@@ -23,6 +23,8 @@
             <SFlow :align-h="Alignment.Center" :align-v="Alignment.Start" style="width: 100%; height: 100%;">
                 <SPanel class="pointer-event" style="overflow: auto;">
                     <SFlow>
+                        <SLineEdit :clearable="false" />
+                        <SLineEdit color="var(--ColorBlue)" disabled />
                         <SButton color="var(--ColorRed)">
                             <X />取消
                         </SButton>
@@ -51,25 +53,28 @@
                 <SPanel class="pointer-event" ref="LeftPanel" style="overflow: auto;">
                     <SFlow vertial>
                         <SButton icon-only icon-size="medium">
-                            <Globe />
+                            <Globe />Normal
                         </SButton>
                         <SButton icon-only icon-size="medium" active>
-                            <Workflow />
+                            <Workflow />active
                         </SButton>
-                        <SButton icon-only icon-size="medium">
-                            <Globe />
+                        <SButton icon-only icon-size="medium" active disabled>
+                            <Globe />active disabled
                         </SButton>
-                        <SButton icon-only icon-size="medium">
-                            <Globe />
+                        <SButton icon-only icon-size="medium" flat>
+                            <Globe />flat
                         </SButton>
-                        <SButton icon-only icon-size="medium">
-                            <Globe />
+                        <SButton icon-only icon-size="medium" flat active>
+                            <Globe />flat active
                         </SButton>
-                        <SButton icon-only icon-size="medium">
-                            <Globe />
+                        <SButton icon-only icon-size="medium" flat active disabled>
+                            <Globe />flat active disabled
                         </SButton>
-                        <SButton icon-only icon-size="medium">
-                            <Globe />
+                        <SButton icon-only icon-size="medium" flat disabled>
+                            <Globe />flat disabled
+                        </SButton>
+                        <SButton icon-only icon-size="medium" disabled>
+                            <Globe />disabled
                         </SButton>
                         <SButton icon-only icon-size="medium">
                             <Globe />
@@ -84,6 +89,7 @@
 import { Alignment } from '@/components/SConst';
 import SPanel from '@/components/SPanel.vue';
 import SButton from '@/components/SButton.vue';
+import SLineEdit from '@/components/SLineEdit.vue';
 import SFlow from '@/components/SFlow.vue';
 import { X, Check, Workflow, Globe, Search, Undo2, Redo2, PanelLeftInactive } from 'lucide-vue-next';
 import { ref } from 'vue';

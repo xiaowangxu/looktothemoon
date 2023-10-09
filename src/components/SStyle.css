@@ -1,15 +1,15 @@
-body{
-	background-color: rgb(80, 80, 80);
+body {
+    background-color: rgb(80, 80, 80);
 }
 
 .__s__ {
     --ThemeColor: rgb(70, 111, 214);
     --ThemeBaseColor: rgb(40, 40, 40);
-    --ThemeDisabledBaseColor: rgb(150, 150, 150);
+    --ThemeDisabledBaseColor: rgb(200, 200, 200);
     --ThemeOppositeColor: rgb(40, 40, 40);
 
     --ThemeBoxShadow: 0px 5px 10px 1px rgba(0, 0, 0, 0.05);
-    
+
     --ThemeDisabledBGColor: color-mix(in srgb, var(--ThemeBaseColor), var(--ThemeDisabledBaseColor) 6%);
     --ThemeDisabledColor: color-mix(in srgb, var(--ThemeBaseColor), var(--ThemeDisabledBaseColor) 22%);
 
@@ -21,7 +21,11 @@ body{
     --MediumPaddingSize: 5px;
     --LargeIconSize: 28px;
     --LargePaddingSize: 7px;
-    
+
+    --NormalMinSize: calc(var(--NormalIconSize) + var(--NormalPaddingSize) * 2);
+    --MediumMinSize: calc(var(--MediumIconSize) + var(--MediumPaddingSize) * 2);
+    --LargeMinSize: calc(var(--LargeIconSize) + var(--LargePaddingSize) * 2);
+
     --GapAndMargin: 5px;
     --FocusOutlineWidth: 3px;
     --NormalRadius: 8px;
@@ -31,4 +35,51 @@ body{
     --ColorRed: rgb(248, 45, 78);
     --ColorGreen: rgb(4, 185, 115);
     --ColorBlue: rgb(70, 111, 214);
+}
+
+.__s__.__s_color__ {
+    --SColorNormal: color-mix(in srgb, var(--ThemeBaseColor), var(--SColor) 10%);
+    --SColorHover: color-mix(in srgb, var(--ThemeBaseColor), var(--SColor) 20%);
+    --SColorActive: var(--SColor);
+    --SColorActiveDisabled: color-mix(in srgb, var(--ThemeBaseColor), var(--SColor) 40%);
+    --SColorFocus: color-mix(in srgb, transparent, var(--SColor) 30%);
+    background-color: var(--SColorNormal);
+    color: var(--SColor);
+}
+
+.__s__.__s_color__:hover {
+    background-color: var(--SColorHover);
+    color: var(--SColor);
+}
+
+.__s__.__s_color__.active,
+.__s__.__s_color__:active {
+    background-color: var(--SColorActive);
+    color: var(--ThemeOppositeColor);
+}
+
+.__s__.__s_color__:disabled {
+    background-color: var(--ThemeDisabledBGColor);
+    color: var(--ThemeDisabledColor);
+}
+
+.__s__.__s_color__.active:disabled {
+    background-color: var(--SColorActiveDisabled);
+    color: var(--ThemeOppositeColor);
+}
+
+.__s__.__s_color__:focus {
+    outline: var(--FocusOutlineWidth) solid var(--SColorFocus);
+}
+
+.__s__[data-s-min-size="normal"] {
+    min-height: var(--NormalMinSize);
+}
+
+.__s__[data-s-min-size="medium"] {
+    min-height: var(--MediumMinSize);
+}
+
+.__s__[data-s-min-size="large"] {
+    min-height: var(--LargeMinSize);
 }
