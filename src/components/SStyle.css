@@ -1,0 +1,34 @@
+body{
+	background-color: rgb(80, 80, 80);
+}
+
+.__s__ {
+    --ThemeColor: rgb(70, 111, 214);
+    --ThemeBaseColor: rgb(40, 40, 40);
+    --ThemeDisabledBaseColor: rgb(150, 150, 150);
+    --ThemeOppositeColor: rgb(40, 40, 40);
+
+    --ThemeBoxShadow: 0px 5px 10px 1px rgba(0, 0, 0, 0.05);
+    
+    --ThemeDisabledBGColor: color-mix(in srgb, var(--ThemeBaseColor), var(--ThemeDisabledBaseColor) 6%);
+    --ThemeDisabledColor: color-mix(in srgb, var(--ThemeBaseColor), var(--ThemeDisabledBaseColor) 22%);
+
+    --FontSize: 12px;
+
+    --NormalIconSize: 18px;
+    --NormalPaddingSize: 3px;
+    --MediumIconSize: 22px;
+    --MediumPaddingSize: 5px;
+    --LargeIconSize: 28px;
+    --LargePaddingSize: 7px;
+    
+    --GapAndMargin: 5px;
+    --FocusOutlineWidth: 3px;
+    --NormalRadius: 8px;
+    --MediumRadius: 12px;
+    --LargeRadius: 20px;
+
+    --ColorRed: rgb(248, 45, 78);
+    --ColorGreen: rgb(4, 185, 115);
+    --ColorBlue: rgb(70, 111, 214);
+}
