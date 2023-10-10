@@ -1,5 +1,13 @@
 body {
     background-color: rgb(80, 80, 80);
+    font-family: sans-serif, Arial, Helvetica;
+    user-select: none;
+}
+
+input,
+button,
+textarea {
+    font-family: sans-serif, Arial, Helvetica;
 }
 
 .__s__ {
@@ -13,24 +21,31 @@ body {
     --ThemeDisabledBGColor: color-mix(in srgb, var(--ThemeBaseColor), var(--ThemeDisabledBaseColor) 6%);
     --ThemeDisabledColor: color-mix(in srgb, var(--ThemeBaseColor), var(--ThemeDisabledBaseColor) 22%);
 
-    --FontSize: 12px;
+    --NormalFontSize: 12px;
+    --MediumFontSize: 14px;
+    --LargeFontSize: 16px;
+    font-size: var(--NormalFontSize);
+    color: var(--ThemeDisabledBaseColor);
 
     --NormalIconSize: 18px;
-    --NormalPaddingSize: 3px;
     --MediumIconSize: 22px;
-    --MediumPaddingSize: 5px;
     --LargeIconSize: 28px;
+
+    --NormalPaddingSize: 3px;
+    --MediumPaddingSize: 5px;
     --LargePaddingSize: 7px;
 
     --NormalMinSize: calc(var(--NormalIconSize) + var(--NormalPaddingSize) * 2);
     --MediumMinSize: calc(var(--MediumIconSize) + var(--MediumPaddingSize) * 2);
     --LargeMinSize: calc(var(--LargeIconSize) + var(--LargePaddingSize) * 2);
 
-    --GapAndMargin: 5px;
-    --FocusOutlineWidth: 3px;
+    --SquareRadius: 4px;
     --NormalRadius: 8px;
     --MediumRadius: 12px;
     --LargeRadius: 20px;
+
+    --GapAndMargin: 5px;
+    --FocusOutlineWidth: 3px;
 
     --ColorRed: rgb(248, 45, 78);
     --ColorGreen: rgb(4, 185, 115);
@@ -39,8 +54,9 @@ body {
 
 .__s__.__s_color__ {
     --SColorNormal: color-mix(in srgb, var(--ThemeBaseColor), var(--SColor) 10%);
-    --SColorHover: color-mix(in srgb, var(--ThemeBaseColor), var(--SColor) 20%);
+    --SColorHover: color-mix(in srgb, var(--ThemeBaseColor), var(--SColor) 16%);
     --SColorActive: var(--SColor);
+    --SColorActiveHover: color-mix(in srgb, var(--ThemeBaseColor), var(--SColor) 84%);
     --SColorActiveDisabled: color-mix(in srgb, var(--ThemeBaseColor), var(--SColor) 40%);
     --SColorFocus: color-mix(in srgb, transparent, var(--SColor) 30%);
     background-color: var(--SColorNormal);
@@ -82,4 +98,20 @@ body {
 
 .__s__[data-s-min-size="large"] {
     min-height: var(--LargeMinSize);
+}
+
+.__s__[data-s-text-size="inherit"] {
+    font-size: inherit;
+}
+
+.__s__[data-s-text-size="normal"] {
+    font-size: var(--NormalFontSize);
+}
+
+.__s__[data-s-text-size="medium"] {
+    font-size: var(--MediumFontSize);
+}
+
+.__s__[data-s-text-size="large"] {
+    font-size: var(--LargeFontSize);
 }

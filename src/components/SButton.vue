@@ -1,20 +1,33 @@
 <template>
     <button class="__s__ __s_color__ __s_button__" :class="{ flat, 'icon-only': iconOnly, active }"
-        :data-s-icon-size="iconSize" :data-s-min-size="iconSize" :style="{ '--SColor': color }"
-        @click="$emit('click', $event)">
+        :data-s-icon-size="iconSize" :data-s-min-size="iconSize" :style="{ '--SColor': color, justifyContent: align_text }"
+        @click="emits('click', $event)">
         <slot name="default" />
     </button>
 </template>
+
 <script setup lang="ts">
+
 import './SStyle.css';
-withDefaults(
-    defineProps<{ active?: boolean, color?: string, flat?: boolean, iconOnly?: boolean, iconSize?: 'normal' | 'medium' | 'large' }>(),
-    { active: false, color: 'var(--ThemeColor)', flat: false, iconOnly: false, iconSize: 'normal' }
+import { useFlexAligmentCss, type Alignment, type IconSize } from './SConst';
+import { toRef } from 'vue';
+
+// props
+const props = withDefaults(
+    defineProps<{ active?: boolean, color?: string, flat?: boolean, iconOnly?: boolean, iconSize?: IconSize, alignText?: Alignment }>(),
+    { active: false, color: 'var(--ThemeColor)', flat: false, iconOnly: false, iconSize: 'normal', alignText: 'start' }
 );
-defineEmits<{
-    (event: 'click', evt: Event): void
+
+// emits
+const emits = defineEmits<{
+    click: [event: Event],
 }>();
+
+// datas
+const align_text = useFlexAligmentCss(toRef(props, 'alignText'));
+
 </script>
+
 <style>
 .__s_button__ {
     appearance: none;
@@ -28,7 +41,6 @@ defineEmits<{
     align-items: center;
     justify-content: center;
 
-    font-size: var(--FontSize);
     border: none;
     border-radius: var(--NormalRadius);
     user-select: none;

@@ -3,13 +3,19 @@
         <slot name="default" />
     </div>
 </template>
+
 <script setup lang="ts">
+
 import './SStyle.css';
-withDefaults(
+
+// props
+const props = withDefaults(
     defineProps<{ color?: string }>(),
     { color: 'var(--ThemeBaseColor)' }
 );
+
 </script>
+
 <style>
 .__s_panel__ {
     border-radius: var(--MediumRadius);

@@ -1,35 +1,41 @@
 <template>
     <div class="__s__ __s_flow__" :style="{
         gap: gap,
-        flexDirection: vertial ? 'column' : 'row',
-        alignItems: vertial ? halign : valign,
-        justifyContent: vertial ? valign : halign,
+        flexDirection: vertical ? 'column' : 'row',
+        alignItems: vertical ? align_h : align_v,
+        justifyContent: vertical ? align_v : align_h,
     }">
         <slot name="default" />
     </div>
 </template>
+
 <script setup lang="ts">
-import { computed } from 'vue';
-import { Alignment } from './SConst';
+
+import { toRef } from 'vue';
+import { type Alignment, useFlexAligmentCss } from './SConst';
+
+// props
 const props = withDefaults(
-    defineProps<{ gap?: string, vertial?: boolean, alignH?: Alignment, alignV?: Alignment }>(),
-    { gap: 'var(--GapAndMargin)', vertial: false, alignH: Alignment.Start, alignV: Alignment.Start }
+    defineProps<{
+        gap?: string,
+        vertical?: boolean,
+        alignH?: Alignment,
+        alignV?: Alignment
+    }>(),
+    {
+        gap: 'var(--GapAndMargin)',
+        vertical: false,
+        alignH: 'start',
+        alignV: 'start',
+    }
 );
-const halign = computed(() => {
-    switch (props.alignH) {
-        case Alignment.Start: return 'flex-start';
-        case Alignment.Center: return 'center';
-        case Alignment.End: return 'flex-end';
-    }
-});
-const valign = computed(() => {
-    switch (props.alignV) {
-        case Alignment.Start: return 'flex-start';
-        case Alignment.Center: return 'center';
-        case Alignment.End: return 'flex-end';
-    }
-});
+
+// datas
+const align_h = useFlexAligmentCss(toRef(props, 'alignH'));
+const align_v = useFlexAligmentCss(toRef(props, 'alignV'));
+
 </script>
+
 <style>
 .__s_flow__ {
     display: flex;
