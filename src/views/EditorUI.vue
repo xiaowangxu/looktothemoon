@@ -23,8 +23,8 @@
             <SFlow align-h="center" align-v="start" style="width: 100%; height: 100%;">
                 <SPanel class="pointer-event" style="overflow: auto;">
                     <SFlow>
-                        <SLineEdit :clearable="false" :align-text="align" v-model:value="lineedit" lazy />
-                        <SNumberEdit v-model:value="numberedit" prefix="长度 " lazy />
+                        <SLineEdit :clearable="false" :align-text="align" v-model:value="lineedit" lazy/>
+                        <SNumberEdit v-model:value="numberedit" prefix="长度 " lazy disabled/>
                         <SCheckBox/>
                         <SButton color="var(--ColorRed)">
                             <X />取消

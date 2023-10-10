@@ -1,6 +1,6 @@
 <template>
     <input ref="lineedit_dom" class="__s__ __s_color__ __s_lineedit__" data-s-min-size="normal"
-        :style="{ '--SColor': color, textAlign: align_text }" :value="value_model"
+        :style="{ '--SColor': color, '--STextColor': textColor ?? color, textAlign: align_text }" :value="value_model"
         @input="emits('input', $event); on_Input(false);" @change="emits('change', $event); on_Input(true);"
         @focus="emits('focus', $event); on_Focus();" @blur="emits('blur', $event);">
 </template>
@@ -18,6 +18,7 @@ const props = withDefaults(
         value?: string,
         lazy?: boolean,
         color?: string,
+        textColor?: string,
         alignText?: Alignment,
         focusSelectAll?: boolean,
     }>(),
@@ -75,19 +76,21 @@ function on_Input(lazy: boolean = false) {
     border-radius: var(--NormalRadius);
     padding: var(--NormalPaddingSize) calc(var(--NormalPaddingSize) + 4px);
     box-sizing: border-box;
+
 }
 
+.__s_lineedit__.__s_color__ {
+    color: var(--STextColor);
+}
+
+.__s_lineedit__.__s_color__:hover,
 .__s_lineedit__.__s_color__:active {
     background-color: var(--SColorHover);
-    color: var(--SColor);
+    color: var(--STextColor);
 }
 
 .__s_lineedit__.__s_color__:disabled {
     background-color: var(--ThemeDisabledBGColor);
     color: var(--ThemeDisabledColor);
-}
-
-.__s_lineedit__.clearable {
-    padding-right: calc(var(--NormalPaddingSize) + 4px + var(--NormalIconSize));
 }
 </style>

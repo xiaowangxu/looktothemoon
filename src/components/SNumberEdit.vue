@@ -1,5 +1,5 @@
 <template>
-    <SLineEdit :color="color" :align-text="alignText" :value="show_text" :focus-select-all="focusSelectAll"
+    <SLineEdit :color="color" :text-color="textColor" :align-text="alignText" :value="show_text" :focus-select-all="focusSelectAll"
         @focus="emits('focus', $event); on_Focus();" @blur="emits('blur', $event); on_Blur();"
         @input="(evt) => { emits('input', evt); on_Input(evt, false); }"
         @change="(evt) => { emits('change', evt); on_Input(evt, true); }" />
@@ -19,6 +19,7 @@ interface Props {
     max?: number,
     lazy?: boolean,
     color?: string,
+    textColor?: string,
     format?: (value: number) => string,
     alignText?: Alignment,
     focusSelectAll?: boolean,

@@ -59,6 +59,14 @@ textarea {
     --SColorActiveHover: color-mix(in srgb, var(--ThemeBaseColor), var(--SColor) 84%);
     --SColorActiveDisabled: color-mix(in srgb, var(--ThemeBaseColor), var(--SColor) 40%);
     --SColorFocus: color-mix(in srgb, transparent, var(--SColor) 30%);
+
+    --STextColorNormal: color-mix(in srgb, var(--ThemeBaseColor), var(--STextColor) 10%);
+    --STextColorHover: color-mix(in srgb, var(--ThemeBaseColor), var(--STextColor) 16%);
+    --STextColorActive: var(--STextColor);
+    --STextColorActiveHover: color-mix(in srgb, var(--ThemeBaseColor), var(--STextColor) 84%);
+    --STextColorActiveDisabled: color-mix(in srgb, var(--ThemeBaseColor), var(--STextColor) 40%);
+    --STextColorFocus: color-mix(in srgb, transparent, var(--STextColor) 30%);
+
     background-color: var(--SColorNormal);
     color: var(--SColor);
 }
@@ -84,7 +92,9 @@ textarea {
     color: var(--ThemeOppositeColor);
 }
 
-.__s__.__s_color__:focus {
+.__s__.__s_color__:focus,
+.__s__.__s_color__:focus-visible {
+    outline-offset: 0px;
     outline: var(--FocusOutlineWidth) solid var(--SColorFocus);
 }
 
