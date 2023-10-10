@@ -82,6 +82,11 @@ textarea {
     color: var(--ThemeOppositeColor);
 }
 
+.__s__.__s_color__.active:hover {
+    background-color: var(--SColorActiveHover);
+    color: var(--ThemeOppositeColor);
+}
+
 .__s__.__s_color__:disabled {
     background-color: var(--ThemeDisabledBGColor);
     color: var(--ThemeDisabledColor);
