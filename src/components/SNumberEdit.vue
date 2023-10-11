@@ -1,6 +1,6 @@
 <template>
-    <SLineEdit :color="color" :text-color="textColor" :align-text="alignText" :value="show_text" :focus-select-all="focusSelectAll"
-        @focus="emits('focus', $event); on_Focus();" @blur="emits('blur', $event); on_Blur();"
+    <SLineEdit ref="slineedit_ref" :color="color" :text-color="textColor" :align-text="alignText" :value="show_text"
+        :focus-select-all="false" @focus="emits('focus', $event); on_Focus();" @blur="emits('blur', $event); on_Blur();"
         @input="(evt) => { emits('input', evt); on_Input(evt, false); }"
         @change="(evt) => { emits('change', evt); on_Input(evt, true); }" />
 </template>
@@ -8,8 +8,8 @@
 <script setup lang="ts">
 
 import SLineEdit from './SLineEdit.vue'; import './SStyle.css';
-import { type Alignment, fixNumberString } from './SConst';
-import { computed, onMounted, ref, watch } from 'vue';
+import { type Alignment, fixNumberString, useComponentRefFocusBlur } from './SConst';
+import { computed, onMounted, ref, watch, nextTick } from 'vue';
 import { useVModel } from '@vueuse/core';
 
 // props
@@ -37,7 +37,6 @@ const props = withDefaults(
         color: 'var(--ThemeDisabledBaseColor)',
         alignText: 'center',
         focusSelectAll: true,
-        suffix: ' 毫米',
         fixDigits: 3,
         precisionDigits: 3,
         showEndZeros: true,
@@ -53,19 +52,19 @@ const emits = defineEmits<{
     'update:value': [value: number]
 }>();
 
-// models
-const value_model = useVModel(props, 'value', emits);
-
 // datas
+const slineedit_ref = ref<InstanceType<typeof SLineEdit>>();
 const is_editing = ref(false);
 const real_value = ref<number>(0);
 const fix_text = computed(() => props.format?.(real_value.value) ?? fixNumberString(real_value.value, props.fixDigits, props.showEndZeros));
 const show_text = ref<string>();
-const full_text = computed(() => `${props.prefix ?? ''}${fix_text.value}${props.suffix ?? ''}`);
 onMounted(() => {
     show_text.value = full_text.value;
 });
-watch(value_model, () => {
+const full_text = computed(() => `${props.prefix ?? ''}${fix_text.value}${props.suffix ?? ''}`);
+
+// models
+const value_model = useVModel(props, 'value', emits);watch(value_model, () => {
     real_value.value = clamp(value_model.value, props.min, props.max);
     if (is_editing.value) {
         on_Focus();
@@ -76,30 +75,20 @@ watch(value_model, () => {
 }, { immediate: true });
 
 // methods
-function clamp(n: number, min: number | undefined, max: number | undefined) {
+function clamp(n: number, min: number | undefined, max: number | undefined, round_to_precision: boolean = true) {
     if (min !== undefined) {
         n = Math.max(min, n);
     }
     if (max !== undefined) {
         n = Math.min(max, n);
     }
-    return n;
+    return round_to_precision ? parseFloat(n.toFixed(props.precisionDigits)) : n;
 }
 function parse_Number(text: string) {
-    // try {
-    //     const calc = new Function('global', `with(global) return ${text};`);
-    //     const global = { window: null, console: null, document: null };
-    //     const value = calc(global);
-    //     console.log("value calculated: ", value);
-    // }
-    // catch {
-
-    // }
     try {
         const value = parseFloat(text);
         if (isNaN(value) || !isFinite(value)) throw new Error('Nan');
-        const round_value = parseFloat(value.toFixed(props.precisionDigits));
-        return { valid: true, value: clamp(round_value, props.min, props.max) };
+        return { valid: true, value: clamp(value, props.min, props.max) };
     }
     catch {
         return { valid: false, value: 0 };
@@ -108,6 +97,14 @@ function parse_Number(text: string) {
 function on_Focus() {
     is_editing.value = true;
     show_text.value = real_value.value.toString();
+    if (props.focusSelectAll) {
+        nextTick(() => {
+            if (slineedit_ref.value && slineedit_ref.value.inputElement) {
+                const input_element = slineedit_ref.value.inputElement;
+                input_element.setSelectionRange(0, input_element.value.length);
+            }
+        });
+    }
 }
 function on_Blur() {
     show_text.value = full_text.value;
@@ -127,6 +124,13 @@ function on_Input(evt: Event, lazy: boolean = false) {
         (evt.target as HTMLInputElement).blur();
     }
 }
+const { focus, blur } = useComponentRefFocusBlur<typeof SLineEdit>(slineedit_ref);
+
+// exposes
+defineExpose({
+    inputElement: computed(() => slineedit_ref.value?.inputElement),
+    focus, blur,
+});
 
 </script>
 

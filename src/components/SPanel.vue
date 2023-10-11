@@ -10,8 +10,12 @@ import './SStyle.css';
 
 // props
 const props = withDefaults(
-    defineProps<{ color?: string }>(),
-    { color: 'var(--ThemeBaseColor)' }
+    defineProps<{
+        color?: string
+    }>(),
+    {
+        color: 'var(--ThemeBaseColor)'
+    }
 );
 
 </script>

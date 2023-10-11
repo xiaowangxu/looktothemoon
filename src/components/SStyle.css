@@ -1,5 +1,6 @@
 body {
     background-color: rgb(80, 80, 80);
+    /* background-color: rgb(240, 240, 240); */
     font-family: sans-serif, Arial, Helvetica;
     user-select: none;
 }
@@ -15,12 +16,16 @@ textarea {
     --ThemeBaseColor: rgb(40, 40, 40);
     --ThemeDisabledBaseColor: rgb(200, 200, 200);
     --ThemeOppositeColor: rgb(40, 40, 40);
+    /* --ThemeBaseColor: rgb(255, 255, 255);
+    --ThemeDisabledBaseColor: rgb(54, 54, 54);
+    --ThemeOppositeColor: rgb(255, 255, 255); */
 
     --ThemeBoxShadow: 0px 5px 10px 1px rgba(0, 0, 0, 0.05);
 
     --ThemeDisabledBGColor: color-mix(in srgb, var(--ThemeBaseColor), var(--ThemeDisabledBaseColor) 6%);
     --ThemeDisabledColor: color-mix(in srgb, var(--ThemeBaseColor), var(--ThemeDisabledBaseColor) 22%);
-
+    
+    --SmallFontSize: 10px;
     --NormalFontSize: 12px;
     --MediumFontSize: 14px;
     --LargeFontSize: 16px;
@@ -117,6 +122,10 @@ textarea {
 
 .__s__[data-s-text-size="inherit"] {
     font-size: inherit;
+}
+
+.__s__[data-s-text-size="small"] {
+    font-size: var(--SmallFontSize);
 }
 
 .__s__[data-s-text-size="normal"] {

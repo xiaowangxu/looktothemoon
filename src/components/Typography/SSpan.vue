@@ -1,12 +1,13 @@
 <template>
-    <span class="__s__ __s_span__" :class="{ bold, italic, underline }" :style="{ color }" :data-s-text-size="textSize">
+    <span class="__s__ __s_span__" :class="{ bold, italic, underline }" :style="{ color, verticalAlign: alignTextVertical }"
+        :data-s-text-size="textSize">
         <slot />
     </span>
 </template>
 
 <script setup lang="ts">
 
-import { type TextSize } from '../SConst';
+import { type TextSize , type TextVerticalAlignment} from '../SConst';
 
 // props
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
     italic?: boolean,
     underline?: boolean,
     textSize?: TextSize,
+    alignTextVertical?: TextVerticalAlignment,
     color?: string,
 }
 const props = withDefaults(
@@ -24,6 +26,7 @@ const props = withDefaults(
         underline: false,
         textSize: 'inherit',
         color: 'inherit',
+        alignTextVertical: 'inherit',
     }
 );
 

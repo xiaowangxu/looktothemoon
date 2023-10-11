@@ -1,6 +1,7 @@
 <template>
     <div class="__s__ __s_flow__" :style="{
         gap: gap,
+        flexWrap: wrap ? 'wrap' : 'nowrap',
         flexDirection: vertical ? 'column' : 'row',
         alignItems: vertical ? align_h : align_v,
         justifyContent: vertical ? align_v : align_h,
@@ -11,6 +12,7 @@
 
 <script setup lang="ts">
 
+import './SStyle.css';
 import { toRef } from 'vue';
 import { type Alignment, useFlexAligmentCss } from './SConst';
 
@@ -20,13 +22,15 @@ const props = withDefaults(
         gap?: string,
         vertical?: boolean,
         alignH?: Alignment,
-        alignV?: Alignment
+        alignV?: Alignment,
+        wrap?: boolean,
     }>(),
     {
         gap: 'var(--GapAndMargin)',
         vertical: false,
         alignH: 'start',
         alignV: 'start',
+        wrap: false,
     }
 );
 

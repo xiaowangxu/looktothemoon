@@ -15,7 +15,7 @@ import { type IconSize, type TextSize, type TypographyProps, useTypoGraphyCss } 
 const props = withDefaults(
     defineProps<TypographyProps & {
         textSize?: TextSize,
-        minSize?: IconSize,
+        minSize?: IconSize | 'unset',
     }>(),
     {
         alignH: 'start',

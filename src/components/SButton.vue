@@ -1,5 +1,5 @@
 <template>
-    <button class="__s__ __s_color__ __s_button__" :class="{ flat, 'icon-only': iconOnly, active }"
+    <button ref="button_dom" class="__s__ __s_color__ __s_button__" :class="{ flat, 'icon-only': iconOnly, active }"
         :data-s-icon-size="iconSize" :data-s-min-size="iconSize" :style="{ '--SColor': color, justifyContent: align_text }"
         @click="emits('click', $event)">
         <slot name="default" />
@@ -9,8 +9,8 @@
 <script setup lang="ts">
 
 import './SStyle.css';
-import { useFlexAligmentCss, type Alignment, type IconSize } from './SConst';
-import { toRef } from 'vue';
+import { useFlexAligmentCss, type Alignment, type IconSize, useHtmlElementFocusBlur } from './SConst';
+import { toRef, ref } from 'vue';
 
 // props
 const props = withDefaults(
@@ -24,7 +24,17 @@ const emits = defineEmits<{
 }>();
 
 // datas
+const button_dom = ref<HTMLButtonElement>();
 const align_text = useFlexAligmentCss(toRef(props, 'alignText'));
+
+// methods
+const { focus, blur } = useHtmlElementFocusBlur(button_dom);
+
+// exposes
+defineExpose({
+    buttonElement: button_dom,
+    focus, blur,
+});
 
 </script>
 
