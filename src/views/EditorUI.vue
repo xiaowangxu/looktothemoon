@@ -21,34 +21,39 @@
         </div>
         <div class="top-panel">
             <SFlow align-h="center" align-v="start" style="width: 100%; height: 100%;">
-                <SResizeObserver @resized="resized">
-                    <SPanel class="pointer-event" style="overflow: hidden;">
-                        <SFlow>
-                            <SLineEdit :clearable="false" :align-text="align" v-model:value="lineedit" lazy />
-                            <SLineEdit :clearable="false" :align-text="align" value="lineeditq23" disabled lazy
-                                text-color="red" />
-                            <SActiveArea>
-                                <SLabel min-size="normal">长度</SLabel>
-                                <SNumberEdit v-model:value="numberedit" suffix=" 毫米" lazy :show-end-zeros="false" />
-                            </SActiveArea>
-                            <SCheckBox value disabled />
-                            <SCheckBox disabled />
-                            <SRadioBox />
-                            <SRadioBox value disabled />
-                            <SRadioBox disabled />
-                            <SActiveArea>
-                                <SCheckBox v-model:value="checkbox" />
-                                <SLabel>Test</SLabel>
-                            </SActiveArea>
-                            <SButton color="var(--ColorRed)">
-                                <X />取消
-                            </SButton>
-                            <SButton color="var(--ColorGreen)" icon-only>
-                                <Check />
-                            </SButton>
-                        </SFlow>
-                    </SPanel>
-                </SResizeObserver>
+                <SPanel class="pointer-event" style="padding: 0; overflow: hidden;">
+                    <SResizeObserver @resized="resized">
+                        <div
+                            style="padding: var(--GapAndMargin); box-sizing: border-box; width: 100%; height: 100%; overflow: hidden;">
+                            <SResizeObserver @resized="resized2">
+                                <SFlow style="width: fit-content;">
+                                    <SLineEdit :clearable="false" :align-text="align" v-model:value="lineedit" lazy />
+                                    <SLineEdit :clearable="false" :align-text="align" value="lineeditq23" disabled lazy
+                                        text-color="red" />
+                                    <SActiveArea>
+                                        <SLabel min-size="normal">长度</SLabel>
+                                        <SNumberEdit v-model:value="numberedit" suffix=" 毫米" lazy :show-end-zeros="false" />
+                                    </SActiveArea>
+                                    <SCheckBox value disabled />
+                                    <SCheckBox disabled />
+                                    <SRadioBox />
+                                    <SRadioBox value disabled />
+                                    <SRadioBox disabled />
+                                    <SActiveArea>
+                                        <SCheckBox v-model:value="checkbox" />
+                                        <SLabel>Test</SLabel>
+                                    </SActiveArea>
+                                    <SButton color="var(--ColorRed)">
+                                        <X />取消
+                                    </SButton>
+                                    <SButton color="var(--ColorGreen)" icon-only>
+                                        <Check />
+                                    </SButton>
+                                </SFlow>
+                            </SResizeObserver>
+                        </div>
+                    </SResizeObserver>
+                </SPanel>
             </SFlow>
         </div>
         <div class="top-right-panel">
@@ -244,6 +249,11 @@ watch(checkbox, (newval, oldval) => {
 });
 
 function resized(borderBoxSize: BoxSize, contentBoxSize: BoxSize, target: Element) {
+    console.log("container resized!", borderBoxSize);
+}
+
+function resized2(borderBoxSize: BoxSize, contentBoxSize: BoxSize, target: Element) {
+    console.log("content resized!", borderBoxSize);
 }
 
 </script>

@@ -24,7 +24,7 @@ textarea {
 
     --ThemeDisabledBGColor: color-mix(in srgb, var(--ThemeBaseColor), var(--ThemeDisabledBaseColor) 6%);
     --ThemeDisabledColor: color-mix(in srgb, var(--ThemeBaseColor), var(--ThemeDisabledBaseColor) 22%);
-    
+
     --SmallFontSize: 10px;
     --NormalFontSize: 12px;
     --MediumFontSize: 14px;
