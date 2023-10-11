@@ -21,7 +21,7 @@ const { color_css, align_h_css } = useTypoGraphyCss(props);
 
 <style>
 .__s_paragraph__ {
-    margin-top: var(--LargePaddingSize);
-    margin-bottom: var(--LargePaddingSize);
+    padding-top: var(--LargePaddingSize);
+    padding-bottom: var(--LargePaddingSize);
 }
 </style>

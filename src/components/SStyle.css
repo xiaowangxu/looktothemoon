@@ -40,6 +40,10 @@ textarea {
     --MediumPaddingSize: 5px;
     --LargePaddingSize: 7px;
 
+    --ScrollBarWidth: 6px;
+    --ScrollBarOffset: 6px;
+    --ScrollBarTotalWidth: calc(var(--ScrollBarOffset) * 2 + var(--ScrollBarWidth));
+
     --NormalMinSize: calc(var(--NormalIconSize) + var(--NormalPaddingSize) * 2);
     --MediumMinSize: calc(var(--MediumIconSize) + var(--MediumPaddingSize) * 2);
     --LargeMinSize: calc(var(--LargeIconSize) + var(--LargePaddingSize) * 2);

@@ -21,7 +21,7 @@ const { color_css, align_h_css } = useTypoGraphyCss(props);
 
 <style>
 .__s_sub_title__ {
-    margin-top: var(--NormalPaddingSize);
-    margin-bottom: var(--NormalPaddingSize);
+    padding-top: 0;
+    padding-bottom: 0;
 }
 </style>

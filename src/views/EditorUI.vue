@@ -21,38 +21,33 @@
         </div>
         <div class="top-panel">
             <SFlow align-h="center" align-v="start" style="width: 100%; height: 100%;">
-                <SPanel class="pointer-event" style="padding: 0; overflow: hidden;">
-                    <SResizeObserver @resized="resized">
-                        <div
-                            style="padding: var(--GapAndMargin); box-sizing: border-box; width: 100%; height: 100%; overflow: hidden;">
-                            <SResizeObserver @resized="resized2">
-                                <SFlow style="width: fit-content;">
-                                    <SLineEdit :clearable="false" :align-text="align" v-model:value="lineedit" lazy />
-                                    <SLineEdit :clearable="false" :align-text="align" value="lineeditq23" disabled lazy
-                                        text-color="red" />
-                                    <SActiveArea>
-                                        <SLabel min-size="normal">长度</SLabel>
-                                        <SNumberEdit v-model:value="numberedit" suffix=" 毫米" lazy :show-end-zeros="false" />
-                                    </SActiveArea>
-                                    <SCheckBox value disabled />
-                                    <SCheckBox disabled />
-                                    <SRadioBox />
-                                    <SRadioBox value disabled />
-                                    <SRadioBox disabled />
-                                    <SActiveArea>
-                                        <SCheckBox v-model:value="checkbox" />
-                                        <SLabel>Test</SLabel>
-                                    </SActiveArea>
-                                    <SButton color="var(--ColorRed)">
-                                        <X />取消
-                                    </SButton>
-                                    <SButton color="var(--ColorGreen)" icon-only>
-                                        <Check />
-                                    </SButton>
-                                </SFlow>
-                            </SResizeObserver>
-                        </div>
-                    </SResizeObserver>
+                <SPanel class="pointer-event" style="overflow: hidden; padding: 0px;">
+                    <SScrollContainer padding="var(--GapAndMargin)">
+                        <SFlow style="width: fit-content;">
+                            <SLineEdit :clearable="false" :align-text="align" v-model:value="lineedit" lazy />
+                            <SLineEdit :clearable="false" :align-text="align" value="lineeditq23" disabled lazy
+                                text-color="red" />
+                            <SActiveArea>
+                                <SLabel min-size="normal">长度</SLabel>
+                                <SNumberEdit v-model:value="numberedit" suffix=" 毫米" lazy :show-end-zeros="false" />
+                            </SActiveArea>
+                            <SCheckBox value disabled />
+                            <SCheckBox disabled />
+                            <SRadioBox />
+                            <SRadioBox value disabled />
+                            <SRadioBox disabled />
+                            <SActiveArea>
+                                <SCheckBox v-model:value="checkbox" />
+                                <SLabel>Test</SLabel>
+                            </SActiveArea>
+                            <SButton color="var(--ColorRed)">
+                                <X />取消
+                            </SButton>
+                            <SButton color="var(--ColorGreen)" icon-only>
+                                <Check />
+                            </SButton>
+                        </SFlow>
+                    </SScrollContainer>
                 </SPanel>
             </SFlow>
         </div>
@@ -100,59 +95,61 @@
         </div>
         <div class="right-panel">
             <SFlow vertical align-h="start" align-v="center" style="width: 100%; height: 100%;">
-                <SPanel class="pointer-event" style="width: 300px; height: 100%;">
-                    <STitle align-h="center">
-                        <SSpan bold italic underline>Typography</SSpan> 排版组件
-                    </STitle>
-                    <SSubTitle color="var(--ColorRed)" align-h="end">
-                        <SSpan bold>Sub Title</SSpan>
-                    </SSubTitle>
-                    <SParagraph>Lorem ipsum dolor sit amet consectetur adipisicing elit. Soluta facere eos
-                        dolores, iusto similique ut optio <SSpan bold text-size="medium" color="var(--ColorGreen)">
-                            <X style="vertical-align: bottom;" />Hello
-                        </SSpan>
-                        possimus quisquam, unde fugiat magnam sequi id debitis voluptate
-                        nobis excepturi aut distinctio consequuntur?
-                    </SParagraph>
-                    <SSubTitle>
-                        <SSpan bold>Sub Title 2</SSpan>
-                    </SSubTitle>
-                    <SParagraph>Lorem ipsum dolor sit amet consectetur adipisicing elit. Soluta facere eos
-                        dolores, iusto similique ut optio <SSpan bold text-size="medium" color="var(--ColorGreen)">
-                            <X style="vertical-align: bottom;" />Hello
-                        </SSpan>
-                        possimus quisquam, unde fugiat magnam sequi id debitis voluptate
-                        nobis excepturi aut distinctio consequuntur?
-                    </SParagraph>
-                    <SFlow wrap>
-                        <SButton icon-only icon-size="medium">
-                            <Globe />Normal
-                        </SButton>
-                        <SButton icon-only icon-size="medium" active>
-                            <Workflow />active
-                        </SButton>
-                        <SButton icon-only icon-size="medium" active disabled>
-                            <Globe />active disabled
-                        </SButton>
-                        <SButton icon-only icon-size="medium" flat>
-                            <Globe />flat
-                        </SButton>
-                        <SButton icon-only icon-size="medium" flat active>
-                            <Globe />flat active
-                        </SButton>
-                        <SButton icon-only icon-size="medium" flat active disabled>
-                            <Globe />flat active disabled
-                        </SButton>
-                        <SButton icon-only icon-size="medium" flat disabled>
-                            <Globe />flat disabled
-                        </SButton>
-                        <SButton icon-only icon-size="medium" disabled>
-                            <Globe />disabled
-                        </SButton>
-                        <SButton icon-only icon-size="medium">
-                            <Globe />
-                        </SButton>
-                    </SFlow>
+                <SPanel class="pointer-event" style="width: 300px; height: 100%; padding: 0px;">
+                    <SScrollContainer padding="var(--GapAndMargin)">
+                        <STitle align-h="center">
+                            <SSpan bold italic underline>Typography</SSpan> 排版组件
+                        </STitle>
+                        <SSubTitle color="var(--ColorRed)" align-h="end">
+                            <SSpan bold>Sub Title</SSpan>
+                        </SSubTitle>
+                        <SParagraph>Lorem ipsum dolor sit amet consectetur adipisicing elit. Soluta facere eos
+                            dolores, iusto similique ut optio <SSpan bold text-size="medium" color="var(--ColorGreen)">
+                                <X style="vertical-align: bottom;" />Hello
+                            </SSpan>
+                            possimus quisquam, unde fugiat magnam sequi id debitis voluptate
+                            nobis excepturi aut distinctio consequuntur?
+                        </SParagraph>
+                        <SSubTitle>
+                            <SSpan bold>Sub Title 2</SSpan>
+                        </SSubTitle>
+                        <SParagraph>Lorem ipsum dolor sit amet consectetur adipisicing elit. Soluta facere eos
+                            dolores, iusto similique ut optio <SSpan bold text-size="medium" color="var(--ColorGreen)">
+                                <X style="vertical-align: bottom;" />Hello
+                            </SSpan>
+                            possimus quisquam, unde fugiat magnam sequi id debitis voluptate
+                            nobis excepturi aut distinctio consequuntur?
+                        </SParagraph>
+                        <SFlow wrap>
+                            <SButton icon-only icon-size="medium">
+                                <Globe />Normal
+                            </SButton>
+                            <SButton icon-only icon-size="medium" active>
+                                <Workflow />active
+                            </SButton>
+                            <SButton icon-only icon-size="medium" active disabled>
+                                <Globe />active disabled
+                            </SButton>
+                            <SButton icon-only icon-size="medium" flat>
+                                <Globe />flat
+                            </SButton>
+                            <SButton icon-only icon-size="medium" flat active>
+                                <Globe />flat active
+                            </SButton>
+                            <SButton icon-only icon-size="medium" flat active disabled>
+                                <Globe />flat active disabledfreergtrgtryth45654ty564y56y56
+                            </SButton>
+                            <SButton icon-only icon-size="medium" flat disabled>
+                                <Globe />flat disabled
+                            </SButton>
+                            <SButton icon-only icon-size="medium" disabled>
+                                <Globe />disabled
+                            </SButton>
+                            <SButton icon-only icon-size="medium">
+                                <Globe />
+                            </SButton>
+                        </SFlow>
+                    </SScrollContainer>
                 </SPanel>
             </SFlow>
         </div>
@@ -231,6 +228,7 @@ import SParagraph from '@/components/Typography/SParagraph.vue';
 import SActiveArea from '@/components/SActiveArea.vue';
 import SPopup from '@/components/SPopup.vue';
 import SResizeObserver from '@/components/SResizeObserver.vue';
+import SScrollContainer from '@/components/SScrollContainer.vue';
 
 const folded = ref(true);
 const align = ref<Alignment>('end');
@@ -249,7 +247,7 @@ watch(checkbox, (newval, oldval) => {
 });
 
 function resized(borderBoxSize: BoxSize, contentBoxSize: BoxSize, target: Element) {
-    console.log("container resized!", borderBoxSize);
+    console.log("container resized!", contentBoxSize);
 }
 
 function resized2(borderBoxSize: BoxSize, contentBoxSize: BoxSize, target: Element) {
