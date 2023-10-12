@@ -65,10 +65,10 @@ export function useWidthDefineCss(
     max_width: Ref<string | undefined>
 ): ComputedRef<{ width?: string, minWidth?: string, maxWidth?: string }> {
     return computed(() => {
-        if (width.value !== undefined) {
-            return { width: width.value };
-        }
         const result: { width?: string, minWidth?: string, maxWidth?: string } = {};
+        if (width.value !== undefined) {
+            result.width = width.value;
+        }
         if (min_width.value !== undefined) {
             result.minWidth = min_width.value;
         }
@@ -85,10 +85,10 @@ export function useHeightDefineCss(
     max_height: Ref<string | undefined>
 ): ComputedRef<{ height?: string, minHeight?: string, maxHeight?: string }> {
     return computed(() => {
-        if (height.value !== undefined) {
-            return { height: height.value };
-        }
         const result: { height?: string, minHeight?: string, maxHeight?: string } = {};
+        if (height.value !== undefined) {
+            result.height = height.value;
+        }
         if (min_height.value !== undefined) {
             result.minHeight = min_height.value;
         }

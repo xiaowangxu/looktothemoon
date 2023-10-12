@@ -40,9 +40,13 @@ textarea {
     --MediumPaddingSize: 5px;
     --LargePaddingSize: 7px;
 
-    --ScrollBarWidth: 6px;
-    --ScrollBarOffset: 6px;
-    --ScrollBarTotalWidth: calc(var(--ScrollBarOffset) * 2 + var(--ScrollBarWidth));
+    --SeparatorSize: 2px;
+
+    --ScrollBarSize: 6px;
+    --ScrollBarTrackStartSize: 2px;
+    --ScrollBarTrackEndSize: 6px;
+    --ScrollBarTrackSize: calc(var(--ScrollBarTrackStartSize) + var(--ScrollBarSize) + var(--ScrollBarTrackEndSize));
+    --ScrollContainerBarOffset: calc(var(--ScrollBarTrackStartSize) + var(--ScrollBarSize));
 
     --NormalMinSize: calc(var(--NormalIconSize) + var(--NormalPaddingSize) * 2);
     --MediumMinSize: calc(var(--MediumIconSize) + var(--MediumPaddingSize) * 2);

@@ -1,6 +1,7 @@
 <template>
     <div class="__s__ __s_flow__" :style="{
         gap: gap,
+        padding: padding,
         flexWrap: wrap ? 'wrap' : 'nowrap',
         flexDirection: vertical ? 'column' : 'row',
         alignItems: vertical ? align_h : align_v,
@@ -20,6 +21,7 @@ import { type Alignment, useFlexAligmentCss } from './SConst';
 const props = withDefaults(
     defineProps<{
         gap?: string,
+        padding?: string,
         vertical?: boolean,
         alignH?: Alignment,
         alignV?: Alignment,
@@ -27,6 +29,7 @@ const props = withDefaults(
     }>(),
     {
         gap: 'var(--GapAndMargin)',
+        padding: '0',
         vertical: false,
         alignH: 'start',
         alignV: 'start',

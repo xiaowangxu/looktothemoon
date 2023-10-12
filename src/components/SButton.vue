@@ -14,8 +14,22 @@ import { toRef, ref } from 'vue';
 
 // props
 const props = withDefaults(
-    defineProps<{ active?: boolean, color?: string, flat?: boolean, iconOnly?: boolean, iconSize?: IconSize, alignText?: Alignment }>(),
-    { active: false, color: 'var(--ThemeColor)', flat: false, iconOnly: false, iconSize: 'normal', alignText: 'start' }
+    defineProps<{ 
+        active?: boolean, 
+        color?: string, 
+        flat?: boolean, 
+        iconOnly?: boolean, 
+        iconSize?: IconSize, 
+        alignText?: Alignment 
+    }>(),
+    { 
+        active: false, 
+        color: 'var(--ThemeColor)', 
+        flat: false, 
+        iconOnly: false, 
+        iconSize: 'normal', 
+        alignText: 'start'
+    }
 );
 
 // emits

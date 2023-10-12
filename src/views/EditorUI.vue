@@ -22,11 +22,12 @@
         <div class="top-panel">
             <SFlow align-h="center" align-v="start" style="width: 100%; height: 100%;">
                 <SPanel class="pointer-event" style="overflow: hidden; padding: 0px;">
-                    <SScrollContainer padding="var(--GapAndMargin)">
-                        <SFlow style="width: fit-content;">
+                    <SScrollContainer scroll-bar-state-h="hidden" scroll-bar-state-v="hidden">
+                        <SFlow padding="var(--GapAndMargin)">
                             <SLineEdit :clearable="false" :align-text="align" v-model:value="lineedit" lazy />
                             <SLineEdit :clearable="false" :align-text="align" value="lineeditq23" disabled lazy
                                 text-color="red" />
+                            <SHSeparator />
                             <SActiveArea>
                                 <SLabel min-size="normal">长度</SLabel>
                                 <SNumberEdit v-model:value="numberedit" suffix=" 毫米" lazy :show-end-zeros="false" />
@@ -66,143 +67,165 @@
                         </SButton>
                     </SFlow>
                 </SPanel>
-                <SPanel class="pointer-event" style="overflow: auto;">
-                    <SFlow vertical>
-                        <SButton icon-only icon-size="medium">
-                            <Globe />
-                        </SButton>
-                        <SButton icon-only icon-size="medium">
-                            <Workflow />
-                        </SButton>
-                        <SButton icon-only icon-size="medium">
-                            <Globe />
-                        </SButton>
-                        <SButton icon-only icon-size="medium">
-                            <Search />
-                        </SButton>
-                        <SButton icon-only icon-size="medium">
-                            <Trash />
-                        </SButton>
-                        <SButton icon-only icon-size="medium">
-                            <Globe />
-                        </SButton>
-                        <SButton icon-only icon-size="medium">
-                            <Check />
-                        </SButton>
-                    </SFlow>
-                </SPanel>
-            </SFlow>
-        </div>
-        <div class="right-panel">
-            <SFlow vertical align-h="start" align-v="center" style="width: 100%; height: 100%;">
-                <SPanel class="pointer-event" style="width: 300px; height: 100%; padding: 0px;">
-                    <SScrollContainer padding="var(--GapAndMargin)">
-                        <STitle align-h="center">
-                            <SSpan bold italic underline>Typography</SSpan> 排版组件
-                        </STitle>
-                        <SSubTitle color="var(--ColorRed)" align-h="end">
-                            <SSpan bold>Sub Title</SSpan>
-                        </SSubTitle>
-                        <SParagraph>Lorem ipsum dolor sit amet consectetur adipisicing elit. Soluta facere eos
-                            dolores, iusto similique ut optio <SSpan bold text-size="medium" color="var(--ColorGreen)">
-                                <X style="vertical-align: bottom;" />Hello
-                            </SSpan>
-                            possimus quisquam, unde fugiat magnam sequi id debitis voluptate
-                            nobis excepturi aut distinctio consequuntur?
-                        </SParagraph>
-                        <SSubTitle>
-                            <SSpan bold>Sub Title 2</SSpan>
-                        </SSubTitle>
-                        <SParagraph>Lorem ipsum dolor sit amet consectetur adipisicing elit. Soluta facere eos
-                            dolores, iusto similique ut optio <SSpan bold text-size="medium" color="var(--ColorGreen)">
-                                <X style="vertical-align: bottom;" />Hello
-                            </SSpan>
-                            possimus quisquam, unde fugiat magnam sequi id debitis voluptate
-                            nobis excepturi aut distinctio consequuntur?
-                        </SParagraph>
-                        <SFlow wrap>
+                <SPanel class="pointer-event" style="overflow: hidden; padding: 0;">
+                    <SScrollContainer scroll-bar-state-h="hidden" scroll-bar-state-v="hidden">
+                        <SFlow padding="var(--GapAndMargin)" vertical>
                             <SButton icon-only icon-size="medium">
-                                <Globe />Normal
+                                <Globe />
                             </SButton>
-                            <SButton icon-only icon-size="medium" active>
-                                <Workflow />active
-                            </SButton>
-                            <SButton icon-only icon-size="medium" active disabled>
-                                <Globe />active disabled
-                            </SButton>
-                            <SButton icon-only icon-size="medium" flat>
-                                <Globe />flat
-                            </SButton>
-                            <SButton icon-only icon-size="medium" flat active>
-                                <Globe />flat active
-                            </SButton>
-                            <SButton icon-only icon-size="medium" flat active disabled>
-                                <Globe />flat active disabledfreergtrgtryth45654ty564y56y56
-                            </SButton>
-                            <SButton icon-only icon-size="medium" flat disabled>
-                                <Globe />flat disabled
-                            </SButton>
-                            <SButton icon-only icon-size="medium" disabled>
-                                <Globe />disabled
+                            <SVSeparator />
+                            <SButton icon-only icon-size="medium">
+                                <Workflow />
                             </SButton>
                             <SButton icon-only icon-size="medium">
                                 <Globe />
+                            </SButton>
+                            <SButton icon-only icon-size="medium">
+                                <Search />
+                            </SButton>
+                            <SButton icon-only icon-size="medium">
+                                <Trash />
+                            </SButton>
+                            <SButton icon-only icon-size="medium">
+                                <Globe />
+                            </SButton>
+                            <SButton icon-only icon-size="medium">
+                                <Check />
                             </SButton>
                         </SFlow>
                     </SScrollContainer>
                 </SPanel>
             </SFlow>
         </div>
+        <div class="right-panel">
+            <SFlow vertical align-h="start" align-v="center" style="width: 100%; height: 100%;">
+                <SPanel class="pointer-event" style="overflow: hidden; width: 300px; height: 100%; padding: 0px;">
+                    <SScrollContainer>
+                        <div style="padding: var(--GapAndMargin);">
+                            <STitle align-h="center">
+                                <SSpan bold italic underline>Typography</SSpan> 排版组件
+                            </STitle>
+                            <SSubTitle color="var(--ColorRed)" align-h="end">
+                                <SSpan bold>Sub Title</SSpan>
+                            </SSubTitle>
+                            <SParagraph>Lorem ipsum dolor sit amet consectetur adipisicing elit. Soluta facere eos
+                                dolores, iusto similique ut optio <SSpan bold text-size="medium" color="var(--ColorGreen)">
+                                    <X style="vertical-align: bottom;" />Hello
+                                </SSpan>
+                                possimus quisquam, unde fugiat magnam sequi id debitis voluptate
+                                nobis excepturi aut distinctio consequuntur?
+                            </SParagraph>
+                            <SSubTitle>
+                                <SSpan bold>Sub Title 2</SSpan>
+                            </SSubTitle>
+                            <SParagraph>Lorem ipsum dolor sit amet consectetur adipisicing elit. Soluta facere eos
+                                dolores, iusto similique ut optio <SSpan bold text-size="medium" color="var(--ColorGreen)">
+                                    <X style="vertical-align: bottom;" />Hello
+                                </SSpan>
+                                possimus quisquam, unde fugiat magnam sequi id debitis voluptate
+                                nobis excepturi aut distinctio consequuntur?
+                            </SParagraph>
+                            <SFlow wrap>
+                                <SButton icon-only icon-size="medium">
+                                    <Globe />Normal
+                                </SButton>
+                                <SButton icon-only icon-size="medium" active>
+                                    <Workflow />active
+                                </SButton>
+                                <SButton icon-only icon-size="medium" active disabled>
+                                    <Globe />active disabled
+                                </SButton>
+                                <SButton icon-only icon-size="medium" flat>
+                                    <Globe />flat
+                                </SButton>
+                                <SButton icon-only icon-size="medium" flat active>
+                                    <Globe />flat active
+                                </SButton>
+                                <SButton icon-only icon-size="medium" flat active disabled>
+                                    <Globe />flat active disabledfreergtrgtryth45654ty564y56y56
+                                </SButton>
+                                <SButton icon-only icon-size="medium" flat disabled>
+                                    <Globe />flat disabled
+                                </SButton>
+                                <SButton icon-only icon-size="medium" disabled>
+                                    <Globe />disabled
+                                </SButton>
+                                <SButton icon-only icon-size="medium">
+                                    <Globe />
+                                </SButton>
+                            </SFlow>
+                        </div>
+                    </SScrollContainer>
+                </SPanel>
+            </SFlow>
+        </div>
         <SPopup>
             <SPanel
-                style="pointer-events: all; border-radius: var(--NormalRadius); overflow: hidden; max-width: 100%; max-height: 100%;">
-                <SFlow gap="var(--FocusOutlineWidth)" vertical>
-                    <SButton icon-only flat color="var(--ThemeDisabledBaseColor)"
-                        style="width: 100%; border-radius: var(--SquareRadius);">
-                        <Globe />
-                        <SLabel min-size="unset" color="inherit" min-width="80px"
-                            style="margin-left: var(--NormalPaddingSize);">这些是选项</SLabel>
-                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
-                            style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end">1234</SLabel>
-                    </SButton>
-                    <SButton icon-only flat color="var(--ThemeDisabledBaseColor)"
-                        style="width: 100%; border-radius: var(--SquareRadius);">
-                        <Workflow />
-                        <SLabel min-size="unset" color="inherit" min-width="80px"
-                            style="margin-left: var(--NormalPaddingSize);">工作流</SLabel>
-                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
-                            style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end">I</SLabel>
-                    </SButton>
-                    <SButton icon-only flat color="var(--ThemeDisabledBaseColor)" active
-                        style="width: 100%; border-radius: var(--SquareRadius);">
-                        <Search />
-                        <SLabel min-size="unset" color="inherit" min-width="80px"
-                            style="margin-left: var(--NormalPaddingSize);">在其中查找</SLabel>
-                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
-                            style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end">Ctrl+Shift+P</SLabel>
-                    </SButton>
-                    <SButton icon-only flat color="var(--ThemeDisabledBaseColor)"
-                        style="width: 100%; border-radius: var(--SquareRadius);">
-                        <Minus />flat active
-                    </SButton>
-                    <SButton icon-only flat color="var(--ThemeDisabledBaseColor)"
-                        style="width: 100%; border-radius: var(--SquareRadius);">
-                        <Redo2 />
-                        <SLabel min-size="unset" color="inherit" min-width="80px"
-                            style="margin-left: var(--NormalPaddingSize);">更多...</SLabel>
-                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
-                            style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end"></SLabel>
-                        <ChevronRight />
-                    </SButton>
-                    <SButton icon-only flat color="var(--ColorRed)"
-                        style="width: 100%; border-radius: var(--SquareRadius);">
-                        <Trash />
-                        <SLabel min-size="unset" color="inherit" min-width="80px"
-                            style="margin-left: var(--NormalPaddingSize);">删除</SLabel>
-                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
-                            style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end">Delete</SLabel>
-                    </SButton>
-                </SFlow>
+                style="pointer-events: all; padding: 0; overflow: hidden; border-radius: var(--NormalRadius); overflow: hidden; width: 100%; height: 100%;">
+                <SScrollContainer scroll-bar-state-h="hidden" scroll-bar-state-v="adaptive" min-width="100%">
+                    <SFlow gap="var(--FocusOutlineWidth)" padding="var(--GapAndMargin)" vertical>
+                        <SButton icon-only flat color="var(--ThemeDisabledBaseColor)"
+                            style="width: 100%; border-radius: var(--SquareRadius);">
+                            <Globe />
+                            <SLabel min-size="unset" color="inherit" min-width="80px"
+                                style="margin-left: var(--NormalPaddingSize);">这些是选项</SLabel>
+                            <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
+                                style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end">1234</SLabel>
+                        </SButton>
+                        <SVSeparator />
+                        <SButton icon-only flat color="var(--ThemeDisabledBaseColor)" text-color="var(--ThemeColor)"
+                            style="width: 100%; border-radius: var(--SquareRadius);">
+                            <Workflow />
+                            <SLabel min-size="unset" color="inherit" min-width="80px"
+                                style="margin-left: var(--NormalPaddingSize);">工作流</SLabel>
+                            <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
+                                style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end">I</SLabel>
+                        </SButton>
+                        <SButton icon-only flat color="var(--ThemeDisabledBaseColor)" active
+                            style="width: 100%; border-radius: var(--SquareRadius);">
+                            <Search />
+                            <SLabel min-size="unset" color="inherit" min-width="80px"
+                                style="margin-left: var(--NormalPaddingSize);">在其中查找</SLabel>
+                            <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
+                                style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end">Ctrl+Shift+P</SLabel>
+                        </SButton>
+                        <SButton icon-only flat color="var(--ThemeDisabledBaseColor)"
+                            style="width: 100%; border-radius: var(--SquareRadius);">
+                            <Minus />flat active
+                        </SButton>
+                        <SButton icon-only flat color="var(--ThemeDisabledBaseColor)"
+                            style="width: 100%; border-radius: var(--SquareRadius);">
+                            <Redo2 />
+                            <SLabel min-size="unset" color="inherit" min-width="80px"
+                                style="margin-left: var(--NormalPaddingSize);">更多...</SLabel>
+                            <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
+                                style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end"></SLabel>
+                            <ChevronRight />
+                        </SButton>
+                        <SVSeparator />
+                        <SButton icon-only flat color="var(--ColorRed)"
+                            style="width: 100%; border-radius: var(--SquareRadius);">
+                            <Trash />
+                            <SLabel min-size="unset" color="inherit" min-width="80px"
+                                style="margin-left: var(--NormalPaddingSize);">删除</SLabel>
+                            <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
+                                style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end">Delete</SLabel>
+                        </SButton>
+                        <SButton icon-only flat color="var(--ThemeDisabledBaseColor)"
+                            style="width: 100%; border-radius: var(--SquareRadius);">
+                            <Minus />flat active
+                        </SButton>
+                        <SButton icon-only flat color="var(--ThemeDisabledBaseColor)"
+                            style="width: 100%; border-radius: var(--SquareRadius);">
+                            <Redo2 />
+                            <SLabel min-size="unset" color="inherit" min-width="80px"
+                                style="margin-left: var(--NormalPaddingSize);">更多...</SLabel>
+                            <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
+                                style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end"></SLabel>
+                            <ChevronRight />
+                        </SButton>
+                    </SFlow>
+                </SScrollContainer>
             </SPanel>
         </SPopup>
     </div>
@@ -229,6 +252,8 @@ import SActiveArea from '@/components/SActiveArea.vue';
 import SPopup from '@/components/SPopup.vue';
 import SResizeObserver from '@/components/SResizeObserver.vue';
 import SScrollContainer from '@/components/SScrollContainer.vue';
+import SHSeparator from '@/components/SHSeparator.vue';
+import SVSeparator from '@/components/SVSeparator.vue';
 
 const folded = ref(true);
 const align = ref<Alignment>('end');

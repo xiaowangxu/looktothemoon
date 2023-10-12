@@ -4,7 +4,7 @@
             <div class="__s__ __s_popup_container__">
                 <slot />
             </div>
-            <div ></div>
+            <div></div>
         </div>
     </Teleport>
 </template>
@@ -40,9 +40,13 @@ const props = withDefaults(
 
 .__s_popup_container__ {
     position: absolute;
-    left: 300px;
+    /* left: 300px;
     width: 200px;
     top: 100px;
-    height: 200px;
+    height: 200px; */
+    left: 261px;
+    width: 247px;
+    top: 245px;
+    height: 133px;
 }
 </style>
