@@ -29,7 +29,7 @@
         <SScrollBar v-if="scrollable_visible_h" v-show="is_scrollable_h" :vertical="false" :visibility="scrollBarVisibility"
             class="__s__ __s_scrollcontainer_hbar__" :percentage="percentage_h" @update:percentage="on_HScrolled" />
         <SScrollBar v-if="scrollable_visible_v" v-show="is_scrollable_v" :vertical="true" :visibility="scrollBarVisibility"
-            class="__s__ __s_scrollcontainer_vbar__" :percentage="percentage_v" @update:percentage="on_VScrolled"/>
+            class="__s__ __s_scrollcontainer_vbar__" :percentage="percentage_v" @update:percentage="on_VScrolled" />
         <!-- <div
             style="position: absolute; left: 0; top: 0; font-size: 8px; padding: 2px 4px; font-family: consolas; pointer-events: none;">
             h {{ is_scrollable_h ? '*' : '~' }} {{ has_more_left ? '[' : '&nbsp;' }}{{ has_more_right ? ']' : '&nbsp;' }} {{

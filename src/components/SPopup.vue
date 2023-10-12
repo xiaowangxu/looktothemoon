@@ -44,6 +44,7 @@ const props = withDefaults(
     width: 200px;
     top: 100px;
     height: 200px; */
+    /* outline: 2px solid red; */
     left: 261px;
     width: 247px;
     top: 245px;

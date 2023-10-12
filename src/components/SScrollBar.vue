@@ -1,9 +1,9 @@
 <template>
-    <div ref="track_div_dom" class="__s__ __s_scrollbar__" :class="{ vertical: vertical }"
+    <div ref="track_div_dom" class="__s__ __s_scrollbar__"
+        :class="{ vertical: vertical, hoverparent: visibility === 'hover', hovertrack: visibility === 'hover-track' }"
         :style="{ '--SPercentage': clamped_percent }">
         <div ref="nob_div_dom" v-show="visibility !== 'hidden'" class="__s__ __s_color__ __s_scrollbar_nob__"
-            :class="{ hoverparent: visibility === 'hover', dragging: is_dragging }" :style="{ '--SColor': color }"
-            @mousedown="on_MouseDown"></div>
+            :class="{ dragging: is_dragging }" :style="{ '--SColor': color }" @mousedown="on_MouseDown"></div>
     </div>
 </template>
 
@@ -12,7 +12,7 @@
 import { computed, ref } from 'vue';
 
 // props
-export type ScrollBarVisibility = 'always' | 'hover' | 'hidden';
+export type ScrollBarVisibility = 'always' | 'hover' | 'hover-track' | 'hidden';
 const props = withDefaults(
     defineProps<{
         color?: string,
@@ -25,7 +25,7 @@ const props = withDefaults(
         color: 'var(--ThemeDisabledBaseColor)',
         vertical: true,
         percentage: 0,
-        visibility: 'hover',
+        visibility: 'hover-track',
         dragFactor: 1,
     }
 );
@@ -78,12 +78,16 @@ function on_MouseUp(evt: MouseEvent) {
 <style>
 .__s_scrollbar__ {
     position: absolute;
-    /* background-color: brown; */
-    pointer-events: none;
+    /* pointer-events: none; */
     height: var(--ScrollBarTrackSize);
     bottom: 0;
     left: 0;
     right: 0;
+    /* background-color: brown; */
+}
+
+.__s_scrollbar__.hovertrack {
+    pointer-events: all;
 }
 
 .__s_scrollbar__.vertical {
@@ -107,19 +111,23 @@ function on_MouseUp(evt: MouseEvent) {
     opacity: 1;
 }
 
-:hover>*>.__s_scrollbar_nob__.hoverparent.dragging,
-.__s_scrollbar_nob__.hoverparent.dragging,
+:hover>.hoverparent>.__s_scrollbar_nob__.dragging,
+.hovertrack:hover>.__s_scrollbar_nob__.dragging,
+.hoverparent>.__s_scrollbar_nob__.dragging,
+.hovertrack>.__s_scrollbar_nob__.dragging,
 .__s_scrollbar_nob__.dragging {
     opacity: 1;
     transition: none;
 }
 
-.__s_scrollbar_nob__.hoverparent {
+.hovertrack>.__s_scrollbar_nob__,
+.hoverparent>.__s_scrollbar_nob__ {
     opacity: 0;
     transition: opacity 0.15s ease-out;
 }
 
-:hover>*>.__s_scrollbar_nob__.hoverparent {
+:hover>.hoverparent>.__s_scrollbar_nob__,
+.hovertrack:hover>.__s_scrollbar_nob__ {
     opacity: 1;
     transition: opacity 0.15s ease-out;
 }

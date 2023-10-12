@@ -1,9 +1,8 @@
 <template>
-    <div class="__s__ __s_flow__" :style="{
+    <div class="__s__ __s_flow__" :class="{ vertical: vertical }" :style="{
         gap: gap,
         padding: padding,
-        flexWrap: wrap ? 'wrap' : 'nowrap',
-        flexDirection: vertical ? 'column' : 'row',
+        flexWrap: wrap ? undefined : 'nowrap',
         alignItems: vertical ? align_h : align_v,
         justifyContent: vertical ? align_v : align_h,
     }">
@@ -28,8 +27,6 @@ const props = withDefaults(
         wrap?: boolean,
     }>(),
     {
-        gap: 'var(--GapAndMargin)',
-        padding: '0',
         vertical: false,
         alignH: 'start',
         alignV: 'start',
@@ -46,5 +43,13 @@ const align_v = useFlexAligmentCss(toRef(props, 'alignV'));
 <style>
 .__s_flow__ {
     display: flex;
+    padding: 0;
+    gap: var(--GapAndMargin);
+    flex-wrap: wrap;
+    flex-direction: row;
+}
+
+.__s_flow__.vertical {
+    flex-direction: column;
 }
 </style>
