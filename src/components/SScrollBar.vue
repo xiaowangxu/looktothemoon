@@ -108,6 +108,7 @@ function on_MouseUp(evt: MouseEvent) {
 }
 
 :hover>*>.__s_scrollbar_nob__.dragging,
+.__s_scrollbar_nob__.dragging.hoverparent,
 .__s_scrollbar_nob__.dragging {
     opacity: 1;
 }
