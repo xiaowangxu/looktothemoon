@@ -107,10 +107,11 @@ function on_MouseUp(evt: MouseEvent) {
     opacity: 1;
 }
 
-:hover>*>.__s_scrollbar_nob__.dragging,
-.__s_scrollbar_nob__.dragging.hoverparent,
+:hover>*>.__s_scrollbar_nob__.hoverparent.dragging,
+.__s_scrollbar_nob__.hoverparent.dragging,
 .__s_scrollbar_nob__.dragging {
     opacity: 1;
+    transition: none;
 }
 
 .__s_scrollbar_nob__.hoverparent {
