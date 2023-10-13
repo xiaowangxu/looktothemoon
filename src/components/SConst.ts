@@ -1,4 +1,4 @@
-import { computed, type Ref, toRef, type ComputedRef, watch } from "vue";
+import { computed, type Ref, toRef, type ComputedRef, type Directive } from "vue";
 
 export type Alignment = 'start' | 'center' | 'end';
 
@@ -10,7 +10,13 @@ export type TextVerticalAlignment = 'top' | 'middle' | 'bottom' | 'baseline' | '
 
 export type BasicTypes = string | number | boolean | bigint | symbol;
 
+export type LabelTypes = BasicTypes | undefined | null;
+
 export type BoxSize = { width: number, height: number };
+
+export type Position = { x: number, y: number };
+
+export type Rect = Position & BoxSize;
 
 export interface WidthDefineProps {
     minWidth?: string,
@@ -125,6 +131,14 @@ export function useComponentRefFocusBlur<T extends abstract new (...args: any) =
         }
     };
 }
+
+export const vFocus: Directive = {
+    mounted(el) {
+        if (el instanceof HTMLElement) {
+            el.focus();
+        }
+    },
+};
 
 /**
  * @param digits digit numbers after dot, exp: 3 -> 0.123

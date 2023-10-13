@@ -9,7 +9,7 @@
                 disabledv: scrollable_disabled_v,
             }" @scroll="on_Scroll">
                 <SResizeObserver @resized="on_ContentResized">
-                    <div class="__s__ __s_scrollcontainer_content__"
+                    <div ref="content_div_dom" class="__s__ __s_scrollcontainer_content__"
                         :style="{ ...content_width_css, ...content_height_css }">
                         <slot />
                     </div>
@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 
-import { computed, ref, toRef } from 'vue';
+import { computed, ref, toRef, watch } from 'vue';
 import { type WidthDefineProps, type HeightDefineProps, type BoxSize, useWidthDefineCss, useHeightDefineCss } from './SConst';
 import SResizeObserver from './SResizeObserver.vue';
 import SScrollBar, { type ScrollBarVisibility } from './SScrollBar.vue';
@@ -73,8 +73,15 @@ const props = withDefaults(
     }
 );
 
+// emits
+const emits = defineEmits<{
+    containerResized: [boxSize: BoxSize],
+    contentResized: [boxSize: BoxSize],
+}>();
+
 // datas
 const container_div_dom = ref<HTMLDivElement>();
+const content_div_dom = ref<HTMLDivElement>();
 
 const content_width_css = useWidthDefineCss(toRef(props, 'width'), toRef(props, 'minWidth'), toRef(props, 'maxWidth'));
 const content_height_css = useHeightDefineCss(toRef(props, 'height'), toRef(props, 'minHeight'), toRef(props, 'maxHeight'));
@@ -87,21 +94,35 @@ const container_width = ref(0);
 const container_height = ref(0);
 const content_width = ref(0);
 const content_height = ref(0);
+watch([container_width, container_height], ([w, h]) => {
+    emits('containerResized', { width: w, height: h });
+});
+watch([content_width, content_height], ([w, h]) => {
+    emits('contentResized', { width: w, height: h });
+});
 
-const is_scrollable_h = computed(() => container_width.value < content_width.value);
-const is_scrollable_v = computed(() => container_height.value < content_height.value);
+const SCROLL_EPSILON = 1;
+
+const is_scrollable_h = computed(() => container_width.value + SCROLL_EPSILON < content_width.value);
+const is_scrollable_v = computed(() => container_height.value + SCROLL_EPSILON < content_height.value);
 const max_scrollable_h = computed(() => Math.max(0, content_width.value - container_width.value));
 const max_scrollable_v = computed(() => Math.max(0, content_height.value - container_height.value));
 const value_scrollable_h = ref(0);
 const value_scrollable_v = ref(0);
 
-const SCROLL_EPSILON = 1;
 const percentage_h = computed(() => value_scrollable_h.value / (max_scrollable_h.value - SCROLL_EPSILON));
 const percentage_v = computed(() => value_scrollable_v.value / (max_scrollable_v.value - SCROLL_EPSILON));
 const has_more_right = computed(() => value_scrollable_h.value + SCROLL_EPSILON < max_scrollable_h.value);
 const has_more_left = computed(() => value_scrollable_h.value > SCROLL_EPSILON);
 const has_more_bottom = computed(() => value_scrollable_v.value + SCROLL_EPSILON < max_scrollable_v.value);
 const has_more_top = computed(() => value_scrollable_v.value > SCROLL_EPSILON);
+
+// watch(has_more_bottom, (v) => {
+//     console.log("bottom", v)
+// }, { immediate: true });
+// watch(has_more_right, (v) => {
+//     console.log("right", v, content_width.value, container_width.value);
+// }, { immediate: true });
 
 // methods
 function on_ContainerResized(border_size: BoxSize, content_size: BoxSize, target: Element) {
@@ -137,7 +158,8 @@ function on_VScrolled(percentage: number) {
 
 // exposes
 defineExpose({
-    domElement: container_div_dom,
+    containerDomElement: container_div_dom,
+    contentDomElement: content_div_dom,
     scrollTo,
     scrollBy,
 

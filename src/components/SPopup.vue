@@ -1,8 +1,13 @@
 <template>
     <Teleport to="#popup">
-        <div v-show="visible" class="__s__ __s_popup_cover__">
-            <div class="__s__ __s_popup_container__">
-                <slot />
+        <div class="__s__ __s_popup_cover__" :class="{ invisible: !visible }">
+            <div ref="container_div_dom" class="__s__ __s_popup_container__" :style="{
+                left: rect?.x ? `${rect?.x}px` : undefined,
+                top: rect?.y ? `${rect?.y}px` : undefined,
+                width: rect?.width ? `${rect?.width}px` : undefined,
+                height: rect?.height ? `${rect?.height}px` : undefined,
+            }">
+                <slot :rect="rect" />
             </div>
             <div></div>
         </div>
@@ -11,17 +16,48 @@
 
 <script setup lang="ts">
 
-import { onMounted, ref } from 'vue';
+import type { Rect } from './SConst';
+import { ref } from 'vue';
+
 
 // props
 const props = withDefaults(
     defineProps<{
-        visible?: boolean
+        visible?: boolean,
+        rect?: Rect,
     }>(),
     {
         visible: true,
+        rect: undefined,
     }
 );
+
+// slots
+defineSlots<{
+    default(props: { rect: Rect | undefined }): void,
+}>();
+
+// datas
+const container_div_dom = ref<HTMLDivElement>();
+
+// methods
+function resetForMeasureMinSize() {
+    if (container_div_dom.value === undefined) return () => { };
+    const dom = container_div_dom.value;
+    const width = dom.style.width;
+    const height = dom.style.height;
+    dom.style.width = '0px';
+    dom.style.height = '0px';
+    return () => {
+        dom.style.width = width;
+        dom.style.height = height;
+    };
+}
+
+// exposes
+defineExpose({
+    resetForMeasureMinSize,
+});
 
 // datas
 
@@ -38,16 +74,15 @@ const props = withDefaults(
     inset: 0px;
 }
 
+.__s_popup_cover__.invisible {
+    visibility: hidden;
+}
+
 .__s_popup_container__ {
     position: absolute;
-    /* left: 300px;
-    width: 200px;
-    top: 100px;
-    height: 200px; */
-    /* outline: 2px solid red; */
-    left: 261px;
-    width: 247px;
-    top: 245px;
-    height: 133px;
+    left: 0;
+    width: 0px;
+    top: 0;
+    height: 0px;
 }
 </style>

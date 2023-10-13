@@ -14,20 +14,20 @@ import { toRef, ref } from 'vue';
 
 // props
 const props = withDefaults(
-    defineProps<{ 
-        active?: boolean, 
-        color?: string, 
-        flat?: boolean, 
-        iconOnly?: boolean, 
-        iconSize?: IconSize, 
-        alignText?: Alignment 
+    defineProps<{
+        active?: boolean,
+        color?: string,
+        flat?: boolean,
+        iconOnly?: boolean,
+        iconSize?: IconSize,
+        alignText?: Alignment
     }>(),
-    { 
-        active: false, 
-        color: 'var(--ThemeColor)', 
-        flat: false, 
-        iconOnly: false, 
-        iconSize: 'normal', 
+    {
+        active: false,
+        color: 'var(--ThemeColor)',
+        flat: false,
+        iconOnly: false,
+        iconSize: 'normal',
         alignText: 'start'
     }
 );
@@ -71,6 +71,10 @@ defineExpose({
     padding: var(--NormalPaddingSize) calc(var(--NormalPaddingSize) + 4px);
 }
 
+.__s_button__ > * {
+    pointer-events: none;
+}
+
 .__s_button__[data-s-icon-size="normal"] {
     gap: var(--NormalPaddingSize);
     padding: var(--NormalPaddingSize) calc(var(--NormalPaddingSize) + 4px);
@@ -99,21 +103,24 @@ defineExpose({
     padding: var(--LargePaddingSize);
 }
 
-.__s_button__[data-s-icon-size="normal"]>svg {
+.__s_button__[data-s-icon-size="normal"] .lucide,
+.__s_button__[data-s-icon-size="normal"] .__s_icon__ {
     width: var(--NormalIconSize);
     height: var(--NormalIconSize);
     min-width: var(--NormalIconSize);
     min-height: var(--NormalIconSize);
 }
 
-.__s_button__[data-s-icon-size="medium"]>svg {
+.__s_button__[data-s-icon-size="medium"] .lucide,
+.__s_button__[data-s-icon-size="normal"] .__s_icon__ {
     width: var(--MediumIconSize);
     height: var(--MediumIconSize);
     min-width: var(--MediumIconSize);
     min-height: var(--MediumIconSize);
 }
 
-.__s_button__[data-s-icon-size="large"]>svg {
+.__s_button__[data-s-icon-size="large"] .lucide,
+.__s_button__[data-s-icon-size="normal"] .__s_icon__ {
     width: var(--LargeIconSize);
     height: var(--LargeIconSize);
     min-width: var(--LargeIconSize);

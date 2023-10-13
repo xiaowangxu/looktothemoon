@@ -1,5 +1,5 @@
 <template>
-    <label class="__s__ __s_label__">
+    <label class="__s__ __s_activearea__">
         <SFlow :vertical="vertical" :gap="gap" :align-h="alignH" :align-v="alignV">
             <slot />
         </SFlow>

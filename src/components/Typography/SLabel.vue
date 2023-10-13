@@ -36,6 +36,7 @@ const { color_css, align_h_css, align_v_css, width_css } = useTypoGraphyCss(prop
 .__s_label__ {
     display: flex;
     flex-direction: row;
+    overflow: hidden;
 }
 
 .__s_label_container__ {

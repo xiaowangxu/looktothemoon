@@ -32,6 +32,80 @@
                                 <SLabel min-size="normal">长度</SLabel>
                                 <SNumberEdit v-model:value="numberedit" suffix=" 毫米" lazy :show-end-zeros="false" />
                             </SActiveArea>
+                            <SHSeparator />
+                            <SActiveArea>
+                                <SLabel min-size="normal">选择器</SLabel>
+                                <SSelect v-model:value="select" style="min-width: 200px; max-width: 200px;">
+                                    <SItem label="0">
+                                        <Baseline />
+                                        <SLabel min-size="unset" color="inherit">{{ checkbox ?
+                                            '更多...ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890' : '???' }}
+                                        </SLabel>
+                                    </SItem>
+                                    <SItem label="1">
+                                        <Globe />
+                                        <SLabel min-size="unset" color="inherit">这些是选项</SLabel>
+                                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
+                                            align-h="end">1234</SLabel>
+                                    </SItem>
+                                    <SVSeparator />
+                                    <SItem label="2">
+                                        <Workflow />
+                                        <SLabel min-size="unset" color="inherit">工作流</SLabel>
+                                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
+                                            align-h="end">I</SLabel>
+                                    </SItem>
+                                    <SItem label="3">
+                                        <Search />
+                                        <SLabel min-size="unset" color="inherit">查找</SLabel>
+                                    </SItem>
+                                    <SItem label="4">
+                                        <Minus />
+                                        <SLabel min-size="unset" color="inherit">Flat Active</SLabel>
+                                    </SItem>
+                                    <SItem label="5">
+                                        <Redo2 />
+                                        <SLabel min-size="unset" color="inherit">更多...</SLabel>
+                                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
+                                            align-h="end"></SLabel>
+                                        <ChevronRight />
+                                    </SItem>
+                                    <SVSeparator />
+                                    <SItem label="6" color="var(--ColorRed)">
+                                        <Trash />
+                                        <SLabel min-size="unset" color="inherit">删除</SLabel>
+                                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
+                                            align-h="end">Delete
+                                        </SLabel>
+                                    </SItem>
+                                    <SItem label="7">
+                                        <Redo2 />
+                                        <SLabel min-size="unset" color="inherit">更多...</SLabel>
+                                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
+                                            align-h="end"></SLabel>
+                                        <ChevronRight />
+                                    </SItem>
+                                </SSelect>
+                            </SActiveArea>
+                            <SHSeparator />
+                            <SActiveArea>
+                                <SLabel min-size="normal">连续性</SLabel>
+                                <SSelect v-model:value="select" style="min-width: 100px; max-width: 100px;">
+                                    <SItem label="0">
+                                        <Dot />
+                                        <SLabel min-size="unset" color="inherit" width="100%" align-h="center">G0</SLabel>
+                                    </SItem>
+                                    <SItem label="1">
+                                        <Tangent />
+                                        <SLabel min-size="unset" color="inherit" width="100%" align-h="center">G1</SLabel>
+                                    </SItem>
+                                    <SItem label="2">
+                                        <Radius />
+                                        <SLabel min-size="unset" color="inherit" width="100%" align-h="center">G2</SLabel>
+                                    </SItem>
+                                </SSelect>
+                            </SActiveArea>
+                            <SHSeparator />
                             <SCheckBox value disabled />
                             <SCheckBox disabled />
                             <SRadioBox />
@@ -142,7 +216,7 @@
                                     <Globe />flat active
                                 </SButton>
                                 <SButton icon-only icon-size="medium" flat active disabled>
-                                    <Globe />flat active disabledfreergtrgtryth45654ty564y56y56
+                                    <Globe />flat active disabled
                                 </SButton>
                                 <SButton icon-only icon-size="medium" flat disabled>
                                     <Globe />flat disabled
@@ -159,81 +233,12 @@
                 </SPanel>
             </SFlow>
         </div>
-        <SPopup>
-            <SPanel
-                style="pointer-events: all; padding: 0; overflow: hidden; border-radius: var(--NormalRadius); overflow: hidden; width: 100%; height: 100%;">
-                <SScrollContainer scroll-bar-state-h="hidden" scroll-bar-state-v="adaptive" min-width="100%">
-                    <SFlow gap="var(--FocusOutlineWidth)" padding="var(--GapAndMargin)" vertical>
-                        <SButton icon-only flat color="var(--ThemeDisabledBaseColor)"
-                            style="width: 100%; border-radius: var(--SquareRadius);">
-                            <Globe />
-                            <SLabel min-size="unset" color="inherit" min-width="80px"
-                                style="margin-left: var(--NormalPaddingSize);">这些是选项</SLabel>
-                            <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
-                                style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end">1234</SLabel>
-                        </SButton>
-                        <SVSeparator />
-                        <SButton icon-only flat color="var(--ThemeDisabledBaseColor)" text-color="var(--ThemeColor)"
-                            style="width: 100%; border-radius: var(--SquareRadius);">
-                            <Workflow />
-                            <SLabel min-size="unset" color="inherit" min-width="80px"
-                                style="margin-left: var(--NormalPaddingSize);">工作流</SLabel>
-                            <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
-                                style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end">I</SLabel>
-                        </SButton>
-                        <SButton icon-only flat color="var(--ThemeDisabledBaseColor)" active
-                            style="width: 100%; border-radius: var(--SquareRadius);">
-                            <Search />
-                            <SLabel min-size="unset" color="inherit" min-width="80px"
-                                style="margin-left: var(--NormalPaddingSize);">在其中查找</SLabel>
-                            <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
-                                style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end">Ctrl+Shift+P</SLabel>
-                        </SButton>
-                        <SButton icon-only flat color="var(--ThemeDisabledBaseColor)"
-                            style="width: 100%; border-radius: var(--SquareRadius);">
-                            <Minus />flat active
-                        </SButton>
-                        <SButton icon-only flat color="var(--ThemeDisabledBaseColor)"
-                            style="width: 100%; border-radius: var(--SquareRadius);">
-                            <Redo2 />
-                            <SLabel min-size="unset" color="inherit" min-width="80px"
-                                style="margin-left: var(--NormalPaddingSize);">更多...</SLabel>
-                            <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
-                                style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end"></SLabel>
-                            <ChevronRight />
-                        </SButton>
-                        <SVSeparator />
-                        <SButton icon-only flat color="var(--ColorRed)"
-                            style="width: 100%; border-radius: var(--SquareRadius);">
-                            <Trash />
-                            <SLabel min-size="unset" color="inherit" min-width="80px"
-                                style="margin-left: var(--NormalPaddingSize);">删除</SLabel>
-                            <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
-                                style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end">Delete</SLabel>
-                        </SButton>
-                        <SButton icon-only flat color="var(--ThemeDisabledBaseColor)"
-                            style="width: 100%; border-radius: var(--SquareRadius);">
-                            <Minus />flat active
-                        </SButton>
-                        <SButton icon-only flat color="var(--ThemeDisabledBaseColor)"
-                            style="width: 100%; border-radius: var(--SquareRadius);">
-                            <Redo2 />
-                            <SLabel min-size="unset" color="inherit" min-width="80px"
-                                style="margin-left: var(--NormalPaddingSize);">更多...</SLabel>
-                            <SLabel min-size="unset" color="var(--SColorActiveDisabled)"
-                                style="flex: 1; margin-right: var(--NormalPaddingSize);" align-h="end"></SLabel>
-                            <ChevronRight />
-                        </SButton>
-                    </SFlow>
-                </SScrollContainer>
-            </SPanel>
-        </SPopup>
     </div>
 </template>
 
 <script setup lang="ts">
 
-import { type Alignment, type BoxSize } from '@/components/SConst';
+import { type BasicTypes, type Alignment, type BoxSize } from '@/components/SConst';
 import SPanel from '@/components/SPanel.vue';
 import SButton from '@/components/SButton.vue';
 import SLineEdit from '@/components/SLineEdit.vue';
@@ -241,35 +246,36 @@ import SNumberEdit from '@/components/SNumberEdit.vue';
 import SCheckBox from '@/components/SCheckBox.vue';
 import SRadioBox from '@/components/SRadioBox.vue';
 import SFlow from '@/components/SFlow.vue';
-import { X, Check, Workflow, Globe, Search, Undo2, Redo2, PanelLeftInactive, Minus, Trash, ChevronRight } from 'lucide-vue-next';
-import { ref, watch, computed } from 'vue';
+import { Tangent, Radius, Dot, X, Check, Workflow, Globe, Search, Undo2, Redo2, PanelLeftInactive, Minus, Trash, ChevronRight, Baseline } from 'lucide-vue-next';
+import { onMounted, ref, watch } from 'vue';
 import SSpan from '@/components/Typography/SSpan.vue';
 import SLabel from '@/components/Typography/SLabel.vue';
 import STitle from '@/components/Typography/STitle.vue';
 import SSubTitle from '@/components/Typography/SSubTitle.vue';
 import SParagraph from '@/components/Typography/SParagraph.vue';
 import SActiveArea from '@/components/SActiveArea.vue';
-import SPopup from '@/components/SPopup.vue';
-import SResizeObserver from '@/components/SResizeObserver.vue';
 import SScrollContainer from '@/components/SScrollContainer.vue';
 import SHSeparator from '@/components/SHSeparator.vue';
 import SVSeparator from '@/components/SVSeparator.vue';
+import SSelect from '@/components/SSelect/SSelect';
+import SItem from '@/components/SItem.vue';
 
 const folded = ref(true);
 const align = ref<Alignment>('end');
 const lineedit = ref('hahaha');
 const numberedit = ref(123);
-const checkbox = ref(true);
+const checkbox = ref(false);
+const select = ref<BasicTypes | undefined>(undefined);
 
-watch(lineedit, (newval, oldval) => {
-    console.log(newval, oldval);
-});
-watch(numberedit, (newval, oldval) => {
-    console.log(newval, oldval);
-});
-watch(checkbox, (newval, oldval) => {
-    console.log(newval, oldval);
-});
+// watch(lineedit, (newval, oldval) => {
+//     console.log(newval, oldval);
+// });
+// watch(numberedit, (newval, oldval) => {
+//     console.log(newval, oldval);
+// });
+// watch(checkbox, (newval, oldval) => {
+//     console.log(newval, oldval);
+// });
 
 function resized(borderBoxSize: BoxSize, contentBoxSize: BoxSize, target: Element) {
     console.log("container resized!", contentBoxSize);
@@ -331,4 +337,4 @@ function resized2(borderBoxSize: BoxSize, contentBoxSize: BoxSize, target: Eleme
     top: 120px;
     bottom: 120px;
 }
-</style>
+</style>@/components/SSelect/SSelect

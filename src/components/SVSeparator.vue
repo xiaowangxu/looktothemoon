@@ -23,6 +23,7 @@ const width_css = useHeightDefineCss(toRef(props, 'width'), toRef(props, 'minWid
 <style>
 .__s_vseparator__ {
     height: var(--SeparatorSize);
+    min-height: var(--SeparatorSize);
 }
 
 .__s_vseparator__.__s_color__ {
