@@ -51,15 +51,15 @@
                                     <SVSeparator />
                                     <SItem label="2">
                                         <Workflow />
-                                        <SLabel min-size="unset" color="inherit">工作流</SLabel>
+                                        <SLabel min-size="unset" color="inherit">禁用项目</SLabel>
                                         <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
-                                            align-h="end">I</SLabel>
+                                            align-h="end">Disable Item</SLabel>
                                     </SItem>
                                     <SItem label="3">
                                         <Search />
                                         <SLabel min-size="unset" color="inherit">查找</SLabel>
                                     </SItem>
-                                    <SItem label="4">
+                                    <SItem label="4" :disabled="select === '2'">
                                         <Minus />
                                         <SLabel min-size="unset" color="inherit">Flat Active</SLabel>
                                     </SItem>
