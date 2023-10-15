@@ -1,5 +1,5 @@
 <template>
-    <button ref="button_dom" class="__s__ __s_color__ __s_button__" :class="{ flat, 'icon-only': iconOnly, active }"
+    <button ref="button_dom" class="__s__ __s_color__ __s_button__" :class="{ flat, 'icon-only': iconOnly, active, square }"
         :data-s-icon-size="iconSize" :data-s-min-size="iconSize" :style="{ '--SColor': color, justifyContent: align_text }"
         @click="emits('click', $event)">
         <slot name="default" />
@@ -20,15 +20,17 @@ const props = withDefaults(
         flat?: boolean,
         iconOnly?: boolean,
         iconSize?: IconSize,
-        alignText?: Alignment
+        alignText?: Alignment,
+        square?: boolean,
     }>(),
     {
         active: false,
-        color: 'var(--ThemeColor)',
+        color: 'var(--ThemeDisabledBaseColor)',
         flat: false,
         iconOnly: false,
         iconSize: 'normal',
-        alignText: 'start'
+        alignText: 'start',
+        square: false,
     }
 );
 
@@ -57,7 +59,6 @@ defineExpose({
     appearance: none;
 
     text-wrap: nowrap;
-    min-width: fit-content;
 
     display: flex;
     flex-direction: row;
@@ -68,26 +69,30 @@ defineExpose({
     border: none;
     border-radius: var(--NormalRadius);
     user-select: none;
-    padding: var(--NormalPaddingSize) calc(var(--NormalPaddingSize) + 4px);
+    padding: var(--NormalPaddingSize) calc(var(--NormalPaddingSize) * 2);
 }
 
-.__s_button__ > * {
+.__s_button__.square {
+    border-radius: var(--SquareRadius);
+}
+
+.__s_button__>* {
     pointer-events: none;
 }
 
 .__s_button__[data-s-icon-size="normal"] {
     gap: var(--NormalPaddingSize);
-    padding: var(--NormalPaddingSize) calc(var(--NormalPaddingSize) + 4px);
+    padding: var(--NormalPaddingSize) var(--NormalAdditionalPaddingSize);
 }
 
 .__s_button__[data-s-icon-size="medium"] {
     gap: var(--MediumPaddingSize);
-    padding: var(--MediumPaddingSize) calc(var(--MediumPaddingSize) + 4px);
+    padding: var(--MediumPaddingSize) var(--MediumAdditionalPaddingSize);
 }
 
 .__s_button__[data-s-icon-size="large"] {
     gap: var(--LargePaddingSize);
-    padding: var(--LargePaddingSize) calc(var(--LargePaddingSize) + 4px);
+    padding: var(--LargePaddingSize) var(--LargeAdditionalPaddingSize);
 }
 
 .__s_button__.icon-only,

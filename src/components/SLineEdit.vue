@@ -79,7 +79,7 @@ defineExpose({
     min-width: fit-content;
     border: none;
     border-radius: var(--NormalRadius);
-    padding: var(--NormalPaddingSize) calc(var(--NormalPaddingSize) + 4px);
+    padding: var(--NormalPaddingSize) calc(var(--NormalPaddingSize) + var(--AdditionalPaddingSize));
     box-sizing: border-box;
 
 }

@@ -1,17 +1,17 @@
 <template>
     <slot />
-    <div v-memo="[label]"></div>
 </template>
 
 <script setup lang="ts">
 
-import { type BasicTypes } from './SConst';
+import { type LabelTypes } from './SConst';
 
 // props
 const props = defineProps<{
-    label: BasicTypes,
+    label: LabelTypes,
     color?: string,
     disabled?: boolean,
+    description?: string,
 }>();
 
 </script>

@@ -114,7 +114,7 @@ defineExpose({
 .__s_checkbox__:checked+.__s_checkbox_icon__,
 .__s_checkbox__.__s_color__:checked:active+.__s_checkbox_icon__,
 .__s_checkbox__.__s_color__:checked:active:disabled+.__s_checkbox_icon__ {
-    visibility: visible;
+    visibility: inherit;
 }
 
 .__s_checkbox__:checked+.__s_checkbox_icon__,

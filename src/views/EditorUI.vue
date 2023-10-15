@@ -3,18 +3,98 @@
         <div class="top-left-panel">
             <SFlow>
                 <SPanel class="pointer-event">
-                    <SButton icon-only icon-size="medium" flat :active="!folded" @click="folded = !folded;">
-                        <PanelLeftInactive />
-                    </SButton>
-                </SPanel>
-                <SPanel class="pointer-event">
-                    <SFlow>
-                        <SButton icon-only>
-                            <Undo2 />
-                        </SButton>
-                        <SButton icon-only>
-                            <Redo2 />
-                        </SButton>
+                    <SFlow gap="0">
+                        <SPopupMenu open-mode="visibility"
+                            :get-popup-rect="(rect) => { return { x: 0, y: 0, width: rect.width, height: rect.height }; }">
+                            <template #default="{ opened, open, close }">
+                                <SButton ref="button_ref" :active="opened" flat @click="opened ? close() : open()">文件
+                                </SButton>
+                            </template>
+                            <template #items>
+                                <SFlow gap="var(--FocusOutlineWidth)" padding="var(--AdditionalPaddingSize)" vertical
+                                    style="width: 200px; max-width: 100%;">
+                                    <SButton square flat style="width: 100%;">
+                                        <SLabel min-size="unset">新建文件</SLabel>
+                                    </SButton>
+                                    <SVSeparator />
+                                    <SButton square flat style="width: 100%;">保存</SButton>
+                                    <SButton square flat style="width: 100%;">另存为</SButton>
+                                    <SButton square flat disabled style="width: 100%;">全部保存</SButton>
+                                    <SVSeparator />
+                                    <SButton square flat color="var(--ColorRed)" style="width: 100%;">退出</SButton>
+                                </SFlow>
+                            </template>
+                        </SPopupMenu>
+                        <SPopupMenu :get-popup-rect="(rect) => {
+                            if (!button_ref?.buttonElement) return undefined;
+                            const { left, bottom } = button_ref.buttonElement.getBoundingClientRect();
+                            return { x: left, y: bottom, width: rect.width, height: rect.height };
+                        }">
+                            <template #default="{ opened, open, close }">
+                                <SButton ref="button_ref" flat @click="opened ? close() : open()">编辑
+                                </SButton>
+                            </template>
+                            <template #items>
+                                <SFlow gap="var(--FocusOutlineWidth)" padding="var(--GapAndMargin)" vertical
+                                    style="width: 200px; max-width: 100%;">
+                                    <SButton square flat style="width: 100%;">
+                                        <Undo2 />
+                                        <SLabel min-size="unset" color="inherit">撤销</SLabel>
+                                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
+                                            align-h="end">
+                                            Ctrl+Z
+                                        </SLabel>
+                                    </SButton>
+                                    <SButton square flat style="width: 100%;">
+                                        <Redo2 />
+                                        <SLabel min-size="unset" color="inherit">恢复</SLabel>
+                                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
+                                            align-h="end">
+                                            Ctrl+Y</SLabel>
+                                    </SButton>
+                                    <SVSeparator />
+                                    <SButton square flat style="width: 100%;">
+                                        <SLabel min-size="unset" color="inherit">剪切</SLabel>
+                                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
+                                            align-h="end">
+                                            Ctrl+X
+                                        </SLabel>
+                                    </SButton>
+                                    <SButton square flat style="width: 100%;">
+                                        <SLabel min-size="unset" color="inherit">复制</SLabel>
+                                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
+                                            align-h="end">
+                                            Ctrl+C</SLabel>
+                                    </SButton>
+                                    <SButton square flat style="width: 100%;">
+                                        <SLabel min-size="unset" color="inherit">粘贴</SLabel>
+                                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
+                                            align-h="end">
+                                            Ctrl+V</SLabel>
+                                    </SButton>
+                                </SFlow>
+                            </template>
+                        </SPopupMenu>
+                        <SPopupMenu
+                            :get-popup-rect="(rect) => { return { x: 0, y: 0, width: rect.width, height: rect.height }; }">
+                            <template #default="{ opened, open, close }">
+                                <SButton flat @click="opened ? close() : open()">选择
+                                </SButton>
+                            </template>
+                            <template #items>
+                                1234
+                            </template>
+                        </SPopupMenu>
+                        <SPopupMenu
+                            :get-popup-rect="(rect) => { return { x: 0, y: 0, width: rect.width, height: rect.height }; }">
+                            <template #default="{ opened, open, close }">
+                                <SButton flat @click="opened ? close() : open()">视图
+                                </SButton>
+                            </template>
+                            <template #items>
+                                1234
+                            </template>
+                        </SPopupMenu>
                     </SFlow>
                 </SPanel>
             </SFlow>
@@ -35,16 +115,18 @@
                             <SHSeparator />
                             <SActiveArea>
                                 <SLabel min-size="normal">选择器</SLabel>
-                                <SSelect v-model:value="select" style="min-width: 200px; max-width: 200px;">
+                                <SSelect v-model:value="select" deselectable style="min-width: 200px; max-width: 200px;">
+                                    <template #empty>
+                                        无项目
+                                    </template>
                                     <SItem label="0">
-                                        <Baseline />
-                                        <SLabel min-size="unset" color="inherit">{{ checkbox ?
-                                            '更多...ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890' : '???' }}
+                                        <SLabel min-size="unset" color="inherit">这些是选项
                                         </SLabel>
                                     </SItem>
                                     <SItem label="1">
                                         <Globe />
-                                        <SLabel min-size="unset" color="inherit">这些是选项</SLabel>
+                                        <SLabel min-size="unset" color="inherit">{{ checkbox ?
+                                            '更多...ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890' : '???' }}</SLabel>
                                         <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
                                             align-h="end">1234</SLabel>
                                     </SItem>
@@ -113,7 +195,7 @@
                             <SRadioBox disabled />
                             <SActiveArea>
                                 <SCheckBox v-model:value="checkbox" />
-                                <SLabel>Test</SLabel>
+                                <SLabel min-size="normal">Test</SLabel>
                             </SActiveArea>
                             <SButton color="var(--ColorRed)">
                                 <X />取消
@@ -134,6 +216,13 @@
         </div>
         <div class="left-panel">
             <SFlow vertical align-h="start" align-v="center" style="width: 100%; height: 100%;">
+                <SPanel class="pointer-event">
+                    <SFlow vertical>
+                        <SButton icon-only icon-size="medium" flat :active="!folded" @click="folded = !folded;">
+                            <PanelLeftInactive />
+                        </SButton>
+                    </SFlow>
+                </SPanel>
                 <SPanel class="pointer-event">
                     <SFlow vertical>
                         <SButton icon-only icon-size="medium" flat>
@@ -257,8 +346,9 @@ import SActiveArea from '@/components/SActiveArea.vue';
 import SScrollContainer from '@/components/SScrollContainer.vue';
 import SHSeparator from '@/components/SHSeparator.vue';
 import SVSeparator from '@/components/SVSeparator.vue';
-import SSelect from '@/components/SSelect/SSelect';
+import SSelect from '@/components/SSelect';
 import SItem from '@/components/SItem.vue';
+import SPopupMenu from '@/components/SPopupMenu.vue';
 
 const folded = ref(true);
 const align = ref<Alignment>('end');
@@ -266,6 +356,8 @@ const lineedit = ref('hahaha');
 const numberedit = ref(123);
 const checkbox = ref(false);
 const select = ref<BasicTypes | undefined>(undefined);
+
+const button_ref = ref<InstanceType<typeof SButton>>();
 
 // watch(lineedit, (newval, oldval) => {
 //     console.log(newval, oldval);
@@ -314,8 +406,8 @@ function resized2(borderBoxSize: BoxSize, contentBoxSize: BoxSize, target: Eleme
 .top-panel {
     position: absolute;
     top: 0px;
-    left: 200px;
-    right: 200px;
+    left: 300px;
+    right: 300px;
 }
 
 .top-right-panel {

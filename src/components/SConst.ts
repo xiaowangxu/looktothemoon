@@ -1,4 +1,4 @@
-import { computed, type Ref, toRef, type ComputedRef, type Directive } from "vue";
+import { computed, watch, ref, type Ref, toRef, type ComputedRef, type Directive } from "vue";
 
 export type Alignment = 'start' | 'center' | 'end';
 
@@ -17,6 +17,8 @@ export type BoxSize = { width: number, height: number };
 export type Position = { x: number, y: number };
 
 export type Rect = Position & BoxSize;
+
+export type PopupOpenMode = 'instance' | 'visibility';
 
 export interface WidthDefineProps {
     minWidth?: string,
@@ -132,6 +134,31 @@ export function useComponentRefFocusBlur<T extends abstract new (...args: any) =
     };
 }
 
+export function usePopupPanelMeasureRect(opened: Ref<boolean>, dom: Ref<HTMLElement | undefined>, instance_mode: Ref<boolean>) {
+    const content_size = ref<BoxSize | undefined>();
+    watch(opened, (newval) => {
+        if (newval) {
+            if (!instance_mode.value) {
+                const { width, height } = dom.value?.getBoundingClientRect()!;
+                content_size.value = {
+                    width: width, height: height,
+                };
+            }
+        }
+        else {
+            content_size.value = undefined;
+        }
+    });
+    watch(dom, (newval) => {
+        if (!newval) return;
+        const { width, height } = dom.value?.getBoundingClientRect()!;
+        content_size.value = {
+            width: width, height: height,
+        };
+    });
+    return computed(() => opened.value ? content_size.value : undefined);
+}
+
 export const vFocus: Directive = {
     mounted(el) {
         if (el instanceof HTMLElement) {
@@ -148,4 +175,34 @@ export function fixNumberString(num: number, digits: number, show_end_zeros: boo
     if (digits <= 0) digits = 0;
     if (show_end_zeros) return num.toFixed(digits);
     return num.toFixed(digits).replace(/\.0*$|(\.\d*[1-9])0+$/g, '$1');
+}
+
+export function calcSelectPopupSize(content_size: BoxSize, button_rect: Rect, window_size: BoxSize, gap: BoxSize = { width: 7, height: 6 }): Rect {
+    const { width: gap_width, height: gap_height } = gap;
+    const min_window_width = window_size.width - gap_width * 2;
+    const min_window_height = window_size.height - gap_height * 2;
+    const base_width = Math.max(content_size.width, button_rect.width);
+    const base_height = content_size.height;
+    const top_space = Math.min(button_rect.y - gap_height, min_window_height);
+    const bottom_space = window_size.height - gap_height - button_rect.y - button_rect.height;
+    const left_space = Math.min(button_rect.x + button_rect.width - gap_width, min_window_width);
+    const right_space = window_size.width - gap_width - button_rect.x;
+    let x: number, y: number, width: number, height: number;
+    if (bottom_space >= top_space || bottom_space >= top_space) {
+        height = Math.min(base_height, bottom_space);
+        y = button_rect.y + button_rect.height;
+    }
+    else {
+        height = Math.min(base_height, top_space);
+        y = gap_height + top_space - height;
+    }
+    if (right_space >= base_width || right_space >= left_space) {
+        width = Math.min(base_width, right_space);
+        x = button_rect.x;
+    }
+    else {
+        width = Math.min(base_width, left_space);
+        x = gap_width + left_space - width;
+    }
+    return { x, y, width, height };
 }

@@ -20,7 +20,7 @@ textarea {
     --ThemeDisabledBaseColor: rgb(54, 54, 54);
     --ThemeOppositeColor: rgb(255, 255, 255); */
 
-    --ThemeBoxShadow: 0px 5px 10px 1px rgba(0, 0, 0, 0.05);
+    --ThemeBoxShadow: 0px 5px 10px 1px rgba(0, 0, 0, 0.15);
 
     --ThemeDisabledBGColor: color-mix(in srgb, var(--ThemeBaseColor), var(--ThemeDisabledBaseColor) 6%);
     --ThemeDisabledColor: color-mix(in srgb, var(--ThemeBaseColor), var(--ThemeDisabledBaseColor) 22%);
@@ -39,6 +39,11 @@ textarea {
     --NormalPaddingSize: 3px;
     --MediumPaddingSize: 5px;
     --LargePaddingSize: 7px;
+
+    --AdditionalPaddingSize: 4px;
+    --NormalAdditionalPaddingSize: calc(var(--NormalPaddingSize) + var(--AdditionalPaddingSize));
+    --MediumAdditionalPaddingSize: calc(var(--MediumPaddingSize) + var(--AdditionalPaddingSize));
+    --LargeAdditionalPaddingSize: calc(var(--LargePaddingSize) + var(--AdditionalPaddingSize));
 
     --SeparatorSize: 2px;
 

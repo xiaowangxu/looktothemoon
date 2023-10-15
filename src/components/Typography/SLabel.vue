@@ -23,7 +23,7 @@ const props = withDefaults(
         color: 'var(--ThemeDisabledBaseColor)',
         inheritColor: false,
         textSize: 'normal',
-        minSize: 'normal',
+        minSize: 'unset',
     }
 );
 

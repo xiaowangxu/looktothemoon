@@ -47,6 +47,7 @@ const align_v = useFlexAligmentCss(toRef(props, 'alignV'));
     gap: var(--GapAndMargin);
     flex-wrap: wrap;
     flex-direction: row;
+    box-sizing: border-box;
 }
 
 .__s_flow__.vertical {

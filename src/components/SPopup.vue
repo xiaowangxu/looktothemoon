@@ -1,6 +1,6 @@
 <template>
     <Teleport to="#popup">
-        <div class="__s__ __s_popup_cover__" :class="{ invisible: !visible }">
+        <div class="__s__ __s_popup_cover__" :class="{ invisible: !visible }" v-bind="$attrs">
             <div ref="container_div_dom" class="__s__ __s_popup_container__" :style="{
                 left: rect?.x ? `${rect?.x}px` : undefined,
                 top: rect?.y ? `${rect?.y}px` : undefined,
@@ -19,6 +19,10 @@
 import type { Rect } from './SConst';
 import { ref } from 'vue';
 
+// options
+defineOptions({
+    inheritAttrs: false,
+});
 
 // props
 const props = withDefaults(
