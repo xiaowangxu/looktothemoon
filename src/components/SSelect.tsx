@@ -7,6 +7,8 @@ import SPopupPanel from '@/components/SPopupPanel.vue';
 import { ChevronDown, ChevronUp } from "lucide-vue-next";
 import { useComponentRefFocusBlur, usePopupPanelMeasureRect, type LabelTypes, type Rect, type BoxSize, type PopupOpenMode, calcSelectPopupSize } from "./SConst";
 import { useWindowSize } from "@vueuse/core";
+import SMenuButton from "@/components/SMenuButton.vue";
+import SLabel from "@/components/Typography/SLabel.vue";
 
 export default defineComponent({
     name: 'SSelect',
@@ -50,7 +52,7 @@ export default defineComponent({
     setup(props, { emit, expose }) {
 
         const opened = ref<boolean>(false);
-        const active_item_ref = ref<InstanceType<typeof SButton>>();
+        const active_item_ref = ref<InstanceType<typeof SButton> | InstanceType<typeof SMenuButton> | null>(null);
         const sbutton_ref = ref<InstanceType<typeof SButton> | null>(null);
         const sscrollcontainer_ref = ref<InstanceType<typeof SScrollContainer> | null>(null);
         const content_size = usePopupPanelMeasureRect(opened, computed(() => sscrollcontainer_ref.value?.contentDomElement), computed(() => props.openMode === 'instance'));
@@ -132,14 +134,32 @@ export default defineComponent({
         let active_color = prop_color;
         const buttons = items.map(i => {
             if (i.type === SItem) {
-                const { label, color = prop_color, disabled, /*description*/ } = i.props!;
+                const { label, color = prop_color, disabled, description, uid } = i.props!;
+                const is_disabled = disabled !== undefined && disabled !== false;
                 const active = label === prop_value;
+                const children = (i.children as any)?.default?.();
+                const icon = (i.children as any)?.icon?.();
+                const key = uid ?? label;
                 if (active) {
-                    active_item = (i.children as any).default?.();
+                    active_item = (i.children as any)?.default?.() ?? <>
+                        {icon}
+                        <SLabel min-size="unset" color="inherit">{label}</SLabel>
+                        {
+                            description !== undefined && <SLabel min-size="unset" color="inherit" style="flex: 1; opacity: var(--DescriptionOpacity);" align-h="end">
+                                {description}
+                            </SLabel>
+                        }
+                    </>;
                     if (prop_use_active_color) active_color = color;
                 }
-                const btn = <SButton ref={active ? 'active_item_ref' : undefined} flat={true} square={true} active={active} color={color} {...{ disabled: disabled }}
-                    style="width: 100%;" key={label} onClick={() => on_ItemClicked(label)}>{i}</SButton>;
+                const btn = children === undefined ?
+                    <SMenuButton ref={active ? 'active_item_ref' : undefined} active={active} label={label} description={description} color={color} disabled={is_disabled} key={key} onClick={() => on_ItemClicked(label)} >
+                        {{
+                            icon: () => icon,
+                        }}
+                    </SMenuButton> :
+                    <SButton ref={active ? 'active_item_ref' : undefined} flat={true} square={true} active={active} color={color} disabled={is_disabled}
+                        style="width: 100%;" key={key} onClick={() => on_ItemClicked(label)}>{i}</SButton>;
                 return btn;
             }
             else return i;

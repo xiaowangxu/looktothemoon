@@ -4,97 +4,73 @@
             <SFlow>
                 <SPanel class="pointer-event">
                     <SFlow gap="0">
-                        <SPopupMenu open-mode="visibility"
-                            :get-popup-rect="(rect) => { return { x: 0, y: 0, width: rect.width, height: rect.height }; }">
-                            <template #default="{ opened, open, close }">
-                                <SButton ref="button_ref" :active="opened" flat @click="opened ? close() : open()">文件
-                                </SButton>
+                        <SPopupMenuButton>
+                            <template #button>
+                                文件
                             </template>
                             <template #items>
-                                <SFlow gap="var(--FocusOutlineWidth)" padding="var(--AdditionalPaddingSize)" vertical
-                                    style="width: 200px; max-width: 100%;">
-                                    <SButton square flat style="width: 100%;">
-                                        <SLabel min-size="unset">新建文件</SLabel>
-                                    </SButton>
-                                    <SVSeparator />
-                                    <SButton square flat style="width: 100%;">保存</SButton>
-                                    <SButton square flat style="width: 100%;">另存为</SButton>
-                                    <SButton square flat disabled style="width: 100%;">全部保存</SButton>
-                                    <SVSeparator />
-                                    <SButton square flat color="var(--ColorRed)" style="width: 100%;">退出</SButton>
-                                </SFlow>
+                                <SItem label="新建文件" />
+                                <SVSeparator />
+                                <SItem label="保存" description="Ctrl+S" />
+                                <SItem label="另存为" />
+                                <SVSeparator />
+                                <SItem label="退出" color="var(--ColorRed)" />
                             </template>
-                        </SPopupMenu>
-                        <SPopupMenu :get-popup-rect="(rect) => {
-                            if (!button_ref?.buttonElement) return undefined;
-                            const { left, bottom } = button_ref.buttonElement.getBoundingClientRect();
-                            return { x: left, y: bottom, width: rect.width, height: rect.height };
-                        }">
-                            <template #default="{ opened, open, close }">
-                                <SButton ref="button_ref" flat @click="opened ? close() : open()">编辑
-                                </SButton>
+                        </SPopupMenuButton>
+                        <SPopupMenuButton>
+                            <template #button>
+                                编辑
                             </template>
                             <template #items>
-                                <SFlow gap="var(--FocusOutlineWidth)" padding="var(--GapAndMargin)" vertical
-                                    style="width: 200px; max-width: 100%;">
-                                    <SButton square flat style="width: 100%;">
+                                <SItem label="撤销" description="Ctrl+Z" disabled>
+                                    <template #icon>
                                         <Undo2 />
-                                        <SLabel min-size="unset" color="inherit">撤销</SLabel>
-                                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
-                                            align-h="end">
-                                            Ctrl+Z
-                                        </SLabel>
-                                    </SButton>
-                                    <SButton square flat style="width: 100%;">
+                                    </template>
+                                </SItem>
+                                <SItem label="恢复" description="Ctrl+Y">
+                                    <template #icon>
                                         <Redo2 />
-                                        <SLabel min-size="unset" color="inherit">恢复</SLabel>
-                                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
-                                            align-h="end">
-                                            Ctrl+Y</SLabel>
-                                    </SButton>
-                                    <SVSeparator />
-                                    <SButton square flat style="width: 100%;">
-                                        <SLabel min-size="unset" color="inherit">剪切</SLabel>
-                                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
-                                            align-h="end">
-                                            Ctrl+X
-                                        </SLabel>
-                                    </SButton>
-                                    <SButton square flat style="width: 100%;">
-                                        <SLabel min-size="unset" color="inherit">复制</SLabel>
-                                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
-                                            align-h="end">
-                                            Ctrl+C</SLabel>
-                                    </SButton>
-                                    <SButton square flat style="width: 100%;">
-                                        <SLabel min-size="unset" color="inherit">粘贴</SLabel>
-                                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
-                                            align-h="end">
-                                            Ctrl+V</SLabel>
-                                    </SButton>
-                                </SFlow>
+                                    </template>
+                                </SItem>
+                                <SVSeparator />
+                                <SItem label="剪切" description="Ctrl+X" />
+                                <SItem label="复制" description="Ctrl+C" />
+                                <SItem label="粘贴" description="Ctrl+V" />
                             </template>
-                        </SPopupMenu>
-                        <SPopupMenu
-                            :get-popup-rect="(rect) => { return { x: 0, y: 0, width: rect.width, height: rect.height }; }">
-                            <template #default="{ opened, open, close }">
-                                <SButton flat @click="opened ? close() : open()">选择
-                                </SButton>
+                        </SPopupMenuButton>
+                        <SPopupMenuButton>
+                            <template #button>
+                                选择
                             </template>
                             <template #items>
-                                1234
+                                <SItem label="取消选择" disabled />
                             </template>
-                        </SPopupMenu>
-                        <SPopupMenu
-                            :get-popup-rect="(rect) => { return { x: 0, y: 0, width: rect.width, height: rect.height }; }">
-                            <template #default="{ opened, open, close }">
-                                <SButton flat @click="opened ? close() : open()">视图
-                                </SButton>
+                        </SPopupMenuButton>
+                        <SPopupMenuButton>
+                            <template #button>
+                                视图
                             </template>
                             <template #items>
-                                1234
+                                <SItem label="顶视图" />
+                                <SItem label="底视图" />
+                                <SItem label="左视图" />
+                                <SItem label="右视图" />
+                                <SItem label="前视图" />
+                                <SItem label="后视图" />
+                                <SVSeparator />
+                                <SItem label="透视" active />
+                                <SItem label="正交" />
+                                <SVSeparator />
+                                <SItem label="视图配置">
+                                    <template #icon>
+                                        <Cog />
+                                    </template>
+                                    <template #subitems>
+                                        <SItem label="网格" />
+                                    </template>
+                                </SItem>
                             </template>
-                        </SPopupMenu>
+                        </SPopupMenuButton>
                     </SFlow>
                 </SPanel>
             </SFlow>
@@ -150,7 +126,6 @@
                                         <SLabel min-size="unset" color="inherit">更多...</SLabel>
                                         <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
                                             align-h="end"></SLabel>
-                                        <ChevronRight />
                                     </SItem>
                                     <SVSeparator />
                                     <SItem label="6" color="var(--ColorRed)">
@@ -160,12 +135,10 @@
                                             align-h="end">Delete
                                         </SLabel>
                                     </SItem>
-                                    <SItem label="7">
-                                        <Redo2 />
-                                        <SLabel min-size="unset" color="inherit">更多...</SLabel>
-                                        <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;"
-                                            align-h="end"></SLabel>
-                                        <ChevronRight />
+                                    <SItem label="这是一个测试" description="hahaha" uid="7" color="orange">
+                                        <template #icon>
+                                            <Search />
+                                        </template>
                                     </SItem>
                                 </SSelect>
                             </SActiveArea>
@@ -322,6 +295,53 @@
                 </SPanel>
             </SFlow>
         </div>
+
+        <SPopupMenu open :get-popup-rect="(c, w) => { return { x: 200, y: 200, ...c }; }">
+            <SItem label="删除" description="Delete" color="var(--ColorRed)">
+                <template #icon>
+                    <Trash />
+                </template>
+            </SItem>
+            <SItem label="2">
+                <Redo2 />
+                <SLabel min-size="unset" color="inherit">更多...</SLabel>
+                <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;" align-h="end"></SLabel>
+            </SItem>
+            <SVSeparator />
+            <SItem label="3">
+                <template #icon>
+                    <Globe />
+                </template>
+                <template #subitems>
+                    <SItem label="4">
+                        <template #subitems>
+                            123
+                        </template>
+                    </SItem>
+                    <SVSeparator />
+                    <SItem label="5"></SItem>
+                    <SItem label="6">
+                        <template #icon>
+                            <Globe />
+                        </template>
+                        <template #subitems>
+                            <SItem label="7"></SItem>
+                            <SVSeparator />
+                            <SItem label="8">
+                                <template #subitems>
+                                    <SItem label="删除" color="var(--ColorRed)">
+                                        <template #icon>
+                                            <Trash />
+                                        </template>
+                                    </SItem>
+                                </template>
+                            </SItem>
+                        </template>
+                    </SItem>
+                </template>
+            </SItem>
+        </SPopupMenu>
+
     </div>
 </template>
 
@@ -335,7 +355,7 @@ import SNumberEdit from '@/components/SNumberEdit.vue';
 import SCheckBox from '@/components/SCheckBox.vue';
 import SRadioBox from '@/components/SRadioBox.vue';
 import SFlow from '@/components/SFlow.vue';
-import { Tangent, Radius, Dot, X, Check, Workflow, Globe, Search, Undo2, Redo2, PanelLeftInactive, Minus, Trash, ChevronRight, Baseline } from 'lucide-vue-next';
+import { Cog, Tangent, Radius, Dot, X, Check, Workflow, Globe, Search, Undo2, Redo2, PanelLeftInactive, Minus, Trash, ChevronRight, Baseline } from 'lucide-vue-next';
 import { onMounted, ref, watch } from 'vue';
 import SSpan from '@/components/Typography/SSpan.vue';
 import SLabel from '@/components/Typography/SLabel.vue';
@@ -348,7 +368,8 @@ import SHSeparator from '@/components/SHSeparator.vue';
 import SVSeparator from '@/components/SVSeparator.vue';
 import SSelect from '@/components/SSelect';
 import SItem from '@/components/SItem.vue';
-import SPopupMenu from '@/components/SPopupMenu.vue';
+import SPopupMenuButton from '@/components/SPopupMenuButton.tsx';
+import SPopupMenu from '@/components/SPopupMenu';
 
 const folded = ref(true);
 const align = ref<Alignment>('end');

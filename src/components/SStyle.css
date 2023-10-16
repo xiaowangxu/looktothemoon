@@ -13,14 +13,16 @@ textarea {
 
 .__s__ {
     --ThemeColor: rgb(70, 111, 214);
-    --ThemeBaseColor: rgb(40, 40, 40);
+    --ThemeBaseColor: rgb(42, 42, 42);
     --ThemeDisabledBaseColor: rgb(200, 200, 200);
     --ThemeOppositeColor: rgb(40, 40, 40);
     /* --ThemeBaseColor: rgb(255, 255, 255);
     --ThemeDisabledBaseColor: rgb(54, 54, 54);
     --ThemeOppositeColor: rgb(255, 255, 255); */
 
-    --ThemeBoxShadow: 0px 5px 10px 1px rgba(0, 0, 0, 0.15);
+    --DescriptionOpacity: 0.4;
+
+    --ThemeBoxShadow: 0px 5px 10px 1px rgba(0, 0, 0, 0.25);
 
     --ThemeDisabledBGColor: color-mix(in srgb, var(--ThemeBaseColor), var(--ThemeDisabledBaseColor) 6%);
     --ThemeDisabledColor: color-mix(in srgb, var(--ThemeBaseColor), var(--ThemeDisabledBaseColor) 22%);

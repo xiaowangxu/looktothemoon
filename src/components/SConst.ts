@@ -145,9 +145,6 @@ export function usePopupPanelMeasureRect(opened: Ref<boolean>, dom: Ref<HTMLElem
                 };
             }
         }
-        else {
-            content_size.value = undefined;
-        }
     });
     watch(dom, (newval) => {
         if (!newval) return;

@@ -1,7 +1,7 @@
 <template>
     <button ref="button_dom" class="__s__ __s_color__ __s_button__" :class="{ flat, 'icon-only': iconOnly, active, square }"
         :data-s-icon-size="iconSize" :data-s-min-size="iconSize" :style="{ '--SColor': color, justifyContent: align_text }"
-        @click="emits('click', $event)">
+        @click="emits('click', $event)" @mouseenter="emits('mouseenter', $event)" :disabled="disabled">
         <slot name="default" />
     </button>
 </template>
@@ -16,6 +16,7 @@ import { toRef, ref } from 'vue';
 const props = withDefaults(
     defineProps<{
         active?: boolean,
+        disabled?: boolean,
         color?: string,
         flat?: boolean,
         iconOnly?: boolean,
@@ -25,6 +26,7 @@ const props = withDefaults(
     }>(),
     {
         active: false,
+        disabled: false,
         color: 'var(--ThemeDisabledBaseColor)',
         flat: false,
         iconOnly: false,
@@ -37,6 +39,7 @@ const props = withDefaults(
 // emits
 const emits = defineEmits<{
     click: [event: Event],
+    mouseenter: [event: Event],
 }>();
 
 // datas
@@ -69,7 +72,6 @@ defineExpose({
     border: none;
     border-radius: var(--NormalRadius);
     user-select: none;
-    padding: var(--NormalPaddingSize) calc(var(--NormalPaddingSize) * 2);
 }
 
 .__s_button__.square {
@@ -117,7 +119,7 @@ defineExpose({
 }
 
 .__s_button__[data-s-icon-size="medium"] .lucide,
-.__s_button__[data-s-icon-size="normal"] .__s_icon__ {
+.__s_button__[data-s-icon-size="medium"] .__s_icon__ {
     width: var(--MediumIconSize);
     height: var(--MediumIconSize);
     min-width: var(--MediumIconSize);
@@ -125,7 +127,7 @@ defineExpose({
 }
 
 .__s_button__[data-s-icon-size="large"] .lucide,
-.__s_button__[data-s-icon-size="normal"] .__s_icon__ {
+.__s_button__[data-s-icon-size="large"] .__s_icon__ {
     width: var(--LargeIconSize);
     height: var(--LargeIconSize);
     min-width: var(--LargeIconSize);
