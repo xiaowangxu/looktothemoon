@@ -296,7 +296,7 @@
             </SFlow>
         </div>
 
-        <SPopupMenu open :get-popup-rect="(c, w) => { return { x: 200, y: 200, ...c }; }">
+        <SPopupMenu open :get-popup-rect="(c, w) => { return { x: 200, y: 600, ...c }; }">
             <SItem label="删除" description="Delete" color="var(--ColorRed)">
                 <template #icon>
                     <Trash />
@@ -329,7 +329,9 @@
                             <SVSeparator />
                             <SItem label="8">
                                 <template #subitems>
-                                    <SItem label="删除" color="var(--ColorRed)">
+                                    <SItem
+                                        :label="'删除' + (!checkbox ? '?' : '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')"
+                                        color="var(--ColorRed)">
                                         <template #icon>
                                             <Trash />
                                         </template>

@@ -14,6 +14,16 @@ const SPopupMenu = defineComponent({
             required: false,
             default: '200px',
         },
+        maxWidth: {
+            type: String,
+            required: false,
+            default: '500px',
+        },
+        width: {
+            type: String,
+            required: false,
+            default: '100%',
+        },
         getPopupRect: {
             type: Function as PropType<(contentMinSize: BoxSize, windowSize: BoxSize) => Rect | undefined>,
             required: true,
@@ -71,9 +81,10 @@ const SPopupMenu = defineComponent({
     },
     render() {
         const { hovered_subitem, prefered_direction, getPopupRect, hover_SubItem, get_HoveredSubItemPopupRect } = this;
-        const { minWidth: prop_min_width, open: prop_open, openMode: prop_open_mode, subOpenMode: prop_sub_open_mode } = this.$props;
+        const { minWidth: prop_min_width, maxWidth: prop_max_width, width: prop_width, open: prop_open, openMode: prop_open_mode, subOpenMode: prop_sub_open_mode } = this.$props;
         const { default: items_render } = this.$slots;
         const items = items_render?.() ?? [];
+        const sub_popupmenus: any[] = [];
         const buttons = items.map(i => {
             if (i.type === SItem) {
                 const { label, color, active, disabled, description, uid } = i.props!;
@@ -82,7 +93,6 @@ const SPopupMenu = defineComponent({
                 const icon = (i.children as any)?.icon?.();
                 const subitems = (i.children as any)?.subitems?.();
                 const has_subitems = subitems !== undefined && subitems.length > 0;
-                // console.log("label:", label, has_subitems, subitems);
                 const key = uid ?? label;
                 const is_hovered_subitems = hovered_subitem === key;
                 const subitem_mouseentered = has_subitems && !is_disabled ? () => hover_SubItem(key) : undefined;
@@ -96,24 +106,29 @@ const SPopupMenu = defineComponent({
                     <SButton ref={subitem_sbutton_ref} flat={true} square={true} active={active} color={color} disabled={is_disabled}
                         style="width: 100%;" key={key} onMouseenter={subitem_mouseentered}>{i}</SButton>;
                 const sub_open_mode = prop_sub_open_mode ?? prop_open_mode;
-                return has_subitems && (sub_open_mode !== 'instance' || is_hovered_subitems) ? [
-                    btn,
-                    <SPopupMenu open={is_hovered_subitems} preferedDirection={prefered_direction} openMode={sub_open_mode} subOpenMode={sub_open_mode} key={`__${key}_popupmenu__`} getPopupRect={get_HoveredSubItemPopupRect}>
-                        {{
-                            default: () => subitems,
-                        }}
-                    </SPopupMenu>
-                ] : btn;
+                if (has_subitems && (prop_sub_open_mode !== 'instance' || is_hovered_subitems)) {
+                    sub_popupmenus.push(
+                        <SPopupMenu open={is_hovered_subitems} minWidth={prop_min_width} maxWidth={prop_max_width} width={prop_width} preferedDirection={prefered_direction} openMode={sub_open_mode} subOpenMode={sub_open_mode} key={`__${key}_popupmenu__`} getPopupRect={get_HoveredSubItemPopupRect}>
+                            {{
+                                default: () => subitems,
+                            }}
+                        </SPopupMenu>
+                    );
+                }
+                return btn;
             }
             else return i;
         });
 
         return <>
             <SAutoMeasurePopupPanel open={prop_open} openMode={prop_open_mode} getPopupRect={getPopupRect}>
-                <SFlow gap="var(--FocusOutlineWidth)" padding="var(--GapAndMargin)" vertical style={{ 'max-width': '100%', width: prop_min_width }}>
+                <SFlow gap="var(--FocusOutlineWidth)" padding="var(--GapAndMargin)" vertical style={{ 'max-width': prop_max_width, 'min-width': prop_min_width, 'width': prop_width }}>
                     {buttons}
                 </SFlow>
             </SAutoMeasurePopupPanel>
+            {
+                sub_popupmenus
+            }
         </>;
     },
 });
