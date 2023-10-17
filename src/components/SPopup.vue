@@ -1,5 +1,5 @@
 <template>
-    <Teleport to="#popup">
+    <Teleport to="#popup" :disabled="teleportDisabled">
         <div class="__s__ __s_popup_cover__" :class="{ invisible: !visible }" v-bind="$attrs">
             <div ref="container_div_dom" class="__s__ __s_popup_container__" :style="{
                 left: rect?.x ? `${rect?.x}px` : undefined,
@@ -29,10 +29,12 @@ const props = withDefaults(
     defineProps<{
         visible?: boolean,
         rect?: Rect,
+        teleportDisabled?: boolean,
     }>(),
     {
         visible: true,
         rect: undefined,
+        teleportDisabled: false,
     }
 );
 

@@ -1,6 +1,7 @@
 <template>
-    <SPopup v-if="instance" :visible="open" :rect="popup_rect" v-slot="{ rect }">
-        <SPanel class="__s_popuppanel_panel__" :style="{ width, height }">
+    <SPopup v-if="instance" :visible="open" :rect="popup_rect" v-slot="{ rect }" :teleportDisabled="teleportDisabled">
+        <SPanel ref="spanel_ref" class="__s_popuppanel_panel__" :style="{ width, height }" @mouseenter="on_PanelMouseEntered"
+            @mouseleave="on_PanelMouseLeaved" v-on-click-outside="on_ClickOutsideHandler">
             <SScrollContainer ref="sscrollcontainer_ref" width="100%" maxWidth="100%">
                 <slot :rect="rect" />
             </SScrollContainer>
@@ -13,9 +14,10 @@
 import SPopup from '@/components/SPopup.vue';
 import SPanel from './SPanel.vue';
 import SScrollContainer from './SScrollContainer.vue';
-import { computed, onRenderTriggered, ref, toRef, watch } from 'vue';
+import { computed, ref, toRef, watch } from 'vue';
 import { usePopupPanelMeasureRect, type PopupOpenMode, type BoxSize, type Rect } from './SConst';
 import { useWindowSize } from '@vueuse/core';
+import { vOnClickOutside } from '@vueuse/components';
 
 // props
 const props = withDefaults(
@@ -24,11 +26,13 @@ const props = withDefaults(
         getPopupRect: (contentMinSize: BoxSize, windowSize: BoxSize) => Rect | undefined,
         openMode?: PopupOpenMode,
         useWindowSize?: boolean,
+        teleportDisabled?: boolean,
     }>(),
     {
         open: false,
         openMode: 'instance',
         useWindowSize: true,
+        teleportDisabled: false,
     }
 );
 
@@ -41,9 +45,13 @@ defineSlots<{
 const emits = defineEmits<{
     opened: [],
     closed: [],
+    mouseenter: [event: Event],
+    mouseleave: [event: Event],
+    clickoutside: [event: PointerEvent],
 }>();
 
 // datas
+const spanel_ref = ref<InstanceType<typeof SPanel> | null>(null);
 watch(toRef(props, 'open'), (v) => {
     if (v) emits('opened');
     else emits('closed');
@@ -59,6 +67,21 @@ const popup_rect = computed<Rect | undefined>(() => {
 const width = computed(() => popup_rect.value === undefined ? undefined : `${popup_rect.value.width}px`);
 const height = computed(() => popup_rect.value === undefined ? undefined : `${popup_rect.value.height}px`);
 
+// methods
+function on_PanelMouseEntered(event: Event) {
+    emits('mouseenter', event);
+}
+function on_PanelMouseLeaved(event: Event) {
+    emits('mouseleave', event);
+}
+function on_ClickOutsideHandler(event: PointerEvent) {
+    emits('clickoutside', event);
+};
+
+// exposes
+defineExpose({
+    panelComponent: spanel_ref,
+});
 
 </script>
 

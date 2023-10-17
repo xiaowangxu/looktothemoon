@@ -177,6 +177,10 @@ export function fixNumberString(num: number, digits: number, show_end_zeros: boo
     return num.toFixed(digits).replace(/\.0*$|(\.\d*[1-9])0+$/g, '$1');
 }
 
+export function clamp(v: number, min: number, max: number) {
+    return Math.max(min, Math.min(max, v));
+}
+
 export function calcSelectPopupSize(content_size: BoxSize, button_rect: Rect, window_size: BoxSize, gap: BoxSize = { width: 7, height: 6 }): Rect {
     const { width: gap_width, height: gap_height } = gap;
     const min_window_width = window_size.width - gap_width * 2;
@@ -205,4 +209,92 @@ export function calcSelectPopupSize(content_size: BoxSize, button_rect: Rect, wi
         x = gap_width + left_space - width;
     }
     return { x, y, width, height };
+}
+
+export function calcPopupMenuPopupSize(content_size: BoxSize, button_rect: Rect, window_size: BoxSize, prefered_direction: 0 | 1, offset: BoxSize = { width: 0, height: -5 }, allow_shift_up: boolean = true, gap: BoxSize = { width: 7, height: 6 }): { rect: Rect, direction: 0 | 1 } {
+    const { width: gap_width, height: gap_height } = gap;
+    const { width: offset_width, height: offset_height } = offset;
+    const min_window_width = window_size.width - gap_width * 2;
+    const min_window_height = window_size.height - gap_height * 2;
+    const right_space = (window_size.width - button_rect.x - button_rect.width) - gap_width - offset_width;
+    const left_space = Math.min(button_rect.x - gap_width - offset_width, min_window_width);
+    let x: number, y: number, width: number, height: number, direction: 0 | 1;
+    if (prefered_direction === 1) {
+        // right
+        if (right_space >= content_size.width) {
+            x = button_rect.x + button_rect.width + offset_width;
+            width = content_size.width;
+            direction = 1;
+        }
+        else if (left_space >= content_size.width) {
+            x = button_rect.x - offset_width - content_size.width;
+            width = content_size.width;
+            direction = 0;
+        }
+        else if (right_space >= left_space) {
+            width = right_space;
+            x = button_rect.x + button_rect.width + offset_width;
+            direction = 1;
+        }
+        else {
+            width = left_space;
+            x = button_rect.x - offset_width - left_space;
+            direction = 0;
+        }
+    }
+    else {
+        // left
+        if (left_space >= content_size.width) {
+            x = button_rect.x - offset_width - content_size.width;
+            width = content_size.width;
+            direction = 0;
+        }
+        else if (right_space >= content_size.width) {
+            x = button_rect.x + button_rect.width + offset_width;
+            width = content_size.width;
+            direction = 1;
+        }
+        else if (left_space >= right_space) {
+            width = left_space;
+            x = button_rect.x - offset_width - left_space;
+            direction = 0;
+        }
+        else {
+            width = right_space;
+            x = button_rect.x + button_rect.width + offset_width;
+            direction = 1;
+        }
+    }
+    const bottom_space = window_size.height - button_rect.y - gap_height - offset_height;
+    if (bottom_space >= content_size.height) {
+        y = button_rect.y + offset_height;
+        height = content_size.height;
+    }
+    else if (allow_shift_up) {
+        height = Math.min(content_size.height, min_window_height);
+        y = window_size.height - gap_height - height;
+    }
+    else {
+        y = button_rect.y + offset_height;
+        height = bottom_space;
+    }
+    return {
+        rect: { x, y, width, height },
+        direction: direction,
+    };
+}
+
+export type TimerCanceller = () => void;
+
+export function timer(func: () => void, time: number): TimerCanceller {
+    let cancelled = false, finished = false;
+    setTimeout(() => {
+        if (cancelled || finished) return;
+        func(); finished = true;
+    }, time);
+    return () => {
+        if (!cancelled && !finished) {
+            cancelled = true;
+        }
+    };
 }

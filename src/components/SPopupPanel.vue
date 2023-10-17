@@ -1,7 +1,9 @@
 <template>
-    <SPopup class="__s_popuppanel_popup__" :visible="visible" :rect="rect">
-        <SPanel class="__s_popuppanel_panel__" :style="{ width, height }">
-            <SScrollContainer ref="sscrollcontainer_ref" width="100%" maxWidth="100%">
+    <SPopup class="__s_popuppanel_popup__" :visible="visible" :rect="rect" :teleportDisabled="teleportDisabled">
+        <SPanel ref="spanel_ref" class="__s_popuppanel_panel__" :style="{ width, height }"
+            @mouseenter="on_PanelMouseEntered" @mouseleave="on_PanelMouseLeaved"
+            v-on-click-outside="on_ClickOutsideHandler">
+            <SScrollContainer width="100%" maxWidth="100%">
                 <slot :rect="rect" />
             </SScrollContainer>
         </SPanel>
@@ -14,12 +16,19 @@ import SPopup from '@/components/SPopup.vue';
 import SPanel from '@/components/SPanel.vue';
 import SScrollContainer from '@/components/SScrollContainer.vue';
 import { type Rect } from './SConst';
-import { computed, onBeforeUnmount, onUnmounted, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { vOnClickOutside } from '@vueuse/components';
 
 // props
-const props = defineProps<{
-    rect: Rect | undefined,
-}>();
+const props = withDefaults(
+    defineProps<{
+        rect: Rect | undefined,
+        teleportDisabled?: boolean,
+    }>(),
+    {
+        teleportDisabled: false,
+    }
+);
 
 // slots
 defineSlots<{
@@ -30,9 +39,13 @@ defineSlots<{
 const emits = defineEmits<{
     opened: [],
     closed: [],
+    mouseenter: [event: Event],
+    mouseleave: [event: Event],
+    clickoutside: [event: PointerEvent],
 }>();
 
 // datas
+const spanel_ref = ref<InstanceType<typeof SPanel> | null>(null);
 const visible = computed(() => props.rect !== undefined);
 watch(visible, (v) => {
     if (v) emits('opened');
@@ -41,6 +54,22 @@ watch(visible, (v) => {
 onBeforeUnmount(() => emits('closed'));
 const width = computed(() => props.rect === undefined ? undefined : `${props.rect.width}px`);
 const height = computed(() => props.rect === undefined ? undefined : `${props.rect.height}px`);
+
+// methods
+function on_PanelMouseEntered(event: Event) {
+    emits('mouseenter', event);
+}
+function on_PanelMouseLeaved(event: Event) {
+    emits('mouseleave', event);
+}
+function on_ClickOutsideHandler(event: PointerEvent) {
+    emits('clickoutside', event);
+};
+
+// exposes
+defineExpose({
+    panelComponent: spanel_ref,
+});
 
 </script>
 

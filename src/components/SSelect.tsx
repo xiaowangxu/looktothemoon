@@ -109,6 +109,14 @@ export default defineComponent({
                 });
             }
         }
+        function on_ClickOutside(event: PointerEvent) {
+            if (!sbutton_ref.value?.buttonElement) return;
+            const target = sbutton_ref.value.buttonElement;
+            const include_button = event.composedPath().includes(target);
+            if (!include_button) {
+                close();
+            }
+        }
 
         expose({
             opened,
@@ -119,12 +127,12 @@ export default defineComponent({
         return {
             opened, popup_rect, content_size,
             sbutton_ref, sscrollcontainer_ref, active_item_ref,
-            on_SelectClicked, on_ItemClicked, on_PopupPanelOpened,
+            on_SelectClicked, on_ItemClicked, on_PopupPanelOpened, on_ClickOutside,
             focus, blur, close,
         };
     },
     render() {
-        const { $slots, $attrs, opened, popup_rect, close, on_ItemClicked, on_SelectClicked, on_PopupPanelOpened } = this;
+        const { $slots, $attrs, opened, popup_rect, close, on_ItemClicked, on_SelectClicked, on_PopupPanelOpened, on_ClickOutside } = this;
         const { value: prop_value, color: prop_color, disabled: prop_disabled, openMode: prop_open_mode, useActiveColor: prop_use_active_color } = this.$props;
         const { default: items_render } = $slots;
 
@@ -168,8 +176,8 @@ export default defineComponent({
 
         return <>
             {/* SelectButton */}
-            <SButton ref="sbutton_ref" class={{ '__s_select__': true, 'opened': opened }} style="padding-right: var(--NormalPaddingSize); overflow: hidden;" color={active_color}
-                {...{ disabled: prop_disabled, ...$attrs }} onClick={on_SelectClicked}>
+            <SButton ref="sbutton_ref" class={{ '__s_select__': true, 'opened': opened }} style="padding-right: var(--NormalPaddingSize); overflow: hidden;" color={active_color} disabled={prop_disabled}
+                {...$attrs} onClick={on_SelectClicked}>
                 <SFlow style="flex: 1; color: inherit; overflow: hidden;" gap="var(--NormalPaddingSize)" alignV="center">
                     {active_item}
                 </SFlow>
@@ -180,7 +188,7 @@ export default defineComponent({
             {/* PopupPanel */}
             {
                 instance &&
-                <SPopupPanel rect={popup_rect} onOpened={on_PopupPanelOpened}>
+                <SPopupPanel rect={popup_rect} onOpened={on_PopupPanelOpened} onClickoutside={on_ClickOutside}>
                     <SScrollContainer ref="sscrollcontainer_ref" width="100%" maxWidth="100%">
                         <SFlow gap="var(--FocusOutlineWidth)" padding="var(--GapAndMargin)" vertical>
                             {buttons}
