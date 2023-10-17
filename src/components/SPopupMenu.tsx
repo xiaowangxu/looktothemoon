@@ -14,6 +14,11 @@ const SPopupMenu = defineComponent({
             required: false,
             default: 600,
         },
+        showDuration: {
+            type: Number,
+            required: false,
+            default: 200,
+        },
         hideOnLeave: {
             type: Boolean,
             required: false,
@@ -72,11 +77,14 @@ const SPopupMenu = defineComponent({
         const hovered_sbutton_ref = ref<InstanceType<typeof SButton> | InstanceType<typeof SMenuButton> | null>(null);
         const prefered_direction = ref<0 | 1>(1);
         let hide_timer: TimerCanceller | undefined = undefined;
+        let show_timer: TimerCanceller | undefined = undefined;
         watch(toRef(props, 'open'), (opened) => {
             if (!opened) {
                 hovered_subitem.value = undefined;
                 hide_timer?.();
                 hide_timer = undefined;
+                show_timer?.();
+                show_timer = undefined;
                 emit('closed');
             }
             else {
@@ -91,11 +99,21 @@ const SPopupMenu = defineComponent({
         }
         function hover_SubItem(key: any, is_submenu: boolean) {
             if (is_submenu) {
-                hovered_subitem.value = key;
                 hide_timer?.();
                 hide_timer = undefined;
+                show_timer?.();
+                if (hovered_subitem.value === key) {
+                    show_timer = undefined;
+                }
+                else {
+                    show_timer = timer(() => {
+                        hovered_subitem.value = key;
+                    }, props.showDuration);
+                }
             }
-            else if (hovered_subitem.value !== undefined) {
+            else {
+                show_timer?.();
+                show_timer = undefined;
                 hide_timer?.();
                 hide_timer = timer(() => {
                     hovered_subitem.value = undefined;
@@ -155,9 +173,8 @@ const SPopupMenu = defineComponent({
         };
     },
     render() {
-        const { hovered_subitem, prefered_direction,
-            getPopupRect, on_Click, hover_SubItem, leave_SubItem, get_HoveredSubItemPopupRect, on_PopupMenuEntered, on_SubMenuPanelEntered, on_ClickOutside } = this;
-        const { isSubMenu: prop_is_submenu, minWidth: prop_min_width, maxWidth: prop_max_width, width: prop_width, open: prop_open, openMode: prop_open_mode, subOpenMode: prop_sub_open_mode, hideOnLeave: prop_hide_on_leave } = this.$props;
+        const { hovered_subitem, prefered_direction, getPopupRect, on_Click, hover_SubItem, leave_SubItem, get_HoveredSubItemPopupRect, on_PopupMenuEntered, on_SubMenuPanelEntered, on_ClickOutside } = this;
+        const { isSubMenu: prop_is_submenu, minWidth: prop_min_width, maxWidth: prop_max_width, width: prop_width, open: prop_open, openMode: prop_open_mode, subOpenMode: prop_sub_open_mode, hideOnLeave: prop_hide_on_leave, hideDuration: prop_hide_duration, showDuration: pro_show_duration } = this.$props;
         const { default: items_render } = this.$slots;
         const items = items_render?.() ?? [];
         const sub_popupmenus: any[] = [];
@@ -186,7 +203,7 @@ const SPopupMenu = defineComponent({
                 const sub_open_mode = prop_sub_open_mode ?? prop_open_mode;
                 if (has_subitems && (prop_sub_open_mode !== 'instance' || is_hovered_subitems)) {
                     sub_popupmenus.push(
-                        <SPopupMenu ref={is_hovered_subitems ? "hovered_spopupmenu_ref" : undefined} isSubMenu={true} open={is_hovered_subitems} minWidth={prop_min_width} maxWidth={prop_max_width} width={prop_width} preferedDirection={prefered_direction} openMode={sub_open_mode} subOpenMode={sub_open_mode} key={`__${key}_popupmenu__`} getPopupRect={get_HoveredSubItemPopupRect} onClick={on_Click} onMouseenter={() => on_SubMenuPanelEntered(key)}>
+                        <SPopupMenu ref={is_hovered_subitems ? "hovered_spopupmenu_ref" : undefined} hideDuration={prop_hide_duration} showDuration={pro_show_duration} hideOnLeave={prop_hide_on_leave} isSubMenu={true} open={is_hovered_subitems} minWidth={prop_min_width} maxWidth={prop_max_width} width={prop_width} preferedDirection={prefered_direction} openMode={sub_open_mode} subOpenMode={sub_open_mode} key={`__${key}_popupmenu__`} getPopupRect={get_HoveredSubItemPopupRect} onClick={on_Click} onMouseenter={() => on_SubMenuPanelEntered(key)}>
                             {{
                                 default: () => subitems,
                             }}

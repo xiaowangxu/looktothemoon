@@ -81,8 +81,13 @@ export default defineComponent({
                 close();
             }
         }
-        function on_Clickoutside() {
-            close();
+        function on_Clickoutside(event: PointerEvent) {
+            if (!sbutton_ref.value?.buttonElement) return;
+            const target = sbutton_ref.value.buttonElement;
+            const include_button = event.composedPath().includes(target);
+            if (!include_button) {
+                close();
+            }
         }
         function open() { opened.value = true; }
         function close() { opened.value = false; }
