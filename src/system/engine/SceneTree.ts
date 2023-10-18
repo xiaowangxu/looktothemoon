@@ -72,7 +72,6 @@ export class SceneTree {
 }
 
 export enum NodeNotification {
-    // Node
     ExitingTree,
     EnteredTree,
     ExitedTree,
@@ -83,10 +82,9 @@ export enum NodeNotification {
     InternalBeforeRender,
     Parented,
     Unparented,
+    ChildAdded,
+    ChildRemoving,
     ChildrenChanged,
-    // Viewport
-    BeforeRender,
-    AfterRender,
 }
 
 export class Node {
@@ -109,6 +107,9 @@ export class Node {
     public readonly signal_exiting_tree: SignalEmitter<() => void> = new SignalEmitter();
     public readonly signal_entered_tree: SignalEmitter<() => void> = new SignalEmitter();
     public readonly signal_exited_tree: SignalEmitter<() => void> = new SignalEmitter();
+
+    public readonly signal_child_added: SignalEmitter<(node: Node) => void> = new SignalEmitter();
+    public readonly signal_child_removing: SignalEmitter<(node: Node) => void> = new SignalEmitter();
 
     public readonly signal_ready: SignalEmitter<() => void> = new SignalEmitter();
     public readonly signal_process: SignalEmitter<(delta: number) => void> = new SignalEmitter();
@@ -236,6 +237,8 @@ export class Node {
         node.parent = this;
         // node parent
         node.nofity(NodeNotification.Parented);
+        this.nofity(NodeNotification.ChildAdded);
+        this.signal_child_added.trigger(node);
         if (this.scenetree !== undefined) {
             node.set_SceneTree(this.scenetree);
         }
@@ -248,6 +251,8 @@ export class Node {
         if (idx < 0) return;
         node.set_SceneTree(undefined);
         this.children.splice(idx, 1);
+        this.nofity(NodeNotification.ChildRemoving);
+        this.signal_child_removing.trigger(node);
         node.parent = undefined;
         // node unparent
         node.nofity(NodeNotification.Unparented);
@@ -605,10 +610,8 @@ export class Viewport extends Node {
                 this.camera_3d.update_ViewportSize(this.size);
                 this.is_size_dirty = false;
             }
-            this.nofity(NodeNotification.BeforeRender);
             this.signal_before_render.trigger();
             this.renderer_3d.render(world_3d, this.camera_3d.camera);
-            this.nofity(NodeNotification.AfterRender);
             this.signal_after_render.trigger();
         }
     }
