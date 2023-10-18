@@ -276,6 +276,11 @@ export class Node {
         return this.children.indexOf(node);
     }
 
+    public get_Index() {
+        if (this.parent === undefined) return -1;
+        return this.parent.get_ChildIndex(this);
+    }
+
     public get_Viewport() {
         return this.viewport;
     }
