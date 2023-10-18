@@ -114,10 +114,11 @@ const SPopupMenu = defineComponent({
             else {
                 show_timer?.();
                 show_timer = undefined;
-                hide_timer?.();
-                hide_timer = timer(() => {
-                    hovered_subitem.value = undefined;
-                }, props.hideDuration);
+                if (hide_timer === undefined && hovered_subitem.value !== undefined) {
+                    hide_timer = timer(() => {
+                        hovered_subitem.value = undefined;
+                    }, props.hideDuration);
+                }
             }
         }
         function leave_SubItem(key: any) {
