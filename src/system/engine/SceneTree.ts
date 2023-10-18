@@ -1,0 +1,603 @@
+import { type Camera, PerspectiveCamera, OrthographicCamera, Clock, Vector3, Euler, Matrix4, Matrix3, Quaternion, Vector2 } from "three";
+import { SignalEmitter } from "../utils/SignalEmitter";
+import { Rid } from "./Rid";
+import { Renderer, World } from "./Renderer";
+
+export class SceneTree {
+    private readonly root: Node;
+    private readonly clock: Clock = new Clock(false);
+    public frame_id: number = 0;
+    private animation_requested: number | undefined = undefined;
+    public get looping() { return this.animation_requested !== undefined; }
+    public time: number = 0;
+    public delta: number = 0;
+
+    private viewports: Set<Viewport> = new Set();
+
+    constructor(root: Node) {
+        if (root.has_parent || root.ready) throw new Error('root is invalid');
+        this.root = root;
+        this.root.set_SceneTree(this);
+    }
+
+    public notify_TreeChange() {
+        console.log(" > scene tree changed");
+    }
+
+    private _loop_func = this.loop.bind(this);
+    private loop() {
+        this.time = this.clock.elapsedTime;
+        this.delta = this.clock.getDelta();
+        this.frame_id++;
+        // internal process process
+        this.root.propagate_InternalBeforeProcess(this.delta);
+        this.root.propagate_Process(this.delta);
+        this.root.propagate_InternalBeforeRender(this.delta);
+        for (const viewport of this.viewports) {
+            viewport.render();
+        }
+        // next frame
+        this.animation_requested = requestAnimationFrame(this._loop_func);
+    }
+
+    // apis
+
+    public add_Viewport(viewport: Viewport) {
+        this.viewports.add(viewport);
+    }
+
+    public remove_Viewport(viewport: Viewport) {
+        this.viewports.delete(viewport);
+    }
+
+    public start_Loop() {
+        if (this.looping) return;
+        this.loop();
+        this.clock.start();
+    }
+
+    public stop_Loop() {
+        if (this.looping) {
+            cancelAnimationFrame(this.animation_requested!);
+            this.animation_requested = undefined;
+            this.clock.stop();
+            this.time = 0;
+            this.delta = 0;
+        }
+    }
+
+    public get_Root() {
+        return this.root;
+    }
+}
+
+export enum NodeNotification {
+    // Node
+    ExitingTree,
+    EnteredTree,
+    ExitedTree,
+    EnteredReady,
+    Ready,
+    InternalBeforeProcess,
+    Process,
+    InternalBeforeRender,
+    Parented,
+    Unparented,
+    ChildrenChanged,
+    // Viewport
+    BeforeRender,
+    AfterRender,
+}
+
+export class Node {
+
+    public readonly rid: string;
+    public name: string | undefined;
+    public get readable_name() { return this.name ?? this.rid; }
+
+    private scenetree: SceneTree | undefined = undefined;
+    private inside_tree: boolean = false;
+    private viewport: Viewport | undefined;
+
+    public parent: Node | undefined = undefined;
+    public get has_parent() { return this.parent !== undefined; }
+    public readonly children: Node[] = [];
+    private is_ready: boolean = false;
+    public get ready() { return this.is_ready; }
+    private first_time_ready: boolean = true;
+
+    // signals
+    public readonly signal_exiting_tree: SignalEmitter<() => void> = new SignalEmitter();
+    public readonly signal_entered_tree: SignalEmitter<() => void> = new SignalEmitter();
+    public readonly signal_exited_tree: SignalEmitter<() => void> = new SignalEmitter();
+
+    public readonly signal_ready: SignalEmitter<() => void> = new SignalEmitter();
+    public readonly signal_process: SignalEmitter<(delta: number) => void> = new SignalEmitter();
+
+    constructor() {
+        this.rid = Rid();
+    };
+
+    // scene tree
+
+    protected nofity(what: NodeNotification) {
+        this._notification(what);
+    }
+
+    private propagate_SceneTreeExiting() {
+        for (const child of this.children) {
+            child.propagate_SceneTreeExiting();
+        }
+        // before exit tree
+        this.nofity(NodeNotification.ExitingTree);
+        this.signal_exiting_tree.trigger();
+        this.viewport = undefined;
+        this.inside_tree = false;
+        this.is_ready = false;
+        this.scenetree = undefined;
+    }
+
+    private propagate_SceneTreeEntering() {
+        if (this.parent !== undefined) {
+            this.scenetree = this.parent.scenetree;
+        }
+        if (this instanceof Viewport) {
+            this.viewport = this;
+        }
+        if (this.viewport === undefined && this.parent !== undefined) {
+            this.viewport = this.parent.viewport;
+        }
+        this.inside_tree = true;
+        // entered tree
+        this.nofity(NodeNotification.EnteredTree);
+        this.signal_entered_tree.trigger();
+        for (const child of this.children) {
+            if (!child.inside_tree) {
+                child.propagate_SceneTreeEntering();
+            }
+        }
+    }
+
+    private propagate_SceneTreeExited() {
+        for (const child of this.children) {
+            child.propagate_SceneTreeExited();
+        }
+        // exited tree
+        this.nofity(NodeNotification.ExitedTree);
+        this.signal_exited_tree.trigger();
+    }
+
+    public propagate_Ready() {
+        this.is_ready = true;
+        for (const child of this.children) {
+            child.propagate_Ready();
+        }
+        this.nofity(NodeNotification.EnteredReady);
+        if (this.first_time_ready) {
+            this.first_time_ready = false;
+            // ready
+            this.nofity(NodeNotification.Ready);
+            this._ready();
+            this.signal_ready.trigger();
+        }
+    }
+
+    public propagate_InternalBeforeProcess(delta: number) {
+        for (const child of this.children) {
+            child.propagate_InternalBeforeProcess(delta);
+        }
+        // internal before process
+        this.nofity(NodeNotification.InternalBeforeProcess);
+    }
+
+    public propagate_Process(delta: number) {
+        for (const child of this.children) {
+            child.propagate_Process(delta);
+        }
+        // process
+        this.nofity(NodeNotification.Process);
+        this._process(delta);
+        this.signal_process.trigger(delta);
+    }
+
+    public propagate_InternalBeforeRender(delta: number) {
+        for (const child of this.children) {
+            child.propagate_InternalBeforeRender(delta);
+        }
+        // internal after process
+        this.nofity(NodeNotification.InternalBeforeRender);
+    }
+
+    public set_SceneTree(scenetree: SceneTree | undefined) {
+        if (this.scenetree === scenetree) return;
+        const last_scenetree: SceneTree | undefined = this.scenetree;
+        if (last_scenetree !== undefined) {
+            // exit tree
+            this.propagate_SceneTreeExiting();
+        }
+        this.scenetree = scenetree;
+        if (this.scenetree !== undefined) {
+            // enter tree
+            this.propagate_SceneTreeEntering();
+            if (this.parent === undefined || this.parent.is_ready) {
+                // ready
+                this.propagate_Ready();
+            }
+        }
+        if (last_scenetree !== undefined) last_scenetree.notify_TreeChange();
+        if (this.scenetree !== undefined) this.scenetree.notify_TreeChange();
+    }
+
+    private add_ChildInternal(node: Node) {
+        if (node.parent === this) return;
+        if (node === this) throw new Error("cannot add child to itself");
+        if (node.parent !== undefined) throw new Error("cannot add child to node because it already has a parent");
+        // check cyclic dependency
+        this.children.push(node);
+        node.parent = this;
+        // node parent
+        node.nofity(NodeNotification.Parented);
+        if (this.scenetree !== undefined) {
+            node.set_SceneTree(this.scenetree);
+        }
+        // children changed
+        node.nofity(NodeNotification.ChildrenChanged);
+    }
+
+    private remove_ChildInternal(node: Node) {
+        const idx = this.get_ChildIndex(node);
+        if (idx < 0) return;
+        node.set_SceneTree(undefined);
+        this.children.splice(idx, 1);
+        node.parent = undefined;
+        // node unparent
+        node.nofity(NodeNotification.Unparented);
+        if (this.inside_tree) {
+            node.propagate_SceneTreeExited();
+        }
+        // children changed siganl
+        node.nofity(NodeNotification.ChildrenChanged);
+    }
+
+    // node public apis
+
+    public add_Child(node: Node) {
+        this.add_ChildInternal(node);
+    }
+
+    public remove_Child(node: Node) {
+        this.remove_ChildInternal(node);
+    }
+
+    public has_Child(node: Node): boolean {
+        return this.children.includes(node);
+    }
+
+    public get_ChildIndex(node: Node): number {
+        return this.children.indexOf(node);
+    }
+
+    public get_Viewport() {
+        return this.viewport;
+    }
+
+    public get_SceneTree() {
+        return this.scenetree;
+    }
+
+    // scriptable
+
+    public _notification(what: NodeNotification) {
+
+    }
+
+    public _ready() {
+
+    }
+
+    public _process(delta: number) {
+
+    }
+}
+
+export class Node3D extends Node {
+
+    // local
+    private readonly _local_position: Vector3 = new Vector3();
+    private readonly _local_rotation: Euler = new Euler();
+    private readonly _local_scale: Vector3 = new Vector3(1, 1, 1);
+
+    public get local_position() {
+        return this._local_position.clone();
+    }
+    public set local_position(position: Vector3) {
+        this._local_position.copy(position);
+        this.is_local_transform_dirty = true;
+        this.propagate_TransformChanged();
+    }
+    public get local_rotation() {
+        return this._local_rotation.clone();
+    }
+    public set local_rotation(rotation: Euler) {
+        this._local_rotation.copy(rotation);
+        this.is_local_transform_dirty = true;
+        this.propagate_TransformChanged();
+    }
+    public get local_scale() {
+        return this._local_scale.clone();
+    }
+    public set local_scale(scale: Vector3) {
+        this._local_scale.copy(scale);
+        this.is_local_transform_dirty = true;
+        this.propagate_TransformChanged();
+    }
+
+    private readonly _local_transform: Matrix4 = new Matrix4();
+    private is_local_transform_dirty: boolean = false;
+    public get local_transform(): Matrix4 {
+        if (this.is_local_transform_dirty) {
+            const scale = new Matrix4().makeScale(this._local_scale.x, this._local_scale.y, this._local_scale.z);
+            const rotation = new Matrix4().makeRotationFromEuler(this._local_rotation);
+            const translate = new Matrix4().makeTranslation(this._local_position);
+            this._local_transform.multiplyMatrices(translate, rotation.multiply(scale));
+            this.is_local_transform_dirty = false;
+        }
+        return this._local_transform.clone();
+    }
+    public set local_transform(transform: Matrix4) {
+        this._local_transform.copy(transform);
+        const position = new Vector3();
+        const rotation = new Quaternion();
+        const scale = new Vector3();
+        this._local_transform.decompose(position, rotation, scale);
+        this._local_position.copy(position);
+        this._local_rotation.setFromQuaternion(rotation);
+        this._local_scale.copy(scale);
+        this.is_local_transform_dirty = false;
+        this.propagate_TransformChanged();
+    }
+
+    // global
+    private readonly _global_transform: Matrix4 = new Matrix4();
+    private is_global_transform_dirty: boolean = false;
+
+    public get global_transform(): Matrix4 {
+        if (this.is_global_transform_dirty) {
+            if (this.parent !== undefined && this.parent instanceof Node3D) {
+                const parent_global_transform = this.parent.global_transform;
+                const self_local_transform = this.local_transform;
+                this._global_transform.multiplyMatrices(parent_global_transform, self_local_transform);
+                // setup global position / rotation
+                const position = new Vector3();
+                const rotation = new Quaternion();
+                const _ = new Vector3();
+                this._global_transform.decompose(position, rotation, _);
+                this._global_position.copy(position);
+                this._global_rotation.setFromQuaternion(rotation);
+                this.is_global_transform_dirty = false;
+            }
+            else {
+                this._global_transform.copy(this.local_transform);
+                this._global_position.copy(this.local_position);
+                this._global_rotation.copy(this.local_rotation);
+                this.is_global_transform_dirty = false;
+            }
+        }
+        return this._global_transform.clone();
+    }
+    public set global_transform(transform: Matrix4) {
+        if (this.parent !== undefined && this.parent instanceof Node3D) {
+            const parent_inverse = this.parent.global_transform.invert();
+            this.local_transform = transform.multiply(parent_inverse);
+        }
+        this.local_transform = transform;
+    }
+
+    private readonly _global_position: Vector3 = new Vector3();
+    private readonly _global_rotation: Euler = new Euler();
+
+    public get global_position(): Vector3 {
+        if (this.is_global_transform_dirty) {
+            const _ = this.global_transform;
+        }
+        return this._global_position.clone();
+    }
+    public set global_position(position: Vector3) {
+        const global_transform = this.global_transform;
+        global_transform.setPosition(position);
+        this.global_transform = global_transform;
+    }
+    public get global_rotation(): Euler {
+        if (this.is_global_transform_dirty) {
+            const _ = this.global_transform;
+        }
+        return this._global_rotation.clone();
+    }
+    public set global_rotation(rotation: Euler) {
+        const global_transform = this.global_transform;
+        global_transform.setFromMatrix3(new Matrix3().setFromMatrix4(new Matrix4().makeRotationFromEuler(rotation)));
+        this.global_transform = global_transform;
+    }
+
+    private propagate_TransformChanged() {
+        if (this.is_global_transform_dirty) return;
+        for (const child of this.children) {
+            if (child instanceof Node3D) {
+                child.propagate_TransformChanged();
+            }
+        }
+        this.is_global_transform_dirty = true;
+    }
+
+    public _notification(what: NodeNotification): void {
+        switch (what) {
+            case NodeNotification.Parented: {
+                if (this.parent !== undefined && this.parent instanceof Node3D) {
+                    this.propagate_TransformChanged();
+                }
+                return;
+            }
+            case NodeNotification.Unparented: {
+                this.propagate_TransformChanged();
+                return;
+            }
+        }
+    }
+}
+
+export class Camera3D extends Node3D {
+    private readonly camera_persp: PerspectiveCamera = new PerspectiveCamera();
+    private readonly camera_orth: OrthographicCamera = new OrthographicCamera();
+
+    private _fov: number = 45;
+    public get fov() { return this._fov; }
+    public set fov(fov: number) {
+        if (this._fov !== fov) {
+            this._fov = fov;
+            this.camera_persp.fov = this._fov;
+            this.camera_persp.updateProjectionMatrix();
+        }
+    }
+
+    public get camera(): Camera {
+        return this.camera_persp;
+    }
+
+    constructor() {
+        super();
+        this.camera_persp.matrixAutoUpdate = false;
+        this.camera_persp.matrixWorldAutoUpdate = false;
+        this.camera_orth.matrixAutoUpdate = false;
+        this.camera_orth.matrixWorldAutoUpdate = false;
+    }
+
+    public _notification(what: NodeNotification): void {
+        switch (what) {
+            case NodeNotification.EnteredTree: {
+                const viewport = this.get_Viewport();
+                viewport?.set_ActiveCamera3D(this);
+                return;
+            }
+            case NodeNotification.ExitingTree: {
+                const viewport = this.get_Viewport();
+                viewport?.clear_Camera3D(this);
+                return;
+            }
+            case NodeNotification.InternalBeforeRender: {
+                this.camera_persp.matrixWorld.copy(this.global_transform);
+                this.camera_persp.matrixWorldInverse.copy(this.camera_persp.matrixWorld).invert();
+                return;
+            }
+        }
+    }
+
+    public update_ViewportSize(size: Vector2) {
+        console.log(">>>> resize", this.readable_name);
+        const aspect = size.x / size.y;
+        this.camera_persp.aspect = aspect;
+        this.camera_persp.updateProjectionMatrix();
+    }
+}
+
+export class Viewport extends Node {
+    private readonly world_3d: World;
+    private readonly renderer_3d: Renderer;
+    private camera_3d: Camera3D | undefined;
+    public get canvas(): HTMLCanvasElement {
+        return this.renderer_3d.canvas;
+    }
+
+    private readonly _size: Vector2 = new Vector2(128, 128);
+    private is_size_dirty: boolean = false;
+    public get size(): Vector2 {
+        return this._size.clone();
+    }
+    public set size(size: Vector2) {
+        if (!this._size.equals(size)) {
+            this._size.copy(size);
+            this.renderer_3d.resize(this._size.x, this._size.y);
+            this.signal_resized.trigger(this.size);
+            this.is_size_dirty = true;
+        }
+    }
+
+    private _pixel_ratio: number = window.devicePixelRatio;
+    public get pixel_ratio(): number {
+        return this._pixel_ratio;
+    }
+    public set pixel_ratio(pixel_ratio: number) {
+        if (this._pixel_ratio !== pixel_ratio) {
+            this._pixel_ratio = pixel_ratio;
+            this.renderer_3d.set_PixelRatio(this._pixel_ratio);
+        }
+    }
+
+    private _transparent: boolean = false;
+    public get transparent() { return this._transparent; }
+    public set transparent(transparent: boolean) {
+        if (this._transparent !== transparent) {
+            this._transparent = transparent;
+            this.renderer_3d.set_ClearAlpha(this._transparent ? 0 : 1);
+        }
+    }
+
+    // signals
+    public readonly signal_before_render: SignalEmitter<() => void> = new SignalEmitter();
+    public readonly signal_after_render: SignalEmitter<() => void> = new SignalEmitter();
+    public readonly signal_resized: SignalEmitter<(size: Vector2) => void> = new SignalEmitter();
+
+    constructor() {
+        super();
+        this.renderer_3d = new Renderer(document.createElement('canvas'), { antialias: true });
+        this.renderer_3d.resize(this.size.x, this.size.y);
+        this.renderer_3d.set_PixelRatio(this.pixel_ratio);
+        this.world_3d = new World();
+    }
+
+    public set_ActiveCamera3D(camera: Camera3D) {
+        if (this.camera_3d !== camera) {
+            this.camera_3d = camera;
+            this.is_size_dirty = true;
+        }
+    }
+
+    public clear_Camera3D(camera: Camera3D) {
+        if (this.camera_3d === camera) {
+            this.camera_3d = undefined;
+            this.is_size_dirty = true;
+        }
+    }
+
+    public _notification(what: NodeNotification): void {
+        switch (what) {
+            case NodeNotification.EnteredTree: {
+                const scenetree = this.get_SceneTree();
+                if (scenetree !== undefined) {
+                    scenetree.add_Viewport(this);
+                }
+                return;
+            }
+            case NodeNotification.ExitingTree: {
+                const scenetree = this.get_SceneTree();
+                if (scenetree !== undefined) {
+                    scenetree.remove_Viewport(this);
+                }
+                return;
+            }
+        }
+    }
+
+    public render(): void {
+        if (this.camera_3d !== undefined) {
+            if (this.is_size_dirty) {
+                this.camera_3d.update_ViewportSize(this.size);
+                this.is_size_dirty = false;
+            }
+            this.nofity(NodeNotification.BeforeRender);
+            this.signal_before_render.trigger();
+            this.renderer_3d.render(this.world_3d.scene, this.camera_3d.camera);
+            this.nofity(NodeNotification.AfterRender);
+            this.signal_after_render.trigger();
+        }
+    }
+}

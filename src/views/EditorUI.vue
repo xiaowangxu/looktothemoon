@@ -1,9 +1,9 @@
 <template>
-    <div class="canvas-container" :class="{ opened: !folded }">
-        <div class="top-left-panel">
+    <div id="editor-container" :class="{ opened: !folded }">
+        <div id="top-left-panel">
             <EditorMenuBar />
         </div>
-        <div class="top-panel">
+        <div id="top-panel">
             <SFlow align-h="center" align-v="start" style="width: 100%; height: 100%;">
                 <SPanel class="pointer-event" style="overflow: hidden; padding: 0px;">
                     <SScrollContainer scroll-bar-state-h="hidden" scroll-bar-state-v="hidden">
@@ -109,15 +109,15 @@
                 </SPanel>
             </SFlow>
         </div>
-        <div class="top-right-panel">
+        <div id="top-right-panel">
             <EditorCompass />
         </div>
-        <div class="left-panel">
+        <div id="left-panel">
             <SFlow vertical align-h="start" align-v="center" style="width: 100%; height: 100%;">
                 <EditorToolBar />
             </SFlow>
         </div>
-        <div class="right-panel">
+        <div id="right-panel">
         </div>
     </div>
 </template>
@@ -182,7 +182,7 @@ function resized2(borderBoxSize: BoxSize, contentBoxSize: BoxSize, target: Eleme
 </script>
 
 <style scoped>
-.canvas-container {
+#editor-container {
     pointer-events: none;
     position: fixed;
     inset: 14px;
@@ -194,41 +194,41 @@ function resized2(borderBoxSize: BoxSize, contentBoxSize: BoxSize, target: Eleme
     pointer-events: all;
 }
 
-.canvas-container.opened {
+#editor-container.opened {
     left: 200px;
     transition: left 0.2s ease-out;
 }
 
-.top-left-panel {
+#top-left-panel {
     position: absolute;
     top: 0px;
     left: 0px;
 }
 
-.top-panel {
+#top-panel {
     position: absolute;
     top: 0px;
     left: 300px;
     right: 300px;
 }
 
-.top-right-panel {
+#top-right-panel {
     position: absolute;
     top: 0px;
     right: 0px;
 }
 
-.left-panel {
+#left-panel {
     position: absolute;
     left: 0px;
     top: 100px;
     bottom: 100px;
 }
 
-.right-panel {
+#right-panel {
     position: absolute;
     right: 0px;
     top: 120px;
     bottom: 120px;
 }
-</style>@/components/SSelect/SSelect
+</style>

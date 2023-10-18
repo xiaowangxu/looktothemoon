@@ -5,36 +5,41 @@ export interface SignalBindOption {
 export class SignalEmitter<T extends (...args: any[]) => void> {
 
     private readonly callbacks: Map<symbol, T> = new Map();
+    private readonly callbacks_once: Map<symbol, T> = new Map();
 
     constructor() { }
 
-    public bind(callback: T, option: SignalBindOption) {
+    public connect(callback: T, option?: SignalBindOption) {
         const sym = Symbol();
-        const { once = false } = option;
+        const { once = false } = option ?? {};
         let f: T = callback;
         if (once) {
-            f = ((...args: Parameters<T>) => {
-                this.unbind(sym);
-                callback(...args);
-            }) as T;
+            this.callbacks_once.set(sym, f);
         }
-        this.callbacks.set(sym, f);
+        else {
+            this.callbacks.set(sym, f);
+        }
         return sym;
     }
 
-    public unbind(sym: symbol) {
+    public disconnect(sym: symbol) {
         this.callbacks.delete(sym);
+        this.callbacks_once.delete(sym);
     }
 
     public trigger(...args: Parameters<T>) {
         for (const callback of this.callbacks.values()) {
             callback(...args);
         }
+        for (const callback of this.callbacks_once.values()) {
+            callback(...args);
+        }
+        this.callbacks_once.clear();
     }
 
     public wait(): Promise<Parameters<T>> {
         return new Promise((resolve, reject) => {
-            this.bind(((...args: Parameters<T>) => {
+            this.connect(((...args: Parameters<T>) => {
                 resolve(args);
             }) as T, { once: true });
         });

@@ -1,15 +1,10 @@
 <template>
     <Teleport to="#popup" :disabled="teleportDisabled">
-        <div class="__s__ __s_popup_cover__" :class="{ invisible: !visible }" v-bind="$attrs">
-            <div ref="container_div_dom" class="__s__ __s_popup_container__" :style="{
-                left: rect?.x ? `${rect?.x}px` : undefined,
-                top: rect?.y ? `${rect?.y}px` : undefined,
-                width: rect?.width ? `${rect?.width}px` : undefined,
-                height: rect?.height ? `${rect?.height}px` : undefined,
-            }">
-                <slot :rect="rect" />
-            </div>
-            <div></div>
+        <div ref="container_div_dom" class="__s__ __s_popup_container__" :class="{ invisible: !visible }" :style="{
+            left: rect?.x ? `${rect?.x}px` : undefined, top: rect?.y ? `${rect?.y}px` : undefined,
+            width: rect?.width ? `${rect?.width}px` : undefined, height: rect?.height ? `${rect?.height}px` : undefined
+        }">
+            <slot :rect="rect" />
         </div>
     </Teleport>
 </template>
@@ -18,11 +13,6 @@
 
 import type { Rect } from './SConst';
 import { ref } from 'vue';
-
-// options
-defineOptions({
-    inheritAttrs: false,
-});
 
 // props
 const props = withDefaults(
@@ -80,15 +70,15 @@ defineExpose({
     inset: 0px;
 }
 
-.__s_popup_cover__.invisible {
-    visibility: hidden;
-}
-
 .__s_popup_container__ {
-    position: absolute;
+    position: fixed;
     left: 0;
     width: 0px;
     top: 0;
     height: 0px;
+}
+
+.__s_popup_container__.invisible {
+    visibility: hidden;
 }
 </style>
