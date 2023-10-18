@@ -10,9 +10,6 @@ export class Renderer {
     public readonly canvas: HTMLCanvasElement;
     private readonly renderer: WebGLRenderer;
 
-    public readonly signal_before_render: SignalEmitter<(renderer: Renderer, camera: Camera, world: World) => void> = new SignalEmitter();
-    public readonly signal_after_render: SignalEmitter<(renderer: Renderer, camera: Camera, world: World) => void> = new SignalEmitter();
-
     constructor(canvas: HTMLCanvasElement, option: RendererCreationOption) {
         const { antialias = true } = option;
         this.canvas = canvas;
@@ -34,12 +31,12 @@ export class Renderer {
         this.renderer.setPixelRatio(pixel_ratio);
     }
 
-    public render(scene: Scene, camera: Camera): void {
-        this.renderer.render(scene, camera);
+    public render(world: World3D, camera: Camera): void {
+        this.renderer.render(world.scene, camera);
     }
 }
 
-export class World {
+export class World3D {
     public readonly scene: Scene = new Scene();
 
     constructor() {

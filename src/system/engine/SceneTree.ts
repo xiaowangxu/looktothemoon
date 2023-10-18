@@ -1,7 +1,7 @@
 import { type Camera, PerspectiveCamera, OrthographicCamera, Clock, Vector3, Euler, Matrix4, Matrix3, Quaternion, Vector2 } from "three";
 import { SignalEmitter } from "../utils/SignalEmitter";
 import { Rid } from "./Rid";
-import { Renderer, World } from "./Renderer";
+import { Renderer, World3D as World3D } from "./Renderer";
 
 export class SceneTree {
     private readonly root: Node;
@@ -500,7 +500,7 @@ export class Camera3D extends Node3D {
 }
 
 export class Viewport extends Node {
-    private readonly world_3d: World;
+    public world_3d: World3D | undefined = undefined;
     private readonly renderer_3d: Renderer;
     private camera_3d: Camera3D | undefined;
     public get canvas(): HTMLCanvasElement {
@@ -551,7 +551,6 @@ export class Viewport extends Node {
         this.renderer_3d = new Renderer(document.createElement('canvas'), { antialias: true });
         this.renderer_3d.resize(this.size.x, this.size.y);
         this.renderer_3d.set_PixelRatio(this.pixel_ratio);
-        this.world_3d = new World();
     }
 
     public set_ActiveCamera3D(camera: Camera3D) {
@@ -587,15 +586,24 @@ export class Viewport extends Node {
         }
     }
 
+    public get_World3D(): World3D | undefined {
+        if (this.world_3d !== undefined) return this.world_3d;
+        if (this.parent !== undefined) {
+            return this.parent.get_Viewport()?.get_World3D?.();
+        }
+        return undefined;
+    }
+
     public render(): void {
-        if (this.camera_3d !== undefined) {
+        const world_3d = this.get_World3D();
+        if (this.camera_3d !== undefined && world_3d !== undefined) {
             if (this.is_size_dirty) {
                 this.camera_3d.update_ViewportSize(this.size);
                 this.is_size_dirty = false;
             }
             this.nofity(NodeNotification.BeforeRender);
             this.signal_before_render.trigger();
-            this.renderer_3d.render(this.world_3d.scene, this.camera_3d.camera);
+            this.renderer_3d.render(world_3d, this.camera_3d.camera);
             this.nofity(NodeNotification.AfterRender);
             this.signal_after_render.trigger();
         }

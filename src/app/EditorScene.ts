@@ -1,8 +1,10 @@
+import { World3D } from "@/system/engine/Renderer";
 import { Camera3D, Node3D, SceneTree, Viewport } from "@/system/engine/SceneTree";
 import { Euler, Vector2, Vector3 } from "three";
 
 // viewport
 export const EditorViewport = new Viewport();
+EditorViewport.world_3d = new World3D();
 EditorViewport.transparent = true;
 function resize_Viewport() {
     EditorViewport.size = new Vector2(window.innerWidth, window.innerHeight);
