@@ -15,7 +15,7 @@ export class SceneTree {
     private viewports: Set<Viewport> = new Set();
 
     constructor(root: Node) {
-        if (root.has_parent || root.ready) throw new Error('root is invalid');
+        if (root.parent !== undefined || root.ready) throw new Error('root is invalid');
         this.root = root;
         this.root.set_SceneTree(this);
     }
@@ -100,7 +100,6 @@ export class Node {
     private viewport: Viewport | undefined;
 
     public parent: Node | undefined = undefined;
-    public get has_parent() { return this.parent !== undefined; }
     public readonly children: Node[] = [];
     private is_ready: boolean = false;
     public get ready() { return this.is_ready; }
