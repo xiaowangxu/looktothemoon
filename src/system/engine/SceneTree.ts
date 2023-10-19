@@ -469,7 +469,7 @@ export class Node3D extends Node {
 }
 
 export class Camera3D extends Node3D {
-    
+
     public get_Camera(): Camera {
         throw new Error('abstract method');
     }
@@ -494,6 +494,10 @@ export class Camera3D extends Node3D {
         throw new Error('abstract method');
     }
 
+}
+
+export enum ViewportUpdateMode {
+    Always, Never, Once,
 }
 
 export class Viewport extends Node {
@@ -537,6 +541,8 @@ export class Viewport extends Node {
             this.renderer_3d.set_ClearAlpha(this._transparent ? 0 : 1);
         }
     }
+
+    public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
 
     // signals
     public readonly signal_before_render: SignalEmitter<() => void> = new SignalEmitter();
@@ -596,6 +602,10 @@ export class Viewport extends Node {
     }
 
     public render(): void {
+        if (this.update_mode === ViewportUpdateMode.Never) return;
+        if (this.update_mode === ViewportUpdateMode.Once) {
+            this.update_mode = ViewportUpdateMode.Never;
+        }
         this.signal_before_render.trigger();
         const world_3d = this.get_RenderableWorld3D();
         if (this.camera_3d !== undefined && world_3d !== undefined) {

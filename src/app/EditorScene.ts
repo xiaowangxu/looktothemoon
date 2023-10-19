@@ -1,5 +1,5 @@
 import { World3D } from "@/system/engine/World";
-import { Camera3D, Node3D, SceneTree, Viewport } from "@/system/engine/SceneTree";
+import { Camera3D, Node3D, SceneTree, Viewport, ViewportUpdateMode } from "@/system/engine/SceneTree";
 import { ViewportDomContainer } from "@/system/engine/nodes/ViewportDomContainer";
 import { Euler, BoxGeometry, InstancedInterleavedBuffer, InterleavedBufferAttribute, Vector2, Vector3, CatmullRomCurve3, Color, TorusGeometry, SRGBColorSpace } from "three";
 import { MeshInstance3D } from "@/system/engine/nodes/MeshInstance3D";
@@ -74,7 +74,7 @@ CameraArm1.local_rotation = new Euler(-0.3, 0, 0);
 CameraArm0.signal_process.connect((delta) => {
     time += delta;
     const rotation = CameraArm0.local_rotation;
-    CameraArm0.local_rotation = new Euler(0, rotation.y + delta / 10, 0);
+    CameraArm0.local_rotation = new Euler(0, rotation.y - delta, 0);
     EditorCamera.fov = (Math.sin(time / 10) + 1) / 2 * 100 + 20;
 })
 
@@ -117,6 +117,12 @@ EditorViewport2.add_Child(EditorCamera2);
 EditorCamera2.local_position = new Vector3(10, 0, 0);
 EditorCamera2.local_rotation = new Euler(0, Math.PI / 2, 0);
 EditorViewport.add_Child(EditorViewportContainer2);
+
+EditorViewport0.update_mode = ViewportUpdateMode.Once;
+
+EditorViewport0.signal_resized.connect(() => {
+    EditorViewport0.update_mode = ViewportUpdateMode.Once;
+});
 
 console.log(EditorSceneTree);
 
