@@ -1,0 +1,16 @@
+.__editor_viewports_container__ {
+    --EditorViewportGap: 3px;
+    position: fixed;
+    inset: var(--EditorViewportGap);
+}
+
+.__editor_canvas_panel__ {
+    position: absolute;
+    overflow: hidden;
+    /* outline: 2px solid red;
+    outline-offset: -2px; */
+    --CanvasBG: rgb(168, 168, 168);
+    background: var(--CanvasBG);
+    border-radius: 10px;
+    margin: var(--EditorViewportGap);
+}

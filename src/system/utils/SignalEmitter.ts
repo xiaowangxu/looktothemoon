@@ -37,6 +37,11 @@ export class SignalEmitter<T extends (...args: any[]) => void> {
         this.callbacks_once.clear();
     }
 
+    public clear() {
+        this.callbacks.clear();
+        this.callbacks_once.clear();
+    }
+
     public wait(): Promise<Parameters<T>> {
         return new Promise((resolve, reject) => {
             this.connect(((...args: Parameters<T>) => {

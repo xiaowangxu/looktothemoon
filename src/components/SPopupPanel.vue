@@ -1,5 +1,5 @@
 <template>
-    <SPopup class="__s_popuppanel_popup__" :visible="visible" :rect="rect" :teleportDisabled="teleportDisabled">
+    <SPopup :visible="visible" :rect="rect" :teleportDisabled="teleportDisabled">
         <SPanel ref="spanel_ref" class="__s_popuppanel_panel__" :style="{ width, height }"
             @mouseenter="on_PanelMouseEntered" @mouseleave="on_PanelMouseLeaved"
             v-on-click-outside="on_ClickOutsideHandler">

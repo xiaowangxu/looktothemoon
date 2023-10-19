@@ -1,0 +1,152 @@
+import { Resource } from "../Resource";
+import { Camera, Color, Material, MeshNormalMaterial, Scene, Vector2, WebGLRenderer } from 'three';
+import { LineMaterial } from 'three/addons/lines/LineMaterial';
+
+export class MaterialResource extends Resource {
+    public get_Material(): Material {
+        throw new Error('abstract method');
+    }
+}
+
+export class ThreeMaterialResource extends MaterialResource {
+    private readonly material: Material;
+
+    constructor(material: Material) {
+        super();
+        this.material = material;
+    }
+
+    public get_Material(): Material {
+        return this.material;
+    }
+}
+
+export class NormalMaterialResource extends MaterialResource {
+    private readonly normal_material: MeshNormalMaterial = new MeshNormalMaterial();
+
+    constructor() {
+        super();
+    }
+
+    public get_Material(): Material {
+        return this.normal_material;
+    }
+}
+
+export class PolyLineMaterialResource extends MaterialResource {
+    private line_material: LineMaterial = new LineMaterial({
+        color: 0xffffff,
+        vertexColors: false,
+        linewidth: 1,
+        worldUnits: false,
+        alphaToCoverage: false,
+        dashed: false,
+        dashScale: 1,
+        gapSize: 1,
+        dashSize: 2,
+        dashOffset: 0,
+    });
+
+    private _color: Color = new Color(1, 1, 1);
+    public get color() { return this._color; }
+    public set color(color: Color) {
+        if (!this._color.equals(color)) {
+            this._color.copy(color);
+            this.line_material.color = this._color;
+        }
+    }
+
+    private _vertex_colors: boolean = false;
+    public get vertex_colors() { return this._vertex_colors; }
+    public set vertex_colors(vertex_color: boolean) {
+        if (this._vertex_colors !== vertex_color) {
+            this._vertex_colors = vertex_color;
+            this.line_material.vertexColors = this._vertex_colors;
+            this.line_material.needsUpdate = true;
+        }
+    }
+
+    private _width: number = 1;
+    public get width() { return this._width; }
+    public set width(width: number) {
+        if (this._width !== width) {
+            this._width = width;
+            this.line_material.linewidth = this._width;
+        }
+    }
+
+    private _world_unit: boolean = false;
+    public get world_unit() { return this._world_unit; }
+    public set world_unit(world_unit: boolean) {
+        if (this._world_unit !== world_unit) {
+            this._world_unit = world_unit;
+            this.line_material.worldUnits = this._world_unit;
+            this.line_material.needsUpdate = true;
+        }
+    }
+
+    private _alpha_to_coverage: boolean = true;
+    public get alpha_to_coverage() { return this._alpha_to_coverage; }
+    public set alpha_to_coverage(alpha_to_coverage: boolean) {
+        if (this._alpha_to_coverage !== alpha_to_coverage) {
+            this._alpha_to_coverage = alpha_to_coverage;
+            this.line_material.alphaToCoverage = this._alpha_to_coverage;
+        }
+    }
+
+    private _dashed: boolean = false;
+    public get dashed() { return this._dashed; }
+    public set dashed(dashed: boolean) {
+        if (this._dashed !== dashed) {
+            this._dashed = dashed;
+            this.line_material.dashed = this._dashed;
+        }
+    }
+
+    private _dash_scale: number = 1;
+    public get dash_scale() { return this._dash_scale; }
+    public set dash_scale(dash_scale: number) {
+        if (this._dash_scale !== dash_scale) {
+            this._dash_scale = dash_scale;
+            this.line_material.dashScale = this._dash_scale;
+        }
+    }
+
+    private _gap_size: number = 1;
+    public get gap_size() { return this._gap_size; }
+    public set gap_size(gap_size: number) {
+        if (this._gap_size !== gap_size) {
+            this._gap_size = gap_size;
+            this.line_material.gapSize = this._gap_size;
+        }
+    }
+
+    private _dash_size: number = 2;
+    public get dash_size() { return this._dash_size; }
+    public set dash_size(dash_size: number) {
+        if (this._dash_size !== dash_size) {
+            this._dash_size = dash_size;
+            this.line_material.dashSize = this._dash_size;
+        }
+    }
+
+    private _dash_offset: number = 0;
+    public get dash_offset() { return this._dash_offset; }
+    public set dash_offset(dash_offset: number) {
+        if (this._dash_offset !== dash_offset) {
+            this._dash_offset = dash_offset;
+            this.line_material.dashOffset = this._dash_offset;
+        }
+    }
+
+    constructor() {
+        super();
+        (this.line_material as any).onBeforeRender = (renderer: WebGLRenderer, scene: Scene, camera: Camera) => {
+            renderer.getSize(this.line_material.resolution);
+        };
+    }
+
+    public get_Material(): Material {
+        return this.line_material;
+    }
+}

@@ -1,11 +1,11 @@
 import { WebGLRenderer, type Camera, Scene, BoxGeometry, MeshBasicMaterial, Mesh, GridHelper } from "three";
-import { SignalEmitter } from "../utils/SignalEmitter";
+import { World3D } from "./World";
 
 export interface RendererCreationOption {
     antialias?: boolean,
 }
 
-export class Renderer {
+export class Renderer3D {
 
     public readonly canvas: HTMLCanvasElement;
     private readonly renderer: WebGLRenderer;
@@ -32,19 +32,11 @@ export class Renderer {
     }
 
     public render(world: World3D, camera: Camera): void {
-        this.renderer.render(world.scene, camera);
+        this.renderer.render(world.get_VisualWorld().get_VisualScene(), camera);
+    }
+
+    public get_Info() {
+        return this.renderer.info;
     }
 }
 
-export class World3D {
-    public readonly scene: Scene = new Scene();
-
-    constructor() {
-        const geometry = new BoxGeometry(1, 1, 1);
-        const material = new MeshBasicMaterial({ color: 0x00ff00 });
-        const cube = new Mesh(geometry, material);
-        const grid = new GridHelper(100, 100);
-        this.scene.add(cube);
-        this.scene.add(grid);
-    }
-}

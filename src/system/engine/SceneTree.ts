@@ -1,7 +1,8 @@
-import { type Camera, PerspectiveCamera, OrthographicCamera, Clock, Vector3, Euler, Matrix4, Matrix3, Quaternion, Vector2 } from "three";
+import { type Camera, OrthographicCamera, Clock, Vector3, Euler, Matrix4, Matrix3, Quaternion, Vector2 } from "three";
 import { SignalEmitter } from "../utils/SignalEmitter";
-import { Rid } from "./Rid";
-import { Renderer, World3D as World3D } from "./Renderer";
+import { Rid, type RID } from "./Rid";
+import { Renderer3D } from "./Renderer";
+import { World3D } from "./World";
 
 export class SceneTree {
     private readonly root: Node;
@@ -15,13 +16,13 @@ export class SceneTree {
     private viewports: Set<Viewport> = new Set();
 
     constructor(root: Node) {
-        if (root.parent !== undefined || root.ready) throw new Error('root is invalid');
+        if (root.get_Parent() !== undefined || root.ready) throw new Error('root is invalid');
         this.root = root;
         this.root.set_SceneTree(this);
     }
 
     public notify_TreeChange() {
-        console.log(" > scene tree changed");
+
     }
 
     private _loop_func = this.loop.bind(this);
@@ -89,15 +90,16 @@ export enum NodeNotification {
 
 export class Node {
 
-    public readonly rid: string;
+    public readonly rid: RID;
     public name: string | undefined;
     public get readable_name() { return this.name ?? this.rid; }
 
     private scenetree: SceneTree | undefined = undefined;
     private inside_tree: boolean = false;
+    public get is_inside_tree() { return this.inside_tree; }
     private viewport: Viewport | undefined;
 
-    public parent: Node | undefined = undefined;
+    private parent: Node | undefined = undefined;
     public readonly children: Node[] = [];
     private is_ready: boolean = false;
     public get ready() { return this.is_ready; }
@@ -281,6 +283,10 @@ export class Node {
         return this.children.indexOf(node);
     }
 
+    public get_Parent() {
+        return this.parent;
+    }
+
     public get_Index() {
         if (this.parent === undefined) return -1;
         return this.parent.get_ChildIndex(this);
@@ -369,11 +375,13 @@ export class Node3D extends Node {
     // global
     private readonly _global_transform: Matrix4 = new Matrix4();
     private is_global_transform_dirty: boolean = false;
+    protected is_global_transform_changed: boolean = false;
 
     public get global_transform(): Matrix4 {
         if (this.is_global_transform_dirty) {
-            if (this.parent !== undefined && this.parent instanceof Node3D) {
-                const parent_global_transform = this.parent.global_transform;
+            const parent = this.get_Parent();
+            if (parent !== undefined && parent instanceof Node3D) {
+                const parent_global_transform = parent.global_transform!;
                 const self_local_transform = this.local_transform;
                 this._global_transform.multiplyMatrices(parent_global_transform, self_local_transform);
                 // setup global position / rotation
@@ -395,8 +403,9 @@ export class Node3D extends Node {
         return this._global_transform.clone();
     }
     public set global_transform(transform: Matrix4) {
-        if (this.parent !== undefined && this.parent instanceof Node3D) {
-            const parent_inverse = this.parent.global_transform.invert();
+        const parent = this.get_Parent();
+        if (parent !== undefined && parent instanceof Node3D) {
+            const parent_inverse = parent.global_transform.invert();
             this.local_transform = transform.multiply(parent_inverse);
         }
         this.local_transform = transform;
@@ -436,12 +445,14 @@ export class Node3D extends Node {
             }
         }
         this.is_global_transform_dirty = true;
+        this.is_global_transform_changed = true;
     }
 
     public _notification(what: NodeNotification): void {
         switch (what) {
             case NodeNotification.Parented: {
-                if (this.parent !== undefined && this.parent instanceof Node3D) {
+                const parent = this.get_Parent();
+                if (parent !== undefined && parent instanceof Node3D) {
                     this.propagate_TransformChanged();
                 }
                 return;
@@ -450,34 +461,17 @@ export class Node3D extends Node {
                 this.propagate_TransformChanged();
                 return;
             }
+            case NodeNotification.InternalBeforeRender: {
+                this.is_global_transform_changed = false;
+            }
         }
     }
 }
 
 export class Camera3D extends Node3D {
-    private readonly camera_persp: PerspectiveCamera = new PerspectiveCamera();
-    private readonly camera_orth: OrthographicCamera = new OrthographicCamera();
-
-    private _fov: number = 45;
-    public get fov() { return this._fov; }
-    public set fov(fov: number) {
-        if (this._fov !== fov) {
-            this._fov = fov;
-            this.camera_persp.fov = this._fov;
-            this.camera_persp.updateProjectionMatrix();
-        }
-    }
-
-    public get camera(): Camera {
-        return this.camera_persp;
-    }
-
-    constructor() {
-        super();
-        this.camera_persp.matrixAutoUpdate = false;
-        this.camera_persp.matrixWorldAutoUpdate = false;
-        this.camera_orth.matrixAutoUpdate = false;
-        this.camera_orth.matrixWorldAutoUpdate = false;
+    
+    public get_Camera(): Camera {
+        throw new Error('abstract method');
     }
 
     public _notification(what: NodeNotification): void {
@@ -485,38 +479,32 @@ export class Camera3D extends Node3D {
             case NodeNotification.EnteredTree: {
                 const viewport = this.get_Viewport();
                 viewport?.set_ActiveCamera3D(this);
-                return;
+                break;
             }
             case NodeNotification.ExitingTree: {
                 const viewport = this.get_Viewport();
                 viewport?.clear_Camera3D(this);
-                return;
-            }
-            case NodeNotification.InternalBeforeRender: {
-                this.camera_persp.matrixWorld.copy(this.global_transform);
-                this.camera_persp.matrixWorldInverse.copy(this.camera_persp.matrixWorld).invert();
-                return;
+                break;
             }
         }
+        super._notification(what);
     }
 
     public update_ViewportSize(size: Vector2) {
-        console.log(">>>> resize", this.readable_name);
-        const aspect = size.x / size.y;
-        this.camera_persp.aspect = aspect;
-        this.camera_persp.updateProjectionMatrix();
+        throw new Error('abstract method');
     }
+
 }
 
 export class Viewport extends Node {
     public world_3d: World3D | undefined = undefined;
-    private readonly renderer_3d: Renderer;
+    private readonly renderer_3d: Renderer3D;
     private camera_3d: Camera3D | undefined;
     public get canvas(): HTMLCanvasElement {
         return this.renderer_3d.canvas;
     }
 
-    private readonly _size: Vector2 = new Vector2(128, 128);
+    private readonly _size: Vector2 = new Vector2(0, 0);
     private is_size_dirty: boolean = false;
     public get size(): Vector2 {
         return this._size.clone();
@@ -557,8 +545,7 @@ export class Viewport extends Node {
 
     constructor() {
         super();
-        this.renderer_3d = new Renderer(document.createElement('canvas'), { antialias: true });
-        this.renderer_3d.resize(this.size.x, this.size.y);
+        this.renderer_3d = new Renderer3D(document.createElement('canvas'), { antialias: true });
         this.renderer_3d.set_PixelRatio(this.pixel_ratio);
     }
 
@@ -596,23 +583,33 @@ export class Viewport extends Node {
     }
 
     public get_World3D(): World3D | undefined {
+        return this.world_3d;
+    }
+
+    private get_RenderableWorld3D(): World3D | undefined {
         if (this.world_3d !== undefined) return this.world_3d;
-        if (this.parent !== undefined) {
-            return this.parent.get_Viewport()?.get_World3D?.();
+        const parent = this.get_Parent();
+        if (parent !== undefined) {
+            return parent.get_Viewport()?.get_World3D();
         }
         return undefined;
     }
 
     public render(): void {
-        const world_3d = this.get_World3D();
+        this.signal_before_render.trigger();
+        const world_3d = this.get_RenderableWorld3D();
         if (this.camera_3d !== undefined && world_3d !== undefined) {
             if (this.is_size_dirty) {
                 this.camera_3d.update_ViewportSize(this.size);
                 this.is_size_dirty = false;
             }
-            this.signal_before_render.trigger();
-            this.renderer_3d.render(world_3d, this.camera_3d.camera);
-            this.signal_after_render.trigger();
+            this.renderer_3d.render(world_3d, this.camera_3d.get_Camera());
         }
+        this.signal_after_render.trigger();
+    }
+
+    public _process(delta: number): void {
+        // const info = this.renderer_3d.get_Info();
+        // console.log(info.memory.geometries, info.programs?.length);
     }
 }
