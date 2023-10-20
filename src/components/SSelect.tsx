@@ -110,7 +110,7 @@ export default defineComponent({
                 });
             }
         }
-        function on_ClickOutside(event: PointerEvent) {
+        function on_ClickOutside(event: Event) {
             if (!sbutton_ref.value?.buttonElement) return;
             const target = sbutton_ref.value.buttonElement;
             const include_button = event.composedPath().includes(target);

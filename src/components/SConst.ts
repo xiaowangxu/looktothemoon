@@ -300,3 +300,34 @@ export function timer(func: () => void, time: number): TimerCanceller {
         }
     };
 }
+
+const GlobalResizeObserver = new ResizeObserver(on_GlobalResizeObserverCallback);
+export type ResizeObserverCallback = (entry: ResizeObserverEntry) => void;
+const ResizeObserverTargetCallbackMap: Map<Element, Set<ResizeObserverCallback>> = new Map();
+function on_GlobalResizeObserverCallback(entrise: ResizeObserverEntry[]) {
+    for (const entry of entrise) {
+        const target = entry.target;
+        ResizeObserverTargetCallbackMap.get(target)?.forEach(c => c(entry));
+    }
+}
+
+export function observe_Resize(el: Element, callback: ResizeObserverCallback) {
+    if (ResizeObserverTargetCallbackMap.has(el)) {
+        ResizeObserverTargetCallbackMap.get(el)?.add(callback);
+    }
+    else {
+        ResizeObserverTargetCallbackMap.set(el, new Set([callback]));
+        GlobalResizeObserver.observe(el);
+    }
+}
+
+export function unobserve_Resize(el: Element, callback: ResizeObserverCallback) {
+    if (ResizeObserverTargetCallbackMap.has(el)) {
+        const callbacks = ResizeObserverTargetCallbackMap.get(el)!;
+        callbacks.delete(callback);
+        if (callbacks.size === 0) {
+            ResizeObserverTargetCallbackMap.delete(el);
+            GlobalResizeObserver.unobserve(el);
+        }
+    }
+}

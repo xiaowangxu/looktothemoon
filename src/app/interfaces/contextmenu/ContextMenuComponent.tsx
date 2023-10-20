@@ -50,7 +50,7 @@ export const ContextMenuComponent = defineComponent({
             required: true,
         },
         onClickoutside: {
-            type: Function as PropType<(event: PointerEvent) => void>,
+            type: Function as PropType<(event: Event) => void>,
             required: true,
         },
         openMode: {

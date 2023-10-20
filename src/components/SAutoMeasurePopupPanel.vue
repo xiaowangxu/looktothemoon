@@ -48,7 +48,7 @@ const emits = defineEmits<{
     closed: [],
     mouseenter: [event: Event],
     mouseleave: [event: Event],
-    clickoutside: [event: PointerEvent],
+    clickoutside: [event: Event],
 }>();
 
 // datas
@@ -75,7 +75,7 @@ function on_PanelMouseEntered(event: Event) {
 function on_PanelMouseLeaved(event: Event) {
     emits('mouseleave', event);
 }
-function on_ClickOutsideHandler(event: PointerEvent) {
+function on_ClickOutsideHandler(event: Event) {
     emits('clickoutside', event);
 };
 

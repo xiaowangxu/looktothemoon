@@ -9,7 +9,7 @@ export class ContextMenu {
 
     // signal
     public readonly signal_item_clicked: SignalEmitter<(key: any) => void> = new SignalEmitter();
-    public readonly signal_clicked_outside: SignalEmitter<(event: PointerEvent) => void> = new SignalEmitter();
+    public readonly signal_clicked_outside: SignalEmitter<(event: Event) => void> = new SignalEmitter();
 
     constructor(items: ContextMenuInstance[]) {
         this.items = items;
@@ -24,14 +24,14 @@ export class ContextMenu {
         this.signal_item_clicked.trigger(key);
     }
     
-    private on_ClickOutside(event: PointerEvent) {
+    private on_ClickOutside(event: Event) {
         this.close();
         this.signal_clicked_outside.trigger(event);
     }
 
-    public show(x: number | PointerEvent, y?: number) {
+    public show(x: number | MouseEvent, y?: number) {
         let _x: number, _y: number;
-        if (x instanceof PointerEvent) {
+        if (x instanceof Event) {
             _x = x.clientX;
             _y = x.clientY;
         }

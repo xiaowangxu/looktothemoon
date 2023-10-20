@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 
-import { type BoxSize } from './SConst';
+import { type BoxSize, observe_Resize, unobserve_Resize } from './SConst';
 import { getCurrentInstance, onMounted, onBeforeUnmount } from 'vue';
 
 // emits
@@ -13,7 +13,7 @@ const emits = defineEmits<{
 }>();
 
 // datas
-const resize_observer = new ResizeObserver(on_Resized);
+let dom: Element | undefined = undefined;
 onMounted(() => {
     const proxy = getCurrentInstance()!.proxy!;
     const el = proxy.$el as Element | undefined;
@@ -26,18 +26,18 @@ onMounted(() => {
         }
     }
     if (el.nextElementSibling !== null) {
-        const dom = el.nextElementSibling;
-        resize_observer.observe(dom);
+        dom = el.nextElementSibling;
+        observe_Resize(dom, on_Resized);
     }
 });
 onBeforeUnmount(() => {
-    resize_observer.disconnect();
+    if (dom !== undefined) {
+        unobserve_Resize(dom, on_Resized);
+    }
 });
 
 // methods
-function on_Resized(entries: ResizeObserverEntry[]) {
-    if (entries[0] === undefined) return;
-    const entry = entries[0];
+function on_Resized(entry: ResizeObserverEntry) {
     const { inlineSize: border_width, blockSize: border_height } = entry.borderBoxSize[0];
     const { inlineSize: content_width, blockSize: content_height } = entry.contentBoxSize[0];
     const { width: content_rect_width, height: content_rect_height } = entry.contentRect;

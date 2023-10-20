@@ -150,7 +150,7 @@ const SPopupMenu : Component = defineComponent({
                 hide_timer = undefined;
             }
         }
-        function on_ClickOutside(event: PointerEvent) {
+        function on_ClickOutside(event: Event) {
             const path = event.composedPath();
             const ignore = get_SubPanelDivElements().some(t => path.includes(t));
             if (!ignore) {

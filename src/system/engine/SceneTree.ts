@@ -612,6 +612,16 @@ export class Viewport extends Node {
         super();
         this.renderer_3d = new Renderer3D(document.createElement('canvas'), { antialias: true });
         this.renderer_3d.set_PixelRatio(this.pixel_ratio);
+        this.canvas.addEventListener('mouseenter', this._on_MouseEntered);
+        this.canvas.addEventListener('mouseleave', this._on_MouseLeaved);
+    }
+
+    private _on_MouseEntered = this.on_MouseEntered.bind(this);
+    private on_MouseEntered(event: MouseEvent) {
+    }
+
+    private _on_MouseLeaved = this.on_MouseLeaved.bind(this);
+    private on_MouseLeaved(event: MouseEvent) {
     }
 
     public set_ActiveCamera3D(camera: Camera3D) {
@@ -651,6 +661,8 @@ export class Viewport extends Node {
             }
             case NodeNotification.Dispose: {
                 this.renderer_3d.dispose();
+                this.canvas.removeEventListener('mouseenter', this._on_MouseEntered);
+                this.canvas.removeEventListener('mouseleave', this._on_MouseLeaved);
                 return;
             }
         }
