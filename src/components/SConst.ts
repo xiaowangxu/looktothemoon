@@ -20,6 +20,8 @@ export type Rect = Position & BoxSize;
 
 export type PopupOpenMode = 'instance' | 'visibility';
 
+export type UID = string | number | symbol | undefined;
+
 export interface WidthDefineProps {
     minWidth?: string,
     maxWidth?: string,

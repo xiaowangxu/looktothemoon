@@ -1,6 +1,6 @@
 <template>
     <SPopup v-if="instance" :visible="open" :rect="popup_rect" v-slot="{ rect }" :teleportDisabled="teleportDisabled">
-        <SPanel ref="spanel_ref" class="__s_popuppanel_panel__" :style="{ width, height }" @mouseenter="on_PanelMouseEntered"
+        <SPanel ref="spanel_ref" class="__s_popuppanel_panel__" :color="color" :style="{ width, height }" @mouseenter="on_PanelMouseEntered"
             @mouseleave="on_PanelMouseLeaved" v-on-click-outside="on_ClickOutsideHandler">
             <SScrollContainer ref="sscrollcontainer_ref" width="100%" maxWidth="100%">
                 <slot :rect="rect" />
@@ -27,6 +27,7 @@ const props = withDefaults(
         openMode?: PopupOpenMode,
         useWindowSize?: boolean,
         teleportDisabled?: boolean,
+        color?: string
     }>(),
     {
         open: false,

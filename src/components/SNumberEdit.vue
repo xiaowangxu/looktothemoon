@@ -39,7 +39,7 @@ const props = withDefaults(
         focusSelectAll: true,
         fixDigits: 3,
         precisionDigits: 3,
-        showEndZeros: true,
+        showEndZeros: false,
     }
 );
 
@@ -64,14 +64,9 @@ onMounted(() => {
 const full_text = computed(() => `${props.prefix ?? ''}${fix_text.value}${props.suffix ?? ''}`);
 
 // models
-const value_model = useVModel(props, 'value', emits);watch(value_model, () => {
+const value_model = useVModel(props, 'value', emits);
+watch(value_model, () => {
     real_value.value = clamp(value_model.value, props.min, props.max);
-    if (is_editing.value) {
-        on_Focus();
-    }
-    else {
-        on_Blur();
-    }
 }, { immediate: true });
 
 // methods
@@ -114,10 +109,11 @@ function on_Input(evt: Event, lazy: boolean = false) {
     const text = (evt.target as HTMLInputElement).value;
     if (props.lazy === lazy) {
         const { valid, value } = parse_Number(text);
-        console.log(text, real_value.value, valid, value);
+        // console.log(text, real_value.value, valid, value);
         if (valid) {
             real_value.value = value;
             value_model.value = real_value.value;
+            show_text.value = text;
         }
     }
     if (lazy) {

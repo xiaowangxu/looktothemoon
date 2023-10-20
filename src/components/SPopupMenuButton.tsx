@@ -46,6 +46,11 @@ export default defineComponent({
             required: false,
             default: true,
         },
+        teleportDisabled: {
+            type: Boolean,
+            required: false,
+            default: false,
+        },
     },
     emits: ['opened', 'closed', 'mouseenter', 'mouseleave', 'click'],
     setup(props, { expose, emit }) {
@@ -64,7 +69,7 @@ export default defineComponent({
             if (!sbutton_ref.value?.buttonElement) return undefined;
             const { left, bottom } = sbutton_ref.value.buttonElement.getBoundingClientRect();
             const clamped_content_size = { width: clamp(contentMinSize.width, props.minWidth, props.maxWidth), height: contentMinSize.height };
-            return calcPopupMenuPopupSize(clamped_content_size, { x: left, y: bottom, width: 0, height: 0 }, windowSize, 1, { width: 0, height: 0 }, false).rect;
+            return calcPopupMenuPopupSize(clamped_content_size, { x: left, y: bottom, width: 0, height: 0 }, windowSize, props.preferedDirection, { width: 0, height: 0 }, props.allowShiftUp).rect;
         }
         function on_ButtonClick() {
             opened.value = !opened.value;
@@ -96,22 +101,22 @@ export default defineComponent({
             open, close, focus, blur,
         });
         return {
-            opened,
+            opened, open, close,
             sbutton_ref,
             get_PopupRect, on_Click, on_ButtonClick, on_ButtonMouseEntered, on_ButtonMouseLeaved, on_Clickoutside,
         };
     },
     render() {
-        const { opened, get_PopupRect, on_Click, on_ButtonClick, on_ButtonMouseEntered, on_ButtonMouseLeaved, on_Clickoutside } = this;
-        const { minWidth, maxWidth, width, openMode, subOpenMode, preferedDirection } = this.$props;
+        const { opened, open, close, get_PopupRect, on_Click, on_ButtonClick, on_ButtonMouseEntered, on_ButtonMouseLeaved, on_Clickoutside } = this;
+        const { minWidth, maxWidth, width, openMode, subOpenMode, preferedDirection, teleportDisabled } = this.$props;
         const { items, button } = this.$slots;
         return <>
             <SButton ref="sbutton_ref" active={opened} flat onClick={on_ButtonClick} onMouseenter={on_ButtonMouseEntered} onMouseleave={on_ButtonMouseLeaved}>
                 {button?.()}
             </SButton>
-            <SPopupMenu open={opened} minWidth={minWidth} maxWidth={maxWidth} width={width} openMode={openMode} subOpenMode={subOpenMode} getPopupRect={get_PopupRect} onClickoutside={on_Clickoutside} preferedDirection={preferedDirection} onClick={on_Click}>
+            <SPopupMenu open={opened} teleportDisabled={teleportDisabled} minWidth={minWidth} maxWidth={maxWidth} width={width} openMode={openMode} subOpenMode={subOpenMode} getPopupRect={get_PopupRect} onClickoutside={on_Clickoutside} preferedDirection={preferedDirection} onClick={on_Click}>
                 {{
-                    default: () => items?.(),
+                    default: () => items?.({ open, close }),
                 }}
             </SPopupMenu >
         </>;

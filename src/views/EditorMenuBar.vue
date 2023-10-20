@@ -53,18 +53,28 @@
                     <template #button>
                         视图
                     </template>
-                    <template #items>
+                    <template #items="{ open, close }">
                         <SItem label="顶视图">
                         </SItem>
                         <SItem label="底视图" />
                         <SItem label="左视图" />
                         <SItem label="更多...">
                             <template #subitems>
-                                <SItem label="右视图" />
-                                <SItem label="前视图" />
-                                <SItem label="后视图" />
+                                <SItem label="右视图" icon="FakeCheckBoxActive" />
+                                <SItem label="前视图" icon="FakeCheckBoxActive" />
+                                <SItem label="后视图" icon="FakeCheckBoxActive" />
                             </template>
                         </SItem>
+                        <SVSeparator />
+                        <SItem label="75%" uid="75%" />
+                        <SItem label="100%" uid="100%" />
+                        <SItem label="150%" uid="150%" />
+                        <SItem label="200%" uid="200%" />
+                        <SActiveArea style="width: 100%; padding: 0 0 0 var(--NormalAdditionalPaddingSize);">
+                            <SLabel min-size="normal">自定义</SLabel>
+                            <SNumberEdit lazy v-model:value="zoom" @update:value="close()" :precision-digits="0"
+                                align-text="start" suffix="%" />
+                        </SActiveArea>
                         <SVSeparator />
                         <SItem label="透视" uid="persp">
                             <template #icon>
@@ -107,7 +117,9 @@ import SFakeCheckBox from '@/components/SFakeCheckBox.vue';
 import SFakeRadioBox from '@/components/SFakeRadioBox.vue';
 import { Cog, Undo2, Redo2 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
-import SIcon from '@/components/SIcon.vue';
+import SNumberEdit from '@/components/SNumberEdit.vue';
+import SActiveArea from '@/components/SActiveArea.vue';
+import SLabel from '@/components/Typography/SLabel.vue';
 
 // datas
 type MenuLabel = 'file' | 'edit' | 'select' | 'view';
@@ -171,7 +183,8 @@ function on_MenuButtonMouseEntered(label: MenuLabel) {
     }
 }
 
-// 
+// editor datas
 const camera_type = ref<boolean>(false);
+const zoom = ref<number>(100);
 
 </script>

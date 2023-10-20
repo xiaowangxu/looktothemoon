@@ -1,13 +1,15 @@
 <template>
-    <SButton ref="sbutton_ref" class="__s_itembutton__" :class="{ subitem: subItemIcon }" square flat :color="color" :active="active"
-        :disabled="disabled" icon-size="normal">
-        <slot name="icon" />
+    <SButton ref="sbutton_ref" class="__s_itembutton__" :class="{ subitem: subItemIcon }" square flat :color="color"
+        :active="active" :disabled="disabled" icon-size="normal">
+        <slot name="icon">
+            <SIcon v-if="icon !== undefined" :name="icon" />
+        </slot>
         <SLabel min-size="unset" color="inherit">{{ label }}</SLabel>
         <SLabel v-if="description !== undefined" min-size="unset" color="inherit"
             style="flex: 1; opacity: var(--DescriptionOpacity);" align-h="end">
             {{ description }}
         </SLabel>
-        <ChevronRight v-if="subItemIcon" class="__s_icon__ __s_itembutton_subitemicon__"  />
+        <ChevronRight v-if="subItemIcon" class="__s_icon__ __s_itembutton_subitemicon__" />
     </SButton>
 </template>
 
@@ -15,19 +17,21 @@
 
 import SButton from './SButton.vue';
 import { computed, ref } from 'vue';
-import { useComponentRefFocusBlur } from './SConst';
+import { useComponentRefFocusBlur, type LabelTypes } from './SConst';
 import { ChevronRight } from 'lucide-vue-next';
 import SLabel from './Typography/SLabel.vue';
+import SIcon from './SIcon.vue';
 
 // props
 const props = withDefaults(
     defineProps<{
-        label?: string,
+        label?: LabelTypes,
         description?: string,
         color?: string,
         active?: boolean,
         disabled?: boolean,
         subItemIcon?: boolean,
+        icon?: string,
     }>(),
     {
         label: '',

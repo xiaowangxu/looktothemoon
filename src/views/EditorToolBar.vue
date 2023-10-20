@@ -1,9 +1,11 @@
 <template>
     <SPanel style="pointer-events: all;">
         <SFlow vertical>
-            <SButton icon-only icon-size="medium" flat>
-                <PanelLeftInactive />
-            </SButton>
+            <SToolTip tool-tip="这是一个测试">
+                <SButton icon-only icon-size="medium" flat>
+                    <PanelLeftInactive />
+                </SButton>
+            </SToolTip>
         </SFlow>
     </SPanel>
     <SPanel style="pointer-events: all;">
@@ -45,11 +47,13 @@
 
 <script setup lang="ts">
 
+import SToolTip from '@/components/SToolTip.vue';
 import SFlow from '@/components/SFlow.vue';
 import SPanel from '@/components/SPanel.vue';
 import SButton from '@/components/SButton.vue';
 import SScrollContainer from '@/components/SScrollContainer.vue';
 import SVSeparator from '@/components/SVSeparator.vue';
 import { Check, Workflow, Globe, Search, Trash, PanelLeftInactive } from 'lucide-vue-next';
+import SLabel from '@/components/Typography/SLabel.vue';
 
 </script>

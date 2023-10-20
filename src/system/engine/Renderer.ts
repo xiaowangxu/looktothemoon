@@ -19,6 +19,10 @@ export class Renderer3D {
         });
     }
 
+    public dispose(){
+        this.renderer.dispose();
+    }
+
     public set_ClearAlpha(alpha: number) {
         this.renderer.setClearAlpha(alpha);
     }

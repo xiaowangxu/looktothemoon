@@ -3,10 +3,10 @@ import SAutoMeasurePopupPanel from '@/components/SAutoMeasurePopupPanel.vue';
 import SFlow from '@/components/SFlow.vue';
 import SItem from '@/components/SItem.vue';
 import SButton from '@/components/SButton.vue';
-import { defineComponent, ref, type PropType, watch, toRef } from 'vue';
+import { defineComponent, ref, type PropType, watch, toRef, type Component } from 'vue';
 import { timer, type BoxSize, type PopupOpenMode, type Rect, type TimerCanceller, calcPopupMenuPopupSize, clamp } from './SConst';
 
-const SPopupMenu = defineComponent({
+const SPopupMenu : Component = defineComponent({
     name: 'SPopupMenu',
     props: {
         hideDuration: {
@@ -56,7 +56,7 @@ const SPopupMenu = defineComponent({
         open: {
             type: Boolean,
             required: false,
-            default: false,
+            default: true,
         },
         preferedDirection: {
             type: Number as PropType<0 | 1>,
@@ -67,7 +67,12 @@ const SPopupMenu = defineComponent({
             type: Boolean,
             required: false,
             default: false,
-        }
+        },
+        teleportDisabled:{
+            type: Boolean,
+            required: false,
+            default: false,
+        },
     },
     emits: ['opened', 'closed', 'mouseenter', 'click', 'clickoutside'],
     setup(props, { emit, expose }) {
@@ -94,7 +99,7 @@ const SPopupMenu = defineComponent({
         function get_ClampedContentSize(contentMinSize: BoxSize): BoxSize {
             return { width: clamp(contentMinSize.width, props.minWidth, props.maxWidth), height: contentMinSize.height };
         }
-        function getPopupRect(contentMinSize: BoxSize, windowSize: BoxSize): Rect | undefined {
+        function get_PopupRect(contentMinSize: BoxSize, windowSize: BoxSize): Rect | undefined {
             return props.getPopupRect(get_ClampedContentSize(contentMinSize), windowSize);
         }
         function hover_SubItem(key: any, is_submenu: boolean) {
@@ -170,18 +175,18 @@ const SPopupMenu = defineComponent({
 
         return {
             hovered_subitem, hovered_sbutton_ref, prefered_direction, hovered_spopupmenu_ref, spopuppanel_ref,
-            getPopupRect, on_Click, hover_SubItem, leave_SubItem, get_HoveredSubItemPopupRect, on_PopupMenuEntered, on_SubMenuPanelEntered, on_ClickOutside,
+            get_PopupRect, on_Click, hover_SubItem, leave_SubItem, get_HoveredSubItemPopupRect, on_PopupMenuEntered, on_SubMenuPanelEntered, on_ClickOutside,
         };
     },
     render() {
-        const { hovered_subitem, prefered_direction, getPopupRect, on_Click, hover_SubItem, leave_SubItem, get_HoveredSubItemPopupRect, on_PopupMenuEntered, on_SubMenuPanelEntered, on_ClickOutside } = this;
-        const { isSubMenu: prop_is_submenu, minWidth: prop_min_width, maxWidth: prop_max_width, width: prop_width, open: prop_open, openMode: prop_open_mode, subOpenMode: prop_sub_open_mode, hideOnLeave: prop_hide_on_leave, hideDuration: prop_hide_duration, showDuration: pro_show_duration } = this.$props;
+        const { hovered_subitem, prefered_direction, get_PopupRect, on_Click, hover_SubItem, leave_SubItem, get_HoveredSubItemPopupRect, on_PopupMenuEntered, on_SubMenuPanelEntered, on_ClickOutside } = this;
+        const { teleportDisabled: prop_teleport_disabled, isSubMenu: prop_is_submenu, minWidth: prop_min_width, maxWidth: prop_max_width, width: prop_width, open: prop_open, openMode: prop_open_mode, subOpenMode: prop_sub_open_mode, hideOnLeave: prop_hide_on_leave, hideDuration: prop_hide_duration, showDuration: pro_show_duration } = this.$props;
         const { default: items_render } = this.$slots;
         const items = items_render?.() ?? [];
         const sub_popupmenus: any[] = [];
         const buttons = items.map(i => {
             if (i.type === SItem) {
-                const { label, color, active, disabled, description, uid } = i.props!;
+                const { label, color, active, disabled, description, uid, icon: prop_icon } = i.props!;
                 const is_disabled = disabled !== undefined && disabled !== false;
                 const children = (i.children as any)?.default?.();
                 const icon = (i.children as any)?.icon?.();
@@ -194,7 +199,7 @@ const SPopupMenu = defineComponent({
                 const item_mouseleaved = prop_hide_on_leave ? () => leave_SubItem(key) : undefined;
                 const item_clicked = has_subitems ? undefined : () => on_Click(key);
                 const btn = children === undefined ?
-                    <SMenuButton ref={subitem_sbutton_ref} active={active} label={label} color={color} disabled={is_disabled} description={description} key={key} subItemIcon={has_subitems} onClick={item_clicked} onMouseenter={subitem_mouseentered} onMouseleave={item_mouseleaved}>
+                    <SMenuButton ref={subitem_sbutton_ref} active={active} label={label} icon={prop_icon} color={color} disabled={is_disabled} description={description} key={key} subItemIcon={has_subitems} onClick={item_clicked} onMouseenter={subitem_mouseentered} onMouseleave={item_mouseleaved}>
                         {{
                             icon: () => icon,
                         }}
@@ -204,7 +209,7 @@ const SPopupMenu = defineComponent({
                 const sub_open_mode = prop_sub_open_mode ?? prop_open_mode;
                 if (has_subitems && (prop_sub_open_mode !== 'instance' || is_hovered_subitems)) {
                     sub_popupmenus.push(
-                        <SPopupMenu ref={is_hovered_subitems ? "hovered_spopupmenu_ref" : undefined} hideDuration={prop_hide_duration} showDuration={pro_show_duration} hideOnLeave={prop_hide_on_leave} isSubMenu={true} open={is_hovered_subitems} minWidth={prop_min_width} maxWidth={prop_max_width} width={prop_width} preferedDirection={prefered_direction} openMode={sub_open_mode} subOpenMode={sub_open_mode} key={`__${key}_popupmenu__`} getPopupRect={get_HoveredSubItemPopupRect} onClick={on_Click} onMouseenter={() => on_SubMenuPanelEntered(key)}>
+                        <SPopupMenu ref={is_hovered_subitems ? "hovered_spopupmenu_ref" : undefined} hideDuration={prop_hide_duration} showDuration={pro_show_duration} hideOnLeave={prop_hide_on_leave} isSubMenu={true} teleportDisabled={prop_teleport_disabled} open={is_hovered_subitems} minWidth={prop_min_width} maxWidth={prop_max_width} width={prop_width} preferedDirection={prefered_direction} openMode={sub_open_mode} subOpenMode={sub_open_mode} key={`__${key}_popupmenu__`} getPopupRect={get_HoveredSubItemPopupRect} onClick={on_Click} onMouseenter={() => on_SubMenuPanelEntered(key)}>
                             {{
                                 default: () => subitems,
                             }}
@@ -217,7 +222,7 @@ const SPopupMenu = defineComponent({
         });
         const click_outside = prop_is_submenu ? undefined : on_ClickOutside;
         return <>
-            <SAutoMeasurePopupPanel ref="spopuppanel_ref" open={prop_open} openMode={prop_open_mode} getPopupRect={getPopupRect} onMouseenter={on_PopupMenuEntered} onClickoutside={prop_is_submenu ? undefined : click_outside}>
+            <SAutoMeasurePopupPanel ref="spopuppanel_ref" open={prop_open} openMode={prop_open_mode} getPopupRect={get_PopupRect} teleportDisabled={prop_teleport_disabled} onMouseenter={on_PopupMenuEntered} onClickoutside={prop_is_submenu ? undefined : click_outside}>
                 <SFlow gap="var(--FocusOutlineWidth)" padding="var(--GapAndMargin)" vertical style={{ width: prop_width }}>
                     {buttons}
                 </SFlow>

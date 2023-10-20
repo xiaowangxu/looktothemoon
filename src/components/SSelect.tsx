@@ -9,6 +9,7 @@ import { useComponentRefFocusBlur, usePopupPanelMeasureRect, type LabelTypes, ty
 import { useWindowSize } from "@vueuse/core";
 import SMenuButton from "@/components/SMenuButton.vue";
 import SLabel from "@/components/Typography/SLabel.vue";
+import SIcon from "./SIcon.vue";
 
 export default defineComponent({
     name: 'SSelect',
@@ -142,7 +143,7 @@ export default defineComponent({
         let active_color = prop_color;
         const buttons = items.map(i => {
             if (i.type === SItem) {
-                const { label, color = prop_color, disabled, description, uid } = i.props!;
+                const { label, color = prop_color, disabled, description, uid, icon: prop_icon } = i.props!;
                 const is_disabled = disabled !== undefined && disabled !== false;
                 const active = label === prop_value;
                 const children = (i.children as any)?.default?.();
@@ -150,7 +151,7 @@ export default defineComponent({
                 const key = uid ?? label;
                 if (active) {
                     active_item = (i.children as any)?.default?.() ?? <>
-                        {icon}
+                        {icon ?? (prop_icon === undefined ? undefined : <SIcon name={prop_icon} />)}
                         <SLabel min-size="unset" color="inherit">{label}</SLabel>
                         {
                             description !== undefined && <SLabel min-size="unset" color="inherit" style="flex: 1; opacity: var(--DescriptionOpacity);" align-h="end">
@@ -161,7 +162,7 @@ export default defineComponent({
                     if (prop_use_active_color) active_color = color;
                 }
                 const btn = children === undefined ?
-                    <SMenuButton ref={active ? 'active_item_ref' : undefined} active={active} label={label} description={description} color={color} disabled={is_disabled} key={key} onClick={() => on_ItemClicked(label)} >
+                    <SMenuButton ref={active ? 'active_item_ref' : undefined} active={active} label={label} icon={prop_icon} description={description} color={color} disabled={is_disabled} key={key} onClick={() => on_ItemClicked(label)} >
                         {{
                             icon: () => icon,
                         }}

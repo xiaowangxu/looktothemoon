@@ -1,11 +1,12 @@
 import { World3D } from "@/system/engine/World";
-import { Camera3D, Node3D, SceneTree, Viewport, ViewportUpdateMode } from "@/system/engine/SceneTree";
+import { NodeNotification, Node3D, SceneTree, Viewport, ViewportUpdateMode } from "@/system/engine/SceneTree";
 import { ViewportDomContainer } from "@/system/engine/nodes/ViewportDomContainer";
-import { Euler, BoxGeometry, InstancedInterleavedBuffer, InterleavedBufferAttribute, Vector2, Vector3, CatmullRomCurve3, Color, TorusGeometry, SRGBColorSpace } from "three";
+import { Euler, BoxGeometry, SphereGeometry, Vector3, MeshBasicMaterial, Color, Quaternion } from "three";
 import { MeshInstance3D } from "@/system/engine/nodes/MeshInstance3D";
 import { PolyLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/GeometryResource";
 import { NormalMaterialResource, PolyLineMaterialResource, ThreeMaterialResource } from "@/system/engine/resources/MaterialResource";
 import { PerspectiveCamera3D } from "@/system/engine/nodes/PerspectiveCamera3D";
+import { OrthographicCamera3D } from "@/system/engine/nodes/OrthographicCamera3D copy";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -126,6 +127,113 @@ EditorViewport0.signal_resized.connect(() => {
 
 console.log(EditorSceneTree);
 
+function create_CompassScene() {
+    const red = 0xf82d4e;
+    const green = 0x04b973;
+    const blue = 0x466fd6;
+    const neg_color = 0x555555;
+    const sphere_radius = 0.4;
+    const distance = 1.4;
+    const line_width = 2;
+    const camera_zoom = 4;
+
+    const viewport_container = new ViewportDomContainer();
+    const viewport = new Viewport();
+    viewport.transparent = true;
+    viewport.world_3d = new World3D();
+    const sphere_geometry = new ThreeGeometryResource(new SphereGeometry(sphere_radius));
+    const line_geometry = new PolyLineGeometryResource();
+    const sphere_neg_material = new ThreeMaterialResource(new MeshBasicMaterial({ color: neg_color, opacity: 0.5, transparent: true }));
+    line_geometry.points = [new Vector3(0, 0, 0), new Vector3(distance, 0, 0)];
+
+    const sphere_mesh_x = new MeshInstance3D();
+    const sphere_x_material = new ThreeMaterialResource(new MeshBasicMaterial({ color: red }));
+    sphere_mesh_x.geometry = sphere_geometry;
+    sphere_mesh_x.material = sphere_x_material;
+    sphere_mesh_x.local_position = new Vector3(distance, 0, 0);
+    const sphere_mesh_x_neg = new MeshInstance3D();
+    const sphere_x_material_neg = sphere_neg_material;
+    sphere_mesh_x_neg.geometry = sphere_geometry;
+    sphere_mesh_x_neg.material = sphere_x_material_neg;
+    sphere_mesh_x_neg.local_position = new Vector3(-distance, 0, 0);
+    const line_mesh_x = new MeshInstance3D();
+    const line_x_material = new PolyLineMaterialResource();
+    line_x_material.color = new Color(red);
+    line_x_material.width = line_width;
+    line_mesh_x.geometry = line_geometry;
+    line_mesh_x.material = line_x_material;
+
+    const sphere_mesh_y = new MeshInstance3D();
+    const sphere_y_material = new ThreeMaterialResource(new MeshBasicMaterial({ color: green }));
+    sphere_mesh_y.geometry = sphere_geometry;
+    sphere_mesh_y.material = sphere_y_material;
+    sphere_mesh_y.local_position = new Vector3(0, distance, 0);
+    const sphere_mesh_y_neg = new MeshInstance3D();
+    const sphere_y_material_neg = sphere_neg_material;
+    sphere_mesh_y_neg.geometry = sphere_geometry;
+    sphere_mesh_y_neg.material = sphere_y_material_neg;
+    sphere_mesh_y_neg.local_position = new Vector3(0, -distance, 0);
+    const line_mesh_y = new MeshInstance3D();
+    const line_y_material = new PolyLineMaterialResource();
+    line_y_material.color = new Color(green);
+    line_y_material.width = line_width;
+    line_mesh_y.geometry = line_geometry;
+    line_mesh_y.material = line_y_material;
+    line_mesh_y.local_rotation = new Euler(0, 0, Math.PI / 2);
+
+    const sphere_mesh_z = new MeshInstance3D();
+    const sphere_z_material = new ThreeMaterialResource(new MeshBasicMaterial({ color: blue }));
+    sphere_mesh_z.geometry = sphere_geometry;
+    sphere_mesh_z.material = sphere_z_material;
+    sphere_mesh_z.local_position = new Vector3(0, 0, distance);
+    const sphere_mesh_z_neg = new MeshInstance3D();
+    const sphere_z_material_neg = sphere_neg_material;
+    sphere_mesh_z_neg.geometry = sphere_geometry;
+    sphere_mesh_z_neg.material = sphere_z_material_neg;
+    sphere_mesh_z_neg.local_position = new Vector3(0, 0, -distance);
+    const line_mesh_z = new MeshInstance3D();
+    const line_z_material = new PolyLineMaterialResource();
+    line_z_material.color = new Color(blue);
+    line_z_material.width = line_width;
+    line_mesh_z.geometry = line_geometry;
+    line_mesh_z.material = line_z_material;
+    line_mesh_z.local_rotation = new Euler(0, -Math.PI / 2, 0);
+
+    const camera = new OrthographicCamera3D();
+    camera.zoom = camera_zoom;
+    camera.local_position = new Vector3(0, 0, 5);
+
+    viewport_container.add_Child(viewport);
+    viewport.add_Child(sphere_mesh_x);
+    viewport.add_Child(sphere_mesh_x_neg);
+    viewport.add_Child(line_mesh_x);
+    viewport.add_Child(sphere_mesh_y);
+    viewport.add_Child(sphere_mesh_y_neg);
+    viewport.add_Child(line_mesh_y);
+    viewport.add_Child(sphere_mesh_z);
+    viewport.add_Child(sphere_mesh_z_neg);
+    viewport.add_Child(line_mesh_z);
+    viewport.add_Child(camera);
+
+    viewport_container.signal_notification.connect((what: NodeNotification) => {
+        if (what === NodeNotification.InternalAfterProcess) {
+            const active_camera = viewport_container.get_Viewport()?.get_Camera3D();
+            if (active_camera === undefined) return;
+            const lookat_global_position = active_camera.to_Global(new Vector3(0, 0, 1));
+            const lookat = lookat_global_position.sub(active_camera.global_position).normalize();
+            // console.log(lookat);
+            camera.local_position = lookat.multiplyScalar(5);
+            camera.local_rotation = active_camera.global_rotation;
+        }
+    });
+
+    return viewport_container;
+}
+
+const EditorCompassViewportContainer = create_CompassScene();
+EditorViewport.add_Child(EditorCompassViewportContainer);
+
 export function createEditorViewport(el: string) {
+    EditorCompassViewportContainer.dom = document.querySelector('#compass') ?? undefined;
     EditorSceneTree.start_Loop();
 }

@@ -23,9 +23,7 @@
                                     <template #empty>
                                         无项目
                                     </template>
-                                    <SItem label="0">
-                                        <SLabel min-size="unset" color="inherit">这些是选项
-                                        </SLabel>
+                                    <SItem label="这些是选项" icon="Undo">
                                     </SItem>
                                     <SItem label="1">
                                         <Globe />
