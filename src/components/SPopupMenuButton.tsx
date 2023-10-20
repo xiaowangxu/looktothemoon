@@ -116,7 +116,7 @@ export default defineComponent({
             </SButton>
             <SPopupMenu open={opened} teleportDisabled={teleportDisabled} minWidth={minWidth} maxWidth={maxWidth} width={width} openMode={openMode} subOpenMode={subOpenMode} getPopupRect={get_PopupRect} onClickoutside={on_Clickoutside} preferedDirection={preferedDirection} onClick={on_Click}>
                 {{
-                    default: () => items?.({ open, close }),
+                    default: (props: { triggerSubItemHide: () => void }) => items?.({ open, close, triggerSubItemHide: props.triggerSubItemHide }),
                 }}
             </SPopupMenu >
         </>;

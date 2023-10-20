@@ -53,7 +53,7 @@
                     <template #button>
                         视图
                     </template>
-                    <template #items="{ open, close }">
+                    <template #items="{ open, close, triggerSubItemHide }">
                         <SItem label="顶视图">
                         </SItem>
                         <SItem label="底视图" />
@@ -70,7 +70,8 @@
                         <SItem label="100%" uid="100%" />
                         <SItem label="150%" uid="150%" />
                         <SItem label="200%" uid="200%" />
-                        <SActiveArea style="width: 100%; padding: 0 0 0 var(--NormalAdditionalPaddingSize);">
+                        <SActiveArea style="width: 100%; padding: 0 0 0 var(--NormalAdditionalPaddingSize);"
+                            @mouseenter="triggerSubItemHide()">
                             <SLabel min-size="normal">自定义</SLabel>
                             <SNumberEdit lazy v-model:value="zoom" @update:value="close()" :precision-digits="0"
                                 align-text="start" suffix="%" />

@@ -6,7 +6,7 @@ import SButton from '@/components/SButton.vue';
 import { defineComponent, ref, type PropType, watch, toRef, type Component } from 'vue';
 import { timer, type BoxSize, type PopupOpenMode, type Rect, type TimerCanceller, calcPopupMenuPopupSize, clamp } from './SConst';
 
-const SPopupMenu : Component = defineComponent({
+const SPopupMenu: Component = defineComponent({
     name: 'SPopupMenu',
     props: {
         hideDuration: {
@@ -68,7 +68,7 @@ const SPopupMenu : Component = defineComponent({
             required: false,
             default: false,
         },
-        teleportDisabled:{
+        teleportDisabled: {
             type: Boolean,
             required: false,
             default: false,
@@ -102,6 +102,15 @@ const SPopupMenu : Component = defineComponent({
         function get_PopupRect(contentMinSize: BoxSize, windowSize: BoxSize): Rect | undefined {
             return props.getPopupRect(get_ClampedContentSize(contentMinSize), windowSize);
         }
+        function trigger_SubItemHide() {
+            show_timer?.();
+            show_timer = undefined;
+            if (hide_timer === undefined && hovered_subitem.value !== undefined) {
+                hide_timer = timer(() => {
+                    hovered_subitem.value = undefined;
+                }, props.hideDuration);
+            }
+        }
         function hover_SubItem(key: any, is_submenu: boolean) {
             if (is_submenu) {
                 hide_timer?.();
@@ -117,13 +126,7 @@ const SPopupMenu : Component = defineComponent({
                 }
             }
             else {
-                show_timer?.();
-                show_timer = undefined;
-                if (hide_timer === undefined && hovered_subitem.value !== undefined) {
-                    hide_timer = timer(() => {
-                        hovered_subitem.value = undefined;
-                    }, props.hideDuration);
-                }
+                trigger_SubItemHide();
             }
         }
         function leave_SubItem(key: any) {
@@ -175,14 +178,14 @@ const SPopupMenu : Component = defineComponent({
 
         return {
             hovered_subitem, hovered_sbutton_ref, prefered_direction, hovered_spopupmenu_ref, spopuppanel_ref,
-            get_PopupRect, on_Click, hover_SubItem, leave_SubItem, get_HoveredSubItemPopupRect, on_PopupMenuEntered, on_SubMenuPanelEntered, on_ClickOutside,
+            get_PopupRect, on_Click, hover_SubItem, trigger_SubItemHide, leave_SubItem, get_HoveredSubItemPopupRect, on_PopupMenuEntered, on_SubMenuPanelEntered, on_ClickOutside,
         };
     },
     render() {
-        const { hovered_subitem, prefered_direction, get_PopupRect, on_Click, hover_SubItem, leave_SubItem, get_HoveredSubItemPopupRect, on_PopupMenuEntered, on_SubMenuPanelEntered, on_ClickOutside } = this;
+        const { hovered_subitem, trigger_SubItemHide, prefered_direction, get_PopupRect, on_Click, hover_SubItem, leave_SubItem, get_HoveredSubItemPopupRect, on_PopupMenuEntered, on_SubMenuPanelEntered, on_ClickOutside } = this;
         const { teleportDisabled: prop_teleport_disabled, isSubMenu: prop_is_submenu, minWidth: prop_min_width, maxWidth: prop_max_width, width: prop_width, open: prop_open, openMode: prop_open_mode, subOpenMode: prop_sub_open_mode, hideOnLeave: prop_hide_on_leave, hideDuration: prop_hide_duration, showDuration: pro_show_duration } = this.$props;
         const { default: items_render } = this.$slots;
-        const items = items_render?.() ?? [];
+        const items = items_render?.({ triggerSubItemHide: trigger_SubItemHide }) ?? [];
         const sub_popupmenus: any[] = [];
         const buttons = items.map(i => {
             if (i.type === SItem) {

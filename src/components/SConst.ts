@@ -290,12 +290,15 @@ export type TimerCanceller = () => void;
 
 export function timer(func: () => void, time: number): TimerCanceller {
     let cancelled = false, finished = false;
+    // console.log('start timer');
     setTimeout(() => {
         if (cancelled || finished) return;
         func(); finished = true;
+        // console.log('timer finished');
     }, time);
     return () => {
         if (!cancelled && !finished) {
+            // console.log('cancel timer');
             cancelled = true;
         }
     };
