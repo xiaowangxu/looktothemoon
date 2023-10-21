@@ -1,7 +1,7 @@
 import { type PropType, defineComponent, ref, computed, watch } from "vue";
 import SPopupMenu from "@/components/SPopupMenu";
 import SButton from "@/components/SButton.vue";
-import { useComponentRefFocusBlur, type BoxSize, type PopupOpenMode, type Rect, calcPopupMenuPopupSize, clamp } from "./SConst";
+import { useComponentRefFocusBlur, type BoxSize, type PopupOpenMode, type Rect, calcPopupMenuPopupSize, clamp, type IconSize } from "./SConst";
 
 export default defineComponent({
     name: 'SPopupMenuButton',
@@ -51,8 +51,30 @@ export default defineComponent({
             required: false,
             default: false,
         },
+        flat: {
+            type: Boolean,
+            required: false,
+            default: true,
+        },
+        iconSize: {
+            type: String as PropType<IconSize>,
+            required: false,
+        },
+        iconOnly: {
+            type: Boolean,
+            required: false,
+        },
+        color: {
+            type: String,
+            required: false,
+        },
+        disabled: {
+            type: Boolean,
+            required: false,
+            default: false,
+        }
     },
-    emits: ['opened', 'closed', 'mouseenter', 'mouseleave', 'click'],
+    emits: ['opened', 'closed', 'mouseenter', 'mouseleave', 'buttonclick', 'click'],
     setup(props, { expose, emit }) {
         const opened = ref<boolean>(false);
         const sbutton_ref = ref<InstanceType<typeof SButton>>();
@@ -71,14 +93,19 @@ export default defineComponent({
             const clamped_content_size = { width: clamp(contentMinSize.width, props.minWidth, props.maxWidth), height: contentMinSize.height };
             return calcPopupMenuPopupSize(clamped_content_size, { x: left, y: bottom, width: 0, height: 0 }, windowSize, props.preferedDirection, { width: 0, height: 0 }, props.allowShiftUp).rect;
         }
-        function on_ButtonClick() {
+        function on_ButtonClick(event: Event) {
+            emit('buttonclick', event);
             opened.value = !opened.value;
         }
         function on_ButtonMouseEntered(event: Event) {
-            emit('mouseenter', event);
+            if (props.disabled !== true) {
+                emit('mouseenter', event);
+            }
         }
         function on_ButtonMouseLeaved(event: Event) {
-            emit('mouseleave', event);
+            if (props.disabled !== true) {
+                emit('mouseleave', event);
+            }
         }
         function on_Click(label: any) {
             emit('click', label);
@@ -108,10 +135,10 @@ export default defineComponent({
     },
     render() {
         const { opened, open, close, get_PopupRect, on_Click, on_ButtonClick, on_ButtonMouseEntered, on_ButtonMouseLeaved, on_Clickoutside } = this;
-        const { minWidth, maxWidth, width, openMode, subOpenMode, preferedDirection, teleportDisabled } = this.$props;
+        const { color, iconOnly, iconSize, disabled, flat, minWidth, maxWidth, width, openMode, subOpenMode, preferedDirection, teleportDisabled } = this.$props;
         const { items, button } = this.$slots;
         return <>
-            <SButton ref="sbutton_ref" active={opened} flat onClick={on_ButtonClick} onMouseenter={on_ButtonMouseEntered} onMouseleave={on_ButtonMouseLeaved}>
+            <SButton ref="sbutton_ref" active={opened} flat={flat} iconOnly={iconOnly} color={color} disabled={disabled} iconSize={iconSize} onClick={on_ButtonClick} onMouseenter={on_ButtonMouseEntered} onMouseleave={on_ButtonMouseLeaved}>
                 {button?.()}
             </SButton>
             <SPopupMenu open={opened} teleportDisabled={teleportDisabled} minWidth={minWidth} maxWidth={maxWidth} width={width} openMode={openMode} subOpenMode={subOpenMode} getPopupRect={get_PopupRect} onClickoutside={on_Clickoutside} preferedDirection={preferedDirection} onClick={on_Click}>

@@ -1,8 +1,8 @@
 <template>
     <button ref="button_dom" class="__s__ __s_color__ __s_button__" :class="{ flat, 'icon-only': iconOnly, active, square }"
         :data-s-icon-size="iconSize" :data-s-min-size="iconSize" :style="{ '--SColor': color, justifyContent: align_text }"
-        @click="emits('click', $event)" @mouseenter="emits('mouseenter', $event)" @mouseleave="emits('mouseleave', $event)"
-        :disabled="disabled">
+        @click="emits('click', $event)" @contextmenu="emits('contextmenu', $event)"
+        @mouseenter="emits('mouseenter', $event)" @mouseleave="emits('mouseleave', $event)" :disabled="disabled">
         <slot name="default" />
     </button>
 </template>
@@ -40,6 +40,7 @@ const props = withDefaults(
 // emits
 const emits = defineEmits<{
     click: [event: Event],
+    contextmenu: [event: Event],
     mouseenter: [event: Event],
     mouseleave: [event: Event],
 }>();
@@ -141,7 +142,7 @@ defineExpose({
 }
 
 .__s_button__.flat:hover {
-    background-color:  var(--SColorNormal);
+    background-color: var(--SColorNormal);
 }
 
 .__s_button__.flat.active,
