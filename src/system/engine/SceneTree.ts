@@ -1,24 +1,32 @@
-import { type Camera, OrthographicCamera, Clock, Vector3, Euler, Matrix4, Matrix3, Quaternion, Vector2 } from "three";
+import { type Camera, Clock, Vector3, Euler, Matrix4, Matrix3, Quaternion, Vector2 } from "three";
 import { SignalEmitter } from "../utils/SignalEmitter";
 import { Rid, type RID } from "./Rid";
 import { Renderer3D } from "./Renderer";
 import { World3D } from "./World";
+import { InputEvent, InputManager, ViewportKeyInputEventManager, ViewportMouseInputEventManager } from "./InputEvent";
 
 export class SceneTree {
+    public readonly input_manager: InputManager = new InputManager();
     private readonly root: Node;
     private readonly clock: Clock = new Clock(false);
+    private readonly physics_fps: number;
+    private readonly physics_clock: Clock = new Clock(false);
     public frame_id: number = 0;
     private animation_requested: number | undefined = undefined;
+    private physics_requested: number | undefined = undefined;
     public get looping() { return this.animation_requested !== undefined; }
     public time: number = 0;
     public delta: number = 0;
+    public physics_time: number = 0;
+    public physics_delta: number = 0;
 
     private viewports: Set<Viewport> = new Set();
 
-    constructor(root: Node) {
+    constructor(root: Node, physics_fps: number = 30) {
         if (root.get_Parent() !== undefined || root.ready) throw new Error('root is invalid');
         this.root = root;
         this.root.set_SceneTree(this);
+        this.physics_fps = physics_fps;
     }
 
     public notify_TreeChange() {
@@ -42,7 +50,21 @@ export class SceneTree {
         this.animation_requested = requestAnimationFrame(this._loop_func);
     }
 
+    private _physics_loop_func = this.physics_loop.bind(this);
+    private physics_loop() {
+        this.physics_time = this.physics_clock.elapsedTime;
+        this.physics_delta = this.physics_clock.getDelta();
+        // internal physics process process
+        this.root.propagate_InternalBeforePhysicsProcess(this.physics_delta);
+        this.root.propagate_PhysicsProcess(this.physics_delta);
+        this.root.propagate_InternalAfterPhysicsProcess(this.physics_delta);
+    }
+
     // apis
+
+    public get_ActiveViewports(): Viewport[] {
+        return [...this.viewports].filter(v => v.is_mouse_inside);
+    }
 
     public add_Viewport(viewport: Viewport) {
         this.viewports.add(viewport);
@@ -52,19 +74,31 @@ export class SceneTree {
         this.viewports.delete(viewport);
     }
 
+    public parse_ActionInputEvent(event: InputEvent,) {
+        const action_input_event = this.input_manager.parse_ActionInputEvent(event);
+        return action_input_event;
+    }
+
     public start_Loop() {
         if (this.looping) return;
         this.loop();
+        this.physics_requested = setInterval(this._physics_loop_func, 1000 / this.physics_fps);
         this.clock.start();
+        this.physics_clock.start();
     }
 
     public stop_Loop() {
         if (this.looping) {
             cancelAnimationFrame(this.animation_requested!);
+            clearInterval(this.physics_requested);
             this.animation_requested = undefined;
+            this.physics_requested = undefined;
             this.clock.stop();
             this.time = 0;
             this.delta = 0;
+            this.physics_clock.stop();
+            this.physics_time = 0;
+            this.physics_delta = 0;
         }
     }
 
@@ -82,6 +116,9 @@ export enum NodeNotification {
     InternalBeforeProcess,
     Process,
     InternalAfterProcess,
+    InternalBeforePhysicsProcess,
+    PhysicsProcess,
+    InternalAfterPhysicsProcess,
     InternalBeforeRender,
     Parented,
     Unparented,
@@ -108,6 +145,8 @@ export class Node {
     public get ready() { return this.is_ready; }
     private first_time_ready: boolean = true;
 
+    public block_input: boolean = false;
+
     // signals
     public readonly signal_exiting_tree: SignalEmitter<() => void> = new SignalEmitter();
     public readonly signal_entered_tree: SignalEmitter<() => void> = new SignalEmitter();
@@ -118,7 +157,9 @@ export class Node {
 
     public readonly signal_notification: SignalEmitter<(what: NodeNotification) => void> = new SignalEmitter();
     public readonly signal_ready: SignalEmitter<() => void> = new SignalEmitter();
+    public readonly signal_input: SignalEmitter<(event: InputEvent, propagate: boolean) => void> = new SignalEmitter();
     public readonly signal_process: SignalEmitter<(delta: number) => void> = new SignalEmitter();
+    public readonly signal_physics_process: SignalEmitter<(delta: number) => void> = new SignalEmitter();
 
     constructor() {
         this.rid = Rid();
@@ -215,6 +256,32 @@ export class Node {
         this.nofity(NodeNotification.InternalAfterProcess);
     }
 
+    public propagate_InternalBeforePhysicsProcess(delta: number) {
+        for (const child of this.children) {
+            child.propagate_InternalBeforePhysicsProcess(delta);
+        }
+        // internal before process
+        this.nofity(NodeNotification.InternalBeforePhysicsProcess);
+    }
+
+    public propagate_PhysicsProcess(delta: number) {
+        for (const child of this.children) {
+            child.propagate_PhysicsProcess(delta);
+        }
+        // process
+        this.nofity(NodeNotification.PhysicsProcess);
+        this._physics_process(delta);
+        this.signal_physics_process.trigger(delta);
+    }
+
+    public propagate_InternalAfterPhysicsProcess(delta: number) {
+        for (const child of this.children) {
+            child.propagate_InternalAfterPhysicsProcess(delta);
+        }
+        // internal before process
+        this.nofity(NodeNotification.InternalAfterPhysicsProcess);
+    }
+
     public propagate_InternalBeforeRender(delta: number) {
         for (const child of this.children) {
             child.propagate_InternalBeforeRender(delta);
@@ -258,7 +325,7 @@ export class Node {
             node.set_SceneTree(this.scenetree);
         }
         // children changed
-        node.nofity(NodeNotification.ChildrenChanged);
+        this.nofity(NodeNotification.ChildrenChanged);
     }
 
     private remove_ChildInternal(node: Node) {
@@ -275,7 +342,7 @@ export class Node {
             node.propagate_SceneTreeExited();
         }
         // children changed siganl
-        node.nofity(NodeNotification.ChildrenChanged);
+        this.nofity(NodeNotification.ChildrenChanged);
     }
 
     private propagate_Dispose() {
@@ -300,6 +367,14 @@ export class Node {
 
     public remove_Child(node: Node) {
         this.remove_ChildInternal(node);
+    }
+
+    public move_Child(node: Node, to: number) {
+        const idx = this.get_ChildIndex(node);
+        if (idx < 0) return;
+        this.children.splice(idx, 1);
+        this.children.splice(to, 0, node);
+        this.nofity(NodeNotification.ChildrenChanged);
     }
 
     public has_Child(node: Node): boolean {
@@ -345,7 +420,15 @@ export class Node {
 
     }
 
+    public _input(event: InputEvent, propagate: boolean) {
+
+    }
+
     public _process(delta: number) {
+
+    }
+
+    public _physics_process(delta: number) {
 
     }
 }
@@ -515,7 +598,7 @@ export class Node3D extends Node {
 
 export class Camera3D extends Node3D {
     public _current: boolean = true;
-    public get current(){return this._current;}
+    public get current() { return this._current; }
     public set current(current: boolean) {
         if (this._current !== current) {
             if (current) {
@@ -534,7 +617,7 @@ export class Camera3D extends Node3D {
     public _notification(what: NodeNotification): void {
         switch (what) {
             case NodeNotification.EnteredTree: {
-                if(this.current) {
+                if (this.current) {
                     this.get_Viewport()?.set_ActiveCamera3D(this);
                 }
                 break;
@@ -560,6 +643,15 @@ export enum ViewportUpdateMode {
 }
 
 export class Viewport extends Node {
+    private readonly mouse_event_manager: ViewportMouseInputEventManager;
+    public get is_mouse_inside() { return this.mouse_event_manager.is_mouse_inside; }
+    public get signal_mouse_entered() { return this.mouse_event_manager.signal_mouse_enetered; }
+    public get signal_mouse_leaved() { return this.mouse_event_manager.signal_mouse_leaved; }
+    public get mouse_position() { return this.mouse_event_manager.mouse_position; }
+    public get mouse_position_normalized() { return this.mouse_event_manager.mouse_position_normalized; }
+
+    private readonly key_event_manager: ViewportKeyInputEventManager;
+
     public world_3d: World3D | undefined = undefined;
     private readonly renderer_3d: Renderer3D;
     private camera_3d: Camera3D | undefined;
@@ -602,6 +694,7 @@ export class Viewport extends Node {
     }
 
     public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
+    public physics_picking: boolean = true;
 
     // signals
     public readonly signal_before_render: SignalEmitter<() => void> = new SignalEmitter();
@@ -612,16 +705,58 @@ export class Viewport extends Node {
         super();
         this.renderer_3d = new Renderer3D(document.createElement('canvas'), { antialias: true });
         this.renderer_3d.set_PixelRatio(this.pixel_ratio);
-        this.canvas.addEventListener('mouseenter', this._on_MouseEntered);
-        this.canvas.addEventListener('mouseleave', this._on_MouseLeaved);
+        this.mouse_event_manager = new ViewportMouseInputEventManager(this);
+        this.key_event_manager = new ViewportKeyInputEventManager(this);
+        this.mouse_event_manager.signal_mouse_event.connect(this._on_InputEvent);
+        this.key_event_manager.signal_key_event.connect(this._on_InputEvent);
     }
 
-    private _on_MouseEntered = this.on_MouseEntered.bind(this);
-    private on_MouseEntered(event: MouseEvent) {
+    private _on_InputEvent = this.on_InputEvent.bind(this);
+    private on_InputEvent(event: InputEvent) {
+        const action_input_event = this.get_SceneTree()?.parse_ActionInputEvent(event);
+        if (action_input_event !== undefined) {
+            this.propagate_InputEvent(action_input_event);
+        }
+        this.propagate_InputEvent(event);
     }
 
-    private _on_MouseLeaved = this.on_MouseLeaved.bind(this);
-    private on_MouseLeaved(event: MouseEvent) {
+    private propagate_InputEventInternal(node: Node, event: InputEvent) {
+        if (node instanceof Viewport || node.block_input) return;
+        node._input(event, true);
+        if (event.is_Canceled()) return;
+        node.signal_input.trigger(event, true);
+        if (event.is_Canceled()) return;
+        for (const child of node.children) {
+            this.propagate_InputEventInternal(child, event);
+            if (event.is_Canceled()) return;
+        }
+        node._input(event, false);
+        if (event.is_Canceled()) return;
+        node.signal_input.trigger(event, false);
+        return;
+    }
+
+    private propagate_InputEvent(event: InputEvent) {
+        if (event.is_Canceled()) return;
+        this._input(event, true);
+        if (event.is_Canceled()) return;
+        this.signal_input.trigger(event, true);
+        for (const child of this.children) {
+            this.propagate_InputEventInternal(child, event);
+            if (event.is_Canceled()) return;
+        }
+        this._input(event, false);
+        if (event.is_Canceled()) return;
+        this.signal_input.trigger(event, false);
+        return;
+    }
+
+    public emulate_InputEvent(event: InputEvent) {
+        this.on_InputEvent(event);
+    }
+
+    public push_InputEvent(event: InputEvent) {
+        this.propagate_InputEvent(event);
     }
 
     public set_ActiveCamera3D(camera: Camera3D) {
@@ -661,9 +796,16 @@ export class Viewport extends Node {
             }
             case NodeNotification.Dispose: {
                 this.renderer_3d.dispose();
-                this.canvas.removeEventListener('mouseenter', this._on_MouseEntered);
-                this.canvas.removeEventListener('mouseleave', this._on_MouseLeaved);
+                this.world_3d?.dispose();
+                this.mouse_event_manager.dispose();
+                this.key_event_manager.dispose();
                 return;
+            }
+            case NodeNotification.InternalAfterPhysicsProcess: {
+                if (this.physics_picking && this.is_mouse_inside) {
+                    // console.log(">> picking", this.readable_name);
+                }
+                break;
             }
         }
     }

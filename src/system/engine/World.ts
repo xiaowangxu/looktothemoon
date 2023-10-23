@@ -1,15 +1,27 @@
-import { Scene, Matrix4, Mesh, Object3D } from "three";
+import { Scene, Matrix4, Mesh, Object3D, Vector2, Camera } from "three";
 import { Rid, type RID } from "./Rid";
 import type { GeometryResource } from "./resources/GeometryResource";
 import type { MaterialResource } from "./resources/MaterialResource";
 
 export class World3D {
     private readonly visual_world: VisualWorld3D = new VisualWorld3D();
+    private readonly physics_world: PhysicsWorld3D = new PhysicsWorld3D();
 
     get_VisualWorld() {
         return this.visual_world;
     }
+
+    get_PhysicsWorld() {
+        return this.visual_world;
+    }
+
+    dispose() {
+        this.visual_world.dispose();
+        this.physics_world.dispose();
+    }
 }
+
+// visual world
 
 export class VisualWorld3D {
     private readonly scene: Scene = new Scene();
@@ -28,6 +40,10 @@ export class VisualWorld3D {
         const instance = this.instance_map.get(rid);
         if (instance === undefined) return undefined;
         return (instance instanceof type) ? instance as T : undefined;
+    }
+
+    public dispose() {
+
     }
 
     // mesh
@@ -127,5 +143,19 @@ export class VisualWorld3D {
         if (instance) {
             instance.layers.mask = layer;
         }
+    }
+
+}
+
+// physics world
+
+export class PhysicsWorld3D {
+
+    public update_PhysicsPicking(position_normal: Vector2, camera: Camera) {
+
+    }
+
+    public dispose() {
+
     }
 }

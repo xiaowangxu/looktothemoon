@@ -8,9 +8,7 @@
                 <SPanel class="pointer-event" style="overflow: hidden; padding: 0px;">
                     <SScrollContainer scroll-bar-state-h="hidden" scroll-bar-state-v="hidden">
                         <SFlow padding="var(--GapAndMargin)">
-                            <SLineEdit :clearable="false" :align-text="align" v-model:value="lineedit" lazy />
-                            <SLineEdit :clearable="false" :align-text="align" value="lineeditq23" disabled lazy
-                                text-color="red" />
+                            <SLineEdit :clearable="false" align-text="start" v-model:value="lineedit" lazy />
                             <SHSeparator />
                             <SActiveArea>
                                 <SLabel min-size="normal">长度</SLabel>

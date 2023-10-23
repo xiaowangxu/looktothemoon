@@ -7,6 +7,7 @@ import { PolyLineGeometryResource, ThreeGeometryResource } from "@/system/engine
 import { NormalMaterialResource, PolyLineMaterialResource, ThreeMaterialResource } from "@/system/engine/resources/MaterialResource";
 import { PerspectiveCamera3D } from "@/system/engine/nodes/PerspectiveCamera3D";
 import { OrthographicCamera3D } from "@/system/engine/nodes/OrthographicCamera3D copy";
+import { ActionInputEvent, KeyInputEvent, MouseButton, MouseButtonInputEvent, ShortCut } from "@/system/engine/InputEvent";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -65,7 +66,9 @@ line_mesh.visual_layer = 1;
 // camera
 const CameraArm0 = new Node3D();
 const CameraArm1 = new Node3D();
+const CameraArm01 = new Node3D();
 CameraArm0.add_Child(CameraArm1);
+CameraArm0.add_Child(CameraArm01);
 export const EditorCamera = new PerspectiveCamera3D();
 CameraArm1.add_Child(EditorCamera);
 EditorViewport.add_Child(CameraArm0);
@@ -77,7 +80,35 @@ CameraArm0.signal_process.connect((delta) => {
     const rotation = CameraArm0.local_rotation;
     CameraArm0.local_rotation = new Euler(0, rotation.y - delta, 0);
     EditorCamera.fov = (Math.sin(time / 10) + 1) / 2 * 100 + 20;
-})
+});
+
+EditorViewport.signal_input.connect((event, prop) => {
+    if (!prop) {
+        if (event instanceof ActionInputEvent) {
+            console.log('viewport', event.action, event.pressed, event.echo);
+        }
+    }
+});
+CameraArm0.signal_input.connect((event, prop) => {
+    if ((event instanceof MouseButtonInputEvent && event.click)) {
+        console.log('camera_arm_0', prop);
+    }
+});
+CameraArm01.signal_input.connect((event, prop) => {
+    if (event instanceof MouseButtonInputEvent && event.click) {
+        console.log('camera_arm_01', prop);
+    }
+});
+CameraArm1.signal_input.connect((event, prop) => {
+    if (event instanceof MouseButtonInputEvent && event.click) {
+        console.log('camera_arm_1', prop);
+    }
+});
+EditorCamera.signal_input.connect((event, prop) => {
+    if (event instanceof MouseButtonInputEvent && event.click) {
+        console.log('camera', prop);
+    }
+});
 
 // scenetree
 export const EditorSceneTree = new SceneTree(EditorViewportContainer);
@@ -93,6 +124,12 @@ EditorViewport0.add_Child(EditorCamera0);
 EditorCamera0.local_position = new Vector3(0, 10, 0);
 EditorCamera0.local_rotation = new Euler(-Math.PI / 2, 0, 0);
 EditorViewport.add_Child(EditorViewportContainer0);
+EditorViewport0.update_mode = ViewportUpdateMode.Once;
+EditorCamera0.signal_input.connect(event => {
+    if (event instanceof MouseButtonInputEvent && event.button === MouseButton.WheelUp) {
+        EditorViewport0.update_mode = ViewportUpdateMode.Once;
+    }
+});
 
 // viewport 1
 const EditorViewportContainer1 = new ViewportDomContainer();
@@ -119,12 +156,7 @@ EditorCamera2.local_position = new Vector3(10, 0, 0);
 EditorCamera2.local_rotation = new Euler(0, Math.PI / 2, 0);
 EditorViewport.add_Child(EditorViewportContainer2);
 
-EditorViewport0.update_mode = ViewportUpdateMode.Once;
-
-EditorViewport0.signal_resized.connect(() => {
-    EditorViewport0.update_mode = ViewportUpdateMode.Once;
-});
-
+EditorSceneTree.input_manager.add_Action('Undo', new ShortCut([new KeyInputEvent('z', '0', true, false, undefined, true, false, false, false)]));
 console.log(EditorSceneTree);
 
 function create_CompassScene() {
@@ -138,6 +170,7 @@ function create_CompassScene() {
     const camera_zoom = 4;
 
     const viewport_container = new ViewportDomContainer();
+    (viewport_container as any).target! = EditorViewport;
     const viewport = new Viewport();
     viewport.transparent = true;
     viewport.world_3d = new World3D();
@@ -217,7 +250,7 @@ function create_CompassScene() {
 
     viewport_container.signal_notification.connect((what: NodeNotification) => {
         if (what === NodeNotification.InternalAfterProcess) {
-            const active_camera = viewport_container.get_Viewport()?.get_Camera3D();
+            const active_camera = (viewport_container as any).target?.get_Camera3D();
             if (active_camera === undefined) return;
             const lookat_global_position = active_camera.to_Global(new Vector3(0, 0, 1));
             const lookat = lookat_global_position.sub(active_camera.global_position).normalize();
@@ -231,6 +264,12 @@ function create_CompassScene() {
 }
 
 const EditorCompassViewportContainer = create_CompassScene();
+
+EditorViewport.signal_mouse_entered.connect(() => (EditorCompassViewportContainer as any).target = EditorViewport);
+EditorViewport0.signal_mouse_entered.connect(() => (EditorCompassViewportContainer as any).target = EditorViewport0);
+EditorViewport1.signal_mouse_entered.connect(() => (EditorCompassViewportContainer as any).target = EditorViewport1);
+EditorViewport2.signal_mouse_entered.connect(() => (EditorCompassViewportContainer as any).target = EditorViewport2);
+
 EditorViewport.add_Child(EditorCompassViewportContainer);
 
 export function createEditorViewport(el: string) {
