@@ -1,0 +1,351 @@
+import { SignalEmitter } from "../utils/SignalEmitter";
+
+export enum TransitionType {
+    Linear, Sine, Quad, Cubic, Quart, Quint, Expo, Back, Elastic, Circle, Bounce
+}
+
+export enum EasingType {
+    In, Out, InOut
+}
+
+export class TweenBase {
+    protected _started: boolean = false;
+    public get started() { return this._started; }
+    protected set started(started: boolean) { this._started = started; }
+    protected _finished: boolean = false;
+    public get finished() { return this._finished; }
+    protected set finished(finished: boolean) {
+        this._finished = finished;
+        if (this._finished) {
+            this.trigger_Finished();
+        }
+    }
+    public get running() { return this.started && !this.finished; }
+
+    // signals
+    public readonly signal_finished: SignalEmitter<() => void> = new SignalEmitter();
+
+    constructor() {
+
+    }
+
+    protected trigger_Finished() {
+        this.signal_finished.trigger();
+    }
+
+    public start() { }
+
+    public process(delta: number) { }
+
+    public stop() {
+        this.finished = true;
+    }
+}
+
+export class TweenSequence extends TweenBase {
+    private readonly tweens: TweenBase[] = [];
+    private current_tween_idx: number = 0;
+    private current_tween: TweenBase | undefined = undefined;
+
+    constructor(tweens: TweenBase[]) {
+        super();
+        this.tweens = tweens;
+    }
+
+    public start() {
+        if (this.tweens.length === 0) {
+            this.started = true;
+            this.finished = true;
+        }
+        else {
+            this.current_tween_idx = 0;
+            this.current_tween = this.tweens[this.current_tween_idx];
+            this.started = true;
+            this.finished = this.start_Tween();
+        }
+    }
+
+    private start_Tween(): boolean {
+        if (this.current_tween !== undefined) {
+            this.current_tween.start();
+            if (this.current_tween.finished) {
+                this.current_tween_idx++;
+                if (this.current_tween_idx >= this.tweens.length) {
+                    return true;
+                }
+                else {
+                    this.current_tween = this.tweens[this.current_tween_idx];
+                    return this.start_Tween();
+                }
+            }
+            else {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public process(delta: number): void {
+        if (this.running) {
+            this.current_tween!.process(delta);
+            if (this.current_tween!.finished) {
+                this.current_tween_idx++;
+                if (this.current_tween_idx >= this.tweens.length) {
+                    this.finished = true;
+                }
+                else {
+                    this.current_tween = this.tweens[this.current_tween_idx];
+                    this.finished = this.start_Tween();
+                }
+            }
+        }
+    }
+}
+
+export class Tween extends TweenBase {
+    private readonly duration: number;
+    private readonly transition: TransitionType;
+    private readonly easing: EasingType;
+
+    private _current: number = 0;
+    public get current() { return this._current; }
+    private _value: number = 0;
+    public get value() { return this._value; }
+
+    constructor(duration: number, transition: TransitionType, easing: EasingType) {
+        super();
+        this.duration = Math.max(0, duration);
+        this.transition = transition;
+        this.easing = easing;
+    }
+
+    public start() {
+        if (this.duration === 0) {
+            this._current = 1;
+            this._value = 1;
+            this.started = true;
+            this.finished = true;
+        }
+        else {
+            this._current = 0;
+            this._value = 0;
+            this.started = true;
+            this.finished = false;
+        }
+    }
+
+    public process(delta: number) {
+        if (this.running) {
+            const finished = this._current >= this.duration;
+            if (finished) {
+                this.finished = true;
+            }
+            else {
+                const c = this._current + delta;
+                this._current = Math.min(this.duration, Math.max(0, c));
+                this._value = Tween.calculate_TransitionEasing(this._current / this.duration, this.transition, this.easing);
+            }
+        }
+    }
+
+    static calculate_TransitionEasing(value: number, transition: TransitionType, easing: EasingType): number {
+        const x = Math.min(1, Math.max(0, value));
+        switch (transition) {
+            case TransitionType.Linear: {
+                return x;
+            }
+            case TransitionType.Sine: {
+                switch (easing) {
+                    case EasingType.In: return 1 - Math.cos((x * Math.PI) / 2);
+                    case EasingType.Out: return Math.sin((x * Math.PI) / 2);
+                    case EasingType.InOut: return -(Math.cos(Math.PI * x) - 1) / 2;
+                }
+            }
+            case TransitionType.Quad: {
+                switch (easing) {
+                    case EasingType.In: return x * x
+                    case EasingType.Out: return 1 - (1 - x) * (1 - x);
+                    case EasingType.InOut: return (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+                }
+            }
+            case TransitionType.Cubic: {
+                switch (easing) {
+                    case EasingType.In: return x * x * x;
+                    case EasingType.Out: return 1 - Math.pow(1 - x, 3);
+                    case EasingType.InOut: return (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+                }
+            }
+            case TransitionType.Quart: {
+                switch (easing) {
+                    case EasingType.In: return x * x * x * x;
+                    case EasingType.Out: return 1 - Math.pow(1 - x, 4);
+                    case EasingType.InOut: return (x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2);
+                }
+            }
+            case TransitionType.Quint: {
+                switch (easing) {
+                    case EasingType.In: return x * x * x * x * x;
+                    case EasingType.Out: return 1 - Math.pow(1 - x, 5);
+                    case EasingType.InOut: return (x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2);
+                }
+            }
+            case TransitionType.Expo: {
+                switch (easing) {
+                    case EasingType.In: return (x === 0 ? 0 : Math.pow(2, 10 * x - 10));
+                    case EasingType.Out: return (x === 1 ? 1 : 1 - Math.pow(2, -10 * x));
+                    case EasingType.InOut: return (x === 0
+                        ? 0
+                        : x === 1
+                            ? 1
+                            : x < 0.5 ? Math.pow(2, 20 * x - 10) / 2
+                                : (2 - Math.pow(2, -20 * x + 10)) / 2);
+                }
+            }
+            case TransitionType.Circle: {
+                switch (easing) {
+                    case EasingType.In: return 1 - Math.sqrt(1 - Math.pow(x, 2));
+                    case EasingType.Out: return Math.sqrt(1 - Math.pow(x - 1, 2));
+                    case EasingType.InOut: return (x < 0.5
+                        ? (1 - Math.sqrt(1 - Math.pow(2 * x, 2))) / 2
+                        : (Math.sqrt(1 - Math.pow(-2 * x + 2, 2)) + 1) / 2);
+                }
+            }
+            case TransitionType.Back: {
+                const c1 = 1.70158;
+                const c2 = c1 * 1.525;
+                const c3 = c1 + 1;
+                switch (easing) {
+                    case EasingType.In: return c3 * x * x * x - c1 * x * x;
+                    case EasingType.Out: return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+                    case EasingType.InOut: return (x < 0.5
+                        ? (Math.pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2)) / 2
+                        : (Math.pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2);
+                }
+            }
+            case TransitionType.Elastic: {
+                const c4 = (2 * Math.PI) / 3;
+                const c5 = (2 * Math.PI) / 4.5;
+                switch (easing) {
+                    case EasingType.In: return (x === 0
+                        ? 0
+                        : x === 1
+                            ? 1
+                            : -Math.pow(2, 10 * x - 10) * Math.sin((x * 10 - 10.75) * c4));
+                    case EasingType.Out: return (x === 0
+                        ? 0
+                        : x === 1
+                            ? 1
+                            : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1);
+                    case EasingType.InOut: return (x === 0
+                        ? 0
+                        : x === 1
+                            ? 1
+                            : x < 0.5
+                                ? -(Math.pow(2, 20 * x - 10) * Math.sin((20 * x - 11.125) * c5)) / 2
+                                : (Math.pow(2, -20 * x + 10) * Math.sin((20 * x - 11.125) * c5)) / 2 + 1);
+                }
+            }
+            case TransitionType.Bounce: {
+                switch (easing) {
+                    case EasingType.In: return 1 - Tween.calculate_TransitionEasing(x, TransitionType.Bounce, EasingType.Out);
+                    case EasingType.Out: {
+                        const n1 = 7.5625;
+                        const d1 = 2.75;
+                        let _x = x;
+                        if (_x < 1 / d1) {
+                            return n1 * _x * _x;
+                        } else if (_x < 2 / d1) {
+                            return n1 * (_x -= 1.5 / d1) * _x + 0.75;
+                        } else if (_x < 2.5 / d1) {
+                            return n1 * (_x -= 2.25 / d1) * _x + 0.9375;
+                        } else {
+                            return n1 * (_x -= 2.625 / d1) * _x + 0.984375;
+                        }
+                    }
+                    case EasingType.InOut: return (x < 0.5
+                        ? (1 - Tween.calculate_TransitionEasing(1 - 2 * x, TransitionType.Bounce, EasingType.Out)) / 2
+                        : (1 + Tween.calculate_TransitionEasing(2 * x - 1, TransitionType.Bounce, EasingType.Out)) / 2);
+                }
+            }
+        }
+    }
+}
+
+export class MethodTween extends Tween {
+    private readonly method: (value: number) => void;
+
+    constructor(method: (value: number) => void, duration: number, transition: TransitionType, easing: EasingType) {
+        super(duration, transition, easing);
+        this.method = method;
+    }
+
+    public start(): void {
+        super.start();
+        if (this.finished) {
+            this.method(this.value);
+        }
+    }
+
+    public process(delta: number): void {
+        if (this.running) {
+            this.method(this.value);
+        }
+        super.process(delta);
+    }
+}
+
+export class CallbackTween extends TweenBase {
+    private readonly callback: () => void;
+
+    constructor(callback: () => void) {
+        super();
+        this.callback = callback;
+    }
+
+    public start(): void {
+        this.callback();
+        this.finished = true;
+    }
+}
+
+export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extends Obj[Key]> extends Tween {
+    public readonly object: Obj;
+    public readonly key: Key;
+    public readonly initial: Val;
+    public readonly target: Val;
+    private readonly lerp: (a: any, b: any, v: number) => any;
+
+    constructor(object: Obj, key: Key, target: Val, duration: number, transition: TransitionType, easing: EasingType) {
+        super(duration, transition, easing);
+        this.object = object;
+        this.key = key;
+        this.initial = this.object[this.key] as Val;
+        this.target = target;
+        if (typeof (this.target) === 'number') {
+            this.lerp = PropertyTween.LerpFuncs.number;
+        }
+        else {
+            throw new Error(`property '${String(this.key)}' is not lerpable`);
+        }
+    }
+
+    public start(): void {
+        super.start();
+        if (this.finished) {
+            const v = this.lerp(this.initial, this.target, this.value);
+            this.object[this.key] = v as Val;
+        }
+    }
+
+    public process(delta: number): void {
+        if (this.running) {
+            const v = this.lerp(this.initial, this.target, this.value);
+            this.object[this.key] = v as Val;
+        }
+        super.process(delta);
+    }
+
+    private static LerpFuncs = {
+        number: (a: number, b: number, v: number) => a + (b - a) * v,
+    }
+}

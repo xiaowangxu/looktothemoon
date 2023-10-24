@@ -172,17 +172,8 @@ export class ShortCut {
     }
 }
 
-export class InputManager {
+export class InputActionMap {
     private input_action_map: Map<string, ShortCut> = new Map();
-    private action_map: Map<string, boolean> = new Map();
-
-    public is_ActionPressed(action: string, echo: boolean = true) {
-        return this.action_map.has(action) && (echo || this.action_map.get(action) === false);
-    }
-
-    public is_ActionEcho(action: string) {
-        return this.action_map.has(action) && this.action_map.get(action) === true;
-    }
 
     private is_InputEventPressed(event: InputEvent) {
         if (event instanceof MouseButtonInputEvent) return event.pressed;
@@ -195,21 +186,11 @@ export class InputManager {
         return false;
     }
 
-    private update_Action(action: string, pressed: boolean, echo: boolean) {
-        if (pressed || echo) {
-            this.action_map.set(action, echo);
-        }
-        else {
-            this.action_map.delete(action);
-        }
-    }
-
     public parse_ActionInputEvent(event: InputEvent): ActionInputEvent | undefined {
         for (const [action, shortcut] of this.input_action_map.entries()) {
             if (shortcut.match(event, false)) {
                 const pressed = this.is_InputEventPressed(event);
                 const echo = this.is_InputEventEcho(event);
-                this.update_Action(action, pressed, echo);
                 return new ActionInputEvent(action, pressed, echo);
             }
         }
@@ -219,9 +200,76 @@ export class InputManager {
     public add_Action(action: string, shortcut: ShortCut) {
         this.input_action_map.set(action, shortcut);
     }
+
 }
 
 // ViewportInputEventManager
+
+export class InputManager {
+    private readonly viewport: Viewport;
+    public get is_mouse_inside() { return this.viewport.mouse_event_manager.is_mouse_inside; }
+    public get mouse_position() { return this.viewport.mouse_event_manager.mouse_position; }
+    public get mouse_position_normalized() { return this.viewport.mouse_event_manager.mouse_position_normalized; }
+
+    // signals
+    public get signal_mouse_entered() { return this.viewport.mouse_event_manager.signal_mouse_enetered; }
+    public get signal_mouse_leaved() { return this.viewport.mouse_event_manager.signal_mouse_leaved; }
+    
+    constructor(viewport: Viewport) {
+        this.viewport = viewport;
+    }
+
+    public is_ActionJustPressed(action: string) {
+        return this.viewport.action_event_manager.is_ActionPressed(action, false);
+    }
+
+    public is_ActionPressed(action: string) {
+        return this.viewport.action_event_manager.is_ActionPressed(action, true);
+    }
+
+    public is_KeyJustPressed(key: string) {
+        return this.viewport.key_event_manager.is_KeyPressed(key, false);
+    }
+
+    public is_KeyPressed(key: string) {
+        return this.viewport.key_event_manager.is_KeyPressed(key, true);
+    }  
+}
+
+export class ViewportActionInputEventManager {
+    private readonly viewport: Viewport;
+    private action_map: Map<string, boolean> = new Map();
+
+    constructor(viewport: Viewport) {
+        this.viewport = viewport;
+    }
+
+    public is_ActionPressed(action: string, echo: boolean = true) {
+        return this.action_map.has(action) && (echo || this.action_map.get(action) === false);
+    }
+
+    public is_ActionEcho(action: string) {
+        return this.action_map.has(action) && this.action_map.get(action) === true;
+    }
+
+    public parse_ActionInputEvent(event: InputEvent) {
+        const action_input_event = this.viewport.get_SceneTree()?.get_InputActionMap()?.parse_ActionInputEvent(event);
+        if (action_input_event !== undefined) {
+            this.update_Action(action_input_event);
+        }
+        return action_input_event;
+    }
+
+    private update_Action(action_input_event: ActionInputEvent) {
+        const { action, pressed, echo } = action_input_event;
+        if (pressed || echo) {
+            this.action_map.set(action, echo);
+        }
+        else {
+            this.action_map.delete(action);
+        }
+    }
+}
 
 export class ViewportMouseInputEventManager {
     private readonly viewport: Viewport;
@@ -416,7 +464,7 @@ export class ViewportMouseInputEventManager {
 
 export class ViewportKeyInputEventManager {
     private readonly viewport: Viewport;
-    private get is_viewport_active() { return this.viewport.is_mouse_inside; }
+    private get is_viewport_active() { return this.viewport.get_Input().is_mouse_inside; }
 
     private key_map: Map<string, boolean> = new Map();
 

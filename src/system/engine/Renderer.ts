@@ -1,8 +1,10 @@
 import { WebGLRenderer, type Camera, Scene, BoxGeometry, MeshBasicMaterial, Mesh, GridHelper } from "three";
 import { World3D } from "./World";
+import type { Camera3D } from "./SceneTree";
 
 export interface RendererCreationOption {
     antialias?: boolean,
+    logarithmicDepthBuffer?: boolean,
 }
 
 export class Renderer3D {
@@ -11,15 +13,15 @@ export class Renderer3D {
     private readonly renderer: WebGLRenderer;
 
     constructor(canvas: HTMLCanvasElement, option: RendererCreationOption) {
-        const { antialias = true } = option;
+        const { antialias = true, logarithmicDepthBuffer = true } = option;
         this.canvas = canvas;
         this.renderer = new WebGLRenderer({
             canvas: canvas,
-            antialias
+            antialias, logarithmicDepthBuffer,
         });
     }
 
-    public dispose(){
+    public dispose() {
         this.renderer.dispose();
     }
 
@@ -35,12 +37,15 @@ export class Renderer3D {
         this.renderer.setPixelRatio(pixel_ratio);
     }
 
-    public render(world: World3D, camera: Camera): void {
-        this.renderer.render(world.get_VisualWorld().get_VisualScene(), camera);
+    public render(world: World3D, camera: Camera3D): void {
+        const world_3d = world.get_VisualWorld();
+        world_3d.trigger_BeforeRender(camera);
+        this.renderer.render(world_3d.get_VisualScene(), camera.get_Camera());
     }
 
     public get_Info() {
         return this.renderer.info;
     }
+
 }
 

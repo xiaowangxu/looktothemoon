@@ -1,13 +1,15 @@
 import { World3D } from "@/system/engine/World";
 import { NodeNotification, Node3D, SceneTree, Viewport, ViewportUpdateMode } from "@/system/engine/SceneTree";
 import { ViewportDomContainer } from "@/system/engine/nodes/ViewportDomContainer";
-import { Euler, BoxGeometry, SphereGeometry, Vector3, MeshBasicMaterial, Color, Quaternion } from "three";
+import { Euler, BoxGeometry, SphereGeometry, Vector3, MeshBasicMaterial, Color, DoubleSide } from "three";
 import { MeshInstance3D } from "@/system/engine/nodes/MeshInstance3D";
 import { PolyLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/GeometryResource";
 import { NormalMaterialResource, PolyLineMaterialResource, ThreeMaterialResource } from "@/system/engine/resources/MaterialResource";
 import { PerspectiveCamera3D } from "@/system/engine/nodes/PerspectiveCamera3D";
-import { OrthographicCamera3D } from "@/system/engine/nodes/OrthographicCamera3D copy";
+import { OrthographicCamera3D } from "@/system/engine/nodes/OrthographicCamera3D";
 import { ActionInputEvent, KeyInputEvent, MouseButton, MouseButtonInputEvent, ShortCut } from "@/system/engine/InputEvent";
+import { InterpolateCamera3D } from "@/system/engine/nodes/InterpolateCamera3D";
+import { CallbackTween, EasingType, MethodTween, PropertyTween, TransitionType, TweenBase, TweenSequence } from "@/system/engine/Tween";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -34,9 +36,15 @@ Cube.local_position = new Vector3(2, 0, 0);
 Cube.add_Child(Cube2);
 Cube2.local_scale = new Vector3(0.25, 1, 0.25);
 Cube2.local_position = new Vector3(0, 1, 0);
-node2.signal_process.connect((delta: number) => {
-    node2.local_rotation = new Euler(0, node2.local_rotation.y + delta, 0);
-});
+// node2.signal_process.connect((delta: number) => {
+//     node2.local_rotation = new Euler(0, node2.local_rotation.y + delta, 0);
+// });
+const Sphere = new MeshInstance3D();
+Sphere.geometry = new ThreeGeometryResource(new SphereGeometry(1, undefined, undefined, Math.PI, Math.PI));
+Sphere.material = new ThreeMaterialResource(new MeshBasicMaterial({ side: DoubleSide }));
+
+EditorViewport.add_Child(Sphere);
+
 
 const polyline_geometry = new PolyLineGeometryResource();
 const points: Vector3[] = []
@@ -46,7 +54,7 @@ for (let i = 0; i <= 100; i++) {
     const rad = t * Math.PI * 2;
     const cos = Math.cos(rad);
     const sin = Math.sin(rad);
-    points.push(new Vector3(cos, 0, sin));
+    points.push(new Vector3(cos, 0, sin).multiplyScalar(1));
     colors.push(new Color().setHSL(t, 1, 0.5));
 }
 polyline_geometry.points = points;
@@ -62,6 +70,7 @@ line_mesh.material = new PolyLineMaterialResource();
 (line_mesh.material as PolyLineMaterialResource).vertex_colors = true;
 EditorViewport.add_Child(line_mesh);
 line_mesh.visual_layer = 1;
+line_mesh.local_rotation = new Euler(0.12, 2, 0.324);
 
 // camera
 const CameraArm0 = new Node3D();
@@ -69,45 +78,16 @@ const CameraArm1 = new Node3D();
 const CameraArm01 = new Node3D();
 CameraArm0.add_Child(CameraArm1);
 CameraArm0.add_Child(CameraArm01);
-export const EditorCamera = new PerspectiveCamera3D();
+export const EditorCamera = new InterpolateCamera3D();
 CameraArm1.add_Child(EditorCamera);
 EditorViewport.add_Child(CameraArm0);
-EditorCamera.local_position = new Vector3(0, 0, 5);
+EditorCamera.local_position = new Vector3(0, 0, 10);
 CameraArm1.local_rotation = new Euler(-0.3, 0, 0);
 
 CameraArm0.signal_process.connect((delta) => {
     time += delta;
     const rotation = CameraArm0.local_rotation;
-    CameraArm0.local_rotation = new Euler(0, rotation.y - delta, 0);
-    EditorCamera.fov = (Math.sin(time / 10) + 1) / 2 * 100 + 20;
-});
-
-EditorViewport.signal_input.connect((event, prop) => {
-    if (!prop) {
-        if (event instanceof ActionInputEvent) {
-            console.log('viewport', event.action, event.pressed, event.echo);
-        }
-    }
-});
-CameraArm0.signal_input.connect((event, prop) => {
-    if ((event instanceof MouseButtonInputEvent && event.click)) {
-        console.log('camera_arm_0', prop);
-    }
-});
-CameraArm01.signal_input.connect((event, prop) => {
-    if (event instanceof MouseButtonInputEvent && event.click) {
-        console.log('camera_arm_01', prop);
-    }
-});
-CameraArm1.signal_input.connect((event, prop) => {
-    if (event instanceof MouseButtonInputEvent && event.click) {
-        console.log('camera_arm_1', prop);
-    }
-});
-EditorCamera.signal_input.connect((event, prop) => {
-    if (event instanceof MouseButtonInputEvent && event.click) {
-        console.log('camera', prop);
-    }
+    // CameraArm0.local_rotation = new Euler(0, rotation.y - delta, 0);
 });
 
 // scenetree
@@ -124,12 +104,6 @@ EditorViewport0.add_Child(EditorCamera0);
 EditorCamera0.local_position = new Vector3(0, 10, 0);
 EditorCamera0.local_rotation = new Euler(-Math.PI / 2, 0, 0);
 EditorViewport.add_Child(EditorViewportContainer0);
-EditorViewport0.update_mode = ViewportUpdateMode.Once;
-EditorCamera0.signal_input.connect(event => {
-    if (event instanceof MouseButtonInputEvent && event.button === MouseButton.WheelUp) {
-        EditorViewport0.update_mode = ViewportUpdateMode.Once;
-    }
-});
 
 // viewport 1
 const EditorViewportContainer1 = new ViewportDomContainer();
@@ -137,10 +111,9 @@ EditorViewportContainer1.dom = document.querySelector('#viewport1') ?? undefined
 const EditorViewport1 = new Viewport();
 EditorViewport1.transparent = true;
 EditorViewportContainer1.add_Child(EditorViewport1);
-const EditorCamera1 = new PerspectiveCamera3D();
+const EditorCamera1 = new InterpolateCamera3D();
 EditorViewport1.add_Child(EditorCamera1);
-EditorCamera1.local_position = new Vector3(0, 0, 10);
-EditorCamera1.local_rotation = new Euler(0, 0, 0);
+EditorCamera1.local_position = new Vector3(0.85, 0, 5);
 EditorViewport.add_Child(EditorViewportContainer1);
 
 
@@ -156,7 +129,7 @@ EditorCamera2.local_position = new Vector3(10, 0, 0);
 EditorCamera2.local_rotation = new Euler(0, Math.PI / 2, 0);
 EditorViewport.add_Child(EditorViewportContainer2);
 
-EditorSceneTree.input_manager.add_Action('Undo', new ShortCut([new KeyInputEvent('z', '0', true, false, undefined, true, false, false, false)]));
+EditorSceneTree.get_InputActionMap().add_Action('Undo', new ShortCut([new KeyInputEvent('z', '0', true, false, undefined, true, false, false, false)]));
 console.log(EditorSceneTree);
 
 function create_CompassScene() {
@@ -265,12 +238,55 @@ function create_CompassScene() {
 
 const EditorCompassViewportContainer = create_CompassScene();
 
-EditorViewport.signal_mouse_entered.connect(() => (EditorCompassViewportContainer as any).target = EditorViewport);
-EditorViewport0.signal_mouse_entered.connect(() => (EditorCompassViewportContainer as any).target = EditorViewport0);
-EditorViewport1.signal_mouse_entered.connect(() => (EditorCompassViewportContainer as any).target = EditorViewport1);
-EditorViewport2.signal_mouse_entered.connect(() => (EditorCompassViewportContainer as any).target = EditorViewport2);
+EditorViewport.get_Input().signal_mouse_entered.connect(() => (EditorCompassViewportContainer as any).target = EditorViewport);
+EditorViewport0.get_Input().signal_mouse_entered.connect(() => (EditorCompassViewportContainer as any).target = EditorViewport0);
+EditorViewport1.get_Input().signal_mouse_entered.connect(() => (EditorCompassViewportContainer as any).target = EditorViewport1);
+EditorViewport2.get_Input().signal_mouse_entered.connect(() => (EditorCompassViewportContainer as any).target = EditorViewport2);
 
 EditorViewport.add_Child(EditorCompassViewportContainer);
+
+// EditorCamera1.near = 3;
+EditorCamera.fov = 80;
+let orthed = false;
+let zoom_tween: PropertyTween<InterpolateCamera3D, 'reference_distance', number> | undefined = undefined;
+const zoom_delta = 0.3;
+const duration = 0.15;
+console.log(EditorCamera.reference_distance);
+EditorViewport.signal_input.connect((event, propagate) => {
+    if (!propagate && event instanceof MouseButtonInputEvent) {
+        if (event.button === MouseButton.WheelUp) {
+            let target = EditorCamera1.reference_distance;
+            if (zoom_tween !== undefined) {
+                target = zoom_tween.target;
+                EditorSceneTree.stop_Tween(zoom_tween);
+            }
+            zoom_tween = new PropertyTween(EditorCamera, 'reference_distance', target + 1, duration, TransitionType.Quad, EasingType.Out);
+            EditorSceneTree.start_Tween(zoom_tween);
+        }
+        else if (event.button === MouseButton.WheelDown) {
+            let target = EditorCamera.reference_distance;
+            if (zoom_tween !== undefined) {
+                target = zoom_tween.target;
+                EditorSceneTree.stop_Tween(zoom_tween);
+            }
+            zoom_tween = new PropertyTween(EditorCamera, 'reference_distance', target - 1, duration, TransitionType.Quad, EasingType.Out);
+            EditorSceneTree.start_Tween(zoom_tween);
+        }
+        console.log(zoom_tween?.target);
+    }
+    if (!propagate && event instanceof MouseButtonInputEvent && event.button === MouseButton.Left && event.click) {
+        if (!orthed)
+            EditorSceneTree.start_Tween(new TweenSequence([
+                new PropertyTween(EditorCamera, 'fov', 0, 1, TransitionType.Linear, EasingType.Out),
+                new CallbackTween(() => orthed = true),
+            ]));
+        else
+            EditorSceneTree.start_Tween(new TweenSequence([
+                new PropertyTween(EditorCamera, 'fov', 90, 1, TransitionType.Linear, EasingType.Out),
+                new CallbackTween(() => orthed = false),
+            ]));
+    }
+});
 
 export function createEditorViewport(el: string) {
     EditorCompassViewportContainer.dom = document.querySelector('#compass') ?? undefined;

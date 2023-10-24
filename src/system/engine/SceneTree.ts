@@ -3,10 +3,11 @@ import { SignalEmitter } from "../utils/SignalEmitter";
 import { Rid, type RID } from "./Rid";
 import { Renderer3D } from "./Renderer";
 import { World3D } from "./World";
-import { InputEvent, InputManager, ViewportKeyInputEventManager, ViewportMouseInputEventManager } from "./InputEvent";
+import { InputActionMap, InputEvent, InputManager, MouseMotionInputEvent, ViewportActionInputEventManager, ViewportKeyInputEventManager, ViewportMouseInputEventManager } from "./InputEvent";
+import type { TweenBase } from "./Tween";
 
 export class SceneTree {
-    public readonly input_manager: InputManager = new InputManager();
+    private readonly input_action_map: InputActionMap = new InputActionMap();
     private readonly root: Node;
     private readonly clock: Clock = new Clock(false);
     private readonly physics_fps: number;
@@ -19,6 +20,8 @@ export class SceneTree {
     public delta: number = 0;
     public physics_time: number = 0;
     public physics_delta: number = 0;
+
+    private tweens: Set<TweenBase> = new Set();
 
     private viewports: Set<Viewport> = new Set();
 
@@ -42,12 +45,22 @@ export class SceneTree {
         this.root.propagate_InternalBeforeProcess(this.delta);
         this.root.propagate_Process(this.delta);
         this.root.propagate_InternalAfterProcess(this.delta);
+        this.process_Tween(this.delta);
         this.root.propagate_InternalBeforeRender(this.delta);
         for (const viewport of this.viewports) {
             viewport.render();
         }
         // next frame
         this.animation_requested = requestAnimationFrame(this._loop_func);
+    }
+
+    private process_Tween(delta: number) {
+        for (const tween of [...this.tweens]) {
+            tween.process(delta);
+            if (tween.finished) {
+                this.tweens.delete(tween);
+            }
+        }
     }
 
     private _physics_loop_func = this.physics_loop.bind(this);
@@ -62,8 +75,12 @@ export class SceneTree {
 
     // apis
 
+    public get_InputActionMap() {
+        return this.input_action_map;
+    }
+
     public get_ActiveViewports(): Viewport[] {
-        return [...this.viewports].filter(v => v.is_mouse_inside);
+        return [...this.viewports].filter(v => v.get_Input().is_mouse_inside);
     }
 
     public add_Viewport(viewport: Viewport) {
@@ -74,17 +91,12 @@ export class SceneTree {
         this.viewports.delete(viewport);
     }
 
-    public parse_ActionInputEvent(event: InputEvent,) {
-        const action_input_event = this.input_manager.parse_ActionInputEvent(event);
-        return action_input_event;
-    }
-
     public start_Loop() {
         if (this.looping) return;
-        this.loop();
-        this.physics_requested = setInterval(this._physics_loop_func, 1000 / this.physics_fps);
         this.clock.start();
         this.physics_clock.start();
+        this.physics_requested = setInterval(this._physics_loop_func, 1000 / this.physics_fps);
+        requestAnimationFrame(this._loop_func);
     }
 
     public stop_Loop() {
@@ -104,6 +116,20 @@ export class SceneTree {
 
     public get_Root() {
         return this.root;
+    }
+
+    public start_Tween(tween: TweenBase) {
+        tween.start();
+        if (!tween.finished) {
+            this.tweens.add(tween);
+        }
+    }
+
+    public stop_Tween(tween: TweenBase) {
+        if (this.tweens.has(tween)) {
+            tween.stop();
+            this.tweens.delete(tween);
+        }
     }
 }
 
@@ -555,7 +581,7 @@ export class Node3D extends Node {
         this.global_transform = global_transform;
     }
 
-    private propagate_TransformChanged() {
+    protected propagate_TransformChanged() {
         if (this.is_global_transform_dirty) return;
         for (const child of this.children) {
             if (child instanceof Node3D) {
@@ -642,15 +668,20 @@ export enum ViewportUpdateMode {
     Always, Never, Once,
 }
 
-export class Viewport extends Node {
-    private readonly mouse_event_manager: ViewportMouseInputEventManager;
-    public get is_mouse_inside() { return this.mouse_event_manager.is_mouse_inside; }
-    public get signal_mouse_entered() { return this.mouse_event_manager.signal_mouse_enetered; }
-    public get signal_mouse_leaved() { return this.mouse_event_manager.signal_mouse_leaved; }
-    public get mouse_position() { return this.mouse_event_manager.mouse_position; }
-    public get mouse_position_normalized() { return this.mouse_event_manager.mouse_position_normalized; }
+export type CursorStyle = 'default' | 'none' | 'context-menu' | 'help' | 'pointer' | 'progress' | 'wait' |
+    'cell' | 'crosshair' | 'text' | 'vertical-text' | 'alias' | 'copy' | 'move' | 'no-drop' | 'not-allowed' | 'grab' |
+    'grabbing' | 'e-resize' | 'n-resize' | 'ne-resize' | 'nw-resize' | 's-resize' | 'se-resize' | 'sw-resize' |
+    'w-resize' | 'ew-resize' | 'ns-resize' | 'nesw-resize' | 'nwse-resize' | 'col-resize' | 'row-resize' | 'all-scroll' |
+    'zoom-in' | 'zoom-out';
 
-    private readonly key_event_manager: ViewportKeyInputEventManager;
+export class Viewport extends Node {
+
+    // input manager
+    public readonly mouse_event_manager: ViewportMouseInputEventManager;
+    public readonly key_event_manager: ViewportKeyInputEventManager;
+    public readonly action_event_manager: ViewportActionInputEventManager;
+
+    private readonly input_manager: InputManager;
 
     public world_3d: World3D | undefined = undefined;
     private readonly renderer_3d: Renderer3D;
@@ -696,6 +727,15 @@ export class Viewport extends Node {
     public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
     public physics_picking: boolean = true;
 
+    private _cursor_style: CursorStyle = 'default';
+    public get cursor_style(): CursorStyle { return this._cursor_style; }
+    public set cursor_style(cursor_style: CursorStyle) {
+        if (this._cursor_style !== cursor_style) {
+            this._cursor_style = cursor_style;
+            this.canvas.style.cursor = this._cursor_style;
+        }
+    }
+
     // signals
     public readonly signal_before_render: SignalEmitter<() => void> = new SignalEmitter();
     public readonly signal_after_render: SignalEmitter<() => void> = new SignalEmitter();
@@ -707,13 +747,15 @@ export class Viewport extends Node {
         this.renderer_3d.set_PixelRatio(this.pixel_ratio);
         this.mouse_event_manager = new ViewportMouseInputEventManager(this);
         this.key_event_manager = new ViewportKeyInputEventManager(this);
+        this.action_event_manager = new ViewportActionInputEventManager(this);
         this.mouse_event_manager.signal_mouse_event.connect(this._on_InputEvent);
         this.key_event_manager.signal_key_event.connect(this._on_InputEvent);
+        this.input_manager = new InputManager(this);
     }
 
     private _on_InputEvent = this.on_InputEvent.bind(this);
     private on_InputEvent(event: InputEvent) {
-        const action_input_event = this.get_SceneTree()?.parse_ActionInputEvent(event);
+        const action_input_event = this.action_event_manager.parse_ActionInputEvent(event);
         if (action_input_event !== undefined) {
             this.propagate_InputEvent(action_input_event);
         }
@@ -802,12 +844,19 @@ export class Viewport extends Node {
                 return;
             }
             case NodeNotification.InternalAfterPhysicsProcess: {
-                if (this.physics_picking && this.is_mouse_inside) {
-                    // console.log(">> picking", this.readable_name);
+                if (this.physics_picking && this.input_manager.is_mouse_inside) {
+                    const camera_3d = this.get_Camera3D();
+                    if (camera_3d === undefined) break;
+                    const event = new MouseMotionInputEvent(new Vector2(0, 0), new Vector2(0, 0), this, this.input_manager.mouse_position, this.input_manager.mouse_position_normalized, false, false, false, false);
+                    this.get_RenderableWorld3D()?.get_PhysicsWorld().update_PhysicsPicking(event, camera_3d);
                 }
                 break;
             }
         }
+    }
+
+    public get_Input() {
+        return this.input_manager;
     }
 
     public get_World3D(): World3D | undefined {
@@ -840,7 +889,7 @@ export class Viewport extends Node {
                 camera_3d.update_ViewportSize(this.size);
                 this.is_size_dirty = false;
             }
-            this.renderer_3d.render(world_3d, camera_3d.get_Camera());
+            this.renderer_3d.render(world_3d, camera_3d);
         }
         this.signal_after_render.trigger();
     }
@@ -849,4 +898,5 @@ export class Viewport extends Node {
         // const info = this.renderer_3d.get_Info();
         // console.log(info.memory.geometries, info.programs?.length);
     }
+
 }

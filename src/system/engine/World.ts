@@ -1,7 +1,10 @@
-import { Scene, Matrix4, Mesh, Object3D, Vector2, Camera } from "three";
+import { Scene, Matrix4, Mesh, Object3D } from "three";
 import { Rid, type RID } from "./Rid";
 import type { GeometryResource } from "./resources/GeometryResource";
 import type { MaterialResource } from "./resources/MaterialResource";
+import { SignalEmitter } from "../utils/SignalEmitter";
+import type { MouseMotionInputEvent } from "./InputEvent";
+import type { Camera3D } from "./SceneTree";
 
 export class World3D {
     private readonly visual_world: VisualWorld3D = new VisualWorld3D();
@@ -12,7 +15,7 @@ export class World3D {
     }
 
     get_PhysicsWorld() {
-        return this.visual_world;
+        return this.physics_world;
     }
 
     dispose() {
@@ -27,6 +30,9 @@ export class VisualWorld3D {
     private readonly scene: Scene = new Scene();
     private readonly instance_map: Map<string, Object3D> = new Map();
 
+    // signal
+    public signal_before_render: SignalEmitter<(camera: Camera3D) => void> = new SignalEmitter();
+
     constructor() {
         this.scene.matrixAutoUpdate = false;
         this.scene.matrixWorldAutoUpdate = false;
@@ -34,6 +40,10 @@ export class VisualWorld3D {
 
     public get_VisualScene() {
         return this.scene;
+    }
+
+    public trigger_BeforeRender(camera: Camera3D) {
+        this.signal_before_render.trigger(camera);
     }
 
     private get_Instance<T>(rid: RID, type: new () => T) {
@@ -151,7 +161,7 @@ export class VisualWorld3D {
 
 export class PhysicsWorld3D {
 
-    public update_PhysicsPicking(position_normal: Vector2, camera: Camera) {
+    public update_PhysicsPicking(event: MouseMotionInputEvent, camera: Camera3D) {
 
     }
 
