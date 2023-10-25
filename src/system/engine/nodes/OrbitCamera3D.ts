@@ -1,9 +1,9 @@
 import { Vector3, Euler, Vector2, Ray, Raycaster, Plane, Line3 } from 'three';
-import { Node3D } from '../../system/engine/SceneTree';
+import { Node3D } from '../SceneTree';
 import { InterpolateCamera3D } from '@/system/engine/nodes/InterpolateCamera3D';
-import { TAU, clamp } from '@/system/engine/MathF';
+import { TAU, clamp, is_ApproxZero } from '@/system/engine/MathF';
 import { MouseButtonInputEvent, type InputEvent, MouseButton, ActionInputEvent, MouseMotionInputEvent, MouseEnterLeaveInputEvent } from '@/system/engine/InputEvent';
-import { EasingType, PropertyTween, TransitionType, TweenParallel } from '@/system/engine/Tween';
+import { EasingType, MethodTween, PropertyTween, TransitionType, TweenBase, TweenParallel } from '@/system/engine/Tween';
 
 export class OrbitCamera3D extends Node3D {
     private readonly camera_arm: Node3D = new Node3D();
@@ -18,6 +18,8 @@ export class OrbitCamera3D extends Node3D {
             this._focus_distance = this.camera.reference_distance;
         }
     }
+
+    public zoom_to_cursor: boolean = true;
 
     public get fov() { return this.camera.fov; }
     public set fov(fov: number) { this.camera.fov = fov; }
@@ -34,21 +36,9 @@ export class OrbitCamera3D extends Node3D {
         this.focus_distance = 1;
     }
 
-    // zoom
-    private zoom_tween: PropertyTween<InterpolateCamera3D, 'zoom', number> | undefined = undefined;
-    public zoom_delta = 0.25;
-    public min_zoom_delta = 0.05;
-    public max_zoom_delta = 0.3;
-    public min_zoom = 0.005;
-    public max_zoom = 10;
-    public zoom_duration = 0.1;
-
     // drag
     private _is_dragging: boolean = false;
     public get is_dragging() { return this._is_dragging; }
-
-    // rotate
-    public rotate_strength: number = 0.0075;
 
     public _input(event: InputEvent, propagate: boolean): void {
         if (!propagate && event instanceof MouseButtonInputEvent) {
@@ -88,25 +78,11 @@ export class OrbitCamera3D extends Node3D {
         if (!propagate && event instanceof ActionInputEvent) {
             // zoom
             if (event.action === 'zoomIn') {
-                let target = this.camera.zoom;
-                if (this.zoom_tween !== undefined) {
-                    target = this.zoom_tween.target;
-                    this.get_SceneTree()?.stop_Tween(this.zoom_tween);
-                }
-                const zoom_delta = clamp(this.zoom_delta * target, this.min_zoom_delta, this.max_zoom_delta);
-                this.zoom_tween = new PropertyTween(this.camera, 'zoom', clamp(target + zoom_delta, this.min_zoom, this.max_zoom), this.zoom_duration, TransitionType.Quad, EasingType.Out);
-                this.get_SceneTree()?.start_Tween(this.zoom_tween);
+                this.zoom(true);
                 event.mark_Canceled();
             }
             else if (event.action === 'zoomOut') {
-                let target = this.camera.zoom;
-                if (this.zoom_tween !== undefined) {
-                    target = this.zoom_tween.target;
-                    this.get_SceneTree()?.stop_Tween(this.zoom_tween);
-                }
-                const zoom_delta = clamp(this.zoom_delta * target, this.min_zoom_delta, this.max_zoom_delta);
-                this.zoom_tween = new PropertyTween(this.camera, 'zoom', clamp(target - zoom_delta, this.min_zoom, this.max_zoom), this.zoom_duration, TransitionType.Quad, EasingType.Out);
-                this.get_SceneTree()?.start_Tween(this.zoom_tween);
+                this.zoom(false);
                 event.mark_Canceled();
             }
             else if (event.action === 'switch_TopView') {
@@ -130,6 +106,73 @@ export class OrbitCamera3D extends Node3D {
         }
     }
 
+    // zoom
+    private zoom_tween: TweenBase | undefined = undefined;
+    public zoom_delta = 0.25;
+    public min_zoom_delta = 0.005;
+    public max_zoom_delta = 0.5;
+    public min_zoom = 0.005;
+    public max_zoom = 10;
+    public zoom_duration = 0.1;
+
+    private target_zoom: number = 1;
+    private zoom(zoom_in: boolean) {
+
+        if (this.zoom_tween !== undefined) {
+            this.get_SceneTree()?.stop_Tween(this.zoom_tween);
+        }
+
+        const target = this.target_zoom;
+        const zoom_delta = clamp(this.zoom_delta * target, this.min_zoom_delta, this.max_zoom_delta);
+        const new_target = zoom_in ? clamp(target + zoom_delta, this.min_zoom, this.max_zoom) : clamp(target - zoom_delta, this.min_zoom, this.max_zoom);
+        this.target_zoom = new_target;
+
+        const current_zoom = this.camera.zoom;
+
+        const zoom_tween = this.zoom_to_cursor ?
+            new MethodTween(v => {
+
+                const zoom = current_zoom + (new_target - current_zoom) * v;
+
+                const mouse_inside = this.get_Viewport()?.get_Input().is_mouse_inside ?? false;
+                const mouse_position_normalized = this.get_Viewport()?.get_Input().mouse_position_normalized;
+                if (mouse_inside && mouse_position_normalized !== undefined) {
+                    const camera = this.get_Viewport()?.get_Camera3D();
+                    if (camera !== undefined) {
+                        const cam = camera.get_Camera();
+                        const dir = this.camera_arm.to_Global(new Vector3(0, 0, 1)).sub(this.global_position).normalize();
+                        const plane = new Plane().setFromNormalAndCoplanarPoint(dir, this.global_position);
+
+                        const raycaster = new Raycaster();
+                        raycaster.setFromCamera(new Vector2(0, 0), cam);
+                        const ray = raycaster.ray;
+                        const center = plane.intersectLine(new Line3(ray.origin, ray.origin.clone().addScaledVector(ray.direction, 100000)), new Vector3());
+
+                        const raycaster2 = new Raycaster();
+                        raycaster2.setFromCamera(mouse_position_normalized, cam);
+                        const ray2 = raycaster2.ray;
+                        const mouse = plane.intersectLine(new Line3(ray2.origin, ray2.origin.clone().addScaledVector(ray2.direction, 100000)), new Vector3());
+
+                        if (center !== null && mouse !== null) {
+                            const delta = mouse.sub(center).multiplyScalar(1 - this.camera.zoom / zoom);
+                            this.local_position = this.local_position.add(delta);
+                        }
+                    }
+                }
+
+                this.camera.zoom = zoom;
+
+            }, this.zoom_duration, TransitionType.Quad, EasingType.Out) :
+            new PropertyTween(this.camera, 'zoom', new_target, this.zoom_duration, TransitionType.Quad, EasingType.Out);
+
+        this.zoom_tween = zoom_tween;
+        this.get_SceneTree()?.start_Tween(this.zoom_tween);
+
+    }
+
+    // rotate
+    public rotate_strength: number = 0.0075;
+
     private rotate(relative: Vector2) {
         const { x, y } = relative;
         this.set_Rotation(this.direction - x * this.rotate_strength, this.yaw - y * this.rotate_strength);
@@ -148,11 +191,10 @@ export class OrbitCamera3D extends Node3D {
         const dir = this.camera_arm.to_Global(new Vector3(0, 0, 1)).sub(this.global_position).normalize();
         const plane = new Plane().setFromNormalAndCoplanarPoint(dir, this.global_position);
 
-        const point = new Vector3();
-        const result = plane.intersectLine(new Line3(ray.origin, ray.origin.clone().addScaledVector(ray.direction, 100000)), point);
+        const result = plane.intersectLine(new Line3(ray.origin, ray.origin.clone().addScaledVector(ray.direction, 100000)), new Vector3());
 
         if (result !== null) {
-            this.local_position = point;
+            this.local_position = result;
         }
     }
 

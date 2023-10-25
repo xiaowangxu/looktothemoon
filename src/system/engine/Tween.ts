@@ -1,4 +1,4 @@
-import { Euler, Quaternion } from "three";
+import { Euler, Quaternion, Vector2, Vector3, Matrix3, Matrix4 } from "three";
 import { SignalEmitter } from "../utils/SignalEmitter";
 import { clamp } from "./MathF";
 
@@ -382,6 +382,12 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
         if (typeof (this.target) === 'number') {
             this.lerp = PropertyTween.LerpFuncs.Number;
         }
+        else if (this.target instanceof Vector2) {
+            this.lerp = PropertyTween.LerpFuncs.Vector2;
+        }
+        else if (this.target instanceof Vector3) {
+            this.lerp = PropertyTween.LerpFuncs.Vector3;
+        }
         else if (this.target instanceof Euler) {
             this.lerp = PropertyTween.LerpFuncs.Euler;
         }
@@ -409,8 +415,10 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
         super.process(delta);
     }
 
-    private static LerpFuncs = {
+    public static LerpFuncs = {
         Number: (a: number, b: number, v: number) => a + (b - a) * v,
+        Vector2: (a: Vector2, b: Vector2, v: number) => new Vector2().lerpVectors(a, b, v),
+        Vector3: (a: Vector3, b: Vector3, v: number) => new Vector3().lerpVectors(a, b, v),
         Quaternion: (a: Quaternion, b: Quaternion, v: number) => a.slerp(b, v),
         Euler: (a: Euler, b: Euler, v: number) => {
             const quat_a = new Quaternion().setFromEuler(a);
