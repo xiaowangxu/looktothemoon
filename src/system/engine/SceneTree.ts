@@ -341,7 +341,7 @@ export class Node {
         if (node === this) throw new Error("cannot add child to itself");
         if (node.parent !== undefined) throw new Error("cannot add child to node because it already has a parent");
         // check cyclic dependency
-        this.children.push(node);
+        this.children.unshift(node);
         node.parent = this;
         // node parent
         node.nofity(NodeNotification.Parented);

@@ -1,4 +1,6 @@
+import { Euler, Quaternion } from "three";
 import { SignalEmitter } from "../utils/SignalEmitter";
+import { clamp } from "./MathF";
 
 export enum TransitionType {
     Linear, Sine, Quad, Cubic, Quart, Quint, Expo, Back, Elastic, Circle, Bounce
@@ -102,6 +104,61 @@ export class TweenSequence extends TweenBase {
     }
 }
 
+export class TweenParallel extends TweenBase {
+    private readonly tweens: TweenBase[] = [];
+    private running_tweens: Set<TweenBase> = new Set();
+
+    constructor(tweens: TweenBase[]) {
+        super();
+        this.tweens = tweens;
+    }
+
+    public start() {
+        if (this.tweens.length === 0) {
+            this.started = true;
+            this.finished = true;
+        }
+        else {
+            this.running_tweens.clear();
+            this.running_tweens = new Set(this.tweens);
+            this.started = true;
+            this.finished = this.start_Tween();
+        }
+    }
+
+    private start_Tween(): boolean {
+        if (this.running_tweens.size > 0) {
+            for (const tween of [...this.running_tweens]) {
+                tween.start();
+                if (tween.finished) {
+                    this.running_tweens.delete(tween);
+                }
+            }
+            return this.running_tweens.size <= 0;
+        }
+        return true;
+    }
+
+    private process_Tween(delta: number): boolean {
+        if (this.running_tweens.size > 0) {
+            for (const tween of [...this.running_tweens]) {
+                tween.process(delta);
+                if (tween.finished) {
+                    this.running_tweens.delete(tween);
+                }
+            }
+            return this.running_tweens.size <= 0;
+        }
+        return true;
+    }
+
+    public process(delta: number): void {
+        if (this.running) {
+            this.finished = this.process_Tween(delta);
+        }
+    }
+}
+
 export class Tween extends TweenBase {
     private readonly duration: number;
     private readonly transition: TransitionType;
@@ -142,14 +199,14 @@ export class Tween extends TweenBase {
             }
             else {
                 const c = this._current + delta;
-                this._current = Math.min(this.duration, Math.max(0, c));
+                this._current = clamp(c, 0, this.duration);
                 this._value = Tween.calculate_TransitionEasing(this._current / this.duration, this.transition, this.easing);
             }
         }
     }
 
     static calculate_TransitionEasing(value: number, transition: TransitionType, easing: EasingType): number {
-        const x = Math.min(1, Math.max(0, value));
+        const x = clamp(value, 0, 1);
         switch (transition) {
             case TransitionType.Linear: {
                 return x;
@@ -321,8 +378,15 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
         this.key = key;
         this.initial = this.object[this.key] as Val;
         this.target = target;
+        // set lerp function
         if (typeof (this.target) === 'number') {
-            this.lerp = PropertyTween.LerpFuncs.number;
+            this.lerp = PropertyTween.LerpFuncs.Number;
+        }
+        else if (this.target instanceof Euler) {
+            this.lerp = PropertyTween.LerpFuncs.Euler;
+        }
+        else if (this.target instanceof Quaternion) {
+            this.lerp = PropertyTween.LerpFuncs.Quaternion;
         }
         else {
             throw new Error(`property '${String(this.key)}' is not lerpable`);
@@ -346,6 +410,12 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
     }
 
     private static LerpFuncs = {
-        number: (a: number, b: number, v: number) => a + (b - a) * v,
+        Number: (a: number, b: number, v: number) => a + (b - a) * v,
+        Quaternion: (a: Quaternion, b: Quaternion, v: number) => a.slerp(b, v),
+        Euler: (a: Euler, b: Euler, v: number) => {
+            const quat_a = new Quaternion().setFromEuler(a);
+            const quat_b = new Quaternion().setFromEuler(b);
+            return new Euler().setFromQuaternion(quat_a.slerp(quat_b, v));
+        },
     }
 }

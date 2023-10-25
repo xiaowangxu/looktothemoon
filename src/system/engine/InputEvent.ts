@@ -52,25 +52,34 @@ export class ComposeInputEvent extends InputEventFromViewport {
 
 export class MouseInputEvent extends ComposeInputEvent {
     public readonly position: Vector2;
-    public readonly normalized_position: Vector2;
+    public readonly position_normalized: Vector2;
 
-    constructor(viewport: Viewport, position: Vector2, normalized_position: Vector2, ctrl: boolean, shift: boolean, alt: boolean, meta: boolean) {
+    constructor(viewport: Viewport | undefined, position: Vector2, position_normalized: Vector2, ctrl: boolean, shift: boolean, alt: boolean, meta: boolean) {
         super(viewport, ctrl, shift, alt, meta);
         this.position = position.clone();
-        this.normalized_position = normalized_position.clone();
+        this.position_normalized = position_normalized.clone();
+    }
+}
+
+export class MouseEnterLeaveInputEvent extends InputEventFromViewport {
+    public readonly inside: boolean;
+
+    constructor(inside: boolean, viewport: Viewport | undefined) {
+        super(viewport);
+        this.inside = inside;
     }
 }
 
 export class MouseMotionInputEvent extends MouseInputEvent {
-    private readonly relative: Vector2;
-    private readonly relative_normalized: Vector2;
+    public readonly relative: Vector2;
+    public readonly relative_normalized: Vector2;
 
     constructor(
         relative: Vector2, relative_normalized: Vector2,
-        viewport: Viewport, position: Vector2, normalized_position: Vector2,
+        viewport: Viewport, position: Vector2, position_normalized: Vector2,
         ctrl: boolean, shift: boolean, alt: boolean, meta: boolean
     ) {
-        super(viewport, position, normalized_position, ctrl, shift, alt, meta);
+        super(viewport, position, position_normalized, ctrl, shift, alt, meta);
         this.relative = relative.clone();
         this.relative_normalized = relative_normalized.clone();
     }
@@ -88,7 +97,7 @@ export class MouseButtonInputEvent extends MouseInputEvent {
 
     constructor(
         button: MouseButton, pressed: boolean, click: boolean, double_click: boolean,
-        viewport: Viewport, position: Vector2, normalized_position: Vector2,
+        viewport: Viewport | undefined, position: Vector2, normalized_position: Vector2,
         ctrl: boolean, shift: boolean, alt: boolean, meta: boolean
     ) {
         super(viewport, position, normalized_position, ctrl, shift, alt, meta);
@@ -214,7 +223,7 @@ export class InputManager {
     // signals
     public get signal_mouse_entered() { return this.viewport.mouse_event_manager.signal_mouse_enetered; }
     public get signal_mouse_leaved() { return this.viewport.mouse_event_manager.signal_mouse_leaved; }
-    
+
     constructor(viewport: Viewport) {
         this.viewport = viewport;
     }
@@ -233,7 +242,7 @@ export class InputManager {
 
     public is_KeyPressed(key: string) {
         return this.viewport.key_event_manager.is_KeyPressed(key, true);
-    }  
+    }
 }
 
 export class ViewportActionInputEventManager {
@@ -309,7 +318,7 @@ export class ViewportMouseInputEventManager {
     }
 
     // signals
-    public readonly signal_mouse_event: SignalEmitter<(event: MouseInputEvent) => void> = new SignalEmitter();
+    public readonly signal_mouse_event: SignalEmitter<(event: InputEventFromViewport) => void> = new SignalEmitter();
     public readonly signal_mouse_enetered: SignalEmitter<() => void> = new SignalEmitter();
     public readonly signal_mouse_leaved: SignalEmitter<() => void> = new SignalEmitter();
 
@@ -326,7 +335,7 @@ export class ViewportMouseInputEventManager {
         this.canvas.addEventListener('wheel', this._on_Wheel);
     }
 
-    private get_MouseInputEventBaseParamaters(event: MouseEvent): [viewport: Viewport, position: Vector2, normalized_position: Vector2, ctrl: boolean, shift: boolean, alt: boolean, meta: boolean] {
+    private get_MouseInputEventBaseParamaters(event: MouseEvent): [viewport: Viewport, position: Vector2, position_normalized: Vector2, ctrl: boolean, shift: boolean, alt: boolean, meta: boolean] {
         return [
             this.viewport,
             this.mouse_position, this.mouse_position_normalized,
@@ -351,11 +360,12 @@ export class ViewportMouseInputEventManager {
         this._mouse_position.set(offsetX, offsetY);
         this._mouse_position_normalized.set(
             x === 0 ? 0 : (offsetX / x * 2 - 1),
-            y === 0 ? 0 : (offsetY / y * 2 - 1),
+            y === 0 ? 0 : (1 - offsetY / y * 2),
         );
     }
 
     private update_MouseKey(event: MouseEvent, down: boolean) {
+        event.preventDefault();
         this.mouse_button_map.set(this.get_MouseButton(event), down);
     }
 
@@ -363,11 +373,17 @@ export class ViewportMouseInputEventManager {
     private on_MouseEntered(event: MouseEvent) {
         this.is_mouse_inside = true;
         this.update_MousePosition(event);
+        this.signal_mouse_event.trigger(
+            new MouseEnterLeaveInputEvent(true, this.viewport)
+        );
     }
 
     private _on_MouseLeaved = this.on_MouseLeaved.bind(this);
     private on_MouseLeaved(event: MouseEvent) {
         this.is_mouse_inside = false;
+        this.signal_mouse_event.trigger(
+            new MouseEnterLeaveInputEvent(false, this.viewport)
+        );
     }
 
     private _on_MouseMoved = this.on_MouseMoved.bind(this);
@@ -375,11 +391,14 @@ export class ViewportMouseInputEventManager {
         const last_mouse_position = this.mouse_position;
         const last_mouse_position_normalized = this.mouse_position_normalized;
         this.update_MousePosition(event);
-        const mouse_position = this.mouse_position;
-        const mouse_position_normalized = this.mouse_position_normalized;
+        const new_mouse_position = this.mouse_position;
+        const new_mouse_position_normalized = this.mouse_position_normalized;
+        const relative = new_mouse_position.sub(last_mouse_position);
+        // console.log(`>>> relative ${relative.length()}`);
+        const relative_normalized = new_mouse_position_normalized.sub(last_mouse_position_normalized);
         this.signal_mouse_event.trigger(
             new MouseMotionInputEvent(
-                mouse_position.clone().sub(last_mouse_position), mouse_position_normalized.clone().sub(last_mouse_position_normalized),
+                relative, relative_normalized,
                 ...this.get_MouseInputEventBaseParamaters(event)
             )
         );
@@ -440,6 +459,7 @@ export class ViewportMouseInputEventManager {
 
     private _on_Wheel = this.on_Wheel.bind(this);
     private on_Wheel(event: WheelEvent) {
+        event.preventDefault();
         const button = event.deltaY < 0 ? MouseButton.WheelUp : MouseButton.WheelDown;
         this.signal_mouse_event.trigger(
             new MouseButtonInputEvent(

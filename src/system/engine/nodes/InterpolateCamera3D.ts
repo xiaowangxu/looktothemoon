@@ -1,3 +1,4 @@
+import { EPSILON } from '../MathF';
 import { Camera3D, NodeNotification } from '../SceneTree';
 import { Camera, PerspectiveCamera, OrthographicCamera, Vector2, Matrix4, Vector3, Quaternion, Euler } from 'three';
 
@@ -8,24 +9,10 @@ export class InterpolateCamera3D extends Camera3D {
     private readonly persp_camera: PerspectiveCamera = new PerspectiveCamera(90, 1, 0.1, 2500);
     private readonly orth_camera: OrthographicCamera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 2500);
 
-    private _reference_distance: number = 5;
+    private _reference_distance: number = 1;
     public get reference_distance() { return this._reference_distance; }
     public set reference_distance(distance: number) {
         if (this._reference_distance !== distance) {
-            if (!this.use_orth) {
-                const ratio = (distance + this.offset_distance) / (this._reference_distance + this.offset_distance);
-                const zoom = ratio * this._reference_zoom;
-                this._reference_zoom = zoom;
-                console.log(this._reference_zoom);
-                const aspect = this.orth_camera.right / this.orth_camera.top;
-                const h = this._reference_zoom;
-                this.orth_camera.top = h / 2;
-                this.orth_camera.bottom = -h / 2;
-                const w = aspect * h;
-                this.orth_camera.left = -w / 2;
-                this.orth_camera.right = w / 2;
-                this.orth_camera.updateProjectionMatrix();
-            }
             this._reference_distance = distance;
             this.update_Camera();
         }
@@ -79,6 +66,8 @@ export class InterpolateCamera3D extends Camera3D {
     private offset_distance: number = 0;
     private use_orth: boolean = false;
 
+    public get is_orthographic() { return this.use_orth; }
+
     constructor() {
         super();
         this.persp_camera.matrixAutoUpdate = false;
@@ -108,7 +97,6 @@ export class InterpolateCamera3D extends Camera3D {
 
         // zoom
         this.orth_camera.zoom = this.zoom;
-        //    this.persp_camera.zoom = this.zoom;
 
         this.persp_camera.updateProjectionMatrix();
         this.orth_camera.updateProjectionMatrix();
@@ -126,6 +114,36 @@ export class InterpolateCamera3D extends Camera3D {
 
     public get_Camera(): Camera {
         return this.use_orth ? this.orth_camera : this.persp_camera;
+    }
+
+    public update_ReferenceDistance(distance: number) {
+        if (!this.use_orth) {
+
+            const half_zoom = (this.reference_zoom / this.zoom) / 2;
+            const half_fov = (this.fov / 180 * Math.PI) / 2;
+            if (half_fov === 0) return;
+
+            const _offset_distance = (half_zoom / Math.tan(half_fov)) - this._reference_distance;
+            if (distance + _offset_distance <= EPSILON) return;
+
+            const ratio = (distance + _offset_distance) / (this._reference_distance + _offset_distance);
+            if (ratio <= EPSILON) return;
+
+            const zoom = ratio * this._reference_zoom;
+            this._reference_zoom = zoom;
+            this._reference_distance = distance;
+
+            const aspect = this.orth_camera.right / this.orth_camera.top;
+            const h = this._reference_zoom;
+            this.orth_camera.top = h / 2;
+            this.orth_camera.bottom = -h / 2;
+            const w = aspect * h;
+            this.orth_camera.left = -w / 2;
+            this.orth_camera.right = w / 2;
+            this.orth_camera.updateProjectionMatrix();
+
+            this.update_Camera();
+        }
     }
 
     public _notification(what: NodeNotification): void {

@@ -1,15 +1,16 @@
 import { World3D } from "@/system/engine/World";
 import { NodeNotification, Node3D, SceneTree, Viewport, ViewportUpdateMode } from "@/system/engine/SceneTree";
 import { ViewportDomContainer } from "@/system/engine/nodes/ViewportDomContainer";
-import { Euler, BoxGeometry, SphereGeometry, Vector3, MeshBasicMaterial, Color, DoubleSide } from "three";
+import { Euler, BoxGeometry, SphereGeometry, Vector3, MeshBasicMaterial, Color, DoubleSide, Vector2 } from "three";
 import { MeshInstance3D } from "@/system/engine/nodes/MeshInstance3D";
 import { PolyLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/GeometryResource";
 import { NormalMaterialResource, PolyLineMaterialResource, ThreeMaterialResource } from "@/system/engine/resources/MaterialResource";
 import { PerspectiveCamera3D } from "@/system/engine/nodes/PerspectiveCamera3D";
 import { OrthographicCamera3D } from "@/system/engine/nodes/OrthographicCamera3D";
-import { ActionInputEvent, KeyInputEvent, MouseButton, MouseButtonInputEvent, ShortCut } from "@/system/engine/InputEvent";
+import { ActionInputEvent, KeyInputEvent, MouseButton, MouseButtonInputEvent, MouseMotionInputEvent, ShortCut } from "@/system/engine/InputEvent";
 import { InterpolateCamera3D } from "@/system/engine/nodes/InterpolateCamera3D";
-import { CallbackTween, EasingType, MethodTween, PropertyTween, TransitionType, TweenBase, TweenSequence } from "@/system/engine/Tween";
+import { CallbackTween, EasingType, MethodTween, PropertyTween, TransitionType, TweenBase, TweenParallel, TweenSequence } from "@/system/engine/Tween";
+import { OrbitCamera3D } from "./nodes/OrbitCamera3D";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -73,22 +74,8 @@ line_mesh.visual_layer = 1;
 line_mesh.local_rotation = new Euler(0.12, 2, 0.324);
 
 // camera
-const CameraArm0 = new Node3D();
-const CameraArm1 = new Node3D();
-const CameraArm01 = new Node3D();
-CameraArm0.add_Child(CameraArm1);
-CameraArm0.add_Child(CameraArm01);
-export const EditorCamera = new InterpolateCamera3D();
-CameraArm1.add_Child(EditorCamera);
-EditorViewport.add_Child(CameraArm0);
-EditorCamera.local_position = new Vector3(0, 0, 10);
-CameraArm1.local_rotation = new Euler(-0.3, 0, 0);
-
-CameraArm0.signal_process.connect((delta) => {
-    time += delta;
-    const rotation = CameraArm0.local_rotation;
-    // CameraArm0.local_rotation = new Euler(0, rotation.y - delta, 0);
-});
+const EditorCamera = new OrbitCamera3D();
+EditorViewport.add_Child(EditorCamera);
 
 // scenetree
 export const EditorSceneTree = new SceneTree(EditorViewportContainer);
@@ -99,10 +86,10 @@ EditorViewportContainer0.dom = document.querySelector('#viewport0') ?? undefined
 const EditorViewport0 = new Viewport();
 EditorViewport0.transparent = true;
 EditorViewportContainer0.add_Child(EditorViewport0);
-const EditorCamera0 = new PerspectiveCamera3D();
+const EditorCamera0 = new OrbitCamera3D();
 EditorViewport0.add_Child(EditorCamera0);
-EditorCamera0.local_position = new Vector3(0, 10, 0);
-EditorCamera0.local_rotation = new Euler(-Math.PI / 2, 0, 0);
+EditorCamera0.fov = 0;
+EditorCamera0.set_Rotation(0, -Math.PI / 2);
 EditorViewport.add_Child(EditorViewportContainer0);
 
 // viewport 1
@@ -111,9 +98,10 @@ EditorViewportContainer1.dom = document.querySelector('#viewport1') ?? undefined
 const EditorViewport1 = new Viewport();
 EditorViewport1.transparent = true;
 EditorViewportContainer1.add_Child(EditorViewport1);
-const EditorCamera1 = new InterpolateCamera3D();
+const EditorCamera1 = new OrbitCamera3D();
+EditorCamera1.fov = 0;
+EditorCamera1.set_Rotation(-Math.PI / 2, 0);
 EditorViewport1.add_Child(EditorCamera1);
-EditorCamera1.local_position = new Vector3(0.85, 0, 5);
 EditorViewport.add_Child(EditorViewportContainer1);
 
 
@@ -123,14 +111,12 @@ EditorViewportContainer2.dom = document.querySelector('#viewport2') ?? undefined
 const EditorViewport2 = new Viewport();
 EditorViewport2.transparent = true;
 EditorViewportContainer2.add_Child(EditorViewport2);
-const EditorCamera2 = new PerspectiveCamera3D();
+const EditorCamera2 = new OrbitCamera3D();
 EditorViewport2.add_Child(EditorCamera2);
-EditorCamera2.local_position = new Vector3(10, 0, 0);
-EditorCamera2.local_rotation = new Euler(0, Math.PI / 2, 0);
+EditorCamera2.fov = 0;
+EditorCamera2.set_Rotation(0, 0);
 EditorViewport.add_Child(EditorViewportContainer2);
 
-EditorSceneTree.get_InputActionMap().add_Action('Undo', new ShortCut([new KeyInputEvent('z', '0', true, false, undefined, true, false, false, false)]));
-console.log(EditorSceneTree);
 
 function create_CompassScene() {
     const red = 0xf82d4e;
@@ -246,47 +232,85 @@ EditorViewport2.get_Input().signal_mouse_entered.connect(() => (EditorCompassVie
 EditorViewport.add_Child(EditorCompassViewportContainer);
 
 // EditorCamera1.near = 3;
-EditorCamera.fov = 80;
-let orthed = false;
-let zoom_tween: PropertyTween<InterpolateCamera3D, 'reference_distance', number> | undefined = undefined;
-const zoom_delta = 0.3;
-const duration = 0.15;
-console.log(EditorCamera.reference_distance);
-EditorViewport.signal_input.connect((event, propagate) => {
-    if (!propagate && event instanceof MouseButtonInputEvent) {
-        if (event.button === MouseButton.WheelUp) {
-            let target = EditorCamera1.reference_distance;
-            if (zoom_tween !== undefined) {
-                target = zoom_tween.target;
-                EditorSceneTree.stop_Tween(zoom_tween);
-            }
-            zoom_tween = new PropertyTween(EditorCamera, 'reference_distance', target + 1, duration, TransitionType.Quad, EasingType.Out);
-            EditorSceneTree.start_Tween(zoom_tween);
-        }
-        else if (event.button === MouseButton.WheelDown) {
-            let target = EditorCamera.reference_distance;
-            if (zoom_tween !== undefined) {
-                target = zoom_tween.target;
-                EditorSceneTree.stop_Tween(zoom_tween);
-            }
-            zoom_tween = new PropertyTween(EditorCamera, 'reference_distance', target - 1, duration, TransitionType.Quad, EasingType.Out);
-            EditorSceneTree.start_Tween(zoom_tween);
-        }
-        console.log(zoom_tween?.target);
+// EditorCamera.fov = 90;
+// let orthed = false;
+// let zoom_tween: PropertyTween<InterpolateCamera3D, 'zoom', number> | undefined = undefined;
+// const zoom_delta = 0.3;
+// const duration = 0.15;
+// EditorViewport.signal_input.connect((event, propagate) => {
+//     if (!propagate && event instanceof MouseButtonInputEvent) {
+//         if (event.button === MouseButton.WheelUp) {
+//             let target = EditorCamera1.zoom;
+//             if (zoom_tween !== undefined) {
+//                 target = zoom_tween.target;
+//                 EditorSceneTree.stop_Tween(zoom_tween);
+//             }
+//             zoom_tween = new PropertyTween(EditorCamera, 'zoom', Math.max(0.01, target + zoom_delta * target), duration, TransitionType.Quad, EasingType.Out);
+//             EditorSceneTree.start_Tween(zoom_tween);
+//         }
+//         else if (event.button === MouseButton.WheelDown) {
+//             let target = EditorCamera.zoom;
+//             if (zoom_tween !== undefined) {
+//                 target = zoom_tween.target;
+//                 EditorSceneTree.stop_Tween(zoom_tween);
+//             }
+//             zoom_tween = new PropertyTween(EditorCamera, 'zoom', Math.max(0.01, target - zoom_delta * target), duration, TransitionType.Quad, EasingType.Out);
+//             EditorSceneTree.start_Tween(zoom_tween);
+//         }
+//     }
+//     if (!propagate && event instanceof KeyInputEvent && event.pressed && !event.echo) {
+//         const duration = 0.25;
+//         if (event.key === '1') {
+//             EditorSceneTree.start_Tween(new TweenParallel([
+//                 new PropertyTween(CameraArm0, 'local_rotation', new Euler(0, 0, 0), duration, TransitionType.Quad, EasingType.Out),
+//                 new PropertyTween(CameraArm1, 'local_rotation', new Euler(0, 0, 0), duration, TransitionType.Quad, EasingType.Out),
+//                 new PropertyTween(EditorCamera, 'fov', 0, duration, TransitionType.Quad, EasingType.Out),
+//             ]));
+//         }
+//         else if (event.key === '2') {
+//             EditorSceneTree.start_Tween(new TweenParallel([
+//                 new PropertyTween(CameraArm0, 'local_rotation', new Euler(0, Math.PI / 2, 0), duration, TransitionType.Quad, EasingType.Out),
+//                 new PropertyTween(CameraArm1, 'local_rotation', new Euler(0, 0, 0), duration, TransitionType.Quad, EasingType.Out),
+//                 new PropertyTween(EditorCamera, 'fov', 0, duration, TransitionType.Quad, EasingType.Out),
+//             ]));
+//         } 
+//         else if (event.key === '3') {
+//             EditorSceneTree.start_Tween(new TweenParallel([
+//                 new PropertyTween(CameraArm0, 'local_rotation', new Euler(0, 0, 0), duration, TransitionType.Quad, EasingType.Out),
+//                 new PropertyTween(CameraArm1, 'local_rotation', new Euler(-Math.PI / 2, 0, 0), duration, TransitionType.Quad, EasingType.Out),
+//                 new PropertyTween(EditorCamera, 'fov', 0, duration, TransitionType.Quad, EasingType.Out),
+//             ]));
+//         }
+//     }
+//     if (!propagate && event instanceof MouseButtonInputEvent && event.button === MouseButton.Left && event.click) {
+//         if (!EditorCamera.is_orthographic)
+//             EditorSceneTree.start_Tween(new TweenSequence([
+//                 new PropertyTween(EditorCamera, 'fov', 0, 1, TransitionType.Linear, EasingType.Out),
+//                 new CallbackTween(() => orthed = true),
+//             ]));
+//         else
+//             EditorSceneTree.start_Tween(new TweenSequence([
+//                 new PropertyTween(EditorCamera, 'fov', 90, 1, TransitionType.Linear, EasingType.Out),
+//                 new CallbackTween(() => orthed = false),
+//             ]));
+//     }
+// });
+
+EditorSceneTree.get_InputActionMap().add_Action('switch_FrontView', new ShortCut([new KeyInputEvent('1', '1', true, false, undefined, false, false, false, false)]));
+EditorSceneTree.get_InputActionMap().add_Action('switch_LeftView', new ShortCut([new KeyInputEvent('2', '2', true, false, undefined, false, false, false, false)]));
+EditorSceneTree.get_InputActionMap().add_Action('switch_TopView', new ShortCut([new KeyInputEvent('3', '3', true, false, undefined, false, false, false, false)]));
+EditorSceneTree.get_InputActionMap().add_Action('zoomIn', new ShortCut([new MouseButtonInputEvent(MouseButton.WheelUp, true, false, false, undefined, new Vector2(0,0), new Vector2(0,0), false, false, false, false)]));
+EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut([new MouseButtonInputEvent(MouseButton.WheelDown, true, false, false, undefined, new Vector2(0,0), new Vector2(0,0), false, false, false, false)]));
+
+EditorViewport.signal_input.connect((event, p)=>{
+    if (p && event instanceof MouseMotionInputEvent) {
+        const div = document.getElementById('test');
+        div!.style.left = event.position.x + 'px';
+        div!.style.top = event.position.y + 'px';
     }
-    if (!propagate && event instanceof MouseButtonInputEvent && event.button === MouseButton.Left && event.click) {
-        if (!orthed)
-            EditorSceneTree.start_Tween(new TweenSequence([
-                new PropertyTween(EditorCamera, 'fov', 0, 1, TransitionType.Linear, EasingType.Out),
-                new CallbackTween(() => orthed = true),
-            ]));
-        else
-            EditorSceneTree.start_Tween(new TweenSequence([
-                new PropertyTween(EditorCamera, 'fov', 90, 1, TransitionType.Linear, EasingType.Out),
-                new CallbackTween(() => orthed = false),
-            ]));
-    }
-});
+})
+
+console.log(EditorSceneTree);
 
 export function createEditorViewport(el: string) {
     EditorCompassViewportContainer.dom = document.querySelector('#compass') ?? undefined;
