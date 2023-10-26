@@ -1,9 +1,9 @@
-import { type Camera, Clock, Vector3, Euler, Matrix4, Matrix3, Quaternion, Vector2 } from "three";
+import { type Camera, Clock, Vector3, Euler, Matrix4, Matrix3, Quaternion, Vector2, Color } from "three";
 import { SignalEmitter } from "../utils/SignalEmitter";
 import { Rid, type RID } from "./Rid";
 import { Renderer3D } from "./Renderer";
 import { World3D } from "./World";
-import { InputActionMap, InputEvent, InputManager, MouseMotionInputEvent, ViewportActionInputEventManager, ViewportKeyInputEventManager, ViewportMouseInputEventManager } from "./InputEvent";
+import { InputActionMap, InputEvent, InputManager, MouseEnterLeaveInputEvent, MouseInputEvent, MouseMotionInputEvent, ViewportActionInputEventManager, ViewportKeyInputEventManager, ViewportMouseInputEventManager } from "./InputEvent";
 import type { TweenBase } from "./Tween";
 
 export class SceneTree {
@@ -724,7 +724,15 @@ export class Viewport extends Node {
         }
     }
 
+    private _clear_color: Color = new Color(0xeeeeee);
+    public get clear_color() { return this._clear_color; }
+    public set clear_color(clear_color: Color) {
+        this._clear_color = clear_color;
+        this.renderer_3d.set_ClearColor(this._clear_color);
+    }
+
     public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
+    public physics_picking_when_mouse_event_not_canceled: boolean = true;
     public physics_picking: boolean = true;
 
     private _cursor_style: CursorStyle = 'default';
@@ -745,6 +753,8 @@ export class Viewport extends Node {
         super();
         this.renderer_3d = new Renderer3D(document.createElement('canvas'), { antialias: true });
         this.renderer_3d.set_PixelRatio(this.pixel_ratio);
+        this.renderer_3d.set_ClearColor(this.clear_color);
+        this.renderer_3d.set_ClearAlpha(this.transparent ? 0 : 1);
         this.mouse_event_manager = new ViewportMouseInputEventManager(this);
         this.key_event_manager = new ViewportKeyInputEventManager(this);
         this.action_event_manager = new ViewportActionInputEventManager(this);
@@ -753,6 +763,8 @@ export class Viewport extends Node {
         this.input_manager = new InputManager(this);
     }
 
+    private mouse_event_canceled: boolean = false;
+
     private _on_InputEvent = this.on_InputEvent.bind(this);
     private on_InputEvent(event: InputEvent) {
         const action_input_event = this.action_event_manager.parse_ActionInputEvent(event);
@@ -760,35 +772,39 @@ export class Viewport extends Node {
             this.propagate_InputEvent(action_input_event);
         }
         this.propagate_InputEvent(event);
+        // check mouse event cancel for physics picking
+        if (event instanceof MouseInputEvent || event instanceof MouseEnterLeaveInputEvent) {
+            this.mouse_event_canceled = event.canceled;
+        }
     }
 
     private propagate_InputEventInternal(node: Node, event: InputEvent) {
         if (node instanceof Viewport || node.block_input) return;
         node._input(event, true);
-        if (event.is_Canceled()) return;
+        if (event.canceled) return;
         node.signal_input.trigger(event, true);
-        if (event.is_Canceled()) return;
+        if (event.canceled) return;
         for (const child of node.children) {
             this.propagate_InputEventInternal(child, event);
-            if (event.is_Canceled()) return;
+            if (event.canceled) return;
         }
         node._input(event, false);
-        if (event.is_Canceled()) return;
+        if (event.canceled) return;
         node.signal_input.trigger(event, false);
         return;
     }
 
     private propagate_InputEvent(event: InputEvent) {
-        if (event.is_Canceled()) return;
+        if (event.canceled) return;
         this._input(event, true);
-        if (event.is_Canceled()) return;
+        if (event.canceled) return;
         this.signal_input.trigger(event, true);
         for (const child of this.children) {
             this.propagate_InputEventInternal(child, event);
-            if (event.is_Canceled()) return;
+            if (event.canceled) return;
         }
         this._input(event, false);
-        if (event.is_Canceled()) return;
+        if (event.canceled) return;
         this.signal_input.trigger(event, false);
         return;
     }
@@ -845,6 +861,7 @@ export class Viewport extends Node {
             }
             case NodeNotification.InternalAfterPhysicsProcess: {
                 if (this.physics_picking && this.input_manager.is_mouse_inside) {
+                    if (this.physics_picking_when_mouse_event_not_canceled === true && this.mouse_event_canceled) break;
                     const camera_3d = this.get_Camera3D();
                     if (camera_3d === undefined) break;
                     const event = new MouseMotionInputEvent(new Vector2(0, 0), new Vector2(0, 0), this, this.input_manager.mouse_position, this.input_manager.mouse_position_normalized, false, false, false, false);

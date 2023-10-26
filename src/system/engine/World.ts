@@ -1,4 +1,4 @@
-import { Scene, Matrix4, Mesh, Object3D } from "three";
+import { Scene, Matrix4, Mesh, Object3D, DirectionalLightHelper, AmbientLight, DirectionalLight, ObjectLoader, Group } from "three";
 import { Rid, type RID } from "./Rid";
 import type { GeometryResource } from "./resources/GeometryResource";
 import type { MaterialResource } from "./resources/MaterialResource";
@@ -46,10 +46,10 @@ export class VisualWorld3D {
         this.signal_before_render.trigger(camera);
     }
 
-    private get_Instance<T>(rid: RID, type: new () => T) {
+    public get_Instance<T>(rid: RID) {
         const instance = this.instance_map.get(rid);
         if (instance === undefined) return undefined;
-        return (instance instanceof type) ? instance as T : undefined;
+        return instance as T;
     }
 
     public dispose() {
@@ -85,7 +85,7 @@ export class VisualWorld3D {
     }
 
     public free_Mesh(rid: RID) {
-        const instance = this.get_Instance(rid, Mesh);
+        const instance = this.get_Instance<Mesh>(rid);
         if (instance === undefined) return;
         instance.removeFromParent();
         this.dispose_MeshGeometry(instance);
@@ -94,7 +94,7 @@ export class VisualWorld3D {
     }
 
     public set_MeshGeometry(rid: RID, geometry_resource: GeometryResource) {
-        const instance = this.get_Instance(rid, Mesh);
+        const instance = this.get_Instance<Mesh>(rid);
         if (instance) {
             this.dispose_MeshGeometry(instance);
             instance.geometry = geometry_resource.get_BufferGeometry();
@@ -105,7 +105,7 @@ export class VisualWorld3D {
     }
 
     public clear_MeshGeometry(rid: RID) {
-        const instance = this.get_Instance(rid, Mesh);
+        const instance = this.get_Instance<Mesh>(rid);
         if (instance && instance.geometry !== undefined) {
             this.dispose_MeshGeometry(instance);
             (instance.geometry as any) = undefined;
@@ -114,7 +114,7 @@ export class VisualWorld3D {
     }
 
     public set_MeshMaterial(rid: RID, material: MaterialResource | MaterialResource[]) {
-        const instance = this.get_Instance(rid, Mesh);
+        const instance = this.get_Instance<Mesh>(rid);
         if (instance) {
             this.dispose_MeshMaterial(instance);
             if (material instanceof Array) {
@@ -127,7 +127,7 @@ export class VisualWorld3D {
     }
 
     public clear_MeshMaterial(rid: RID) {
-        const instance = this.get_Instance(rid, Mesh);
+        const instance = this.get_Instance<Mesh>(rid);
         if (instance && instance.material !== undefined) {
             this.dispose_MeshMaterial(instance);
             (instance.material as any) = undefined;
@@ -135,23 +135,37 @@ export class VisualWorld3D {
     }
 
     public set_MeshGlobalTransform(rid: RID, transform: Matrix4) {
-        const instance = this.get_Instance(rid, Mesh);
+        const instance = this.get_Instance<Mesh>(rid);
         if (instance) {
             instance.matrixWorld.copy(transform);
         }
     }
 
     public set_MeshVisibility(rid: RID, visible: boolean) {
-        const instance = this.get_Instance(rid, Mesh);
+        const instance = this.get_Instance<Mesh>(rid);
         if (instance) {
             instance.visible = visible;
         }
     }
 
     public set_MeshLayer(rid: RID, layer: number) {
-        const instance = this.get_Instance(rid, Mesh);
+        const instance = this.get_Instance<Mesh>(rid);
         if (instance) {
             instance.layers.mask = layer;
+        }
+    }
+
+    public set_MeshCastShadow(rid: RID, cast: boolean) {
+        const instance = this.get_Instance<Mesh>(rid);
+        if (instance) {
+            instance.castShadow = cast;
+        }
+    }
+
+    public set_MeshReceiveShadow(rid: RID, receive: boolean) {
+        const instance = this.get_Instance<Mesh>(rid);
+        if (instance) {
+            instance.receiveShadow = receive;
         }
     }
 
@@ -162,7 +176,7 @@ export class VisualWorld3D {
 export class PhysicsWorld3D {
 
     public update_PhysicsPicking(event: MouseMotionInputEvent, camera: Camera3D) {
-
+        // console.log(">>>>>> physics picking from viewport", event.viewport?.readable_name);
     }
 
     public dispose() {

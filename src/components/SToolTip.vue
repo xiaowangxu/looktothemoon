@@ -16,7 +16,7 @@
 import { ref } from 'vue';
 import SAutoMeasurePopupPanel from './SAutoMeasurePopupPanel.vue';
 import SFlow from './SFlow.vue';
-import SLabel from './Typography/SLabel.vue';
+import SLabel from './typography/SLabel.vue';
 import type { BoxSize, PopupOpenMode, Rect } from './SConst';
 
 // props

@@ -4,7 +4,7 @@ import type { Viewport } from "./SceneTree";
 
 export class InputEvent {
     private _canceled: boolean = false;
-    public is_Canceled() {
+    public get canceled() {
         return this._canceled;
     }
 
@@ -365,7 +365,7 @@ export class ViewportMouseInputEventManager {
     }
 
     private update_MouseKey(event: MouseEvent, down: boolean) {
-        event.preventDefault();
+        // event.preventDefault();
         this.mouse_button_map.set(this.get_MouseButton(event), down);
     }
 
@@ -463,7 +463,7 @@ export class ViewportMouseInputEventManager {
         const button = event.deltaY < 0 ? MouseButton.WheelUp : MouseButton.WheelDown;
         this.signal_mouse_event.trigger(
             new MouseButtonInputEvent(
-                button, false, false, false,
+                button, true, false, false,
                 ...this.get_MouseInputEventBaseParamaters(event)
             )
         );

@@ -1,5 +1,5 @@
 import { type Camera, PerspectiveCamera, Vector2 } from "three";
-import { Camera3D, NodeNotification } from "../SceneTree";
+import { Camera3D, NodeNotification } from "../../SceneTree";
 
 export class PerspectiveCamera3D extends Camera3D {
     private readonly camera_persp: PerspectiveCamera = new PerspectiveCamera();

@@ -1,4 +1,4 @@
-import { WebGLRenderer, type Camera, Scene, BoxGeometry, MeshBasicMaterial, Mesh, GridHelper } from "three";
+import { WebGLRenderer, type Camera, Scene, BoxGeometry, MeshBasicMaterial, Mesh, GridHelper, Color, PCFSoftShadowMap } from "three";
 import { World3D } from "./World";
 import type { Camera3D } from "./SceneTree";
 
@@ -13,12 +13,14 @@ export class Renderer3D {
     private readonly renderer: WebGLRenderer;
 
     constructor(canvas: HTMLCanvasElement, option: RendererCreationOption) {
-        const { antialias = true, logarithmicDepthBuffer = true } = option;
+        const { antialias = true, logarithmicDepthBuffer = false } = option;
         this.canvas = canvas;
         this.renderer = new WebGLRenderer({
             canvas: canvas,
             antialias, logarithmicDepthBuffer,
         });
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = PCFSoftShadowMap;
     }
 
     public dispose() {
@@ -27,6 +29,10 @@ export class Renderer3D {
 
     public set_ClearAlpha(alpha: number) {
         this.renderer.setClearAlpha(alpha);
+    }
+
+    public set_ClearColor(color: Color) {
+        this.renderer.setClearColor(color);
     }
 
     public resize(width: number, height: number) {

@@ -1,4 +1,4 @@
-import { Node3D, NodeNotification } from "../SceneTree";
+import { Node3D, NodeNotification } from "../../SceneTree";
 
 export class VisualInstance3D extends Node3D {
     private _local_visible: boolean = true;
@@ -6,7 +6,6 @@ export class VisualInstance3D extends Node3D {
     public set local_visible(visible: boolean) {
         if (this._local_visible !== visible) {
             this._local_visible = visible;
-            console.log(">>> set visible ", this.readable_name, this.local_visible);
             this.propagate_VisibilityChanged();
             this.is_global_visible_dirty = true;
         }

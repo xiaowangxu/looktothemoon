@@ -1,10 +1,10 @@
-import { EPSILON } from '../MathF';
-import { Camera3D, NodeNotification } from '../SceneTree';
+import { EPSILON } from '../../MathF';
+import { Camera3D, NodeNotification } from '../../SceneTree';
 import { Camera, PerspectiveCamera, OrthographicCamera, Vector2, Matrix4, Vector3, Quaternion, Euler } from 'three';
 
 export class InterpolateCamera3D extends Camera3D {
-    private static MaxOffsetDistance = 1000;
-    private static OrthographicMaxOffsetDistance = 2500;
+    private static MaxOffsetDistance = 40;
+    private static OrthographicMaxOffsetDistance = 1000;
 
     private readonly persp_camera: PerspectiveCamera = new PerspectiveCamera(90, 1, 0.1, 2500);
     private readonly orth_camera: OrthographicCamera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 2500);
@@ -45,7 +45,7 @@ export class InterpolateCamera3D extends Camera3D {
         }
     }
 
-    private _far: number = 1000;
+    private _far: number = 5000;
     public get far() { return this._far; }
     public set far(far: number) {
         if (this._far !== far) {
@@ -78,11 +78,18 @@ export class InterpolateCamera3D extends Camera3D {
     }
 
     private update_Camera() {
-        const half_zoom = (this.reference_zoom / this.zoom) / 2;
+        // check use orth
+        const half_zoom_only = this.reference_zoom / 2;
         const half_fov = (this.fov / 180 * Math.PI) / 2;
+        if (half_fov === 0) this.use_orth = true;
+        else {
+            const zoom_only_offset_distance = (half_zoom_only / Math.tan(half_fov)) - this.reference_distance;
+            this.use_orth = zoom_only_offset_distance >= InterpolateCamera3D.MaxOffsetDistance;
+        }
+
         // offset
+        const half_zoom = (this.reference_zoom / this.zoom) / 2;
         this.offset_distance = half_fov === 0 ? InterpolateCamera3D.OrthographicMaxOffsetDistance : (half_zoom / Math.tan(half_fov)) - this.reference_distance;
-        this.use_orth = this.offset_distance >= InterpolateCamera3D.MaxOffsetDistance;
         this.persp_camera.fov = this.fov;
         this.persp_camera.near = this.near;
 

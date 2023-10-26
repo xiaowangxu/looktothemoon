@@ -1,5 +1,5 @@
 import { Resource } from "../Resource";
-import { Camera, Color, Material, MeshNormalMaterial, Scene, Vector2, WebGLRenderer } from 'three';
+import { Camera, Color, Material, MeshNormalMaterial, Scene, WebGLRenderer } from 'three';
 import { LineMaterial } from 'three/addons/lines/LineMaterial';
 
 export class MaterialResource extends Resource {
@@ -33,7 +33,7 @@ export class NormalMaterialResource extends MaterialResource {
     }
 }
 
-export class PolyLineMaterialResource extends MaterialResource {
+export class LineMaterialResource extends MaterialResource {
     private line_material: LineMaterial = new LineMaterial({
         color: 0xffffff,
         vertexColors: false,
@@ -47,13 +47,29 @@ export class PolyLineMaterialResource extends MaterialResource {
         dashOffset: 0,
     });
 
+    private _transparent: boolean = false;
+    public get transparent() { return this._transparent; }
+    public set transparent(transparent: boolean) {
+        if (this._transparent !== transparent) {
+            this._transparent = transparent;
+            this.line_material.transparent = this._transparent;
+        }
+    }
+
+    private _opacity: number = 1;
+    public get opacity() { return this._opacity; }
+    public set opacity(opacity: number) {
+        if (this._opacity !== opacity) {
+            this._opacity = opacity;
+            this.line_material.opacity = this._opacity;
+        }
+    }
+
     private _color: Color = new Color(1, 1, 1);
     public get color() { return this._color; }
     public set color(color: Color) {
-        if (!this._color.equals(color)) {
-            this._color.copy(color);
-            this.line_material.color = this._color;
-        }
+        this._color.copy(color);
+        this.line_material.color = this._color;
     }
 
     private _vertex_colors: boolean = false;

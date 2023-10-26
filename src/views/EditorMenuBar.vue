@@ -120,7 +120,7 @@ import { Cog, Undo2, Redo2 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 import SNumberEdit from '@/components/SNumberEdit.vue';
 import SActiveArea from '@/components/SActiveArea.vue';
-import SLabel from '@/components/Typography/SLabel.vue';
+import SLabel from '@/components/typography/SLabel.vue';
 
 // datas
 type MenuLabel = 'file' | 'edit' | 'select' | 'view';

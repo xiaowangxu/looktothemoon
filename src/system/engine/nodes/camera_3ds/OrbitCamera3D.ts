@@ -1,6 +1,6 @@
 import { Vector3, Euler, Vector2, Ray, Raycaster, Plane, Line3 } from 'three';
-import { Node3D } from '../SceneTree';
-import { InterpolateCamera3D } from '@/system/engine/nodes/InterpolateCamera3D';
+import { Node3D } from '../../SceneTree';
+import { InterpolateCamera3D } from '@/system/engine/nodes/camera_3ds/InterpolateCamera3D';
 import { TAU, clamp, is_ApproxZero } from '@/system/engine/MathF';
 import { MouseButtonInputEvent, type InputEvent, MouseButton, ActionInputEvent, MouseMotionInputEvent, MouseEnterLeaveInputEvent } from '@/system/engine/InputEvent';
 import { EasingType, MethodTween, PropertyTween, TransitionType, TweenBase, TweenParallel } from '@/system/engine/Tween';
@@ -20,9 +20,21 @@ export class OrbitCamera3D extends Node3D {
     }
 
     public zoom_to_cursor: boolean = true;
+    public zoom_enable: boolean = true;
+    public rotate_enable: boolean = true;
+    public pan_enable: boolean = true;
 
-    public get fov() { return this.camera.fov; }
-    public set fov(fov: number) { this.camera.fov = fov; }
+    private _perspective_fov: number = 60;
+    public get perspective_fov() { return this._perspective_fov; }
+    public set perspective_fov(fov: number) {
+        fov = clamp(fov, 0, 179);
+        if (this._perspective_fov !== fov) {
+            this._perspective_fov = fov;
+            if (!this.is_orthographic) {
+                this.set_Fov(this._perspective_fov, false);
+            }
+        }
+    }
 
     public get is_orthographic() { return this.camera.is_orthographic; }
     public get direction() { return this.local_rotation.y; }
@@ -32,7 +44,7 @@ export class OrbitCamera3D extends Node3D {
         super();
         this.add_Child(this.camera_arm);
         this.camera_arm.add_Child(this.camera);
-        this.fov = 45;
+        this.camera.fov = this.perspective_fov;
         this.focus_distance = 1;
     }
 
@@ -52,7 +64,6 @@ export class OrbitCamera3D extends Node3D {
                 }
                 else if (event.pressed === false) {
                     this._is_dragging = false;
-                    event.mark_Canceled();
                 }
             }
         }
@@ -69,13 +80,12 @@ export class OrbitCamera3D extends Node3D {
                     this.pan(event.relative_normalized);
                 }
                 else {
-                    // roatate
                     this.rotate(event.relative);
                 }
                 event.mark_Canceled();
             }
         }
-        if (!propagate && event instanceof ActionInputEvent) {
+        if (!propagate && event instanceof ActionInputEvent && event.pressed) {
             // zoom
             if (event.action === 'zoomIn') {
                 this.zoom(true);
@@ -103,11 +113,18 @@ export class OrbitCamera3D extends Node3D {
                 this._is_dragging = false;
                 event.mark_Canceled();
             }
+            else if (event.action === 'switch_CameraType') {
+                if (this.is_fov_tween_finished) {
+                    this.set_Fov(this.is_orthographic ? this.perspective_fov : 0, true);
+                    event.mark_Canceled();
+                }
+            }
         }
     }
 
     // zoom
     private zoom_tween: TweenBase | undefined = undefined;
+    private get is_zoom_tween_finished() { return this.zoom_tween === undefined || this.zoom_tween.finished; }
     public zoom_delta = 0.25;
     public min_zoom_delta = 0.005;
     public max_zoom_delta = 0.5;
@@ -116,7 +133,9 @@ export class OrbitCamera3D extends Node3D {
     public zoom_duration = 0.1;
 
     private target_zoom: number = 1;
+
     private zoom(zoom_in: boolean) {
+        if (!this.zoom_enable) return;
 
         if (this.zoom_tween !== undefined) {
             this.get_SceneTree()?.stop_Tween(this.zoom_tween);
@@ -155,7 +174,7 @@ export class OrbitCamera3D extends Node3D {
 
                         if (center !== null && mouse !== null) {
                             const delta = mouse.sub(center).multiplyScalar(1 - this.camera.zoom / zoom);
-                            this.local_position = this.local_position.add(delta);
+                            this.set_Position(this.local_position.add(delta), false);
                         }
                     }
                 }
@@ -174,11 +193,15 @@ export class OrbitCamera3D extends Node3D {
     public rotate_strength: number = 0.0075;
 
     private rotate(relative: Vector2) {
+        if (!this.rotate_enable) return;
+
         const { x, y } = relative;
         this.set_Rotation(this.direction - x * this.rotate_strength, this.yaw - y * this.rotate_strength);
     }
 
     private pan(relative_normalized: Vector2) {
+        if (!this.pan_enable) return;
+
         const viewport = this.get_Viewport();
         if (viewport === undefined) return;
         const camera = viewport.get_Camera3D();
@@ -194,14 +217,14 @@ export class OrbitCamera3D extends Node3D {
         const result = plane.intersectLine(new Line3(ray.origin, ray.origin.clone().addScaledVector(ray.direction, 100000)), new Vector3());
 
         if (result !== null) {
-            this.local_position = result;
+            this.set_Position(result, false);
         }
     }
 
     // transform
-    private transform_tween: TweenParallel | undefined = undefined;
+    private rotate_tween: TweenParallel | undefined = undefined;
+    private get is_rotate_tween_finished() { return this.rotate_tween === undefined || this.rotate_tween.finished; }
     public transform_duration = 0.15;
-    private fov_tween: PropertyTween<OrbitCamera3D, 'fov', number> | undefined = undefined;
 
     public set_Rotation(direction: number, yaw: number, animate: boolean = false) {
         direction = direction % TAU;
@@ -211,28 +234,48 @@ export class OrbitCamera3D extends Node3D {
             this.camera_arm.local_rotation = new Euler(yaw, 0, 0);
         }
         else {
-            if (this.transform_tween !== undefined) {
-                this.get_SceneTree()?.stop_Tween(this.transform_tween);
+            if (this.rotate_tween !== undefined) {
+                this.get_SceneTree()?.stop_Tween(this.rotate_tween);
             }
-            this.transform_tween = new TweenParallel([
+            this.rotate_tween = new TweenParallel([
                 new PropertyTween(this, 'local_rotation', new Euler(0, direction, 0), this.transform_duration, TransitionType.Quad, EasingType.Out),
                 new PropertyTween(this.camera_arm, 'local_rotation', new Euler(yaw, 0, 0), this.transform_duration, TransitionType.Quad, EasingType.Out),
             ]);
-            this.get_SceneTree()?.start_Tween(this.transform_tween);
+            this.get_SceneTree()?.start_Tween(this.rotate_tween);
         }
     }
+
+    private fov_tween: PropertyTween<InterpolateCamera3D, 'fov', number> | undefined = undefined;
+    private get is_fov_tween_finished() { return this.fov_tween === undefined || this.fov_tween.finished; }
 
     public set_Fov(fov: number, animate: boolean = false) {
         fov = clamp(fov, 0, 179);
         if (!animate) {
-            this.fov = fov;
+            this.camera.fov = fov;
         }
         else {
             if (this.fov_tween !== undefined) {
                 this.get_SceneTree()?.stop_Tween(this.fov_tween);
             }
-            this.fov_tween = new PropertyTween(this, 'fov', fov, this.transform_duration, TransitionType.Quad, EasingType.Out);
+            this.fov_tween = new PropertyTween(this.camera, 'fov', fov, this.transform_duration, TransitionType.Quad, EasingType.Out);
             this.get_SceneTree()?.start_Tween(this.fov_tween);
+        }
+    }
+
+    private position_tween: PropertyTween<OrbitCamera3D, 'local_position', Vector3> | undefined = undefined;
+    private get is_position_tween_finished() { return this.position_tween === undefined || this.position_tween.finished; }
+
+    public set_Position(position: Vector3, animate: boolean = false) {
+        const pos = position.clone();
+        if (!animate) {
+            this.local_position = position;
+        }
+        else {
+            if (this.position_tween !== undefined) {
+                this.get_SceneTree()?.stop_Tween(this.position_tween);
+            }
+            this.position_tween = new PropertyTween(this, 'local_position', pos, this.transform_duration, TransitionType.Quad, EasingType.Out);
+            this.get_SceneTree()?.start_Tween(this.position_tween);
         }
     }
 }

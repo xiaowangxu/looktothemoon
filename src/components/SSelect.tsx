@@ -8,7 +8,7 @@ import { ChevronDown, ChevronUp } from "lucide-vue-next";
 import { useComponentRefFocusBlur, usePopupPanelMeasureRect, type LabelTypes, type Rect, type BoxSize, type PopupOpenMode, calcSelectPopupSize } from "./SConst";
 import { useWindowSize } from "@vueuse/core";
 import SMenuButton from "@/components/SMenuButton.vue";
-import SLabel from "@/components/Typography/SLabel.vue";
+import SLabel from "@/components/typography/SLabel.vue";
 import SIcon from "./SIcon.vue";
 
 export default defineComponent({

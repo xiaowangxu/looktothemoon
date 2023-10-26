@@ -372,30 +372,38 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
     public readonly target: Val;
     private readonly lerp: (a: any, b: any, v: number) => any;
 
-    constructor(object: Obj, key: Key, target: Val, duration: number, transition: TransitionType, easing: EasingType) {
+    constructor(object: Obj, key: Key, target: Val, duration: number, transition: TransitionType, easing: EasingType, lerp: ((a: Val, b: Val, v: number) => Val) | undefined = undefined) {
         super(duration, transition, easing);
         this.object = object;
         this.key = key;
         this.initial = this.object[this.key] as Val;
         this.target = target;
         // set lerp function
-        if (typeof (this.target) === 'number') {
-            this.lerp = PropertyTween.LerpFuncs.Number;
-        }
-        else if (this.target instanceof Vector2) {
-            this.lerp = PropertyTween.LerpFuncs.Vector2;
-        }
-        else if (this.target instanceof Vector3) {
-            this.lerp = PropertyTween.LerpFuncs.Vector3;
-        }
-        else if (this.target instanceof Euler) {
-            this.lerp = PropertyTween.LerpFuncs.Euler;
-        }
-        else if (this.target instanceof Quaternion) {
-            this.lerp = PropertyTween.LerpFuncs.Quaternion;
+        if (lerp !== undefined) {
+            this.lerp = lerp;
         }
         else {
-            throw new Error(`property '${String(this.key)}' is not lerpable`);
+            if (typeof (this.target) === 'number') {
+                this.lerp = PropertyTween.LerpFuncs.Number;
+            }
+            else if (typeof (this.target) === 'boolean') {
+                this.lerp = PropertyTween.LerpFuncs.Boolean;
+            }
+            else if (this.target instanceof Vector2) {
+                this.lerp = PropertyTween.LerpFuncs.Vector2;
+            }
+            else if (this.target instanceof Vector3) {
+                this.lerp = PropertyTween.LerpFuncs.Vector3;
+            }
+            else if (this.target instanceof Euler) {
+                this.lerp = PropertyTween.LerpFuncs.Euler;
+            }
+            else if (this.target instanceof Quaternion) {
+                this.lerp = PropertyTween.LerpFuncs.Quaternion;
+            }
+            else {
+                throw new Error(`property '${String(this.key)}' is not lerpable`);
+            }
         }
     }
 
@@ -417,6 +425,7 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
 
     public static LerpFuncs = {
         Number: (a: number, b: number, v: number) => a + (b - a) * v,
+        Boolean: (a: boolean, b: boolean, v: number) => v < 1 ? a : b,
         Vector2: (a: Vector2, b: Vector2, v: number) => new Vector2().lerpVectors(a, b, v),
         Vector3: (a: Vector3, b: Vector3, v: number) => new Vector3().lerpVectors(a, b, v),
         Quaternion: (a: Quaternion, b: Quaternion, v: number) => a.slerp(b, v),

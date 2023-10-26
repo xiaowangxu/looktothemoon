@@ -15,12 +15,12 @@
 
 <script setup lang="ts">
 
-import SButton from './SButton.vue';
+import SButton from '@/components/SButton.vue';
 import { computed, ref } from 'vue';
-import { useComponentRefFocusBlur, type LabelTypes } from './SConst';
+import { useComponentRefFocusBlur, type LabelTypes } from '@/components/SConst';
 import { ChevronRight } from 'lucide-vue-next';
-import SLabel from './Typography/SLabel.vue';
-import SIcon from './SIcon.vue';
+import SLabel from '@/components/typography/SLabel.vue';
+import SIcon from '@/components/SIcon.vue';
 
 // props
 const props = withDefaults(

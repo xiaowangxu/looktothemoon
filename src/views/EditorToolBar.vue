@@ -54,6 +54,6 @@ import SButton from '@/components/SButton.vue';
 import SScrollContainer from '@/components/SScrollContainer.vue';
 import SVSeparator from '@/components/SVSeparator.vue';
 import { Check, Workflow, Globe, Search, Trash, PanelLeftInactive } from 'lucide-vue-next';
-import SLabel from '@/components/Typography/SLabel.vue';
+import SLabel from '@/components/typography/SLabel.vue';
 
 </script>

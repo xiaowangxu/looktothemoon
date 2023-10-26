@@ -1,10 +1,10 @@
-import type { RID } from "../Rid";
-import { NodeNotification } from "../SceneTree";
-import type { GeometryResource } from "../resources/GeometryResource";
-import type { MaterialResource } from "../resources/MaterialResource";
-import { VisualInstance3D } from "./VisualInstance3D";
+import type { RID } from "../../Rid";
+import { NodeNotification } from "../../SceneTree";
+import type { GeometryResource } from "../../resources/GeometryResource";
+import type { MaterialResource } from "../../resources/MaterialResource";
+import { GeometryInstance3D } from "./GeometryInstance";
 
-export class MeshInstance3D extends VisualInstance3D {
+export class MeshInstance3D extends GeometryInstance3D {
     private mesh_rid: RID | undefined = undefined;
     private _geometry: GeometryResource | undefined = undefined;
     public get geometry() { return this._geometry; }
@@ -49,6 +49,24 @@ export class MeshInstance3D extends VisualInstance3D {
             }
         }
     }
+    
+    protected on_CastShadowChanged(): void {
+        if (this.mesh_rid !== undefined) {
+            const visual_world = this.get_Viewport()?.get_World3D()?.get_VisualWorld();
+            if (visual_world !== undefined) {
+                visual_world.set_MeshCastShadow(this.mesh_rid, this.cast_shadow);
+            }
+        }
+    }
+
+    protected on_ReceiveShadowChanged(): void {
+        if (this.mesh_rid !== undefined) {
+            const visual_world = this.get_Viewport()?.get_World3D()?.get_VisualWorld();
+            if (visual_world !== undefined) {
+                visual_world.set_MeshReceiveShadow(this.mesh_rid, this.receive_shadow);
+            }
+        }
+    }
 
     public _notification(what: NodeNotification): void {
         switch (what) {
@@ -64,6 +82,8 @@ export class MeshInstance3D extends VisualInstance3D {
                             visual_world.set_MeshMaterial(this.mesh_rid, this.material);
                         }
                         visual_world.set_MeshLayer(this.mesh_rid, this.visual_layer);
+                        visual_world.set_MeshCastShadow(this.mesh_rid, this.cast_shadow);
+                        visual_world.set_MeshReceiveShadow(this.mesh_rid, this.receive_shadow);
                     }
                 }
                 break;

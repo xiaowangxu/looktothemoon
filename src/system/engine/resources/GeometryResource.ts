@@ -1,6 +1,7 @@
 import { BufferGeometry, Vector3, InstancedInterleavedBuffer, InterleavedBufferAttribute, Color } from 'three';
 import { Resource } from '../Resource';
 import { LineGeometry } from 'three/addons/lines/LineGeometry';
+import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry';
 
 export class GeometryResource extends Resource {
     public get_BufferGeometry(): BufferGeometry {
@@ -73,5 +74,31 @@ export class PolyLineGeometryResource extends GeometryResource {
 
     public get_BufferGeometry(): BufferGeometry {
         return this.line_geometry;
+    }
+}
+
+export class SegmentLineGeometryResource extends GeometryResource {
+    private line_segment_geometry: LineSegmentsGeometry = new LineSegmentsGeometry();
+
+    private _points: Vector3[] = [];
+    public get points() {
+        return this._points;
+    }
+    public set points(points: Vector3[]) {
+        this._points = points;
+        this.line_segment_geometry.setPositions(this._points.flatMap(p => [p.x, p.y, p.z]));
+    }
+
+    private _colors: Color[] = [];
+    public get colors() {
+        return this._colors;
+    }
+    public set colors(colors: Color[]) {
+        this._colors = colors;
+        this.line_segment_geometry.setColors(this._colors.flatMap(c => [c.r, c.g, c.b]));
+    }
+
+    public get_BufferGeometry(): BufferGeometry {
+        return this.line_segment_geometry;
     }
 }

@@ -1,5 +1,5 @@
 import { type Camera, OrthographicCamera, Vector2 } from "three";
-import { Camera3D, NodeNotification } from "../SceneTree";
+import { Camera3D, NodeNotification } from "../../SceneTree";
 
 export class OrthographicCamera3D extends Camera3D {
     private readonly camera_orth: OrthographicCamera = new OrthographicCamera();
