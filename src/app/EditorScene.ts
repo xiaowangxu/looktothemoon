@@ -20,37 +20,43 @@ export const EditorViewport = new Viewport();
 EditorViewport.clear_color = new Color(0xf2f2f2);
 EditorViewport.world_3d = new World3D();
 EditorViewportContainer.add_Child(EditorViewport);
+// camera
+const EditorCamera = new OrbitCamera3D();
+EditorViewport.add_Child(EditorCamera);
+
+// World 
+const World = new Node3D();
+World.local_scale = new Vector3(0.01, 0.01, 0.01);
+EditorViewport.add_Child(World);
+
 const axis = new Axis();
-EditorViewport.add_Child(axis);
+World.add_Child(axis);
 axis.local_scale = new Vector3(100000, 100000, 100000);
 const wireframe_box = new WireframeBox();
-wireframe_box.box = new Box3(new Vector3(-1, -1, -3), new Vector3(2, 4, -2));
-EditorViewport.add_Child(wireframe_box);
+wireframe_box.box = new Box3(new Vector3(-100, -100, -300), new Vector3(200, 400, -200));
+World.add_Child(wireframe_box);
 
 // Cube test
 const node2 = new Node3D();
 const Cube = new MeshInstance3D();
 const Cube2 = new MeshInstance3D();
-Cube.geometry = new ThreeGeometryResource(new BoxGeometry());
+Cube.geometry = new ThreeGeometryResource(new BoxGeometry(100, 100, 100));
 Cube2.geometry = Cube.geometry;
 const mat = new NormalMaterialResource();
 Cube.material = [mat, mat, mat, mat, mat, mat];
 Cube2.material = [mat, mat, mat, mat, mat, mat];
 node2.add_Child(Cube);
-EditorViewport.add_Child(node2);
-Cube.local_position = new Vector3(2, 0, 0);
+World.add_Child(node2);
+Cube.local_position = new Vector3(200, 0, 0);
 Cube.add_Child(Cube2);
 Cube2.local_scale = new Vector3(0.25, 1, 0.25);
-Cube2.local_position = new Vector3(0, 1, 0);
+Cube2.local_position = new Vector3(0, 100, 0);
 const Sphere = new MeshInstance3D();
-Sphere.geometry = new ThreeGeometryResource(new SphereGeometry(1, undefined, undefined, Math.PI, Math.PI));
+Sphere.geometry = new ThreeGeometryResource(new SphereGeometry(100, undefined, undefined, Math.PI, Math.PI));
 Sphere.material = new ThreeMaterialResource(new MeshBasicMaterial({ side: DoubleSide }));
-Sphere.local_position = new Vector3(-2, 0, 0);
-EditorViewport.add_Child(Sphere);
+Sphere.local_position = new Vector3(-200, 0, 0);
+World.add_Child(Sphere);
 
-// camera
-const EditorCamera = new OrbitCamera3D();
-EditorViewport.add_Child(EditorCamera);
 
 // scenetree
 export const EditorSceneTree = new SceneTree(EditorViewportContainer);
