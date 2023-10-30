@@ -1,6 +1,8 @@
 import { VisualInstance3D } from "./VisualInstance3D";
 
 export class GeometryInstance3D extends VisualInstance3D {
+    public static readonly class_name: string = "GeometryInstance3D";
+
     private _cast_shadow: boolean = false;
     public get cast_shadow() { return this._cast_shadow; }
     public set cast_shadow(cast: boolean) {

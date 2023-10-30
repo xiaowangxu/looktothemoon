@@ -3,6 +3,8 @@ import { Camera3D, NodeNotification } from '../../SceneTree';
 import { Camera, PerspectiveCamera, OrthographicCamera, Vector2, Matrix4, Vector3, Quaternion, Euler } from 'three';
 
 export class InterpolateCamera3D extends Camera3D {
+    public static readonly class_name: string = "InterpolateCamera3D";
+    
     private static MaxOffsetDistance = 40;
     private static OrthographicMaxOffsetDistance = 1000;
 

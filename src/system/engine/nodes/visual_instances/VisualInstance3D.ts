@@ -1,6 +1,8 @@
 import { Node3D, NodeNotification } from "../../SceneTree";
 
 export class VisualInstance3D extends Node3D {
+    public static readonly class_name: string = "VisualInstance3D";
+
     private _local_visible: boolean = true;
     public get local_visible() { return this._local_visible; }
     public set local_visible(visible: boolean) {

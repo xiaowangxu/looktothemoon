@@ -5,6 +5,7 @@ import { Renderer3D } from "./Renderer";
 import { World3D } from "./World";
 import { InputActionMap, InputEvent, InputManager, MouseEnterLeaveInputEvent, MouseInputEvent, MouseMotionInputEvent, ViewportActionInputEventManager, ViewportKeyInputEventManager, ViewportMouseInputEventManager } from "./InputEvent";
 import type { TweenBase } from "./Tween";
+import { ClassBase } from "./ClassBase";
 
 export class SceneTree {
     private readonly input_action_map: InputActionMap = new InputActionMap();
@@ -154,7 +155,8 @@ export enum NodeNotification {
     Dispose,
 }
 
-export class Node {
+export class Node extends ClassBase {
+    public static readonly class_name: string = "Node";
 
     public readonly rid: RID;
     public name: string | undefined;
@@ -188,6 +190,7 @@ export class Node {
     public readonly signal_physics_process: SignalEmitter<(delta: number) => void> = new SignalEmitter();
 
     constructor() {
+        super();
         this.rid = Rid();
     };
 
@@ -623,6 +626,8 @@ export class Node3D extends Node {
 }
 
 export class Camera3D extends Node3D {
+    public static readonly class_name: string = "Camera3D";
+
     public _current: boolean = true;
     public get current() { return this._current; }
     public set current(current: boolean) {
@@ -675,6 +680,7 @@ export type CursorStyle = 'default' | 'none' | 'context-menu' | 'help' | 'pointe
     'zoom-in' | 'zoom-out';
 
 export class Viewport extends Node {
+    public static readonly class_name: string = "Viewport";
 
     // input manager
     public readonly mouse_event_manager: ViewportMouseInputEventManager;

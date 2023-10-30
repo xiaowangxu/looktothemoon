@@ -5,6 +5,8 @@ import type { MaterialResource } from "../../resources/MaterialResource";
 import { GeometryInstance3D } from "./GeometryInstance";
 
 export class MeshInstance3D extends GeometryInstance3D {
+    public static readonly class_name: string = "MeshInstance3D";
+
     private mesh_rid: RID | undefined = undefined;
     private _geometry: GeometryResource | undefined = undefined;
     public get geometry() { return this._geometry; }

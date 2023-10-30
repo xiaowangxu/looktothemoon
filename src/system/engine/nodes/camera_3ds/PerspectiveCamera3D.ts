@@ -2,6 +2,8 @@ import { type Camera, PerspectiveCamera, Vector2 } from "three";
 import { Camera3D, NodeNotification } from "../../SceneTree";
 
 export class PerspectiveCamera3D extends Camera3D {
+    public static readonly class_name: string = "PerspectiveCamera3D";
+
     private readonly camera_persp: PerspectiveCamera = new PerspectiveCamera();
 
     private _fov: number = 45;

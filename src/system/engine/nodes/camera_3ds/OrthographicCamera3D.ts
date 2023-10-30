@@ -2,6 +2,8 @@ import { type Camera, OrthographicCamera, Vector2 } from "three";
 import { Camera3D, NodeNotification } from "../../SceneTree";
 
 export class OrthographicCamera3D extends Camera3D {
+    public static readonly class_name: string = "OrthographicCamera3D";
+
     private readonly camera_orth: OrthographicCamera = new OrthographicCamera();
     private aspect: number = 1;
 

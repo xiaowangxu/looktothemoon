@@ -4,12 +4,16 @@ import { LineGeometry } from 'three/addons/lines/LineGeometry';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry';
 
 export class GeometryResource extends Resource {
+    public static readonly class_name: string = "GeometryResource";
+
     public get_BufferGeometry(): BufferGeometry {
         throw new Error('abstract method');
     }
 }
 
 export class BufferGeometryResource extends GeometryResource {
+    public static readonly class_name: string = "BufferGeometryResource";
+
     private readonly buffer_geometry: BufferGeometry = new BufferGeometry();
 
     constructor() {

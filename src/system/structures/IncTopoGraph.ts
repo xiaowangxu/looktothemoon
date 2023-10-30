@@ -1,3 +1,5 @@
+import { Result } from "../utils/Result";
+
 type TopoOrder = number;
 
 class IncTopoGraphNode<T> {
@@ -108,22 +110,22 @@ export class IncTopoGraph<T> {
 
         if (!no_prev_edge) return IncTopoGraphResult.Existed;
 
-        // if (lower_bound < upper_bound) {
-        //     const visited = new Set<IncTopoGraphNode<T>>();
+        if (lower_bound < upper_bound) {
+            const visited = new Set<IncTopoGraphNode<T>>();
 
-        //     Result < List<IncrementalTopoGraphNode<T>>, ErrorResult > changed_forward = this.ForwardDFS(succ, upper_bound, visited);
+            const changed_forward = this.dfs_Forward(succ, upper_bound, visited);
 
-        //     if (changed_forward.Failed) {
-        //         prec.Children.Remove(succ);
-        //         succ.Parents.Remove(prec);
-        //         return Err<bool, ErrorResult>(changed_forward.Error);
-        //     }
-        //     else {
-        //         List < IncrementalTopoGraphNode < T >> nodes = changed_forward.Unwrap();
-        //         List < IncrementalTopoGraphNode < T >> backward_nodes = this.BackwardDFS(prec, lower_bound, visited);
-        //         IncrementalTopoGraph<T>.ReorderNodes(nodes, backward_nodes);
-        //     }
-        // }
+            if (changed_forward.failed) {
+                prec.children.delete(succ);
+                succ.parents.delete(prec);
+                return changed_forward.error;
+            }
+            else {
+                const nodes = changed_forward.value;
+                const backward_nodes = this.dfs_Backward(prec, lower_bound, visited);
+                IncTopoGraph.reorder(nodes, backward_nodes);
+            }
+        }
 
         return IncTopoGraphResult.Ok;
     }
@@ -137,6 +139,37 @@ export class IncTopoGraph<T> {
         if (prec === succ) return false;
 
         return prec.children.has(succ);
+    }
+
+    public has_IndirectRef(item: T, dep: T) {
+        const prec = this.nodes_map.get(dep);
+        const succ = this.nodes_map.get(item);
+
+        if (prec === undefined || succ === undefined || prec === succ) return false;
+
+        const stack: IncTopoGraphNode<T>[] = [];
+        const visited = new Set<IncTopoGraphNode<T>>();
+
+        stack.push(prec);
+        while (stack.length > 0) {
+            const key = stack.pop()!;
+            if (visited.has(key)) continue;
+            else { visited.add(key); }
+
+            const children = key.children;
+
+            if (children.has(succ)) {
+                return true;
+            }
+            else {
+                for (const child of children) {
+                    stack.push(child);
+                }
+                continue;
+            }
+        }
+
+        return false;
     }
 
     public unref(item: T, dep: T) {
@@ -153,5 +186,135 @@ export class IncTopoGraph<T> {
         succ.parents.delete(prec);
 
         return true;
+    }
+
+    public get unsorted() {
+        return [...this.nodes_map.values()];
+    }
+
+    public get sorted() {
+        return this.unsorted.sort((a, b) => a.order - b.order);
+    }
+
+    public get_UnsortedDescendants(item: T) {
+        const result: IncTopoGraphNode<T>[] = [];
+        const node = this.nodes_map.get(item);
+        if (node === undefined) {
+            return result;
+        }
+
+        const stack: IncTopoGraphNode<T>[] = [];
+        const visited = new Set<IncTopoGraphNode<T>>();
+
+        stack.push(node);
+        while (stack.length > 0) {
+            const key = stack.pop()!;
+            if (visited.has(key)) continue;
+            else { visited.add(key); }
+
+            for (const child of key.children) {
+                stack.push(child);
+            }
+
+            result.push(key);
+        }
+
+        return result;
+    }
+
+    public propagation(items: T[]) {
+        const result: IncTopoGraphNode<T>[] = [];
+
+        PriorityQueue < IncrementalTopoGraphNode<T>, TopoOrder > queue = new ();
+        const visited: Set<IncTopoGraphNode<T>> = new Set();
+
+        for (const item of items) {
+            const node = this.nodes_map.get(item);
+            if (node !== undefined) {
+                queue.Enqueue(node, node.order);
+            }
+        }
+
+        while (true) {
+            if (queue.Count <= 0) break;
+            const key: IncTopoGraphNode<T> = queue.Dequeue();
+            if (visited.has(key)) continue;
+            else { visited.add(key); }
+
+            for (const child of key.children) {
+                queue.Enqueue(child, child.order);
+            }
+
+            result.push(key);
+        }
+
+        return result;
+    }
+
+    private dfs_Forward(root: IncTopoGraphNode<T>, upper_bound: TopoOrder, visited: Set<IncTopoGraphNode<T>>): Result<IncTopoGraphNode<T>[], IncTopoGraphResult> {
+        const result: IncTopoGraphNode<T>[] = [];
+        const stack: IncTopoGraphNode<T>[] = [];
+
+        stack.push(root);
+        while (stack.length > 0) {
+            const node = stack.pop()!;
+
+            visited.add(node);
+            result.push(node);
+
+            for (const child of node.children) {
+                const order = child.order;
+
+                if (order == upper_bound) {
+                    return Result.Error(IncTopoGraphResult.CyclicReference);
+                }
+
+                if (!visited.has(child) && order < upper_bound) {
+                    stack.push(child);
+                }
+            }
+        }
+
+        return Result.Ok(result);
+    }
+
+    private dfs_Backward(root: IncTopoGraphNode<T>, lower_bound: TopoOrder, visited: Set<IncTopoGraphNode<T>>): IncTopoGraphNode<T>[] {
+        const result: IncTopoGraphNode<T>[] = [];
+        const stack: IncTopoGraphNode<T>[] = [];
+
+        stack.push(root);
+        while (stack.length > 0) {
+            const node = stack.pop()!;
+
+            visited.add(node);
+            result.push(node);
+
+            for (const parent of node.parents) {
+                const order = parent.order;
+
+                if (!visited.has(parent) && lower_bound < order) {
+                    stack.push(parent);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static sort<T>(a: IncTopoGraphNode<T>, b: IncTopoGraphNode<T>) {
+        if (a.order < b.order) return -1;
+        else if (a.order > b.order) return 1;
+        return 0;
+    }
+    private static reorder<T>(forward: IncTopoGraphNode<T>[], backward: IncTopoGraphNode<T>[]) {
+        forward.sort(IncTopoGraph.sort);
+        backward.sort(IncTopoGraph.sort);
+
+        var orders = [...backward.map(n => n.order), ...forward.map(n => n.order)].sort();
+        var nodes = [...backward, ...forward];
+
+        orders.forEach((order, idx) => {
+            nodes[idx].order = order;
+        });
     }
 }

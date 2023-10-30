@@ -1,11 +1,18 @@
 import { Vector2 } from "three";
 import { SignalEmitter } from "../utils/SignalEmitter";
 import type { Viewport } from "./SceneTree";
+import { Resource } from "./Resource";
 
-export class InputEvent {
+export class InputEvent extends Resource {
+    public static readonly class_name: string = "InputEvent";
+
     private _canceled: boolean = false;
     public get canceled() {
         return this._canceled;
+    }
+
+    constructor() {
+        super();
     }
 
     public mark_Canceled() {
@@ -18,6 +25,8 @@ export class InputEvent {
 }
 
 export class InputEventFromViewport extends InputEvent {
+    public static readonly class_name: string = "InputEventFromViewport";
+
     public readonly viewport: Viewport | undefined;
 
     constructor(viewport: Viewport | undefined) {
@@ -27,6 +36,8 @@ export class InputEventFromViewport extends InputEvent {
 }
 
 export class ComposeInputEvent extends InputEventFromViewport {
+    public static readonly class_name: string = "ComposeInputEvent";
+
     public readonly ctrl: boolean;
     public readonly shift: boolean;
     public readonly alt: boolean;
@@ -51,6 +62,8 @@ export class ComposeInputEvent extends InputEventFromViewport {
 }
 
 export class MouseInputEvent extends ComposeInputEvent {
+    public static readonly class_name: string = "MouseInputEvent";
+
     public readonly position: Vector2;
     public readonly position_normalized: Vector2;
 
@@ -62,6 +75,8 @@ export class MouseInputEvent extends ComposeInputEvent {
 }
 
 export class MouseEnterLeaveInputEvent extends InputEventFromViewport {
+    public static readonly class_name: string = "MouseEnterLeaveInputEvent";
+
     public readonly inside: boolean;
 
     constructor(inside: boolean, viewport: Viewport | undefined) {
@@ -71,6 +86,8 @@ export class MouseEnterLeaveInputEvent extends InputEventFromViewport {
 }
 
 export class MouseMotionInputEvent extends MouseInputEvent {
+    public static readonly class_name: string = "MouseMotionInputEvent";
+
     public readonly relative: Vector2;
     public readonly relative_normalized: Vector2;
 
@@ -90,6 +107,8 @@ export enum MouseButton {
 }
 
 export class MouseButtonInputEvent extends MouseInputEvent {
+    public static readonly class_name: string = "MouseButtonInputEvent";
+
     public readonly button: MouseButton;
     public readonly pressed: boolean;
     public readonly click: boolean;
@@ -123,6 +142,8 @@ export class MouseButtonInputEvent extends MouseInputEvent {
 }
 
 export class KeyInputEvent extends ComposeInputEvent {
+    public static readonly class_name: string = "KeyInputEvent";
+
     public readonly key: string;
     public readonly keycode: string;
     public readonly pressed: boolean;
@@ -155,6 +176,8 @@ export class KeyInputEvent extends ComposeInputEvent {
 }
 
 export class ActionInputEvent extends InputEvent {
+    public static readonly class_name: string = "ActionInputEvent";
+
     public readonly action: string;
     public readonly pressed: boolean;
     public readonly echo: boolean;
@@ -169,10 +192,13 @@ export class ActionInputEvent extends InputEvent {
 
 // InputManager
 
-export class ShortCut {
+export class ShortCut extends Resource {
+    public static readonly class_name: string = "ShortCut";
+
     public readonly events: InputEvent[];
 
     constructor(events: InputEvent[]) {
+        super();
         this.events = events;
     }
 
@@ -181,8 +207,14 @@ export class ShortCut {
     }
 }
 
-export class InputActionMap {
+export class InputActionMap extends Resource {
+    public static readonly class_name: string = "InputActionMap";
+    
     private input_action_map: Map<string, ShortCut> = new Map();
+
+    constructor() {
+        super();
+    }
 
     private is_InputEventPressed(event: InputEvent) {
         if (event instanceof MouseButtonInputEvent) return event.pressed;
@@ -209,7 +241,6 @@ export class InputActionMap {
     public add_Action(action: string, shortcut: ShortCut) {
         this.input_action_map.set(action, shortcut);
     }
-
 }
 
 // ViewportInputEventManager

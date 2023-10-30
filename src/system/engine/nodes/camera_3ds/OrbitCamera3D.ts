@@ -6,6 +6,8 @@ import { MouseButtonInputEvent, type InputEvent, MouseButton, ActionInputEvent, 
 import { EasingType, MethodTween, PropertyTween, TransitionType, TweenBase, TweenParallel } from '@/system/engine/Tween';
 
 export class OrbitCamera3D extends Node3D {
+    public static readonly class_name: string = "OrbitCamera3D";
+
     private readonly camera_arm: Node3D = new Node3D();
     private readonly camera: InterpolateCamera3D = new InterpolateCamera3D();
 

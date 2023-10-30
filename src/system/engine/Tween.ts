@@ -436,3 +436,41 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
         },
     }
 }
+
+export class TimerTween extends TweenBase {
+    private readonly duration: number;
+
+    private _current: number = 0;
+    public get current() { return this._current; }
+
+    constructor(duration: number) {
+        super();
+        this.duration = Math.max(0, duration);
+    }
+
+    public start() {
+        if (this.duration === 0) {
+            this._current = 1;
+            this.started = true;
+            this.finished = true;
+        }
+        else {
+            this._current = 0;
+            this.started = true;
+            this.finished = false;
+        }
+    }
+
+    public process(delta: number) {
+        if (this.running) {
+            const finished = this._current >= this.duration;
+            if (finished) {
+                this.finished = true;
+            }
+            else {
+                const c = this._current + delta;
+                this._current = clamp(c, 0, this.duration);
+            }
+        }
+    }
+}

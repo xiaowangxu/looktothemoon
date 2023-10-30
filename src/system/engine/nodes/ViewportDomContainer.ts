@@ -3,6 +3,8 @@ import { NodeNotification, Node, Viewport } from "../SceneTree";
 
 
 export class ViewportDomContainer extends Node {
+    public static readonly class_name: string = "ViewportDomContainer";
+
     private viewport_node: Viewport | undefined = undefined;
     private resize_observer: ResizeObserver = new ResizeObserver((entries) => this.on_DomResize(entries[0]));
 
