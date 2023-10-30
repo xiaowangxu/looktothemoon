@@ -4,7 +4,7 @@ import { InterpolateCamera3D } from "./nodes/camera_3ds/InterpolateCamera3D";
 import { OrbitCamera3D } from "./nodes/camera_3ds/OrbitCamera3D";
 import { OrthographicCamera3D } from "./nodes/camera_3ds/OrthographicCamera3D";
 import { PerspectiveCamera3D } from "./nodes/camera_3ds/PerspectiveCamera3D";
-import { GeometryInstance3D } from "./nodes/visual_instances/GeometryInstance";
+import { GeometryInstance3D } from "./nodes/visual_instances/GeometryInstance3D";
 import { MeshInstance3D } from "./nodes/visual_instances/MeshInstance3D";
 import { VisualInstance3D } from "./nodes/visual_instances/VisualInstance3D";
 import { ClassBase } from "./ClassBase";

@@ -1,11 +1,12 @@
-import { type Camera, Clock, Vector3, Euler, Matrix4, Matrix3, Quaternion, Vector2, Color } from "three";
+import { type Camera, Clock, Vector3, Euler, Matrix4, Matrix3, Quaternion, Vector2, Color, Raycaster } from "three";
 import { SignalEmitter } from "../utils/SignalEmitter";
 import { Rid, type RID } from "./Rid";
 import { Renderer3D } from "./Renderer";
-import { World3D } from "./World";
+import { PickingOrder, RayPickingOption, World3D } from "./World";
 import { InputActionMap, InputEvent, InputManager, MouseEnterLeaveInputEvent, MouseInputEvent, MouseMotionInputEvent, ViewportActionInputEventManager, ViewportKeyInputEventManager, ViewportMouseInputEventManager } from "./InputEvent";
 import type { TweenBase } from "./Tween";
 import { ClassBase } from "./ClassBase";
+import type { PickingArea3D } from "./nodes/physics_3ds/PickingArea3D";
 
 export class SceneTree {
     private readonly input_action_map: InputActionMap = new InputActionMap();
@@ -26,7 +27,7 @@ export class SceneTree {
 
     private viewports: Set<Viewport> = new Set();
 
-    constructor(root: Node, physics_fps: number = 30) {
+    constructor(root: Node, physics_fps: number = 60) {
         if (root.get_Parent() !== undefined || root.ready) throw new Error('root is invalid');
         this.root = root;
         this.root.set_SceneTree(this);
@@ -614,6 +615,22 @@ export class Node3D extends Node {
         }
     }
 
+    protected _notification_IgnoreTransformChange(what: NodeNotification): void {
+        switch (what) {
+            case NodeNotification.Parented: {
+                const parent = this.get_Parent();
+                if (parent !== undefined && parent instanceof Node3D) {
+                    this.propagate_TransformChanged();
+                }
+                return;
+            }
+            case NodeNotification.Unparented: {
+                this.propagate_TransformChanged();
+                return;
+            }
+        }
+    }
+
     // apis
 
     public to_Global(local_position: Vector3) {
@@ -740,6 +757,18 @@ export class Viewport extends Node {
     public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
     public physics_picking_when_mouse_event_not_canceled: boolean = true;
     public physics_picking: boolean = true;
+    private _physics_picking_area: PickingArea3D | undefined = undefined;
+    private set physics_picking_area(area: PickingArea3D | undefined) {
+        if (this._physics_picking_area !== area) {
+            if (this._physics_picking_area !== undefined) {
+                this._physics_picking_area.on_MouseExited();
+            }
+            this._physics_picking_area = area;
+            if (this._physics_picking_area !== undefined) {
+                this._physics_picking_area.on_MouseEntered();
+            }
+        }
+    }
 
     private _cursor_style: CursorStyle = 'default';
     public get cursor_style(): CursorStyle { return this._cursor_style; }
@@ -866,13 +895,7 @@ export class Viewport extends Node {
                 return;
             }
             case NodeNotification.InternalAfterPhysicsProcess: {
-                if (this.physics_picking && this.input_manager.is_mouse_inside) {
-                    if (this.physics_picking_when_mouse_event_not_canceled === true && this.mouse_event_canceled) break;
-                    const camera_3d = this.get_Camera3D();
-                    if (camera_3d === undefined) break;
-                    const event = new MouseMotionInputEvent(new Vector2(0, 0), new Vector2(0, 0), this, this.input_manager.mouse_position, this.input_manager.mouse_position_normalized, false, false, false, false);
-                    this.get_RenderableWorld3D()?.get_PhysicsWorld().update_PhysicsPicking(event, camera_3d);
-                }
+                this.process_PhysicsPicking();
                 break;
             }
         }
@@ -917,9 +940,38 @@ export class Viewport extends Node {
         this.signal_after_render.trigger();
     }
 
-    public _process(delta: number): void {
-        // const info = this.renderer_3d.get_Info();
-        // console.log(info.memory.geometries, info.programs?.length);
+    public process_PhysicsPicking(): void {
+        if (this.physics_picking && this.input_manager.is_mouse_inside) {
+            const picking_world = this.get_RenderableWorld3D()?.get_PickingWorld();
+            const camera_3d = this.get_Camera3D();
+            if (picking_world === undefined ||
+                camera_3d === undefined ||
+                (this.physics_picking_when_mouse_event_not_canceled === true && this.mouse_event_canceled)
+            ) {
+                this.physics_picking_area = undefined;
+                return;
+            };
+            this.input_manager.mouse_position_normalized
+            const raycast = new Raycaster();
+            raycast.setFromCamera(this.input_manager.mouse_position_normalized, camera_3d.get_Camera());
+            const ray_picking_option = new RayPickingOption(
+                raycast.ray.origin,
+                raycast.ray.origin.clone().addScaledVector(raycast.ray.direction, 10000),
+                0xffffffff,
+                camera_3d,
+                PickingOrder.Ordered,
+            );
+            const ray_picking_results = picking_world.perform_RayPicking(ray_picking_option);
+            if (ray_picking_results.length > 0) {
+                this.physics_picking_area = ray_picking_results[0].area;
+            }
+            else {
+                this.physics_picking_area = undefined;
+            }
+        }
+        else {
+            this.physics_picking_area = undefined;
+        }
     }
-
+    
 }

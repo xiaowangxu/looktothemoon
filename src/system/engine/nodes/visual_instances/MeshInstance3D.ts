@@ -2,7 +2,7 @@ import type { RID } from "../../Rid";
 import { NodeNotification } from "../../SceneTree";
 import type { GeometryResource } from "../../resources/GeometryResource";
 import type { MaterialResource } from "../../resources/MaterialResource";
-import { GeometryInstance3D } from "./GeometryInstance";
+import { GeometryInstance3D } from "./GeometryInstance3D";
 
 export class MeshInstance3D extends GeometryInstance3D {
     public static readonly class_name: string = "MeshInstance3D";
@@ -102,7 +102,7 @@ export class MeshInstance3D extends GeometryInstance3D {
             case NodeNotification.InternalBeforeRender: {
                 if (this.mesh_rid !== undefined) {
                     const visual_world = this.get_Viewport()?.get_World3D()?.get_VisualWorld();
-                    if (visual_world === undefined) throw new Error('cannot find visual world, fail to free mesh instance');
+                    if (visual_world === undefined) throw new Error('cannot find visual world, fail to update mesh instance');
                     if (this.is_global_transform_changed) {
                         visual_world.set_MeshGlobalTransform(this.mesh_rid, this.global_transform);
                     }

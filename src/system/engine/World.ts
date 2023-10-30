@@ -1,14 +1,15 @@
-import { Scene, Matrix4, Mesh, Object3D, DirectionalLightHelper, AmbientLight, DirectionalLight, ObjectLoader, Group } from "three";
+import { Scene, Matrix4, Mesh, Object3D, Vector3 } from "three";
 import { Rid, type RID } from "./Rid";
 import type { GeometryResource } from "./resources/GeometryResource";
 import type { MaterialResource } from "./resources/MaterialResource";
 import { SignalEmitter } from "../utils/SignalEmitter";
-import type { MouseMotionInputEvent } from "./InputEvent";
 import type { Camera3D } from "./SceneTree";
+import type { PickingArea3D } from "./nodes/physics_3ds/PickingArea3D";
 
 export class World3D {
     private readonly visual_world: VisualWorld3D = new VisualWorld3D();
     private readonly physics_world: PhysicsWorld3D = new PhysicsWorld3D();
+    private readonly picking_world: PickingWorld3D = new PickingWorld3D();
 
     get_VisualWorld() {
         return this.visual_world;
@@ -18,9 +19,14 @@ export class World3D {
         return this.physics_world;
     }
 
+    get_PickingWorld() {
+        return this.picking_world;
+    }
+
     dispose() {
         this.visual_world.dispose();
         this.physics_world.dispose();
+        this.picking_world.dispose();
     }
 }
 
@@ -173,13 +179,179 @@ export class VisualWorld3D {
 
 // physics world
 
-export class PhysicsWorld3D {
+export interface RaycastResult {
+    position: Vector3,
+    normal: Vector3,
+}
 
-    public update_PhysicsPicking(event: MouseMotionInputEvent, camera: Camera3D) {
-        // console.log(">>>>>> physics picking from viewport", event.viewport?.readable_name);
+export class PhysicsWorld3D {
+    public dispose() {
+
+    }
+}
+
+// picking world
+
+export interface PickingShape3D {
+    perform_Raycast(from: Vector3, to: Vector3, side: PickingSide, camera: Camera3D | undefined): RaycastResult | undefined;
+}
+
+class PickingArea {
+    public readonly area: PickingArea3D;
+    public layer: number = 0xffffffff;
+
+    constructor(area: PickingArea3D) {
+        this.area = area;
+    }
+}
+
+class PickingShapeInstance {
+    public shape: PickingShape3D | undefined;
+    public area: PickingArea | undefined;
+    public layer: number = 0xffffffff;
+    public global_transform: Matrix4 = new Matrix4();
+    public global_transform_inverse: Matrix4 = new Matrix4();
+}
+
+export enum PickingOrder {
+    Ordered, Unordered,
+}
+
+export enum PickingSide {
+    Front, Back, Double,
+}
+
+export class RayPickingOption {
+    public readonly from: Vector3;
+    public readonly to: Vector3;
+    public readonly mask: number;
+    public readonly camera: Camera3D | undefined;
+    public readonly order: PickingOrder;
+    public readonly side: PickingSide;
+
+    constructor(from: Vector3, to: Vector3, mask: number, camera: Camera3D | undefined, order: PickingOrder = PickingOrder.Ordered, side: PickingSide = PickingSide.Front) {
+        this.from = from.clone();
+        this.to = to.clone();
+        this.mask = mask & 0xffffffff;
+        this.camera = camera;
+        this.order = order;
+        this.side = side;
+    }
+}
+
+export class RayPickingResult {
+    public readonly area: PickingArea3D;
+    public readonly position: Vector3;
+    public readonly normal: Vector3;
+    public readonly distance: number;
+
+    constructor(area: PickingArea3D, position: Vector3, normal: Vector3, distance: number) {
+        this.area = area;
+        this.position = position.clone();
+        this.normal = normal.clone();
+        this.distance = distance;
+    }
+}
+
+export class PickingWorld3D {
+    private readonly shape_map: Map<string, PickingShapeInstance> = new Map();
+    private readonly area_map: Map<string, PickingArea> = new Map();
+
+    private get_Area(rid: RID) {
+        return this.area_map.get(rid);
+    }
+
+    private get_Shape(rid: RID) {
+        return this.shape_map.get(rid);
+    }
+
+    public perform_RayPicking(option: RayPickingOption) {
+        const { mask, from, to, camera, order, side } = option;
+        const result: RayPickingResult[] = [];
+        for (const shape_instance of this.shape_map.values()) {
+            if (shape_instance.shape !== undefined && shape_instance.area !== undefined && (shape_instance.area.layer & mask) !== 0) {
+                const local_from = from.clone().applyMatrix4(shape_instance.global_transform_inverse);
+                const local_to = to.clone().applyMatrix4(shape_instance.global_transform_inverse);
+                const res = shape_instance.shape.perform_Raycast(local_from, local_to, side, camera);
+                if (res !== undefined) {
+                    const position = res.position.clone().applyMatrix4(shape_instance.global_transform);
+                    const normal = res.normal.clone().applyMatrix4(shape_instance.global_transform).normalize();
+                    result.push(new RayPickingResult(shape_instance.area.area, position, normal, position.distanceTo(from)));
+                }
+            }
+        }
+        if (order === PickingOrder.Ordered) {
+            result.sort((a, b) => a.distance - b.distance);
+        }
+        return result;
+    }
+
+    public create_PickingArea(area: PickingArea3D): RID {
+        const rid = Rid();
+        const _area = new PickingArea(area);
+        this.area_map.set(rid, _area);
+        return rid;
+    }
+
+    public set_PickingAreaLayer(rid: RID, layer: number) {
+        const area = this.get_Area(rid);
+        if (area === undefined) return;
+        area.layer = layer;
+    }
+
+    public free_PickingArea(rid: RID) {
+        const area = this.get_Area(rid);
+        if (area === undefined) return;
+        this.area_map.delete(rid);
+    }
+
+    public create_PickingShapeInstance(): RID {
+        const rid = Rid();
+        const shape = new PickingShapeInstance();
+        this.shape_map.set(rid, shape);
+        return rid;
+    }
+
+    public free_PickingShapeInstance(rid: RID) {
+        const shape = this.get_Shape(rid);
+        if (shape === undefined) return;
+        this.shape_map.delete(rid);
+    }
+
+    public set_PickingShapeInstanceGlobalTransform(rid: RID, global_transform: Matrix4) {
+        const shape = this.get_Shape(rid);
+        if (shape === undefined) return;
+        shape.global_transform.copy(global_transform);
+        shape.global_transform_inverse.copy(global_transform).invert();
+    }
+
+    public set_PickingShapeInstanceArea(rid: RID, area_rid: RID) {
+        const shape = this.get_Shape(rid);
+        const area = this.get_Area(area_rid);
+        if (shape === undefined || area === undefined) return;
+        shape.area = area;
+    }
+
+    public clear_PickingShapeInstanceArea(rid: RID) {
+        const shape = this.get_Shape(rid);
+        if (shape === undefined) return;
+        shape.area = undefined;
+    }
+
+    public set_PickingShapeInstanceShape(rid: RID, shape: PickingShape3D) {
+        const _shape = this.get_Shape(rid);
+        if (_shape === undefined) return;
+        _shape.shape = shape;
+    }
+
+    public clear_PickingShapeInstanceShape(rid: RID) {
+        const _shape = this.get_Shape(rid);
+        if (_shape === undefined) return;
+        _shape.shape = undefined;
     }
 
     public dispose() {
-
+        this.area_map.clear();
+        this.shape_map.clear();
     }
 }

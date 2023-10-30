@@ -1,7 +1,7 @@
 import { World3D } from "@/system/engine/World";
 import { NodeNotification, Node3D, SceneTree, Viewport } from "@/system/engine/SceneTree";
 import { ViewportDomContainer } from "@/system/engine/nodes/ViewportDomContainer";
-import { Euler, BoxGeometry, SphereGeometry, Vector3, MeshBasicMaterial, Color, DoubleSide, Vector2, Box3 } from "three";
+import { Euler, BoxGeometry, SphereGeometry, Vector3, MeshBasicMaterial, MeshMatcapMaterial, Color, TorusKnotGeometry, Vector2, Box3 } from "three";
 import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/MeshInstance3D";
 import { PolyLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/GeometryResource";
 import { NormalMaterialResource, LineMaterialResource, ThreeMaterialResource } from "@/system/engine/resources/MaterialResource";
@@ -10,6 +10,9 @@ import { KeyInputEvent, MouseButton, MouseButtonInputEvent, ShortCut } from "@/s
 import { OrbitCamera3D } from "../system/engine/nodes/camera_3ds/OrbitCamera3D";
 import { Axis } from "./nodes/Axis";
 import { WireframeBox } from "./nodes/WireframeBox";
+import { PickingArea3D } from "@/system/engine/nodes/physics_3ds/PickingArea3D";
+import { PickingShape3D } from "@/system/engine/nodes/physics_3ds/PickingShape3D";
+import { PickingBVHResource, PickingSphereResource } from "@/system/engine/resources/PickingShapeResource";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -51,24 +54,67 @@ Cube.local_position = new Vector3(200, 0, 0);
 Cube.add_Child(Cube2);
 Cube2.local_scale = new Vector3(0.25, 1, 0.25);
 Cube2.local_position = new Vector3(0, 100, 0);
-const Sphere = new MeshInstance3D();
-Sphere.geometry = new ThreeGeometryResource(new SphereGeometry(100, undefined, undefined, Math.PI, Math.PI));
-Sphere.material = new ThreeMaterialResource(new MeshBasicMaterial({ side: DoubleSide }));
-Sphere.local_position = new Vector3(-200, 0, 0);
-World.add_Child(Sphere);
 
+class Sphere extends MeshInstance3D {
+    constructor() {
+        super();
+        this.geometry = new ThreeGeometryResource(new SphereGeometry(100));
+        this.material = new ThreeMaterialResource(new MeshMatcapMaterial({}));
+        const area = new PickingArea3D();
+        const shape = new PickingShape3D();
+        const sphere_shape = new PickingSphereResource();
+        sphere_shape.radius = 100;
+        shape.shape = sphere_shape;
+        area.signal_mouse_entered.connect(() => {
+            ((this.material as ThreeMaterialResource).get_Material() as MeshMatcapMaterial).color = new Color(0x0000ff);
+        });
+        area.signal_mouse_exited.connect(() => {
+            ((this.material as ThreeMaterialResource).get_Material() as MeshMatcapMaterial).color = new Color(0xffffff);
+        });
+        area.add_Child(shape);
+        this.add_Child(area);
+    }
+}
+
+const sph1 = new Sphere();
+sph1.local_position = new Vector3(-200, 0, 0);
+World.add_Child(sph1);
+// const sph2 = new Sphere();
+// sph2.local_position = new Vector3(-200, 200, 0);
+// World.add_Child(sph2);
+// const sph3 = new Sphere();
+// sph3.local_position = new Vector3(-400, 200, 0);
+// World.add_Child(sph3);
+
+const Torus = new MeshInstance3D();
+Torus.geometry = new ThreeGeometryResource(new TorusKnotGeometry(50, 10, 360));
+Torus.material = new ThreeMaterialResource(new MeshMatcapMaterial({}));
+const area = new PickingArea3D();
+const shape = new PickingShape3D();
+const sphere_shape = new PickingBVHResource();
+sphere_shape.compute_BVH(Torus.geometry);
+shape.shape = sphere_shape;
+area.signal_mouse_entered.connect(() => {
+    ((Torus.material as ThreeMaterialResource).get_Material() as MeshMatcapMaterial).color = new Color(0x0000ff);
+});
+area.signal_mouse_exited.connect(() => {
+    ((Torus.material as ThreeMaterialResource).get_Material() as MeshMatcapMaterial).color = new Color(0xffffff);
+});
+area.add_Child(shape);
+Torus.add_Child(area);
+World.add_Child(Torus);
 
 // scenetree
 export const EditorSceneTree = new SceneTree(EditorViewportContainer);
 
-// // viewport 0
-// const EditorViewportContainer0 = new ViewportDomContainer();
-// EditorViewportContainer0.dom = document.querySelector('#viewport0') ?? undefined;
-// const EditorViewport0 = new Viewport();
-// EditorViewportContainer0.add_Child(EditorViewport0);
-// const EditorCamera0 = new OrbitCamera3D();
-// EditorViewport0.add_Child(EditorCamera0);
-// EditorViewport.add_Child(EditorViewportContainer0);
+// viewport 0
+const EditorViewportContainer0 = new ViewportDomContainer();
+EditorViewportContainer0.dom = document.querySelector('#viewport0') ?? undefined;
+const EditorViewport0 = new Viewport();
+EditorViewportContainer0.add_Child(EditorViewport0);
+const EditorCamera0 = new OrbitCamera3D();
+EditorViewport0.add_Child(EditorCamera0);
+EditorViewport.add_Child(EditorViewportContainer0);
 
 // // viewport 1
 // const EditorViewportContainer1 = new ViewportDomContainer();
