@@ -79,6 +79,11 @@ export class InterpolateCamera3D extends Camera3D {
         this.update_Camera();
     }
 
+    protected on_VisualMaskChanged(): void {
+        this.persp_camera.layers.mask = this.visual_mask;
+        this.orth_camera.layers.mask = this.visual_mask;
+    }
+
     private update_Camera() {
         // check use orth
         const half_zoom_only = this.reference_zoom / 2;

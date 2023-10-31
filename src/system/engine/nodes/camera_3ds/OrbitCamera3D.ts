@@ -1,5 +1,5 @@
 import { Vector3, Euler, Vector2, Ray, Raycaster, Plane, Line3 } from 'three';
-import { Node3D } from '../../SceneTree';
+import { Node3D, NodeNotification } from '../../SceneTree';
 import { InterpolateCamera3D } from '@/system/engine/nodes/camera_3ds/InterpolateCamera3D';
 import { TAU, clamp, is_ApproxZero } from '@/system/engine/MathF';
 import { MouseButtonInputEvent, type InputEvent, MouseButton, ActionInputEvent, MouseMotionInputEvent, MouseEnterLeaveInputEvent } from '@/system/engine/InputEvent';
@@ -41,6 +41,9 @@ export class OrbitCamera3D extends Node3D {
     public get is_orthographic() { return this.camera.is_orthographic; }
     public get direction() { return this.local_rotation.y; }
     public get yaw() { return this.camera_arm.local_rotation.x; }
+
+    public get visual_mask() { return this.camera.visual_mask; }
+    public set visual_mask(mask: number) { this.camera.visual_mask = mask; }
 
     constructor() {
         super();

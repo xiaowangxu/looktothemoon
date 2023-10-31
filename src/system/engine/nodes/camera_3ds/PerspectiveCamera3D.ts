@@ -22,6 +22,10 @@ export class PerspectiveCamera3D extends Camera3D {
         this.camera_persp.matrixWorldAutoUpdate = false;
     }
 
+    protected on_VisualMaskChanged(): void {
+        this.camera_persp.layers.mask = this.visual_mask;
+    }
+
     public get_Camera(): Camera {
         return this.camera_persp;
     }

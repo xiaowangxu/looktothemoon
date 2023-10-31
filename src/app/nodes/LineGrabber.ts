@@ -59,6 +59,9 @@ export class LineGrabber extends FixSizeNode3D {
         super();
         this.unit_pixel_count = 75;
 
+        this.line.visual_layer = 1;
+        this.grabber.visual_layer = 1;
+
         this.line.geometry = new ThreeGeometryResource(new CylinderGeometry(0.02, 0.02, 1));
         this.line.material = this.material;
 

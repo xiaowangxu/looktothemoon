@@ -1,7 +1,7 @@
 import { Node3D } from "../../SceneTree";
 
 export class PhysicsInstance3D extends Node3D {
-    public static readonly class_name: string = "VisualInstance3D";
+    public static readonly class_name: string = "PhysicsInstance3D";
 
     private _enabled: boolean = true;
     public get enabled() { return this._enabled; }

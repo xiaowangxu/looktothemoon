@@ -662,6 +662,20 @@ export class Camera3D extends Node3D {
         }
     }
 
+    private _visual_mask: number = 0xffffffff;
+    public get visual_mask() { return this._visual_mask; }
+    public set visual_mask(mask: number) {
+        mask = mask & 0xffffffff;
+        if (this._visual_mask !== mask) {
+            this._visual_mask = mask;
+            this.on_VisualMaskChanged();
+        }
+    }
+
+    protected on_VisualMaskChanged() {
+        throw new Error('abstract method');
+    }
+
     public get_Camera(): Camera {
         throw new Error('abstract method');
     }

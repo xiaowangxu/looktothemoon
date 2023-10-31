@@ -27,6 +27,10 @@ export class OrthographicCamera3D extends Camera3D {
         this.camera_orth.matrixWorldAutoUpdate = false;
     }
 
+    protected on_VisualMaskChanged(): void {
+        this.camera_orth.layers.mask = this.visual_mask;
+    }
+
     public get_Camera(): Camera {
         return this.camera_orth;
     }

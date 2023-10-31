@@ -7,7 +7,6 @@ import { PolyLineGeometryResource, ThreeGeometryResource } from "@/system/engine
 import { NormalMaterialResource, LineMaterialResource, ThreeMaterialResource } from "@/system/engine/resources/MaterialResource";
 import { OrthographicCamera3D } from "@/system/engine/nodes/camera_3ds/OrthographicCamera3D";
 import { ActionInputEvent, InputEventFromViewport, KeyInputEvent, MouseButton, MouseButtonInputEvent, ShortCut } from "@/system/engine/InputEvent";
-import { OrbitCamera3D } from "../system/engine/nodes/camera_3ds/OrbitCamera3D";
 import { Axis } from "./nodes/Axis";
 import { WireframeBox } from "./nodes/WireframeBox";
 import { PickingArea3D } from "@/system/engine/nodes/physics_3ds/PickingArea3D";
@@ -15,6 +14,7 @@ import { PickingShape3D } from "@/system/engine/nodes/physics_3ds/PickingShape3D
 import { PickingBVHResource, PickingSphereResource } from "@/system/engine/resources/PickingShapeResource";
 import { FixSizeNode3D } from "@/system/engine/nodes/node_3ds/FixSizeNode3D";
 import { LineGrabber } from "./nodes/LineGrabber";
+import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -26,7 +26,7 @@ EditorViewport.clear_color = new Color(0xf2f2f2);
 EditorViewport.world_3d = new World3D();
 EditorViewportContainer.add_Child(EditorViewport);
 // camera
-const EditorCamera = new OrbitCamera3D();
+const EditorCamera = new EditorOrbitCamera3D();
 EditorViewport.add_Child(EditorCamera);
 
 // World 
@@ -125,7 +125,7 @@ const EditorViewportContainer0 = new ViewportDomContainer();
 EditorViewportContainer0.dom = document.querySelector('#viewport0') ?? undefined;
 const EditorViewport0 = new Viewport();
 EditorViewportContainer0.add_Child(EditorViewport0);
-const EditorCamera0 = new OrbitCamera3D();
+const EditorCamera0 = new EditorOrbitCamera3D();
 EditorViewport0.add_Child(EditorCamera0);
 EditorViewport.add_Child(EditorViewportContainer0);
 

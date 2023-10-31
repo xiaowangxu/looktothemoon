@@ -3,12 +3,13 @@ import { Node3D, NodeNotification } from "../../SceneTree";
 import { Raycaster, Vector2, Plane, Line3, Vector3 } from "three";
 
 export class FixSizeNode3D extends Node3D {
+    public static readonly class_name: string = "FixSizeNode3D";
 
     public unit_pixel_count: number = 50;
     public use_active_viewport: boolean = true;
 
     protected update_Size() {
-        const camera = (this.use_active_viewport? this.get_SceneTree()?.get_ActiveViewports()[0] : this.get_Viewport())?.get_Camera3D()?.get_Camera();
+        const camera = (this.use_active_viewport ? this.get_SceneTree()?.get_ActiveViewports()[0] : this.get_Viewport())?.get_Camera3D()?.get_Camera();
         if (camera === undefined) return;
         const { y: height } = this.get_Viewport()!.size;
         if (height === 0) return;
