@@ -25,6 +25,15 @@ export class PickingArea3D extends PhysicsInstance3D {
         }
     }
 
+    public on_EnabledChanged(): void {
+        if (this.area_rid !== undefined) {
+            const picking_world = this.get_Viewport()?.get_World3D()?.get_PickingWorld();
+            if (picking_world !== undefined) {
+                picking_world.set_PickingAreaEnabled(this.area_rid, this.enabled);
+            }
+        }
+    }
+
     public _notification(what: NodeNotification): void {
         switch (what) {
             case NodeNotification.EnteredTree: {

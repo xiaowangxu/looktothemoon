@@ -1,10 +1,42 @@
-import { BufferGeometry, Vector3, InstancedInterleavedBuffer, InterleavedBufferAttribute, Color } from 'three';
+import { BufferGeometry, Vector3, InstancedInterleavedBuffer, InterleavedBufferAttribute, Color, InstancedBufferGeometry } from 'three';
 import { Resource } from '../Resource';
 import { LineGeometry } from 'three/addons/lines/LineGeometry';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry';
 
+declare module 'three' {
+    interface BufferGeometry {
+        isRefCounted: boolean;
+        ref_count(): number;
+        ref(): void;
+        unref(): void;
+    }
+}
+
+BufferGeometry.prototype.isRefCounted = true;
+BufferGeometry.prototype.ref = function () {
+    this.userData.ref_count++;
+}
+BufferGeometry.prototype.ref_count = function () {
+    return this.userData.ref_count;
+}
+BufferGeometry.prototype.unref = function () {
+    if (this.ref_count() === 0) return;
+    const ref_count = --this.userData.ref_count;
+    if (ref_count <= 0) {
+        this.dispose();
+    }
+}
+
 export class GeometryResource extends Resource {
     public static readonly class_name: string = "GeometryResource";
+
+    constructor() {
+        super();
+    }
+
+    protected init_RefCount() {
+        this.get_BufferGeometry().userData.ref_count = 0;
+    }
 
     public get_BufferGeometry(): BufferGeometry {
         throw new Error('abstract method');
@@ -18,6 +50,7 @@ export class BufferGeometryResource extends GeometryResource {
 
     constructor() {
         super();
+        this.init_RefCount();
     }
 
     public get_BufferGeometry(): BufferGeometry {
@@ -26,11 +59,14 @@ export class BufferGeometryResource extends GeometryResource {
 }
 
 export class ThreeGeometryResource extends GeometryResource {
+    public static readonly class_name: string = "ThreeGeometryResource";
+
     private readonly buffer_geometry: BufferGeometry;
 
     constructor(buffer_geometry: BufferGeometry) {
         super();
         this.buffer_geometry = buffer_geometry;
+        this.init_RefCount();
     }
 
     public get_BufferGeometry(): BufferGeometry {
@@ -39,6 +75,8 @@ export class ThreeGeometryResource extends GeometryResource {
 }
 
 export class PolyLineGeometryResource extends GeometryResource {
+    public static readonly class_name: string = "PolyLineGeometryResource";
+
     private line_geometry: LineGeometry = new LineGeometry();
 
     private _points: Vector3[] = [];
@@ -59,6 +97,11 @@ export class PolyLineGeometryResource extends GeometryResource {
     public set colors(colors: Color[]) {
         this._colors = colors;
         this.line_geometry.setColors(this._colors.flatMap(c => [c.r, c.g, c.b]));
+    }
+
+    constructor() {
+        super();
+        this.init_RefCount();
     }
 
     public compute_LineDistances() {
@@ -82,6 +125,8 @@ export class PolyLineGeometryResource extends GeometryResource {
 }
 
 export class SegmentLineGeometryResource extends GeometryResource {
+    public static readonly class_name: string = "SegmentLineGeometryResource";
+
     private line_segment_geometry: LineSegmentsGeometry = new LineSegmentsGeometry();
 
     private _points: Vector3[] = [];
@@ -100,6 +145,11 @@ export class SegmentLineGeometryResource extends GeometryResource {
     public set colors(colors: Color[]) {
         this._colors = colors;
         this.line_segment_geometry.setColors(this._colors.flatMap(c => [c.r, c.g, c.b]));
+    }
+
+    constructor() {
+        super();
+        this.init_RefCount();
     }
 
     public get_BufferGeometry(): BufferGeometry {

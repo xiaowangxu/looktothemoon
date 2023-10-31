@@ -33,8 +33,6 @@ class ClassDataBase {
 
 export const ClassDB = new ClassDataBase();
 
-(window as any).classdb = ClassDB;
-
 ClassDB.register_Class(ClassBase);
 ClassDB.register_Class(Node);
 ClassDB.register_Class(Node3D);

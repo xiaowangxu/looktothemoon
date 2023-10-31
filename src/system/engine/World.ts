@@ -1,9 +1,9 @@
 import { Scene, Matrix4, Mesh, Object3D, Vector3 } from "three";
 import { Rid, type RID } from "./Rid";
-import type { GeometryResource } from "./resources/GeometryResource";
+import { GeometryResource } from "./resources/GeometryResource";
 import type { MaterialResource } from "./resources/MaterialResource";
 import { SignalEmitter } from "../utils/SignalEmitter";
-import type { Camera3D } from "./SceneTree";
+import type { Camera3D, Viewport } from "./SceneTree";
 import type { PickingArea3D } from "./nodes/physics_3ds/PickingArea3D";
 
 export class World3D {
@@ -37,7 +37,7 @@ export class VisualWorld3D {
     private readonly instance_map: Map<string, Object3D> = new Map();
 
     // signal
-    public signal_before_render: SignalEmitter<(camera: Camera3D) => void> = new SignalEmitter();
+    public signal_before_render: SignalEmitter<(viewport: Viewport, camera: Camera3D) => void> = new SignalEmitter();
 
     constructor() {
         this.scene.matrixAutoUpdate = false;
@@ -48,8 +48,8 @@ export class VisualWorld3D {
         return this.scene;
     }
 
-    public trigger_BeforeRender(camera: Camera3D) {
-        this.signal_before_render.trigger(camera);
+    public trigger_BeforeRender(viewport: Viewport, camera: Camera3D) {
+        this.signal_before_render.trigger(viewport, camera);
     }
 
     public get_Instance<T>(rid: RID) {
@@ -67,25 +67,31 @@ export class VisualWorld3D {
     public create_Mesh() {
         const rid = Rid();
         const mesh = new Mesh();
+        (mesh.geometry as any) = undefined;
+        (mesh.material as any) = undefined;
         mesh.matrixAutoUpdate = false;
         mesh.matrixWorldAutoUpdate = false;
         this.instance_map.set(rid, mesh);
         return rid;
     }
 
-    private dispose_MeshGeometry(mesh: Mesh) {
-        mesh.geometry?.dispose();
+    private unref_MeshGeometry(mesh: Mesh) {
+        if (mesh.geometry !== undefined && mesh.geometry.isRefCounted) {
+            mesh.geometry.unref();
+        }
     }
 
-    private dispose_MeshMaterial(mesh: Mesh) {
+    private unref_MeshMaterial(mesh: Mesh) {
         if (mesh.material !== undefined) {
             if (mesh.material instanceof Array) {
                 for (const mat of mesh.material) {
-                    mat.dispose();
+                    if (mat.isRefCounted) {
+                        mat.unref();
+                    }
                 }
             }
-            else {
-                mesh.material.dispose();
+            else if (mesh.material.isRefCounted) {
+                mesh.material.unref();
             }
         }
     }
@@ -94,16 +100,18 @@ export class VisualWorld3D {
         const instance = this.get_Instance<Mesh>(rid);
         if (instance === undefined) return;
         instance.removeFromParent();
-        this.dispose_MeshGeometry(instance);
-        this.dispose_MeshMaterial(instance);
+        this.unref_MeshGeometry(instance);
+        this.unref_MeshMaterial(instance);
         this.instance_map.delete(rid);
     }
 
     public set_MeshGeometry(rid: RID, geometry_resource: GeometryResource) {
         const instance = this.get_Instance<Mesh>(rid);
         if (instance) {
-            this.dispose_MeshGeometry(instance);
-            instance.geometry = geometry_resource.get_BufferGeometry();
+            this.unref_MeshGeometry(instance);
+            const buffer_geometry = geometry_resource.get_BufferGeometry();
+            instance.geometry = buffer_geometry;
+            buffer_geometry.ref();
             if (instance.parent === null) {
                 this.scene.add(instance);
             }
@@ -113,7 +121,7 @@ export class VisualWorld3D {
     public clear_MeshGeometry(rid: RID) {
         const instance = this.get_Instance<Mesh>(rid);
         if (instance && instance.geometry !== undefined) {
-            this.dispose_MeshGeometry(instance);
+            this.unref_MeshGeometry(instance);
             (instance.geometry as any) = undefined;
             instance.removeFromParent();
         }
@@ -122,12 +130,18 @@ export class VisualWorld3D {
     public set_MeshMaterial(rid: RID, material: MaterialResource | MaterialResource[]) {
         const instance = this.get_Instance<Mesh>(rid);
         if (instance) {
-            this.dispose_MeshMaterial(instance);
+            this.unref_MeshMaterial(instance);
             if (material instanceof Array) {
-                instance.material = material.map(m => m.get_Material());
+                instance.material = material.map(m => {
+                    const mat = m.get_Material();
+                    mat.ref();
+                    return mat;
+                });
             }
             else {
-                instance.material = material.get_Material();
+                const mat = material.get_Material();
+                instance.material = mat;
+                mat.ref();
             }
         }
     }
@@ -135,7 +149,7 @@ export class VisualWorld3D {
     public clear_MeshMaterial(rid: RID) {
         const instance = this.get_Instance<Mesh>(rid);
         if (instance && instance.material !== undefined) {
-            this.dispose_MeshMaterial(instance);
+            this.unref_MeshMaterial(instance);
             (instance.material as any) = undefined;
         }
     }
@@ -174,7 +188,6 @@ export class VisualWorld3D {
             instance.receiveShadow = receive;
         }
     }
-
 }
 
 // physics world
@@ -199,6 +212,7 @@ export interface PickingShape3D {
 class PickingArea {
     public readonly area: PickingArea3D;
     public layer: number = 0xffffffff;
+    public enabled: boolean = true;
 
     constructor(area: PickingArea3D) {
         this.area = area;
@@ -269,14 +283,15 @@ export class PickingWorld3D {
         const { mask, from, to, camera, order, side } = option;
         const result: RayPickingResult[] = [];
         for (const shape_instance of this.shape_map.values()) {
-            if (shape_instance.shape !== undefined && shape_instance.area !== undefined && (shape_instance.area.layer & mask) !== 0) {
-                const local_from = from.clone().applyMatrix4(shape_instance.global_transform_inverse);
-                const local_to = to.clone().applyMatrix4(shape_instance.global_transform_inverse);
-                const res = shape_instance.shape.perform_Raycast(local_from, local_to, side, camera);
+            const { shape, area, global_transform, global_transform_inverse } = shape_instance;
+            if (shape !== undefined && area !== undefined && area.enabled && (area.layer & mask) !== 0) {
+                const local_from = from.clone().applyMatrix4(global_transform_inverse);
+                const local_to = to.clone().applyMatrix4(global_transform_inverse);
+                const res = shape.perform_Raycast(local_from, local_to, side, camera);
                 if (res !== undefined) {
-                    const position = res.position.clone().applyMatrix4(shape_instance.global_transform);
-                    const normal = res.normal.clone().applyMatrix4(shape_instance.global_transform).normalize();
-                    result.push(new RayPickingResult(shape_instance.area.area, position, normal, position.distanceTo(from)));
+                    const position = res.position.clone().applyMatrix4(global_transform);
+                    const normal = res.normal.clone().applyMatrix4(global_transform).normalize();
+                    result.push(new RayPickingResult(area.area, position, normal, position.distanceTo(from)));
                 }
             }
         }
@@ -297,6 +312,12 @@ export class PickingWorld3D {
         const area = this.get_Area(rid);
         if (area === undefined) return;
         area.layer = layer;
+    }
+
+    public set_PickingAreaEnabled(rid: RID, enabled: boolean) {
+        const area = this.get_Area(rid);
+        if (area === undefined) return;
+        area.enabled = enabled;
     }
 
     public free_PickingArea(rid: RID) {

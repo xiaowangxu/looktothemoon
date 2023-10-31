@@ -38,7 +38,7 @@ export class PickingSphereResource extends PickingShape3DResource {
         }
         const normal = rel.divideScalar(rel_l);
 
-        const sphere_d = normal.dot(sphere_pos);
+        const sphere_d = sphere_pos.dot(normal);
 
         const ray_distance = sphere_pos.distanceTo(normal.multiplyScalar(sphere_d));
 
@@ -62,6 +62,21 @@ export class PickingSphereResource extends PickingShape3DResource {
         const result_normal = result_position.normalize();
 
         return { position: result_position, normal: result_normal };
+    }
+}
+
+export class PickingBoxResource extends PickingShape3DResource {
+    public static readonly class_name: string = "PickingBoxResource";
+
+    private _size: Vector3 = new Vector3(1, 1, 1);
+    public get size() { return this._size; }
+    public set size(size: Vector3) {
+        this._size.copy(size);
+        this.trigger_Changed();
+    }
+
+    perform_Raycast(from: Vector3, to: Vector3, side: PickingSide, camera: Camera3D | undefined): RaycastResult | undefined {
+        return undefined;
     }
 }
 

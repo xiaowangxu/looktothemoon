@@ -2,18 +2,55 @@ import { Resource } from "../Resource";
 import { Camera, Color, Material, MeshNormalMaterial, Scene, WebGLRenderer } from 'three';
 import { LineMaterial } from 'three/addons/lines/LineMaterial';
 
+declare module 'three' {
+    interface Material {
+        isRefCounted: boolean;
+        ref_count(): number;
+        ref(): void;
+        unref(): void;
+    }
+}
+
+Material.prototype.isRefCounted = true;
+Material.prototype.ref = function () {
+    this.userData.ref_count++;
+}
+Material.prototype.ref_count = function () {
+    return this.userData.ref_count;
+}
+Material.prototype.unref = function () {
+    if (this.ref_count() === 0) return;
+    const ref_count = --this.userData.ref_count;
+    if (ref_count <= 0) {
+        this.dispose();
+    }
+}
+
 export class MaterialResource extends Resource {
+    public static readonly class_name: string = "MaterialResource";
+
+    constructor() {
+        super();
+    }
+
+    protected init_RefCount() {
+        this.get_Material().userData.ref_count = 0;
+    }
+
     public get_Material(): Material {
         throw new Error('abstract method');
     }
 }
 
 export class ThreeMaterialResource extends MaterialResource {
+    public static readonly class_name: string = "ThreeMaterialResource";
+
     private readonly material: Material;
 
     constructor(material: Material) {
         super();
         this.material = material;
+        this.init_RefCount();
     }
 
     public get_Material(): Material {
@@ -22,10 +59,13 @@ export class ThreeMaterialResource extends MaterialResource {
 }
 
 export class NormalMaterialResource extends MaterialResource {
+    public static readonly class_name: string = "NormalMaterialResource";
+
     private readonly normal_material: MeshNormalMaterial = new MeshNormalMaterial();
 
     constructor() {
         super();
+        this.init_RefCount();
     }
 
     public get_Material(): Material {
@@ -34,6 +74,8 @@ export class NormalMaterialResource extends MaterialResource {
 }
 
 export class LineMaterialResource extends MaterialResource {
+    public static readonly class_name: string = "LineMaterialResource";
+
     private line_material: LineMaterial = new LineMaterial({
         color: 0xffffff,
         vertexColors: false,
@@ -160,6 +202,7 @@ export class LineMaterialResource extends MaterialResource {
         (this.line_material as any).onBeforeRender = (renderer: WebGLRenderer, scene: Scene, camera: Camera) => {
             renderer.getSize(this.line_material.resolution);
         };
+        this.init_RefCount();
     }
 
     public get_Material(): Material {

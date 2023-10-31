@@ -103,14 +103,32 @@ export class OrbitCamera3D extends Node3D {
                 this._is_dragging = false;
                 event.mark_Canceled();
             }
+            else if (event.action === 'switch_BottomView') {
+                this.set_Rotation(0, Math.PI / 2, true);
+                this.set_Fov(0, true);
+                this._is_dragging = false;
+                event.mark_Canceled();
+            }
             else if (event.action === 'switch_LeftView') {
                 this.set_Rotation(-Math.PI / 2, 0, true);
                 this.set_Fov(0, true);
                 this._is_dragging = false;
                 event.mark_Canceled();
             }
+            else if (event.action === 'switch_RightView') {
+                this.set_Rotation(Math.PI / 2, 0, true);
+                this.set_Fov(0, true);
+                this._is_dragging = false;
+                event.mark_Canceled();
+            }
             else if (event.action === 'switch_FrontView') {
                 this.set_Rotation(0, 0, true);
+                this.set_Fov(0, true);
+                this._is_dragging = false;
+                event.mark_Canceled();
+            }
+            else if (event.action === 'switch_BackView') {
+                this.set_Rotation(Math.PI, 0, true);
                 this.set_Fov(0, true);
                 this._is_dragging = false;
                 event.mark_Canceled();

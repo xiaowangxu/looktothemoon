@@ -5,6 +5,10 @@ export function clamp(value: number, min: number, max: number) {
     return Math.min(max, Math.max(min, value));
 }
 
+export function lerp(a: number, b: number, weight: number) {
+    return a + (b - a) * weight;
+}
+
 export function is_ApproxEqual(a: number, b: number, epsilon = EPSILON) {
     return Math.abs(a - b) <= epsilon;
 }

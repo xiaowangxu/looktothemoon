@@ -2,7 +2,7 @@ import { type Camera, Clock, Vector3, Euler, Matrix4, Matrix3, Quaternion, Vecto
 import { SignalEmitter } from "../utils/SignalEmitter";
 import { Rid, type RID } from "./Rid";
 import { Renderer3D } from "./Renderer";
-import { PickingOrder, RayPickingOption, World3D } from "./World";
+import { PickingOrder, PickingSide, RayPickingOption, World3D } from "./World";
 import { InputActionMap, InputEvent, InputManager, MouseEnterLeaveInputEvent, MouseInputEvent, MouseMotionInputEvent, ViewportActionInputEventManager, ViewportKeyInputEventManager, ViewportMouseInputEventManager } from "./InputEvent";
 import type { TweenBase } from "./Tween";
 import { ClassBase } from "./ClassBase";
@@ -46,8 +46,11 @@ export class SceneTree {
         // internal process process
         this.root.propagate_InternalBeforeProcess(this.delta);
         this.root.propagate_Process(this.delta);
-        this.root.propagate_InternalAfterProcess(this.delta);
         this.process_Tween(this.delta);
+        this.root.propagate_InternalAfterProcess(this.delta);
+        for (const viewport of this.viewports) {
+            viewport.before_InternalBeforeRender();
+        }
         this.root.propagate_InternalBeforeRender(this.delta);
         for (const viewport of this.viewports) {
             viewport.render();
@@ -147,6 +150,7 @@ export enum NodeNotification {
     InternalBeforePhysicsProcess,
     PhysicsProcess,
     InternalAfterPhysicsProcess,
+    SetupCamera,
     InternalBeforeRender,
     Parented,
     Unparented,
@@ -313,11 +317,11 @@ export class Node extends ClassBase {
     }
 
     public propagate_InternalBeforeRender(delta: number) {
+        // internal after process
+        this.nofity(NodeNotification.InternalBeforeRender);
         for (const child of this.children) {
             child.propagate_InternalBeforeRender(delta);
         }
-        // internal after process
-        this.nofity(NodeNotification.InternalBeforeRender);
     }
 
     public set_SceneTree(scenetree: SceneTree | undefined) {
@@ -755,8 +759,22 @@ export class Viewport extends Node {
     }
 
     public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
+
+    public redirect_input_event: boolean = true;
+
     public physics_picking_when_mouse_event_not_canceled: boolean = true;
     public physics_picking: boolean = true;
+    private _physics_picking_mask: number = 0xffffffff;
+    public get physics_picking_mask() { return this._physics_picking_mask; }
+    public set physics_picking_mask(mask: number) {
+        mask = mask & 0xffffffff;
+        if (this._physics_picking_mask !== mask) {
+            this._physics_picking_mask = mask;
+            if (this._physics_picking_area !== undefined && (this._physics_picking_area.layer & this.physics_picking_mask) === 0) {
+                this.physics_picking_area = undefined;
+            }
+        }
+    }
     private _physics_picking_area: PickingArea3D | undefined = undefined;
     private set physics_picking_area(area: PickingArea3D | undefined) {
         if (this._physics_picking_area !== area) {
@@ -804,23 +822,47 @@ export class Viewport extends Node {
     private on_InputEvent(event: InputEvent) {
         const action_input_event = this.action_event_manager.parse_ActionInputEvent(event);
         if (action_input_event !== undefined) {
-            this.propagate_InputEvent(action_input_event);
+            if (this.redirect_input_event) {
+                this.redirect_InputEvent(action_input_event);
+            }
+            else {
+                this.propagate_InputEvent(action_input_event, this);
+            }
         }
-        this.propagate_InputEvent(event);
+        if (this.redirect_input_event) {
+            this.redirect_InputEvent(event);
+        }
+        else {
+            this.propagate_InputEvent(event, this);
+        }
         // check mouse event cancel for physics picking
         if (event instanceof MouseInputEvent || event instanceof MouseEnterLeaveInputEvent) {
             this.mouse_event_canceled = event.canceled;
         }
     }
 
-    private propagate_InputEventInternal(node: Node, event: InputEvent) {
-        if (node instanceof Viewport || node.block_input) return;
+    private redirect_InputEvent(event: InputEvent) {
+        if (event.canceled) return;
+        const redirect_target = this.get_OwnWorld3DViewport();
+        if (redirect_target !== undefined) {
+            redirect_target.push_InputEvent(event, this);
+        }
+    }
+
+    private propagate_InputEventInternal(node: Node, event: InputEvent, target: Viewport | undefined) {
+        if (node.block_input) return;
+        if (node instanceof Viewport) {
+            if (node === target) {
+                node.push_InputEvent(event, undefined);
+            }
+            return;
+        }
         node._input(event, true);
         if (event.canceled) return;
         node.signal_input.trigger(event, true);
         if (event.canceled) return;
         for (const child of node.children) {
-            this.propagate_InputEventInternal(child, event);
+            this.propagate_InputEventInternal(child, event, target);
             if (event.canceled) return;
         }
         node._input(event, false);
@@ -829,13 +871,13 @@ export class Viewport extends Node {
         return;
     }
 
-    private propagate_InputEvent(event: InputEvent) {
+    private propagate_InputEvent(event: InputEvent, target: Viewport | undefined) {
         if (event.canceled) return;
         this._input(event, true);
         if (event.canceled) return;
         this.signal_input.trigger(event, true);
         for (const child of this.children) {
-            this.propagate_InputEventInternal(child, event);
+            this.propagate_InputEventInternal(child, event, target);
             if (event.canceled) return;
         }
         this._input(event, false);
@@ -848,8 +890,8 @@ export class Viewport extends Node {
         this.on_InputEvent(event);
     }
 
-    public push_InputEvent(event: InputEvent) {
-        this.propagate_InputEvent(event);
+    public push_InputEvent(event: InputEvent, target: Viewport | undefined = undefined) {
+        this.propagate_InputEvent(event, target);
     }
 
     public set_ActiveCamera3D(camera: Camera3D) {
@@ -913,13 +955,33 @@ export class Viewport extends Node {
         return this.camera_3d;
     }
 
+    private get_OwnWorld3DViewport(): Viewport | undefined {
+        if (this.world_3d !== undefined) return this;
+        const parent = this.get_Parent();
+        if (parent !== undefined) {
+            return parent.get_Viewport()?.get_OwnWorld3DViewport();
+        }
+        return undefined;
+    }
+
     private get_RenderableWorld3D(): World3D | undefined {
         if (this.world_3d !== undefined) return this.world_3d;
         const parent = this.get_Parent();
         if (parent !== undefined) {
-            return parent.get_Viewport()?.get_World3D();
+            return parent.get_Viewport()?.get_RenderableWorld3D();
         }
         return undefined;
+    }
+
+    public before_InternalBeforeRender(): void {
+        const camera_3d = this.get_Camera3D();
+        if (camera_3d !== undefined) {
+            camera_3d._notification(NodeNotification.SetupCamera);
+            if (this.is_size_dirty) {
+                camera_3d.update_ViewportSize(this.size);
+                this.is_size_dirty = false;
+            }
+        }
     }
 
     public render(): void {
@@ -931,11 +993,7 @@ export class Viewport extends Node {
         const world_3d = this.get_RenderableWorld3D();
         const camera_3d = this.get_Camera3D();
         if (camera_3d !== undefined && world_3d !== undefined) {
-            if (this.is_size_dirty) {
-                camera_3d.update_ViewportSize(this.size);
-                this.is_size_dirty = false;
-            }
-            this.renderer_3d.render(world_3d, camera_3d);
+            this.renderer_3d.render(world_3d, this, camera_3d);
         }
         this.signal_after_render.trigger();
     }
@@ -956,10 +1014,11 @@ export class Viewport extends Node {
             raycast.setFromCamera(this.input_manager.mouse_position_normalized, camera_3d.get_Camera());
             const ray_picking_option = new RayPickingOption(
                 raycast.ray.origin,
-                raycast.ray.origin.clone().addScaledVector(raycast.ray.direction, 10000),
-                0xffffffff,
+                raycast.ray.origin.clone().addScaledVector(raycast.ray.direction, 100000),
+                this.physics_picking_mask,
                 camera_3d,
                 PickingOrder.Ordered,
+                PickingSide.Front,
             );
             const ray_picking_results = picking_world.perform_RayPicking(ray_picking_option);
             if (ray_picking_results.length > 0) {
@@ -973,5 +1032,4 @@ export class Viewport extends Node {
             this.physics_picking_area = undefined;
         }
     }
-    
 }

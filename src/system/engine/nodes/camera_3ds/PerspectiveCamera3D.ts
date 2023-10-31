@@ -27,17 +27,18 @@ export class PerspectiveCamera3D extends Camera3D {
     }
 
     public update_ViewportSize(size: Vector2) {
-        const aspect = size.x / size.y;
+        const aspect = size.y === 0 ? 1 : size.x / size.y;
         this.camera_persp.aspect = aspect;
         this.camera_persp.updateProjectionMatrix();
     }
 
     public _notification(what: NodeNotification): void {
         switch (what) {
-            case NodeNotification.InternalBeforeRender: {
+            case NodeNotification.SetupCamera: {
                 if (this.is_global_transform_changed) {
                     this.camera_persp.matrixWorld.copy(this.global_transform);
                     this.camera_persp.matrixWorldInverse.copy(this.camera_persp.matrixWorld).invert();
+                    this.is_global_transform_changed = false;
                 }
                 break;
             }

@@ -4,8 +4,8 @@ import { Camera, PerspectiveCamera, OrthographicCamera, Vector2, Matrix4, Vector
 
 export class InterpolateCamera3D extends Camera3D {
     public static readonly class_name: string = "InterpolateCamera3D";
-    
-    private static MaxOffsetDistance = 40;
+
+    private static MaxOffsetDistance = 20;
     private static OrthographicMaxOffsetDistance = 1000;
 
     private readonly persp_camera: PerspectiveCamera = new PerspectiveCamera(90, 1, 0.1, 2500);
@@ -157,9 +157,10 @@ export class InterpolateCamera3D extends Camera3D {
 
     public _notification(what: NodeNotification): void {
         switch (what) {
-            case NodeNotification.InternalBeforeRender: {
+            case NodeNotification.SetupCamera: {
                 if (this.is_global_transform_changed) {
                     this.update_CameraTransform();
+                    this.is_global_transform_changed = false;
                 }
                 break;
             }
@@ -168,7 +169,10 @@ export class InterpolateCamera3D extends Camera3D {
     }
 
     public update_ViewportSize(size: Vector2): void {
-        const { x, y } = size;
+        let { x, y } = size;
+        if (y === 0) {
+            x = y = 1;
+        }
         const aspect = x / y;
         this.persp_camera.aspect = aspect;
         this.persp_camera.updateProjectionMatrix();

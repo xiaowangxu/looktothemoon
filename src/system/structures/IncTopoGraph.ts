@@ -1,4 +1,5 @@
 import { Result } from "../utils/Result";
+import { PriorityQueue } from "./PriorityQueue";
 
 type TopoOrder = number;
 
@@ -27,6 +28,10 @@ export class IncTopoGraph<T> {
     private readonly nodes_map: Map<T, IncTopoGraphNode<T>> = new Map();
 
     public get count() { return this.nodes_map.size; }
+
+    [Symbol.iterator]() {
+        return this.sorted[Symbol.iterator]();
+    }
 
     constructor() {
 
@@ -225,24 +230,24 @@ export class IncTopoGraph<T> {
     public propagation(items: T[]) {
         const result: IncTopoGraphNode<T>[] = [];
 
-        PriorityQueue < IncrementalTopoGraphNode<T>, TopoOrder > queue = new ();
+        const queue: PriorityQueue<IncTopoGraphNode<T>> = new PriorityQueue((a, b) => a.order - b.order);
         const visited: Set<IncTopoGraphNode<T>> = new Set();
 
         for (const item of items) {
             const node = this.nodes_map.get(item);
             if (node !== undefined) {
-                queue.Enqueue(node, node.order);
+                queue.enqueue(node);
             }
         }
 
         while (true) {
-            if (queue.Count <= 0) break;
-            const key: IncTopoGraphNode<T> = queue.Dequeue();
+            if (queue.length <= 0) break;
+            const key: IncTopoGraphNode<T> = queue.dequeue()!;
             if (visited.has(key)) continue;
             else { visited.add(key); }
 
             for (const child of key.children) {
-                queue.Enqueue(child, child.order);
+                queue.enqueue(child);
             }
 
             result.push(key);
@@ -306,6 +311,7 @@ export class IncTopoGraph<T> {
         else if (a.order > b.order) return 1;
         return 0;
     }
+
     private static reorder<T>(forward: IncTopoGraphNode<T>[], backward: IncTopoGraphNode<T>[]) {
         forward.sort(IncTopoGraph.sort);
         backward.sort(IncTopoGraph.sort);
@@ -316,5 +322,21 @@ export class IncTopoGraph<T> {
         orders.forEach((order, idx) => {
             nodes[idx].order = order;
         });
+    }
+
+    public static print<N>(graph: IncTopoGraph<N>) {
+        let str = 'graph LR';
+        for (const node of graph.nodes_map.values()) {
+            if (node.is_single) {
+                str += `\n  ${node.item}`;
+            }
+            else {
+
+                for (const child of node.children) {
+                    str += `\n  ${node.item} --> ${child.item}`;
+                }
+            }
+        }
+        return str;
     }
 }

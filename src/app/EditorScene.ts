@@ -6,13 +6,15 @@ import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/MeshInsta
 import { PolyLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/GeometryResource";
 import { NormalMaterialResource, LineMaterialResource, ThreeMaterialResource } from "@/system/engine/resources/MaterialResource";
 import { OrthographicCamera3D } from "@/system/engine/nodes/camera_3ds/OrthographicCamera3D";
-import { KeyInputEvent, MouseButton, MouseButtonInputEvent, ShortCut } from "@/system/engine/InputEvent";
+import { ActionInputEvent, InputEventFromViewport, KeyInputEvent, MouseButton, MouseButtonInputEvent, ShortCut } from "@/system/engine/InputEvent";
 import { OrbitCamera3D } from "../system/engine/nodes/camera_3ds/OrbitCamera3D";
 import { Axis } from "./nodes/Axis";
 import { WireframeBox } from "./nodes/WireframeBox";
 import { PickingArea3D } from "@/system/engine/nodes/physics_3ds/PickingArea3D";
 import { PickingShape3D } from "@/system/engine/nodes/physics_3ds/PickingShape3D";
 import { PickingBVHResource, PickingSphereResource } from "@/system/engine/resources/PickingShapeResource";
+import { FixSizeNode3D } from "@/system/engine/nodes/node_3ds/FixSizeNode3D";
+import { LineGrabber } from "./nodes/LineGrabber";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -29,8 +31,8 @@ EditorViewport.add_Child(EditorCamera);
 
 // World 
 const World = new Node3D();
+const EditorWorld = new Node3D();
 World.local_scale = new Vector3(0.01, 0.01, 0.01);
-EditorViewport.add_Child(World);
 
 const axis = new Axis();
 World.add_Child(axis);
@@ -50,15 +52,16 @@ Cube.material = [mat, mat, mat, mat, mat, mat];
 Cube2.material = [mat, mat, mat, mat, mat, mat];
 node2.add_Child(Cube);
 World.add_Child(node2);
-Cube.local_position = new Vector3(200, 0, 0);
+node2.local_position = new Vector3(200, 0, 0);
 Cube.add_Child(Cube2);
 Cube2.local_scale = new Vector3(0.25, 1, 0.25);
 Cube2.local_position = new Vector3(0, 100, 0);
 
+const sphere_geo = new ThreeGeometryResource(new SphereGeometry(100));
 class Sphere extends MeshInstance3D {
     constructor() {
         super();
-        this.geometry = new ThreeGeometryResource(new SphereGeometry(100));
+        this.geometry = sphere_geo;
         this.material = new ThreeMaterialResource(new MeshMatcapMaterial({}));
         const area = new PickingArea3D();
         const shape = new PickingShape3D();
@@ -71,6 +74,16 @@ class Sphere extends MeshInstance3D {
         area.signal_mouse_exited.connect(() => {
             ((this.material as ThreeMaterialResource).get_Material() as MeshMatcapMaterial).color = new Color(0xffffff);
         });
+        area.signal_input.connect((event, prop) => {
+            if (!prop && area.is_mouse_hover) {
+                if (event instanceof InputEventFromViewport) {
+                    console.log(event.viewport?.readable_name);
+                }
+                if (event instanceof MouseButtonInputEvent && event.click) {
+                    this.get_Parent()?.remove_Child(this);
+                }
+            }
+        });
         area.add_Child(shape);
         this.add_Child(area);
     }
@@ -79,12 +92,12 @@ class Sphere extends MeshInstance3D {
 const sph1 = new Sphere();
 sph1.local_position = new Vector3(-200, 0, 0);
 World.add_Child(sph1);
-// const sph2 = new Sphere();
-// sph2.local_position = new Vector3(-200, 200, 0);
-// World.add_Child(sph2);
-// const sph3 = new Sphere();
-// sph3.local_position = new Vector3(-400, 200, 0);
-// World.add_Child(sph3);
+const sph2 = new Sphere();
+sph2.local_position = new Vector3(-200, 200, 0);
+World.add_Child(sph2);
+const sph3 = new Sphere();
+sph3.local_position = new Vector3(-400, 200, 0);
+World.add_Child(sph3);
 
 const Torus = new MeshInstance3D();
 Torus.geometry = new ThreeGeometryResource(new TorusKnotGeometry(50, 10, 360));
@@ -142,13 +155,17 @@ EditorViewport.add_Child(EditorViewportContainer0);
 // EditorViewport1.get_Input().signal_mouse_entered.connect(() => (EditorCompassViewportContainer as any).target = EditorViewport1);
 // EditorViewport2.get_Input().signal_mouse_entered.connect(() => (EditorCompassViewportContainer as any).target = EditorViewport2);
 
+EditorViewport.add_Child(World);
+EditorViewport.add_Child(EditorWorld);
+
 function create_CompassScene() {
     const red = 0xf82d4e;
     const green = 0x04b973;
     const blue = 0x466fd6;
-    const neg_color = 0x555555;
+    const neg_color = 0x858585;
     const sphere_radius = 0.4;
-    const distance = 1.4;
+    const hover_sphere_scale = 1.15;
+    const distance = 1.5;
     const line_width = 2;
     const camera_zoom = 4;
 
@@ -158,11 +175,34 @@ function create_CompassScene() {
     viewport.transparent = true;
     viewport.world_3d = new World3D();
     const sphere_geometry = new ThreeGeometryResource(new SphereGeometry(sphere_radius));
+    const sphere_shape = new PickingSphereResource();
+    sphere_shape.radius = sphere_radius;
     const line_geometry = new PolyLineGeometryResource();
-    const sphere_neg_material = new ThreeMaterialResource(new MeshBasicMaterial({ color: neg_color, opacity: 0.5, transparent: true }));
+    const sphere_neg_material = new ThreeMaterialResource(new MeshBasicMaterial({ color: neg_color, opacity: 0.25, transparent: true }));
     line_geometry.points = [new Vector3(0, 0, 0), new Vector3(distance, 0, 0)];
 
     const sphere_mesh_x = new MeshInstance3D();
+    const sphere_area_x = new PickingArea3D();
+    const sphere_shape_x = new PickingShape3D();
+    sphere_shape_x.shape = sphere_shape;
+    sphere_mesh_x.add_Child(sphere_area_x);
+    sphere_area_x.add_Child(sphere_shape_x);
+    sphere_area_x.signal_mouse_entered.connect(() => {
+        sphere_mesh_x.local_scale = new Vector3(hover_sphere_scale, hover_sphere_scale, hover_sphere_scale);
+    });
+    sphere_area_x.signal_mouse_exited.connect(() => {
+        sphere_mesh_x.local_scale = new Vector3(1, 1, 1);
+    });
+    sphere_area_x.signal_input.connect((evt, prop) => {
+        if (!prop && sphere_area_x.is_mouse_hover && evt instanceof MouseButtonInputEvent && evt.click) {
+            if (evt.button === MouseButton.Left) {
+                ((viewport_container as any).target as Viewport | undefined)?.push_InputEvent(new ActionInputEvent('switch_RightView', true, false));
+            }
+            else if (evt.button === MouseButton.Right) {
+                ((viewport_container as any).target as Viewport | undefined)?.push_InputEvent(new ActionInputEvent('switch_LeftView', true, false));
+            }
+        }
+    });
     const sphere_x_material = new ThreeMaterialResource(new MeshBasicMaterial({ color: red }));
     sphere_mesh_x.geometry = sphere_geometry;
     sphere_mesh_x.material = sphere_x_material;
@@ -180,6 +220,27 @@ function create_CompassScene() {
     line_mesh_x.material = line_x_material;
 
     const sphere_mesh_y = new MeshInstance3D();
+    const sphere_area_y = new PickingArea3D();
+    const sphere_shape_y = new PickingShape3D();
+    sphere_shape_y.shape = sphere_shape;
+    sphere_mesh_y.add_Child(sphere_area_y);
+    sphere_area_y.add_Child(sphere_shape_y);
+    sphere_area_y.signal_mouse_entered.connect(() => {
+        sphere_mesh_y.local_scale = new Vector3(hover_sphere_scale, hover_sphere_scale, hover_sphere_scale);
+    });
+    sphere_area_y.signal_mouse_exited.connect(() => {
+        sphere_mesh_y.local_scale = new Vector3(1, 1, 1);
+    });
+    sphere_area_y.signal_input.connect((evt, prop) => {
+        if (!prop && sphere_area_y.is_mouse_hover && evt instanceof MouseButtonInputEvent && evt.click) {
+            if (evt.button === MouseButton.Left) {
+                ((viewport_container as any).target as Viewport | undefined)?.push_InputEvent(new ActionInputEvent('switch_TopView', true, false));
+            }
+            else if (evt.button === MouseButton.Right) {
+                ((viewport_container as any).target as Viewport | undefined)?.push_InputEvent(new ActionInputEvent('switch_BottomView', true, false));
+            }
+        }
+    });
     const sphere_y_material = new ThreeMaterialResource(new MeshBasicMaterial({ color: green }));
     sphere_mesh_y.geometry = sphere_geometry;
     sphere_mesh_y.material = sphere_y_material;
@@ -198,6 +259,27 @@ function create_CompassScene() {
     line_mesh_y.local_rotation = new Euler(0, 0, Math.PI / 2);
 
     const sphere_mesh_z = new MeshInstance3D();
+    const sphere_area_z = new PickingArea3D();
+    const sphere_shape_z = new PickingShape3D();
+    sphere_shape_z.shape = sphere_shape;
+    sphere_mesh_z.add_Child(sphere_area_z);
+    sphere_area_z.add_Child(sphere_shape_z);
+    sphere_area_z.signal_mouse_entered.connect(() => {
+        sphere_mesh_z.local_scale = new Vector3(hover_sphere_scale, hover_sphere_scale, hover_sphere_scale);
+    });
+    sphere_area_z.signal_mouse_exited.connect(() => {
+        sphere_mesh_z.local_scale = new Vector3(1, 1, 1);
+    });
+    sphere_area_z.signal_input.connect((evt, prop) => {
+        if (!prop && sphere_area_z.is_mouse_hover && evt instanceof MouseButtonInputEvent && evt.click) {
+            if (evt.button === MouseButton.Left) {
+                ((viewport_container as any).target as Viewport | undefined)?.push_InputEvent(new ActionInputEvent('switch_FrontView', true, false));
+            }
+            else if (evt.button === MouseButton.Right) {
+                ((viewport_container as any).target as Viewport | undefined)?.push_InputEvent(new ActionInputEvent('switch_BackView', true, false));
+            }
+        }
+    });
     const sphere_z_material = new ThreeMaterialResource(new MeshBasicMaterial({ color: blue }));
     sphere_mesh_z.geometry = sphere_geometry;
     sphere_mesh_z.material = sphere_z_material;
@@ -247,7 +329,6 @@ function create_CompassScene() {
 }
 
 const EditorCompassViewportContainer = create_CompassScene();
-
 EditorViewport.add_Child(EditorCompassViewportContainer);
 
 EditorSceneTree.get_InputActionMap().add_Action('switch_FrontView', new ShortCut([new KeyInputEvent('1', '1', true, false, undefined, false, false, false, false)]));
@@ -266,9 +347,22 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut([
     new MouseButtonInputEvent(MouseButton.WheelDown, true, false, false, undefined, new Vector2(0, 0), new Vector2(0, 0), true, false, false, false),
 ]));
 
+const transform_helper = new Node3D();
+transform_helper.local_position = new Vector3(2, 1, 5);
+const grabber1 = new LineGrabber();
+grabber1.direction = new Vector3(0, 1, 0);
+const grabber2 = new LineGrabber();
+grabber2.direction = new Vector3(1, 0, 0);
+const grabber3 = new LineGrabber();
+grabber3.direction = new Vector3(0, 0, 1);
+transform_helper.add_Child(grabber1);
+transform_helper.add_Child(grabber2);
+transform_helper.add_Child(grabber3);
+EditorWorld.add_Child(transform_helper);
+
 console.log(EditorSceneTree);
 
-export function createEditorViewport(el: string) {
+export function createEditorViewport() {
     EditorCompassViewportContainer.dom = document.querySelector('#compass') ?? undefined;
     EditorSceneTree.start_Loop();
 }

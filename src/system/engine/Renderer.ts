@@ -1,6 +1,6 @@
 import { WebGLRenderer, type Camera, Scene, BoxGeometry, MeshBasicMaterial, Mesh, GridHelper, Color, PCFSoftShadowMap } from "three";
 import { World3D } from "./World";
-import type { Camera3D } from "./SceneTree";
+import type { Camera3D, Viewport } from "./SceneTree";
 
 export interface RendererCreationOption {
     antialias?: boolean,
@@ -43,9 +43,9 @@ export class Renderer3D {
         this.renderer.setPixelRatio(pixel_ratio);
     }
 
-    public render(world: World3D, camera: Camera3D): void {
+    public render(world: World3D, viewport: Viewport, camera: Camera3D): void {
         const world_3d = world.get_VisualWorld();
-        world_3d.trigger_BeforeRender(camera);
+        world_3d.trigger_BeforeRender(viewport, camera);
         this.renderer.render(world_3d.get_VisualScene(), camera.get_Camera());
     }
 
@@ -54,4 +54,3 @@ export class Renderer3D {
     }
 
 }
-

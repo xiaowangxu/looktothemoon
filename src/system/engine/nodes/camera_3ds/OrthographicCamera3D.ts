@@ -32,7 +32,10 @@ export class OrthographicCamera3D extends Camera3D {
     }
 
     public update_ViewportSize(size: Vector2) {
-        const { x: width, y: height } = size;
+        let { x: width, y: height } = size;
+        if (height === 0) {
+            width = height = 1;
+        }
         this.aspect = width / height;
         this.camera_orth.left = this._zoom / -2;
         this.camera_orth.right = this._zoom / 2;
@@ -44,10 +47,11 @@ export class OrthographicCamera3D extends Camera3D {
 
     public _notification(what: NodeNotification): void {
         switch (what) {
-            case NodeNotification.InternalBeforeRender: {
+            case NodeNotification.SetupCamera: {
                 if (this.is_global_transform_changed) {
                     this.camera_orth.matrixWorld.copy(this.global_transform);
                     this.camera_orth.matrixWorldInverse.copy(this.camera_orth.matrixWorld).invert();
+                    this.is_global_transform_changed = false;
                 }
                 break;
             }

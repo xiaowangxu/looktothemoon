@@ -51,7 +51,7 @@ export class MeshInstance3D extends GeometryInstance3D {
             }
         }
     }
-    
+
     protected on_CastShadowChanged(): void {
         if (this.mesh_rid !== undefined) {
             const visual_world = this.get_Viewport()?.get_World3D()?.get_VisualWorld();
