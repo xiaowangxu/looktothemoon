@@ -27,6 +27,8 @@ export class SceneTree {
 
     private viewports: Set<Viewport> = new Set();
 
+    private node_queued_free: Set<Node> = new Set();
+
     constructor(root: Node, physics_fps: number = 60) {
         if (root.get_Parent() !== undefined || root.ready) throw new Error('root is invalid');
         this.root = root;
@@ -55,6 +57,15 @@ export class SceneTree {
         for (const viewport of this.viewports) {
             viewport.render();
         }
+        // queue free
+        for (const node of this.node_queued_free) {
+            const parent = node.get_Parent();
+            if (parent !== this.root) {
+                parent?.remove_Child(node);
+                node.free();
+            }
+        }
+        this.node_queued_free.clear();
         // next frame
         this.animation_requested = requestAnimationFrame(this._loop_func);
     }
@@ -79,6 +90,15 @@ export class SceneTree {
     }
 
     // apis
+
+    public queue_Free(node: Node) {
+        if (!node.is_inside_tree) throw new Error('can not queue free node which is not inside scene tree');
+        this.node_queued_free.add(node);
+    }
+
+    public is_QueuedFreed(node: Node) {
+        return this.node_queued_free.has(node);
+    }
 
     public get_InputActionMap() {
         return this.input_action_map;
@@ -440,6 +460,12 @@ export class Node extends ClassBase {
         this.free_Internal();
     }
 
+    public queue_Free() {
+        const scenetree = this.get_SceneTree();
+        if (scenetree === undefined) throw new Error('can not queue free node since it is not inside tree');
+        scenetree.queue_Free(this);
+    }
+
     // scriptable
 
     public _dispose() {
@@ -447,7 +473,21 @@ export class Node extends ClassBase {
     }
 
     public _notification(what: NodeNotification) {
-
+        switch (what) {
+            case NodeNotification.Dispose: {
+                this.signal_exiting_tree.clear();
+                this.signal_entered_tree.clear();
+                this.signal_exited_tree.clear();
+                this.signal_child_added.clear();
+                this.signal_child_removing.clear();
+                this.signal_notification.clear();
+                this.signal_ready.clear();
+                this.signal_input.clear();
+                this.signal_process.clear();
+                this.signal_physics_process.clear();
+                break;
+            }
+        }
     }
 
     public _ready() {
@@ -558,9 +598,11 @@ export class Node3D extends Node {
         const parent = this.get_Parent();
         if (parent !== undefined && parent instanceof Node3D) {
             const parent_inverse = parent.global_transform.invert();
-            this.local_transform = transform.multiply(parent_inverse);
+            this.local_transform = parent_inverse.multiply(transform);
         }
-        this.local_transform = transform;
+        else {
+            this.local_transform = transform;
+        }
     }
 
     private readonly _global_position: Vector3 = new Vector3();
@@ -617,6 +659,7 @@ export class Node3D extends Node {
                 this.is_global_transform_changed = false;
             }
         }
+        super._notification(what);
     }
 
     protected _notification_IgnoreTransformChange(what: NodeNotification): void {
@@ -769,7 +812,7 @@ export class Viewport extends Node {
     public get clear_color() { return this._clear_color; }
     public set clear_color(clear_color: Color) {
         this._clear_color = clear_color;
-        this.renderer_3d.set_ClearColor(this._clear_color);
+        this.renderer_3d.set_ClearColor(this._clear_color, this._transparent ? 0 : 1);
     }
 
     public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
@@ -801,6 +844,7 @@ export class Viewport extends Node {
             }
         }
     }
+    // private _
 
     private _cursor_style: CursorStyle = 'default';
     public get cursor_style(): CursorStyle { return this._cursor_style; }
@@ -820,8 +864,7 @@ export class Viewport extends Node {
         super();
         this.renderer_3d = new Renderer3D(document.createElement('canvas'), { antialias: true });
         this.renderer_3d.set_PixelRatio(this.pixel_ratio);
-        this.renderer_3d.set_ClearColor(this.clear_color);
-        this.renderer_3d.set_ClearAlpha(this.transparent ? 0 : 1);
+        this.renderer_3d.set_ClearColor(this.clear_color, this.transparent ? 0 : 1);
         this.mouse_event_manager = new ViewportMouseInputEventManager(this);
         this.key_event_manager = new ViewportKeyInputEventManager(this);
         this.action_event_manager = new ViewportActionInputEventManager(this);
@@ -1046,4 +1089,5 @@ export class Viewport extends Node {
             this.physics_picking_area = undefined;
         }
     }
+
 }

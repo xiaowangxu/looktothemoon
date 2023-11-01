@@ -212,6 +212,7 @@ export interface PickingShape3D {
 class PickingArea {
     public readonly area: PickingArea3D;
     public layer: number = 0xffffffff;
+    public priority: number = 0;
     public enabled: boolean = true;
 
     constructor(area: PickingArea3D) {
@@ -258,12 +259,14 @@ export class RayPickingResult {
     public readonly position: Vector3;
     public readonly normal: Vector3;
     public readonly distance: number;
+    public readonly priority: number;
 
-    constructor(area: PickingArea3D, position: Vector3, normal: Vector3, distance: number) {
+    constructor(area: PickingArea3D, position: Vector3, normal: Vector3, distance: number, priority: number) {
         this.area = area;
         this.position = position.clone();
         this.normal = normal.clone();
         this.distance = distance;
+        this.priority = priority;
     }
 }
 
@@ -291,12 +294,18 @@ export class PickingWorld3D {
                 if (res !== undefined) {
                     const position = res.position.clone().applyMatrix4(global_transform);
                     const normal = res.normal.clone().applyMatrix4(global_transform).normalize();
-                    result.push(new RayPickingResult(area.area, position, normal, position.distanceTo(from)));
+                    result.push(new RayPickingResult(area.area, position, normal, position.distanceTo(from), area.priority));
                 }
             }
         }
         if (order === PickingOrder.Ordered) {
-            result.sort((a, b) => a.distance - b.distance);
+            result.sort((a, b) => {
+                const priority_a = a.priority;
+                const priority_b = b.priority;
+                if (priority_a < priority_b) return -1;
+                if (priority_a > priority_b) return 1;
+                return a.distance - b.distance;
+            });
         }
         return result;
     }
@@ -312,6 +321,12 @@ export class PickingWorld3D {
         const area = this.get_Area(rid);
         if (area === undefined) return;
         area.layer = layer;
+    }
+
+    public set_PickingAreaPriority(rid: RID, priority: number) {
+        const area = this.get_Area(rid);
+        if (area === undefined) return;
+        area.priority = priority;
     }
 
     public set_PickingAreaEnabled(rid: RID, enabled: boolean) {

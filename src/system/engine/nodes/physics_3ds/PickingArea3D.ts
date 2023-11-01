@@ -16,6 +16,24 @@ export class PickingArea3D extends PhysicsInstance3D {
     private _is_mouse_hover: boolean = false;
     public get is_mouse_hover() { return this._is_mouse_hover; }
 
+    private _priority: number = 0;
+    public get priority() { return this._priority; }
+    public set priority(priority: number) {
+        if (this._priority !== priority) {
+            this._priority = priority;
+            this.on_PriorityChanged();
+        }
+    }
+
+    protected on_PriorityChanged():void {
+        if (this.area_rid !== undefined) {
+            const picking_world = this.get_Viewport()?.get_World3D()?.get_PickingWorld();
+            if (picking_world !== undefined) {
+                picking_world.set_PickingAreaPriority(this.area_rid, this.priority);
+            }
+        }
+    }
+
     public on_LayerChanged(): void {
         if (this.area_rid !== undefined) {
             const picking_world = this.get_Viewport()?.get_World3D()?.get_PickingWorld();
@@ -42,6 +60,8 @@ export class PickingArea3D extends PhysicsInstance3D {
                     if (picking_world !== undefined) {
                         this.area_rid = picking_world.create_PickingArea(this);
                         picking_world.set_PickingAreaLayer(this.area_rid, this.layer);
+                        picking_world.set_PickingAreaPriority(this.area_rid, this.priority);
+                        picking_world.set_PickingAreaEnabled(this.area_rid, this.enabled);
                     }
                 }
                 break;
@@ -53,6 +73,11 @@ export class PickingArea3D extends PhysicsInstance3D {
                     picking_world.free_PickingArea(this.area_rid);
                     this.area_rid = undefined;
                 }
+                break;
+            }
+            case NodeNotification.Dispose:{
+                this.signal_mouse_entered.clear();
+                this.signal_mouse_exited.clear();
                 break;
             }
         }

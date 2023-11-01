@@ -1,7 +1,7 @@
 import { BufferGeometry, Vector3, InstancedInterleavedBuffer, InterleavedBufferAttribute, Color, InstancedBufferGeometry } from 'three';
 import { Resource } from '../Resource';
-import { LineGeometry } from 'three/addons/lines/LineGeometry';
-import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry';
+import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
+import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
 
 declare module 'three' {
     interface BufferGeometry {

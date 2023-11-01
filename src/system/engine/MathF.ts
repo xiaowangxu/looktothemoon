@@ -1,3 +1,5 @@
+import { Vector3, type Line3, type Ray } from "three";
+
 export const EPSILON = 1e-10;
 export const TAU = Math.PI * 2;
 
@@ -15,4 +17,101 @@ export function is_ApproxEqual(a: number, b: number, epsilon = EPSILON) {
 
 export function is_ApproxZero(value: number, epsilon = EPSILON) {
     return -epsilon <= value && value <= epsilon;
+}
+
+export function get_ClosestPointsOnLines(l0: Line3, l1: Line3): [p0: Vector3, p1: Vector3] {
+    const p = l0.end.clone().sub(l0.start);
+    const q = l1.end.clone().sub(l1.start);
+    const r = l0.start.clone().sub(l1.start);
+
+    const a = p.dot(p);
+    const b = p.dot(q);
+    const c = q.dot(q);
+    const d = p.dot(r);
+    const e = q.dot(r);
+
+    let s = 0.0;
+    let t = 0.0;
+
+    const det = a * c - b * b;
+    if (det > EPSILON) {
+        // Non-parallel segments
+        const bte = b * e;
+        const ctd = c * d;
+
+        if (bte <= ctd) {
+            // s <= 0.0
+            if (e <= 0.0) {
+                // t <= 0.0
+                s = (-d >= a ? 1 : (-d > 0.0 ? -d / a : 0.0));
+                t = 0.0;
+            } else if (e < c) {
+                // 0.0 < t < 1
+                s = 0.0;
+                t = e / c;
+            } else {
+                // t >= 1
+                s = (b - d >= a ? 1 : (b - d > 0.0 ? (b - d) / a : 0.0));
+                t = 1;
+            }
+        } else {
+            // s > 0.0
+            s = bte - ctd;
+            if (s >= det) {
+                // s >= 1
+                if (b + e <= 0.0) {
+                    // t <= 0.0
+                    s = (-d <= 0.0 ? 0.0 : (-d < a ? -d / a : 1));
+                    t = 0.0;
+                } else if (b + e < c) {
+                    // 0.0 < t < 1
+                    s = 1;
+                    t = (b + e) / c;
+                } else {
+                    // t >= 1
+                    s = (b - d <= 0.0 ? 0.0 : (b - d < a ? (b - d) / a : 1));
+                    t = 1;
+                }
+            } else {
+                // 0.0 < s < 1
+                const ate = a * e;
+                const btd = b * d;
+
+                if (ate <= btd) {
+                    // t <= 0.0
+                    s = (-d <= 0.0 ? 0.0 : (-d >= a ? 1 : -d / a));
+                    t = 0.0;
+                } else {
+                    // t > 0.0
+                    t = ate - btd;
+                    if (t >= det) {
+                        // t >= 1
+                        s = (b - d <= 0.0 ? 0.0 : (b - d >= a ? 1 : (b - d) / a));
+                        t = 1;
+                    } else {
+                        // 0.0 < t < 1
+                        s /= det;
+                        t /= det;
+                    }
+                }
+            }
+        }
+    } else {
+        // Parallel segments
+        if (e <= 0.0) {
+            s = (-d <= 0.0 ? 0.0 : (-d >= a ? 1 : -d / a));
+            t = 0.0;
+        } else if (e >= c) {
+            s = (b - d <= 0.0 ? 0.0 : (b - d >= a ? 1 : (b - d) / a));
+            t = 1;
+        } else {
+            s = 0.0;
+            t = e / c;
+        }
+    }
+
+    const p0 = new Vector3().lerpVectors(l0.start, l0.end, s);
+    const p1 = new Vector3().lerpVectors(l1.start, l1.end, t);
+
+    return [p0, p1];
 }

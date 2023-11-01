@@ -9,9 +9,10 @@ export class FixSizeNode3D extends Node3D {
     public use_active_viewport: boolean = true;
 
     protected update_Size() {
-        const camera = (this.use_active_viewport ? this.get_SceneTree()?.get_ActiveViewports()[0] : this.get_Viewport())?.get_Camera3D()?.get_Camera();
+        const viewport = this.use_active_viewport ? this.get_SceneTree()?.get_ActiveViewports()[0] : this.get_Viewport();
+        const camera = viewport?.get_Camera3D()?.get_Camera();
         if (camera === undefined) return;
-        const { y: height } = this.get_Viewport()!.size;
+        const { y: height } = viewport!.size;
         if (height === 0) return;
         const center_ray = new Raycaster();
         center_ray.setFromCamera(new Vector2(0, 0), camera);

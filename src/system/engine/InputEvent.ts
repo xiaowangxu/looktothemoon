@@ -209,7 +209,7 @@ export class ShortCut extends Resource {
 
 export class InputActionMap extends Resource {
     public static readonly class_name: string = "InputActionMap";
-    
+
     private input_action_map: Map<string, ShortCut> = new Map();
 
     constructor() {
@@ -510,6 +510,9 @@ export class ViewportMouseInputEventManager {
         this.canvas.removeEventListener('dblclick', this._on_DoubleClick);
         this.canvas.removeEventListener('contextmenu', this._on_RightClick);
         this.canvas.removeEventListener('wheel', this._on_Wheel);
+        this.signal_mouse_event.clear();
+        this.signal_mouse_enetered.clear();
+        this.signal_mouse_leaved.clear();
     }
 }
 
@@ -577,5 +580,6 @@ export class ViewportKeyInputEventManager {
     public dispose() {
         window.removeEventListener('keydown', this._on_KeyDown);
         window.removeEventListener('keyup', this._on_KeyUp);
+        this.signal_key_event.clear();
     }
 }

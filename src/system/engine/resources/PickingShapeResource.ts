@@ -1,4 +1,4 @@
-import { BackSide, DoubleSide, FrontSide, Ray, Vector3 } from "three";
+import { BackSide, DoubleSide, FrontSide, Ray, Vector2, Vector3 } from "three";
 import { Resource } from "../Resource";
 import type { Camera3D } from "../SceneTree";
 import { PickingSide, type PickingShape3D, type RaycastResult } from "../World";
@@ -39,8 +39,7 @@ export class PickingSphereResource extends PickingShape3DResource {
         const normal = rel.divideScalar(rel_l);
 
         const sphere_d = sphere_pos.dot(normal);
-
-        const ray_distance = sphere_pos.distanceTo(normal.multiplyScalar(sphere_d));
+        const ray_distance = sphere_pos.distanceTo(normal.clone().multiplyScalar(sphere_d));
 
         if (ray_distance >= this.radius) {
             return undefined;
@@ -65,18 +64,122 @@ export class PickingSphereResource extends PickingShape3DResource {
     }
 }
 
-export class PickingBoxResource extends PickingShape3DResource {
+export class PickingCylinderResource extends PickingShape3DResource {
     public static readonly class_name: string = "PickingBoxResource";
 
-    private _size: Vector3 = new Vector3(1, 1, 1);
-    public get size() { return this._size; }
-    public set size(size: Vector3) {
-        this._size.copy(size);
-        this.trigger_Changed();
+    private _radius: number = 0.5;
+    public get radius() { return this._radius; }
+    public set radius(radius: number) {
+        if (this._radius !== radius) {
+            this._radius = radius;
+            this.trigger_Changed();
+        }
+    }
+
+    private _height: number = 1;
+    public get height() { return this._height; }
+    public set height(height: number) {
+        if (this._height !== height) {
+            this._height = height;
+            this.trigger_Changed();
+        }
     }
 
     perform_Raycast(from: Vector3, to: Vector3, side: PickingSide, camera: Camera3D | undefined): RaycastResult | undefined {
-        return undefined;
+        const rel = to.clone().sub(from);
+        const rel_l = rel.length();
+        if (rel_l < EPSILON) {
+            return undefined;
+        }
+
+        const cylinder_axis = new Vector3(0, 1, 0);
+
+        // First check if they are parallel.
+        const normal = rel.clone().divideScalar(rel_l);
+        const crs = normal.cross(cylinder_axis);
+        const crs_l = crs.length();
+
+        let axis_dir: Vector3;
+
+        if (crs_l < EPSILON) {
+            axis_dir = new Vector3(0, 0, 1); // Any side axis OK.
+        } else {
+            axis_dir = crs.clone().divideScalar(crs_l);
+        }
+
+        const dist = axis_dir.dot(from);
+
+        if (dist >= this.radius) {
+            return undefined; // Too far away.
+        }
+
+        // Convert to 2D.
+        const w2 = this.radius * this.radius - dist * dist;
+        if (w2 < EPSILON) {
+            return undefined; // Avoid numerical error.
+        }
+
+        const size = new Vector2(Math.sqrt(w2), this.height / 2);
+
+        const side_dir = axis_dir.clone().cross(cylinder_axis).normalize();
+
+        const from2D = new Vector2(side_dir.dot(from), from.y);
+        const to2D = new Vector2(side_dir.dot(to), to.y);
+
+        let min = 0, max = 1;
+
+        let axis = -1;
+
+        for (let i = 0; i < 2; i++) {
+            const seg_from = i === 0 ? from2D.x : from2D.y;
+            const seg_to = i === 0 ? to2D.x : to2D.y;
+            const box_begin = - (i === 0 ? size.x : size.y);
+            const box_end = -box_begin;
+            let cmin, cmax;
+
+            if (seg_from < seg_to) {
+                if (seg_from > box_end || seg_to < box_begin) {
+                    return undefined;
+                }
+                const length = seg_to - seg_from;
+                cmin = (seg_from < box_begin) ? ((box_begin - seg_from) / length) : 0;
+                cmax = (seg_to > box_end) ? ((box_end - seg_from) / length) : 1;
+
+            } else {
+                if (seg_to > box_end || seg_from < box_begin) {
+                    return undefined;
+                }
+                const length = seg_to - seg_from;
+                cmin = (seg_from > box_end) ? (box_end - seg_from) / length : 0;
+                cmax = (seg_to < box_begin) ? (box_begin - seg_from) / length : 1;
+            }
+
+            if (cmin > min) {
+                min = cmin;
+                axis = i;
+            }
+            if (cmax < max) {
+                max = cmax;
+            }
+            if (max < min) {
+                return undefined;
+            }
+        }
+
+        // Convert to 3D again.
+        const result = from.clone().addScaledVector(rel, min);
+        const res_normal = result.clone();
+
+        if (axis == 0) {
+            res_normal.y = 0;
+        } else {
+            res_normal.x = 0;
+            res_normal.z = 0;
+        }
+
+        res_normal.normalize();
+
+        return { position: result, normal: res_normal };
     }
 }
 

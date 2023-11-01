@@ -1,6 +1,6 @@
 import { Resource } from "../Resource";
 import { Camera, Color, Material, MeshNormalMaterial, Scene, WebGLRenderer } from 'three';
-import { LineMaterial } from 'three/addons/lines/LineMaterial';
+import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 
 declare module 'three' {
     interface Material {

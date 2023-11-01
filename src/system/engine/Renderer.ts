@@ -31,8 +31,8 @@ export class Renderer3D {
         this.renderer.setClearAlpha(alpha);
     }
 
-    public set_ClearColor(color: Color) {
-        this.renderer.setClearColor(color);
+    public set_ClearColor(color: Color, alpha: number) {
+        this.renderer.setClearColor(color, alpha);
     }
 
     public resize(width: number, height: number) {
