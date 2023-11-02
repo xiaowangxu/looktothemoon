@@ -2,13 +2,14 @@ import { NodeNotification } from "../../SceneTree";
 import { PhysicsInstance3D } from "./PhysicsInstance3D";
 import { type RID } from "../../Rid";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
+import type { MouseInputEvent } from "../../InputEvent";
 
 export class PickingArea3D extends PhysicsInstance3D {
     public static readonly class_name: string = "PickingArea3D";
 
     // signal
-    public readonly signal_mouse_entered: SignalEmitter<() => void> = new SignalEmitter();
-    public readonly signal_mouse_exited: SignalEmitter<() => void> = new SignalEmitter();
+    public readonly signal_mouse_entered: SignalEmitter<(event: MouseInputEvent) => void> = new SignalEmitter();
+    public readonly signal_mouse_exited: SignalEmitter<(event: MouseInputEvent) => void> = new SignalEmitter();
 
     private area_rid: RID | undefined = undefined;
     public get picking_area_rid() { return this.area_rid; }
@@ -84,13 +85,13 @@ export class PickingArea3D extends PhysicsInstance3D {
         super._notification(what);
     }
 
-    public on_MouseEntered() {
+    public on_MouseEntered(event: MouseInputEvent) {
         this._is_mouse_hover = true;
-        this.signal_mouse_entered.trigger();
+        this.signal_mouse_entered.trigger(event);
     }
 
-    public on_MouseExited() {
+    public on_MouseExited(event: MouseInputEvent) {
         this._is_mouse_hover = false;
-        this.signal_mouse_exited.trigger();
+        this.signal_mouse_exited.trigger(event);
     }
 }

@@ -836,15 +836,14 @@ export class Viewport extends Node {
     private set physics_picking_area(area: PickingArea3D | undefined) {
         if (this._physics_picking_area !== area) {
             if (this._physics_picking_area !== undefined) {
-                this._physics_picking_area.on_MouseExited();
+                this._physics_picking_area.on_MouseExited(new MouseInputEvent(this, this.input_manager.mouse_position, this.input_manager.mouse_position_normalized, false, false, false, false));
             }
             this._physics_picking_area = area;
             if (this._physics_picking_area !== undefined) {
-                this._physics_picking_area.on_MouseEntered();
+                this._physics_picking_area.on_MouseEntered(new MouseInputEvent(this, this.input_manager.mouse_position, this.input_manager.mouse_position_normalized, false, false, false, false));
             }
         }
     }
-    // private _
 
     private _cursor_style: CursorStyle = 'default';
     public get cursor_style(): CursorStyle { return this._cursor_style; }

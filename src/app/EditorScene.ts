@@ -1,7 +1,7 @@
 import { World3D } from "@/system/engine/World";
 import { NodeNotification, Node3D, SceneTree, Viewport } from "@/system/engine/SceneTree";
 import { ViewportDomContainer } from "@/system/engine/nodes/ViewportDomContainer";
-import { Euler, BoxGeometry, SphereGeometry, Vector3, MeshBasicMaterial, MeshMatcapMaterial, Color, TorusKnotGeometry, Vector2, Box3 } from "three";
+import { Euler, BoxGeometry, SphereGeometry, Vector3, MeshBasicMaterial, MeshMatcapMaterial, Color, TorusKnotGeometry, Vector2, Box3, ConeGeometry, Quaternion } from "three";
 import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/MeshInstance3D";
 import { PolyLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/GeometryResource";
 import { NormalMaterialResource, LineMaterialResource, ThreeMaterialResource } from "@/system/engine/resources/MaterialResource";
@@ -13,7 +13,7 @@ import { PickingArea3D } from "@/system/engine/nodes/physics_3ds/PickingArea3D";
 import { PickingShape3D } from "@/system/engine/nodes/physics_3ds/PickingShape3D";
 import { PickingBVHResource, PickingSphereResource } from "@/system/engine/resources/PickingShapeResource";
 import { FixSizeNode3D } from "@/system/engine/nodes/node_3ds/FixSizeNode3D";
-import { LineGrabber, PointGrabber, TranslateGrabber } from "./nodes/Grabbers";
+import { LineGrabber, PointGrabber, AngleGrabber, TranslateGrabber, RotateGrabber, TransformGrabber } from "./nodes/Grabbers";
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 
 // viewport container
@@ -41,7 +41,7 @@ axis.local_scale = new Vector3(100000, 100000, 100000);
 axis.local_position = new Vector3(-500, 0, -500);
 const wireframe_box = new WireframeBox();
 wireframe_box.box = new Box3(new Vector3(-100, -100, -300), new Vector3(200, 400, -200));
-World.add_Child(wireframe_box);
+// World.add_Child(wireframe_box);
 
 // Cube test
 const node2 = new Node3D();
@@ -52,7 +52,7 @@ Cube2.geometry = Cube.geometry;
 const mat = new NormalMaterialResource();
 Cube.material = [mat, mat, mat, mat, mat, mat];
 Cube2.material = [mat, mat, mat, mat, mat, mat];
-node2.add_Child(Cube);
+// node2.add_Child(Cube);
 World.add_Child(node2);
 node2.local_position = new Vector3(200, 0, 0);
 Cube.add_Child(Cube2);
@@ -88,15 +88,15 @@ class Sphere extends MeshInstance3D {
     }
 }
 
-const sph1 = new Sphere();
-sph1.local_position = new Vector3(-200, 0, 0);
-World.add_Child(sph1);
-const sph2 = new Sphere();
-sph2.local_position = new Vector3(-200, 200, 0);
-World.add_Child(sph2);
-const sph3 = new Sphere();
-sph3.local_position = new Vector3(-400, 200, 0);
-World.add_Child(sph3);
+// const sph1 = new Sphere();
+// sph1.local_position = new Vector3(-200, 0, 0);
+// World.add_Child(sph1);
+// const sph2 = new Sphere();
+// sph2.local_position = new Vector3(-200, 200, 0);
+// World.add_Child(sph2);
+// const sph3 = new Sphere();
+// sph3.local_position = new Vector3(-400, 200, 0);
+// World.add_Child(sph3);
 
 const Torus = new MeshInstance3D();
 Torus.geometry = new ThreeGeometryResource(new TorusKnotGeometry(50, 10, 360));
@@ -106,11 +106,13 @@ const shape = new PickingShape3D();
 const sphere_shape = new PickingBVHResource();
 sphere_shape.compute_BVH(Torus.geometry);
 shape.shape = sphere_shape;
-area.signal_mouse_entered.connect(() => {
+area.signal_mouse_entered.connect((evt) => {
     ((Torus.material as ThreeMaterialResource).get_Material() as MeshMatcapMaterial).color = new Color(0x0000ff);
+    evt.viewport!.cursor_style = 'crosshair';
 });
-area.signal_mouse_exited.connect(() => {
+area.signal_mouse_exited.connect((evt) => {
     ((Torus.material as ThreeMaterialResource).get_Material() as MeshMatcapMaterial).color = new Color(0xffffff);
+    evt.viewport!.cursor_style! = 'default';
 });
 area.add_Child(shape);
 Torus.add_Child(area);
@@ -345,10 +347,13 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut([
     new MouseButtonInputEvent(MouseButton.WheelDown, true, false, false, undefined, new Vector2(0, 0), new Vector2(0, 0), true, false, false, false),
 ]));
 
-const transform_helper = new TranslateGrabber();
-transform_helper.local_position = Torus.global_position;
-transform_helper.signal_grabbing.connect((position) => Torus.global_position = position);
-EditorWorld.add_Child(transform_helper);
+const transform_grabber = new TransformGrabber();
+// transform_grabber.local_scale = new Vector3(100, 100, 100);
+transform_grabber.signal_grabbing.connect(({ local_position, local_rotation }) => {
+    Torus.global_position = transform_grabber.to_Global(local_position);
+    Torus.local_rotation = local_rotation;
+})
+EditorWorld.add_Child(transform_grabber);
 
 console.log(EditorSceneTree);
 
