@@ -353,7 +353,9 @@ transform_grabber.signal_grabbing.connect(({ local_position, local_rotation }) =
     Torus.global_position = transform_grabber.to_Global(local_position);
     Torus.local_rotation = local_rotation;
 })
-EditorWorld.add_Child(transform_grabber);
+transform_grabber.signal_grab_end.connect(({ local_position, local_rotation }) => {
+})
+World.add_Child(transform_grabber);
 
 console.log(EditorSceneTree);
 

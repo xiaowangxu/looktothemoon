@@ -539,6 +539,15 @@ export class Node3D extends Node {
         this.propagate_TransformChanged();
     }
 
+    private _top_level: boolean = false;
+    public get top_level(){return this._top_level;}
+    public set top_level(top_level: boolean) {
+        if (this._top_level !== top_level) {
+            this._top_level = top_level;
+            this.propagate_TransformChanged();
+        }
+    }
+
     private readonly _local_transform: Matrix4 = new Matrix4();
     private is_local_transform_dirty: boolean = false;
     public get local_transform(): Matrix4 {
@@ -572,7 +581,7 @@ export class Node3D extends Node {
     public get global_transform(): Matrix4 {
         if (this.is_global_transform_dirty) {
             const parent = this.get_Parent();
-            if (parent !== undefined && parent instanceof Node3D) {
+            if (!this.top_level && parent !== undefined && parent instanceof Node3D) {
                 const parent_global_transform = parent.global_transform!;
                 const self_local_transform = this.local_transform;
                 this._global_transform.multiplyMatrices(parent_global_transform, self_local_transform);
@@ -596,7 +605,7 @@ export class Node3D extends Node {
     }
     public set global_transform(transform: Matrix4) {
         const parent = this.get_Parent();
-        if (parent !== undefined && parent instanceof Node3D) {
+        if (!this.top_level && parent !== undefined && parent instanceof Node3D) {
             const parent_inverse = parent.global_transform.invert();
             this.local_transform = parent_inverse.multiply(transform);
         }
@@ -634,7 +643,7 @@ export class Node3D extends Node {
     protected propagate_TransformChanged() {
         if (this.is_global_transform_dirty) return;
         for (const child of this.children) {
-            if (child instanceof Node3D) {
+            if (child instanceof Node3D && !child.top_level) {
                 child.propagate_TransformChanged();
             }
         }

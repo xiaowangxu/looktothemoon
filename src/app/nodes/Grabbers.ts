@@ -800,9 +800,14 @@ export class Grabbers<T> extends Node3D {
     protected on_EnabledChanged() {
         throw new Error('abstract method');
     }
-
+    
     protected on_VisibleChanged() {
         throw new Error('abstract method');
+    }
+
+    constructor() {
+        super();
+        this.top_level = true;
     }
 }
 
@@ -1026,8 +1031,8 @@ export class RotateGrabber extends Grabbers<Quaternion> {
 }
 
 export class TransformGrabber extends Grabbers<{ type: 'translate' | 'rotate', local_position: Vector3, local_rotation: Euler }> {
-    private readonly translate: TranslateGrabber = new TranslateGrabber();
-    private readonly rotate: RotateGrabber = new RotateGrabber();
+    public readonly translate: TranslateGrabber = new TranslateGrabber();
+    public readonly rotate: RotateGrabber = new RotateGrabber();
 
     private _rotate_enabled: boolean = true;
     public get rotate_enabled() { return this._rotate_enabled; }
