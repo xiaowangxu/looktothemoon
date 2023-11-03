@@ -15,6 +15,7 @@ import { PickingBVHResource, PickingSphereResource } from "@/system/engine/resou
 import { FixSizeNode3D } from "@/system/engine/nodes/node_3ds/FixSizeNode3D";
 import { LineGrabber, PointGrabber, AngleGrabber, TranslateGrabber, RotateGrabber, TransformGrabber } from "./nodes/Grabbers";
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
+import { PickingBoxResource } from "../system/engine/resources/PickingShapeResource";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -99,12 +100,15 @@ class Sphere extends MeshInstance3D {
 // World.add_Child(sph3);
 
 const Torus = new MeshInstance3D();
-Torus.geometry = new ThreeGeometryResource(new TorusKnotGeometry(50, 10, 360));
+Torus.geometry = new ThreeGeometryResource(new BoxGeometry(50, 10, 30));
 Torus.material = new ThreeMaterialResource(new MeshMatcapMaterial({}));
 const area = new PickingArea3D();
 const shape = new PickingShape3D();
-const sphere_shape = new PickingBVHResource();
-sphere_shape.compute_BVH(Torus.geometry);
+const sphere_shape = new PickingBoxResource();
+sphere_shape.width = 50;
+sphere_shape.height = 10;
+sphere_shape.depth = 30;
+// sphere_shape.compute_BVH(Torus.geometry);
 shape.shape = sphere_shape;
 area.signal_mouse_entered.connect((evt) => {
     ((Torus.material as ThreeMaterialResource).get_Material() as MeshMatcapMaterial).color = new Color(0x0000ff);
@@ -162,7 +166,7 @@ EditorViewport.add_Child(EditorWorld);
 const red = 0xff4a56;
 const green = 0x04b973;
 const blue = 0x466fd6;
-const neg_color = 0x404040;
+const neg_color = 0xe0e0e0;
 function create_CompassScene() {
     const sphere_radius = 0.4;
     const distance = 1.5;
@@ -348,13 +352,10 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut([
 ]));
 
 const transform_grabber = new TransformGrabber();
-// transform_grabber.local_scale = new Vector3(100, 100, 100);
 transform_grabber.signal_grabbing.connect(({ local_position, local_rotation }) => {
     Torus.global_position = transform_grabber.to_Global(local_position);
     Torus.local_rotation = local_rotation;
-})
-transform_grabber.signal_grab_end.connect(({ local_position, local_rotation }) => {
-})
+});
 World.add_Child(transform_grabber);
 
 console.log(EditorSceneTree);

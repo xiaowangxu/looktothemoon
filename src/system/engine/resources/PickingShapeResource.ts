@@ -14,6 +14,99 @@ export class PickingShape3DResource extends Resource implements PickingShape3D {
     }
 }
 
+export class PickingBoxResource extends Resource {
+    public static readonly class_name: string = "PickingBoxResource";
+
+    private _width: number = 1;
+    public get width() { return this._width; }
+    public set width(width: number) {
+        if (this._width !== width) {
+            this._width = width;
+            this.trigger_Changed();
+        }
+    }
+
+    private _height: number = 1;
+    public get height() { return this._height; }
+    public set height(height: number) {
+        if (this._height !== height) {
+            this._height = height;
+            this.trigger_Changed();
+        }
+    }
+
+    private _depth: number = 1;
+    public get depth() { return this._depth; }
+    public set depth(depth: number) {
+        if (this._depth !== depth) {
+            this._depth = depth;
+            this.trigger_Changed();
+        }
+    }
+
+    perform_Raycast(from: Vector3, to: Vector3, side: PickingSide, camera: Camera3D | undefined): RaycastResult | undefined {
+        let min = 0, max = 1;
+        let axis = 0;
+        let sign = 0;
+
+        const position_start = new Vector3(-this.width / 2, -this.height / 2, -this.depth / 2);
+        const position_end = new Vector3(this.width / 2, this.height / 2, this.depth / 2);
+
+        for (let i = 0; i < 3; i++) {
+            const seg_from = i === 0 ? from.x : (i === 1 ? from.y : from.z);
+            const seg_to = i === 0 ? to.x : (i === 1 ? to.y : to.z);
+            const box_begin = i === 0 ? position_start.x : (i === 1 ? position_start.y : position_start.z);
+            const box_end = i === 0 ? position_end.x : (i === 1 ? position_end.y : position_end.z);
+            let cmin, cmax;
+            let csign;
+
+            if (seg_from < seg_to) {
+                if (seg_from > box_end || seg_to < box_begin) {
+                    return undefined;
+                }
+                const length = seg_to - seg_from;
+                cmin = (seg_from < box_begin) ? ((box_begin - seg_from) / length) : 0;
+                cmax = (seg_to > box_end) ? ((box_end - seg_from) / length) : 1;
+                csign = -1.0;
+
+            } else {
+                if (seg_to > box_end || seg_from < box_begin) {
+                    return undefined;
+                }
+                const length = seg_to - seg_from;
+                cmin = (seg_from > box_end) ? (box_end - seg_from) / length : 0;
+                cmax = (seg_to < box_begin) ? (box_begin - seg_from) / length : 1;
+                csign = 1.0;
+            }
+
+            if (cmin > min) {
+                min = cmin;
+                axis = i;
+                sign = csign;
+            }
+            if (cmax < max) {
+                max = cmax;
+            }
+            if (max < min) {
+                return undefined;
+            }
+        }
+
+        const rel = to.clone().sub(from);
+
+        const normal = new Vector3();
+        switch (axis) {
+            case 0: normal.x = sign; break;
+            case 1: normal.y = sign; break;
+            case 2: normal.z = sign; break;
+        }
+
+        const result = from.clone().addScaledVector(rel, min);
+
+        return { position: result, normal: normal };
+    }
+}
+
 export class PickingSphereResource extends PickingShape3DResource {
     public static readonly class_name: string = "PickingSphereResource";
 
@@ -65,7 +158,7 @@ export class PickingSphereResource extends PickingShape3DResource {
 }
 
 export class PickingCylinderResource extends PickingShape3DResource {
-    public static readonly class_name: string = "PickingBoxResource";
+    public static readonly class_name: string = "PickingCylinderResource";
 
     private _radius: number = 0.5;
     public get radius() { return this._radius; }

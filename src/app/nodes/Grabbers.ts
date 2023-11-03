@@ -1,5 +1,5 @@
 import { InputEvent, MouseButton, MouseButtonInputEvent, MouseEnterLeaveInputEvent, MouseInputEvent, MouseMotionInputEvent } from "@/system/engine/InputEvent";
-import { EPSILON, TAU, clamp, get_ClosestPointsOnLines } from "@/system/engine/MathF";
+import { EPSILON, TAU, clamp, get_ClosestPointsOnLineSegments, get_ClosestPointsOnLines } from "@/system/engine/MathF";
 import { Node3D, NodeNotification, type CursorStyle, Viewport } from "@/system/engine/SceneTree";
 import { FixSizeNode3D } from "@/system/engine/nodes/node_3ds/FixSizeNode3D";
 import { PickingArea3D } from "@/system/engine/nodes/physics_3ds/PickingArea3D";
@@ -8,7 +8,7 @@ import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/MeshInsta
 import { PolyLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/GeometryResource";
 import { LineMaterialResource, ThreeMaterialResource } from "@/system/engine/resources/MaterialResource";
 import { PickingBVHResource, PickingCylinderResource, PickingSphereResource } from "@/system/engine/resources/PickingShapeResource";
-import { Vector3, ConeGeometry, MeshMatcapMaterial, MeshBasicMaterial, SphereGeometry, CylinderGeometry, Color, Euler, Quaternion, Line3, Vector2, Raycaster, Plane, TorusGeometry, DoubleSide } from 'three';
+import { Vector3, ConeGeometry, MeshMatcapMaterial, MeshBasicMaterial, SphereGeometry, CylinderGeometry, Color, Euler, Quaternion, Line3, Vector2, Raycaster, Plane, TorusGeometry, DoubleSide, Ray } from 'three';
 import { SignalEmitter } from '@/system/utils/SignalEmitter';
 
 export class GrabberElement<T> extends FixSizeNode3D {
@@ -307,11 +307,11 @@ export class LineGrabber extends GrabberElement<Vector3> {
         const camera = evt.viewport?.get_Camera3D()?.get_Camera();
         if (camera === undefined) return undefined;
         const dir = this.to_Global(new Vector3(0, 1, 0)).sub(this.global_position).normalize();
-        const l0 = new Line3(this.global_position.addScaledVector(dir, -10000), this.global_position.addScaledVector(dir, 10000));
+        const r0 = new Ray(this.global_position, dir);
         const raycast = new Raycaster()
         raycast.setFromCamera(evt.position_normalized, camera);
-        const l1 = new Line3(raycast.ray.origin, raycast.ray.origin.clone().addScaledVector(raycast.ray.direction, 100000));
-        const [p0, _] = get_ClosestPointsOnLines(l0, l1);
+        const r1 = raycast.ray;
+        const [p0, _] = get_ClosestPointsOnLines(r0, r1);
         return p0;
     }
 
@@ -681,11 +681,11 @@ export class PointGrabber extends GrabberElement<Vector3> {
 
         this.area.signal_mouse_entered.connect((evt) => {
             this.is_hovering = true;
-            this.set_ViewportCursorStyle(evt.viewport!, 'move');
+            // this.set_ViewportCursorStyle(evt.viewport!, 'move');
         });
         this.area.signal_mouse_exited.connect((evt) => {
             this.is_hovering = false;
-            this.set_ViewportCursorStyle(evt.viewport!, 'default');
+            // this.set_ViewportCursorStyle(evt.viewport!, 'default');
         });
 
         this.area.signal_input.connect((evt, prop) => {
@@ -800,7 +800,7 @@ export class Grabbers<T> extends Node3D {
     protected on_EnabledChanged() {
         throw new Error('abstract method');
     }
-    
+
     protected on_VisibleChanged() {
         throw new Error('abstract method');
     }
