@@ -1,4 +1,4 @@
-import { BufferGeometry, Vector3, InstancedInterleavedBuffer, InterleavedBufferAttribute, Color, InstancedBufferGeometry } from 'three';
+import { BufferGeometry, Vector3, InstancedInterleavedBuffer, InterleavedBufferAttribute, Color, SphereGeometry } from 'three';
 import { Resource } from '../Resource';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
@@ -60,6 +60,7 @@ export class BufferGeometryResource extends GeometryResource {
 
 export class ThreeGeometryResource extends GeometryResource {
     public static readonly class_name: string = "ThreeGeometryResource";
+    public static readonly use_custom_instantiater: boolean = true;
 
     private readonly buffer_geometry: BufferGeometry;
 
@@ -71,6 +72,10 @@ export class ThreeGeometryResource extends GeometryResource {
 
     public get_BufferGeometry(): BufferGeometry {
         return this.buffer_geometry;
+    }
+
+    public static instantiate(): ThreeGeometryResource {
+        return new ThreeGeometryResource(new SphereGeometry(10));
     }
 }
 

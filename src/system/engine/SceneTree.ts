@@ -29,11 +29,11 @@ export class SceneTree {
 
     private readonly singletions: Map<string, Singletion> = new Map();
 
-    private tweens: Set<TweenBase> = new Set();
+    private readonly tweens: Set<TweenBase> = new Set();
 
-    private viewports: Set<Viewport> = new Set();
+    private readonly viewports: Set<Viewport> = new Set();
 
-    private node_queued_free: Set<Node> = new Set();
+    private readonly node_queued_free: Set<Node> = new Set();
 
     constructor(root: Node, physics_fps: number = 60) {
         if (root.get_Parent() !== undefined || root.ready) throw new Error('root is invalid');
@@ -204,7 +204,6 @@ export enum NodeNotification {
 export class Node extends ClassBase {
     public static readonly class_name: string = "Node";
 
-    public readonly rid: RID;
     public name: string | undefined;
     public get readable_name() { return this.name ?? this.rid; }
 
@@ -237,7 +236,6 @@ export class Node extends ClassBase {
 
     constructor() {
         super();
-        this.rid = Rid();
     };
 
     // scene tree
@@ -529,6 +527,7 @@ export class Node extends ClassBase {
 }
 
 export class Node3D extends Node {
+    public static readonly class_name: string = "Node3D";
 
     // local
     private readonly _local_position: Vector3 = new Vector3();

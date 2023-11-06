@@ -10,24 +10,26 @@ import { VisualInstance3D } from "./nodes/visual_instances/VisualInstance3D";
 import { ClassBase } from "./ClassBase";
 import { Resource } from "./Resource";
 import { ActionInputEvent, ComposeInputEvent, InputActionMap, InputEvent, InputEventFromViewport, KeyInputEvent, MouseButton, MouseButtonInputEvent, MouseEnterLeaveInputEvent, MouseInputEvent, MouseMotionInputEvent, ShortCut, } from "./InputEvent";
-import { BufferGeometryResource, GeometryResource } from "./resources/GeometryResource";
-
+import { BufferGeometryResource, GeometryResource, ThreeGeometryResource } from "./resources/GeometryResource";
 
 class ClassDataBase {
-    private readonly db: Map<string, new (...args: any[]) => ClassBase> = new Map();
+    private readonly db: Map<string, typeof ClassBase> = new Map();
 
     public has_Class(name: string) {
         return this.db.has(name);
     }
 
     public register_Class(cls: new (...args: any[]) => ClassBase) {
-        this.db.set((cls as typeof ClassBase).class_name, cls);
+        this.db.set((cls as typeof ClassBase).class_name, cls as typeof ClassBase);
     }
 
-    public instantiate<T extends typeof ClassBase>(cls: T, ...args: any[]): InstanceType<T> {
-        if (!this.has_Class(cls.class_name)) throw new Error(`class ${cls.class_name} does not exist`);
-        const cons = this.db.get(cls.class_name)! as new (...args: any[]) => T;
-        return (new cons(...args)) as InstanceType<T>;
+    public instantiate<T extends ClassBase>(class_name: string, data: Object | undefined = undefined): T {
+        if (!this.has_Class(class_name)) throw new Error(`class ${class_name} does not exist`);
+        const cons = this.db.get(class_name)!;
+        if (cons.use_custom_instantiater) {
+            return cons.instantiate(data ?? {}) as T;
+        }
+        return (new cons()) as T;
     }
 }
 
@@ -62,3 +64,4 @@ ClassDB.register_Class(InputActionMap);
 
 ClassDB.register_Class(GeometryResource);
 ClassDB.register_Class(BufferGeometryResource);
+ClassDB.register_Class(ThreeGeometryResource);

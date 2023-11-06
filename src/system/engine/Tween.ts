@@ -1,4 +1,4 @@
-import { Euler, Quaternion, Vector2, Vector3, Matrix3, Matrix4 } from "three";
+import { Euler, Quaternion, Vector2, Vector3 } from "three";
 import { SignalEmitter } from "../utils/SignalEmitter";
 import { clamp } from "./MathF";
 
