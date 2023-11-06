@@ -1,8 +1,8 @@
 <template>
     <Teleport to="#popup" :disabled="teleportDisabled">
         <div ref="container_div_dom" class="__s__ __s_popup_container__" :class="{ invisible: !visible }" :style="{
-            left: rect?.x ? `${rect?.x}px` : undefined, top: rect?.y ? `${rect?.y}px` : undefined,
-            width: rect?.width ? `${rect?.width}px` : undefined, height: rect?.height ? `${rect?.height}px` : undefined
+            left: rect?.x ? `${rect?.x}px` : '0', top: rect?.y ? `${rect?.y}px` : '0',
+            width: rect?.width ? `${rect?.width}px` : '100%', height: rect?.height ? `${rect?.height}px` : '100%'
         }">
             <slot :rect="rect" />
         </div>

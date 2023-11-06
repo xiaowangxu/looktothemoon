@@ -53,6 +53,10 @@ export class ThreeMaterialResource extends MaterialResource {
         this.init_RefCount();
     }
 
+    public cast_Material<T extends Material>() {
+        return this.material as T;
+    }
+
     public get_Material(): Material {
         return this.material;
     }

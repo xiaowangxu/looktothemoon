@@ -1,8 +1,8 @@
 <template>
     <SPopup :visible="visible" :rect="rect" :teleportDisabled="teleportDisabled">
-        <SPanel ref="spanel_ref" class="__s_popuppanel_panel__" :color="color" :style="{ width, height }"
-            @mouseenter="on_PanelMouseEntered" @mouseleave="on_PanelMouseLeaved"
-            v-on-click-outside="on_ClickOutsideHandler">
+        <SPanel ref="spanel_ref" class="__s_popuppanel_panel__" :color="color"
+            :style="{ width, height, ...($attrs.style ?? {}) }" @mouseenter="on_PanelMouseEntered"
+            @mouseleave="on_PanelMouseLeaved" v-on-click-outside="on_ClickOutsideHandler">
             <SScrollContainer width="100%" maxWidth="100%">
                 <slot :rect="rect" />
             </SScrollContainer>

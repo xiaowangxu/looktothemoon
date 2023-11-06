@@ -24,10 +24,10 @@ class ClassDataBase {
         this.db.set((cls as typeof ClassBase).class_name, cls);
     }
 
-    public instantiate<T extends typeof ClassBase>(cls: T, ...args: any[]) {
+    public instantiate<T extends typeof ClassBase>(cls: T, ...args: any[]): InstanceType<T> {
         if (!this.has_Class(cls.class_name)) throw new Error(`class ${cls.class_name} does not exist`);
         const cons = this.db.get(cls.class_name)! as new (...args: any[]) => T;
-        return new cons(...args);
+        return (new cons(...args)) as InstanceType<T>;
     }
 }
 

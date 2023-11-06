@@ -8,6 +8,10 @@ import type { TweenBase } from "./Tween";
 import { ClassBase } from "./ClassBase";
 import type { PickingArea3D } from "./nodes/physics_3ds/PickingArea3D";
 
+export class Singletion {
+    public static readonly singleton_name: string = "Singleton";
+}
+
 export class SceneTree {
     private readonly input_action_map: InputActionMap = new InputActionMap();
     private readonly root: Node;
@@ -22,6 +26,8 @@ export class SceneTree {
     public delta: number = 0;
     public physics_time: number = 0;
     public physics_delta: number = 0;
+
+    private readonly singletions: Map<string, Singletion> = new Map();
 
     private tweens: Set<TweenBase> = new Set();
 
@@ -90,6 +96,21 @@ export class SceneTree {
     }
 
     // apis
+
+    public register_Singleton(singletion: typeof Singletion) {
+        const name = singletion.singleton_name;
+        if (this.singletions.has(name)) throw new Error(`singleton ${name} already existed`);
+        this.singletions.set(name, new singletion());
+    }
+
+    public unregister_Singleton(singletion: typeof Singletion) {
+        const name = singletion.singleton_name;
+        if (this.singletions.has(name)) this.singletions.delete(name);
+    }
+
+    public get_Singleton<T extends typeof Singletion>(singletion: T): InstanceType<T> | undefined {
+        return this.singletions.get(singletion.singleton_name) as InstanceType<T> | undefined;
+    }
 
     public queue_Free(node: Node) {
         if (!node.is_inside_tree) throw new Error('can not queue free node which is not inside scene tree');
@@ -540,7 +561,7 @@ export class Node3D extends Node {
     }
 
     private _top_level: boolean = false;
-    public get top_level(){return this._top_level;}
+    public get top_level() { return this._top_level; }
     public set top_level(top_level: boolean) {
         if (this._top_level !== top_level) {
             this._top_level = top_level;
@@ -1082,7 +1103,8 @@ export class Viewport extends Node {
                 raycast.ray.origin.clone().addScaledVector(raycast.ray.direction, 100000),
                 this.physics_picking_mask,
                 camera_3d,
-                PickingOrder.Ordered,
+                this,
+                PickingOrder.OffsetOrdered,
                 PickingSide.Front,
             );
             const ray_picking_results = picking_world.perform_RayPicking(ray_picking_option);

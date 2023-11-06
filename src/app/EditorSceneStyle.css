@@ -9,6 +9,7 @@
     overflow: hidden;
     /* outline: 2px solid red;
     outline-offset: -2px; */
+    /* --CanvasBG: rgb(60, 60, 60); */
     --CanvasBG: rgb(240, 240, 240);
     background: var(--CanvasBG);
     border-radius: 10px;

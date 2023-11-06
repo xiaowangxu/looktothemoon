@@ -11,11 +11,12 @@ import { Axis } from "./nodes/Axis";
 import { WireframeBox } from "./nodes/WireframeBox";
 import { PickingArea3D } from "@/system/engine/nodes/physics_3ds/PickingArea3D";
 import { PickingShape3D } from "@/system/engine/nodes/physics_3ds/PickingShape3D";
-import { PickingBVHResource, PickingSphereResource } from "@/system/engine/resources/PickingShapeResource";
+import { PickingBVHResource, PickingPolyLineResource, PickingSphereResource } from "@/system/engine/resources/PickingShapeResource";
 import { FixSizeNode3D } from "@/system/engine/nodes/node_3ds/FixSizeNode3D";
 import { LineGrabber, PointGrabber, AngleGrabber, TranslateGrabber, RotateGrabber, TransformGrabber } from "./nodes/Grabbers";
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { PickingBoxResource } from "../system/engine/resources/PickingShapeResource";
+import { DependencyGraph } from "./singletons/DependencyGraph";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -122,8 +123,37 @@ area.add_Child(shape);
 Torus.add_Child(area);
 World.add_Child(Torus);
 
+const Edge = new MeshInstance3D();
+const EdgeGeometry = new PolyLineGeometryResource();
+EdgeGeometry.points = [new Vector3(-25, 5, 15), new Vector3(25, 5, 15)];
+const EdgeMaterial = new LineMaterialResource();
+EdgeMaterial.color = new Color(0x000000);
+EdgeMaterial.width = 1.8;
+Edge.geometry = EdgeGeometry;
+Edge.material = EdgeMaterial;
+Torus.add_Child(Edge);
+const EdgeArea = new PickingArea3D();
+const EdgeShape = new PickingShape3D();
+const EdgeShapeShape = new PickingPolyLineResource();
+EdgeShapeShape.points = EdgeGeometry.points;
+EdgeShapeShape.width = 10;
+EdgeShape.distance_offset = -0.001;
+EdgeShape.shape = EdgeShapeShape;
+EdgeArea.add_Child(EdgeShape);
+Edge.add_Child(EdgeArea);
+
+EdgeArea.signal_mouse_entered.connect((evt)=>{
+    (Edge.material as LineMaterialResource).color = new Color(0x0000ff);
+    evt.viewport!.cursor_style = 'crosshair';
+});
+EdgeArea.signal_mouse_exited.connect((evt)=>{
+    (Edge.material as LineMaterialResource).color = new Color(0x000000);
+    evt.viewport!.cursor_style = 'default';
+});
+
 // scenetree
 export const EditorSceneTree = new SceneTree(EditorViewportContainer);
+EditorSceneTree.register_Singleton(DependencyGraph);
 
 // viewport 0
 const EditorViewportContainer0 = new ViewportDomContainer();

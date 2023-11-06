@@ -42,5 +42,6 @@ defineExpose({
     padding: var(--GapAndMargin);
     background-color: var(--SColor);
     box-shadow: var(--ThemeBoxShadow);
+    box-sizing: border-box;
 }
 </style>

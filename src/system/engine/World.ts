@@ -206,7 +206,8 @@ export class PhysicsWorld3D {
 // picking world
 
 export interface PickingShape3D {
-    perform_Raycast(from: Vector3, to: Vector3, side: PickingSide, camera: Camera3D | undefined): RaycastResult | undefined;
+    preserve_global_transform: boolean;
+    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: PickingSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult | undefined;
 }
 
 class PickingArea {
@@ -223,13 +224,13 @@ class PickingArea {
 class PickingShapeInstance {
     public shape: PickingShape3D | undefined;
     public area: PickingArea | undefined;
-    public layer: number = 0xffffffff;
+    public distance_offset: number = 0;
     public global_transform: Matrix4 = new Matrix4();
     public global_transform_inverse: Matrix4 = new Matrix4();
 }
 
 export enum PickingOrder {
-    Ordered, Unordered,
+    Ordered, OffsetOrdered, Unordered,
 }
 
 export enum PickingSide {
@@ -241,14 +242,16 @@ export class RayPickingOption {
     public readonly to: Vector3;
     public readonly mask: number;
     public readonly camera: Camera3D | undefined;
+    public readonly viewport: Viewport | undefined;
     public readonly order: PickingOrder;
     public readonly side: PickingSide;
 
-    constructor(from: Vector3, to: Vector3, mask: number, camera: Camera3D | undefined, order: PickingOrder = PickingOrder.Ordered, side: PickingSide = PickingSide.Front) {
+    constructor(from: Vector3, to: Vector3, mask: number, camera: Camera3D | undefined, viewport: Viewport | undefined, order: PickingOrder = PickingOrder.Ordered, side: PickingSide = PickingSide.Front) {
         this.from = from.clone();
         this.to = to.clone();
         this.mask = mask & 0xffffffff;
         this.camera = camera;
+        this.viewport = viewport;
         this.order = order;
         this.side = side;
     }
@@ -259,13 +262,15 @@ export class RayPickingResult {
     public readonly position: Vector3;
     public readonly normal: Vector3;
     public readonly distance: number;
+    public readonly offset_distance: number;
     public readonly priority: number;
 
-    constructor(area: PickingArea3D, position: Vector3, normal: Vector3, distance: number, priority: number) {
+    constructor(area: PickingArea3D, position: Vector3, normal: Vector3, distance: number, offset_distance: number, priority: number) {
         this.area = area;
         this.position = position.clone();
         this.normal = normal.clone();
         this.distance = distance;
+        this.offset_distance = offset_distance;
         this.priority = priority;
     }
 }
@@ -283,18 +288,20 @@ export class PickingWorld3D {
     }
 
     public perform_RayPicking(option: RayPickingOption) {
-        const { mask, from, to, camera, order, side } = option;
+        const { mask, from, to, camera, viewport, order, side } = option;
         const result: RayPickingResult[] = [];
         for (const shape_instance of this.shape_map.values()) {
-            const { shape, area, global_transform, global_transform_inverse } = shape_instance;
+            const { shape, distance_offset, area, global_transform, global_transform_inverse } = shape_instance;
             if (shape !== undefined && area !== undefined && area.enabled && (area.layer & mask) !== 0) {
-                const local_from = from.clone().applyMatrix4(global_transform_inverse);
-                const local_to = to.clone().applyMatrix4(global_transform_inverse);
-                const res = shape.perform_Raycast(local_from, local_to, side, camera);
+                const preserve_global_transform = shape.preserve_global_transform;
+                const local_from = preserve_global_transform ? from.clone() : from.clone().applyMatrix4(global_transform_inverse);
+                const local_to = preserve_global_transform ? to.clone() : to.clone().applyMatrix4(global_transform_inverse);
+                const res = shape.perform_Raycast(local_from, local_to, global_transform, side, camera, viewport);
                 if (res !== undefined) {
-                    const position = res.position.clone().applyMatrix4(global_transform);
-                    const normal = res.normal.clone().applyMatrix4(global_transform).normalize();
-                    result.push(new RayPickingResult(area.area, position, normal, position.distanceTo(from), area.priority));
+                    const position = preserve_global_transform ? res.position.clone() : res.position.clone().applyMatrix4(global_transform);
+                    const normal = preserve_global_transform ? res.normal.clone() : res.normal.clone().applyMatrix4(global_transform).normalize();
+                    const distance = position.distanceTo(from)
+                    result.push(new RayPickingResult(area.area, position, normal, distance, distance + distance_offset, area.priority));
                 }
             }
         }
@@ -305,6 +312,15 @@ export class PickingWorld3D {
                 if (priority_a < priority_b) return -1;
                 if (priority_a > priority_b) return 1;
                 return a.distance - b.distance;
+            });
+        }
+        else if (order === PickingOrder.OffsetOrdered) {
+            result.sort((a, b) => {
+                const priority_a = a.priority;
+                const priority_b = b.priority;
+                if (priority_a < priority_b) return -1;
+                if (priority_a > priority_b) return 1;
+                return a.offset_distance - b.offset_distance;
             });
         }
         return result;
@@ -378,6 +394,12 @@ export class PickingWorld3D {
         const _shape = this.get_Shape(rid);
         if (_shape === undefined) return;
         _shape.shape = shape;
+    }
+
+    public set_PickingShapeInstanceDistanceOffset(rid: RID, distance_offset: number) {
+        const _shape = this.get_Shape(rid);
+        if (_shape === undefined) return;
+        _shape.distance_offset = distance_offset;
     }
 
     public clear_PickingShapeInstanceShape(rid: RID) {

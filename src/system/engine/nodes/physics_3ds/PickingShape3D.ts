@@ -27,6 +27,20 @@ export class PickingShape3D extends Node3D {
         }
     }
 
+    private _distance_offset: number = 0;
+    public get distance_offset() { return this._distance_offset; }
+    public set distance_offset(distance_offset: number) {
+        if (this._distance_offset !== distance_offset) {
+            this._distance_offset = distance_offset;
+            if (this.shape_rid !== undefined) {
+                const picking_world = this.get_Viewport()?.get_World3D()?.get_PickingWorld();
+                if (picking_world !== undefined) {
+                    picking_world.set_PickingShapeInstanceDistanceOffset(this.shape_rid, this._distance_offset);
+                }
+            }
+        }
+    }
+
     public _notification(what: NodeNotification): void {
         switch (what) {
             case NodeNotification.EnteredTree: {
@@ -34,6 +48,7 @@ export class PickingShape3D extends Node3D {
                     const picking_world = this.get_Viewport()?.get_World3D()?.get_PickingWorld();
                     if (picking_world !== undefined) {
                         this.shape_rid = picking_world.create_PickingShapeInstance();
+                        picking_world.set_PickingShapeInstanceDistanceOffset(this.shape_rid, this.distance_offset);
                         if (this.shape !== undefined) {
                             picking_world.set_PickingShapeInstanceShape(this.shape_rid, this.shape);
                         }

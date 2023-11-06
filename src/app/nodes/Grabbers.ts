@@ -454,11 +454,11 @@ export class AngleGrabber extends GrabberElement<{ angle: number, relative: numb
         this.line.material = this.material;
 
         const picking_shape = new PickingBVHResource();
-        picking_shape.compute_BVH(new ThreeGeometryResource(new TorusGeometry(0.6, 0.05, undefined, undefined, Math.PI / 2 - size_gap_rad)));
+        picking_shape.compute_BVH(new ThreeGeometryResource(new TorusGeometry(0.6, 0.075, undefined, undefined, Math.PI / 2 - size_gap_rad)));
         this.shape.shape = picking_shape;
 
         // const test_shape = new MeshInstance3D();
-        // test_shape.geometry = new ThreeGeometryResource(new TorusGeometry(0.5, 0.05, undefined, undefined, Math.PI / 2));
+        // test_shape.geometry = new ThreeGeometryResource(new TorusGeometry(0.6, 0.075, undefined, undefined, Math.PI / 2 - size_gap_rad));
         // test_shape.material = new ThreeMaterialResource(new MeshMatcapMaterial({ color: 0xff00ff, transparent: true, opacity: 0.3, depthTest: false, depthWrite: false }));
         // this.shape.add_Child(test_shape);
 
@@ -494,6 +494,7 @@ export class AngleGrabber extends GrabberElement<{ angle: number, relative: numb
         this.add_Child(this.line_base);
         this.guide_line.local_rotation = new Euler(0, 0, gap_rad / 2);
         this.grabber.local_rotation = new Euler(0, 0, size_gap_rad / 2);
+        this.area.local_rotation = new Euler(0, 0, size_gap_rad / 2);
         this.line.local_position = new Vector3(0.6, 0, 0);
 
         // this.shape.local_position = new Vector3(0, 0.5, 0);
