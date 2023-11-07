@@ -1,9 +1,9 @@
 import { clamp } from "@/system/engine/MathF";
 import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/MeshInstance3D";
-import { BufferGeometryResource, GeometryResource, SegmentLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/GeometryResource";
+import { GeometryResource, SegmentLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/GeometryResource";
 import { LineMaterialResource, MaterialResource, ThreeMaterialResource } from "@/system/engine/resources/MaterialResource";
 import { Cacher } from "@/system/utils/Cacher";
-import { Box3, BoxGeometry, Color, Matrix4, Mesh, MeshBasicMaterial, Vector3 } from "three";
+import { Box3, BoxGeometry, Color, Matrix4, MeshBasicMaterial, Vector3 } from "three";
 
 const WireframeBoxWireFrameGeometry = new Cacher<SegmentLineGeometryResource>(() => {
     const geometry = new SegmentLineGeometryResource();

@@ -1,7 +1,10 @@
-import { BufferGeometry, Vector3, InstancedInterleavedBuffer, InterleavedBufferAttribute, Color, SphereGeometry } from 'three';
+import { BufferGeometry, Vector3, InstancedInterleavedBuffer, InterleavedBufferAttribute, Color, ObjectLoader } from 'three';
 import { Resource } from '../Resource';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
+import { ClassReader, type ClassWriter } from '../classes/ClassWriterReader';
+import { ValueObject } from '../classes/ValueObject';
+import { PlainObject } from '../classes/PlainObject';
 
 declare module 'three' {
     interface BufferGeometry {
@@ -43,21 +46,6 @@ export class GeometryResource extends Resource {
     }
 }
 
-export class BufferGeometryResource extends GeometryResource {
-    public static readonly class_name: string = "BufferGeometryResource";
-
-    private readonly buffer_geometry: BufferGeometry = new BufferGeometry();
-
-    constructor() {
-        super();
-        this.init_RefCount();
-    }
-
-    public get_BufferGeometry(): BufferGeometry {
-        return this.buffer_geometry;
-    }
-}
-
 export class ThreeGeometryResource extends GeometryResource {
     public static readonly class_name: string = "ThreeGeometryResource";
     public static readonly use_custom_instantiater: boolean = true;
@@ -74,8 +62,26 @@ export class ThreeGeometryResource extends GeometryResource {
         return this.buffer_geometry;
     }
 
-    public static instantiate(): ThreeGeometryResource {
-        return new ThreeGeometryResource(new SphereGeometry(10));
+    public dump(writer: ClassWriter): void {
+        writer.initialization('three_geometry', new PlainObject(this.buffer_geometry.toJSON()));
+    }
+
+    public load(reader: ClassReader): void { }
+
+    public static instantiate(data: any | ClassReader): ThreeGeometryResource {
+        if (data instanceof ClassReader) {
+            const three_geometry: PlainObject | undefined = data.get('three_geometry');
+            if (three_geometry === undefined || !(three_geometry instanceof PlainObject)) throw new Error('can not instantiate ThreeGeometryResource');
+            const loader = new ObjectLoader();
+            const geometries = loader.parseGeometries([three_geometry.value]);
+            const geometry = geometries[three_geometry.value.uuid];
+            return new ThreeGeometryResource(geometry);
+        }
+        else {
+            const three_geometry: BufferGeometry | undefined = data.three_geometry;
+            if (three_geometry === undefined || !(three_geometry instanceof BufferGeometry)) throw new Error('can not instantiate ThreeGeometryResource');
+            return new ThreeGeometryResource(three_geometry);
+        }
     }
 }
 
@@ -92,6 +98,7 @@ export class PolyLineGeometryResource extends GeometryResource {
         this._points = points;
         (this.line_geometry as BufferGeometry).deleteAttribute('instanceDistanceStart');
         (this.line_geometry as BufferGeometry).deleteAttribute('instanceDistanceEnd');
+        this.line_distance_computed = false;
         this.line_geometry.setPositions(this._points.flatMap(p => [p.x, p.y, p.z]));
     }
 
@@ -109,6 +116,8 @@ export class PolyLineGeometryResource extends GeometryResource {
         this.init_RefCount();
     }
 
+    private line_distance_computed: boolean = false;
+
     public compute_LineDistances() {
         const instance_start = this.line_geometry.attributes.instanceStart;
         const instance_end = this.line_geometry.attributes.instanceEnd;
@@ -122,10 +131,26 @@ export class PolyLineGeometryResource extends GeometryResource {
         const instance_distance_buffer = new InstancedInterleavedBuffer(line_distances, 2, 1); // d0, d1
         (this.line_geometry as BufferGeometry).setAttribute('instanceDistanceStart', new InterleavedBufferAttribute(instance_distance_buffer, 1, 0)); // d0
         (this.line_geometry as BufferGeometry).setAttribute('instanceDistanceEnd', new InterleavedBufferAttribute(instance_distance_buffer, 1, 1)); // d1
+        this.line_distance_computed = true;
     }
 
     public get_BufferGeometry(): BufferGeometry {
         return this.line_geometry;
+    }
+
+    public dump(writer: ClassWriter): void {
+        writer.property('points', new ValueObject(this.points))
+            .property('colors', new ValueObject(this.colors))
+            .property('compute_line_distance', this.line_distance_computed);
+    }
+
+    public load(reader: ClassReader): void {
+        const points = reader.get<ValueObject>('points')?.value;
+        if (points !== undefined) this.points = points;
+        const colors = reader.get<ValueObject>('colors')?.value;
+        if (colors !== undefined) this.colors = colors;
+        const line_distance_computed = reader.get<boolean>('compute_line_distance') ?? false;
+        if (line_distance_computed) this.compute_LineDistances();
     }
 }
 
@@ -159,5 +184,17 @@ export class SegmentLineGeometryResource extends GeometryResource {
 
     public get_BufferGeometry(): BufferGeometry {
         return this.line_segment_geometry;
+    }
+
+    public dump(writer: ClassWriter): void {
+        writer.property('points', new ValueObject(this.points))
+            .property('colors', new ValueObject(this.colors));
+    }
+
+    public load(reader: ClassReader): void {
+        const points = reader.get<ValueObject>('points')?.value;
+        if (points !== undefined) this.points = points;
+        const colors = reader.get<ValueObject>('colors')?.value;
+        if (colors !== undefined) this.colors = colors;
     }
 }

@@ -5,7 +5,7 @@ import { Renderer3D } from "./Renderer";
 import { PickingOrder, PickingSide, RayPickingOption, World3D } from "./World";
 import { InputActionMap, InputEvent, InputManager, MouseEnterLeaveInputEvent, MouseInputEvent, MouseMotionInputEvent, ViewportActionInputEventManager, ViewportKeyInputEventManager, ViewportMouseInputEventManager } from "./InputEvent";
 import type { TweenBase } from "./Tween";
-import { ClassBase } from "./ClassBase";
+import { ClassBase } from "./classes/ClassBase";
 import type { PickingArea3D } from "./nodes/physics_3ds/PickingArea3D";
 
 export class Singletion {

@@ -193,6 +193,11 @@ export class IncTopoGraph<T> {
         return true;
     }
 
+    public clear() {
+        this.last_order = 0;
+        this.nodes_map.clear();
+    }
+
     public get unsorted() {
         return [...this.nodes_map.values()];
     }

@@ -17,6 +17,7 @@ import { LineGrabber, PointGrabber, AngleGrabber, TranslateGrabber, RotateGrabbe
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { PickingBoxResource } from "../system/engine/resources/PickingShapeResource";
 import { DependencyGraph } from "./singletons/DependencyGraph";
+import { ClassLoader } from "../system/engine/classes/ClassSaverLoader";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -100,6 +101,37 @@ class Sphere extends MeshInstance3D {
 // sph3.local_position = new Vector3(-400, 200, 0);
 // World.add_Child(sph3);
 
+const json = `{
+    "type": "LTTMClassDescriptor",
+    "root": "classref(0)",
+    "instances": [
+      {
+        "type": "PolyLineGeometryResource",
+        "refid": "classref(0)",
+        "initialization": {},
+        "property": {
+          "points": "valueobject([\\\"vector3(0,0,0)\\\",\\\"vector3(100,0,0)\\\",\\\"vector3(100,100,0)\\\"])",
+          "colors": "valueobject([\\\"color(1,0,0)\\\",\\\"color(0,1,0)\\\",\\\"color(0,0,1)\\\"])"
+        }
+      }
+    ]
+  }`;
+const loader = new ClassLoader();
+const result = loader.load<PolyLineGeometryResource>(json);
+if (result.failed) {
+    console.error(result.error);
+}
+else {
+    const mesh = new MeshInstance3D();
+    mesh.geometry = result.value;
+    const mat = new LineMaterialResource();
+    mat.vertex_colors = true;
+    mat.width = 5;
+    mesh.material = mat;
+    World.add_Child(mesh);
+    // console.log(mesh);
+}
+
 const Torus = new MeshInstance3D();
 Torus.geometry = new ThreeGeometryResource(new BoxGeometry(50, 10, 30));
 Torus.material = new ThreeMaterialResource(new MeshMatcapMaterial({}));
@@ -142,11 +174,11 @@ EdgeShape.shape = EdgeShapeShape;
 EdgeArea.add_Child(EdgeShape);
 Edge.add_Child(EdgeArea);
 
-EdgeArea.signal_mouse_entered.connect((evt)=>{
+EdgeArea.signal_mouse_entered.connect((evt) => {
     (Edge.material as LineMaterialResource).color = new Color(0x0000ff);
     evt.viewport!.cursor_style = 'crosshair';
 });
-EdgeArea.signal_mouse_exited.connect((evt)=>{
+EdgeArea.signal_mouse_exited.connect((evt) => {
     (Edge.material as LineMaterialResource).color = new Color(0x000000);
     evt.viewport!.cursor_style = 'default';
 });

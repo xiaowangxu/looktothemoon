@@ -1,6 +1,9 @@
 import { Resource } from "../Resource";
 import { Camera, Color, Material, MeshNormalMaterial, Scene, WebGLRenderer } from 'three';
+import { MaterialLoader } from 'three';
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
+import { PlainObject } from "@/system/engine/classes/PlainObject";
+import { ClassReader, type ClassWriter } from "../classes/ClassWriterReader";
 
 declare module 'three' {
     interface Material {
@@ -44,6 +47,7 @@ export class MaterialResource extends Resource {
 
 export class ThreeMaterialResource extends MaterialResource {
     public static readonly class_name: string = "ThreeMaterialResource";
+    public static readonly use_custom_instantiater: boolean = true;
 
     private readonly material: Material;
 
@@ -59,6 +63,27 @@ export class ThreeMaterialResource extends MaterialResource {
 
     public get_Material(): Material {
         return this.material;
+    }
+
+    public dump(writer: ClassWriter): void {
+        writer.initialization('three_material', new PlainObject(this.material.toJSON()));
+    }
+
+    public load(reader: ClassReader): void { }
+
+    public static instantiate(data: any | ClassReader): ThreeMaterialResource {
+        if (data instanceof ClassReader) {
+            const three_material: PlainObject | undefined = data.get('three_material');
+            if (three_material === undefined || !(three_material instanceof PlainObject)) throw new Error('can not instantiate ThreeMaterialResource');
+            const loader = new MaterialLoader();
+            const material = loader.parse(three_material.value);
+            return new ThreeMaterialResource(material);
+        }
+        else {
+            const three_material: Material | undefined = data.three_material;
+            if (three_material === undefined || !(three_material instanceof Material)) throw new Error('can not instantiate ThreeMaterialResource');
+            return new ThreeMaterialResource(three_material);
+        }
     }
 }
 

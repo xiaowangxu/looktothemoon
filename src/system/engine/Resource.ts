@@ -1,5 +1,5 @@
 import { SignalEmitter } from '../utils/SignalEmitter';
-import { ClassBase } from './ClassBase';
+import { ClassBase } from './classes/ClassBase';
 
 export class Resource extends ClassBase {
     public static readonly class_name: string = "Resource";
