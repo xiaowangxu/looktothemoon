@@ -18,6 +18,15 @@ export class ClassWriter {
         this.base = base;
     }
 
+    public ref(obj: ClassBase, deps: boolean = true) {
+        if (deps) {
+            return this.scope.create_Ref(this.base, obj);
+        }
+        else {
+            return this.scope.add_Ref(obj);
+        }
+    }
+
     public initialization(key: string, value: any) {
         if (value === undefined) return this;
         if (value instanceof ClassBase) {
