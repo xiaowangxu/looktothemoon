@@ -1,4 +1,5 @@
 import { Node3D, NodeNotification } from "../../SceneTree";
+import type { ClassReader, ClassWriter } from "../../classes/ClassWriterReader";
 
 export class VisualInstance3D extends Node3D {
     public static readonly class_name: string = "VisualInstance3D";
@@ -76,5 +77,19 @@ export class VisualInstance3D extends Node3D {
             }
         }
         super._notification(what);
+    }
+
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        super.dump(writer);
+        writer.property('local_visible', this.local_visible);
+        writer.property('visual_layer', this.visual_layer);
+    }
+
+    public load(reader: ClassReader): void {
+        super.load(reader);
+        this.local_visible = reader.get<boolean>('local_visible') ?? true;
+        this.visual_layer = reader.get<number>('visual_layer') ?? 0xffffffff;
     }
 }

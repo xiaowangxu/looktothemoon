@@ -29,7 +29,7 @@ Material.prototype.unref = function () {
     }
 }
 
-export class MaterialResource extends Resource {
+export abstract class MaterialResource extends Resource {
     public static readonly class_name: string = "MaterialResource";
 
     constructor() {
@@ -236,5 +236,37 @@ export class LineMaterialResource extends MaterialResource {
 
     public get_Material(): Material {
         return this.line_material;
+    }
+
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        writer.property('transparent', this.transparent);
+        writer.property('opacity', this.opacity);
+        writer.property('color', this.color);
+        writer.property('vertex_colors', this.vertex_colors);
+        writer.property('width', this.width);
+        writer.property('world_unit', this.world_unit);
+        writer.property('alpha_to_coverage', this.alpha_to_coverage);
+        writer.property('dashed', this.dashed);
+        writer.property('dash_scale', this.dash_scale);
+        writer.property('gap_size', this.gap_size);
+        writer.property('dash_size', this.dash_size);
+        writer.property('dash_offset', this.dash_offset);
+    }
+
+    public load(reader: ClassReader): void {
+        this.transparent = reader.get<boolean>('transparent') ?? false;
+        this.opacity = reader.get<number>('opacity') ?? 1;
+        this.color = reader.get<Color>('color') ?? new Color(1, 1, 1);
+        this.vertex_colors = reader.get<boolean>('vertex_colors') ?? false;
+        this.width = reader.get<number>('width') ?? 1;
+        this.world_unit = reader.get<boolean>('world_unit') ?? false;
+        this.alpha_to_coverage = reader.get<boolean>('alpha_to_coverage') ?? true;
+        this.dashed = reader.get<boolean>('dashed') ?? false;
+        this.dash_scale = reader.get<number>('dash_scale') ?? 1;
+        this.gap_size = reader.get<number>('gap_size') ?? 1;
+        this.dash_size = reader.get<number>('dash_size') ?? 2;
+        this.dash_offset = reader.get<number>('dash_offset') ?? 0;
     }
 }

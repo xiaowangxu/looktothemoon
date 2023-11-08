@@ -10,11 +10,16 @@ import { VisualInstance3D } from "../nodes/visual_instances/VisualInstance3D";
 import { ClassBase } from "./ClassBase";
 import { Resource } from "../Resource";
 import { ActionInputEvent, ComposeInputEvent, InputActionMap, InputEvent, InputEventFromViewport, KeyInputEvent, MouseButton, MouseButtonInputEvent, MouseEnterLeaveInputEvent, MouseInputEvent, MouseMotionInputEvent, ShortCut, } from "../InputEvent";
-import {  GeometryResource, PolyLineGeometryResource, ThreeGeometryResource } from "../resources/GeometryResource";
+import { GeometryResource, PolyLineGeometryResource, ThreeGeometryResource } from "../resources/GeometryResource";
 import { MaterialResource, ThreeMaterialResource } from "../resources/MaterialResource";
 import { Color, Vector2, Vector3, Vector4, Euler, Quaternion, Matrix3, Matrix4 } from "three";
 import { PlainObject } from "./PlainObject";
 import { ValueObject } from "./ValueObject";
+import type { ClassReader, ClassWriter } from "./ClassWriterReader";
+import { PackedSceneResource } from "../resources/PackedSceneResource";
+import { PickingArea3D } from "../nodes/physics_3ds/PickingArea3D";
+import { PickingShape3D } from "../nodes/physics_3ds/PickingShape3D";
+import { PickingBoxResource } from "../resources/PickingShapeResource";
 
 export class ClassDataBase {
     private readonly db: Map<string, typeof ClassBase> = new Map();
@@ -40,6 +45,7 @@ export class ClassDataBase {
 export const ClassDB = new ClassDataBase();
 
 ClassDB.register_Class(ClassBase);
+
 ClassDB.register_Class(Node);
 ClassDB.register_Class(Node3D);
 ClassDB.register_Class(Camera3D);
@@ -52,8 +58,13 @@ ClassDB.register_Class(InterpolateCamera3D);
 ClassDB.register_Class(OrthographicCamera3D);
 ClassDB.register_Class(PerspectiveCamera3D);
 ClassDB.register_Class(ViewportDomContainer);
+ClassDB.register_Class(PickingArea3D);
+ClassDB.register_Class(PickingShape3D);
 
 ClassDB.register_Class(Resource);
+
+ClassDB.register_Class(PackedSceneResource);
+
 ClassDB.register_Class(InputEvent);
 ClassDB.register_Class(InputEventFromViewport);
 ClassDB.register_Class(ComposeInputEvent);
@@ -66,12 +77,12 @@ ClassDB.register_Class(ActionInputEvent);
 ClassDB.register_Class(ShortCut);
 ClassDB.register_Class(InputActionMap);
 
-ClassDB.register_Class(GeometryResource);
 ClassDB.register_Class(ThreeGeometryResource);
 ClassDB.register_Class(PolyLineGeometryResource);
 
-ClassDB.register_Class(MaterialResource);
 ClassDB.register_Class(ThreeMaterialResource);
+
+ClassDB.register_Class(PickingBoxResource);
 
 export class ValueDataBase {
     private readonly saver: Map<Function, (v: any, value_db: ValueDataBase) => string> = new Map();
@@ -161,7 +172,7 @@ ValueDB.register_Value('matrix3', Matrix3, v => v.elements.join(','), v => {
         v6 = parseFloat(nums[6]),
         v7 = parseFloat(nums[7]),
         v8 = parseFloat(nums[8]);
-    return new Matrix3(v0, v1, v2, v3, v4, v5, v6, v7, v8);
+    return new Matrix3(v0, v3, v6, v1, v4, v7, v2, v5, v8);
 });
 
 ValueDB.register_Value('matrix4', Matrix4, v => v.elements.join(','), v => {
@@ -182,7 +193,10 @@ ValueDB.register_Value('matrix4', Matrix4, v => v.elements.join(','), v => {
         v13 = parseFloat(nums[13]),
         v14 = parseFloat(nums[14]),
         v15 = parseFloat(nums[15]);
-    return new Matrix4(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15);
+    return new Matrix4(v0, v4, v8, v12,
+                       v1, v5, v9, v13,
+                       v2, v6, v10, v14,
+                       v3, v7, v11, v15);
 });
 
 ValueDB.register_Value('color', Color, v => `${v.r},${v.g},${v.b}`, v => {

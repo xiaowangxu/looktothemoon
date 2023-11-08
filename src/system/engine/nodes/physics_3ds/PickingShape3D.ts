@@ -1,5 +1,6 @@
 import type { RID } from "../../Rid";
 import { Node3D, NodeNotification } from "../../SceneTree";
+import type { ClassReader, ClassWriter } from "../../classes/ClassWriterReader";
 import type { PickingShape3DResource } from "../../resources/PickingShapeResource";
 import { PickingArea3D } from "./PickingArea3D";
 
@@ -86,5 +87,20 @@ export class PickingShape3D extends Node3D {
             }
         }
         super._notification_IgnoreTransformChange(what);
+    }
+
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        super.dump(writer);
+        writer.property('shape', this.shape);
+        writer.property('distance_offset', this.distance_offset);
+    }
+
+    public load(reader: ClassReader): void {
+        super.load(reader);
+        const shape = reader.get<PickingShape3DResource>('shape');
+        this.shape = shape;
+        this.distance_offset = reader.get<number>('distance_offset') ?? 0;
     }
 }

@@ -5,8 +5,10 @@ import { PickingSide, type PickingShape3D, type RaycastResult } from "../World";
 import { EPSILON, lerp } from '../MathF';
 import { MeshBVH } from 'three-mesh-bvh';
 import type { GeometryResource } from "./GeometryResource";
+import type { ClassReader, ClassWriter } from "../classes/ClassWriterReader";
+import { ValueObject } from "../classes/ValueObject";
 
-export class PickingShape3DResource extends Resource implements PickingShape3D {
+export abstract class PickingShape3DResource extends Resource implements PickingShape3D {
     public static readonly class_name: string = "PickingShape3DResource";
 
     public readonly preserve_global_transform: boolean = false;
@@ -109,6 +111,20 @@ export class PickingBoxResource extends Resource {
 
         return { position: result, normal: normal };
     }
+
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        writer.property('width', this.width);
+        writer.property('height', this.height);
+        writer.property('depth', this.depth);
+    }
+
+    public load(reader: ClassReader): void {
+        this.width = reader.get<number>('width') ?? 1;
+        this.height = reader.get<number>('height') ?? 1;
+        this.depth = reader.get<number>('depth') ?? 1;
+    }
 }
 
 export class PickingSphereResource extends PickingShape3DResource {
@@ -160,6 +176,16 @@ export class PickingSphereResource extends PickingShape3DResource {
         const result_normal = result_position.normalize();
 
         return { position: result_position, normal: result_normal };
+    }
+
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        writer.property('radius', this.radius);
+    }
+
+    public load(reader: ClassReader): void {
+        this.radius = reader.get<number>('radius') ?? 0.5;
     }
 }
 
@@ -281,6 +307,18 @@ export class PickingCylinderResource extends PickingShape3DResource {
         res_normal.normalize();
 
         return { position: result, normal: res_normal };
+    }
+
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        writer.property('radius', this.radius);
+        writer.property('height', this.height);
+    }
+
+    public load(reader: ClassReader): void {
+        this.radius = reader.get<number>('radius') ?? 0.5;
+        this.height = reader.get<number>('height') ?? 1;
     }
 }
 
@@ -460,7 +498,7 @@ export class PickingPolyLineResource extends PickingShape3DResource {
                 const pointOnLine = new Vector3();
                 const point = new Vector3();
                 ray.distanceSqToSegment(s, e, point, pointOnLine);
-                
+
                 const distance = ray.origin.distanceTo(pointOnLine);
 
                 if (width < min_width || (width === min_width && distance < min_distance)) {
@@ -493,5 +531,18 @@ export class PickingPolyLineResource extends PickingShape3DResource {
         }
 
         return this.raycast_ScreenSpace(ray, global_transform, _camera, resolution);
+    }
+
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        writer.property('width', this.width);
+        writer.property('points', new ValueObject(this.points));
+    }
+
+    public load(reader: ClassReader): void {
+        this.width = reader.get<number>('width') ?? 5;
+        const points = reader.get<ValueObject>('points')?.value;
+        if (points !== undefined) this.points = points;
     }
 }

@@ -7,6 +7,7 @@ import { InputActionMap, InputEvent, InputManager, MouseEnterLeaveInputEvent, Mo
 import type { TweenBase } from "./Tween";
 import { ClassBase } from "./classes/ClassBase";
 import type { PickingArea3D } from "./nodes/physics_3ds/PickingArea3D";
+import type { ClassReader, ClassWriter } from "./classes/ClassWriterReader";
 
 export class Singletion {
     public static readonly singleton_name: string = "Singleton";
@@ -524,6 +525,18 @@ export class Node extends ClassBase {
     public _physics_process(delta: number) {
 
     }
+
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        writer.property('name', this.name);
+        writer.property('block_input', this.block_input);
+    }
+
+    public load(reader: ClassReader): void {
+        this.name = reader.get<string>('name');
+        this.block_input = reader.get<boolean>('block_input') ?? false;
+    }
 }
 
 export class Node3D extends Node {
@@ -715,6 +728,20 @@ export class Node3D extends Node {
 
     public to_Local(global_position: Vector3) {
         return global_position.clone().applyMatrix4(this.global_transform.invert());
+    }
+
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        super.dump(writer);
+        writer.property('top_level', this.top_level);
+        writer.property('local_transform', this.local_transform);
+    }
+
+    public load(reader: ClassReader): void {
+        super.load(reader);
+        this.top_level = reader.get<boolean>('top_level') ?? false;
+        this.local_transform = reader.get<Matrix4>('local_transform') ?? new Matrix4();
     }
 }
 

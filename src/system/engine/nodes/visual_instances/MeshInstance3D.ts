@@ -1,7 +1,9 @@
 import type { RID } from "../../Rid";
 import { NodeNotification } from "../../SceneTree";
+import type { ClassReader, ClassRef, ClassWriter } from "../../classes/ClassWriterReader";
+import { ValueObject } from "../../classes/ValueObject";
 import type { GeometryResource } from "../../resources/GeometryResource";
-import type { MaterialResource } from "../../resources/MaterialResource";
+import { MaterialResource } from "../../resources/MaterialResource";
 import { GeometryInstance3D } from "./GeometryInstance3D";
 
 export class MeshInstance3D extends GeometryInstance3D {
@@ -114,5 +116,33 @@ export class MeshInstance3D extends GeometryInstance3D {
             }
         }
         super._notification(what);
+    }
+
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        super.dump(writer);
+        writer.property('geometry', this.geometry)
+        writer.property('material',
+            this.material === undefined ?
+                undefined :
+                (
+                    this.material instanceof MaterialResource ?
+                        this.material :
+                        new ValueObject(this.material.map(m => writer.ref(m, false)))
+                )
+        );
+    }
+
+    public load(reader: ClassReader): void {
+        super.load(reader);
+        const geometry = reader.get<GeometryResource>('geometry');
+        this.geometry = geometry;
+        const material = reader.get('material');
+        if (material === undefined) { }
+        else if (material instanceof MaterialResource) this.material = material;
+        else if (material instanceof ValueObject) {
+            this.material = (material.value as ClassRef[]).map(ref => reader.get<MaterialResource>(ref)!);
+        }
     }
 }

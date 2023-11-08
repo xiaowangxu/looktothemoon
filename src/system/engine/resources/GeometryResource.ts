@@ -30,7 +30,7 @@ BufferGeometry.prototype.unref = function () {
     }
 }
 
-export class GeometryResource extends Resource {
+export abstract class GeometryResource extends Resource {
     public static readonly class_name: string = "GeometryResource";
 
     constructor() {
@@ -61,6 +61,8 @@ export class ThreeGeometryResource extends GeometryResource {
     public get_BufferGeometry(): BufferGeometry {
         return this.buffer_geometry;
     }
+
+    // save / load
 
     public dump(writer: ClassWriter): void {
         writer.initialization('three_geometry', new PlainObject(this.buffer_geometry.toJSON()));
@@ -138,10 +140,12 @@ export class PolyLineGeometryResource extends GeometryResource {
         return this.line_geometry;
     }
 
+    // save / load
+
     public dump(writer: ClassWriter): void {
-        writer.property('points', new ValueObject(this.points))
-            .property('colors', new ValueObject(this.colors))
-            .property('compute_line_distance', this.line_distance_computed);
+        writer.property('points', new ValueObject(this.points));
+        writer.property('colors', new ValueObject(this.colors));
+        writer.property('compute_line_distance', this.line_distance_computed);
     }
 
     public load(reader: ClassReader): void {
@@ -186,9 +190,11 @@ export class SegmentLineGeometryResource extends GeometryResource {
         return this.line_segment_geometry;
     }
 
+    // save / load
+
     public dump(writer: ClassWriter): void {
-        writer.property('points', new ValueObject(this.points))
-            .property('colors', new ValueObject(this.colors));
+        writer.property('points', new ValueObject(this.points));
+        writer.property('colors', new ValueObject(this.colors));
     }
 
     public load(reader: ClassReader): void {

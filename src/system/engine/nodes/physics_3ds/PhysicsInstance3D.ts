@@ -1,4 +1,5 @@
 import { Node3D } from "../../SceneTree";
+import type { ClassReader, ClassWriter } from "../../classes/ClassWriterReader";
 
 export class PhysicsInstance3D extends Node3D {
     public static readonly class_name: string = "PhysicsInstance3D";
@@ -42,5 +43,21 @@ export class PhysicsInstance3D extends Node3D {
 
     protected on_DetectLayerChanged() {
         throw new Error('abstract method');
+    }
+    
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        super.dump(writer);
+        writer.property('enabled', this.enabled);
+        writer.property('layer', this.layer);
+        writer.property('detect_layer', this.detect_layer);
+    }
+
+    public load(reader: ClassReader): void {
+        super.load(reader);
+        this.enabled = reader.get<boolean>('enabled') ?? true;
+        this.layer = reader.get<number>('layer') ?? 0xffffffff;
+        this.detect_layer = reader.get<number>('detect_layer') ?? 0xffffffff;
     }
 }

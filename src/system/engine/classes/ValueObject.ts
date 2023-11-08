@@ -1,9 +1,9 @@
 import type { ValueDataBase } from "./ClassValueDataBase";
 
-export class ValueObject {
-    public readonly value: any[] | Object;
+export class ValueObject<T = any> {
+    public readonly value: T;
 
-    constructor(value: any[] | Object) {
+    constructor(value: T) {
         this.value = value;
     }
 
@@ -41,13 +41,13 @@ export class ValueObject {
         return value_db.load_Value(value as string);
     }
 
-    public static save(v: ValueObject, value_db: ValueDataBase) {
+    public static save<V = any>(v: ValueObject<V>, value_db: ValueDataBase) {
         const str = ValueObject.stringify(v.value, value_db);
         if (str === undefined) throw new Error(`can not stringify object`);
         return str;
     }
 
-    public static load(v: string, value_db: ValueDataBase): ValueObject {
-        return new ValueObject(JSON.parse(v, (key, value) => ValueObject.parse(value, value_db)));
+    public static load<V = any>(v: string, value_db: ValueDataBase): ValueObject<V> {
+        return new ValueObject<V>(JSON.parse(v, (key, value) => ValueObject.parse(value, value_db)));
     }
 }

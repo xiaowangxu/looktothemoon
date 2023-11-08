@@ -1,6 +1,7 @@
 import { EPSILON } from "../../MathF";
 import { Node3D, NodeNotification } from "../../SceneTree";
 import { Raycaster, Vector2, Plane, Line3, Vector3 } from "three";
+import type { ClassReader, ClassWriter } from "../../classes/ClassWriterReader";
 
 export class FixSizeNode3D extends Node3D {
     public static readonly class_name: string = "FixSizeNode3D";
@@ -42,5 +43,19 @@ export class FixSizeNode3D extends Node3D {
             }
         }
         super._notification(what);
+    }
+    
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        super.dump(writer);
+        writer.property('unit_pixel_count', this.unit_pixel_count);
+        writer.property('use_active_viewport', this.use_active_viewport);
+    }
+
+    public load(reader: ClassReader): void {
+        super.load(reader);
+        this.unit_pixel_count = reader.get<number>('unit_pixel_count') ?? 50;
+        this.use_active_viewport = reader.get<boolean>('use_active_viewport') ?? true;
     }
 }

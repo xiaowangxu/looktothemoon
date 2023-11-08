@@ -25,7 +25,10 @@ export class Result<T, Err> {
 
     public unwrap() {
         if (this.ok) return this.value;
-        else throw new Error('failed to unwrap from Result.Error');
+        else {
+            console.error(this.error);
+            throw new Error(`failed to unwrap from Result.Error\nbecause ${this.error.toString()}`);
+        }
     }
 
     public unwrap_Error() {

@@ -17,7 +17,8 @@ import { LineGrabber, PointGrabber, AngleGrabber, TranslateGrabber, RotateGrabbe
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { PickingBoxResource } from "../system/engine/resources/PickingShapeResource";
 import { DependencyGraph } from "./singletons/DependencyGraph";
-import { ClassLoader } from "../system/engine/classes/ClassSaverLoader";
+import { ClassLoader, ClassSaver } from "../system/engine/classes/ClassSaverLoader";
+import { PackedSceneResource } from "@/system/engine/resources/PackedSceneResource";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -101,36 +102,21 @@ class Sphere extends MeshInstance3D {
 // sph3.local_position = new Vector3(-400, 200, 0);
 // World.add_Child(sph3);
 
-const json = `{
-    "type": "LTTMClassDescriptor",
-    "root": "classref(0)",
-    "instances": [
-      {
-        "type": "PolyLineGeometryResource",
-        "refid": "classref(0)",
-        "initialization": {},
-        "property": {
-          "points": "valueobject([\\\"vector3(0,0,0)\\\",\\\"vector3(100,0,0)\\\",\\\"vector3(100,100,0)\\\"])",
-          "colors": "valueobject([\\\"color(1,0,0)\\\",\\\"color(0,1,0)\\\",\\\"color(0,0,1)\\\"])"
-        }
-      }
-    ]
-  }`;
-const loader = new ClassLoader();
-const result = loader.load<PolyLineGeometryResource>(json);
-if (result.failed) {
-    console.error(result.error);
-}
-else {
-    const mesh = new MeshInstance3D();
-    mesh.geometry = result.value;
-    const mat = new LineMaterialResource();
-    mat.vertex_colors = true;
-    mat.width = 5;
-    mesh.material = mat;
-    World.add_Child(mesh);
-    // console.log(mesh);
-}
+// const loader = new ClassLoader();
+// const result = loader.fetch<PolyLineGeometryResource>('res://test.lttm');
+// if (result.failed) {
+//     console.error(result.error);
+// }
+// else {
+//     const mesh = new MeshInstance3D();
+//     mesh.geometry = result.value;
+//     const mat = new LineMaterialResource();
+//     mat.vertex_colors = true;
+//     mat.width = 5;
+//     mesh.material = mat;
+//     World.add_Child(mesh);
+//     // console.log(mesh);
+// }
 
 const Torus = new MeshInstance3D();
 Torus.geometry = new ThreeGeometryResource(new BoxGeometry(50, 10, 30));
@@ -153,7 +139,14 @@ area.signal_mouse_exited.connect((evt) => {
 });
 area.add_Child(shape);
 Torus.add_Child(area);
+Torus.local_position = new Vector3(1, 2, 3);
+Torus.local_rotation = new Euler(1, 2, 3);
 World.add_Child(Torus);
+
+const packed_scene = new ClassLoader().fetch<PackedSceneResource>('res://Box.lttm').unwrap();
+const node = packed_scene.root as Node3D;
+World.add_Child(node);
+node.local_position = new Vector3(100, 100, 100);
 
 const Edge = new MeshInstance3D();
 const EdgeGeometry = new PolyLineGeometryResource();

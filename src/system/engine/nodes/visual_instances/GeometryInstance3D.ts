@@ -1,3 +1,4 @@
+import type { ClassReader, ClassWriter } from "../../classes/ClassWriterReader";
 import { VisualInstance3D } from "./VisualInstance3D";
 
 export class GeometryInstance3D extends VisualInstance3D {
@@ -31,5 +32,19 @@ export class GeometryInstance3D extends VisualInstance3D {
 
     protected on_ReceiveShadowChanged() {
         throw new Error('abstract method');
+    }
+
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        super.dump(writer);
+        writer.property('cast_shadow', this.cast_shadow);
+        writer.property('receive_shadow', this.receive_shadow);
+    }
+
+    public load(reader: ClassReader): void {
+        super.load(reader);
+        this.cast_shadow = reader.get<boolean>('cast_shadow') ?? false;
+        this.receive_shadow = reader.get<boolean>('receive_shadow') ?? false;
     }
 }

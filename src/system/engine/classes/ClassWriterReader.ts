@@ -9,6 +9,14 @@ export class ClassRef {
     }
 }
 
+export class ClassExternalPath {
+    public readonly path: string;
+
+    constructor(path: string) {
+        this.path = path;
+    }
+}
+
 export class ClassWriter {
     private readonly scope: ClassSaverScope;
     private readonly base: ClassBase;
@@ -31,7 +39,7 @@ export class ClassWriter {
         if (value === undefined) return this;
         if (value instanceof ClassBase) {
             const refid = this.scope.create_Ref(this.base, value);
-            this.scope.add_Initialization(this.base, key, new ClassRef(refid));
+            this.scope.add_Initialization(this.base, key, refid);
         }
         else {
             this.scope.add_Initialization(this.base, key, value);
@@ -43,7 +51,7 @@ export class ClassWriter {
         if (value === undefined) return this;
         if (value instanceof ClassBase) {
             const refid = this.scope.add_Ref(value);
-            this.scope.add_Property(this.base, key, new ClassRef(refid));
+            this.scope.add_Property(this.base, key, refid);
         }
         else {
             this.scope.add_Property(this.base, key, value);
@@ -61,7 +69,7 @@ export class ClassReader {
         this.property = property;
     }
 
-    public get<T>(key: string | ClassRef): any | undefined {
+    public get<T>(key: string | ClassRef): T | undefined {
         if (key instanceof ClassRef) return this.loader.get_Instance(key.refid) as T;
         const data = this.property[key];
         if (data === undefined) return undefined;

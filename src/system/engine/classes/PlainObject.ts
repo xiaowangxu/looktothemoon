@@ -1,15 +1,15 @@
-export class PlainObject {
-    public readonly value: any[] | any;
+export class PlainObject<T = any> {
+    public readonly value: T;
 
-    constructor(value: any[] | Object) {
+    constructor(value: T) {
         this.value = value;
     }
 
-    public static save(v: PlainObject) {
+    public static save<V = any>(v: PlainObject<V>) {
         return JSON.stringify(v.value);
     }
 
-    public static load(v: string): PlainObject {
-        return new PlainObject(JSON.parse(v));
+    public static load<V = any>(v: string): PlainObject<V> {
+        return new PlainObject<V>(JSON.parse(v));
     }
 }

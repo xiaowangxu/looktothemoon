@@ -3,6 +3,7 @@ import { PhysicsInstance3D } from "./PhysicsInstance3D";
 import { type RID } from "../../Rid";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
 import type { MouseInputEvent } from "../../InputEvent";
+import type { ClassReader, ClassWriter } from "../../classes/ClassWriterReader";
 
 export class PickingArea3D extends PhysicsInstance3D {
     public static readonly class_name: string = "PickingArea3D";
@@ -53,6 +54,10 @@ export class PickingArea3D extends PhysicsInstance3D {
         }
     }
 
+    public on_DetectLayerChanged(): void {
+        
+    }
+
     public _notification(what: NodeNotification): void {
         switch (what) {
             case NodeNotification.EnteredTree: {
@@ -93,5 +98,17 @@ export class PickingArea3D extends PhysicsInstance3D {
     public on_MouseExited(event: MouseInputEvent) {
         this._is_mouse_hover = false;
         this.signal_mouse_exited.trigger(event);
+    }
+    
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        super.dump(writer);
+        writer.property('priority', this.priority);
+    }
+
+    public load(reader: ClassReader): void {
+        super.load(reader);
+        this.priority = reader.get<number>('priority') ?? 0;
     }
 }
