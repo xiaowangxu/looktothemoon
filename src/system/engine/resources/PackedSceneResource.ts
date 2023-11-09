@@ -12,9 +12,10 @@ export class PackedSceneResource extends Resource {
     private readonly for_save: boolean;
 
     private _root: Node | undefined;
-    public get root() {
+    
+    public get_Root<T extends Node = Node>(): T {
         if (this.for_save) throw new Error('can not get the root from a PackedSceneResource for saving');
-        return this._root!;
+        return this._root! as T;
     }
 
     private parent_list: [parent: ClassRef, child: ClassRef][] = [];
@@ -41,7 +42,7 @@ export class PackedSceneResource extends Resource {
         this.parent_list = [];
         this.dump_Node(this._root!, undefined, writer);
         writer.property('root', writer.ref(this._root!));
-        writer.property('parents', new ValueObject(this.parent_list));
+        writer.property('parents', new ValueObject(this.parent_list.reverse()));
     }
 
     public load(reader: ClassReader): void {

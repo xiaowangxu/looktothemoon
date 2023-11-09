@@ -37,7 +37,15 @@ export abstract class MaterialResource extends Resource {
     }
 
     protected init_RefCount() {
-        this.get_Material().userData.ref_count = 0;
+        Object.defineProperty(
+            this.get_Material().userData,
+            'ref_count',
+            {
+                value: 0,
+                enumerable: false,
+                writable: true,
+            }
+        );
     }
 
     public get_Material(): Material {

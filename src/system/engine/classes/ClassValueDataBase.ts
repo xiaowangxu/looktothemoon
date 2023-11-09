@@ -4,8 +4,8 @@ import { InterpolateCamera3D } from "../nodes/camera_3ds/InterpolateCamera3D";
 import { OrbitCamera3D } from "../nodes/camera_3ds/OrbitCamera3D";
 import { OrthographicCamera3D } from "../nodes/camera_3ds/OrthographicCamera3D";
 import { PerspectiveCamera3D } from "../nodes/camera_3ds/PerspectiveCamera3D";
-import { GeometryInstance3D } from "../nodes/visual_instances/GeometryInstance3D";
-import { MeshInstance3D } from "../nodes/visual_instances/MeshInstance3D";
+import { GeometryInstance3D } from "../nodes/visual_instances/geometry_3ds/GeometryInstance3D";
+import { MeshInstance3D } from "../nodes/visual_instances/geometry_3ds/MeshInstance3D";
 import { VisualInstance3D } from "../nodes/visual_instances/VisualInstance3D";
 import { ClassBase } from "./ClassBase";
 import { Resource } from "../Resource";
@@ -20,6 +20,8 @@ import { PackedSceneResource } from "../resources/PackedSceneResource";
 import { PickingArea3D } from "../nodes/physics_3ds/PickingArea3D";
 import { PickingShape3D } from "../nodes/physics_3ds/PickingShape3D";
 import { PickingBoxResource } from "../resources/PickingShapeResource";
+import { AmbientLight3D } from "../nodes/visual_instances/light_3ds/AmbientLight3D";
+import { HemisphereLight3D } from "../nodes/visual_instances/light_3ds/HemisphereLight3D";
 
 export class ClassDataBase {
     private readonly db: Map<string, typeof ClassBase> = new Map();
@@ -50,8 +52,6 @@ ClassDB.register_Class(Node);
 ClassDB.register_Class(Node3D);
 ClassDB.register_Class(Camera3D);
 ClassDB.register_Class(Viewport);
-ClassDB.register_Class(VisualInstance3D);
-ClassDB.register_Class(GeometryInstance3D);
 ClassDB.register_Class(MeshInstance3D);
 ClassDB.register_Class(OrbitCamera3D);
 ClassDB.register_Class(InterpolateCamera3D);
@@ -60,6 +60,8 @@ ClassDB.register_Class(PerspectiveCamera3D);
 ClassDB.register_Class(ViewportDomContainer);
 ClassDB.register_Class(PickingArea3D);
 ClassDB.register_Class(PickingShape3D);
+ClassDB.register_Class(AmbientLight3D);
+ClassDB.register_Class(HemisphereLight3D);
 
 ClassDB.register_Class(Resource);
 

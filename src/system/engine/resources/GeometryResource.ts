@@ -38,7 +38,15 @@ export abstract class GeometryResource extends Resource {
     }
 
     protected init_RefCount() {
-        this.get_BufferGeometry().userData.ref_count = 0;
+        Object.defineProperty(
+            this.get_BufferGeometry().userData,
+            'ref_count',
+            {
+                value: 0,
+                enumerable: false,
+                writable: true,
+            }
+        );
     }
 
     public get_BufferGeometry(): BufferGeometry {

@@ -1,10 +1,12 @@
-import { Scene, Matrix4, Mesh, Object3D, Vector3 } from "three";
+import { Scene, Matrix4, Mesh, Object3D, Vector3, Euler, AmbientLight, HemisphereLight, DirectionalLight, Light, Color } from "three";
 import { Rid, type RID } from "./Rid";
 import { GeometryResource } from "./resources/GeometryResource";
 import type { MaterialResource } from "./resources/MaterialResource";
 import { SignalEmitter } from "../utils/SignalEmitter";
 import type { Camera3D, Viewport } from "./SceneTree";
 import type { PickingArea3D } from "./nodes/physics_3ds/PickingArea3D";
+
+import { DirectionalLightHelper } from 'three';
 
 export class World3D {
     private readonly visual_world: VisualWorld3D = new VisualWorld3D();
@@ -187,6 +189,115 @@ export class VisualWorld3D {
         if (instance) {
             instance.receiveShadow = receive;
         }
+    }
+
+    // light
+
+    public create_AmbientLight() {
+        const rid = Rid();
+        const light = new AmbientLight();
+        light.matrixAutoUpdate = false;
+        light.matrixWorldAutoUpdate = false;
+        this.instance_map.set(rid, light);
+        this.scene.add(light);
+        return rid;
+    }
+
+    public create_HemisphereLight() {
+        const rid = Rid();
+        const light = new HemisphereLight();
+        light.matrixAutoUpdate = false;
+        light.matrixWorldAutoUpdate = false;
+        light.updateMatrix();
+        light.updateMatrixWorld(true);
+        this.instance_map.set(rid, light);
+        this.scene.add(light);
+        return rid;
+    }
+
+    public create_DirectionalLight() {
+        const rid = Rid();
+        const light = new DirectionalLight();
+        light.matrixAutoUpdate = false;
+        light.matrixWorldAutoUpdate = false;
+        light.position.set(0,0,0);
+        light.updateMatrix();
+        light.updateMatrixWorld(true);
+        light.target.matrixAutoUpdate = false;
+        light.target.matrixWorldAutoUpdate = false;
+        light.target.updateMatrix();
+        light.target.updateMatrixWorld(true);
+        this.instance_map.set(rid, light);
+        this.scene.add(light);
+        return rid;
+    }
+
+    public set_HemisphereLightGroundColor(rid: RID, ground_color: Color) {
+        const instance = this.get_Instance<HemisphereLight>(rid);
+        if (instance) {
+            instance.groundColor.copy(ground_color);
+        }
+    }
+
+    public set_HemisphereLightUp(rid: RID, up: Vector3) {
+        const instance = this.get_Instance<HemisphereLight>(rid);
+        if (instance) {
+            instance.position.copy(up);
+            instance.updateMatrix();
+            instance.updateMatrixWorld(true);
+        }
+    }
+
+    public set_DirectionalLightRotation(rid: RID, rotation: Euler) {
+        const instance = this.get_Instance<DirectionalLight>(rid);
+        if (instance) {
+            instance.target.position.copy(new Vector3(0, -1, 0).applyEuler(rotation));
+            instance.target.updateMatrix();
+            instance.target.updateMatrixWorld(true);
+        }
+    }
+
+    public set_LightColor(rid: RID, color: Color) {
+        const instance = this.get_Instance<Light>(rid);
+        if (instance) {
+            instance.color.copy(color);
+        }
+    }
+
+    public set_LightIntensity(rid: RID, intensity: number) {
+        const instance = this.get_Instance<Light>(rid);
+        if (instance) {
+            instance.intensity = intensity;
+        }
+    }
+
+    public set_LightGlobalTransform(rid: RID, transform: Matrix4) {
+        const instance = this.get_Instance<Light>(rid);
+        if (instance) {
+            instance.matrixWorld.copy(transform);
+        }
+    }
+
+    public set_LightVisibility(rid: RID, visible: boolean) {
+        const instance = this.get_Instance<Light>(rid);
+        if (instance) {
+            instance.visible = visible;
+        }
+    }
+
+    public set_LightLayer(rid: RID, layer: number) {
+        const instance = this.get_Instance<Light>(rid);
+        if (instance) {
+            instance.layers.mask = layer;
+        }
+    }
+
+    public free_Light(rid: RID) {
+        const instance = this.get_Instance<Light>(rid);
+        if (instance === undefined) return;
+        instance.removeFromParent();
+        instance.dispose();
+        this.instance_map.delete(rid);
     }
 }
 

@@ -1,9 +1,9 @@
-import type { RID } from "../../Rid";
-import { NodeNotification } from "../../SceneTree";
-import type { ClassReader, ClassRef, ClassWriter } from "../../classes/ClassWriterReader";
-import { ValueObject } from "../../classes/ValueObject";
-import type { GeometryResource } from "../../resources/GeometryResource";
-import { MaterialResource } from "../../resources/MaterialResource";
+import type { RID } from "../../../Rid";
+import { NodeNotification } from "../../../SceneTree";
+import type { ClassReader, ClassRef, ClassWriter } from "../../../classes/ClassWriterReader";
+import { ValueObject } from "../../../classes/ValueObject";
+import type { GeometryResource } from "../../../resources/GeometryResource";
+import { MaterialResource } from "../../../resources/MaterialResource";
 import { GeometryInstance3D } from "./GeometryInstance3D";
 
 export class MeshInstance3D extends GeometryInstance3D {

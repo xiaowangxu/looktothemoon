@@ -7,8 +7,13 @@ createApp(App).mount('#app');
 
 createEditorViewport();
 
-// import { ClassLoader } from './system/engine/classes/ClassSaverLoader';
-// console.log(new ClassLoader().fetch('res://test.lttm').unwrap());
-// console.log(new ClassLoader().fetch('res://test.lttm').unwrap());
-// import { DefaultResourceInstanceCache } from '@/system/engine/Resource';
-// console.log(DefaultResourceInstanceCache.paths);
+// import Monkey from 'res://Monkey.obj?raw';
+// import { ObjLoader } from './system/engine/loaders/ObjLoader';
+// import { ClassSaver } from './system/engine/classes/ClassSaverLoader';
+// import { PackedSceneResource } from './system/engine/resources/PackedSceneResource';
+// const obj = new ObjLoader().parse(Monkey);
+// console.log(obj.unwrap());
+
+// const string = new ClassSaver().save(new PackedSceneResource(obj.unwrap())).unwrap();
+// console.log(string);
+// navigator.clipboard.writeText(string);

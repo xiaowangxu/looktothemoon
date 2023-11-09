@@ -1,5 +1,5 @@
 import { Node3D } from "@/system/engine/SceneTree";
-import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/MeshInstance3D";
+import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/geometry_3ds/MeshInstance3D";
 import { PolyLineGeometryResource } from "@/system/engine/resources/GeometryResource";
 import { LineMaterialResource } from "@/system/engine/resources/MaterialResource";
 import { Euler, Vector3, Color } from "three";

@@ -4,7 +4,7 @@ import { Node3D, NodeNotification, type CursorStyle, Viewport } from "@/system/e
 import { FixSizeNode3D } from "@/system/engine/nodes/node_3ds/FixSizeNode3D";
 import { PickingArea3D } from "@/system/engine/nodes/physics_3ds/PickingArea3D";
 import { PickingShape3D } from "@/system/engine/nodes/physics_3ds/PickingShape3D";
-import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/MeshInstance3D";
+import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/geometry_3ds/MeshInstance3D";
 import { PolyLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/GeometryResource";
 import { LineMaterialResource, ThreeMaterialResource } from "@/system/engine/resources/MaterialResource";
 import { PickingBVHResource, PickingCylinderResource, PickingSphereResource } from "@/system/engine/resources/PickingShapeResource";

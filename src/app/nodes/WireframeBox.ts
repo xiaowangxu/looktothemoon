@@ -1,5 +1,5 @@
 import { clamp } from "@/system/engine/MathF";
-import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/MeshInstance3D";
+import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/geometry_3ds/MeshInstance3D";
 import { GeometryResource, SegmentLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/GeometryResource";
 import { LineMaterialResource, MaterialResource, ThreeMaterialResource } from "@/system/engine/resources/MaterialResource";
 import { Cacher } from "@/system/utils/Cacher";

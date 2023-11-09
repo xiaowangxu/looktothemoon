@@ -207,7 +207,7 @@ export class ClassSaver {
         });
     }
 
-    public get_JsonString(space?: string | number | undefined): Result<string, Error> {
+    public get_JsonString(space?: string | number): Result<string, Error> {
         const root_refid = this.scope.root_refid;
         if (root_refid === undefined) return Result.Error(new Error('no root instance to be saved'));
         const sorted = this.scope.get_SortedInstanceData();
@@ -257,6 +257,12 @@ export class ClassSaver {
             instances
         };
         return Result.Ok(JSON.stringify(json, undefined, space));
+    }
+
+    public save(obj: ClassBase, option?: ClassSaverDumpOption, space?: string | number): Result<string, Error> {
+        const error = this.dump(obj, option);
+        if (error !== undefined) return Result.Error(error);
+        return this.get_JsonString(space);
     }
 
     public print() {

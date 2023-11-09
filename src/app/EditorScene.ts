@@ -1,24 +1,25 @@
 import { World3D } from "@/system/engine/World";
 import { NodeNotification, Node3D, SceneTree, Viewport } from "@/system/engine/SceneTree";
 import { ViewportDomContainer } from "@/system/engine/nodes/ViewportDomContainer";
-import { Euler, BoxGeometry, SphereGeometry, Vector3, MeshBasicMaterial, MeshMatcapMaterial, Color, TorusKnotGeometry, Vector2, Box3, ConeGeometry, Quaternion } from "three";
-import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/MeshInstance3D";
+import { Euler, BoxGeometry, SphereGeometry, Vector3, MeshBasicMaterial, MeshMatcapMaterial, MeshPhongMaterial, Color, Vector2, Box3 } from "three";
+import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/geometry_3ds/MeshInstance3D";
 import { PolyLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/GeometryResource";
 import { NormalMaterialResource, LineMaterialResource, ThreeMaterialResource } from "@/system/engine/resources/MaterialResource";
 import { OrthographicCamera3D } from "@/system/engine/nodes/camera_3ds/OrthographicCamera3D";
-import { ActionInputEvent, InputEventFromViewport, KeyInputEvent, MouseButton, MouseButtonInputEvent, ShortCut } from "@/system/engine/InputEvent";
+import { KeyInputEvent, MouseButton, MouseButtonInputEvent, ShortCut } from "@/system/engine/InputEvent";
 import { Axis } from "./nodes/Axis";
 import { WireframeBox } from "./nodes/WireframeBox";
 import { PickingArea3D } from "@/system/engine/nodes/physics_3ds/PickingArea3D";
 import { PickingShape3D } from "@/system/engine/nodes/physics_3ds/PickingShape3D";
-import { PickingBVHResource, PickingPolyLineResource, PickingSphereResource } from "@/system/engine/resources/PickingShapeResource";
-import { FixSizeNode3D } from "@/system/engine/nodes/node_3ds/FixSizeNode3D";
-import { LineGrabber, PointGrabber, AngleGrabber, TranslateGrabber, RotateGrabber, TransformGrabber } from "./nodes/Grabbers";
+import { PickingPolyLineResource, PickingSphereResource } from "@/system/engine/resources/PickingShapeResource";
+import { TransformGrabber } from "./nodes/Grabbers";
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { PickingBoxResource } from "../system/engine/resources/PickingShapeResource";
 import { DependencyGraph } from "./singletons/DependencyGraph";
-import { ClassLoader, ClassSaver } from "../system/engine/classes/ClassSaverLoader";
+import { ClassLoader } from "../system/engine/classes/ClassSaverLoader";
 import { PackedSceneResource } from "@/system/engine/resources/PackedSceneResource";
+import { HemisphereLight3D } from "@/system/engine/nodes/visual_instances/light_3ds/HemisphereLight3D";
+import { DirectionalLight3D } from "@/system/engine/nodes/visual_instances/light_3ds/DirectionalLight3D";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -120,7 +121,7 @@ class Sphere extends MeshInstance3D {
 
 const Torus = new MeshInstance3D();
 Torus.geometry = new ThreeGeometryResource(new BoxGeometry(50, 10, 30));
-Torus.material = new ThreeMaterialResource(new MeshMatcapMaterial({}));
+Torus.material = new ThreeMaterialResource(new MeshPhongMaterial({}));
 const area = new PickingArea3D();
 const shape = new PickingShape3D();
 const sphere_shape = new PickingBoxResource();
@@ -139,12 +140,10 @@ area.signal_mouse_exited.connect((evt) => {
 });
 area.add_Child(shape);
 Torus.add_Child(area);
-Torus.local_position = new Vector3(1, 2, 3);
-Torus.local_rotation = new Euler(1, 2, 3);
 World.add_Child(Torus);
 
 const packed_scene = new ClassLoader().fetch<PackedSceneResource>('res://Box.lttm').unwrap();
-const node = packed_scene.root as Node3D;
+const node = packed_scene.get_Root<Node3D>();
 World.add_Child(node);
 node.local_position = new Vector3(100, 100, 100);
 
@@ -414,6 +413,27 @@ transform_grabber.signal_grabbing.connect(({ local_position, local_rotation }) =
 World.add_Child(transform_grabber);
 
 console.log(EditorSceneTree);
+
+const monkey_scene = new ClassLoader().fetch<PackedSceneResource>('res://Monkey.lttm').unwrap();
+const monkey = monkey_scene.get_Root<MeshInstance3D>();
+monkey.local_scale = new Vector3(100, 100, 100);
+monkey.local_position = new Vector3(-200, 100, -200);
+World.add_Child(monkey);
+
+const ambient = new HemisphereLight3D();
+ambient.color = new Color(0.7, 0.8, 1);
+ambient.ground_color = new Color(0.9, 0.9, 0.9);
+ambient.intensity = 1.5;
+World.add_Child(ambient);
+
+const directional = new DirectionalLight3D();
+World.add_Child(directional);
+
+transform_grabber.signal_grabbing.connect(({ local_rotation }) => {
+    const up = new Vector3(0, 1, 0).applyEuler(local_rotation);
+    // ambient.up = up;
+    directional.local_rotation = local_rotation;
+});
 
 export function createEditorViewport() {
     EditorCompassViewportContainer.dom = document.querySelector('#compass') ?? undefined;

@@ -1,7 +1,7 @@
 import { Node3D, NodeNotification } from "../../SceneTree";
 import type { ClassReader, ClassWriter } from "../../classes/ClassWriterReader";
 
-export class VisualInstance3D extends Node3D {
+export abstract class VisualInstance3D extends Node3D {
     public static readonly class_name: string = "VisualInstance3D";
 
     private _local_visible: boolean = true;
