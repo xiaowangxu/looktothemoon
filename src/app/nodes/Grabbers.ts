@@ -252,16 +252,17 @@ export class LineGrabber extends GrabberElement<Vector3> {
     public _input(event: InputEvent, propagate: boolean): void {
         if (!propagate && this.is_grabbing) {
             if (event instanceof MouseButtonInputEvent) {
-                if (event.button === MouseButton.Left) {
-                    if (event.pressed === false) {
-                        this.on_EndGrab();
-                    }
+                if (event.button === MouseButton.Left && event.pressed === false) {
+                    this.on_EndGrab();
+                    return;
                 }
+                event.mark_Canceled();
             }
             // mouse exit
             else if (event instanceof MouseEnterLeaveInputEvent) {
                 if (!event.inside) {
                     this.on_EndGrab();
+                    return;
                 }
             }
             else {
@@ -506,16 +507,17 @@ export class AngleGrabber extends GrabberElement<{ angle: number, relative: numb
     public _input(event: InputEvent, propagate: boolean): void {
         if (!propagate && this.is_grabbing) {
             if (event instanceof MouseButtonInputEvent) {
-                if (event.button === MouseButton.Left) {
-                    if (event.pressed === false) {
-                        this.on_EndGrab();
-                    }
+                if (event.button === MouseButton.Left && event.pressed === false) {
+                    this.on_EndGrab();
+                    return;
                 }
+                event.mark_Canceled();
             }
             // mouse exit
             else if (event instanceof MouseEnterLeaveInputEvent) {
                 if (!event.inside) {
                     this.on_EndGrab();
+                    return;
                 }
             }
             else {
@@ -710,16 +712,17 @@ export class PointGrabber extends GrabberElement<Vector3> {
     public _input(event: InputEvent, propagate: boolean): void {
         if (!propagate && this.is_grabbing) {
             if (event instanceof MouseButtonInputEvent) {
-                if (event.button === MouseButton.Left) {
-                    if (event.pressed === false) {
-                        this.on_EndGrab();
-                    }
+                if (event.button === MouseButton.Left && event.pressed === false) {
+                    this.on_EndGrab();
+                    return;
                 }
+                event.mark_Canceled();
             }
             // mouse exit
             else if (event instanceof MouseEnterLeaveInputEvent) {
                 if (!event.inside) {
                     this.on_EndGrab();
+                    return;
                 }
             }
             else {

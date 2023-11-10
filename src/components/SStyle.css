@@ -35,15 +35,18 @@ textarea {
     font-size: var(--NormalFontSize);
     color: var(--ThemeDisabledBaseColor);
 
+    --SmallIconSize: 14px;
     --NormalIconSize: 18px;
     --MediumIconSize: 22px;
     --LargeIconSize: 28px;
 
+    --SmallPaddingSize: 1px;
     --NormalPaddingSize: 3px;
     --MediumPaddingSize: 5px;
     --LargePaddingSize: 7px;
 
     --AdditionalPaddingSize: 4px;
+    --SmallAdditionalPaddingSize: calc(var(--SmallPaddingSize) + var(--AdditionalPaddingSize));
     --NormalAdditionalPaddingSize: calc(var(--NormalPaddingSize) + var(--AdditionalPaddingSize));
     --MediumAdditionalPaddingSize: calc(var(--MediumPaddingSize) + var(--AdditionalPaddingSize));
     --LargeAdditionalPaddingSize: calc(var(--LargePaddingSize) + var(--AdditionalPaddingSize));
@@ -56,11 +59,13 @@ textarea {
     --ScrollBarTrackSize: calc(var(--ScrollBarTrackStartSize) + var(--ScrollBarSize) + var(--ScrollBarTrackEndSize));
     --ScrollContainerBarOffset: calc(var(--ScrollBarTrackStartSize) + var(--ScrollBarSize));
 
+    --SmallMinSize: calc(var(--SmallIconSize) + var(--SmallPaddingSize) * 2);
     --NormalMinSize: calc(var(--NormalIconSize) + var(--NormalPaddingSize) * 2);
     --MediumMinSize: calc(var(--MediumIconSize) + var(--MediumPaddingSize) * 2);
     --LargeMinSize: calc(var(--LargeIconSize) + var(--LargePaddingSize) * 2);
 
     --SquareRadius: 4px;
+    --SmallRadius: 6px;
     --NormalRadius: 8px;
     --MediumRadius: 12px;
     --LargeRadius: 20px;
@@ -126,6 +131,10 @@ textarea {
 
 .__s__[data-s-min-size="normal"] {
     min-height: var(--NormalMinSize);
+}
+
+.__s__[data-s-min-size="small"] {
+    min-height: var(--SmallMinSize);
 }
 
 .__s__[data-s-min-size="medium"] {

@@ -1,7 +1,7 @@
 import { World3D } from "@/system/engine/World";
 import { NodeNotification, Node3D, SceneTree, Viewport } from "@/system/engine/SceneTree";
 import { ViewportDomContainer } from "@/system/engine/nodes/ViewportDomContainer";
-import { Euler, BoxGeometry, SphereGeometry, Vector3, MeshBasicMaterial, MeshMatcapMaterial, MeshPhongMaterial, Color, Vector2, Box3 } from "three";
+import { Euler, BoxGeometry, SphereGeometry, Vector3, MeshBasicMaterial, MeshMatcapMaterial, MeshPhongMaterial, Color, Vector2, Box3, SpotLight } from "three";
 import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/geometry_3ds/MeshInstance3D";
 import { PolyLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/GeometryResource";
 import { NormalMaterialResource, LineMaterialResource, ThreeMaterialResource } from "@/system/engine/resources/MaterialResource";
@@ -20,6 +20,8 @@ import { ClassLoader } from "../system/engine/classes/ClassSaverLoader";
 import { PackedSceneResource } from "@/system/engine/resources/PackedSceneResource";
 import { HemisphereLight3D } from "@/system/engine/nodes/visual_instances/light_3ds/HemisphereLight3D";
 import { DirectionalLight3D } from "@/system/engine/nodes/visual_instances/light_3ds/DirectionalLight3D";
+import { PointLight3D } from "@/system/engine/nodes/visual_instances/light_3ds/PointLight3D";
+import { SpotLight3D } from "@/system/engine/nodes/visual_instances/light_3ds/SpotLight3D";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -407,8 +409,8 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut([
 
 const transform_grabber = new TransformGrabber();
 transform_grabber.signal_grabbing.connect(({ local_position, local_rotation }) => {
-    Torus.global_position = transform_grabber.to_Global(local_position);
-    Torus.local_rotation = local_rotation;
+    // Torus.global_position = transform_grabber.to_Global(local_position);
+    // Torus.local_rotation = local_rotation;
 });
 World.add_Child(transform_grabber);
 
@@ -423,16 +425,21 @@ World.add_Child(monkey);
 const ambient = new HemisphereLight3D();
 ambient.color = new Color(0.7, 0.8, 1);
 ambient.ground_color = new Color(0.9, 0.9, 0.9);
-ambient.intensity = 1.5;
+ambient.intensity = 1;
 World.add_Child(ambient);
 
 const directional = new DirectionalLight3D();
 World.add_Child(directional);
 
-transform_grabber.signal_grabbing.connect(({ local_rotation }) => {
-    const up = new Vector3(0, 1, 0).applyEuler(local_rotation);
-    // ambient.up = up;
+const point = new SpotLight3D();
+World.add_Child(point);
+point.color = new Color(1, 0, 0);
+point.power = 100;
+
+transform_grabber.signal_grabbing.connect(({ local_position, local_rotation }) => {
     directional.local_rotation = local_rotation;
+    point.global_position = transform_grabber.to_Global(local_position);
+    point.local_rotation = local_rotation;
 });
 
 export function createEditorViewport() {

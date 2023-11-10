@@ -90,6 +90,12 @@ defineExpose({
     padding: var(--NormalPaddingSize) var(--NormalAdditionalPaddingSize);
 }
 
+.__s_button__[data-s-icon-size="small"] {
+    gap: var(--SmallPaddingSize);
+    padding: var(--SmallPaddingSize) var(--SmallAdditionalPaddingSize);
+    border-radius: var(--SmallRadius);
+}
+
 .__s_button__[data-s-icon-size="medium"] {
     gap: var(--MediumPaddingSize);
     padding: var(--MediumPaddingSize) var(--MediumAdditionalPaddingSize);
@@ -103,6 +109,10 @@ defineExpose({
 .__s_button__.icon-only,
 .__s_button__.icon-only[data-s-icon-size="normal"] {
     padding: var(--NormalPaddingSize);
+}
+
+.__s_button__.icon-only[data-s-icon-size="small"] {
+    padding: var(--SmallPaddingSize);
 }
 
 .__s_button__.icon-only[data-s-icon-size="medium"] {
@@ -119,6 +129,14 @@ defineExpose({
     height: var(--NormalIconSize);
     min-width: var(--NormalIconSize);
     min-height: var(--NormalIconSize);
+}
+
+.__s_button__[data-s-icon-size="small"] .lucide,
+.__s_button__[data-s-icon-size="small"] .__s_icon__ {
+    width: var(--SmallIconSize);
+    height: var(--SmallIconSize);
+    min-width: var(--SmallIconSize);
+    min-height: var(--SmallIconSize);
 }
 
 .__s_button__[data-s-icon-size="medium"] .lucide,

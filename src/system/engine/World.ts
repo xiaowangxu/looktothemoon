@@ -1,4 +1,4 @@
-import { Scene, Matrix4, Mesh, Object3D, Vector3, Euler, AmbientLight, HemisphereLight, DirectionalLight, Light, Color } from "three";
+import { Scene, Matrix4, Mesh, Object3D, Vector3, Euler, AmbientLight, HemisphereLight, DirectionalLight, PointLight, Light, Color, SpotLight, Quaternion } from "three";
 import { Rid, type RID } from "./Rid";
 import { GeometryResource } from "./resources/GeometryResource";
 import type { MaterialResource } from "./resources/MaterialResource";
@@ -61,7 +61,18 @@ export class VisualWorld3D {
     }
 
     public dispose() {
-
+        for (const instance of this.instance_map.values()) {
+            if (instance instanceof Mesh) {
+                instance.removeFromParent();
+                this.unref_MeshGeometry(instance);
+                this.unref_MeshMaterial(instance);
+            }
+            else if (instance instanceof Light) {
+                instance.removeFromParent();
+                instance.dispose();
+            }
+        }
+        this.instance_map.clear();
     }
 
     // mesh
@@ -220,13 +231,42 @@ export class VisualWorld3D {
         const light = new DirectionalLight();
         light.matrixAutoUpdate = false;
         light.matrixWorldAutoUpdate = false;
-        light.position.set(0,0,0);
+        light.position.set(0, 0, 0);
         light.updateMatrix();
         light.updateMatrixWorld(true);
         light.target.matrixAutoUpdate = false;
         light.target.matrixWorldAutoUpdate = false;
         light.target.updateMatrix();
         light.target.updateMatrixWorld(true);
+        this.instance_map.set(rid, light);
+        this.scene.add(light);
+        return rid;
+    }
+
+    public create_SpotLight() {
+        const rid = Rid();
+        const light = new SpotLight();
+        light.matrixAutoUpdate = false;
+        light.matrixWorldAutoUpdate = false;
+        light.position.set(0, 0, 0);
+        light.updateMatrix();
+        light.updateMatrixWorld(true);
+        light.target.matrixAutoUpdate = false;
+        light.target.matrixWorldAutoUpdate = false;
+        light.target.updateMatrix();
+        light.target.updateMatrixWorld(true);
+        this.instance_map.set(rid, light);
+        this.scene.add(light);
+        return rid;
+    }
+
+    public create_PointLight() {
+        const rid = Rid();
+        const light = new PointLight();
+        light.matrixAutoUpdate = false;
+        light.matrixWorldAutoUpdate = false;
+        light.updateMatrix();
+        light.updateMatrixWorld(true);
         this.instance_map.set(rid, light);
         this.scene.add(light);
         return rid;
@@ -252,6 +292,59 @@ export class VisualWorld3D {
         const instance = this.get_Instance<DirectionalLight>(rid);
         if (instance) {
             instance.target.position.copy(new Vector3(0, -1, 0).applyEuler(rotation));
+            instance.target.updateMatrix();
+            instance.target.updateMatrixWorld(true);
+        }
+    }
+
+    public set_PointLightDecay(rid: RID, decay: number) {
+        const instance = this.get_Instance<PointLight>(rid);
+        if (instance) {
+            instance.decay = decay;
+        }
+    }
+
+    public set_PointLightRadius(rid: RID, radius: number) {
+        const instance = this.get_Instance<PointLight>(rid);
+        if (instance) {
+            instance.distance = radius;
+        }
+    }
+
+    public set_SpotLightDecay(rid: RID, decay: number) {
+        const instance = this.get_Instance<SpotLight>(rid);
+        if (instance) {
+            instance.decay = decay;
+        }
+    }
+
+    public set_SpotLightDistance(rid: RID, distance: number) {
+        const instance = this.get_Instance<SpotLight>(rid);
+        if (instance) {
+            instance.distance = distance;
+        }
+    }
+
+    public set_SpotLightAngle(rid: RID, angle: number) {
+        const instance = this.get_Instance<SpotLight>(rid);
+        if (instance) {
+            instance.angle = angle;
+        }
+    }
+
+    public set_SpotLightPenumbra(rid: RID, penumbra: number) {
+        const instance = this.get_Instance<SpotLight>(rid);
+        if (instance) {
+            instance.penumbra = penumbra;
+        }
+    }
+
+    public set_SpotLightRotation(rid: RID, rotation: Euler) {
+        const instance = this.get_Instance<SpotLight>(rid);
+        if (instance) {
+            const position = new Vector3();
+            instance.matrixWorld.decompose(position, new Quaternion(), new Vector3());
+            instance.target.position.copy(new Vector3(0, -1, 0).applyEuler(rotation).add(position));
             instance.target.updateMatrix();
             instance.target.updateMatrixWorld(true);
         }
