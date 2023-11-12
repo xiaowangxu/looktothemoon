@@ -37,7 +37,7 @@
                         </SButton>
                     </SFlow>
                 </div>
-                <SButton class="outliner-item-button">
+                <SButton class="outliner-item-button" flat>
                     <SIcon v-if="icon !== undefined" :name="icon"></SIcon>{{ name }}
                 </SButton>
                 <!-- <SButton icon-only>
