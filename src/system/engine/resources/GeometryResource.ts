@@ -1,4 +1,4 @@
-import { BufferGeometry, Vector3, InstancedInterleavedBuffer, InterleavedBufferAttribute, Color, ObjectLoader } from 'three';
+import { BufferGeometry, Vector3, Vector2, InstancedInterleavedBuffer, InterleavedBufferAttribute, Color, ObjectLoader, ShapePath, ShapeGeometry, Shape } from 'three';
 import { Resource } from '../Resource';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
@@ -210,5 +210,40 @@ export class SegmentLineGeometryResource extends GeometryResource {
         if (points !== undefined) this.points = points;
         const colors = reader.get<ValueObject>('colors')?.value;
         if (colors !== undefined) this.colors = colors;
+    }
+}
+
+export class PolygonGeometryResource extends GeometryResource {
+    public static readonly class_name: string = "PolygonGeometryResource";
+
+    private readonly buffer_geometry: BufferGeometry = new BufferGeometry();
+
+    private _points: Vector2[] = [];
+    public get points() {
+        return this._points;
+    }
+    public set points(points: Vector2[]) {
+        if (points.length < 3) return;
+        this._points = points;
+        this.update_ShapeGeometry();
+    }
+
+    private update_ShapeGeometry() {
+        if (this.points.length < 3) return;
+        const shape = new Shape();
+        shape.moveTo(this.points[0].x, this.points[0].y);
+        for (let i = 1; i < this.points.length; i++) {
+            shape.lineTo(this.points[i].x, this.points[i].y);
+        }
+        this.buffer_geometry.copy(new ShapeGeometry(shape));
+    }
+
+    constructor() {
+        super();
+        this.init_RefCount();
+    }
+
+    public get_BufferGeometry(): BufferGeometry {
+        return this.buffer_geometry;
     }
 }

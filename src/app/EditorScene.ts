@@ -1,9 +1,9 @@
 import { World3D } from "@/system/engine/World";
 import { NodeNotification, Node3D, SceneTree, Viewport } from "@/system/engine/SceneTree";
 import { ViewportDomContainer } from "@/system/engine/nodes/ViewportDomContainer";
-import { Euler, BoxGeometry, SphereGeometry, Vector3, MeshBasicMaterial, MeshMatcapMaterial, MeshPhongMaterial, Color, Vector2, Box3, SpotLight } from "three";
+import { Euler, BoxGeometry, SphereGeometry, Vector3, MeshBasicMaterial, MeshMatcapMaterial, MeshPhongMaterial, Color, Vector2, Box3, SpotLight, DoubleSide, ShaderMaterial } from "three";
 import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/geometry_3ds/MeshInstance3D";
-import { PolyLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/GeometryResource";
+import { PolyLineGeometryResource, PolygonGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/GeometryResource";
 import { NormalMaterialResource, LineMaterialResource, ThreeMaterialResource } from "@/system/engine/resources/MaterialResource";
 import { OrthographicCamera3D } from "@/system/engine/nodes/camera_3ds/OrthographicCamera3D";
 import { KeyInputEvent, MouseButton, MouseButtonInputEvent, ShortCut } from "@/system/engine/InputEvent";
@@ -436,10 +436,50 @@ World.add_Child(point);
 point.color = new Color(1, 0, 0);
 point.power = 100;
 
+const mesh2 = new MeshInstance3D();
+const shape_geo = new PolygonGeometryResource();
+shape_geo.points = [new Vector2(0, 0), new Vector2(100, 0), new Vector2(100, 100), new Vector2(0, 100)];
+mesh2.geometry = shape_geo;
+mesh2.material = new ThreeMaterialResource(new ShaderMaterial({
+    vertexShader: `
+        varying vec4 vPos;
+	    void main() {
+		    vPos = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+		    gl_Position = vPos;
+	    }
+    `,
+    fragmentShader: `
+        varying vec4 vPos;
+        vec2 rotate_vec2(vec2 uv, vec2 pivot, float angle) {
+            mat2 rotation = mat2(vec2(sin(angle), -cos(angle)),
+                                vec2(cos(angle), sin(angle)));
+            uv -= pivot;
+            uv = uv * rotation;
+            uv += pivot;
+            return uv;
+        }
+        void main() {
+            vec2 vCoords = vPos.xy;
+            vCoords /= vPos.w;
+            vCoords = vCoords * 0.5 + 0.5;
+            vec2 uv = fract( vCoords);
+            vec2 screen_uv = rotate_vec2(uv, vec2(0.5), 0.78);
+            vec2 gap_size = vec2(20.0, 10.0);
+            gl_FragColor = vec4( 1.0, 0.0, 0.0, smoothstep(0.5, 0.65, (sin(screen_uv.x * 500.0) + 1.0) / 2.0) * 0.4 );
+        }
+    `,
+    transparent: true,
+}));
+// mesh2.material = new NormalMaterialResource();
+// mesh2.material.get_Material().side = DoubleSide;
+World.add_Child(mesh2);
+
 transform_grabber.signal_grabbing.connect(({ local_position, local_rotation }) => {
     directional.local_rotation = local_rotation;
     point.global_position = transform_grabber.to_Global(local_position);
     point.local_rotation = local_rotation;
+    const local = mesh2.to_Local(transform_grabber.to_Global(local_position));
+    shape_geo.points = [new Vector2(0, 0), new Vector2(100, 0), new Vector2(local.x, local.y), new Vector2(0, 200)];
 });
 
 export function createEditorViewport() {

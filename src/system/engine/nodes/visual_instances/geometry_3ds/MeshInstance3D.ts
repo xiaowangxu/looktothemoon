@@ -1,10 +1,14 @@
+import { Cacher } from "@/system/utils/Cacher";
 import type { RID } from "../../../Rid";
 import { NodeNotification } from "../../../SceneTree";
 import type { ClassReader, ClassRef, ClassWriter } from "../../../classes/ClassWriterReader";
 import { ValueObject } from "../../../classes/ValueObject";
 import type { GeometryResource } from "../../../resources/GeometryResource";
-import { MaterialResource } from "../../../resources/MaterialResource";
+import { MaterialResource, ThreeMaterialResource } from "../../../resources/MaterialResource";
 import { GeometryInstance3D } from "./GeometryInstance3D";
+import { MeshPhongMaterial, DoubleSide } from "three";
+
+const FallbackMaterial = new Cacher(() => new ThreeMaterialResource(new MeshPhongMaterial({ color: 0xff00ff, side: DoubleSide })));
 
 export class MeshInstance3D extends GeometryInstance3D {
     public static readonly class_name: string = "MeshInstance3D";
@@ -28,10 +32,13 @@ export class MeshInstance3D extends GeometryInstance3D {
             }
         }
     }
-    private _material: MaterialResource | MaterialResource[] | undefined = undefined;
+    private _material: MaterialResource | MaterialResource[] | undefined = FallbackMaterial.value;
     public get material() { return this._material; }
     public set material(material: MaterialResource | MaterialResource[] | undefined) {
-        this._material = material;
+        this._material = material ?? FallbackMaterial.value;
+        if (this._material instanceof Array && this._material.length <= 0) {
+            this._material = FallbackMaterial.value;
+        }
         if (this.mesh_rid !== undefined) {
             const visual_world = this.get_Viewport()?.get_World3D()?.get_VisualWorld();
             if (visual_world !== undefined) {

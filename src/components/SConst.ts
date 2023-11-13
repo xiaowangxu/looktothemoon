@@ -2,7 +2,7 @@ import { computed, watch, ref, type Ref, toRef, type ComputedRef, type Directive
 
 export type Alignment = 'start' | 'center' | 'end';
 
-export type IconSize = 'normal' | 'medium' | 'large';
+export type IconSize = 'small' | 'normal' | 'medium' | 'large';
 
 export type TextSize = 'small' | 'normal' | 'medium' | 'large' | 'inherit';
 

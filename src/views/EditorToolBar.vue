@@ -7,13 +7,13 @@
                 <PanelLeftInactive />
             </SButton>
             <Teleport to="#popup">
-                <div v-show="outliner_opened" style="position: fixed; left: 70px; width: 210px; top: 100px; bottom: 100px;">
+                <div v-show="outliner_opened" style="position: fixed; left: 70px; width: 220px; top: 100px; bottom: 100px;">
                     <SFlow vertical style="width: 100%; height: 100%;">
-                        <SPanel style="width: 100%;">
+                        <!-- <SPanel style="width: 100%;">
                             <SFlow>
-                                <!-- <SButton icon-only @click="outliner_opened = false">
+                                <SButton icon-only @click="outliner_opened = false">
                                     <ChevronLeft />
-                                </SButton> -->
+                                </SButton>
                                 <SLineEdit placeholder="查找" style="flex: 1; min-width: 0px;"></SLineEdit>
                                 <SPopupMenuButton icon-only :flat="false" :min-width="100" allow-shift-up
                                     @click="on_OutlinerOptionItemClick">
@@ -27,25 +27,15 @@
                                     </template>
                                 </SPopupMenuButton>
                             </SFlow>
-                        </SPanel>
+                        </SPanel> -->
                         <SPanel style="padding: 0; flex: 1; width: 100%; overflow: hidden;">
-                            <SScrollContainer scroll-bar-state-h="hidden" scroll-bar-state-v="hidden" min-width="100%">
+                            <SScrollContainer scroll-bar-state-h="hidden" scroll-bar-state-v="hidden" min-width="100%"
+                                width="100%">
                                 <SFlow vertical gap="0" padding="var(--GapAndMargin)" style="min-width: 100%;">
-                                    <OutlinerItem name="道路段1" icon="Puzzle" first />
+                                    <OutlinerItem name="道路段123r43rufrgfy43ugfyu4fbyu3tbfyrfdgeyfgtydfety3ft" icon="Puzzle"
+                                        first />
                                     <OutlinerItem name="道路段2"
-                                        :children="[{ name: '123', children: [{ name: '123' }, { name: '456' }] }, { name: '456' }]" />
-                                    <OutlinerItem name="道路段3" />
-                                    <OutlinerItem name="道路段1" icon="Puzzle" />
-                                    <OutlinerItem name="道路段2"
-                                        :children="[{ name: '123', children: [{ name: '123' }, { name: '456' }] }, { name: '456' }]" />
-                                    <OutlinerItem name="道路段3" />
-                                    <OutlinerItem name="道路段1" icon="Puzzle" />
-                                    <OutlinerItem name="道路段2"
-                                        :children="[{ name: '123', children: [{ name: '123' }, { name: '456' }] }, { name: '456' }]" />
-                                    <OutlinerItem name="道路段3" />
-                                    <OutlinerItem name="道路段1" icon="Puzzle" />
-                                    <OutlinerItem name="道路段2"
-                                        :children="[{ name: '123', children: [{ name: '123' }, { name: '456' }] }, { name: '456' }]" />
+                                        :children="[{ name: '123', children: [{ name: '123道路段123r43rufrgfy43ugfyu4fbyu3tbfyrfdgeyfgtydfety3ft' }, { name: '456' }] }, { name: '456' }]" />
                                     <OutlinerItem name="道路段3" />
                                     <OutlinerItem name="道路段1" icon="Puzzle" />
                                     <OutlinerItem name="道路段2"

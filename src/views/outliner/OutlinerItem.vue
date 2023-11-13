@@ -1,7 +1,7 @@
 <template>
-    <div class="__s__ outliner-item-container" :class="{ last: last }">
+    <div class="__s__ __s_color__ outliner-item-container" :class="{ last: last }">
         <SFlow vertical style="width: 100%;">
-            <SFlow align-v="center" style="width: 100%;">
+            <SFlow align-v="center" style="width: 100%;" class="outliner-item">
                 <div class="__s__ outliner-item-fold-container">
                     <template v-if="first === last">
                         <svg class="__s__ __s_color__ ouliner-item-relation-svg">
@@ -37,14 +37,20 @@
                         </SButton>
                     </SFlow>
                 </div>
-                <SButton class="outliner-item-button" flat>
-                    <SIcon v-if="icon !== undefined" :name="icon"></SIcon>{{ name }}
+                <SButton v-if="!is_ranaming" class="outliner-item-button" flat @dblclick="rename = name" style="overflow: hidden;">
+                    <SIcon v-if="icon !== undefined" :name="icon"></SIcon>
+                    <SLabel inherit-color>{{ name }}</SLabel>
                 </SButton>
-                <!-- <SButton icon-only>
+                <div v-else class="outliner-rename-button">
+                    <SIcon v-if="icon !== undefined" :name="icon"></SIcon>
+                    <SLineEdit ref="rename_lineedit_ref" v-model:value="rename" @blur="on_RenameFinish"
+                        @change="on_RenameFinish" focus-select-all style="min-width: unset; flex: 1; width: 0px;"></SLineEdit>
+                </div>
+                <SButton icon-only class="outliner-item-hover-visible">
                     <Eye />
-                </SButton> -->
+                </SButton>
             </SFlow>
-            <SFlow v-show="!children_folded" v-if="has_children" vertical gap="0"
+            <SFlow v-show="!children_folded" class="outliner-children-container" v-if="has_children" vertical gap="0"
                 style="width: 100%; padding-left: var(--SmallMinSize); position: relative;">
                 <div v-if="!last" class="outliner-children-item-fold-container">
                     <svg style="width: 100%; height: 100%;">
@@ -53,7 +59,7 @@
                     </svg>
                 </div>
                 <OutlinerItem v-for="child, idx in children" :name="idx + ' ' + child.name" :first="false"
-                    :last="idx === children.length - 1" :children="child.children" />
+                    :last="idx === children!.length - 1" :children="child.children" />
             </SFlow>
         </SFlow>
     </div>
@@ -65,7 +71,9 @@ import SFlow from '@/components/SFlow.vue';
 import SButton from '@/components/SButton.vue';
 import { ChevronRight, ChevronDown, Eye, EyeOff } from 'lucide-vue-next';
 import SIcon from '@/components/SIcon.vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import SLineEdit from '@/components/SLineEdit.vue';
+import SLabel from '@/components/typography/SLabel.vue';
 
 export interface OutlinerItem {
     name: string,
@@ -93,17 +101,48 @@ const props = withDefaults(
 // data
 const has_children = computed(() => props.children !== undefined && props.children.length > 0);
 const children_folded = ref(false);
+const rename = ref<undefined | string>(undefined);
+const is_ranaming = computed(() => rename.value !== undefined);
+const rename_lineedit_ref = ref<InstanceType<typeof SLineEdit> | null>(null);
+watch(rename_lineedit_ref, (val) => {
+    if (val !== null) {
+        val.focus();
+    }
+});
+
+// methods
+function on_RenameFinish() {
+    if (!is_ranaming.value) return;
+    const new_name = rename.value;
+    if (props.name !== new_name) {
+        console.log(new_name);
+    }
+    rename.value = undefined;
+}
 
 </script>
 
 <style scoped>
 .outliner-item-container {
+    background-color: unset;
     width: 100%;
-    /* height: var(--NormalMinSize); */
     margin-bottom: var(--GapAndMargin);
     box-sizing: border-box;
-    /* background-color: red; */
 }
+
+/* .outliner-item-hover-visible {
+    visibility: hidden;
+}
+
+.outliner-item:hover .outliner-item-hover-visible {
+    visibility: visible;
+} */
+
+/* .outliner-item-container:hover  {
+    outline: 2px solid color-mix(in srgb, transparent, var(--ThemeColor) 30%);
+    outline-offset:  calc(var(--GapAndMargin) / 2);
+    border-radius: var(--NormalRadius);
+} */
 
 .outliner-item-container.last {
     margin-bottom: 0;
@@ -111,6 +150,7 @@ const children_folded = ref(false);
 
 .outliner-item-fold-container {
     width: var(--SmallMinSize);
+    min-width: var(--SmallMinSize);
     height: var(--NormalMinSize);
     position: relative;
     /* background-color: blue; */
@@ -127,6 +167,7 @@ const children_folded = ref(false);
 
 .ouliner-item-relation-svg {
     position: absolute;
+    background-color: transparent;
     /* background-color: red;
     outline: blue 1px solid;
     outline-offset: -1px; */
@@ -137,5 +178,27 @@ const children_folded = ref(false);
 
 .outliner-item-button {
     flex: 1;
+}
+
+.outliner-rename-button {
+    flex: 1;
+    text-wrap: nowrap;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: left;
+    border: none;
+    border-radius: var(--NormalRadius);
+    gap: var(--NormalPaddingSize);
+    padding: 0 0 0 var(--NormalAdditionalPaddingSize);
+}
+
+.outliner-rename-button .lucide,
+.outliner-rename-button .__s_icon__ {
+    width: var(--NormalIconSize);
+    height: var(--NormalIconSize);
+    min-width: var(--NormalIconSize);
+    min-height: var(--NormalIconSize);
 }
 </style>

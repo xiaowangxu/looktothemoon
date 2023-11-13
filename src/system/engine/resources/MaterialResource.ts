@@ -1,5 +1,5 @@
 import { Resource } from "../Resource";
-import { Camera, Color, Material, MeshNormalMaterial, Scene, WebGLRenderer } from 'three';
+import { Camera, Color, Material, MeshNormalMaterial, Scene, ShaderMaterial, WebGLRenderer } from 'three';
 import { MaterialLoader } from 'three';
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { PlainObject } from "@/system/engine/classes/PlainObject";

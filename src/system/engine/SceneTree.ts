@@ -1146,4 +1146,7 @@ export class Viewport extends Node {
         }
     }
 
+    // public _process(delta: number): void {
+    //     console.log(this.readable_name, this.renderer_3d.get_Info().programs);    
+    // }
 }
