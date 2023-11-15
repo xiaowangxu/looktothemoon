@@ -16,7 +16,7 @@ import { TransformGrabber } from "./nodes/Grabbers";
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { PickingBoxResource } from "../system/engine/resources/PickingShapeResource";
 import { DependencyGraph } from "./singletons/DependencyGraph";
-import { ClassLoader } from "../system/engine/classes/ClassSaverLoader";
+import { ClassLoader, ClassSaver } from "../system/engine/classes/ClassSaverLoader";
 import { PackedSceneResource } from "@/system/engine/resources/PackedSceneResource";
 import { HemisphereLight3D } from "@/system/engine/nodes/visual_instances/light_3ds/HemisphereLight3D";
 import { DirectionalLight3D } from "@/system/engine/nodes/visual_instances/light_3ds/DirectionalLight3D";
@@ -470,6 +470,7 @@ mesh2.material = new ThreeMaterialResource(new ShaderMaterial({
     `,
     transparent: true,
 }));
+mesh2.local_position = new Vector3(0, 0, -100);
 // mesh2.material = new NormalMaterialResource();
 // mesh2.material.get_Material().side = DoubleSide;
 World.add_Child(mesh2);
@@ -481,6 +482,35 @@ transform_grabber.signal_grabbing.connect(({ local_position, local_rotation }) =
     const local = mesh2.to_Local(transform_grabber.to_Global(local_position));
     shape_geo.points = [new Vector2(0, 0), new Vector2(100, 0), new Vector2(local.x, local.y), new Vector2(0, 200)];
 });
+
+// transform_grabber.signal_grab_end.connect(({ local_position, local_rotation }) => {
+//     monkey.queue_Free();
+// });
+
+import GltfFile from 'res://road.glb?raw-buffer';
+import GltfFileText from 'res://Box.gltf?raw';
+import { GltfLoader } from '@/system/engine/loaders/GltfLoader';
+const loader = new GltfLoader();
+loader.parse(GltfFile.buffer).then(res => {
+    if (res.succeed) {
+        const pole = res.unwrap();
+        pole.local_scale = new Vector3(1, 1, 1);
+        console.log(pole);
+        World.add_Child(pole);
+        // const saver = new ClassSaver();
+        // console.log(saver.save(new PackedSceneResource(res.unwrap())).unwrap());
+        transform_grabber.signal_grabbing.connect(({ local_position, local_rotation }) => {
+            pole.global_position = transform_grabber.to_Global(local_position);
+            pole.local_rotation = local_rotation;
+        });
+    }
+});
+
+// const pole_scene = new ClassLoader().fetch<PackedSceneResource>('res://pole.lttm').unwrap();
+// const pole = pole_scene.get_Root<Node3D>();
+// // pole.local_scale = new Vector3(100, 100, 100);
+// // pole.local_position = new Vector3(-200, 100, -200);
+// World.add_Child(pole);
 
 export function createEditorViewport() {
     EditorCompassViewportContainer.dom = document.querySelector('#compass') ?? undefined;

@@ -25,6 +25,10 @@ export class PackedSceneResource extends Resource {
         this._root = root;
         this.for_save = this._root !== undefined;
     }
+    
+    protected dispose(): void { }
+
+    // save / load
 
     public dump_Node(node: Node, parent: Node | undefined, writer: ClassWriter) {
         const node_refid = writer.ref(node);

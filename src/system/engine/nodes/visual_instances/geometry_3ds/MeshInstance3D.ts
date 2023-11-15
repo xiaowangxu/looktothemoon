@@ -7,46 +7,53 @@ import type { GeometryResource } from "../../../resources/GeometryResource";
 import { MaterialResource, ThreeMaterialResource } from "../../../resources/MaterialResource";
 import { GeometryInstance3D } from "./GeometryInstance3D";
 import { MeshPhongMaterial, DoubleSide } from "three";
+import { Ref, RefArray } from "@/system/utils/RefCounted";
 
-const FallbackMaterial = new Cacher(() => new ThreeMaterialResource(new MeshPhongMaterial({ color: 0xff00ff, side: DoubleSide })));
+const FallbackMaterial = new Cacher(() => new Ref(new ThreeMaterialResource(new MeshPhongMaterial({ color: 0xff00ff, side: DoubleSide }))));
 
 export class MeshInstance3D extends GeometryInstance3D {
     public static readonly class_name: string = "MeshInstance3D";
 
     private mesh_rid: RID | undefined = undefined;
-    private _geometry: GeometryResource | undefined = undefined;
-    public get geometry() { return this._geometry; }
+    private _geometry: Ref<GeometryResource> = new Ref();
+    public get geometry() { return this._geometry.value; }
     public set geometry(geometry: GeometryResource | undefined) {
-        if (this._geometry !== geometry) {
-            this._geometry = geometry;
+        if (this._geometry.value !== geometry) {
+            this._geometry.value = geometry;
             if (this.mesh_rid !== undefined) {
                 const visual_world = this.get_Viewport()?.get_World3D()?.get_VisualWorld();
                 if (visual_world !== undefined) {
-                    if (this._geometry === undefined) {
+                    if (this._geometry.value === undefined) {
                         visual_world.clear_MeshGeometry(this.mesh_rid);
                     }
                     else {
-                        visual_world.set_MeshGeometry(this.mesh_rid, this._geometry);
+                        visual_world.set_MeshGeometry(this.mesh_rid, this._geometry.value);
                     }
                 }
             }
         }
     }
-    private _material: MaterialResource | MaterialResource[] | undefined = FallbackMaterial.value;
-    public get material() { return this._material; }
-    public set material(material: MaterialResource | MaterialResource[] | undefined) {
-        this._material = material ?? FallbackMaterial.value;
-        if (this._material instanceof Array && this._material.length <= 0) {
-            this._material = FallbackMaterial.value;
+    private _material: Ref<MaterialResource> | RefArray<MaterialResource> = new Ref(FallbackMaterial.value.value);
+    public get material(): MaterialResource | MaterialResource[] { return this._material.value as MaterialResource[]; }
+    public set material(material: MaterialResource | undefined | (MaterialResource | undefined)[]) {
+        if (this._material instanceof RefArray || this._material instanceof Ref) this._material.clear();
+        if (material === undefined) {
+            this._material = new Ref(FallbackMaterial.value.value);
+        }
+        else if (material instanceof MaterialResource) {
+            this._material = new Ref(material);
+        }
+        else {
+            this._material = new RefArray(material.map(m => m === undefined ? FallbackMaterial.value.value : m));
         }
         if (this.mesh_rid !== undefined) {
             const visual_world = this.get_Viewport()?.get_World3D()?.get_VisualWorld();
             if (visual_world !== undefined) {
-                if (this._material === undefined) {
+                if (this._material.value === undefined) {
                     visual_world.clear_MeshMaterial(this.mesh_rid);
                 }
                 else {
-                    visual_world.set_MeshMaterial(this.mesh_rid, this._material);
+                    visual_world.set_MeshMaterial(this.mesh_rid, this._material.value as MaterialResource | MaterialResource[]);
                 }
             }
         }
@@ -90,7 +97,7 @@ export class MeshInstance3D extends GeometryInstance3D {
                             visual_world.set_MeshGeometry(this.mesh_rid, this.geometry);
                         }
                         if (this.material !== undefined) {
-                            visual_world.set_MeshMaterial(this.mesh_rid, this.material);
+                            visual_world.set_MeshMaterial(this.mesh_rid, this.material as MaterialResource | MaterialResource[]);
                         }
                         visual_world.set_MeshLayer(this.mesh_rid, this.visual_layer);
                         visual_world.set_MeshCastShadow(this.mesh_rid, this.cast_shadow);
@@ -121,6 +128,11 @@ export class MeshInstance3D extends GeometryInstance3D {
                 }
                 break;
             }
+            case NodeNotification.Dispose: {
+                this._geometry.clear();
+                this._material.clear();
+                break;
+            }
         }
         super._notification(what);
     }
@@ -129,14 +141,12 @@ export class MeshInstance3D extends GeometryInstance3D {
 
     public dump(writer: ClassWriter): void {
         super.dump(writer);
-        writer.property('geometry', this.geometry)
+        writer.property('geometry', this.geometry);
+        const material = this.material;
         writer.property('material',
-            this.material === undefined ?
-                undefined :
-                (
-                    this.material instanceof MaterialResource ?
-                        this.material :
-                        new ValueObject(this.material.map(m => writer.ref(m, false)))
+            material === undefined ? undefined :
+                (material instanceof MaterialResource ? material :
+                    new ValueObject(material.map(m => m === FallbackMaterial.value.value ? undefined : writer.ref(m, false)))
                 )
         );
     }

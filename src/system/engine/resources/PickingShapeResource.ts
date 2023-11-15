@@ -18,7 +18,7 @@ export abstract class PickingShape3DResource extends Resource implements Picking
     }
 }
 
-export class PickingBoxResource extends Resource {
+export class PickingBoxResource extends PickingShape3DResource {
     public static readonly class_name: string = "PickingBoxResource";
 
     public readonly preserve_global_transform: boolean = false;
@@ -112,6 +112,8 @@ export class PickingBoxResource extends Resource {
         return { position: result, normal: normal };
     }
 
+    protected dispose(): void { }
+
     // save / load
 
     public dump(writer: ClassWriter): void {
@@ -177,6 +179,8 @@ export class PickingSphereResource extends PickingShape3DResource {
 
         return { position: result_position, normal: result_normal };
     }
+
+    protected dispose(): void { }
 
     // save / load
 
@@ -309,6 +313,8 @@ export class PickingCylinderResource extends PickingShape3DResource {
         return { position: result, normal: res_normal };
     }
 
+    protected dispose(): void { }
+
     // save / load
 
     public dump(writer: ClassWriter): void {
@@ -355,6 +361,9 @@ export class PickingBVHResource extends PickingShape3DResource {
         }
         return min;
     }
+
+    protected dispose(): void { }
+
 }
 
 export class PickingPolyLineResource extends PickingShape3DResource {
@@ -532,6 +541,8 @@ export class PickingPolyLineResource extends PickingShape3DResource {
 
         return this.raycast_ScreenSpace(ray, global_transform, _camera, resolution);
     }
+    
+    protected dispose(): void { }
 
     // save / load
 

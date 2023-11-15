@@ -1,8 +1,20 @@
+import type { RefCounted } from '../utils/RefCounted';
 import { SignalEmitter } from '../utils/SignalEmitter';
 import { ClassBase } from './classes/ClassBase';
 
-export class Resource extends ClassBase {
+export abstract class Resource extends ClassBase implements RefCounted {
     public static readonly class_name: string = "Resource";
+
+    private _ref_count: number = 0;
+    public ref_count(): number { return this._ref_count; }
+    public ref(): void { this._ref_count++; }
+    public unref(): void {
+        this._ref_count--;
+        if (this._ref_count <= 0) {
+            this._ref_count = 0;
+            this.dispose();
+        }
+    }
 
     protected _unique: boolean = false;
     public get unique() { return this._unique; }
@@ -16,6 +28,8 @@ export class Resource extends ClassBase {
     protected trigger_Changed() {
         this.signal_changed.trigger();
     }
+
+    protected abstract dispose(): void;
 }
 
 export class ResourceInstanceCache {

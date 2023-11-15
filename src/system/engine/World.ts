@@ -140,7 +140,7 @@ export class VisualWorld3D {
         }
     }
 
-    public set_MeshMaterial(rid: RID, material: MaterialResource | MaterialResource[]) {
+    public set_MeshMaterial(rid: RID, material: MaterialResource | (MaterialResource)[]) {
         const instance = this.get_Instance<Mesh>(rid);
         if (instance) {
             this.unref_MeshMaterial(instance);

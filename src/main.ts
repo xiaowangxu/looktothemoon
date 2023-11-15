@@ -18,7 +18,3 @@ createEditorViewport();
 // console.log(string);
 // navigator.clipboard.writeText(string);
 
-import GltfFile from 'res://road.glb?raw-buffer';
-import { GltfLoader } from './system/engine/loaders/GltfLoader';
-const loader = new GltfLoader();
-console.log(loader.parse(GltfFile.buffer).error);

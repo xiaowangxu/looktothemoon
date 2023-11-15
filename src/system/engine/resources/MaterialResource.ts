@@ -4,9 +4,10 @@ import { MaterialLoader } from 'three';
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { PlainObject } from "@/system/engine/classes/PlainObject";
 import { ClassReader, type ClassWriter } from "../classes/ClassWriterReader";
+import type { RefCounted } from "@/system/utils/RefCounted";
 
 declare module 'three' {
-    interface Material {
+    interface Material extends RefCounted {
         isRefCounted: boolean;
         ref_count(): number;
         ref(): void;
@@ -73,6 +74,12 @@ export class ThreeMaterialResource extends MaterialResource {
         return this.material;
     }
 
+    protected dispose(): void {
+        console.log(">>>>> dispose three material", this);
+    }
+
+    // save / load
+
     public dump(writer: ClassWriter): void {
         writer.initialization('three_material', new PlainObject(this.material.toJSON()));
     }
@@ -108,6 +115,9 @@ export class NormalMaterialResource extends MaterialResource {
     public get_Material(): Material {
         return this.normal_material;
     }
+
+    protected dispose(): void { }
+
 }
 
 export class LineMaterialResource extends MaterialResource {
@@ -245,6 +255,8 @@ export class LineMaterialResource extends MaterialResource {
     public get_Material(): Material {
         return this.line_material;
     }
+
+    protected dispose(): void { }
 
     // save / load
 

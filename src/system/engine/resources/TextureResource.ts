@@ -1,8 +1,9 @@
 import { Resource } from '@/system/engine/Resource';
+import type { RefCounted } from '@/system/utils/RefCounted';
 import { Texture } from 'three';
 
 declare module 'three' {
-    interface Texture {
+    interface Texture extends RefCounted {
         isRefCounted: boolean;
         ref_count(): number;
         ref(): void;
@@ -47,4 +48,6 @@ export class TextureResource extends Resource {
     public get_Texture(): Texture {
         throw new Error('abstract method');
     }
+
+    protected dispose(): void { }
 }

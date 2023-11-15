@@ -5,9 +5,10 @@ import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeome
 import { ClassReader, type ClassWriter } from '../classes/ClassWriterReader';
 import { ValueObject } from '../classes/ValueObject';
 import { PlainObject } from '../classes/PlainObject';
+import type { RefCounted } from '@/system/utils/RefCounted';
 
 declare module 'three' {
-    interface BufferGeometry {
+    interface BufferGeometry extends RefCounted {
         isRefCounted: boolean;
         ref_count(): number;
         ref(): void;
@@ -70,6 +71,7 @@ export class ThreeGeometryResource extends GeometryResource {
         return this.buffer_geometry;
     }
 
+    protected dispose(): void { }
     // save / load
 
     public dump(writer: ClassWriter): void {
@@ -148,6 +150,8 @@ export class PolyLineGeometryResource extends GeometryResource {
         return this.line_geometry;
     }
 
+    protected dispose(): void { }
+
     // save / load
 
     public dump(writer: ClassWriter): void {
@@ -198,6 +202,8 @@ export class SegmentLineGeometryResource extends GeometryResource {
         return this.line_segment_geometry;
     }
 
+    protected dispose(): void { }
+
     // save / load
 
     public dump(writer: ClassWriter): void {
@@ -246,4 +252,7 @@ export class PolygonGeometryResource extends GeometryResource {
     public get_BufferGeometry(): BufferGeometry {
         return this.buffer_geometry;
     }
+
+    protected dispose(): void { }
+
 }
