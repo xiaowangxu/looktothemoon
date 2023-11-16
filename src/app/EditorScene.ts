@@ -487,14 +487,14 @@ transform_grabber.signal_grabbing.connect(({ local_position, local_rotation }) =
 //     monkey.queue_Free();
 // });
 
-import GltfFile from 'res://road.glb?raw-buffer';
+// import GltfFile from 'res://road.glb?raw-buffer';
 import GltfFileText from 'res://Box.gltf?raw';
 import { GltfLoader } from '@/system/engine/loaders/GltfLoader';
 const loader = new GltfLoader();
-loader.parse(GltfFile.buffer).then(res => {
+loader.parse(GltfFileText).then(res => {
     if (res.succeed) {
         const pole = res.unwrap();
-        pole.local_scale = new Vector3(1, 1, 1);
+        pole.local_scale = new Vector3(100, 100, 100);
         console.log(pole);
         World.add_Child(pole);
         // const saver = new ClassSaver();

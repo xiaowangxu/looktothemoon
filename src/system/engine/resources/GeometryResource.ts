@@ -72,6 +72,7 @@ export class ThreeGeometryResource extends GeometryResource {
     }
 
     protected dispose(): void { }
+    
     // save / load
 
     public dump(writer: ClassWriter): void {

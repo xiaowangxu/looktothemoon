@@ -22,6 +22,7 @@ import { PickingShape3D } from "../nodes/physics_3ds/PickingShape3D";
 import { PickingBoxResource } from "../resources/PickingShapeResource";
 import { AmbientLight3D } from "../nodes/visual_instances/light_3ds/AmbientLight3D";
 import { HemisphereLight3D } from "../nodes/visual_instances/light_3ds/HemisphereLight3D";
+import { ImageResource } from "../resources/ImageResource";
 
 export class ClassDataBase {
     private readonly db: Map<string, typeof ClassBase> = new Map();
@@ -63,7 +64,7 @@ ClassDB.register_Class(PickingShape3D);
 ClassDB.register_Class(AmbientLight3D);
 ClassDB.register_Class(HemisphereLight3D);
 
-ClassDB.register_Class(Resource);
+ClassDB.register_Class(ImageResource);
 
 ClassDB.register_Class(PackedSceneResource);
 
