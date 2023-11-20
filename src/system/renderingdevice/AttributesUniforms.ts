@@ -19,7 +19,7 @@ export class Uniforms {
 
     constructor() { }
 
-    public get names() { return [...this.uniforms_map.keys()]; }
+    public get names() { return this.uniforms_map.keys(); }
 
     public add_Uniform(name: string, type: AttributeUniformType, value: UniformDataType | undefined) {
         this.uniforms_map.set(name, { type, location: null, value });

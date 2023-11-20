@@ -41,12 +41,6 @@ class RenderState {
         this.gl = _gl;
     }
 
-    public set_Size(width: number, height: number) {
-        const w = Math.max(0, Math.floor(width));
-        const h = Math.max(0, Math.floor(height));
-        if (w <= 0 || h <= 0) return;
-    }
-
     // shader
 
     public create_Shader(type: ShaderType, source: string): Shader {
@@ -436,7 +430,7 @@ class RenderState {
 // console.log(new ImageLoader().parse(testimage));
 
 
-import { data1, data2 } from './test.js';
+import { data1, data2 } from './test';
 
 
 const cvs = document.getElementById('text-canvas') as HTMLCanvasElement;
@@ -936,7 +930,8 @@ uniform sampler2D u_texture;
 in vec2 v_uv;
 out vec4 outColor;
 void main() {
-  vec4 color = texture(u_texture, v_uv);
+  vec2 uv = vec2(v_uv.x * v_uv.x, v_uv.y);
+  vec4 color = texture(u_texture, uv);
   float distance = distance(v_uv, vec2(0.5));
   vec3 greyScale = vec3(.5, .5, .5);
   color = vec4(vec3(dot(color.rgb, greyScale)), color.a);
