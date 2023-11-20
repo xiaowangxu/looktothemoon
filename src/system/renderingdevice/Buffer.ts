@@ -12,7 +12,7 @@ export class Buffer implements RefCounted {
     public get data_stride() { return 0; }
     public get data_offset() { return 0; }
 
-    public data: Float32Array | undefined = undefined;
+    public data: ArrayBufferLike | undefined = undefined;
 
     private _buffer: WebGLBuffer | undefined = undefined;
     public get buffer() { return this._buffer; }
@@ -31,13 +31,14 @@ export class Buffer implements RefCounted {
         }
     }
 
-    constructor(rd: RenderingDevice, type: number, usage: number, data_size: number, data_type: number, data_normalize: boolean) {
+    constructor(rd: RenderingDevice, type: number, usage: number, data_size: number, data_type: number, data_normalize: boolean, data: ArrayBufferLike | undefined) {
         this.rd = rd;
         this.type = type;
         this.usage = usage;
         this.data_size = data_size;
         this.data_type = data_type;
         this.data_normalize = data_normalize;
+        this.data = data;
     }
 
     public free() {
@@ -64,10 +65,6 @@ export class BufferView implements RefCounted {
         this.buffer_ref.value!.buffer = buffer;
     }
 
-    public set data(data: Float32Array) {
-        this.buffer_ref.value!.data = data;
-    }
-
     public get compiled() { return this.buffer_ref.value!.compiled; }
 
     private _ref_count: number = 0;
@@ -89,10 +86,6 @@ export class BufferView implements RefCounted {
     }
 
     public free() {
-        const buffer = this.buffer_ref.value;
-        // set undefined to use ref count free
         this.buffer_ref.value = undefined;
-        // restore buffer ref
-        this.buffer_ref.value = buffer;
     }
 }

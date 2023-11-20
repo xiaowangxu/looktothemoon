@@ -1,5 +1,6 @@
 import { type RefCounted, Ref } from "../utils/RefCounted";
 import type { RenderingDevice } from "./RenderingDevice";
+import { Attributes, Uniforms } from "./AttributesUniforms";
 
 export enum ShaderType { Vertex, Fragment }
 
@@ -7,8 +8,6 @@ export class Shader implements RefCounted {
     private readonly rd: RenderingDevice;
     public readonly type: ShaderType;
     public readonly source: string;
-    public readonly attributes: string[];
-    public readonly uniforms: string[];
 
     private _shader: WebGLShader | undefined = undefined;
     public get shader() { return this._shader; }
@@ -27,15 +26,15 @@ export class Shader implements RefCounted {
         }
     }
 
-    constructor(rd: RenderingDevice, type: ShaderType, source: string, attributes: string[], uniforms: string[]) {
+    constructor(rd: RenderingDevice, type: ShaderType, source: string) {
         this.rd = rd;
         this.type = type;
         this.source = source;
-        this.attributes = attributes;
-        this.uniforms = uniforms;
     }
 
-    public free() { }
+    public free() {
+        this.rd.state.free_Shader(this);
+    }
 }
 
 export class ShaderProgram implements RefCounted {
@@ -43,8 +42,11 @@ export class ShaderProgram implements RefCounted {
     public readonly vertex_shader: Ref<Shader> = new Ref();
     public readonly fragment_shader: Ref<Shader> = new Ref();
 
-    public readonly attribute_locations_map: Map<string, number> = new Map();
-    public readonly uniform_locations_map: Map<string, WebGLUniformLocation> = new Map();
+    public readonly attributes: Attributes;
+    public readonly uniforms: Uniforms;
+
+    public cull_back_face: boolean = true;
+    public depth_test: boolean = true;
 
     private _program: WebGLProgram | undefined = undefined;
     public get program() { return this._program; }
@@ -63,11 +65,19 @@ export class ShaderProgram implements RefCounted {
         }
     }
 
-    constructor(rd: RenderingDevice, vertex_shader: Shader, fragment_shader: Shader) {
+    constructor(rd: RenderingDevice, vertex_shader: Shader, fragment_shader: Shader, attributes: Attributes, uniforms: Uniforms, cull_back_face: boolean, depth_test: boolean) {
         this.rd = rd;
         this.vertex_shader.value = vertex_shader;
         this.fragment_shader.value = fragment_shader;
+        this.attributes = attributes;
+        this.uniforms = uniforms;
+        this.cull_back_face = cull_back_face;
+        this.depth_test = depth_test;
     }
 
-    public free() { }
+    public free() {
+        this.vertex_shader.value = undefined;
+        this.fragment_shader.value = undefined;
+        this.rd.state.free_ShaderProgram(this);
+    }
 }

@@ -1,9 +1,14 @@
+import { Buffer } from "./Buffer";
 import { type RefCounted, Ref } from "../utils/RefCounted";
 import type { RenderingDevice } from "./RenderingDevice";
+import type { BufferView } from "./Buffer";
 
 export class VertexArray implements RefCounted {
     private readonly rd: RenderingDevice;
-    public readonly primitive_type: number; 
+    public readonly primitive_type: number;
+
+    public offset: number = 0;
+    public count: number = 0;
 
     private _vertex_array: WebGLVertexArrayObject | undefined = undefined;
     public get vertex_array() { return this._vertex_array; }
@@ -22,10 +27,18 @@ export class VertexArray implements RefCounted {
         }
     }
 
-    constructor(rd: RenderingDevice, primitive_type: number) {
+    constructor(rd: RenderingDevice, primitive_type: number, offset: number, count: number) {
         this.rd = rd;
         this.primitive_type = primitive_type;
+        this.offset = offset;
+        this.count = count;
     }
 
-    public free() { }
+    public bind_Buffer(attribute: string, attribute_location: number, buffer: Buffer | BufferView) {
+        this.rd.state.set_VertexArrayAttributeBuffer(this, attribute_location, buffer);
+    }
+
+    public free() {
+        this.rd.state.free_VertexArray(this);
+    }
 }

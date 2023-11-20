@@ -20,6 +20,7 @@ export class Result<T, Err> {
     }
 
     public static Error<T, Err>(err: Err) {
+        console.log(err);
         return new Result<T, Err>(false, undefined, err);
     }
 

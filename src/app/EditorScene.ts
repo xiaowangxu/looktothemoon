@@ -487,22 +487,22 @@ transform_grabber.signal_grabbing.connect(({ local_position, local_rotation }) =
 //     monkey.queue_Free();
 // });
 
-// import GltfFile from 'res://road.glb?raw-buffer';
-import GltfFileText from 'res://Box.gltf?raw';
+import GltfFile from 'res://road.glb?raw-buffer';
+// import GltfFileText from 'res://Box.gltf?raw';
 import { GltfLoader } from '@/system/engine/loaders/GltfLoader';
 const loader = new GltfLoader();
-loader.parse(GltfFileText).then(res => {
+loader.parse(GltfFile.buffer).then(res => {
     if (res.succeed) {
         const pole = res.unwrap();
-        pole.local_scale = new Vector3(100, 100, 100);
+        pole.local_scale = new Vector3(1, 1, 1);
         console.log(pole);
         World.add_Child(pole);
         // const saver = new ClassSaver();
         // console.log(saver.save(new PackedSceneResource(res.unwrap())).unwrap());
-        transform_grabber.signal_grabbing.connect(({ local_position, local_rotation }) => {
-            pole.global_position = transform_grabber.to_Global(local_position);
-            pole.local_rotation = local_rotation;
-        });
+        // transform_grabber.signal_grabbing.connect(({ local_position, local_rotation }) => {
+        //     pole.global_position = transform_grabber.to_Global(local_position);
+        //     pole.local_rotation = local_rotation;
+        // });
     }
 });
 

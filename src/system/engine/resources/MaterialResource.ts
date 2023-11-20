@@ -102,6 +102,23 @@ export class ThreeMaterialResource extends MaterialResource {
     }
 }
 
+export class PhysicalMaterialResource extends MaterialResource {
+    public static readonly class_name: string = "PhysicalMaterialResource";
+    
+    private readonly physical_material: MeshNormalMaterial = new MeshNormalMaterial();
+
+    constructor() {
+        super();
+        this.init_RefCount();
+    }
+
+    public get_Material(): Material {
+        return this.physical_material;
+    }
+
+    protected dispose(): void {}
+}
+
 export class NormalMaterialResource extends MaterialResource {
     public static readonly class_name: string = "NormalMaterialResource";
 
@@ -118,6 +135,13 @@ export class NormalMaterialResource extends MaterialResource {
 
     protected dispose(): void { }
 
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+    }
+
+    public load(reader: ClassReader): void {
+    }
 }
 
 export class LineMaterialResource extends MaterialResource {
