@@ -164,7 +164,12 @@ class RenderState {
         if (buffer_result.failed) return Result.Error(buffer_result.error!);
         const gl = this.gl;
         gl.bindBuffer(buffer.type, buffer.buffer!);
-        gl.bufferData(buffer.type, data, buffer.usage);
+        if (buffer.usage === gl.DYNAMIC_DRAW || buffer.usage === gl.DYNAMIC_COPY || buffer.usage === gl.DYNAMIC_READ) {
+            gl.bufferSubData(buffer.type, 0, data);
+        }
+        else {
+            gl.bufferData(buffer.type, data, buffer.usage);
+        }
     }
 
     public free_Buffer(buffer: Buffer) {
@@ -190,7 +195,7 @@ class RenderState {
         return Result.Ok(vertex_array);
     }
 
-    public set_VertexArrayAttributeBuffer(vertex_array: VertexArray, attribute_location: number, buffer: Buffer | BufferView) {
+    public set_VertexArrayAttributeBuffer(vertex_array: VertexArray, attribute_location: number, buffer: Buffer | BufferView, divisor: number | undefined = undefined) {
         if (attribute_location === -1) return Result.Error(new Error('attribute_location is -1'));
         const vertexarray_result = this.compile_VertexArray(vertex_array);
         if (vertexarray_result.failed) return Result.Error(vertexarray_result.error!);
@@ -201,6 +206,9 @@ class RenderState {
         gl.bindVertexArray(vertex_array.vertex_array!);
         gl.enableVertexAttribArray(attribute_location);
         gl.vertexAttribPointer(attribute_location, data_size, data_type, data_normalize, data_stride, data_offset);
+        if (divisor !== undefined) {
+            gl.vertexAttribDivisor(attribute_location, divisor);
+        }
         return Result.Ok(undefined);
     }
 
