@@ -20,7 +20,6 @@ export class Result<T, Err> {
     }
 
     public static Error<T, Err>(err: Err) {
-        console.log(err);
         return new Result<T, Err>(false, undefined, err);
     }
 
@@ -35,5 +34,10 @@ export class Result<T, Err> {
     public unwrap_Error() {
         if (!this.ok) return this.error;
         else throw new Error('failed to unwrap error from Result.Ok');
+    }
+
+    public expect() {
+        if (this.ok) return this.item!;
+        throw this.error!;
     }
 }

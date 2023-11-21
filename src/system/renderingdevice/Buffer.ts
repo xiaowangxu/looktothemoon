@@ -12,7 +12,7 @@ export class Buffer implements RefCounted {
     public get data_stride() { return 0; }
     public get data_offset() { return 0; }
 
-    public data: ArrayBufferLike | undefined = undefined;
+    public data: ArrayBufferLike;
 
     private _buffer: WebGLBuffer | undefined = undefined;
     public get buffer() { return this._buffer; }
@@ -31,7 +31,7 @@ export class Buffer implements RefCounted {
         }
     }
 
-    constructor(rd: RenderingDevice, type: number, usage: number, data_size: number, data_type: number, data_normalize: boolean, data: ArrayBufferLike | undefined) {
+    constructor(rd: RenderingDevice, type: number, usage: number, data_size: number, data_type: number, data_normalize: boolean, data: ArrayBufferLike) {
         this.rd = rd;
         this.type = type;
         this.usage = usage;
@@ -39,6 +39,13 @@ export class Buffer implements RefCounted {
         this.data_type = data_type;
         this.data_normalize = data_normalize;
         this.data = data;
+    }
+
+    public set_Data(data:  ArrayBufferLike) {
+        this.data = data;
+        if (this.compiled) {
+            this.rd.state.set_Buffer(this, this.data, false);
+        }
     }
 
     public free() {
@@ -54,7 +61,8 @@ export class BufferView implements RefCounted {
     public get type() { return this.buffer_ref.value!.type; }
     public get usage() { return this.buffer_ref.value!.usage; }
 
-    public get data_size() { return this.buffer_ref.value!.data_size; }
+    private _data_size: number | undefined;
+    public get data_size() { return this._data_size ?? this.buffer_ref.value!.data_size; }
     public get data_type() { return this.buffer_ref.value!.data_type; }
     public get data_normalize() { return this.buffer_ref.value!.data_normalize; }
     public readonly data_stride: number;
@@ -78,11 +86,12 @@ export class BufferView implements RefCounted {
         }
     }
 
-    constructor(rd: RenderingDevice, buffer: Buffer, data_stride: number, data_offset: number) {
+    constructor(rd: RenderingDevice, buffer: Buffer, data_stride: number, data_offset: number, data_size: number | undefined) {
         this.rd = rd;
         this.buffer_ref.value = buffer;
         this.data_stride = data_stride;
         this.data_offset = data_offset;
+        this._data_size = data_size;
     }
 
     public free() {

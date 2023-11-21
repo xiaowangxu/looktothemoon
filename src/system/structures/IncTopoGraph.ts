@@ -199,11 +199,11 @@ export class IncTopoGraph<T> {
     }
 
     public get unsorted() {
-        return [...this.nodes_map.values()];
+        return this.nodes_map.values();
     }
 
     public get sorted() {
-        return this.unsorted.sort((a, b) => a.order - b.order);
+        return [...this.unsorted].sort((a, b) => a.order - b.order);
     }
 
     public get_UnsortedDescendants(item: T) {

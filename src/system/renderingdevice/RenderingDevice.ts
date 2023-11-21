@@ -4,6 +4,8 @@ import { VertexArray } from "./VertexArray";
 import { Shader, ShaderProgram, ShaderType } from "./Shader";
 import { AttributeUniformType, Attributes, Uniforms } from "./AttributesUniforms";
 import { Texture, type TextureSourceType } from "./Texture";
+import { RenderTexture } from "./RenderTexture";
+import { Ref } from "../utils/RefCounted";
 import { ImageLoader } from "../engine/loaders/ImageLoader";
 
 export class RenderingDevice {
@@ -14,11 +16,18 @@ export class RenderingDevice {
         this.canvas = canvas;
         this.state = new RenderState(this);
     }
+
+    public create_RenderGraph() {
+        return new RenderGraph(this);
+    }
 }
 
 class RenderState {
     public static readonly StartTextureSlot = 8;
     public static readonly MaxTextureSlot = 20;
+
+    private fullscreen_quad: Ref<VertexArray> | undefined = undefined;
+    private fullscreen_quad_vertex_shader: Ref<Shader> | undefined = undefined;
 
     private readonly rd: RenderingDevice;
     public readonly gl: WebGL2RenderingContext;
@@ -29,6 +38,7 @@ class RenderState {
         buffers: new Set(),
         vertex_arrays: new Set(),
         textures: new Set(),
+        render_textures: new Set(),
         frame_buffers: new Set(),
     }
 
@@ -36,9 +46,58 @@ class RenderState {
 
     constructor(rd: RenderingDevice) {
         this.rd = rd;
-        const _gl = this.rd.canvas.getContext('webgl2');
+        const _gl = this.rd.canvas.getContext('webgl2', { antialias: true });
         if (_gl === null) throw new Error('failed to get webgl2 context');
         this.gl = _gl;
+    }
+
+    // utils
+
+    public create_FullScreenQuad() {
+        if (this.fullscreen_quad === undefined) {
+            const buffer_quad = this.create_Buffer(this.gl.ARRAY_BUFFER, this.gl.STATIC_DRAW, 3, this.gl.FLOAT, false, new Float32Array([
+                -1, 1, 0,
+                -1, -1, 0,
+                1, 1, 0,
+
+                1, 1, 0,
+                -1, -1, 0,
+                1, -1, 0,
+            ]));
+            const uv_buffer_quad = this.create_Buffer(this.gl.ARRAY_BUFFER, this.gl.STATIC_DRAW, 2, this.gl.FLOAT, true, new Float32Array([
+                0, 1,
+                0, 0,
+                1, 1,
+
+                1, 1,
+                0, 0,
+                1, 0,
+            ]));
+            const quad = this.create_VertexArray(this.gl.TRIANGLES, 0, buffer_quad.data!.byteLength / Float32Array.BYTES_PER_ELEMENT / 3);
+            this.set_VertexArrayAttributeBuffer(quad, 0, buffer_quad);
+            this.set_VertexArrayAttributeBuffer(quad, 1, uv_buffer_quad);
+            this.fullscreen_quad = new Ref(quad);
+        }
+        return this.fullscreen_quad.value!;
+    }
+
+    public create_FullScreenQuadVertexShader() {
+        if (this.fullscreen_quad_vertex_shader === undefined) {
+            const vertexShaderSourceQuad = `#version 300 es
+
+                                            in vec4 a_position;
+                                            in vec2 a_uv;
+            
+                                            out vec2 v_uv;
+            
+                                            void main() {
+                                                gl_Position = a_position;
+                                                v_uv = a_uv;
+                                            }
+                                            `;
+            this.fullscreen_quad_vertex_shader = new Ref(this.create_Shader(ShaderType.Vertex, vertexShaderSourceQuad));
+        }
+        return this.fullscreen_quad_vertex_shader.value!;
     }
 
     // shader
@@ -135,13 +194,13 @@ class RenderState {
 
     // buffer
 
-    public create_Buffer(type: number, usage: number, data_size: number, data_type: number, data_normalize: boolean, data: ArrayBufferLike | undefined) {
+    public create_Buffer(type: number, usage: number, data_size: number, data_type: number, data_normalize: boolean, data: ArrayBufferLike) {
         const buffer = new Buffer(this.rd, type, usage, data_size, data_type, data_normalize, data);
         return buffer;
     }
 
-    public create_BufferView(buffer: Buffer, data_stride: number = 0, data_offset: number = 0) {
-        return new BufferView(this.rd, buffer, data_stride, data_offset);
+    public create_BufferView(buffer: Buffer, data_stride: number = 0, data_offset: number = 0, data_size: number | undefined = undefined) {
+        return new BufferView(this.rd, buffer, data_stride, data_offset, data_size);
     }
 
     public compile_Buffer(buffer: Buffer | BufferView): Result<Buffer | BufferView, Error> {
@@ -150,21 +209,21 @@ class RenderState {
         if (glbuffer === null) return Result.Error(new Error('failed to create buffer'));
         buffer.buffer = glbuffer;
         if (buffer instanceof Buffer && buffer.data !== undefined) {
-            this.set_Buffer(buffer, buffer.data);
+            this.set_Buffer(buffer, buffer.data, true);
         }
         if (buffer instanceof BufferView && buffer.buffer_ref.value!.data !== undefined) {
-            this.set_Buffer(buffer.buffer_ref.value!, buffer.buffer_ref.value!.data);
+            this.set_Buffer(buffer.buffer_ref.value!, buffer.buffer_ref.value!.data, true);
         }
         this.instances.buffers.add(buffer);
         return Result.Ok(buffer);
     }
 
-    public set_Buffer(buffer: Buffer | BufferView, data: ArrayBufferLike) {
+    public set_Buffer(buffer: Buffer | BufferView, data: ArrayBufferLike, init: boolean) {
         const buffer_result = this.compile_Buffer(buffer);
         if (buffer_result.failed) return Result.Error(buffer_result.error!);
         const gl = this.gl;
         gl.bindBuffer(buffer.type, buffer.buffer!);
-        if (buffer.usage === gl.DYNAMIC_DRAW || buffer.usage === gl.DYNAMIC_COPY || buffer.usage === gl.DYNAMIC_READ) {
+        if (!init && buffer.usage === gl.DYNAMIC_DRAW || buffer.usage === gl.DYNAMIC_COPY || buffer.usage === gl.DYNAMIC_READ) {
             gl.bufferSubData(buffer.type, 0, data);
         }
         else {
@@ -182,8 +241,8 @@ class RenderState {
 
     // vertex array
 
-    public create_VertexArray(primitive_type: number, offset: number, count: number) {
-        return new VertexArray(this.rd, primitive_type, offset, count);
+    public create_VertexArray(primitive_type: number, offset: number, count: number, instance_count: number = 1) {
+        return new VertexArray(this.rd, primitive_type, offset, count, instance_count);
     }
 
     public compile_VertexArray(vertex_array: VertexArray): Result<VertexArray, Error> {
@@ -240,6 +299,7 @@ class RenderState {
         for (let i = 0, len = texture.levels.length; i < len; i++) {
             const data = texture.levels[i];
             this.set_Texture(texture, i, texture.internal_format, texture.format, texture.type, data, texture.width, texture.height, texture.mipmap);
+            this.set_TextureParameters(texture, texture.wrap_s, texture.wrap_t, texture.min_filter, texture.mag_filter);
         }
         this.instances.textures.add(texture);
         return Result.Ok(texture);
@@ -292,6 +352,47 @@ class RenderState {
         }
     }
 
+    // render texture
+
+    public create_RenderTexture(internal_format: number, samples: number, width: number, height: number) {
+        const gl = this.gl;
+        samples = Math.min(gl.getParameter(gl.MAX_SAMPLES), samples);
+        return new RenderTexture(this.rd, internal_format, samples, width, height);
+    }
+
+    public compile_RenderTexture(texture: RenderTexture): Result<RenderTexture, Error> {
+        if (texture.compiled) return Result.Ok(texture);
+        const glrenderbuffer = this.gl.createRenderbuffer();
+        if (glrenderbuffer === null) return Result.Error(new Error('failed to create render texture'));
+        texture.renderbuffer = glrenderbuffer;
+        this.set_RenderTexture(texture, texture.internal_format, texture.samples, texture.width, texture.height);
+        this.instances.render_textures.add(texture);
+        return Result.Ok(texture);
+    }
+
+    public set_RenderTexture(texture: RenderTexture, internal_format: number, samples: number, width: number, height: number) {
+        const texture_result = this.compile_RenderTexture(texture);
+        if (texture_result.failed) return Result.Error(texture_result.error!);
+        const gl = this.gl;
+        samples = Math.min(gl.getParameter(gl.MAX_SAMPLES), samples);
+        gl.bindRenderbuffer(gl.RENDERBUFFER, texture.renderbuffer!);
+        if (texture.samples > 1) {
+            gl.renderbufferStorageMultisample(gl.RENDERBUFFER, samples, internal_format, width, height);
+        }
+        else {
+            gl.renderbufferStorage(gl.RENDERBUFFER, internal_format, width, height)
+        }
+        return Result.Ok(undefined);
+    }
+
+    public free_RenderTexture(texture: RenderTexture) {
+        if (texture.compiled) {
+            this.gl.deleteRenderbuffer(texture.renderbuffer!);
+            texture.renderbuffer = undefined;
+            this.instances.render_textures.delete(texture);
+        }
+    }
+
     // frame buffer
 
     public create_FrameBuffer() {
@@ -307,7 +408,7 @@ class RenderState {
         return Result.Ok(framebuffer);
     }
 
-    public set_FrameBuffer(framebuffer: FrameBuffer, attach: number, texture: Texture, level: number) {
+    public set_FrameBufferTexture(framebuffer: FrameBuffer, attach: number, texture: Texture, level: number) {
         const framebuffer_result = this.compile_FrameBuffer(framebuffer);
         if (framebuffer_result.failed) return Result.Error(framebuffer_result.error!);
         const texture_result = this.compile_Texture(texture);
@@ -315,6 +416,26 @@ class RenderState {
         const gl = this.gl;
         gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer.framebuffer!);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, attach, gl.TEXTURE_2D, texture.texture!, level);
+        return Result.Ok(undefined);
+    }
+
+    public set_FrameBufferRenderTexture(framebuffer: FrameBuffer, attach: number, texture: RenderTexture) {
+        const framebuffer_result = this.compile_FrameBuffer(framebuffer);
+        if (framebuffer_result.failed) return Result.Error(framebuffer_result.error!);
+        const texture_result = this.compile_RenderTexture(texture);
+        if (texture_result.failed) return Result.Error(texture_result.error!);
+        const gl = this.gl;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer.framebuffer!);
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, attach, gl.RENDERBUFFER, texture.renderbuffer!);
+        return Result.Ok(undefined);
+    }
+
+    public enabled_FrameBufferAttachments(framebuffer: FrameBuffer, attachments: number[]) {
+        const framebuffer_result = this.compile_FrameBuffer(framebuffer);
+        if (framebuffer_result.failed) return Result.Error(framebuffer_result.error!);
+        const gl = this.gl;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer.framebuffer!);
+        gl.drawBuffers(attachments);
         return Result.Ok(undefined);
     }
 
@@ -392,21 +513,32 @@ class RenderState {
     public set_Capibilities(program: ShaderProgram) {
         const gl = this.gl;
         // cull back faces
-        if (program.cull_back_face) gl.enable(this.gl.CULL_FACE);
-        else gl.disable(this.gl.CULL_FACE);
+        if (program.cull_back_face) gl.enable(gl.CULL_FACE);
+        else gl.disable(gl.CULL_FACE);
         // depth test
-        if (program.depth_test) gl.enable(this.gl.DEPTH_TEST);
-        else gl.disable(this.gl.DEPTH_TEST);
+        if (program.depth_test) gl.enable(gl.DEPTH_TEST);
+        else gl.disable(gl.DEPTH_TEST);
     }
 
-    public bind_FrameBuffer(framebuffer: FrameBuffer | undefined = undefined) {
+    public bind_FrameBuffer(target: number = this.gl.FRAMEBUFFER, framebuffer: FrameBuffer | undefined = undefined) {
         const gl = this.gl;
         if (framebuffer === undefined || framebuffer.framebuffer === undefined) {
-            gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+            gl.bindFramebuffer(target, null);
         }
         else {
-            gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer.framebuffer);
+            gl.bindFramebuffer(target, framebuffer.framebuffer);
         }
+    }
+
+    public blit_FrameBuffers(src: FrameBuffer, dst: FrameBuffer,
+        src_x: number, src_y: number, src_x1: number, src_y1: number,
+        dst_x: number, dst_y: number, dst_x1: number, dst_y1: number,
+        mask: number, filter: number
+    ) {
+        const gl = this.gl;
+        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, src.framebuffer!);
+        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, dst.framebuffer!);
+        gl.blitFramebuffer(src_x, src_y, src_x1, src_y1, dst_x, dst_y, dst_x1, dst_y1, mask, filter);
     }
 
     public clear_FrameBuffer(mask: number = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT, clear_color_r: number = 0, clear_color_g: number = 0, clear_color_b: number = 0, clear_color_a: number = 0) {
@@ -428,25 +560,30 @@ class RenderState {
             this.set_Uniforms(program, uniforms);
 
             gl.bindVertexArray(vertex_array.vertex_array);
-            gl.drawArrays(vertex_array.primitive_type, 0, vertex_array.count);
+
+            if (vertex_array.instance_count <= 1) {
+                gl.drawArrays(vertex_array.primitive_type, vertex_array.offset, vertex_array.count);
+            }
+            else {
+                gl.drawArraysInstanced(vertex_array.primitive_type, vertex_array.offset, vertex_array.count, vertex_array.instance_count);
+            }
         }
     }
 }
 
-
 // import testimage from 'res://test-image.png';
 // console.log(new ImageLoader().parse(testimage));
 
-
 import { data1, data2 } from './test';
-
 
 const cvs = document.getElementById('text-canvas') as HTMLCanvasElement;
 const rd = new RenderingDevice(cvs);
+
 const vertexShaderSource = `#version 300 es
 
 // 属性是输入(in)顶点着色器的，从缓冲区接收数据
 in vec4 a_position;
+in vec3 a_normal;
 in vec4 a_color;
 in vec2 a_uv;
 
@@ -456,12 +593,14 @@ uniform mat4 u_matrix;
 // a varying the color to the fragment shader
 out vec4 v_color;
 out vec2 v_uv;
+out vec3 v_normal;
 
 // 所有着色器都有一个 main 函数
 void main() {
   // 将位置和矩阵相乘
   gl_Position = u_matrix * a_position;
   v_color = a_color;
+  v_normal = a_normal;
   v_uv = a_uv;
 }
 `;
@@ -473,27 +612,36 @@ precision highp float;
  
 uniform vec4 u_color;
 uniform sampler2D u_texture0;
-uniform sampler2D u_texture1;
+// uniform sampler2D u_texture1;
 uniform float u_mix;
 
 in vec4 v_color;
 in vec2 v_uv;
+in vec3 v_normal;
 
 // we need to declare an output for the fragment shader
-out vec4 outColor;
+layout(location = 0) out vec4 outColor;
+layout(location = 1) out vec4 outNormal;
  
 void main() {
-  // Just set the output to a constant reddish-purple
-  if (v_uv.x <= 0.5) {
-    outColor = mix(texture(u_texture0, v_uv), v_color, u_mix) * u_color;
-  }
-  else {
-    outColor = mix(texture(u_texture1, v_uv), v_color, u_mix) * u_color;
-  }
+
+// Just set the output to a constant reddish-purple
+//   if (v_uv.x <= 0.5) {
+    outColor = mix(texture(u_texture0, v_uv * 2.0), v_color, u_mix) * u_color;
+//   }
+//   else {
+    // outColor = mix(texture(u_texture1, v_uv), v_color, u_mix) * u_color;
+//   }
+  vec3 normal = normalize(v_normal);
+  outNormal = vec4(1.0, 0.0, 0.0, 1.0);
+// 通过取法线与光线反向的点积计算光
+  vec3 light_dir_inv = normalize(vec3(1, -0.2, 1));
+  float light = dot(normal, light_dir_inv);
+// 让我们只将颜色部分（不是 alpha）乘以光
+  outColor.rgb *= light;
 }
 `;
-import { FrameBuffer } from "./FrameBuffer";
-const texture0 = rd.state.create_Texture([new ImageData(data1, 256, 256)], 256, 256);
+const texture0 = rd.state.create_Texture([new ImageData(data1, 256, 256)], 256, 256, undefined, undefined, undefined, rd.state.gl.REPEAT);
 const texture1 = rd.state.create_Texture([new ImageData(data2, 130, 130)], 130, 130);
 rd.state.compile_Texture(texture0);
 rd.state.compile_Texture(texture1);
@@ -501,11 +649,11 @@ const vert_shader = rd.state.create_Shader(ShaderType.Vertex, vertexShaderSource
 const frag_shader = rd.state.create_Shader(ShaderType.Fragment, fragmentShaderSource);
 const shader_program = rd.state.create_ShaderProgram(
     vert_shader, frag_shader,
-    new Attributes().add_Attribute('a_position', AttributeUniformType.Vec4).add_Attribute('a_uv', AttributeUniformType.Vec2).add_Attribute('a_color', AttributeUniformType.Vec4),
+    new Attributes().add_Attribute('a_position', AttributeUniformType.Vec4).add_Attribute('a_normal', AttributeUniformType.Vec3).add_Attribute('a_uv', AttributeUniformType.Vec2).add_Attribute('a_color', AttributeUniformType.Vec4),
     new Uniforms().add_Uniform('u_mix', AttributeUniformType.Float, [0.9])
         .add_Uniform('u_color', AttributeUniformType.Vec4, [0, 1, 0, 0])
         .add_Uniform('u_texture0', AttributeUniformType.Sample2D, texture0)
-        .add_Uniform('u_texture1', AttributeUniformType.Sample2D, texture1)
+        // .add_Uniform('u_texture1', AttributeUniformType.Sample2D, texture1)
         .add_Uniform('u_matrix', AttributeUniformType.Mat4, new Float32Array([0.0037685475964776838, 0.0009449206565663207, -0.0031694184489966864, 0, 0.0026387654351557603, -0.003413163747081668, 0.0017042432096518146, 0, 0.0021452703641659868, 0.0025384026843990647, 0.0034713602200744193, 0, -0.7715736040609137, 0.3464052287581699, 0, 1])),
     true, true,
 );
@@ -638,6 +786,135 @@ const buffer = rd.state.create_Buffer(rd.state.gl.ARRAY_BUFFER, rd.state.gl.STAT
     0, 0, 0,
     0, 150, 30,
     0, 150, 0,
+]));
+const normal_buffer = rd.state.create_Buffer(rd.state.gl.ARRAY_BUFFER, rd.state.gl.STATIC_DRAW, 3, rd.state.gl.FLOAT, false, new Float32Array([
+    // 正面左竖
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+
+    // 正面上横
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+
+    // 正面中横
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+
+    // 背面左竖
+    0, 0, -1,
+    0, 0, -1,
+    0, 0, -1,
+    0, 0, -1,
+    0, 0, -1,
+    0, 0, -1,
+
+    // 背面上横
+    0, 0, -1,
+    0, 0, -1,
+    0, 0, -1,
+    0, 0, -1,
+    0, 0, -1,
+    0, 0, -1,
+
+    // 背面中横
+    0, 0, -1,
+    0, 0, -1,
+    0, 0, -1,
+    0, 0, -1,
+    0, 0, -1,
+    0, 0, -1,
+
+    // 顶部
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+
+    // 上横右面
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+
+    // 上横下面
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+
+    // 上横和中横之间
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+
+    // 中横上面
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+
+    // 中横右面
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+
+    // 中横底面
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+
+    // 底部右侧
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+
+    // 底面
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+
+    // 左面
+    -1, 0, 0,
+    -1, 0, 0,
+    -1, 0, 0,
+    -1, 0, 0,
+    -1, 0, 0,
+    -1, 0, 0,
 ]));
 const uv_buffer = rd.state.create_Buffer(rd.state.gl.ARRAY_BUFFER, rd.state.gl.STATIC_DRAW, 2, rd.state.gl.FLOAT, true, new Float32Array([
     // left column front
@@ -899,92 +1176,85 @@ const color_buffer = rd.state.create_Buffer(rd.state.gl.ARRAY_BUFFER, rd.state.g
 ]));
 const vertex_array = rd.state.create_VertexArray(rd.state.gl.TRIANGLES, 0, buffer.data!.byteLength / Float32Array.BYTES_PER_ELEMENT / 3);
 rd.state.set_VertexArrayAttributeBuffer(vertex_array, shader_program.attributes.get_Location('a_position')!, buffer);
+rd.state.set_VertexArrayAttributeBuffer(vertex_array, shader_program.attributes.get_Location('a_normal')!, normal_buffer);
 rd.state.set_VertexArrayAttributeBuffer(vertex_array, shader_program.attributes.get_Location('a_uv')!, uv_buffer);
 rd.state.set_VertexArrayAttributeBuffer(vertex_array, shader_program.attributes.get_Location('a_color')!, color_buffer);
 
-// console.log(texture);
+// render graph
+import { FrameBuffer } from "./FrameBuffer";
+import { FramePass, FullScreenFramePass, MultiSampleFramePass, ProxyFramePass, TestFramePass, TestMultiSampleFramePass, TestProxyFramePass } from "./FramePass";
+import { RenderGraph } from "./RenderGraph";
 
-const framebuffer = rd.state.create_FrameBuffer();
-const color_frame = rd.state.create_Texture([undefined], 2048, 2048, rd.state.gl.RGBA, rd.state.gl.RGBA, rd.state.gl.UNSIGNED_BYTE, undefined, undefined, rd.state.gl.NEAREST, rd.state.gl.NEAREST);
-const depth_frame = rd.state.create_Texture([undefined], 2048, 2048, rd.state.gl.DEPTH_COMPONENT24, rd.state.gl.DEPTH_COMPONENT, rd.state.gl.UNSIGNED_INT, undefined, undefined, rd.state.gl.NEAREST, rd.state.gl.NEAREST, false);
-rd.state.set_FrameBuffer(framebuffer, rd.state.gl.COLOR_ATTACHMENT0, color_frame, 0);
-rd.state.set_FrameBuffer(framebuffer, rd.state.gl.DEPTH_ATTACHMENT, depth_frame, 0);
+const rendergraph = rd.create_RenderGraph();
 
-color_frame.width = depth_frame.width = 1024 * 2;
-color_frame.height = depth_frame.height = 1024 * 2;
-rd.state.set_Texture(color_frame, 0, color_frame.internal_format, color_frame.format, color_frame.type, undefined, color_frame.width, color_frame.height, false);
-rd.state.set_Texture(depth_frame, 0, depth_frame.internal_format, depth_frame.format, depth_frame.type, undefined, depth_frame.width, depth_frame.height, false);
-rd.state.set_TextureParameters(color_frame, color_frame.wrap_s, color_frame.wrap_t, color_frame.min_filter, color_frame.mag_filter);
-rd.state.set_TextureParameters(depth_frame, depth_frame.wrap_s, depth_frame.wrap_t, depth_frame.min_filter, depth_frame.mag_filter);
+const framepass = rendergraph.create_FramePass(TestMultiSampleFramePass, 'prepass', false);
+framepass.set_ClearMask(rd.state.gl.COLOR_BUFFER_BIT | rd.state.gl.DEPTH_BUFFER_BIT);
+const samples = 8;
+// framepass.create_Attachment(rd.state.gl.COLOR_ATTACHMENT0, rd.state.gl.RGBA8, rd.state.gl.RGBA, rd.state.gl.UNSIGNED_BYTE, rd.state.gl.NEAREST, rd.state.gl.NEAREST, false);
+// framepass.create_Attachment(rd.state.gl.COLOR_ATTACHMENT1, rd.state.gl.RGBA8, rd.state.gl.RGBA, rd.state.gl.UNSIGNED_BYTE, rd.state.gl.NEAREST, rd.state.gl.NEAREST, false);
+// framepass.create_Attachment(rd.state.gl.DEPTH_ATTACHMENT, rd.state.gl.DEPTH_COMPONENT24, rd.state.gl.DEPTH_COMPONENT, rd.state.gl.UNSIGNED_INT, rd.state.gl.NEAREST, rd.state.gl.NEAREST, false);
+framepass.create_Attachment(rd.state.gl.COLOR_ATTACHMENT0, rd.state.gl.RGBA8, samples, rd.state.gl.RGBA, rd.state.gl.UNSIGNED_BYTE, rd.state.gl.NEAREST, rd.state.gl.NEAREST, false);
+framepass.create_Attachment(rd.state.gl.COLOR_ATTACHMENT1, rd.state.gl.RGBA8, samples, rd.state.gl.RGBA, rd.state.gl.UNSIGNED_BYTE, rd.state.gl.NEAREST, rd.state.gl.NEAREST, false);
+framepass.create_Attachment(rd.state.gl.DEPTH_ATTACHMENT, rd.state.gl.DEPTH_COMPONENT24, samples, rd.state.gl.DEPTH_COMPONENT, rd.state.gl.UNSIGNED_INT, rd.state.gl.NEAREST, rd.state.gl.NEAREST, false);
+framepass.attach();
+framepass.set_ClearColor(0.8, 1, 1);
+framepass.set_RenderFunc(() => {
+    rd.state.draw_VertexArray(shader_program, vertex_array, new Uniforms().add_Uniform('u_color', AttributeUniformType.Vec4, new Float32Array([1, 1, 1, 1])));
+    rd.state.draw_VertexArray(shader_program, vertex_array, new Uniforms().add_Uniform('u_matrix', AttributeUniformType.Vec4, [0.000058149283975075864, 0.00341993078634373, -0.0031820659747489304, 0, -0.003331370247788233, -0.0012787371333891201, -0.0018539974908720388, 0, 0.0017715908029656267, -0.0025168415640455574, -0.0033818854853742935, 0, 0.588679245283019, -0.3170731707317074, 0.25, 1]).add_Uniform('u_color', AttributeUniformType.Vec4, new Float32Array([1, 1, 1, 1])).add_Uniform('u_mix', AttributeUniformType.Float, [0.0]));
+});
 
-rd.state.bind_FrameBuffer(framebuffer);
-rd.state.clear_FrameBuffer();
-rd.state.set_Viewport(0, 0, color_frame.width, color_frame.height);
-rd.state.draw_VertexArray(shader_program, vertex_array, new Uniforms().add_Uniform('u_color', AttributeUniformType.Vec4, new Float32Array([1, 1, 1, 1])));
-rd.state.draw_VertexArray(shader_program, vertex_array, new Uniforms().add_Uniform('u_matrix', AttributeUniformType.Vec4, [0.000058149283975075864, 0.00341993078634373, -0.0031820659747489304, 0, -0.003331370247788233, -0.0012787371333891201, -0.0018539974908720388, 0, 0.0017715908029656267, -0.0025168415640455574, -0.0033818854853742935, 0, 0.588679245283019, -0.3170731707317074, 0.25, 1]).add_Uniform('u_color', AttributeUniformType.Vec4, new Float32Array([1, 1, 1, 1])).add_Uniform('u_mix', AttributeUniformType.Float, [0.0]));
+// const proxypass = rendergraph.create_FramePass(TestProxyFramePass, 'proxypass', false);
+// proxypass.set_Proxy(framepass);
+// rendergraph.link_FramePass(proxypass, [framepass]);
+// proxypass.set_RenderFunc(() => {
+//     rd.state.draw_VertexArray(shader_program, vertex_array, new Uniforms().add_Uniform('u_matrix', AttributeUniformType.Vec4, [0.000058149283975075864, 0.00341993078634373, -0.0031820659747489304, 0, -0.003331370247788233, -0.0012787371333891201, -0.0018539974908720388, 0, 0.0017715908029656267, -0.0025168415640455574, -0.0033818854853742935, 0, 0.588679245283019, -0.3170731707317074, 0.25, 1]).add_Uniform('u_color', AttributeUniformType.Vec4, new Float32Array([1, 1, 1, 1])).add_Uniform('u_mix', AttributeUniformType.Float, [0.0]));
+// });
 
-const vertexShaderSourceQuad = `#version 300 es
-in vec4 a_position;
-in vec2 a_uv;
-out vec2 v_uv;
-void main() {
-  gl_Position = a_position;
-  v_uv = a_uv;
-}
-`;
 const fragmentShaderSourceQuad = `#version 300 es
 precision highp float;
 uniform sampler2D u_texture;
 in vec2 v_uv;
 out vec4 outColor;
 void main() {
-  vec2 uv = vec2(v_uv.x * v_uv.x, v_uv.y);
+  vec2 uv = vec2(v_uv.x, v_uv.y);
   vec4 color = texture(u_texture, uv);
   float distance = distance(v_uv, vec2(0.5));
-  vec3 greyScale = vec3(.5, .5, .5);
-  color = vec4(vec3(dot(color.rgb, greyScale)), color.a);
   outColor = mix( color, vec4(0.0,0.0,0.0,1.0), distance / 2.0);
 }
 `;
-const vert_shader_quad = rd.state.create_Shader(ShaderType.Vertex, vertexShaderSourceQuad);
 const frag_shader_quad = rd.state.create_Shader(ShaderType.Fragment, fragmentShaderSourceQuad);
 const shader_program_quad = rd.state.create_ShaderProgram(
-    vert_shader_quad, frag_shader_quad,
+    rd.state.create_FullScreenQuadVertexShader(), frag_shader_quad,
     new Attributes().add_Attribute('a_position', AttributeUniformType.Vec4).add_Attribute('a_uv', AttributeUniformType.Vec2),
-    new Uniforms().add_Uniform('u_texture', AttributeUniformType.Sample2D, color_frame),
+    new Uniforms().add_Uniform('u_texture', AttributeUniformType.Sample2D, framepass.get_Attachment(rd.state.gl.COLOR_ATTACHMENT1)),
     true, true,
 );
-rd.state.compile_ShaderProgram(shader_program_quad);
-const buffer_quad = rd.state.create_Buffer(rd.state.gl.ARRAY_BUFFER, rd.state.gl.STATIC_DRAW, 3, rd.state.gl.FLOAT, false, new Float32Array([
-    -1, 1, 0,
-    -1, -1, 0,
-    1, 1, 0,
+const screenpass = rendergraph.create_FramePass(FullScreenFramePass, 'screenpass', true);
+screenpass.set_Program(shader_program_quad);
+rendergraph.link_FramePass(screenpass, [framepass]);
 
-    1, 1, 0,
-    -1, -1, 0,
-    1, -1, 0,
-]));
-const uv_buffer_quad = rd.state.create_Buffer(rd.state.gl.ARRAY_BUFFER, rd.state.gl.STATIC_DRAW, 2, rd.state.gl.FLOAT, true, new Float32Array([
-    0, 1,
-    0, 0,
-    1, 1,
+function resize() {
+    const w = window.innerWidth * window.devicePixelRatio;
+    const h = window.innerHeight * window.devicePixelRatio;
+    framepass.resize(w, h);
+    // proxypass.resize(w, h);
+    screenpass.resize(w, h);
+}
 
-    1, 1,
-    0, 0,
-    1, 0,
-]));
-const vertex_array_quad = rd.state.create_VertexArray(rd.state.gl.TRIANGLES, 0, buffer_quad.data!.byteLength / Float32Array.BYTES_PER_ELEMENT / 3);
-rd.state.set_VertexArrayAttributeBuffer(vertex_array_quad, shader_program_quad.attributes.get_Location('a_position')!, buffer_quad);
-rd.state.set_VertexArrayAttributeBuffer(vertex_array_quad, shader_program_quad.attributes.get_Location('a_uv')!, uv_buffer_quad);
-rd.state.bind_FrameBuffer(undefined);
-rd.state.clear_FrameBuffer();
-rd.state.set_Viewport(0, 0, 2048, 2048);
-rd.state.draw_VertexArray(shader_program_quad, vertex_array_quad);
+window.addEventListener('resize', resize);
 
-shader_program.free();
-shader_program_quad.free();
+function render() {
+    rendergraph.render();
+    requestAnimationFrame(render);
+}
 
-console.log(rd.state.instances);
+// console.dir(rd.state.instances);
 
-// import url from 'res://f-texture.png';
-// console.log(new ImageLoader().parse(url));
+// setTimeout(() => {
+//     rendergraph.dispose();
+//     console.dir(rd.state.instances);
+// }, 1000);
+
+resize();
+// render();
+requestAnimationFrame(render);

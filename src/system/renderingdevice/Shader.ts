@@ -33,6 +33,7 @@ export class Shader implements RefCounted {
     }
 
     public free() {
+        console.log(">>>>> free shader");
         this.rd.state.free_Shader(this);
     }
 }
@@ -76,8 +77,9 @@ export class ShaderProgram implements RefCounted {
     }
 
     public free() {
-        this.vertex_shader.value = undefined;
-        this.fragment_shader.value = undefined;
+        console.log(">>>>> free shader program");
+        this.vertex_shader.clear();
+        this.fragment_shader.clear();
         this.rd.state.free_ShaderProgram(this);
     }
 }

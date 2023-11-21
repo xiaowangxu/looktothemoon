@@ -9,6 +9,7 @@ export class VertexArray implements RefCounted {
 
     public offset: number = 0;
     public count: number = 0;
+    public instance_count: number = 0;
 
     private _vertex_array: WebGLVertexArrayObject | undefined = undefined;
     public get vertex_array() { return this._vertex_array; }
@@ -27,11 +28,12 @@ export class VertexArray implements RefCounted {
         }
     }
 
-    constructor(rd: RenderingDevice, primitive_type: number, offset: number, count: number) {
+    constructor(rd: RenderingDevice, primitive_type: number, offset: number, count: number, instance_count: number) {
         this.rd = rd;
         this.primitive_type = primitive_type;
         this.offset = offset;
         this.count = count;
+        this.instance_count = instance_count;
     }
 
     public bind_Buffer(attribute: string, attribute_location: number, buffer: Buffer | BufferView) {
