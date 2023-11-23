@@ -1,9 +1,9 @@
-import { vec2, Vector2 } from "../math/Vector2";
+import { vec2, Vector2 } from "../math/linear_algebra/Vector2";
 import { Ref } from "../utils/RefCounted";
 import { FrameBuffer } from "./FrameBuffer";
 import { RenderingDevice } from "./RenderingDevice";
 import { Texture } from "./Texture";
-import { Vector4, vec4 } from "../math/Vector4";
+import { Vector4, vec4 } from "../math/linear_algebra/Vector4";
 import type { ShaderProgram } from "./Shader";
 import { RenderGraph } from "./RenderGraph";
 import type { RenderTexture } from "./RenderTexture";

@@ -576,7 +576,7 @@ class RenderState {
 
 import { data1, data2 } from './test';
 
-const cvs = document.getElementById('text-canvas') as HTMLCanvasElement;
+const cvs = document.getElementById('test-canvas') as HTMLCanvasElement;
 const rd = new RenderingDevice(cvs);
 
 const vertexShaderSource = `#version 300 es

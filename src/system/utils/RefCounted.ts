@@ -4,6 +4,21 @@ export interface RefCounted {
     unref(): void;
 }
 
+export abstract class RefCountedBase implements RefCounted {
+    private _ref_count: number = 0;
+    public ref_count() { return this._ref_count; }
+    public ref() { this._ref_count++; }
+    public unref(){
+        if (this._ref_count === 0) return;
+        this._ref_count--;
+        if (this._ref_count === 0) {
+            this.dispose();
+        }
+    }
+
+    public abstract dispose(): void;
+}
+
 export class Ref<T extends RefCounted> {
     private ref: T | undefined = undefined;
 
@@ -16,6 +31,11 @@ export class Ref<T extends RefCounted> {
         if (this.ref !== undefined) {
             this.ref.ref();
         }
+    }
+
+    public get expect() {
+        if (this.ref === undefined) throw new Error('failed to get ref counted object');
+        return this.ref;
     }
 
     constructor(item: T | undefined = undefined) {
