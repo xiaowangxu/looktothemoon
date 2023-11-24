@@ -1,5 +1,5 @@
 import { Ref } from "@/system/utils/RefCounted";
-import { RenderStateObject } from "../RenderObject";
+import { RenderStateObject } from "../RenderStateObject";
 import type { RenderState } from "../RenderState";
 
 export class RenderStateVertexArray<T extends RenderState<T>> extends RenderStateObject<T> {
@@ -26,6 +26,8 @@ export class RenderStateVertexArray<T extends RenderState<T>> extends RenderStat
 
 export class RenderStateVertexArrayView<T extends RenderState<T>> extends RenderStateObject<T> {
     public readonly vertex_array_ref: Ref<RenderStateVertexArray<T>> = new Ref();
+
+    public get vertex_array() { return this.vertex_array_ref.expect.vertex_array; }
 
     public get primitive_type() { return this.vertex_array_ref.expect.primitive_type; }
     public readonly offset: number;

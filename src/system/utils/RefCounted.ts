@@ -24,6 +24,7 @@ export class Ref<T extends RefCounted> {
 
     public get value() { return this.ref; }
     public set value(item: T | undefined) {
+        if (this.ref === item) return;
         if (this.ref !== undefined) {
             this.ref.unref();
         }
@@ -52,8 +53,9 @@ export class RefArray<T extends RefCounted> {
 
     public get value(): (T | undefined)[] { return this.refs.map(r => r.value); }
     public set value(items: (T | undefined)[]) {
+        const refs = items.map(i => new Ref(i));
         this.unref_All();
-        this.refs = items.map(i => new Ref(i));
+        this.refs = refs;
     }
 
     public get length() { return this.refs.length; }

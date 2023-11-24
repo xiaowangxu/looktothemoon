@@ -1,4 +1,6 @@
 import { lerp } from "../Scalar";
+import type { Matrix3 } from "./Matrix3";
+import type { Matrix4 } from "./Matrix4";
 import type { MatrixLike } from "./MatrixLike";
 import type { VectorLike } from "./VectorLike";
 
@@ -24,6 +26,14 @@ export class Vector3 implements VectorLike {
         this.z = z;
     }
 
+    public static make_Zero(): Vector3 {
+        return new Vector3(0, 0, 0);
+    }
+
+    public static make_One(): Vector3 {
+        return new Vector3(1, 1, 1);
+    }
+
     index(index: number): number {
         switch (index) {
             case 0: return this.x;
@@ -32,6 +42,7 @@ export class Vector3 implements VectorLike {
             default: return 0;
         }
     }
+
     add(b: Vector3): Vector3 {
         return new Vector3(this.x + b.x, this.y + b.y, this.z + b.z);
     }
@@ -59,6 +70,7 @@ export class Vector3 implements VectorLike {
     add_Scaled(num: number, b: Vector3): Vector3 {
         return new Vector3(this.x + b.x * num, this.y + b.y * num, this.z + b.z * num);
     }
+
     lerp(b: Vector3, weight: number): Vector3 {
         return new Vector3(lerp(this.x, b.x, weight), lerp(this.y, b.y, weight), lerp(this.z, b.z, weight));
     }
@@ -68,8 +80,14 @@ export class Vector3 implements VectorLike {
     cross(b: Vector3): Vector3 {
         return new Vector3(this.y * b.z - this.z * b.y, this.z * b.x - this.x * b.z, this.x * b.y - this.y * b.x);
     }
-    transform(matrix: MatrixLike): Vector3 {
-        throw new Error("Method not implemented.");
+    transform(matrix: Matrix3): Vector3 {
+        const [n11, n12, n13, n21, n22, n23, n31, n32, n33] = matrix.elements;
+        const { x, y, z } = this;
+        return new Vector3(
+            n11 * x + n12 * y + n13 * z,
+            n21 * x + n22 * y + n23 * z,
+            n31 * x + n32 * y + n33 * z,
+        );
     }
     min(b: Vector3): Vector3 {
         return new Vector3(Math.min(this.x, b.x), Math.min(this.y, b.y), Math.min(this.z, b.z));
@@ -83,17 +101,27 @@ export class Vector3 implements VectorLike {
     normalize(): Vector3 {
         return this.div_Number(this.length);
     }
+    negate(): Vector3 {
+        return new Vector3(-this.x, -this.y, -this.z);
+    }
+
     equal(b: Vector3): boolean {
         return this.x === b.x && this.y === b.y && this.z === b.z;
     }
-    zero(): Vector3 {
-        return new Vector3(0, 0, 0);
-    }
-    one(): Vector3 {
-        return new Vector3(1, 1, 1);
-    }
+
     clone(): Vector3 {
         return new Vector3(this.x, this.y, this.z);
+    }
+
+    public apple_Transformation(transformation: Matrix4) {
+        const [n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44] = transformation.elements;
+        const { x, y, z } = this;
+        const w = 1 / (n41 * x + n42 * y + n43 * z + n44);
+        return new Vector3(
+            (n11 * x + n12 * y + n13 * z + n14) * w,
+            (n21 * x + n22 * y + n23 * z + n24) * w,
+            (n31 * x + n32 * y + n33 * z + n34) * w,
+        );
     }
 
     public set(x: number = 0, y: number = 0, z: number = 0) {

@@ -24,7 +24,7 @@ export interface VectorLike {
     div(b: VectorLike): VectorLike;
     div_Number(b: number): VectorLike;
     add_Scaled(num: number, b: VectorLike): VectorLike;
-
+    
     lerp(b: VectorLike, weight: number): VectorLike;
     dot(b: VectorLike): number;
     transform(matrix: MatrixLike): VectorLike;
@@ -32,11 +32,9 @@ export interface VectorLike {
     max(b: VectorLike): VectorLike;
     abs(): VectorLike;
     normalize(): VectorLike;
+    negate(): VectorLike;
 
     equal(b: VectorLike): boolean;
-
-    zero(): VectorLike;
-    one(): VectorLike;
 
     clone(): VectorLike;
 }

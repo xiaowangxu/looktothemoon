@@ -21,6 +21,14 @@ export class Vector2 implements VectorLike {
         this.x = x;
         this.y = y;
     }
+    
+    public static make_Zero(): Vector2 {
+        return new Vector2(0, 0);
+    }
+    
+    public static make_One(): Vector2 {
+        return new Vector2(1, 1);
+    }
 
     index(index: number): number {
         switch (index) {
@@ -29,6 +37,7 @@ export class Vector2 implements VectorLike {
             default: return 0;
         }
     }
+
     add(b: Vector2): Vector2 {
         return new Vector2(this.x + b.x, this.y + b.y);
     }
@@ -56,6 +65,7 @@ export class Vector2 implements VectorLike {
     add_Scaled(num: number, b: Vector2): Vector2 {
         return new Vector2(this.x + b.x * num, this.y + b.y * num);
     }
+
     lerp(b: Vector2, weight: number): Vector2 {
         return new Vector2(lerp(this.x, b.x, weight), lerp(this.y, b.y, weight));
     }
@@ -80,17 +90,14 @@ export class Vector2 implements VectorLike {
     normalize(): Vector2 {
         return this.div_Number(this.length);
     }
+    negate(): Vector2 {
+        return new Vector2(-this.x, -this.y);
+    }
 
     equal(b: Vector2): boolean {
         return this.x === b.x && this.y === b.y;
     }
 
-    zero(): Vector2 {
-        return new Vector2(0, 0);
-    }
-    one(): Vector2 {
-        return new Vector2(1, 1);
-    }
     clone(): Vector2 {
         return new Vector2(this.x, this.y);
     }

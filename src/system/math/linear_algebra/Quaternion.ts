@@ -153,6 +153,6 @@ export class Quaternion {
     }
 }
 
-export function quar(x: number = 0, y: number = 0, z: number = 0, w: number = 0) {
+export function quat(x: number = 0, y: number = 0, z: number = 0, w: number = 0) {
     return new Quaternion(x, y, z, w);
 }

@@ -5,9 +5,8 @@ export interface MatrixLike {
     get array(): number[];
     get typed_array_f64(): Float64Array;
     get typed_array_f32(): Float32Array;
-    get rank(): number;
-
-    get full_rank(): boolean;
+    // get rank(): number;
+    // get full_rank(): boolean;
 
     index(row: number, col: number): number;
 
@@ -22,10 +21,10 @@ export interface MatrixLike {
     addScaled(num: number, b: MatrixLike): MatrixLike;
 
     transpose(): MatrixLike;
-    inverse(): MatrixLike | undefined;
+    inverse(): MatrixLike;
     compose(b: MatrixLike): MatrixLike;
 
-    identity(): MatrixLike;
+    equal(b: MatrixLike): boolean;
 
     clone(): MatrixLike;
 }

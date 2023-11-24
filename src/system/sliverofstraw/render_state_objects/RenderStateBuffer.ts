@@ -1,5 +1,5 @@
 import { Ref } from "@/system/utils/RefCounted";
-import { RenderStateObject } from "../RenderObject";
+import { RenderStateObject } from "../RenderStateObject";
 import type { RenderState } from "../RenderState";
 
 export class RenderStateBuffer<T extends RenderState<T>> extends RenderStateObject<T> {
@@ -34,6 +34,8 @@ export class RenderStateBuffer<T extends RenderState<T>> extends RenderStateObje
 
 export class RenderStateBufferView<T extends RenderState<T>> extends RenderStateObject<T> {
     public readonly buffer_ref: Ref<RenderStateBuffer<T>> = new Ref();
+
+    public get buffer() { return this.buffer_ref.expect.buffer; }
 
     public get type() { return this.buffer_ref.expect.type; }
     public get usage() { return this.buffer_ref.expect.type; }
