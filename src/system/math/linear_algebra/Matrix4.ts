@@ -47,6 +47,29 @@ export class Matrix4 implements MatrixLike {
     }
     get typed_array_f64(): Float64Array { return new Float64Array(this.elements); }
     get typed_array_f32(): Float32Array { return new Float32Array(this.elements); }
+    get transposed_array(): number[] {
+        const arr = new Array(16);
+        arr[0] = this.elements[0];
+        arr[1] = this.elements[4];
+        arr[2] = this.elements[8];
+        arr[3] = this.elements[12];
+        arr[4] = this.elements[1];
+        arr[5] = this.elements[5];
+        arr[6] = this.elements[9];
+        arr[7] = this.elements[13];
+        arr[8] = this.elements[2];
+        arr[9] = this.elements[6];
+        arr[10] = this.elements[10];
+        arr[11] = this.elements[14];
+        arr[12] = this.elements[3];
+        arr[13] = this.elements[7];
+        arr[14] = this.elements[11];
+        arr[15] = this.elements[15];
+        return arr;
+    }
+    get typed_transposed_array_f64(): Float64Array { return new Float64Array(this.transposed_array); }
+    get typed_transposed_array_f32(): Float32Array { return new Float32Array(this.transposed_array); }
+    
     // get rank(): number {
     //     throw new Error("Method not implemented.");
     // }

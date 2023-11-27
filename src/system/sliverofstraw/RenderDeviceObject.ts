@@ -8,7 +8,7 @@ export abstract class RenderDeviceObject<T extends RenderState<T>> extends RefCo
     public readonly id: number = id++;
     public readonly render_device: RenderDevice<T>;
 
-    public get render_state(){return this.render_device.render_state;}
+    public get render_state(): T { return this.render_device.render_state; }
 
     constructor(render_device: RenderDevice<T>) {
         super();

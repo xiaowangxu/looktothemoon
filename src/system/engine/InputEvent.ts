@@ -22,9 +22,14 @@ export class InputEvent extends Resource {
     public match(event: InputEvent, with_pressed: boolean): boolean {
         return false;
     }
+
+    protected dispose(): void { }
 }
 
 export class InputEventFromViewport extends InputEvent {
+    protected dispose(): void {
+        throw new Error("Method not implemented.");
+    }
     public static readonly class_name: string = "InputEventFromViewport";
 
     public readonly viewport: Viewport | undefined;
@@ -36,6 +41,9 @@ export class InputEventFromViewport extends InputEvent {
 }
 
 export class ComposeInputEvent extends InputEventFromViewport {
+    protected dispose(): void {
+        throw new Error("Method not implemented.");
+    }
     public static readonly class_name: string = "ComposeInputEvent";
 
     public readonly ctrl: boolean;
@@ -62,6 +70,9 @@ export class ComposeInputEvent extends InputEventFromViewport {
 }
 
 export class MouseInputEvent extends ComposeInputEvent {
+    protected dispose(): void {
+        throw new Error("Method not implemented.");
+    }
     public static readonly class_name: string = "MouseInputEvent";
 
     public readonly position: Vector2;
@@ -75,6 +86,9 @@ export class MouseInputEvent extends ComposeInputEvent {
 }
 
 export class MouseEnterLeaveInputEvent extends InputEventFromViewport {
+    protected dispose(): void {
+        throw new Error("Method not implemented.");
+    }
     public static readonly class_name: string = "MouseEnterLeaveInputEvent";
 
     public readonly inside: boolean;
@@ -86,6 +100,9 @@ export class MouseEnterLeaveInputEvent extends InputEventFromViewport {
 }
 
 export class MouseMotionInputEvent extends MouseInputEvent {
+    protected dispose(): void {
+        throw new Error("Method not implemented.");
+    }
     public static readonly class_name: string = "MouseMotionInputEvent";
 
     public readonly relative: Vector2;
@@ -107,6 +124,9 @@ export enum MouseButton {
 }
 
 export class MouseButtonInputEvent extends MouseInputEvent {
+    protected dispose(): void {
+        throw new Error("Method not implemented.");
+    }
     public static readonly class_name: string = "MouseButtonInputEvent";
 
     public readonly button: MouseButton;
@@ -142,6 +162,9 @@ export class MouseButtonInputEvent extends MouseInputEvent {
 }
 
 export class KeyInputEvent extends ComposeInputEvent {
+    protected dispose(): void {
+        throw new Error("Method not implemented.");
+    }
     public static readonly class_name: string = "KeyInputEvent";
 
     public readonly key: string;
@@ -176,6 +199,9 @@ export class KeyInputEvent extends ComposeInputEvent {
 }
 
 export class ActionInputEvent extends InputEvent {
+    protected dispose(): void {
+        throw new Error("Method not implemented.");
+    }
     public static readonly class_name: string = "ActionInputEvent";
 
     public readonly action: string;
@@ -193,6 +219,9 @@ export class ActionInputEvent extends InputEvent {
 // InputManager
 
 export class ShortCut extends Resource {
+    protected dispose(): void {
+        throw new Error("Method not implemented.");
+    }
     public static readonly class_name: string = "ShortCut";
 
     public readonly events: InputEvent[];
@@ -208,6 +237,9 @@ export class ShortCut extends Resource {
 }
 
 export class InputActionMap extends Resource {
+    protected dispose(): void {
+        throw new Error("Method not implemented.");
+    }
     public static readonly class_name: string = "InputActionMap";
 
     private input_action_map: Map<string, ShortCut> = new Map();

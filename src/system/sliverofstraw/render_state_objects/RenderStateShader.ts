@@ -1,14 +1,11 @@
 import { RenderStateObject } from "../RenderStateObject";
 import type { RenderState } from "../RenderState";
 
-export class RenderStateShader<T extends RenderState<T>> extends RenderStateObject<T> {
-    public readonly shader: WebGLShader;
-
+export abstract class RenderStateShader<T extends RenderState<T>> extends RenderStateObject<T> {
     public readonly type: number;
 
-    constructor(render_state: RenderState<T>, shader: WebGLShader, type: number) {
+    constructor(render_state: RenderState<T>, type: number) {
         super(render_state);
-        this.shader = shader;
         this.type = type;
     }
 

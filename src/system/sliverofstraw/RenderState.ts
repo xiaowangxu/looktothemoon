@@ -10,7 +10,7 @@ export enum RenderStateShaderType {
 }
 
 export enum RenderStateBufferType {
-    Index, Array,
+    Index, Array, Uniform
 }
 
 export enum RenderStateBufferUsage {
@@ -19,13 +19,19 @@ export enum RenderStateBufferUsage {
 }
 
 export enum RenderStatePrimitiveType {
-    Triangles,
+    Triangles, LineStrip, Lines, LineLoop
 }
 
 export enum RenderStateDataType {
     Float, Int, Byte, Short,
     UnsignedInt, UnsignedByte, UnsignedShort,
 }
+
+export enum RenderStateUniformType {
+    Int, Float, Vec2, Vec3, Vec4, Mat3, Mat4, Tex,
+}
+
+export type RenderStateUniformVectorType = Uint16Array | Int16Array | Uint8Array | Int8Array | Uint32Array | Int32Array | Float32Array | Float64Array;
 
 export abstract class RenderState<T extends RenderState<T>> {
     public readonly render_device: RenderDevice<T>;
@@ -38,47 +44,53 @@ export abstract class RenderState<T extends RenderState<T>> {
     // Shader
 
     public abstract create_Shader(type: RenderStateShaderType, source: string):
-        Result<RenderStateShader<RenderState<T>>, Error>;
+        Result<RenderStateShader<T>, Error>;
 
-    public abstract delete_Shader(shader: RenderStateShader<RenderState<T>>): void;
+    public abstract delete_Shader(shader: RenderStateShader<T>): void;
 
-    public abstract create_Program(vert_shader: RenderStateShader<RenderState<T>>, frag_shader: RenderStateShader<RenderState<T>>):
-        Result<RenderStateProgram<RenderState<T>>, Error>;
+    public abstract create_Program(vert_shader: RenderStateShader<T>, frag_shader: RenderStateShader<T>):
+        Result<RenderStateProgram<T>, Error>;
 
-    public abstract delete_Program(program: RenderStateProgram<RenderState<T>>): void;
-
-    public abstract get_ProgramAttributeLocation(program: RenderStateProgram<RenderState<T>>, attribute: string): number;
-
-    public abstract get_ProgramUniformLocation(program: RenderStateProgram<RenderState<T>>, uniform: string): any;
-
+    public abstract delete_Program(program: RenderStateProgram<T>): void;
+    
     // Buffer
 
     public abstract create_Buffer(type: RenderStateBufferType, usage: RenderStateBufferUsage, data_size: number, data_type: RenderStateDataType, data_normalize: boolean, divisor: number):
-        Result<RenderStateBuffer<RenderState<T>>, Error>;
+        Result<RenderStateBuffer<T>, Error>;
 
-    public abstract alloc_Buffer(buffer: RenderStateBuffer<RenderState<T>>, size: number, data?: ArrayBufferView): void;
+    public abstract alloc_Buffer(buffer: RenderStateBuffer<T>, size: number, data?: ArrayBufferView): void;
 
-    public abstract update_Buffer(buffer: RenderStateBuffer<RenderState<T>>, data: ArrayBufferView, offset: number, src_offset?: number, length?: number): void;
+    public abstract update_Buffer(buffer: RenderStateBuffer<T>, data: ArrayBufferView, offset: number, src_offset?: number, length?: number): void;
 
-    public abstract delete_Buffer(buffer: RenderStateBuffer<RenderState<T>>): void;
+    public abstract delete_Buffer(buffer: RenderStateBuffer<T>): void;
 
-    public abstract create_BufferView(buffer: RenderStateBuffer<RenderState<T>>, data_size: number, data_stride: number, data_offset: number, divisor: number):
-        Result<RenderStateBufferView<RenderState<T>>, Error>;
+    public abstract create_BufferView(buffer: RenderStateBuffer<T>, data_size: number, data_stride: number, data_offset: number, divisor: number):
+        Result<RenderStateBufferView<T>, Error>;
 
     // Vertex Array
 
     public abstract create_VertexArray(primitive_type: RenderStatePrimitiveType, offset: number, count: number, instance_count: number):
-        Result<RenderStateVertexArray<RenderState<T>>, Error>;
+        Result<RenderStateVertexArray<T>, Error>;
 
-    public abstract delete_VertexArray(vertex_array: RenderStateVertexArray<RenderState<T>>): void;
+    public abstract delete_VertexArray(vertex_array: RenderStateVertexArray<T>): void;
 
-    public abstract create_VertexArrayView(vertex_array: RenderStateVertexArray<RenderState<T>>, offset: number, count: number, instance_count: number):
-        Result<RenderStateVertexArrayView<RenderState<T>>, Error>;
+    public abstract create_VertexArrayView(vertex_array: RenderStateVertexArray<T>, offset: number, count: number, instance_count: number):
+        Result<RenderStateVertexArrayView<T>, Error>;
 
-    public abstract set_VertexArrayAttribute(vertex_array: RenderStateVertexArray<RenderState<T>>, attribute_location: number, enabled: boolean): void;
+    public abstract set_VertexArrayAttribute(vertex_array: RenderStateVertexArray<T>, attribute_location: number, enabled: boolean): void;
 
-    public abstract set_VertexArrayAttributeBuffer(vertex_array: RenderStateVertexArray<RenderState<T>>,
-        attribute_location: number, buffer: RenderStateBuffer<RenderState<T>> | RenderStateBufferView<RenderState<T>>): void;
+    public abstract set_VertexArrayAttributeBuffer(vertex_array: RenderStateVertexArray<T>,
+        attribute_location: number, buffer: RenderStateBuffer<T> | RenderStateBufferView<T>): void;
 
-    public abstract set_VertexArrayIndexBuffer(vertex_array: RenderStateVertexArray<RenderState<T>>, buffer: RenderStateBuffer<RenderState<T>> | RenderStateBufferView<RenderState<T>>): void;
+    public abstract set_VertexArrayIndexBuffer(vertex_array: RenderStateVertexArray<T>, buffer: RenderStateBuffer<T> | RenderStateBufferView<T>): void;
+
+    // uniform
+
+    public abstract set_ProgramUniform(program: RenderStateProgram<T>, uniform_location: WebGLUniformLocation, uniform_type: RenderStateUniformType, data: RenderStateUniformVectorType): void;
+
+    // draw
+
+    public abstract drawArrays(program: RenderStateProgram<T>, vertex_array: RenderStateVertexArray<T> | RenderStateVertexArrayView<T>): void;
+
+    public abstract drawElements(program: RenderStateProgram<T>, vertex_array: RenderStateVertexArray<T> | RenderStateVertexArrayView<T>, index_data_type: RenderStateDataType): void;
 }

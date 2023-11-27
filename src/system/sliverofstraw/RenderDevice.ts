@@ -2,12 +2,22 @@ import type { RenderState } from "./RenderState";
 
 export type RDCanvas = HTMLCanvasElement | OffscreenCanvas;
 
-export class RenderDevice<T extends RenderState<T>> {
+export abstract class RenderDevice<T extends RenderState<T>> {
     public readonly canvas: RDCanvas;
-    public readonly render_state: RenderState<T>;
+    public readonly render_state: T;
 
-    constructor(canvas: RDCanvas, render_state_class: new (render_device: RenderDevice<T>) => T){
+    constructor(canvas: RDCanvas, render_state_class: new (render_device: RenderDevice<T>) => T) {
         this.canvas = canvas;
         this.render_state = new render_state_class(this);
     }
+
+    public render_Renderable(renderable: RenderDeviceRenderable<T>) {
+        renderable.render();
+    }
+
+    public abstract dispose(): void;
+}
+
+export interface RenderDeviceRenderable<T extends RenderState<T>> {
+    render(): void;
 }

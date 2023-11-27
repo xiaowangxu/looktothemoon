@@ -1,10 +1,14 @@
 import { Result } from "@/system/utils/Result";
 import type { RenderDevice } from "../RenderDevice";
-import { RenderState, RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType } from "../RenderState";
+import { RenderState, RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateUniformType, type RenderStateUniformVectorType } from "../RenderState";
 import { RenderStateBuffer, RenderStateBufferView } from "../render_state_objects/RenderStateBuffer";
 import { RenderStateShader } from "../render_state_objects/RenderStateShader";
 import { RenderStateProgram } from "../render_state_objects/RenderStateProgram";
 import { RenderStateVertexArray, RenderStateVertexArrayView } from "../render_state_objects/RenderStateVertexArray";
+import { WebGL2RenderStateBuffer, WebGL2RenderStateBufferView } from "./webgl2_render_state_objects/WebGL2RenderStateBuffer";
+import { WebGL2RenderStateShader } from "./webgl2_render_state_objects/WebGL2RenderStateShader";
+import { WebGL2RenderStateProgram } from "./webgl2_render_state_objects/WebGL2RenderStateProgram";
+import { WebGL2RenderStateVertexArray, WebGL2RenderStateVertexArrayView } from "./webgl2_render_state_objects/WebGL2RenderStateVertexArray";
 
 export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public readonly gl: WebGL2RenderingContext;
@@ -88,7 +92,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         super(render_device);
         const gl = this.render_device.canvas.getContext('webgl2', { antialias: true });
         if (gl === null) throw new Error('<WebGL2RenderState> constructor: failed to get webgl2 context');
-        this.gl = gl;
+        this.gl = gl as WebGL2RenderingContext;
     }
 
     // #region enum
@@ -96,6 +100,9 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public get_PrimitiveType(primitive_type: RenderStatePrimitiveType): number {
         switch (primitive_type) {
             case RenderStatePrimitiveType.Triangles: return this.gl.TRIANGLES;
+            case RenderStatePrimitiveType.LineStrip: return this.gl.LINE_STRIP;
+            case RenderStatePrimitiveType.Lines: return this.gl.LINES;
+            case RenderStatePrimitiveType.LineLoop: return this.gl.LINE_LOOP;
             default: {
                 const n: never = primitive_type;
                 return n;
@@ -123,6 +130,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         switch (type) {
             case RenderStateBufferType.Index: return this.gl.ELEMENT_ARRAY_BUFFER;
             case RenderStateBufferType.Array: return this.gl.ARRAY_BUFFER;
+            case RenderStateBufferType.Uniform: return this.gl.UNIFORM_BUFFER;
             default: {
                 const n: never = type;
                 return n;
@@ -161,7 +169,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     // Shader
 
     public create_Shader(type: RenderStateShaderType, source: string):
-        Result<RenderStateShader<RenderState<WebGL2RenderState>>, Error> {
+        Result<WebGL2RenderStateShader, Error> {
         const gl = this.gl;
         const shader = gl.createShader(this.get_ShaderType(type));
         if (shader === null) return Result.Error(new Error('<WebGL2RenderState> create_Shader: failed to create render state shader'));
@@ -169,20 +177,20 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         gl.compileShader(shader);
         const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
         if (success) {
-            return Result.Ok(new RenderStateShader(this.render_state, shader, type));
+            return Result.Ok(new WebGL2RenderStateShader(this.render_state, shader, type));
         }
-        const res: Result<RenderStateShader<RenderState<WebGL2RenderState>>, Error> = Result.Error(new Error(`<WebGL2RenderState> create_Shader: failed to create render state shader:\n${gl.getShaderInfoLog(shader) ?? 'unknown error'}\nin ${source}`));
+        const res: Result<WebGL2RenderStateShader, Error> = Result.Error(new Error(`<WebGL2RenderState> create_Shader: failed to create render state shader:\n${gl.getShaderInfoLog(shader) ?? 'unknown error'}\nin ${source}`));
         gl.deleteShader(shader);
         return res;
     }
 
-    public delete_Shader(shader: RenderStateShader<RenderState<WebGL2RenderState>>): void {
+    public delete_Shader(shader: WebGL2RenderStateShader): void {
         this.gl.deleteShader(shader.shader);
         console.log("delete shader", shader.id);
     }
 
-    public create_Program(vert_shader: RenderStateShader<RenderState<WebGL2RenderState>>, frag_shader: RenderStateShader<RenderState<WebGL2RenderState>>):
-        Result<RenderStateProgram<RenderState<WebGL2RenderState>>, Error> {
+    public create_Program(vert_shader: WebGL2RenderStateShader, frag_shader: WebGL2RenderStateShader):
+        Result<WebGL2RenderStateProgram, Error> {
         const gl = this.gl;
         const program = gl.createProgram();
         if (program === null) return Result.Error(new Error('<WebGL2RenderState> create_Program: failed to create render state program'));
@@ -191,36 +199,62 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         gl.linkProgram(program);
         const success = gl.getProgramParameter(program, gl.LINK_STATUS);
         if (success) {
-            return Result.Ok(new RenderStateProgram(this.render_state, program, vert_shader, frag_shader));
+            return Result.Ok(new WebGL2RenderStateProgram(this.render_state, program, vert_shader, frag_shader));
         }
-        const res: Result<RenderStateProgram<RenderState<WebGL2RenderState>>, Error> = Result.Error(new Error(`<WebGL2RenderState> create_Program: failed to create render state program:\n${gl.getProgramInfoLog(program) ?? 'unknown error'}`));
+        const res: Result<WebGL2RenderStateProgram, Error> = Result.Error(new Error(`<WebGL2RenderState> create_Program: failed to create render state program:\n${gl.getProgramInfoLog(program) ?? 'unknown error'}`));
         gl.deleteProgram(program);
         return res;
     }
 
-    public delete_Program(program: RenderStateProgram<RenderState<WebGL2RenderState>>): void {
+    public delete_Program(program: WebGL2RenderStateProgram): void {
         this.gl.deleteProgram(program.program);
         console.log("delete program", program.id);
     }
 
-    public get_ProgramAttributeLocation(program: RenderStateProgram<RenderState<WebGL2RenderState>>, attribute: string) {
+    public get_ProgramAttributeLocation(program: WebGL2RenderStateProgram, attribute: string) {
         return this.gl.getAttribLocation(program.program, attribute);
     }
 
-    public get_ProgramUniformLocation(program: RenderStateProgram<RenderState<WebGL2RenderState>>, uniform: string) {
+    public get_ProgramUniformLocation(program: WebGL2RenderStateProgram, uniform: string) {
         return this.gl.getUniformLocation(program.program, uniform);
+    }
+
+    public get_ProgramUniformBlockLocation(program: WebGL2RenderStateProgram, uniform: string) {
+        return this.gl.getUniformBlockIndex(program.program, uniform);
+    }
+
+    public get_ProgramUniformBlockSize(program: WebGL2RenderStateProgram, uniform_location: number) {
+        return this.gl.getActiveUniformBlockParameter(program.program, uniform_location, this.gl.UNIFORM_BLOCK_DATA_SIZE);
+    }
+
+    public get_ProgramUniformBlockMemberIndexOffsets(program: WebGL2RenderStateProgram, members: string[]): null | { [name: string]: { index: number, offset: number } } {
+        const gl = this.gl;
+        const indices = gl.getUniformIndices(program.program, members);
+        if (indices === null) return null;
+        const offsets = gl.getActiveUniforms(program.program, indices, gl.UNIFORM_OFFSET);
+        const result: { [name: string]: { index: number, offset: number } } = {};
+        const indexes = [...indices];
+        for (let i = 0; i < members.length; i++) {
+            result[members[i]] = {index: indexes[i], offset: offsets[i]};
+        }
+        return result;
+    }
+
+    public bind_UniformBuffer(buffer: WebGL2RenderStateBuffer, index: number) {
+        this.bind_BufferProxy(this.gl.UNIFORM_BUFFER, buffer.buffer);
+        this.gl.bindBufferBase(this.gl.UNIFORM_BUFFER, index, buffer.buffer);
     }
 
     // Buffer
 
     public create_Buffer(type: RenderStateBufferType, usage: RenderStateBufferUsage, data_size: number, data_type: RenderStateDataType, data_normalize: boolean, divisor: number):
-        Result<RenderStateBuffer<RenderState<WebGL2RenderState>>, Error> {
+        Result<WebGL2RenderStateBuffer, Error> {
         const buffer = this.gl.createBuffer();
         if (buffer === null) return Result.Error(new Error('<WebGL2RenderState> create_Buffer: failed to create render state buffer'));
-        return Result.Ok(new RenderStateBuffer(this.render_state, buffer, this.get_BufferType(type), this.get_BufferUsage(usage), data_size, this.get_DataType(data_type), data_normalize, 0, 0, divisor));
+        return Result.Ok(new WebGL2RenderStateBuffer(this.render_state, buffer, this.get_BufferType(type), this.get_BufferUsage(usage), data_size, this.get_DataType(data_type), data_normalize, 0, 0, divisor));
     }
 
-    public alloc_Buffer(buffer: RenderStateBuffer<RenderState<WebGL2RenderState>>, size: number, data?: ArrayBufferView): void {
+    public alloc_Buffer(buffer: WebGL2RenderStateBuffer, size: number, data?: ArrayBufferView): void {
         this.bind_BufferProxy(buffer.type, buffer.buffer);
         if (data === undefined) {
             this.gl.bufferData(buffer.type, size, buffer.usage);
@@ -230,7 +264,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         }
     }
 
-    public update_Buffer(buffer: RenderStateBuffer<RenderState<WebGL2RenderState>>, data: ArrayBufferView, offset: number = 0, src_offset?: number, length?: number) {
+    public update_Buffer(buffer: WebGL2RenderStateBuffer, data: ArrayBufferView, offset: number = 0, src_offset?: number, length?: number) {
         this.bind_BufferProxy(buffer.type, buffer.buffer);
         if (src_offset === undefined) {
             this.gl.bufferSubData(buffer.type, offset, data);
@@ -240,44 +274,44 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         }
     }
 
-    public delete_Buffer(buffer: RenderStateBuffer<RenderState<WebGL2RenderState>>): void {
+    public delete_Buffer(buffer: WebGL2RenderStateBuffer): void {
         this.gl.deleteBuffer(buffer.buffer);
         console.log("delete buffer", buffer.id);
     }
 
-    public create_BufferView(buffer: RenderStateBuffer<RenderState<WebGL2RenderState>>, data_size: number, data_stride: number, data_offset: number, divisor: number):
-        Result<RenderStateBufferView<RenderState<WebGL2RenderState>>, Error> {
-        return Result.Ok(new RenderStateBufferView(this.render_state, buffer, data_size, data_stride, data_offset, divisor));
+    public create_BufferView(buffer: WebGL2RenderStateBuffer, data_size: number, data_stride: number, data_offset: number, divisor: number):
+        Result<WebGL2RenderStateBufferView, Error> {
+        return Result.Ok(new WebGL2RenderStateBufferView(this.render_state, buffer, data_size, data_stride, data_offset, divisor));
     }
 
     // Vertex Array
 
     public create_VertexArray(primitive_type: RenderStatePrimitiveType, offset: number, count: number, instance_count: number = 1):
-        Result<RenderStateVertexArray<RenderState<WebGL2RenderState>>, Error> {
+        Result<WebGL2RenderStateVertexArray, Error> {
         const vertex_array = this.gl.createVertexArray();
         if (vertex_array === null) return Result.Error(new Error('<WebGL2RenderState> create_VertexArray: failed to create render state vertex array'));
-        return Result.Ok(new RenderStateVertexArray(this.render_state, vertex_array, this.get_PrimitiveType(primitive_type), offset, count, instance_count));
+        return Result.Ok(new WebGL2RenderStateVertexArray(this.render_state, vertex_array, this.get_PrimitiveType(primitive_type), offset, count, instance_count));
     }
 
-    public delete_VertexArray(vertex_array: RenderStateVertexArray<RenderState<WebGL2RenderState>>): void {
+    public delete_VertexArray(vertex_array: WebGL2RenderStateVertexArray): void {
         this.gl.deleteVertexArray(vertex_array.vertex_array);
         console.log("delete vertex array", vertex_array.id);
     }
 
-    public create_VertexArrayView(vertex_array: RenderStateVertexArray<RenderState<WebGL2RenderState>>, offset: number, count: number, instance_count: number = 1):
-        Result<RenderStateVertexArrayView<RenderState<WebGL2RenderState>>, Error> {
-        return Result.Ok(new RenderStateVertexArrayView(this.render_state, vertex_array, offset, count, instance_count));
+    public create_VertexArrayView(vertex_array: WebGL2RenderStateVertexArray, offset: number, count: number, instance_count: number = 1):
+        Result<WebGL2RenderStateVertexArrayView, Error> {
+        return Result.Ok(new WebGL2RenderStateVertexArrayView(this.render_state, vertex_array, offset, count, instance_count));
     }
 
-    public set_VertexArrayAttribute(vertex_array: RenderStateVertexArray<RenderState<WebGL2RenderState>>, attribute_location: number, enable: boolean): void {
+    public set_VertexArrayAttribute(vertex_array: WebGL2RenderStateVertexArray, attribute_location: number, enable: boolean): void {
         const gl = this.gl;
         this.bind_VertexArrayProxy(vertex_array.vertex_array);
         if (enable) gl.enableVertexAttribArray(attribute_location);
         else gl.disableVertexAttribArray(attribute_location);
     }
 
-    public set_VertexArrayAttributeBuffer(vertex_array: RenderStateVertexArray<RenderState<WebGL2RenderState>>,
-        attribute_location: number, buffer: RenderStateBuffer<RenderState<WebGL2RenderState>> | RenderStateBufferView<RenderState<WebGL2RenderState>>): void {
+    public set_VertexArrayAttributeBuffer(vertex_array: WebGL2RenderStateVertexArray,
+        attribute_location: number, buffer: WebGL2RenderStateBuffer | WebGL2RenderStateBufferView): void {
         const gl = this.gl;
         this.bind_VertexArrayProxy(vertex_array.vertex_array);
         const { type, data_size, data_type, data_stride, data_normalize, data_offset, divisor } = buffer;
@@ -286,9 +320,70 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         gl.vertexAttribDivisor(attribute_location, divisor);
     }
 
-    public set_VertexArrayIndexBuffer(vertex_array: RenderStateVertexArray<RenderState<WebGL2RenderState>>, buffer: RenderStateBuffer<RenderState<WebGL2RenderState>> | RenderStateBufferView<RenderState<WebGL2RenderState>>): void {
+    public set_VertexArrayIndexBuffer(vertex_array: WebGL2RenderStateVertexArray, buffer: WebGL2RenderStateBuffer | WebGL2RenderStateBufferView): void {
         if (buffer.type !== this.gl.ELEMENT_ARRAY_BUFFER) return;
         this.bind_VertexArrayProxy(vertex_array.vertex_array);
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.buffer);
+    }
+
+    // uniform
+
+    public set_ProgramUniform(program: WebGL2RenderStateProgram, uniform_location: WebGLUniformLocation, uniform_type: RenderStateUniformType, data: RenderStateUniformVectorType): void {
+        this.use_ProgramProxy(program.program);
+        switch (uniform_type) {
+            case RenderStateUniformType.Int: {
+                this.gl.uniform1iv(uniform_location, data);
+                return;
+            }
+            case RenderStateUniformType.Float: {
+                this.gl.uniform1fv(uniform_location, data);
+                return;
+            }
+            case RenderStateUniformType.Vec2: {
+                this.gl.uniform2fv(uniform_location, data);
+                return;
+            }
+            case RenderStateUniformType.Vec3: {
+                this.gl.uniform3fv(uniform_location, data);
+                return;
+            }
+            case RenderStateUniformType.Vec4: {
+                this.gl.uniform4fv(uniform_location, data);
+                return;
+            }
+            case RenderStateUniformType.Mat3: {
+                this.gl.uniformMatrix3fv(uniform_location, true, data);
+                return;
+            }
+            case RenderStateUniformType.Mat4: {
+                this.gl.uniformMatrix4fv(uniform_location, true, data);
+                return;
+            }
+            case RenderStateUniformType.Tex: {
+                return;
+            }
+            default: {
+                const n: never = uniform_type;
+                return n;
+            }
+        }
+    }
+
+    public set_ProgramUniformBuffer(program: WebGL2RenderStateProgram, uniform_location: number, index: number) {
+        this.gl.uniformBlockBinding(program.program, uniform_location, index);
+    }
+
+    // render
+
+    public drawArrays(program: WebGL2RenderStateProgram, vertex_array: WebGL2RenderStateVertexArray | WebGL2RenderStateVertexArrayView): void {
+        this.use_ProgramProxy(program.program);
+        this.bind_VertexArrayProxy(vertex_array.vertex_array);
+        this.gl.drawArrays(vertex_array.primitive_type, vertex_array.offset, vertex_array.count);
+    }
+
+    public drawElements(program: WebGL2RenderStateProgram, vertex_array: WebGL2RenderStateVertexArray | WebGL2RenderStateVertexArrayView, index_data_type: RenderStateDataType): void {
+        this.use_ProgramProxy(program.program);
+        this.bind_VertexArrayProxy(vertex_array.vertex_array);
+        this.gl.drawElements(vertex_array.primitive_type, vertex_array.count, this.get_DataType(index_data_type), vertex_array.offset);
     }
 }

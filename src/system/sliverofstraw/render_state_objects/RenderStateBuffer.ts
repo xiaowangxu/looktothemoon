@@ -2,9 +2,7 @@ import { Ref } from "@/system/utils/RefCounted";
 import { RenderStateObject } from "../RenderStateObject";
 import type { RenderState } from "../RenderState";
 
-export class RenderStateBuffer<T extends RenderState<T>> extends RenderStateObject<T> {
-    public readonly buffer: WebGLBuffer;
-
+export abstract class RenderStateBuffer<T extends RenderState<T>> extends RenderStateObject<T> {
     public readonly type: number;
     public readonly usage: number;
     public readonly data_size: number;
@@ -14,9 +12,8 @@ export class RenderStateBuffer<T extends RenderState<T>> extends RenderStateObje
     public readonly data_offset: number;
     public readonly divisor: number;
 
-    constructor(render_state: RenderState<T>, buffer: WebGLBuffer, type: number, usage: number, data_size: number, data_type: number, data_normalize: boolean, data_stride: number, data_offset: number, divisor: number) {
+    constructor(render_state: RenderState<T>, type: number, usage: number, data_size: number, data_type: number, data_normalize: boolean, data_stride: number, data_offset: number, divisor: number) {
         super(render_state);
-        this.buffer = buffer;
         this.type = type;
         this.usage = usage;
         this.data_size = data_size;
@@ -32,10 +29,8 @@ export class RenderStateBuffer<T extends RenderState<T>> extends RenderStateObje
     }
 }
 
-export class RenderStateBufferView<T extends RenderState<T>> extends RenderStateObject<T> {
+export abstract class RenderStateBufferView<T extends RenderState<T>> extends RenderStateObject<T> {
     public readonly buffer_ref: Ref<RenderStateBuffer<T>> = new Ref();
-
-    public get buffer() { return this.buffer_ref.expect.buffer; }
 
     public get type() { return this.buffer_ref.expect.type; }
     public get usage() { return this.buffer_ref.expect.type; }
