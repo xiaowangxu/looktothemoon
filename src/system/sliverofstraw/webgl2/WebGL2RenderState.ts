@@ -235,7 +235,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         const result: { [name: string]: { index: number, offset: number } } = {};
         const indexes = [...indices];
         for (let i = 0; i < members.length; i++) {
-            result[members[i]] = {index: indexes[i], offset: offsets[i]};
+            result[members[i]] = { index: indexes[i], offset: offsets[i] };
         }
         return result;
     }
@@ -378,12 +378,22 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public drawArrays(program: WebGL2RenderStateProgram, vertex_array: WebGL2RenderStateVertexArray | WebGL2RenderStateVertexArrayView): void {
         this.use_ProgramProxy(program.program);
         this.bind_VertexArrayProxy(vertex_array.vertex_array);
-        this.gl.drawArrays(vertex_array.primitive_type, vertex_array.offset, vertex_array.count);
+        if (vertex_array.instance_count <= 1) {
+            this.gl.drawArrays(vertex_array.primitive_type, vertex_array.offset, vertex_array.count);
+        }
+        else {
+            this.gl.drawArraysInstanced(vertex_array.primitive_type, vertex_array.offset, vertex_array.count, vertex_array.instance_count);
+        }
     }
 
     public drawElements(program: WebGL2RenderStateProgram, vertex_array: WebGL2RenderStateVertexArray | WebGL2RenderStateVertexArrayView, index_data_type: RenderStateDataType): void {
         this.use_ProgramProxy(program.program);
         this.bind_VertexArrayProxy(vertex_array.vertex_array);
-        this.gl.drawElements(vertex_array.primitive_type, vertex_array.count, this.get_DataType(index_data_type), vertex_array.offset);
+        if (vertex_array.instance_count <= 1) {
+            this.gl.drawElements(vertex_array.primitive_type, vertex_array.count, this.get_DataType(index_data_type), vertex_array.offset);
+        }
+        else {
+            this.gl.drawElementsInstanced(vertex_array.primitive_type, vertex_array.count, this.get_DataType(index_data_type), vertex_array.offset, vertex_array.instance_count);
+        }
     }
 }
