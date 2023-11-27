@@ -13,6 +13,7 @@ import { WebGL2RenderDeviceRenderableSurface } from "./webgl2/webgl2_render_devi
 import { WebGL2RenderDeviceMaterial } from "./webgl2/webgl2_render_device_objects/WebGL2RenderDeviceMaterial";
 import { WebGL2RenderDeviceSurface } from "./webgl2/webgl2_render_device_objects/WebGL2RenderDeviceSurface";
 import { Matrix3 } from "../math/linear_algebra/Matrix3";
+import { Ref } from "../utils/RefCounted";
 
 const onscreen = document.getElementById('test-canvas') as HTMLCanvasElement;
 const on_screen_ctx = onscreen.getContext('2d');
@@ -158,26 +159,54 @@ console.log('program: ', program);
 console.groupEnd();
 
 
-// const f_fragmentShaderSource2 = `#version 300 es
-// precision highp float;
- 
-// in vec4 v_color;
+const f_vertexShaderSource2 = `#version 300 es
 
-// layout(location = 0) out vec4 outColor;
- 
-// void main() {
-//   vec2 uv = gl_FragCoord.xy / vec2(2048, 2048);
-//   outColor = vec4(v_color.rg / 255.0, 0.0, 1.0);
-// }
-// `;
-// const frag_shader2 = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, f_fragmentShaderSource2).expect();
-// const program2 = render_device.render_state.create_Program(vert_shader, frag_shader2).expect();
+uniform WorldUniforms {
+  mat4 model_world;
+  mat4 camera_world;
+  mat4 camera_projection;
+  vec2 screen_size;
+  float time;
+};
 
-const material = new WebGL2RenderDeviceMaterial(render_device, program);
-// const material2 = new RenderDeviceMaterial(render_device, program2);
+// in vec3 a_normal;
+layout(location = 4) in vec3 a_position;
+
+out vec3 v_normal;
+
+void main() {
+  gl_Position = camera_projection * inverse(camera_world) * model_world * vec4(a_position, 1.0);
+  v_normal = vec3(1.0, 0.0, 0.0);
+}
+`;
+const f_fragmentShaderSource2 = `#version 300 es
+precision highp float;
+ 
+in vec3 v_normal;
+
+uniform WorldUniforms {
+    mat4 model_world;
+    mat4 camera_world;
+    mat4 camera_projection;
+    vec2 screen_size;
+    float time;
+};
+
+layout(location = 0) out vec4 outColor;
+ 
+void main() {
+  outColor = vec4(1.0, 0.0, 0.0, 1.0);
+}
+`;
+const vert_shader2 = render_device.render_state.create_Shader(RenderStateShaderType.Vertex, f_vertexShaderSource2).expect();
+const frag_shader2 = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, f_fragmentShaderSource2).expect();
+const program2 = render_device.render_state.create_Program(vert_shader2, frag_shader2).expect();
+
+const material = new Ref(new WebGL2RenderDeviceMaterial(render_device, program));
+const material2 = new Ref(new WebGL2RenderDeviceMaterial(render_device, program2));
 
 const renderable_surface = new WebGL2RenderDeviceRenderableSurface(render_device);
-renderable_surface.set_Material(material);
+renderable_surface.set_Material(material.expect);
 renderable_surface.set_Surface(surface);
 
 const camera_world = Matrix4.from_BasisPosition(undefined, new Vector3(0,0,3));
@@ -209,10 +238,15 @@ function render(time: number) {
   // render_state.gl.drawElements(surface.vertex_array.primitive_type, surface.vertex_array.count, surface.index.data_type, surface.vertex_array.offset);
 }
 
-// setTimeout(() => {
-//   console.log(">>>> set mat");
-//   renderable_surface.set_Material(material2);
-// }, 2000);
+setTimeout(() => {
+  console.log(">>>> set mat");
+  renderable_surface.set_Material(material2.expect);
+}, 2000);
+
+setTimeout(() => {
+  console.log(">>>> set mat");
+  renderable_surface.set_Material(material.expect);
+}, 4000);
 
 // setTimeout(() => {
 //   console.log(">>>> set sur");
