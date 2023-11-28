@@ -2,12 +2,12 @@ import { Ref } from "@/system/utils/RefCounted";
 import { RenderDeviceObject } from "../RenderDeviceObject";
 import type { RenderState } from "../RenderState";
 import type { RenderDeviceSurface } from "./RenderDeviceSurface";
-import type { RenderDeviceMaterial } from "./RenderDeviceMaterial";
+import type { RenderDeviceMaterialSet } from "./RenderDeviceMaterialSet";
 import type { RenderDevice, RenderDeviceRenderable } from "../RenderDevice";
 
 export abstract class RenderDeviceRenderableSurface<
     T extends RenderState<T>,
-    Mat extends RenderDeviceMaterial<T> = RenderDeviceMaterial<T>,
+    Mat extends RenderDeviceMaterialSet<T> = RenderDeviceMaterialSet<T>,
     Surf extends RenderDeviceSurface<T> = RenderDeviceSurface<T>,
 >
     extends RenderDeviceObject<T> implements RenderDeviceRenderable<T>
@@ -32,7 +32,7 @@ export abstract class RenderDeviceRenderableSurface<
         this.surface_ref.value = surface;
     }
 
-    public abstract render(): void;
+    public abstract render(stage: string): void;
 
     public dispose(): void {
         console.log(">>> dispose <RenderDeviceRenderableSurface>");

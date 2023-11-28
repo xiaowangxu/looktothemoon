@@ -5,6 +5,7 @@ import type { RenderStateBuffer } from "../render_state_objects/RenderStateBuffe
 import type { RenderDevice } from "../RenderDevice";
 import type { Vector3 } from "@/system/math/linear_algebra/Vector3";
 import type { Vector2 } from "@/system/math/linear_algebra/Vector2";
+import type { RenderStateVertexArray } from "../render_state_objects/RenderStateVertexArray";
 
 export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
     extends RenderDeviceObject<T>
@@ -25,6 +26,10 @@ export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buff
     public abstract set_Data(data: any[]): void;
 
     public abstract update_Data(data: any[], offset: number): void;
+
+    public bound_VertexArray(vertex_array: RenderStateVertexArray<T>, attribute_location: number) {
+        this.render_state.set_VertexArrayAttributeBuffer(vertex_array, attribute_location, this.buffer);
+    }
 
     public dispose(): void {
         console.log(">>> dispose <RenderDeviceAttributeBuffer>");

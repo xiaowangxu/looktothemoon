@@ -4,26 +4,14 @@ import { WebGL2RenderState } from "./WebGL2RenderState";
 import { RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStateShaderType } from "../RenderState";
 import type { WebGL2RenderStateBuffer } from "./webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import type { WebGL2RenderStateShader } from "./webgl2_render_state_objects/WebGL2RenderStateShader";
+import { process_WebGL2ShaderCode } from "./WebGL2ShaderProcessor";
 
-const vertex_shader_source = `#version 300 es
-uniform WorldUniforms {
-    mat4 model_world;
-    mat4 camera_world;
-    mat4 camera_projection;
-    vec2 screen_size;
-    float time;
-};
-void main() {
-}
-`
-const frag_shader_source = `#version 300 es
-void main() {
-}
-`;
+const vertex_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Vertex, undefined, undefined, undefined, undefined, '');
+const frag_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Fragment, undefined, undefined, undefined, undefined, '');
 
 export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState> {
     private static readonly WorldUniformsName: string = 'WorldUniforms';
-    private static readonly WorldUniformsItems: string[] = ['model_world', 'camera_world', 'camera_projection', 'screen_size', 'time'];
+    private static readonly WorldUniformsItems: string[] = ['model_world', 'camera_world', 'camera_view', 'camera_projection', 'screen_size', 'time'];
     private static readonly WorldUniformsUnit: number = 0;
 
     private world_uniform_buffer: Ref<WebGL2RenderStateBuffer> = new Ref();
@@ -49,8 +37,6 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState> {
         this.world_uniform_setting = settings;
         this.world_uniform_buffer.value = this.render_state.create_Buffer(RenderStateBufferType.Uniform, RenderStateBufferUsage.DynamicDraw, 1, RenderStateDataType.Float, false, 0).expect();
         this.render_state.alloc_Buffer(this.world_uniform_buffer.expect, size);
-
-        console.log(this.world_uniform_setting);
 
         this.render_state.bind_UniformBuffer(this.world_uniform_buffer.expect, WebGL2RenderDevice.WorldUniformsUnit);
     }

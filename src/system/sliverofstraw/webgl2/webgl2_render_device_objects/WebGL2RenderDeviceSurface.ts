@@ -1,5 +1,4 @@
 import { RenderDeviceSurface } from "../../render_device_objects/RenderDeviceSurface";
-import type { RenderStateProgram } from "../../render_state_objects/RenderStateProgram";
 import type { WebGL2RenderDevice } from "../WebGL2RenderDevice";
 import type { WebGL2RenderState } from "../WebGL2RenderState";
 import type { WebGL2RenderStateBuffer, WebGL2RenderStateBufferView } from "../webgl2_render_state_objects/WebGL2RenderStateBuffer";
@@ -21,14 +20,13 @@ export class WebGL2RenderDeviceSurface extends RenderDeviceSurface<WebGL2RenderS
         }
         for (const [attribute, buffer_ref] of this.buffer_refs) {
             const attribute_location = rs.get_ProgramAttributeLocation(program, attribute);
-            console.log(attribute, attribute_location);
             if (attribute_location < 0) {
                 buffer_ref.location = undefined;
                 continue;
             }
             if (buffer_ref.location === undefined || buffer_ref.location !== attribute_location) {
                 const buffer = buffer_ref.buffer;
-                rs.set_VertexArrayAttributeBuffer(vertex_array, attribute_location, (buffer.expect.buffer as WebGL2RenderStateBuffer | WebGL2RenderStateBufferView));
+                buffer.expect.bound_VertexArray(vertex_array, attribute_location);
                 rs.set_VertexArrayAttribute(vertex_array, attribute_location, true);
                 buffer_ref.location = attribute_location;
             }

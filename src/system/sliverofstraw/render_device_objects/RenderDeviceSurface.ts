@@ -31,6 +31,7 @@ export abstract class RenderDeviceSurface<
         for (const buffer_ref of this.buffer_refs.values()) {
             buffer_ref.buffer.clear();
         }
+        this.buffer_refs.clear();
     }
 
     public set_AttributeBuffer(primitive_type: RenderStatePrimitiveType, count: number, buffers: { [name: string]: RenderDeviceAttributeBuffer<T> }, index?: RenderDeviceIndexAttributeBuffer<T>) {

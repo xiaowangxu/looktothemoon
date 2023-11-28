@@ -11,13 +11,13 @@ export abstract class RenderDevice<T extends RenderState<T>> {
         this.render_state = new render_state_class(this);
     }
 
-    public render_Renderable(renderable: RenderDeviceRenderable<T>) {
-        renderable.render();
+    public render_Renderable(stage: string, renderable: RenderDeviceRenderable<T>) {
+        renderable.render(stage);
     }
 
     public abstract dispose(): void;
 }
 
 export interface RenderDeviceRenderable<T extends RenderState<T>> {
-    render(): void;
+    render(stage: string): void;
 }
