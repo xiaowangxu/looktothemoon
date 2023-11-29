@@ -19,6 +19,13 @@ export abstract class RefCountedBase implements RefCounted {
     public abstract dispose(): void;
 }
 
+export type ToRefed<T> = T extends RefCounted ? Ref<T> : T; 
+
+export function unref<V, T extends RefCounted>(item: V | Ref<T>) {
+    if (item instanceof Ref) return item.expect;
+    return item;
+}
+
 export class Ref<T extends RefCounted> {
     private ref: T | undefined = undefined;
 

@@ -29,13 +29,14 @@ export function process_WebGL2ShaderCode(
 precision highp float;
 
 uniform WorldUniforms {
-    mat4 model_world;
     mat4 camera_world;
     mat4 camera_view;
     mat4 camera_projection;
     vec2 screen_size;
     float time;
-};`;
+};
+
+uniform mat4 model_world;`;
     if (type === RenderStateShaderType.Vertex) {
         const attrs = Object.entries(attributes ?? {}).map(([name, { type, location }]) => `${location === undefined ? '' : `layout(location = ${location}) `}in ${get_ShaderMemberType(type)} ${name};`);
         const unifs = Object.entries(uniforms ?? {}).map(([name, { type }]) => `uniform ${get_ShaderMemberType(type)} ${name};`);

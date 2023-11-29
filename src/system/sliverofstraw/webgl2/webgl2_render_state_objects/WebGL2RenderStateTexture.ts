@@ -4,6 +4,9 @@ import type { WebGL2RenderState } from "../WebGL2RenderState";
 export class WebGL2RenderStateTexture extends RenderStateTexture<WebGL2RenderState> {
     public readonly texture: WebGLTexture;
 
+    public active_slot: number | undefined = undefined;
+    public active_slot_changed: boolean = false;
+
     public readonly texel_format: number;
     public readonly data_type: number;
 

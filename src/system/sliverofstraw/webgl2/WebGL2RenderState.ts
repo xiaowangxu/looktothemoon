@@ -1,14 +1,24 @@
 import { Result } from "@/system/utils/Result";
 import type { RenderDevice } from "../RenderDevice";
-import { RenderState, RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateValueType, type RenderStateUniformVectorType, RenderStateTextureWrap, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureFormat, RenderStateTextureType } from "../RenderState";
+import { RenderState, RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateValueType, type RenderStateUniformVectorType, RenderStateTextureWrap, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureFormat, RenderStateTextureType, type RenderStateValueTypeKey } from "../RenderState";
 import { WebGL2RenderStateBuffer, WebGL2RenderStateBufferView } from "./webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import { WebGL2RenderStateShader } from "./webgl2_render_state_objects/WebGL2RenderStateShader";
 import { WebGL2RenderStateProgram } from "./webgl2_render_state_objects/WebGL2RenderStateProgram";
 import { WebGL2RenderStateVertexArray, WebGL2RenderStateVertexArrayView } from "./webgl2_render_state_objects/WebGL2RenderStateVertexArray";
 import { WebGL2RenderStateTexture } from "./webgl2_render_state_objects/WebGL2RenderStateTexture";
+import { WeakRef } from "@/system/utils/RefCounted";
+import type { RenderStateTexture } from "../render_state_objects/RenderStateTexture";
 
 export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public readonly gl: WebGL2RenderingContext;
+
+    private static readonly TextureSlotBase = 1;
+    private static readonly TextureSlotPreserved = 3;
+
+    public readonly max_texture_slot: number;
+    public readonly user_texture_slot_count: number;
+    private readonly active_texture_slots: WeakRef<WebGL2RenderStateTexture>[];
+    private active_texture_slot_pointer: number = 0;
 
     // #region state proxy
 
@@ -102,11 +112,63 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         return false;
     }
 
-    private depth_func: number | null = null;
+    private face_winding_state: number | null = null;
+    public set_FaceWindingProxy(direction: number) {
+        if (this.face_winding_state !== direction) {
+            this.face_winding_state = direction;
+            this.gl.frontFace(direction);
+            return true;
+        }
+        return false;
+    }
+
+    private depth_func_state: number | null = null;
     public set_DepthFuncProxy(func: number) {
-        if (this.depth_func !== func) {
-            this.depth_func = func;
+        if (this.depth_func_state !== func) {
+            this.depth_func_state = func;
             this.gl.depthFunc(func);
+            return true;
+        }
+        return false;
+    }
+
+    private viewport_state: [number | null, number | null, number | null, number | null] = [null, null, null, null];
+    public set_ViewportProxy(x: number, y: number, w: number, h: number) {
+        const [_x, _y, _w, _h] = this.viewport_state;
+        if (_x !== x || _y !== y || _w !== w || _h !== h) {
+            this.viewport_state[0] = x;
+            this.viewport_state[1] = y;
+            this.viewport_state[2] = w;
+            this.viewport_state[3] = h;
+            this.gl.viewport(x, y, w, h);
+            return true;
+        }
+        return false;
+    }
+
+    private scissor_state: [number | null, number | null, number | null, number | null] = [null, null, null, null];
+    public set_ScissorProxy(x: number, y: number, w: number, h: number) {
+        const [_x, _y, _w, _h] = this.viewport_state;
+        if (_x !== x || _y !== y || _w !== w || _h !== h) {
+            this.scissor_state[0] = x;
+            this.scissor_state[1] = y;
+            this.scissor_state[2] = w;
+            this.scissor_state[3] = h;
+            this.gl.scissor(x, y, w, h);
+            return true;
+        }
+        return false;
+    }
+
+    private clear_color_state: [number | null, number | null, number | null, number | null] = [null, null, null, null];
+    public set_ClearColorProxy(r: number, g: number, b: number, a: number) {
+        const [_r, _g, _b, _a] = this.clear_color_state;
+        if (_r !== r || _g !== g || _b !== b || _a !== a) {
+            this.clear_color_state[0] = r;
+            this.clear_color_state[1] = g;
+            this.clear_color_state[2] = b;
+            this.clear_color_state[3] = a;
+            this.gl.clearColor(r, g, b, a);
             return true;
         }
         return false;
@@ -119,6 +181,10 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         const gl = this.render_device.canvas.getContext('webgl2', { antialias: true });
         if (gl === null) throw new Error('<WebGL2RenderState> constructor: failed to get webgl2 context');
         this.gl = gl as WebGL2RenderingContext;
+        this.max_texture_slot = this.gl.getParameter(this.gl.MAX_TEXTURE_IMAGE_UNITS);
+        this.user_texture_slot_count = this.max_texture_slot - WebGL2RenderState.TextureSlotBase - WebGL2RenderState.TextureSlotPreserved;
+        if (this.user_texture_slot_count <= 0) throw new Error('<WebGL2RenderState> constructor: texture unit not enough');
+        this.active_texture_slots = new Array(this.user_texture_slot_count);
     }
 
     // #region enum
@@ -420,6 +486,11 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         return Result.Ok(new WebGL2RenderStateTexture(this.render_state, texture, this.get_TextureType(type), internal_format, texel_format, data_type, this.get_TextureWrap(wrap_s), this.get_TextureWrap(wrap_t), this.get_TextureFilter(min_filter), this.get_TextureFilter(mag_filter)));
     }
 
+    public delete_Texture(texture: WebGL2RenderStateTexture): void {
+        this.gl.deleteTexture(texture.texture);
+        console.log("delete texture", texture.id);
+    }
+
     public alloc_Texture(texture: WebGL2RenderStateTexture, width: number, height: number, level: number, data?: ArrayBufferView): void {
         const {
             format: internal_format,
@@ -459,47 +530,89 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     }
 
     public active_Texture(texture: WebGL2RenderStateTexture, slot: number) {
-        this.gl.activeTexture(this.gl.TEXTURE0 + slot);
+        const target_point = WebGL2RenderState.TextureSlotBase + slot;
+        if (texture.active_slot === target_point) return;
+        this.gl.activeTexture(this.gl.TEXTURE0 + target_point);
         const binded = this.bind_TextureProxy(texture.type, texture.texture);
         if (!binded) {
             this.gl.bindTexture(texture.type, texture.texture);
         }
+        this.gl.activeTexture(this.gl.TEXTURE0);
+        texture.active_slot = target_point;
+        texture.active_slot_changed = true;
+    }
+
+    public get_TextureSlot(texture: WebGL2RenderStateTexture | undefined) {
+        if (texture === undefined) return WebGL2RenderState.TextureSlotBase;
+        if (texture.active_slot !== undefined) {
+            return texture.active_slot;
+        }
+        // find
+        const last_slot = this.active_texture_slot_pointer;
+        let current_slot = last_slot;
+        while (true) {
+            const texture_slot = this.active_texture_slots[current_slot];
+            if (texture_slot === undefined || texture_slot.value === undefined) {
+                // find blank
+                break;
+            }
+            current_slot = (current_slot + 1) % this.user_texture_slot_count;
+            // looped around
+            if (current_slot === last_slot) break;
+        }
+        const texture_slot = this.active_texture_slots[current_slot];
+        if (texture_slot === undefined || texture_slot.value === undefined) {
+            this.active_texture_slots[current_slot] = new WeakRef(texture);
+            this.active_Texture(texture, WebGL2RenderState.TextureSlotPreserved + current_slot);
+        }
+        else {
+            const old_texture = texture_slot.value;
+            old_texture.active_slot = undefined;
+            old_texture.active_slot_changed = true;
+            this.active_texture_slots[current_slot] = new WeakRef(texture);
+            this.active_Texture(texture, WebGL2RenderState.TextureSlotPreserved + current_slot);
+        }
+        return texture.active_slot!;
     }
 
     // uniform
 
-    public set_ProgramUniform(program: WebGL2RenderStateProgram, uniform_location: WebGLUniformLocation, uniform_type: RenderStateValueType, data: RenderStateUniformVectorType): void {
+    public set_ProgramUniform<Val extends RenderStateValueType>(program: WebGL2RenderStateProgram, uniform_location: WebGLUniformLocation, uniform_type: Val, data: RenderStateValueTypeKey<WebGL2RenderState, Val>): void {
         this.use_ProgramProxy(program.program);
         switch (uniform_type) {
             case RenderStateValueType.Int: {
-                this.gl.uniform1iv(uniform_location, data);
+                this.gl.uniform1i(uniform_location, (data as RenderStateValueTypeKey<WebGL2RenderState, RenderStateValueType.Int>));
                 return;
             }
             case RenderStateValueType.Float: {
-                this.gl.uniform1fv(uniform_location, data);
+                this.gl.uniform1f(uniform_location, (data as RenderStateValueTypeKey<WebGL2RenderState, RenderStateValueType.Int>));
                 return;
             }
             case RenderStateValueType.Vec2: {
-                this.gl.uniform2fv(uniform_location, data);
+                this.gl.uniform2fv(uniform_location, (data as RenderStateValueTypeKey<WebGL2RenderState, RenderStateValueType.Vec2>).typed_array_f32);
                 return;
             }
             case RenderStateValueType.Vec3: {
-                this.gl.uniform3fv(uniform_location, data);
+                this.gl.uniform3fv(uniform_location, (data as RenderStateValueTypeKey<WebGL2RenderState, RenderStateValueType.Vec3>).typed_array_f32);
                 return;
             }
             case RenderStateValueType.Vec4: {
-                this.gl.uniform4fv(uniform_location, data);
+                this.gl.uniform4fv(uniform_location, (data as RenderStateValueTypeKey<WebGL2RenderState, RenderStateValueType.Vec4>).typed_array_f32);
                 return;
             }
             case RenderStateValueType.Mat3: {
-                this.gl.uniformMatrix3fv(uniform_location, true, data);
+                this.gl.uniformMatrix3fv(uniform_location, true, (data as RenderStateValueTypeKey<WebGL2RenderState, RenderStateValueType.Mat3>).typed_array_f32);
                 return;
             }
             case RenderStateValueType.Mat4: {
-                this.gl.uniformMatrix4fv(uniform_location, true, data);
+                this.gl.uniformMatrix4fv(uniform_location, true, (data as RenderStateValueTypeKey<WebGL2RenderState, RenderStateValueType.Mat4>).typed_array_f32);
                 return;
             }
             case RenderStateValueType.Tex2D: {
+                const texture = data as RenderStateValueTypeKey<WebGL2RenderState, RenderStateValueType.Tex2D> as (WebGL2RenderStateTexture | undefined);
+                const slot = this.get_TextureSlot(texture);
+                // console.log("use texture slot", slot);
+                this.gl.uniform1i(uniform_location, slot);
                 return;
             }
             default: {

@@ -4,7 +4,7 @@ import { RenderStateObject } from "../RenderStateObject";
 export abstract class RenderStateTexture<T extends RenderState<T>> extends RenderStateObject<T> {
     public width: number = 0;
     public height: number = 0;
-
+    
     public readonly type: number;
     public readonly format: number;
 
@@ -25,5 +25,6 @@ export abstract class RenderStateTexture<T extends RenderState<T>> extends Rende
 
     public dispose() {
         console.log(">>> dispsoe <RenderStateTexture>");
+        this.render_state.delete_Texture(this);
     }
 }

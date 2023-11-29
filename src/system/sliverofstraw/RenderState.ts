@@ -1,3 +1,8 @@
+import type { Matrix3 } from "../math/linear_algebra/Matrix3";
+import type { Matrix4 } from "../math/linear_algebra/Matrix4";
+import type { Vector2 } from "../math/linear_algebra/Vector2";
+import type { Vector3 } from "../math/linear_algebra/Vector3";
+import type { Vector4 } from "../math/linear_algebra/Vector4";
 import { Result } from "../utils/Result";
 import type { RenderDevice } from "./RenderDevice";
 import { RenderStateBuffer, RenderStateBufferView } from "./render_state_objects/RenderStateBuffer";
@@ -31,6 +36,22 @@ export enum RenderStateDataType {
 export enum RenderStateValueType {
     Int, Float, Vec2, Vec3, Vec4, Mat3, Mat4, Tex2D,
 }
+
+export interface RenderStateValueTypeMap<RS extends RenderState<RS>> {
+    Int: number,
+    Float: number,
+    Vec2: Vector2,
+    Vec3: Vector3,
+    Vec4: Vector4,
+    Mat3: Matrix3,
+    Mat4: Matrix4,
+    Tex2D: RenderStateTexture<RS> | undefined,
+}
+type ValueOf<T> = T[keyof T];
+export type RenderStateAllValueType<RS extends RenderState<RS>> = ValueOf<RenderStateValueTypeMap<RS>>;
+export type RenderStateValueTypeKey<RS extends RenderState<RS>, T extends RenderStateValueType> = RenderStateValueTypeMap<RS>[Extract<ValueOf<{
+    [K in keyof typeof RenderStateValueType]: [K, typeof RenderStateValueType[K]]
+}>, [any, T]>[0]];
 
 export enum RenderStateTextureType {
     Tex2D, CubeMap, Tex3D, Tex2DArray
@@ -108,9 +129,11 @@ export abstract class RenderState<T extends RenderState<T>> {
         min_filter: RenderStateTextureMinFilter, mag_filter: RenderStateTextureMagFilter
     ): Result<RenderStateTexture<T>, Error>;
 
+    public abstract delete_Texture(texture: RenderStateTexture<T>): void;
+
     // uniform
 
-    public abstract set_ProgramUniform(program: RenderStateProgram<T>, uniform_location: WebGLUniformLocation, uniform_type: RenderStateValueType, data: RenderStateUniformVectorType): void;
+    public abstract set_ProgramUniform<Val extends RenderStateValueType>(program: RenderStateProgram<T>, uniform_location: any, uniform_type: Val, data: RenderStateValueTypeKey<T, Val>): void;
 
     // draw
 

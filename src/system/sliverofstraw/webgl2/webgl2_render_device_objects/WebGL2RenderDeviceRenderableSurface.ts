@@ -12,7 +12,8 @@ export class WebGL2RenderDeviceRenderableSurface extends RenderDeviceRenderableS
     public render(stage: string): void {
         const material = this.material_ref.expect;
         const surface = this.surface_ref.expect;
-        const program = material.get_Program(stage);
+        // set uniforms
+        const program = material.use_Program(stage);
         if (program === undefined) return;
         const vertex_array = surface.vertex_array;
         if (this.material_changed || this.surface_changed || surface.changed) {
@@ -25,7 +26,6 @@ export class WebGL2RenderDeviceRenderableSurface extends RenderDeviceRenderableS
             // set cap
             const { depth_test } = material;
             rs.set_CapabilityProxy(rs.gl.DEPTH_TEST, depth_test);
-            // set uniforms
             if (surface.indexed) {
                 rs.drawElements(program, vertex_array, surface.index_type);
             }
