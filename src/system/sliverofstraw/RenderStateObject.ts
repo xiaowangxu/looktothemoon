@@ -10,6 +10,7 @@ export abstract class RenderStateObject<T extends RenderState<T>> extends RefCou
     constructor(render_state: RenderState<T>) {
         super();
         this.render_state = render_state;
+        // console.log(">>>>> create ", this.constructor.name, this.id);
     }
 
     public abstract dispose(): void;

@@ -36,7 +36,7 @@ export abstract class RenderDeviceSurface<
 
     public set_AttributeBuffer(primitive_type: RenderStatePrimitiveType, count: number, buffers: { [name: string]: RenderDeviceAttributeBuffer<T> }, index?: RenderDeviceIndexAttributeBuffer<T>) {
         this.changed = true;
-        this.vertex_array_ref.value = this.render_state.create_VertexArray(primitive_type, 0, count, 1).expect() as Vert;
+        this.vertex_array_ref.value = this.render_state.create_VertexArray(primitive_type, 0, count, 0).expect() as Vert;
         const map: BufferMap<T> = new Map();
         for (const [attribute, buffer] of Object.entries(buffers)) {
             map.set(attribute, {
@@ -50,6 +50,10 @@ export abstract class RenderDeviceSurface<
             this.index_refs.value = index;
             this.render_state.set_VertexArrayIndexBuffer(this.vertex_array_ref.expect, this.index_refs.expect.buffer);
         }
+    }
+
+    public set_InstanceCount(count: number) {
+        this.render_state.set_VertexArrayInstanceCount(this.vertex_array, count);
     }
 
     public get_AttributeBuffer<Buffer extends RenderDeviceAttributeBuffer<T>>(attribute: string) {

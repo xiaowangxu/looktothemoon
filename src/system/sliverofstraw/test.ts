@@ -1,10 +1,10 @@
 import { Matrix3 } from "../math/linear_algebra/Matrix3";
-import { Matrix4 } from "../math/linear_algebra/Matrix4";
+import { Matrix4, mat4 } from "../math/linear_algebra/Matrix4";
 import { Vector3, vec3 } from "../math/linear_algebra/Vector3";
 import { Vector2, vec2 } from "../math/linear_algebra/Vector2";
 import { Ref } from "../utils/RefCounted";
 import { RenderStateBufferUsage, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateTextureWrap, RenderStateValueType } from "./RenderState";
-import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector3AttributeBuffer, RenderDeviceVector2AttributeBuffer } from "./render_device_objects/RenderDeviceAttributeBuffer";
+import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector3AttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceMatrix4AttributeBuffer } from "./render_device_objects/RenderDeviceAttributeBuffer";
 import { WebGL2RenderDevice } from "./webgl2/WebGL2RenderDevice";
 import { WebGL2RenderState } from "./webgl2/WebGL2RenderState";
 import { process_WebGL2ShaderCode } from "./webgl2/WebGL2ShaderProcessor";
@@ -173,7 +173,7 @@ const vert_shader = render_device.render_state.create_Shader(RenderStateShaderTy
 const frag_shader = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, f_fragmentShaderSource).expect();
 const frag_shader2 = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, f_fragmentShaderSource2).expect();
 
-const material = new Ref(new WebGL2RenderDeviceMaterialSet(render_device,
+const material = new WebGL2RenderDeviceMaterialSet(render_device,
 	vert_shader, {},
 	{
 		default: {
@@ -189,16 +189,14 @@ const material = new Ref(new WebGL2RenderDeviceMaterialSet(render_device,
 			}
 		}
 	}
-));
-
-console.log(material.expect);
+);
 
 const renderable_surface = new WebGL2RenderDeviceRenderableSurface(render_device);
-renderable_surface.set_Material(material.expect);
+renderable_surface.set_Material(material);
 renderable_surface.set_Surface(surface);
 
 const camera_world = Matrix4.from_BasisPosition(undefined, new Vector3(0, 0, 3));
-const camera_projection = Matrix4.make_PerspectiveFovProjection(100 / 180 * Math.PI, 1, 0.01, 1000);
+const camera_projection = Matrix4.make_OrthogonalProjection(-4, 4, 4, -4, 0.01, 1000); //Matrix4.make_PerspectiveFovProjection(100 / 180 * Math.PI, 1, 0.01, 1000);
 
 render_device.set_WorldUniform('camera_world', camera_world.typed_transposed_array_f32);
 render_device.set_WorldUniform('camera_view', camera_world.inverse().typed_transposed_array_f32);
@@ -208,29 +206,116 @@ let stage = 'test';
 
 const render_state = render_device.render_state as WebGL2RenderState;
 
-material.expect.set_Uniform<RenderStateValueType.Tex2D>(stage, 'u_texture', texture);
-material.expect.set_Uniform<RenderStateValueType.Tex2D>(stage, 'u_texture2', texture2);
+material.set_Uniform<RenderStateValueType.Tex2D>(stage, 'u_texture', texture);
+material.set_Uniform<RenderStateValueType.Tex2D>(stage, 'u_texture2', texture2);
+
+// instance surface
+
+const mat4buffer = new RenderDeviceMatrix4AttributeBuffer(render_device, RenderStateBufferUsage.DynamicDraw, [
+	Matrix4.make_Identity(), Matrix4.make_Identity(),
+	Matrix4.make_Identity(), Matrix4.make_Identity(),
+	Matrix4.make_Identity(), Matrix4.make_Identity(),
+	Matrix4.make_Identity(), Matrix4.make_Identity(),
+], 1);
+const surface2 = new WebGL2RenderDeviceSurface(render_device);
+surface2.set_AttributeBuffer(RenderStatePrimitiveType.Triangles, indexbuffer.element_count, {
+	a_position: positionbuffer,
+	a_normal: normalbuffer,
+	a_uv: uvbuffer,
+	a_model_world: mat4buffer,
+}, indexbuffer);
+surface2.set_InstanceCount(8);
+const attributes2 = {
+	a_position: { type: RenderStateValueType.Vec3 },
+	a_normal: { type: RenderStateValueType.Vec3 },
+	a_uv: { type: RenderStateValueType.Vec2 },
+	a_model_world: { type: RenderStateValueType.Mat4 },
+};
+const uniforms2 = { u_color: { type: RenderStateValueType.Vec4 }, u_texture: { type: RenderStateValueType.Tex2D }, u_texture2: { type: RenderStateValueType.Tex2D } };
+const varyings2 = { v_world: { type: RenderStateValueType.Vec3 }, v_normal: { type: RenderStateValueType.Vec3 }, v_uv: { type: RenderStateValueType.Vec2 } };
+const outputs2 = { o_color: { type: RenderStateValueType.Vec4, location: 0 } };
+const f_vertexShaderSource2 = process_WebGL2ShaderCode(RenderStateShaderType.Vertex,
+	attributes2, uniforms2, varyings2, outputs2,
+	`vec4 world = a_model_world * vec4(a_position, 1.0);
+gl_Position = camera_projection * camera_view * world;
+v_normal = normalize(mat3(transpose(inverse(a_model_world))) * a_normal);
+v_uv = a_uv;
+v_world = world.xyz;`
+);
+const f_fragmentShaderSource3 = process_WebGL2ShaderCode(RenderStateShaderType.Fragment,
+	attributes2, uniforms2, varyings2, outputs2,
+	`o_color = vec4((v_normal + 1.0) / 2.0, 1.0);//vec4(texture(u_texture, v_uv).rgb * texture(u_texture2, v_uv).rgb, 1.0);`
+);
+const vert_shader2 = render_device.render_state.create_Shader(RenderStateShaderType.Vertex, f_vertexShaderSource2).expect();
+const frag_shader3 = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, f_fragmentShaderSource3).expect();
+const material2 = new WebGL2RenderDeviceMaterialSet(render_device,
+	vert_shader2, {},
+	{
+		default: {
+			shader: frag_shader,
+			uniforms: {}
+		},
+		test: {
+			shader: frag_shader3,
+			uniforms: {
+				u_color: { type: RenderStateValueType.Vec4, default: vec4(1, 1, 1, 1) },
+				u_texture: { type: RenderStateValueType.Tex2D, default: undefined },
+				u_texture2: { type: RenderStateValueType.Tex2D, default: undefined },
+			}
+		}
+	}
+);
+const renderable_surface2 = new WebGL2RenderDeviceRenderableSurface(render_device);
+renderable_surface2.set_Material(material2);
+renderable_surface2.set_Surface(surface2);
+const texture3 = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, RenderStateTextureFormat.RGBA8, RenderStateTextureWrap.MirrorRepeat, RenderStateTextureWrap.MirrorRepeat, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+render_device.render_state.alloc_Texture(texture3, 2, 2, 0, new Uint8ClampedArray([
+	255, 255, 255, 255,
+	255, 255, 255, 255,
+	255, 0, 0, 255,
+	0, 255, 0, 255,
+]));
+const texture4 = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, RenderStateTextureFormat.RGBA8, RenderStateTextureWrap.MirrorRepeat, RenderStateTextureWrap.MirrorRepeat, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+render_device.render_state.alloc_Texture(texture4, 2, 2, 0, new Uint8ClampedArray([
+	0, 0, 255, 255,
+	255, 0, 255, 255,
+	255, 255, 255, 255,
+	255, 255, 255, 255,
+]));
+material2.set_Uniform<RenderStateValueType.Tex2D>(stage, 'u_texture', texture);
+material2.set_Uniform<RenderStateValueType.Tex2D>(stage, 'u_texture2', texture4);
 
 function render(time: number) {
 	render_device.set_WorldUniform('time', new Float32Array([time]));
+
+	render_state.use_FrameBuffer(undefined);
 	render_state.set_ViewportProxy(0, 0, 2048, 2048);
 	render_state.set_ClearColorProxy(0.2, 0.2, 0.2, 1);
 	render_state.gl.clear(render_state.gl.COLOR_BUFFER_BIT | render_state.gl.DEPTH_BUFFER_BIT);
 
 	const model_world = Matrix4.from_BasisPosition(Matrix3.make_RotateX(time / 2).compose(Matrix3.make_RotateY(time * 0.15)), vec3(0, 0, 0));
-	material.expect.set_Uniform<RenderStateValueType.Mat4>(stage, 'model_world', model_world);
-	material.expect.set_Uniform<RenderStateValueType.Vec4>(stage, 'u_color', vec4(1, 0.0, 0.0, 1));
+	material.set_Uniform<RenderStateValueType.Mat4>(stage, 'model_world', model_world);
+	material.set_Uniform<RenderStateValueType.Vec4>(stage, 'u_color', vec4(1, 0.0, 0.0, 1));
 	render_device.render_Renderable(stage, renderable_surface);
 
-	const model_world2 = Matrix4.from_BasisPosition(Matrix3.make_Scale(0.5, 0.5, 0.5), vec3(2, 0, 0));
-	material.expect.set_Uniform<RenderStateValueType.Mat4>(stage, 'model_world', model_world2);
-	material.expect.set_Uniform<RenderStateValueType.Vec4>(stage, 'u_color', vec4(0.0, 1, 0.0, 1));
-	render_device.render_Renderable(stage, renderable_surface);
+	// const model_world2 = Matrix4.from_BasisPosition(Matrix3.make_Scale(0.5, 0.5, 0.5), vec3(2, 0, 0));
+	// material.expect.set_Uniform<RenderStateValueType.Mat4>(stage, 'model_world', model_world2);
+	// material.expect.set_Uniform<RenderStateValueType.Vec4>(stage, 'u_color', vec4(0.0, 1, 0.0, 1));
+	// render_device.render_Renderable(stage, renderable_surface);
 
-	const model_world3 = Matrix4.from_BasisPosition(Matrix3.make_Scale(0.5, 0.5, 0.5), vec3(-2, 0, 0));
-	material.expect.set_Uniform<RenderStateValueType.Mat4>(stage, 'model_world', model_world3);
-	material.expect.set_Uniform<RenderStateValueType.Vec4>(stage, 'u_color', vec4(0.0, 0.0, 1, 1));
-	render_device.render_Renderable(stage, renderable_surface);
+	const model_world_right0 = Matrix4.from_BasisPosition(Matrix3.make_Scale(0.5, 0.5, 0.5).compose(Matrix3.make_RotateY(time / 2)), vec3(2, 0, 0));
+	const model_world_left0 = Matrix4.from_BasisPosition(Matrix3.make_Scale(0.5, 0.5, 0.5).compose(Matrix3.make_RotateY(-time / 2)), vec3(-2, 0, 0));
+	const model_world_top0 = Matrix4.from_BasisPosition(Matrix3.make_Scale(0.5, 0.5, 0.5).compose(Matrix3.make_RotateX(-time / 2)), vec3(0, 2, 0));
+	const model_world_bottom0 = Matrix4.from_BasisPosition(Matrix3.make_Scale(0.5, 0.5, 0.5).compose(Matrix3.make_RotateX(time / 2)), vec3(0, -2, 0));
+	const model_world_right1 = Matrix4.from_BasisPosition(Matrix3.make_Scale(0.5, 0.5, 0.5).compose(Matrix3.make_RotateY(time / 2)), vec3(2, 2, 0));
+	const model_world_left1 = Matrix4.from_BasisPosition(Matrix3.make_Scale(0.5, 0.5, 0.5).compose(Matrix3.make_RotateY(-time / 2)), vec3(-2, 2, 0));
+	const model_world_top1 = Matrix4.from_BasisPosition(Matrix3.make_Scale(0.5, 0.5, 0.5).compose(Matrix3.make_RotateX(-time / 2)), vec3(2, -2, 0));
+	const model_world_bottom1 = Matrix4.from_BasisPosition(Matrix3.make_Scale(0.5, 0.5, 0.5).compose(Matrix3.make_RotateX(time / 2)), vec3(-2, -2, 0));
+	mat4buffer.update_Data([
+		model_world_right0, model_world_left0, model_world_top0, model_world_bottom0,
+		model_world_right1, model_world_left1, model_world_top1, model_world_bottom1,
+	], 0);
+	render_device.render_Renderable(stage, renderable_surface2);
 
 	on_screen_ctx?.drawImage(canvas, 0, 0);
 }
@@ -246,7 +331,7 @@ function render(time: number) {
 
 // setTimeout(() => {
 // 	console.log("> set uniform");
-// 	material.expect.set_Uniform<RenderStateValueType.Tex2D>(stage, 'u_texture2', undefined);
+// 	// material.expect.set_Uniform<RenderStateValueType.Tex2D>(stage, 'u_texture2', undefined);
 // }, 2000);
 
 let time = 0;
@@ -255,7 +340,7 @@ function animation() {
 	requestAnimationFrame(animation);
 	time += 0.033;
 	const x = (Math.sin(time) + 1) / 2;
-// surface.get_AttributeBuffer('a_position')?.update_Data([vec2(x, -0.5), vec2(0.5, x)], 2);
+	// surface.get_AttributeBuffer('a_position')?.update_Data([vec2(x, -0.5), vec2(0.5, x)], 2);
 	render(time);
 }
 

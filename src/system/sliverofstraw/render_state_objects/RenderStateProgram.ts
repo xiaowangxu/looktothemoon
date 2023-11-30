@@ -8,7 +8,7 @@ export class RenderStateProgram<T extends RenderState<T>> extends RenderStateObj
     public readonly vert_shader_ref: Ref<RenderStateShader<T>> = new Ref();
     public readonly frag_shader_ref: Ref<RenderStateShader<T>> = new Ref();
     
-    constructor(render_state: RenderState<T>, vert_shader: RenderStateShader<T>, frag_shader: RenderStateShader<T>){
+    constructor(render_state: T, vert_shader: RenderStateShader<T>, frag_shader: RenderStateShader<T>){
         super(render_state);
         this.vert_shader_ref.value = vert_shader;
         this.frag_shader_ref.value = frag_shader;

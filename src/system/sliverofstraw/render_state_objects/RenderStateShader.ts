@@ -4,7 +4,7 @@ import type { RenderState } from "../RenderState";
 export abstract class RenderStateShader<T extends RenderState<T>> extends RenderStateObject<T> {
     public readonly type: number;
 
-    constructor(render_state: RenderState<T>, type: number) {
+    constructor(render_state: T, type: number) {
         super(render_state);
         this.type = type;
     }

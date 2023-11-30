@@ -1,16 +1,35 @@
 import { Matrix4 } from "@/system/math/linear_algebra/Matrix4";
-import { RenderStateValueType, type RenderStateAllValueType } from "../../RenderState";
-import { RenderDeviceMaterialSet, RenderDeviceUniformSet, type UniformInitSet } from "../../render_device_objects/RenderDeviceMaterialSet";
+import { RenderStateValueType } from "../../RenderState";
+import { RenderDeviceMaterialSet, RenderDeviceUniformSet, type UniformInitSet, type UniformSetItemType } from "../../render_device_objects/RenderDeviceMaterialSet";
 import type { WebGL2RenderDevice } from "../WebGL2RenderDevice";
 import type { WebGL2RenderState } from "../WebGL2RenderState";
 import type { WebGL2RenderStateProgram } from "../webgl2_render_state_objects/WebGL2RenderStateProgram";
 import type { WebGL2RenderStateShader } from "../webgl2_render_state_objects/WebGL2RenderStateShader";
+import { Ref } from "@/system/utils/RefCounted";
+import type { WebGL2RenderStateTexture } from "../webgl2_render_state_objects/WebGL2RenderStateTexture";
 
 export class WebGL2RenderDeviceUniformSet extends RenderDeviceUniformSet<WebGL2RenderState> {
-    protected push_UniformInternal(render_state: WebGL2RenderState, changed: boolean, program: WebGL2RenderStateProgram, location: any, type: RenderStateValueType, value: RenderStateAllValueType<WebGL2RenderState>): void {
-        if (changed || type === RenderStateValueType.Tex2D) {
-            render_state.set_ProgramUniform(program, location, type, value);
+    protected uniforms: Map<string, UniformSetItemType<WebGL2RenderState> & { texture_slot: number | undefined }> = new Map();
+
+    protected push_UniformInternal(render_state: WebGL2RenderState, program: WebGL2RenderStateProgram, obj: UniformSetItemType<WebGL2RenderState> & { texture_slot: number | undefined }): void {
+        const { type, changed, default: default_value, value, texture_slot, location } = obj;
+        const val = value ?? default_value;
+        if (type === RenderStateValueType.Tex2D) {
+            if (val === undefined) {
+                if (changed) render_state.set_ProgramUniform(program, location, type, undefined);
+            }
+            else {
+                const texture = (val as Ref<WebGL2RenderStateTexture>).expect;
+                if (texture.active_slot === undefined || texture.active_slot !== texture_slot) {
+                    render_state.set_ProgramUniform(program, location, type, texture);
+                }
+                obj.texture_slot = texture.active_slot;
+            }
         }
+        else if (changed) {
+            render_state.set_ProgramUniform(program, location, type, val as any);
+        }
+        obj.changed = false;
     }
 }
 

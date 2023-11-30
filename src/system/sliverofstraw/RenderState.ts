@@ -6,9 +6,10 @@ import type { Vector4 } from "../math/linear_algebra/Vector4";
 import { Result } from "../utils/Result";
 import type { RenderDevice } from "./RenderDevice";
 import { RenderStateBuffer, RenderStateBufferView } from "./render_state_objects/RenderStateBuffer";
+import type { FrameBufferAttachment, RenderStateFrameBuffer } from "./render_state_objects/RenderStateFrameBuffer";
 import { RenderStateProgram } from "./render_state_objects/RenderStateProgram";
 import type { RenderStateShader } from "./render_state_objects/RenderStateShader";
-import type { RenderStateTexture } from "./render_state_objects/RenderStateTexture";
+import type { RenderStateTexture, RenderStateTextureSampler } from "./render_state_objects/RenderStateTexture";
 import type { RenderStateVertexArray, RenderStateVertexArrayView } from "./render_state_objects/RenderStateVertexArray";
 
 export enum RenderStateShaderType {
@@ -115,7 +116,9 @@ export abstract class RenderState<T extends RenderState<T>> {
     public abstract create_VertexArrayView(vertex_array: RenderStateVertexArray<T>, offset: number, count: number, instance_count: number):
         Result<RenderStateVertexArrayView<T>, Error>;
 
-    public abstract set_VertexArrayAttribute(vertex_array: RenderStateVertexArray<T>, attribute_location: number, enabled: boolean): void;
+    public abstract toggle_VertexArrayAttribute(vertex_array: RenderStateVertexArray<T>, attribute_location: number, enabled: boolean): void;
+
+    public abstract set_VertexArrayInstanceCount(vertex_array: RenderStateVertexArray<T>, instance_count: number): void;
 
     public abstract set_VertexArrayAttributeBuffer(vertex_array: RenderStateVertexArray<T>,
         attribute_location: number, buffer: RenderStateBuffer<T> | RenderStateBufferView<T>): void;
@@ -129,7 +132,26 @@ export abstract class RenderState<T extends RenderState<T>> {
         min_filter: RenderStateTextureMinFilter, mag_filter: RenderStateTextureMagFilter
     ): Result<RenderStateTexture<T>, Error>;
 
+    public abstract set_TextureParameters(texture: RenderStateTexture<T>, wrap_s?: RenderStateTextureWrap, wrap_t?: RenderStateTextureWrap, min_filter?: RenderStateTextureMinFilter, mag_filter?: RenderStateTextureMagFilter): void;
+
     public abstract delete_Texture(texture: RenderStateTexture<T>): void;
+
+    // texture sampler
+
+    public abstract create_TextureSampler(wrap_s: RenderStateTextureWrap, wrap_t: RenderStateTextureWrap, min_filter: RenderStateTextureMinFilter, mag_filter: RenderStateTextureMagFilter):
+        Result<RenderStateTextureSampler<T>, Error>;
+
+    public abstract set_TextureSamplerParameters(sampler: RenderStateTextureSampler<T>, wrap_s?: RenderStateTextureWrap, wrap_t?: RenderStateTextureWrap, min_filter?: RenderStateTextureMinFilter, mag_filter?: RenderStateTextureMagFilter): void;
+
+    public abstract delete_TextureSampler(sampler: RenderStateTextureSampler<T>): void;
+
+    // frame buffer
+
+    public abstract create_FrameBuffer(): Result<RenderStateFrameBuffer<T>, Error>;
+
+    public abstract set_FrameBufferAttachment(frame_buffer: RenderStateFrameBuffer<T>, target: any, attachment: FrameBufferAttachment<T> | undefined): void;
+
+    public abstract delete_FrameBuffer(frame_buffer: RenderStateFrameBuffer<T>): void;
 
     // uniform
 
@@ -137,7 +159,9 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     // draw
 
-    public abstract drawArrays(program: RenderStateProgram<T>, vertex_array: RenderStateVertexArray<T> | RenderStateVertexArrayView<T>): void;
+    public abstract use_FrameBuffer(frame_buffer: RenderStateFrameBuffer<T> | undefined): void;
 
-    public abstract drawElements(program: RenderStateProgram<T>, vertex_array: RenderStateVertexArray<T> | RenderStateVertexArrayView<T>, index_data_type: RenderStateDataType): void;
+    public abstract draw_Arrays(program: RenderStateProgram<T>, vertex_array: RenderStateVertexArray<T> | RenderStateVertexArrayView<T>): void;
+
+    public abstract draw_Elements(program: RenderStateProgram<T>, vertex_array: RenderStateVertexArray<T> | RenderStateVertexArrayView<T>, index_data_type: RenderStateDataType): void;
 }

@@ -1,11 +1,12 @@
-import { RenderStateTexture } from "../../render_state_objects/RenderStateTexture";
+import { texture } from "three/examples/jsm/nodes/Nodes.js";
+import { RenderStateTexture, RenderStateTextureSampler } from "../../render_state_objects/RenderStateTexture";
 import type { WebGL2RenderState } from "../WebGL2RenderState";
+import { Ref } from "@/system/utils/RefCounted";
 
 export class WebGL2RenderStateTexture extends RenderStateTexture<WebGL2RenderState> {
     public readonly texture: WebGLTexture;
 
     public active_slot: number | undefined = undefined;
-    public active_slot_changed: boolean = false;
 
     public readonly texel_format: number;
     public readonly data_type: number;
@@ -15,5 +16,14 @@ export class WebGL2RenderStateTexture extends RenderStateTexture<WebGL2RenderSta
         this.texture = texture;
         this.texel_format = texel_format;
         this.data_type = data_type;
+    }
+}
+
+export class WebGL2RenderStateTextureSampler extends RenderStateTextureSampler<WebGL2RenderState> {
+    public readonly sampler: WebGLSampler;
+
+    constructor(render_state: WebGL2RenderState, sampler: WebGLSampler, wrap_s: number, wrap_t: number, min_filter: number, mag_filter: number) {
+        super(render_state, wrap_s, wrap_t, min_filter, mag_filter);
+        this.sampler = sampler;
     }
 }

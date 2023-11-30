@@ -15,9 +15,10 @@ type UniformValueTypeByTypeName<RS extends RenderState<RS>> = {
     };
 };
 export type UniformInitSet<RS extends RenderState<RS>> = { [name: string]: UniformValueTypeByTypeName<RS>[keyof typeof RenderStateValueType] };
+export type UniformSetItemType<RS extends RenderState<RS>> = { type: RenderStateValueType, default: ToRefed<RenderStateAllValueType<RS>>, value: ToRefed<RenderStateAllValueType<RS>> | undefined, location: any, changed: boolean }
 
 export class RenderDeviceUniformSet<RS extends RenderState<RS>> {
-    private uniforms: Map<string, { type: RenderStateValueType, default: ToRefed<RenderStateAllValueType<RS>>, value: ToRefed<RenderStateAllValueType<RS>> | undefined, location: any, changed: boolean }> = new Map();
+    protected uniforms: Map<string, UniformSetItemType<RS>> = new Map();
 
     public add_Uniform<T extends RenderStateValueType>(name: string, type: T, location: any, default_value: RenderStateValueTypeKey<RS, T>) {
         if (this.uniforms.has(name)) return;
@@ -54,26 +55,32 @@ export class RenderDeviceUniformSet<RS extends RenderState<RS>> {
         }
     }
 
-    protected push_UniformInternal(render_state: RS, changed: boolean, program: RenderStateProgram<RS>, location: any, type: RenderStateValueType, value: RenderStateAllValueType<RS>) {
+    protected push_UniformInternal(render_state: RS, program: RenderStateProgram<RS>, obj: UniformSetItemType<RS>) {
+        const { changed, location, type, default: default_value, value } = obj;
         if (!changed) return;
-        render_state.set_ProgramUniform(program, location, type, value);
+        render_state.set_ProgramUniform(program, location, type, unref(value ?? default_value));
+        obj.changed = false;
     }
 
     public push_Uniform(render_state: RS, program: RenderStateProgram<RS>, name: string) {
         if (this.uniforms.has(name)) {
             const obj = this.uniforms.get(name)!;
-            const value = obj.value ?? obj.default;
-            this.push_UniformInternal(render_state, obj.changed, program, obj.location, obj.type, unref(value));
-            obj.changed = false;
+            this.push_UniformInternal(render_state, program, obj);
         }
     }
 
     public push_AllUniform(render_state: RS, program: RenderStateProgram<RS>) {
         for (const obj of this.uniforms.values()) {
-            const value = obj.value ?? obj.default;
-            this.push_UniformInternal(render_state, obj.changed, program, obj.location, obj.type, unref(value));
-            obj.changed = false;
+            this.push_UniformInternal(render_state, program, obj);
         }
+    }
+
+    public clear() {
+        for (const obj of this.uniforms.values()) {
+            if (obj.default instanceof Ref) obj.default.clear();
+            if (obj.value instanceof Ref) obj.value.clear();
+        }
+        this.uniforms.clear();
     }
 }
 
@@ -145,8 +152,9 @@ export abstract class RenderDeviceMaterialSet<
     }
 
     private clear_Programs() {
-        for (const program_ref of this.programs_ref.values()) {
-            program_ref.program.clear();
+        for (const {program, uniforms} of this.programs_ref.values()) {
+            program.clear();
+            uniforms.clear();
         }
         this.programs_ref.clear();
     }
