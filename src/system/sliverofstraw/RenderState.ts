@@ -26,7 +26,7 @@ export enum RenderStateBufferUsage {
 }
 
 export enum RenderStatePrimitiveType {
-    Triangles, LineStrip, Lines, LineLoop
+    Triangles, TriangleStrip, LineStrip, Lines, LineLoop
 }
 
 export enum RenderStateDataType {
@@ -61,6 +61,7 @@ export enum RenderStateTextureType {
 export enum RenderStateTextureFormat {
     RGBA8, RGBA32F,
     R32UI,
+    D24,
     D32F, D32FS8,
 }
 
@@ -127,12 +128,19 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     // texture
 
-    public abstract create_Texture(type: RenderStateTextureType, format: RenderStateTextureFormat,
-        wrap_s: RenderStateTextureWrap, wrap_t: RenderStateTextureWrap,
-        min_filter: RenderStateTextureMinFilter, mag_filter: RenderStateTextureMagFilter
+    public abstract create_Texture(type: RenderStateTextureType, constant: boolean, format: RenderStateTextureFormat, levels: number,
+        wrap_s: RenderStateTextureWrap, wrap_t: RenderStateTextureWrap, wrap_r: RenderStateTextureWrap, min_filter: RenderStateTextureMinFilter, mag_filter: RenderStateTextureMagFilter
     ): Result<RenderStateTexture<T>, Error>;
 
-    public abstract set_TextureParameters(texture: RenderStateTexture<T>, wrap_s?: RenderStateTextureWrap, wrap_t?: RenderStateTextureWrap, min_filter?: RenderStateTextureMinFilter, mag_filter?: RenderStateTextureMagFilter): void;
+    public abstract alloc_Texture2D(texture: RenderStateTexture<T>, width: number, height: number, level: number, data?: ArrayBufferView): void;
+
+    public abstract update_Texture2D(texture: RenderStateTexture<T>, level: number, data: ArrayBufferView, width: number, height: number, offset_x?: number, offset_y?: number, src_offset?: number): void;
+
+    public abstract alloc_Texture3D(texture: RenderStateTexture<T>, width: number, height: number, depth: number, level: number, data?: ArrayBufferView): void;
+
+    public abstract update_Texture3D(texture: RenderStateTexture<T>, level: number, data: ArrayBufferView, width: number, height: number, depth: number, offset_x?: number, offset_y?: number, offset_z?: number, src_offset?: number): void;
+
+    public abstract set_TextureParameters(texture: RenderStateTexture<T>, wrap_s?: RenderStateTextureWrap, wrap_t?: RenderStateTextureWrap, wrap_r?: RenderStateTextureWrap, min_filter?: RenderStateTextureMinFilter, mag_filter?: RenderStateTextureMagFilter): void;
 
     public abstract delete_Texture(texture: RenderStateTexture<T>): void;
 

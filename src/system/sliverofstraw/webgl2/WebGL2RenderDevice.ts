@@ -1,10 +1,14 @@
 import { Ref } from "@/system/utils/RefCounted";
 import { RenderDevice, type RDCanvas } from "../RenderDevice";
 import { WebGL2RenderState } from "./WebGL2RenderState";
-import { RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStateShaderType, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType } from "../RenderState";
+import { RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType } from "../RenderState";
 import type { WebGL2RenderStateBuffer } from "./webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import { process_WebGL2ShaderCode } from "./WebGL2ShaderProcessor";
 import type { WebGL2RenderStateTexture } from "./webgl2_render_state_objects/WebGL2RenderStateTexture";
+import { WebGL2RenderDeviceSurface } from "./webgl2_render_device_objects/WebGL2RenderDeviceSurface";
+import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceVector3AttributeBuffer } from "../render_device_objects/RenderDeviceAttributeBuffer";
+import { vec3 } from "@/system/math/linear_algebra/Vector3";
+import { vec2 } from "@/system/math/linear_algebra/Vector2";
 
 const vertex_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Vertex, undefined, undefined, undefined, undefined, '');
 const frag_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Fragment, undefined, undefined, undefined, undefined, '');
@@ -14,7 +18,7 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState> {
     private static readonly WorldUniformsItems: string[] = ['camera_world', 'camera_view', 'camera_projection', 'screen_size', 'time'];
     public static readonly WorldUniformsUnit: number = 0;
     public static readonly EmptyTextureUnit: number = 0;
-    
+
     public readonly empty_texture: Ref<WebGL2RenderStateTexture> = new Ref();
 
     private world_uniform_buffer: Ref<WebGL2RenderStateBuffer> = new Ref();
@@ -43,10 +47,10 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState> {
         this.render_state.bind_UniformBuffer(this.world_uniform_buffer.expect, WebGL2RenderDevice.WorldUniformsUnit);
     }
 
-    private setup_EmptyTexture(){
-        const texture = this.render_state.create_Texture(RenderStateTextureType.Tex2D, RenderStateTextureFormat.RGBA8, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+    private setup_EmptyTexture() {
+        const texture = this.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
         this.empty_texture.value = texture;
-        this.render_state.alloc_Texture(texture, 2, 2, 0, new Uint8ClampedArray([
+        this.render_state.alloc_Texture2D(texture, 2, 2, 0, new Uint8ClampedArray([
             255, 0, 255, 255,
             128, 128, 128, 255,
             128, 128, 128, 255,

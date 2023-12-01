@@ -8,7 +8,19 @@ import { WebGL2RenderStateVertexArray, WebGL2RenderStateVertexArrayView } from "
 import { WebGL2RenderStateTexture, WebGL2RenderStateTextureSampler } from "./webgl2_render_state_objects/WebGL2RenderStateTexture";
 import { WeakRef } from "@/system/utils/RefCounted";
 import { WebGL2RenderStateFrameBuffer } from "./webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
-import type { RenderStateFrameBuffer, FrameBufferAttachment } from "../render_state_objects/RenderStateFrameBuffer";
+import { type FrameBufferAttachment } from "../render_state_objects/RenderStateFrameBuffer";
+
+export enum WebGL2RenderStateFrameBufferAttachmentPoint {
+    Color0, Color1,
+    Color2, Color3,
+    Color4, Color5,
+    Color6, Color7,
+    Color8, Color9,
+    Color10, Color11,
+    Color12, Color13,
+    Color14, Color15,
+    Depth, DepthStencil,
+}
 
 export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public readonly gl: WebGL2RenderingContext;
@@ -211,6 +223,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public get_PrimitiveType(primitive_type: RenderStatePrimitiveType): number {
         switch (primitive_type) {
             case RenderStatePrimitiveType.Triangles: return this.gl.TRIANGLES;
+            case RenderStatePrimitiveType.TriangleStrip: return this.gl.TRIANGLE_STRIP;
             case RenderStatePrimitiveType.LineStrip: return this.gl.LINE_STRIP;
             case RenderStatePrimitiveType.Lines: return this.gl.LINES;
             case RenderStatePrimitiveType.LineLoop: return this.gl.LINE_LOOP;
@@ -322,10 +335,38 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             case RenderStateTextureFormat.RGBA8: return [this.gl.RGBA8, this.gl.RGBA, this.gl.UNSIGNED_BYTE];
             case RenderStateTextureFormat.RGBA32F: return [this.gl.RGBA32F, this.gl.RGBA, this.gl.FLOAT];
             case RenderStateTextureFormat.R32UI: return [this.gl.R32UI, this.gl.RED_INTEGER, this.gl.UNSIGNED_INT];
+            case RenderStateTextureFormat.D24: return [this.gl.DEPTH_COMPONENT24, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_INT];
             case RenderStateTextureFormat.D32F: return [this.gl.DEPTH_COMPONENT32F, this.gl.DEPTH_COMPONENT, this.gl.FLOAT];
             case RenderStateTextureFormat.D32FS8: return [this.gl.DEPTH32F_STENCIL8, this.gl.DEPTH_STENCIL, this.gl.FLOAT_32_UNSIGNED_INT_24_8_REV];
             default: {
                 const n: never = internal_format;
+                return n;
+            }
+        }
+    }
+
+    public get_FrameBufferAttachmentPoint(target: WebGL2RenderStateFrameBufferAttachmentPoint) {
+        switch (target) {
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Color0: return this.gl.COLOR_ATTACHMENT0;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Color1: return this.gl.COLOR_ATTACHMENT1;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Color2: return this.gl.COLOR_ATTACHMENT2;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Color3: return this.gl.COLOR_ATTACHMENT3;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Color4: return this.gl.COLOR_ATTACHMENT4;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Color5: return this.gl.COLOR_ATTACHMENT5;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Color6: return this.gl.COLOR_ATTACHMENT6;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Color7: return this.gl.COLOR_ATTACHMENT7;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Color8: return this.gl.COLOR_ATTACHMENT8;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Color9: return this.gl.COLOR_ATTACHMENT9;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Color10: return this.gl.COLOR_ATTACHMENT10;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Color11: return this.gl.COLOR_ATTACHMENT11;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Color12: return this.gl.COLOR_ATTACHMENT12;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Color13: return this.gl.COLOR_ATTACHMENT13;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Color14: return this.gl.COLOR_ATTACHMENT14;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Color15: return this.gl.COLOR_ATTACHMENT15;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.Depth: return this.gl.DEPTH_ATTACHMENT;
+            case WebGL2RenderStateFrameBufferAttachmentPoint.DepthStencil: return this.gl.DEPTH_STENCIL_ATTACHMENT;
+            default: {
+                const n: never = target;
                 return n;
             }
         }
@@ -346,7 +387,8 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         if (success) {
             return Result.Ok(new WebGL2RenderStateShader(this.render_state, shader, type));
         }
-        const res: Result<WebGL2RenderStateShader, Error> = Result.Error(new Error(`<WebGL2RenderState> create_Shader: failed to create render state shader:\n${gl.getShaderInfoLog(shader) ?? 'unknown error'}\nin ${source}`));
+        const lined_source = source.split('\n').map((s, line) => `${(line + 1).toString().padStart(4, ' ')} |  ${s}`).join('\n');
+        const res: Result<WebGL2RenderStateShader, Error> = Result.Error(new Error(`<WebGL2RenderState> create_Shader: failed to create render state shader:\n${gl.getShaderInfoLog(shader) ?? 'unknown error'}in:\n${lined_source}\n`));
         gl.deleteShader(shader);
         return res;
     }
@@ -498,15 +540,16 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         if (!binded) {
             this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.buffer);
         }
+        this.bind_VertexArrayProxy(null);
     }
 
     // Texture
 
-    public create_Texture(type: RenderStateTextureType, format: RenderStateTextureFormat, wrap_s: RenderStateTextureWrap = RenderStateTextureWrap.Clamp, wrap_t: RenderStateTextureWrap = RenderStateTextureWrap.Clamp, min_filter: RenderStateTextureMinFilter = RenderStateTextureMinFilter.Linear, mag_filter: RenderStateTextureMagFilter = RenderStateTextureMagFilter.Linear): Result<WebGL2RenderStateTexture, Error> {
+    public create_Texture(type: RenderStateTextureType, constant: boolean, format: RenderStateTextureFormat, levels: number, wrap_s: RenderStateTextureWrap = RenderStateTextureWrap.Clamp, wrap_t: RenderStateTextureWrap = RenderStateTextureWrap.Clamp, wrap_r: RenderStateTextureWrap = RenderStateTextureWrap.Clamp, min_filter: RenderStateTextureMinFilter = RenderStateTextureMinFilter.Linear, mag_filter: RenderStateTextureMagFilter = RenderStateTextureMagFilter.Linear): Result<WebGL2RenderStateTexture, Error> {
         const texture = this.gl.createTexture();
         if (texture === null) return Result.Error(new Error('<WebGL2RenderState> create_Texture: failed to create render state texture'));
         const [internal_format, texel_format, data_type] = this.get_TextureFormatType(format);
-        return Result.Ok(new WebGL2RenderStateTexture(this.render_state, texture, this.get_TextureType(type), internal_format, texel_format, data_type, this.get_TextureWrap(wrap_s), this.get_TextureWrap(wrap_t), this.get_TextureFilter(min_filter), this.get_TextureFilter(mag_filter)));
+        return Result.Ok(new WebGL2RenderStateTexture(this.render_state, texture, this.get_TextureType(type), constant, internal_format, texel_format, levels, data_type, this.get_TextureWrap(wrap_s), this.get_TextureWrap(wrap_t), this.get_TextureWrap(wrap_r), this.get_TextureFilter(min_filter), this.get_TextureFilter(mag_filter)));
     }
 
     public delete_Texture(texture: WebGL2RenderStateTexture): void {
@@ -514,37 +557,42 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         console.log("delete texture", texture.id);
     }
 
-    public set_TextureParameters(texture: WebGL2RenderStateTexture, wrap_s?: RenderStateTextureWrap | undefined, wrap_t?: RenderStateTextureWrap | undefined, min_filter?: RenderStateTextureMinFilter | undefined, mag_filter?: RenderStateTextureMagFilter | undefined): void {
+    public set_TextureParameters(texture: WebGL2RenderStateTexture, wrap_s?: RenderStateTextureWrap | undefined, wrap_t?: RenderStateTextureWrap | undefined, wrap_r?: RenderStateTextureWrap | undefined, min_filter?: RenderStateTextureMinFilter | undefined, mag_filter?: RenderStateTextureMagFilter | undefined): void {
         const gl = this.gl;
         const { type, texture: tex } = texture;
         this.bind_TextureProxy(type, tex);
         if (wrap_s) gl.texParameteri(type, gl.TEXTURE_WRAP_S, this.get_TextureWrap(wrap_s));
         if (wrap_t) gl.texParameteri(type, gl.TEXTURE_WRAP_S, this.get_TextureWrap(wrap_t));
-        if (min_filter) gl.texParameteri(type, gl.TEXTURE_WRAP_S, this.get_TextureFilter(min_filter));
-        if (mag_filter) gl.texParameteri(type, gl.TEXTURE_WRAP_S, this.get_TextureFilter(mag_filter));
+        if (wrap_r) gl.texParameteri(type, gl.TEXTURE_WRAP_R, this.get_TextureWrap(wrap_r));
+        if (min_filter) gl.texParameteri(type, gl.TEXTURE_MIN_FILTER, this.get_TextureFilter(min_filter));
+        if (mag_filter) gl.texParameteri(type, gl.TEXTURE_MAG_FILTER, this.get_TextureFilter(mag_filter));
     }
 
-    public alloc_Texture(texture: WebGL2RenderStateTexture, width: number, height: number, level: number, data?: ArrayBufferView): void {
+    // 2D
+
+    public alloc_Texture2D(texture: WebGL2RenderStateTexture, width: number, height: number, level: number, data?: ArrayBufferView): void {
         const {
-            format: internal_format,
-            texel_format: format,
-            data_type, type,
-            wrap_s, wrap_t, min_filter, mag_filter
+            type, constant, format: internal_format, texel_format: format, levels, data_type,
+            wrap_s, wrap_t, wrap_r, min_filter, mag_filter
         } = texture;
+        if (type !== this.gl.TEXTURE_2D) return;
         this.bind_TextureProxy(type, texture.texture);
         const gl = this.gl;
-        if (type === this.gl.TEXTURE_2D) {
-            gl.texImage2D(type, level, internal_format, width, height, 0, format, data_type, data ?? null);
-            texture.width = width;
-            texture.height = height;
+        if (constant) {
+            gl.texStorage2D(type, levels, internal_format, width, height);
+            if (data !== undefined) {
+                this.update_Texture2D(texture, level, data, width, height);
+            }
         }
-        gl.texParameteri(type, gl.TEXTURE_WRAP_S, wrap_s);
-        gl.texParameteri(type, gl.TEXTURE_WRAP_T, wrap_t);
-        gl.texParameteri(type, gl.TEXTURE_MIN_FILTER, min_filter);
-        gl.texParameteri(type, gl.TEXTURE_MAG_FILTER, mag_filter);
+        else {
+            gl.texImage2D(type, level, internal_format, width, height, 0, format, data_type, data ?? null);
+        }
+        texture.width = width;
+        texture.height = height;
+        this.set_TextureParameters(texture, wrap_s, wrap_t, wrap_r, min_filter, mag_filter);
     }
 
-    public update_Texture(texture: WebGL2RenderStateTexture, level: number, data: ArrayBufferView, width: number, height: number, offset_x: number = 0, offset_y: number = 0, src_offset?: number) {
+    public update_Texture2D(texture: WebGL2RenderStateTexture, level: number, data: ArrayBufferView, width: number, height: number, offset_x: number = 0, offset_y: number = 0, src_offset?: number) {
         const { texel_format: format, data_type, type } = texture;
         this.bind_TextureProxy(type, texture.texture);
         if (type === this.gl.TEXTURE_2D) {
@@ -556,6 +604,49 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             }
         }
     }
+
+    // 3D
+
+    public alloc_Texture3D(texture: WebGL2RenderStateTexture, width: number, height: number, depth: number, level: number, data?: ArrayBufferView): void {
+        const {
+            type, constant, format: internal_format, texel_format: format, levels, data_type,
+            wrap_s, wrap_t, wrap_r, min_filter, mag_filter
+        } = texture;
+        const gl = this.gl;
+        if (type !== gl.TEXTURE_3D && type !== gl.TEXTURE_2D_ARRAY) return;
+        this.bind_TextureProxy(type, texture.texture);
+        if (constant) {
+            gl.texStorage3D(type, levels, internal_format, width, height, depth);
+            if (data !== undefined) {
+                this.update_Texture3D(texture, level, data, width, height, depth);
+            }
+        }
+        else {
+            gl.texImage3D(type, level, internal_format, width, height, depth, 0, format, data_type, data ?? null);
+        }
+        texture.width = width;
+        texture.height = height;
+        texture.depth = depth;
+        this.set_TextureParameters(texture, wrap_s, wrap_t, wrap_r, min_filter, mag_filter);
+    }
+
+    public update_Texture3D(texture: WebGL2RenderStateTexture, level: number, data: ArrayBufferView, width: number, height: number, depth: number, offset_x: number = 0, offset_y: number = 0, offset_z: number = 0, src_offset?: number) {
+        const { texel_format: format, data_type, type } = texture;
+        this.bind_TextureProxy(type, texture.texture);
+        const gl = this.gl;
+        if (type === gl.TEXTURE_3D || type === gl.TEXTURE_2D_ARRAY) {
+            if (src_offset !== undefined) {
+                this.gl.texSubImage3D(type, level, offset_x, offset_y, offset_z, width, height, depth, format, data_type, data, src_offset);
+            }
+            else {
+                this.gl.texSubImage3D(type, level, offset_x, offset_y, offset_z, width, height, depth, format, data_type, data);
+            }
+        }
+    }
+
+    // Cube Map
+
+    // end setting texture
 
     public generate_Mipmap(texture: WebGL2RenderStateTexture) {
         this.bind_TextureProxy(texture.type, texture.texture);
@@ -637,36 +728,45 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         return Result.Ok(new WebGL2RenderStateFrameBuffer(this.render_state, frame_buffer));
     }
 
-    public set_FrameBufferAttachment(frame_buffer: WebGL2RenderStateFrameBuffer, target: number, attachment: FrameBufferAttachment<WebGL2RenderState> | undefined): void {
+    public set_FrameBufferAttachment(frame_buffer: WebGL2RenderStateFrameBuffer, target: WebGL2RenderStateFrameBufferAttachmentPoint, attachment: FrameBufferAttachment<WebGL2RenderState> | undefined): void {
         const gl = this.gl;
-        if (frame_buffer.has_Attachment(target)) {
+        const point = this.get_FrameBufferAttachmentPoint(target);
+        if (frame_buffer.has_Attachment(point)) {
             if (attachment === undefined) {
                 // remove
                 this.bind_FrameBufferProxy(gl.FRAMEBUFFER, frame_buffer.frame_buffer);
-                gl.framebufferTexture2D(gl.FRAMEBUFFER, target, gl.TEXTURE_2D, null, 0);
+                gl.framebufferTexture2D(gl.FRAMEBUFFER, point, gl.TEXTURE_2D, null, 0);
             }
             else {
                 // reset
                 this.bind_FrameBufferProxy(gl.FRAMEBUFFER, frame_buffer.frame_buffer);
                 if (attachment instanceof WebGL2RenderStateTexture) {
-                    gl.framebufferTexture2D(gl.FRAMEBUFFER, target, gl.TEXTURE_2D, attachment.texture, 0);
+                    gl.framebufferTexture2D(gl.FRAMEBUFFER, point, gl.TEXTURE_2D, attachment.texture, 0);
                 }
                 else {
                     // render buffer
                 }
             }
-            frame_buffer.set_Attachment(target, attachment);
+            frame_buffer.set_Attachment(point, attachment);
         }
         else if (attachment !== undefined) {
+            this.bind_FrameBufferProxy(gl.FRAMEBUFFER, frame_buffer.frame_buffer);
             // new
             if (attachment instanceof WebGL2RenderStateTexture) {
-                gl.framebufferTexture2D(gl.FRAMEBUFFER, target, gl.TEXTURE_2D, attachment.texture, 0);
+                gl.framebufferTexture2D(gl.FRAMEBUFFER, point, gl.TEXTURE_2D, attachment.texture, 0);
             }
             else {
                 // render buffer
             }
-            frame_buffer.set_Attachment(target, attachment);
+            frame_buffer.set_Attachment(point, attachment);
         }
+    }
+
+    public enable_FrameBuffer(frame_buffer: WebGL2RenderStateFrameBuffer) {
+        const gl = this.gl;
+        this.bind_FrameBufferProxy(gl.FRAMEBUFFER, frame_buffer.frame_buffer);
+        const used_attachement_points = frame_buffer.attachement_points.filter(ap => ap !== gl.DEPTH_ATTACHMENT && ap !== gl.DEPTH_STENCIL_ATTACHMENT);
+        gl.drawBuffers(used_attachement_points);
     }
 
     public delete_FrameBuffer(frame_buffer: WebGL2RenderStateFrameBuffer): void {

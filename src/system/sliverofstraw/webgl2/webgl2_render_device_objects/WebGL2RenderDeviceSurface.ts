@@ -5,6 +5,8 @@ import type { WebGL2RenderStateProgram } from "../webgl2_render_state_objects/We
 import type { WebGL2RenderStateVertexArray } from "../webgl2_render_state_objects/WebGL2RenderStateVertexArray";
 
 export class WebGL2RenderDeviceSurface extends RenderDeviceSurface<WebGL2RenderState, WebGL2RenderStateVertexArray> {
+    
+
     constructor(render_device: WebGL2RenderDevice) {
         super(render_device);
     }

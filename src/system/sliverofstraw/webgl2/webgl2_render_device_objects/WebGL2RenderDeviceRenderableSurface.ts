@@ -1,6 +1,7 @@
 import { RenderDeviceRenderableSurface } from "../../render_device_objects/RenderDeviceRenderableSurface";
 import type { WebGL2RenderDevice } from "../WebGL2RenderDevice";
 import type { WebGL2RenderState } from "../WebGL2RenderState";
+import type { WebGL2RenderStateBuffer } from "../webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import type { WebGL2RenderDeviceMaterialSet } from "./WebGL2RenderDeviceMaterialSet";
 import type { WebGL2RenderDeviceSurface } from "./WebGL2RenderDeviceSurface";
 

@@ -8,6 +8,8 @@ export type FrameBufferAttachment<RS extends RenderState<RS>> = RenderStateTextu
 export class RenderStateFrameBuffer<T extends RenderState<T>> extends RenderStateObject<T> {
     public attachments_ref: Map<any, Ref<FrameBufferAttachment<T>>> = new Map();
 
+    public get attachement_points() { return [...this.attachments_ref.keys()]; }
+
     constructor(render_state: T) {
         super(render_state);
     }
