@@ -20,11 +20,15 @@ export type UniformSetItemType<RS extends RenderState<RS>> = { type: RenderState
 export class RenderDeviceUniformSet<RS extends RenderState<RS>> {
     protected uniforms: Map<string, UniformSetItemType<RS>> = new Map();
 
+    protected is_Texture(type: RenderStateValueType) {
+        return type === RenderStateValueType.Tex2D || type === RenderStateValueType.Tex2DArray || type === RenderStateValueType.Tex3D;
+    }
+
     public add_Uniform<T extends RenderStateValueType>(name: string, type: T, location: any, default_value: RenderStateValueTypeKey<RS, T>) {
         if (this.uniforms.has(name)) return;
         this.uniforms.set(name, {
             type: type,
-            default: type === RenderStateValueType.Tex2D ? (default_value === undefined ? undefined : new Ref(default_value)) : default_value,
+            default: this.is_Texture(type) ? (default_value === undefined ? undefined : new Ref(default_value)) : default_value,
             value: undefined,
             location: location,
             changed: true,
@@ -34,7 +38,7 @@ export class RenderDeviceUniformSet<RS extends RenderState<RS>> {
     public set_Uniform<T extends RenderStateValueType>(name: string, value: RenderStateValueTypeKey<RS, T>) {
         if (this.uniforms.has(name)) {
             const obj = this.uniforms.get(name)!;
-            if (obj.type === RenderStateValueType.Tex2D) {
+            if (this.is_Texture(obj.type)) {
                 if (obj.value !== undefined) {
                     if (value === undefined) {
                         (obj.value as Ref<RenderStateValueTypeKey<RS, T>>).clear();
@@ -152,7 +156,7 @@ export abstract class RenderDeviceMaterialSet<
     }
 
     private clear_Programs() {
-        for (const {program, uniforms} of this.programs_ref.values()) {
+        for (const { program, uniforms } of this.programs_ref.values()) {
             program.clear();
             uniforms.clear();
         }

@@ -26,7 +26,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public readonly gl: WebGL2RenderingContext;
 
     private static readonly TextureSlotBase = 1;
-    private static readonly TextureSlotPreserved = 3;
+    private static readonly TextureSlotPreserved = 5;
 
     public readonly max_texture_slot: number;
     public readonly user_texture_slot_count: number;
@@ -211,6 +211,8 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         super(render_device);
         const gl = this.render_device.canvas.getContext('webgl2', { antialias: true });
         if (gl === null) throw new Error('<WebGL2RenderState> constructor: failed to get webgl2 context');
+        const color_buffer_float_ext = gl.getExtension('EXT_color_buffer_float');
+        if (color_buffer_float_ext === null) throw new Error('<WebGL2RenderState> constructor: failed to get webgl2 color buffer float extension');
         this.gl = gl as WebGL2RenderingContext;
         this.max_texture_slot = this.gl.getParameter(this.gl.MAX_TEXTURE_IMAGE_UNITS);
         this.user_texture_slot_count = this.max_texture_slot - WebGL2RenderState.TextureSlotBase - WebGL2RenderState.TextureSlotPreserved;
@@ -807,7 +809,9 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
                 this.gl.uniformMatrix4fv(uniform_location, true, (data as RenderStateValueTypeKey<WebGL2RenderState, RenderStateValueType.Mat4>).typed_array_f32);
                 return;
             }
-            case RenderStateValueType.Tex2D: {
+            case RenderStateValueType.Tex2D:
+            case RenderStateValueType.Tex3D:
+            case RenderStateValueType.Tex2DArray: {
                 const texture = data as RenderStateValueTypeKey<WebGL2RenderState, RenderStateValueType.Tex2D> as (WebGL2RenderStateTexture | undefined);
                 const slot = this.get_TextureSlot(texture);
                 // console.log("use texture slot", slot);

@@ -35,7 +35,7 @@ export enum RenderStateDataType {
 }
 
 export enum RenderStateValueType {
-    Int, Float, Vec2, Vec3, Vec4, Mat3, Mat4, Tex2D,
+    Int, Float, Vec2, Vec3, Vec4, Mat3, Mat4, Tex2D, Tex2DArray, Tex3D
 }
 
 export interface RenderStateValueTypeMap<RS extends RenderState<RS>> {
@@ -47,6 +47,8 @@ export interface RenderStateValueTypeMap<RS extends RenderState<RS>> {
     Mat3: Matrix3,
     Mat4: Matrix4,
     Tex2D: RenderStateTexture<RS> | undefined,
+    Tex2DArray: RenderStateTexture<RS> | undefined,
+    Tex3D: RenderStateTexture<RS> | undefined,
 }
 type ValueOf<T> = T[keyof T];
 export type RenderStateAllValueType<RS extends RenderState<RS>> = ValueOf<RenderStateValueTypeMap<RS>>;

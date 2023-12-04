@@ -10,6 +10,8 @@ function get_ShaderMemberType(data_type: RenderStateValueType) {
         case RenderStateValueType.Mat3: return 'mat3';
         case RenderStateValueType.Mat4: return 'mat4';
         case RenderStateValueType.Tex2D: return 'sampler2D';
+        case RenderStateValueType.Tex3D: return 'sampler3D';
+        case RenderStateValueType.Tex2DArray: return 'sampler2DArray';
         default: {
             const n: never = data_type;
             return n;
@@ -27,6 +29,8 @@ export function process_WebGL2ShaderCode(
 ) {
     const header = `#version 300 es
 precision highp float;
+precision highp sampler2DArray;
+precision highp sampler3D;
 
 uniform WorldUniforms {
     mat4 camera_world;
@@ -36,7 +40,8 @@ uniform WorldUniforms {
     float time;
 };
 
-uniform mat4 model_world;`;
+uniform mat4 model_world;
+uniform sampler2DArray lights;`;
     if (type === RenderStateShaderType.Vertex) {
         const attrs = Object.entries(attributes ?? {}).map(([name, { type, location }]) => `${location === undefined ? '' : `layout(location = ${location}) `}in ${get_ShaderMemberType(type)} ${name};`);
         const unifs = Object.entries(uniforms ?? {}).map(([name, { type }]) => `uniform ${get_ShaderMemberType(type)} ${name};`);

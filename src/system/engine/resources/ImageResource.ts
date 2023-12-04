@@ -23,7 +23,7 @@ export class ImageResource extends Resource {
     public static readonly class_name: string = "ImageResource";
     public static readonly use_custom_instantiater: boolean = true;
 
-    private readonly image_data: ImageData;
+    public readonly image_data: ImageData;
 
     public get width() { return this.image_data.width; }
     public get height() { return this.image_data.height; }

@@ -14,7 +14,7 @@ export class WebGL2RenderDeviceUniformSet extends RenderDeviceUniformSet<WebGL2R
     protected push_UniformInternal(render_state: WebGL2RenderState, program: WebGL2RenderStateProgram, obj: UniformSetItemType<WebGL2RenderState> & { texture_slot: number | undefined }): void {
         const { type, changed, default: default_value, value, texture_slot, location } = obj;
         const val = value ?? default_value;
-        if (type === RenderStateValueType.Tex2D) {
+        if (this.is_Texture(type)) {
             if (val === undefined) {
                 if (changed) render_state.set_ProgramUniform(program, location, type, undefined);
             }
@@ -46,6 +46,11 @@ export class WebGL2RenderDeviceMaterialSet extends RenderDeviceMaterialSet<WebGL
         const model_world_location = this.render_state.get_ProgramUniformLocation(program, 'model_world');
         if (model_world_location !== null) {
             uniform.add_Uniform('model_world', RenderStateValueType.Mat4, model_world_location, Matrix4.make_Identity());
+        }
+        // lights
+        const lights_location = this.render_state.get_ProgramUniformLocation(program, 'lights');
+        if (lights_location !== null) {
+            uniform.add_Uniform('lights', RenderStateValueType.Tex2DArray, lights_location, (this.render_device as WebGL2RenderDevice).lights_texture.expect);
         }
         for (const name in uniforms) {
             const { type, default: default_value } = uniforms[name];
