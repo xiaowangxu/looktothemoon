@@ -1,15 +1,278 @@
-import { InputEvent, MouseButton, MouseButtonInputEvent, MouseEnterLeaveInputEvent, MouseInputEvent, MouseMotionInputEvent } from "@/system/engine/InputEvent";
-import { EPSILON, TAU, clamp, get_ClosestPointsOnLineSegments, get_ClosestPointsOnLines } from "@/system/engine/MathF";
-import { Node3D, NodeNotification, type CursorStyle, Viewport } from "@/system/engine/SceneTree";
-import { FixSizeNode3D } from "@/system/engine/nodes/node_3ds/FixSizeNode3D";
-import { PickingArea3D } from "@/system/engine/nodes/physics_3ds/PickingArea3D";
-import { PickingShape3D } from "@/system/engine/nodes/physics_3ds/PickingShape3D";
-import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/geometry_3ds/MeshInstance3D";
-import { PolyLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/GeometryResource";
-import { LineMaterialResource, ThreeMaterialResource } from "@/system/engine/resources/MaterialResource";
-import { PickingBVHResource, PickingCylinderResource, PickingSphereResource } from "@/system/engine/resources/PickingShapeResource";
+import { MouseButton, MouseButtonInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseButton";
+import { MouseMotionInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseMotionInputEvent";
+import { MouseEnterLeaveInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseEnterLeaveInputEvent";
+import { MouseInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseInputEvent";
+import { InputEvent } from "@/system/engine/inputs/InputEvent";
+import { Epsilon, Tau, clamp } from "@/system/math/Scalar";
+import { NodeNotification } from "@/system/engine/nodes/Node";
+import { type CursorStyle, Viewport } from "@/system/engine/nodes/Node";
+import { Node3D } from "@/system/engine/nodes/node3ds/Node3D";
+import { FixSizeNode3D } from "@/system/engine/nodes/node3ds/FixSizeNode3D";
+import { PickingArea3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingArea3D";
+import { PickingShape3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingShape3D";
+import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry_3ds/MeshInstance3D";
+import { PolyLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/resources/GeometryResource";
+import { LineMaterialResource, ThreeMaterialResource } from "@/system/engine/resources/resources/MaterialResource";
+import { PickingBVHResource, PickingCylinderResource, PickingSphereResource } from "@/system/engine/resources/resources/PickingShapeResource";
 import { Vector3, ConeGeometry, MeshMatcapMaterial, MeshBasicMaterial, SphereGeometry, CylinderGeometry, Color, Euler, Quaternion, Line3, Vector2, Raycaster, Plane, TorusGeometry, DoubleSide, Ray } from 'three';
 import { SignalEmitter } from '@/system/utils/SignalEmitter';
+import { vec3 } from "@/system/math/linear_algebra/Vector3";
+import { euler } from "@/system/math/linear_algebra/Euler";
+
+function get_ClosestPointsOnLineSegmentsParameters(l0: Line3, l1: Line3): [p0: number, p1: number] {
+    const p = l0.end.clone().sub(l0.start);
+    const q = l1.end.clone().sub(l1.start);
+    const r = l0.start.clone().sub(l1.start);
+
+    const a = p.dot(p);
+    const b = p.dot(q);
+    const c = q.dot(q);
+    const d = p.dot(r);
+    const e = q.dot(r);
+
+    let s = 0.0;
+    let t = 0.0;
+
+    const det = a * c - b * b;
+    if (det > Epsilon) {
+        // Non-parallel segments
+        const bte = b * e;
+        const ctd = c * d;
+
+        if (bte <= ctd) {
+            // s <= 0.0
+            if (e <= 0.0) {
+                // t <= 0.0
+                s = (-d >= a ? 1 : (-d > 0.0 ? -d / a : 0.0));
+                t = 0.0;
+            } else if (e < c) {
+                // 0.0 < t < 1
+                s = 0.0;
+                t = e / c;
+            } else {
+                // t >= 1
+                s = (b - d >= a ? 1 : (b - d > 0.0 ? (b - d) / a : 0.0));
+                t = 1;
+            }
+        } else {
+            // s > 0.0
+            s = bte - ctd;
+            if (s >= det) {
+                // s >= 1
+                if (b + e <= 0.0) {
+                    // t <= 0.0
+                    s = (-d <= 0.0 ? 0.0 : (-d < a ? -d / a : 1));
+                    t = 0.0;
+                } else if (b + e < c) {
+                    // 0.0 < t < 1
+                    s = 1;
+                    t = (b + e) / c;
+                } else {
+                    // t >= 1
+                    s = (b - d <= 0.0 ? 0.0 : (b - d < a ? (b - d) / a : 1));
+                    t = 1;
+                }
+            } else {
+                // 0.0 < s < 1
+                const ate = a * e;
+                const btd = b * d;
+
+                if (ate <= btd) {
+                    // t <= 0.0
+                    s = (-d <= 0.0 ? 0.0 : (-d >= a ? 1 : -d / a));
+                    t = 0.0;
+                } else {
+                    // t > 0.0
+                    t = ate - btd;
+                    if (t >= det) {
+                        // t >= 1
+                        s = (b - d <= 0.0 ? 0.0 : (b - d >= a ? 1 : (b - d) / a));
+                        t = 1;
+                    } else {
+                        // 0.0 < t < 1
+                        s /= det;
+                        t /= det;
+                    }
+                }
+            }
+        }
+    } else {
+        // Parallel segments
+        if (e <= 0.0) {
+            s = (-d <= 0.0 ? 0.0 : (-d >= a ? 1 : -d / a));
+            t = 0.0;
+        } else if (e >= c) {
+            s = (b - d <= 0.0 ? 0.0 : (b - d >= a ? 1 : (b - d) / a));
+            t = 1;
+        } else {
+            s = 0.0;
+            t = e / c;
+        }
+    }
+
+    return [s, t];
+}
+
+function get_ClosestPointsOnLineSegments(l0: Line3, l1: Line3): [p0: Vector3, p1: Vector3] {
+    const p = l0.end.clone().sub(l0.start);
+    const q = l1.end.clone().sub(l1.start);
+    const r = l0.start.clone().sub(l1.start);
+
+    const a = p.dot(p);
+    const b = p.dot(q);
+    const c = q.dot(q);
+    const d = p.dot(r);
+    const e = q.dot(r);
+
+    let s = 0.0;
+    let t = 0.0;
+
+    const det = a * c - b * b;
+    if (det > Epsilon) {
+        // Non-parallel segments
+        const bte = b * e;
+        const ctd = c * d;
+
+        if (bte <= ctd) {
+            // s <= 0.0
+            if (e <= 0.0) {
+                // t <= 0.0
+                s = (-d >= a ? 1 : (-d > 0.0 ? -d / a : 0.0));
+                t = 0.0;
+            } else if (e < c) {
+                // 0.0 < t < 1
+                s = 0.0;
+                t = e / c;
+            } else {
+                // t >= 1
+                s = (b - d >= a ? 1 : (b - d > 0.0 ? (b - d) / a : 0.0));
+                t = 1;
+            }
+        } else {
+            // s > 0.0
+            s = bte - ctd;
+            if (s >= det) {
+                // s >= 1
+                if (b + e <= 0.0) {
+                    // t <= 0.0
+                    s = (-d <= 0.0 ? 0.0 : (-d < a ? -d / a : 1));
+                    t = 0.0;
+                } else if (b + e < c) {
+                    // 0.0 < t < 1
+                    s = 1;
+                    t = (b + e) / c;
+                } else {
+                    // t >= 1
+                    s = (b - d <= 0.0 ? 0.0 : (b - d < a ? (b - d) / a : 1));
+                    t = 1;
+                }
+            } else {
+                // 0.0 < s < 1
+                const ate = a * e;
+                const btd = b * d;
+
+                if (ate <= btd) {
+                    // t <= 0.0
+                    s = (-d <= 0.0 ? 0.0 : (-d >= a ? 1 : -d / a));
+                    t = 0.0;
+                } else {
+                    // t > 0.0
+                    t = ate - btd;
+                    if (t >= det) {
+                        // t >= 1
+                        s = (b - d <= 0.0 ? 0.0 : (b - d >= a ? 1 : (b - d) / a));
+                        t = 1;
+                    } else {
+                        // 0.0 < t < 1
+                        s /= det;
+                        t /= det;
+                    }
+                }
+            }
+        }
+    } else {
+        // Parallel segments
+        if (e <= 0.0) {
+            s = (-d <= 0.0 ? 0.0 : (-d >= a ? 1 : -d / a));
+            t = 0.0;
+        } else if (e >= c) {
+            s = (b - d <= 0.0 ? 0.0 : (b - d >= a ? 1 : (b - d) / a));
+            t = 1;
+        } else {
+            s = 0.0;
+            t = e / c;
+        }
+    }
+
+    const p0 = new Vector3().lerpVectors(l0.start, l0.end, s);
+    const p1 = new Vector3().lerpVectors(l1.start, l1.end, t);
+
+    return [p0, p1];
+}
+
+function get_ClosestPointsOnLineParameter(l: Ray, p: Vector3): number {
+    const _p = p.clone().sub(l.origin)
+    const n = l.direction;
+    const l2 = n.lengthSq();
+    if (l2 < Epsilon) {
+        return 0; // Both points are the same, just give any.
+    }
+    const d = n.dot(_p) / l2;
+    return d;
+}
+
+function get_ClosestPointsOnLine(l: Ray, p: Vector3): Vector3 {
+    const _p = p.clone().sub(l.origin)
+    const n = l.direction;
+    const l2 = n.lengthSq();
+    if (l2 < Epsilon) {
+        return l.origin.clone(); // Both points are the same, just give any.
+    }
+    const d = n.dot(_p) / l2;
+    return l.origin.clone().addScaledVector(n, d); // Inside.
+}
+
+function get_ClosestPointsOnLinesParameters(l0: Ray, l1: Ray): [p0: number, p1: number] {
+    const r1 = l0.origin.clone();
+    const r2 = l1.origin.clone();
+    const e1 = l0.direction.clone();
+    const e2 = l1.direction.clone();
+
+    const n = new Vector3().crossVectors(e1, e2);
+
+    if (n.length() < Epsilon) {
+        return [0, get_ClosestPointsOnLineParameter(l1, r1)];
+    }
+
+    const n_length_sq = n.lengthSq();
+    const r = r2.clone().sub(r1);
+
+    const t1 = new Vector3().crossVectors(e2, n).dot(r) / (n_length_sq);
+    const t2 = new Vector3().crossVectors(e1, n).dot(r) / (n_length_sq);
+
+    return [t1, t2];
+}
+
+function get_ClosestPointsOnLines(l0: Ray, l1: Ray): [p0: Vector3, p1: Vector3] {
+    const r1 = l0.origin.clone();
+    const r2 = l1.origin.clone();
+    const e1 = l0.direction.clone();
+    const e2 = l1.direction.clone();
+
+    const n = new Vector3().crossVectors(e1, e2);
+
+    if (n.length() < Epsilon) {
+        return [r1, get_ClosestPointsOnLine(l1, r1)];
+    }
+
+    const n_length_sq = n.lengthSq();
+    const r = r2.clone().sub(r1);
+
+    const t1 = new Vector3().crossVectors(e2, n).dot(r) / (n_length_sq);
+    const t2 = new Vector3().crossVectors(e1, n).dot(r) / (n_length_sq);
+
+    return [r1.clone().addScaledVector(e1, t1), r2.clone().addScaledVector(e2, t2)];
+}
 
 export class GrabberElement<T> extends FixSizeNode3D {
     // signals
@@ -77,13 +340,13 @@ export class LineGrabber extends GrabberElement<Vector3> {
     }
 
     private update_Transform() {
-        this.line.local_scale = new Vector3(1, this.length, 1);
-        this.line.local_position = new Vector3(0, this.length / 2 + this.offset_length, 0);
-        this.grabber.local_position = new Vector3(0, this.length + this.offset_length + 0.1, 0);
-        this.guide_line.local_position = new Vector3(0, this.length + this.offset_length + 0.2, 0);
-        this.guide_line2.local_position = new Vector3(0, this.offset_length, 0);
-        this.area.local_position = new Vector3(0, this.offset_length * 2, 0);
-        this.area.local_scale = new Vector3(1, this.length + 0.2 - this.offset_length, 1);
+        this.line.local_scale = vec3(1, this.length, 1);
+        this.line.local_position = vec3(0, this.length / 2 + this.offset_length, 0);
+        this.grabber.local_position = vec3(0, this.length + this.offset_length + 0.1, 0);
+        this.guide_line.local_position = vec3(0, this.length + this.offset_length + 0.2, 0);
+        this.guide_line2.local_position = vec3(0, this.offset_length, 0);
+        this.area.local_position = vec3(0, this.offset_length * 2, 0);
+        this.area.local_scale = vec3(1, this.length + 0.2 - this.offset_length, 1);
     }
 
     private _is_grabbing: boolean = false;
@@ -159,8 +422,8 @@ export class LineGrabber extends GrabberElement<Vector3> {
         }
         else {
             const cam = camera.get_Camera();
-            const a = this.grabber.global_position.project(cam);
-            const b = this.global_position.project(cam);
+            const a = new Vector3().fromArray(this.grabber.global_position.array).project(cam);
+            const b = new Vector3().fromArray(this.global_position.array).project(cam);
             const distance = new Vector2(a.x, a.y).distanceTo(new Vector2(b.x, b.y));
             const opactiy = (clamp(distance * 8, 0.1, 0.35) - 0.1) * 4;
             this.material.get_Material().opacity = opactiy;
@@ -241,10 +504,10 @@ export class LineGrabber extends GrabberElement<Vector3> {
         this.add_Child(this.area);
         this.area.add_Child(this.shape);
 
-        this.shape.local_position = new Vector3(0, 0.5, 0);
-        this.guide_line.local_scale = new Vector3(1, 10000, 1);
-        this.guide_line2.local_scale = new Vector3(1, 10000, 1);
-        this.guide_line2.local_rotation = new Euler(Math.PI, 0, 0);
+        this.shape.local_position = vec3(0, 0.5, 0);
+        this.guide_line.local_scale = vec3(1, 10000, 1);
+        this.guide_line2.local_scale = vec3(1, 10000, 1);
+        this.guide_line2.local_rotation = euler(Math.PI, 0, 0);
 
         this.update_Transform();
     }
@@ -282,11 +545,11 @@ export class LineGrabber extends GrabberElement<Vector3> {
         const position = this.get_MousePositionOnLine(evt);
         if (position === undefined) return;
         this.is_grabbing = true;
-        this.drag_global_position.copy(this.global_position);
-        this.drag_offset_position.copy(this.global_position.sub(position));
+        this.drag_global_position.copy(new Vector3().fromArray(this.global_position.array));
+        this.drag_offset_position.copy(new Vector3().fromArray(this.global_position.array).sub(position));
         this.drag_offset_scale = this.local_scale.y;
         evt.mark_Canceled();
-        this.signal_grab_start.trigger(this.global_position, this);
+        this.signal_grab_start.trigger(new Vector3().fromArray(this.global_position.array), this);
     }
 
     private on_Grabbing(evt: MouseInputEvent) {
@@ -464,7 +727,7 @@ export class AngleGrabber extends GrabberElement<{ angle: number, relative: numb
         // this.shape.add_Child(test_shape);
 
         const gap_rad = 0.21;
-        const guide_line_geometry = new ThreeGeometryResource(new TorusGeometry(0.6, 0.01, undefined, undefined, TAU - gap_rad));
+        const guide_line_geometry = new ThreeGeometryResource(new TorusGeometry(0.6, 0.01, undefined, undefined, Tau - gap_rad));
         this.guide_line.geometry = guide_line_geometry;
         this.guide_line.material = this.guide_material;
         this.guide_line.local_visible = false;
@@ -493,10 +756,10 @@ export class AngleGrabber extends GrabberElement<{ angle: number, relative: numb
         this.line_base.add_Child(this.guide_line);
         this.line_base.add_Child(this.line);
         this.add_Child(this.line_base);
-        this.guide_line.local_rotation = new Euler(0, 0, gap_rad / 2);
-        this.grabber.local_rotation = new Euler(0, 0, size_gap_rad / 2);
-        this.area.local_rotation = new Euler(0, 0, size_gap_rad / 2);
-        this.line.local_position = new Vector3(0.6, 0, 0);
+        this.guide_line.local_rotation = euler(0, 0, gap_rad / 2);
+        this.grabber.local_rotation = euler(0, 0, size_gap_rad / 2);
+        this.area.local_rotation = euler(0, 0, size_gap_rad / 2);
+        this.line.local_position = vec3(0.6, 0, 0);
 
         // this.shape.local_position = new Vector3(0, 0.5, 0);
         // this.guide_line.local_scale = new Vector3(1, 10000, 1);
@@ -538,7 +801,7 @@ export class AngleGrabber extends GrabberElement<{ angle: number, relative: numb
         this.is_grabbing = true;
         const local = this.to_Local(position);
         local.z = 0;
-        const dir = local.length() < EPSILON ? new Vector2(1, 0) : new Vector2(local.x, local.y);
+        const dir = local.length() < Epsilon ? new Vector2(1, 0) : new Vector2(local.x, local.y);
         this.drag_angle = dir.angle();
         this.line_base.local_rotation = new Euler(0, 0, this.drag_angle);
         this.drag_offset_angle = this.drag_angle;
@@ -551,7 +814,7 @@ export class AngleGrabber extends GrabberElement<{ angle: number, relative: numb
         if (position === undefined) return;
         const local = this.to_Local(position);
         local.z = 0;
-        const dir = local.length() < EPSILON ? new Vector2(1, 0) : new Vector2(local.x, local.y);
+        const dir = local.length() < Epsilon ? new Vector2(1, 0) : new Vector2(local.x, local.y);
         const last_drag_angle = this.drag_angle;
         this.drag_angle = dir.angle();
         this.line_base.local_rotation = new Euler(0, 0, this.drag_angle);

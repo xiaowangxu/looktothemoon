@@ -1,7 +1,8 @@
-import { Node3D } from "@/system/engine/SceneTree";
-import { MeshInstance3D } from "@/system/engine/nodes/visual_instances/geometry_3ds/MeshInstance3D";
-import { PolyLineGeometryResource } from "@/system/engine/resources/GeometryResource";
-import { LineMaterialResource } from "@/system/engine/resources/MaterialResource";
+import { Node3D } from "@/system/engine/nodes/node3ds/Node3D";
+import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
+import { PolyLineGeometryResource } from "@/system/engine/resources/resources/GeometryResource";
+import { LineMaterialResource } from "@/system/engine/resources/resources/MaterialResource";
+import { euler } from "@/system/math/linear_algebra/Euler";
 import { Euler, Vector3, Color } from "three";
 
 export class Axis extends Node3D {
@@ -77,8 +78,8 @@ export class Axis extends Node3D {
         this.add_Child(this.axis_y);
         this.add_Child(this.axis_z);
         this.axis_x.geometry = this.axis_y.geometry = this.axis_z.geometry = this.axis_geometry;
-        this.axis_y.local_rotation = new Euler(0, 0, Math.PI / 2);
-        this.axis_z.local_rotation = new Euler(0, -Math.PI / 2, 0);
+        this.axis_y.local_rotation = euler(0, 0, Math.PI / 2);
+        this.axis_z.local_rotation = euler(0, -Math.PI / 2, 0);
         this.axis_x_mat.color = new Color(Axis.Red);
         this.axis_y_mat.color = new Color(Axis.Green);
         this.axis_z_mat.color = new Color(Axis.Blue);

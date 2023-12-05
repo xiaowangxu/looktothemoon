@@ -1,11 +1,12 @@
 import { Result } from "@/system/utils/Result";
-import { Node3D, Node } from "../SceneTree";
+import { Node } from "../nodes/Node";
+import { Node3D } from "../nodes/node3ds/Node3D";
 import { convert_DataURI_to_Buffer } from '@/system/utils/DataURIToBuffer';
 import { type ColorSpace, Matrix4, Vector3, Quaternion, ClampToEdgeWrapping, MirroredRepeatWrapping, RepeatWrapping, NearestFilter, LinearFilter, NearestMipmapNearestFilter, LinearMipmapNearestFilter, NearestMipmapLinearFilter, LinearMipmapLinearFilter, ImageLoader, ImageBitmapLoader, Texture, BufferAttribute, InterleavedBuffer, InterleavedBufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, SRGBColorSpace, DoubleSide, Vector2, Material, MeshBasicMaterial, MeshPhysicalMaterial, MeshStandardMaterial } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { MeshInstance3D } from "../nodes/visual_instances/geometry_3ds/MeshInstance3D";
-import { ThreeGeometryResource } from "../resources/GeometryResource";
-import { ThreeMaterialResource } from "../resources/MaterialResource";
+import { MeshInstance3D } from "../nodes/node3ds/visual_instance3ds/geometry_3ds/MeshInstance3D";
+import { ThreeGeometryResource } from "../resources/resources/GeometryResource";
+import { ThreeMaterialResource } from "../resources/resources/MaterialResource";
 
 export class GltfLoader {
     private static readonly BinaryExtHeader = 'glTF';

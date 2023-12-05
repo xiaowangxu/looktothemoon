@@ -11,7 +11,7 @@ const frag_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Fragme
 
 export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState> {
     private static readonly WorldUniformsName: string = 'WorldUniforms';
-    private static readonly WorldUniformsItems: string[] = ['camera_world', 'camera_view', 'camera_projection', 'screen_size', 'time'];
+    private static readonly WorldUniformsItems: string[] = ['camera_world', 'camera_projection', 'screen_size', 'time'];
     public static readonly WorldUniformsUnit: number = 0;
     public static readonly EmptyTextureUnit: number = 0;
     public static readonly LightsTextureUnit: number = 1;
@@ -92,6 +92,16 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState> {
             }
         }
         this.render_state.update_Texture3D(texture, 0, lights, light_width, light_height, 2, 0, 0, 0);
+
+        this.render_state.update_Texture3D(texture, 0, new Float32Array([
+            1.0, 0.0, 0.0, 8
+        ]), 1, 1, 1, 0, 0, 1);
+        this.render_state.update_Texture3D(texture, 0, new Float32Array([
+            0.0, 0.0, 0.0, 0,
+            -1.0, 1.0, 1.0, 1,
+            1.0, 1.0, 1.0, 0.2,
+            1.0, 1.0, 1.0, 0.3,
+        ]), 2, 1, 2, 0, 0, 0);
     }
 
     public set_WorldUniform(name: string, data: ArrayBufferView) {

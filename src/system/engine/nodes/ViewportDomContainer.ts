@@ -1,6 +1,6 @@
 import { Vector2 } from "three";
-import { NodeNotification, Node, Viewport } from "../SceneTree";
-
+import { NodeNotification, Node } from "./Node";
+import { Viewport } from "./Node";
 
 export class ViewportDomContainer extends Node {
     public static readonly class_name: string = "ViewportDomContainer";

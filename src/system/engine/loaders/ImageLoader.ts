@@ -1,5 +1,5 @@
 import { Result } from "@/system/utils/Result";
-import { ImageResource } from "../resources/ImageResource";
+import { ImageResource } from "../resources/resources/ImageResource";
 
 export class ImageLoader {
     private readonly canvas: HTMLCanvasElement = document.createElement('canvas');

@@ -4,10 +4,10 @@ import type { MatrixLike } from "./MatrixLike";
 import type { VectorLike } from "./VectorLike";
 
 export class Vector4 implements VectorLike {
-    public x: number;
-    public y: number;
-    public z: number;
-    public w: number;
+    public readonly x: number;
+    public readonly y: number;
+    public readonly z: number;
+    public readonly w: number;
 
     get dimension(): number { return 4; }
     get array(): number[] { return [this.x, this.y, this.z, this.w]; }
@@ -104,6 +104,20 @@ export class Vector4 implements VectorLike {
     negate(): Vector4 {
         return new Vector4(-this.x, -this.y, -this.z, -this.w);
     }
+    distance(b: Vector4) {
+        const x = this.x - b.x;
+        const y = this.y - b.y;
+        const z = this.z - b.z;
+        const w = this.w - b.w;
+        return Math.sqrt(x * x + y * y + z * z + w * w);
+    }
+    squared_distance(b: Vector4) {
+        const x = this.x - b.x;
+        const y = this.y - b.y;
+        const z = this.z - b.z;
+        const w = this.w - b.w;
+        return x * x + y * y + z * z + w * w;
+    }
 
     equal(b: Vector4): boolean {
         return this.x === b.x && this.y === b.y && this.z === b.z && this.w === b.w;
@@ -111,13 +125,6 @@ export class Vector4 implements VectorLike {
 
     clone(): Vector4 {
         return new Vector4(this.x, this.y, this.z, this.w);
-    }
-
-    public set(x: number = 0, y: number = 0, z: number = 0, w: number = 0) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.w = w;
     }
 }
 

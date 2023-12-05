@@ -1,5 +1,8 @@
+import { Euler, EulerOrder } from "./Euler";
+import { Matrix4 } from "./Matrix4";
 import type { MatrixLike } from "./MatrixLike";
-import type { Vector3 } from "./Vector3";
+import type { Quaternion } from "./Quaternion";
+import { Vector3 } from "./Vector3";
 
 export class Matrix3 implements MatrixLike {
     // [ n11 n12 n13 ]
@@ -100,6 +103,72 @@ export class Matrix3 implements MatrixLike {
             cr, -sr, 0,
             sr, cr, 0,
             0, 0, 1,
+        );
+    }
+
+    public static from_Euler(euler: Euler) {
+        const { x, y, z, order } = euler;
+        const a = Math.cos(x), b = Math.sin(x);
+        const c = Math.cos(y), d = Math.sin(y);
+        const e = Math.cos(z), f = Math.sin(z);
+        if (order === EulerOrder.XYZ) {
+            const ae = a * e, af = a * f, be = b * e, bf = b * f;
+            return new Matrix3(
+                c * e, - c * f, d,
+                af + be * d, ae - bf * d, - b * c,
+                bf - ae * d, be + af * d, a * c,
+            );
+        } else if (order === EulerOrder.YXZ) {
+            const ce = c * e, cf = c * f, de = d * e, df = d * f;
+            return new Matrix3(
+                ce + df * b, de * b - cf, a * d,
+                a * f, a * e, - b,
+                cf * b - de, df + ce * b, a * c,
+            );
+        } else if (order === EulerOrder.ZXY) {
+            const ce = c * e, cf = c * f, de = d * e, df = d * f;
+            return new Matrix3(
+                ce - df * b, - a * f, de + cf * b,
+                cf + de * b, a * e, df - ce * b,
+                - a * d, b, a * c,
+            );
+        } else if (order === EulerOrder.ZYX) {
+            const ae = a * e, af = a * f, be = b * e, bf = b * f;
+            return new Matrix3(
+                c * e, be * d - af, ae * d + bf,
+                c * f, bf * d + ae, af * d - be,
+                - d, b * c, a * c,
+            );
+        } else if (order === EulerOrder.YZX) {
+            const ac = a * c, ad = a * d, bc = b * c, bd = b * d;
+            return new Matrix3(
+                c * e, bd - ac * f, bc * f + ad,
+                f, a * e, - b * e,
+                - d * e, ad * f + bc, ac - bd * f,
+            );
+        } else if (order === EulerOrder.XZY) {
+            const ac = a * c, ad = a * d, bc = b * c, bd = b * d;
+            return new Matrix3(
+                c * e, - f, d * e,
+                ac * f + bd, a * e, ad * f - bc,
+                bc * f - ad, b * e, bd * f + ac,
+            );
+        } else {
+            const n: never = order;
+            return Matrix3.make_Identity();
+        }
+    }
+
+    public static from_Quaternion(quat: Quaternion) {
+        const { x, y, z, w } = quat;
+        const x2 = x + x, y2 = y + y, z2 = z + z;
+        const xx = x * x2, xy = x * y2, xz = x * z2;
+        const yy = y * y2, yz = y * z2, zz = z * z2;
+        const wx = w * x2, wy = w * y2, wz = w * z2;
+        return new Matrix3(
+            1 - yy - zz, xy - wz, xz + wy,
+            xy + wz, 1 - xx - zz, yz - wx,
+            xz - wy, yz + wx, 1 - xx - yy,
         );
     }
 
@@ -238,6 +307,24 @@ export class Matrix3 implements MatrixLike {
             this.elements[3], this.elements[4], this.elements[5],
             this.elements[6], this.elements[7], this.elements[8],
         );
+    }
+
+    public get_RotationScale(order: EulerOrder = EulerOrder.XYZ): [Euler, Vector3] {
+        const [n11, n12, n13, n21, n22, n23, n31, n32, n33] = this.elements;
+        const scale = new Vector3(
+            new Vector3(n11, n21, n31).length,
+            new Vector3(n12, n22, n32).length,
+            new Vector3(n13, n23, n33).length,
+        );
+        const euler = Euler.from_RotateMatrix(
+            new Matrix3(
+                n11 / scale.x, n12 / scale.y, n13 / scale.z,
+                n21 / scale.x, n22 / scale.y, n23 / scale.z,
+                n31 / scale.x, n32 / scale.y, n33 / scale.z,
+            ),
+            order
+        );
+        return [euler, scale];
     }
 }
 

@@ -5,8 +5,7 @@ import { ClassDB, type ClassDataBase, ValueDB, ValueDataBase } from './ClassValu
 import { ClassExternalPath, ClassReader, ClassRef, ClassWriter } from './ClassWriterReader';
 import type { RID } from '../Rid';
 import { load_ResFile_from_Path } from 'res://ResFiles';
-import { DefaultResourceInstanceCache, Resource, ResourceInstanceCache } from '../Resource';
-import { generateUUID } from 'three/src/math/MathUtils.js';
+import { DefaultResourceInstanceCache, Resource, ResourceInstanceCache } from '../resources/Resource';
 
 export type RefId = string;
 

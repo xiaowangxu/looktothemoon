@@ -3,8 +3,8 @@ import type { MatrixLike } from "./MatrixLike";
 import type { VectorLike } from "./VectorLike";
 
 export class Vector2 implements VectorLike {
-    public x: number;
-    public y: number;
+    public readonly x: number;
+    public readonly y: number;
 
     get dimension(): number { return 2; }
     get array(): number[] { return [this.x, this.y]; }
@@ -21,11 +21,11 @@ export class Vector2 implements VectorLike {
         this.x = x;
         this.y = y;
     }
-    
+
     public static make_Zero(): Vector2 {
         return new Vector2(0, 0);
     }
-    
+
     public static make_One(): Vector2 {
         return new Vector2(1, 1);
     }
@@ -93,6 +93,16 @@ export class Vector2 implements VectorLike {
     negate(): Vector2 {
         return new Vector2(-this.x, -this.y);
     }
+    distance(b: Vector2) {
+        const x = this.x - b.x;
+        const y = this.y - b.y;
+        return Math.sqrt(x * x + y * y);
+    }
+    squared_distance(b: Vector2) {
+        const x = this.x - b.x;
+        const y = this.y - b.y;
+        return x * x + y * y;
+    }
 
     equal(b: Vector2): boolean {
         return this.x === b.x && this.y === b.y;
@@ -100,11 +110,6 @@ export class Vector2 implements VectorLike {
 
     clone(): Vector2 {
         return new Vector2(this.x, this.y);
-    }
-
-    public set(x: number = 0, y: number = 0) {
-        this.x = x;
-        this.y = y;
     }
 }
 

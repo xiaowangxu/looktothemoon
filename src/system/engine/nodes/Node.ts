@@ -1,0 +1,710 @@
+import { Vector2, Color, Raycaster } from "three";
+import { SignalEmitter } from "../../utils/SignalEmitter";
+import { Renderer3D } from "../Renderer";
+import { World3D } from "../worlds/world3ds/World3D";
+import { PickingOrder, PickingSide, RayPickingOption } from "../worlds/world3ds/PickingWorld3D";
+import { MouseEnterLeaveInputEvent } from "../inputs/events/mouse_events/MouseEnterLeaveInputEvent";
+import { MouseInputEvent } from "../inputs/events/mouse_events/MouseInputEvent";
+import { InputEvent } from "../inputs/InputEvent";
+import { ViewportKeyInputEventManager } from "../inputs/managers/ViewportKeyInputEventManager";
+import { ViewportMouseInputEventManager } from "../inputs/managers/ViewportMouseInputEventManager";
+import { ViewportActionInputEventManager } from "../inputs/managers/ViewportActionInputEventManager";
+import { ViewportInputManager } from "../inputs/managers/ViewportInputManager";
+import { ClassBase } from "../classes/ClassBase";
+import type { PickingArea3D } from "./node3ds/physics3ds/PickingArea3D";
+import type { ClassReader, ClassWriter } from "../classes/ClassWriterReader";
+import { SceneTree } from "../SceneTree";
+import type { Camera3D } from "./camera3ds/Camera3D";
+
+export enum NodeNotification {
+    ExitingTree,
+    EnteredTree,
+    ExitedTree,
+    EnteredReady,
+    Ready,
+    InternalBeforeProcess,
+    Process,
+    InternalAfterProcess,
+    InternalBeforePhysicsProcess,
+    PhysicsProcess,
+    InternalAfterPhysicsProcess,
+    SetupCamera,
+    InternalBeforeRender,
+    Parented,
+    Unparented,
+    ChildAdded,
+    ChildRemoving,
+    ChildrenChanged,
+    Dispose
+}
+
+export class Node extends ClassBase {
+    public static readonly class_name: string = "Node";
+
+    public name: string | undefined;
+    public get readable_name() { return this.name ?? this.rid; }
+
+    private scenetree: SceneTree | undefined = undefined;
+    private inside_tree: boolean = false;
+    public get is_inside_tree() { return this.inside_tree; }
+    private viewport: Viewport | undefined;
+
+    private parent: Node | undefined = undefined;
+    public readonly children: Node[] = [];
+    private is_ready: boolean = false;
+    public get ready() { return this.is_ready; }
+    private first_time_ready: boolean = true;
+
+    public block_input: boolean = false;
+
+    // signals
+    public readonly signal_exiting_tree: SignalEmitter<() => void> = new SignalEmitter();
+    public readonly signal_entered_tree: SignalEmitter<() => void> = new SignalEmitter();
+    public readonly signal_exited_tree: SignalEmitter<() => void> = new SignalEmitter();
+
+    public readonly signal_child_added: SignalEmitter<(node: Node) => void> = new SignalEmitter();
+    public readonly signal_child_removing: SignalEmitter<(node: Node) => void> = new SignalEmitter();
+
+    public readonly signal_notification: SignalEmitter<(what: NodeNotification) => void> = new SignalEmitter();
+    public readonly signal_ready: SignalEmitter<() => void> = new SignalEmitter();
+    public readonly signal_input: SignalEmitter<(event: InputEvent, propagate: boolean) => void> = new SignalEmitter();
+    public readonly signal_process: SignalEmitter<(delta: number) => void> = new SignalEmitter();
+    public readonly signal_physics_process: SignalEmitter<(delta: number) => void> = new SignalEmitter();
+
+    constructor() {
+        super();
+    };
+
+    // scene tree
+    protected nofity(what: NodeNotification) {
+        this._notification(what);
+        this.signal_notification.trigger(what);
+    }
+
+    private propagate_SceneTreeExiting() {
+        for (const child of this.children) {
+            child.propagate_SceneTreeExiting();
+        }
+        // before exit tree
+        this.nofity(NodeNotification.ExitingTree);
+        this.signal_exiting_tree.trigger();
+        this.viewport = undefined;
+        this.inside_tree = false;
+        this.is_ready = false;
+        this.scenetree = undefined;
+    }
+
+    private propagate_SceneTreeEntering() {
+        if (this.parent !== undefined) {
+            this.scenetree = this.parent.scenetree;
+        }
+        if (this instanceof Viewport) {
+            this.viewport = this;
+        }
+        if (this.viewport === undefined && this.parent !== undefined) {
+            this.viewport = this.parent.viewport;
+        }
+        this.inside_tree = true;
+        // entered tree
+        this.nofity(NodeNotification.EnteredTree);
+        this.signal_entered_tree.trigger();
+        for (const child of this.children) {
+            if (!child.inside_tree) {
+                child.propagate_SceneTreeEntering();
+            }
+        }
+    }
+
+    private propagate_SceneTreeExited() {
+        for (const child of this.children) {
+            child.propagate_SceneTreeExited();
+        }
+        // exited tree
+        this.nofity(NodeNotification.ExitedTree);
+        this.signal_exited_tree.trigger();
+    }
+
+    public propagate_Ready() {
+        this.is_ready = true;
+        for (const child of this.children) {
+            child.propagate_Ready();
+        }
+        this.nofity(NodeNotification.EnteredReady);
+        if (this.first_time_ready) {
+            this.first_time_ready = false;
+            // ready
+            this.nofity(NodeNotification.Ready);
+            this._ready();
+            this.signal_ready.trigger();
+        }
+    }
+
+    public propagate_InternalBeforeProcess(delta: number) {
+        for (const child of this.children) {
+            child.propagate_InternalBeforeProcess(delta);
+        }
+        // internal before process
+        this.nofity(NodeNotification.InternalBeforeProcess);
+    }
+
+    public propagate_Process(delta: number) {
+        for (const child of this.children) {
+            child.propagate_Process(delta);
+        }
+        // process
+        this.nofity(NodeNotification.Process);
+        this._process(delta);
+        this.signal_process.trigger(delta);
+    }
+
+    public propagate_InternalAfterProcess(delta: number) {
+        for (const child of this.children) {
+            child.propagate_InternalAfterProcess(delta);
+        }
+        // internal before process
+        this.nofity(NodeNotification.InternalAfterProcess);
+    }
+
+    public propagate_InternalBeforePhysicsProcess(delta: number) {
+        for (const child of this.children) {
+            child.propagate_InternalBeforePhysicsProcess(delta);
+        }
+        // internal before process
+        this.nofity(NodeNotification.InternalBeforePhysicsProcess);
+    }
+
+    public propagate_PhysicsProcess(delta: number) {
+        for (const child of this.children) {
+            child.propagate_PhysicsProcess(delta);
+        }
+        // process
+        this.nofity(NodeNotification.PhysicsProcess);
+        this._physics_process(delta);
+        this.signal_physics_process.trigger(delta);
+    }
+
+    public propagate_InternalAfterPhysicsProcess(delta: number) {
+        for (const child of this.children) {
+            child.propagate_InternalAfterPhysicsProcess(delta);
+        }
+        // internal before process
+        this.nofity(NodeNotification.InternalAfterPhysicsProcess);
+    }
+
+    public propagate_InternalBeforeRender(delta: number) {
+        // internal after process
+        this.nofity(NodeNotification.InternalBeforeRender);
+        for (const child of this.children) {
+            child.propagate_InternalBeforeRender(delta);
+        }
+    }
+
+    public set_SceneTree(scenetree: SceneTree | undefined) {
+        if (this.scenetree === scenetree) return;
+        const last_scenetree: SceneTree | undefined = this.scenetree;
+        if (last_scenetree !== undefined) {
+            // exit tree
+            this.propagate_SceneTreeExiting();
+        }
+        this.scenetree = scenetree;
+        if (this.scenetree !== undefined) {
+            // enter tree
+            this.propagate_SceneTreeEntering();
+            if (this.parent === undefined || this.parent.is_ready) {
+                // ready
+                this.propagate_Ready();
+            }
+        }
+        if (last_scenetree !== undefined) last_scenetree.notify_TreeChange();
+        if (this.scenetree !== undefined) this.scenetree.notify_TreeChange();
+    }
+
+    private add_ChildInternal(node: Node) {
+        if (node.parent === this) return;
+        if (node === this) throw new Error("cannot add child to itself");
+        if (node.parent !== undefined) throw new Error("cannot add child to node because it already has a parent");
+        // check cyclic dependency
+        this.children.unshift(node);
+        node.parent = this;
+        // node parent
+        node.nofity(NodeNotification.Parented);
+        this.nofity(NodeNotification.ChildAdded);
+        this.signal_child_added.trigger(node);
+        if (this.scenetree !== undefined) {
+            node.set_SceneTree(this.scenetree);
+        }
+        // children changed
+        this.nofity(NodeNotification.ChildrenChanged);
+    }
+
+    private remove_ChildInternal(node: Node) {
+        const idx = this.get_ChildIndex(node);
+        if (idx < 0) return;
+        node.set_SceneTree(undefined);
+        this.children.splice(idx, 1);
+        this.nofity(NodeNotification.ChildRemoving);
+        this.signal_child_removing.trigger(node);
+        node.parent = undefined;
+        // node unparent
+        node.nofity(NodeNotification.Unparented);
+        if (this.inside_tree) {
+            node.propagate_SceneTreeExited();
+        }
+        // children changed siganl
+        this.nofity(NodeNotification.ChildrenChanged);
+    }
+
+    private propagate_Dispose() {
+        for (const child of this.children) {
+            child.propagate_Dispose();
+        }
+        // dispose
+        this.nofity(NodeNotification.Dispose);
+        this._dispose();
+    }
+
+    private free_Internal() {
+        if (this.is_inside_tree) throw new Error('cannot free a node when it is inside the scenetree');
+        this.propagate_Dispose();
+    }
+
+    // node public apis
+    public add_Child(node: Node) {
+        this.add_ChildInternal(node);
+    }
+
+    public remove_Child(node: Node) {
+        this.remove_ChildInternal(node);
+    }
+
+    public move_Child(node: Node, to: number) {
+        const idx = this.get_ChildIndex(node);
+        if (idx < 0) return;
+        this.children.splice(idx, 1);
+        this.children.splice(to, 0, node);
+        this.nofity(NodeNotification.ChildrenChanged);
+    }
+
+    public has_Child(node: Node): boolean {
+        return this.children.includes(node);
+    }
+
+    public get_ChildIndex(node: Node): number {
+        return this.children.indexOf(node);
+    }
+
+    public get_Parent() {
+        return this.parent;
+    }
+
+    public get_Index() {
+        if (this.parent === undefined) return -1;
+        return this.parent.get_ChildIndex(this);
+    }
+
+    public get_Viewport() {
+        return this.viewport;
+    }
+
+    public get_SceneTree() {
+        return this.scenetree;
+    }
+
+    public free() {
+        this.free_Internal();
+    }
+
+    public queue_Free() {
+        const scenetree = this.get_SceneTree();
+        if (scenetree === undefined) throw new Error('can not queue free node since it is not inside tree');
+        scenetree.queue_Free(this);
+    }
+
+    // scriptable
+    public _dispose() {
+    }
+
+    public _notification(what: NodeNotification) {
+        switch (what) {
+            case NodeNotification.Dispose: {
+                this.signal_exiting_tree.clear();
+                this.signal_entered_tree.clear();
+                this.signal_exited_tree.clear();
+                this.signal_child_added.clear();
+                this.signal_child_removing.clear();
+                this.signal_notification.clear();
+                this.signal_ready.clear();
+                this.signal_input.clear();
+                this.signal_process.clear();
+                this.signal_physics_process.clear();
+                break;
+            }
+        }
+    }
+
+    public _ready() {
+    }
+
+    public _input(event: InputEvent, propagate: boolean) {
+    }
+
+    public _process(delta: number) {
+    }
+
+    public _physics_process(delta: number) {
+    }
+
+    // save / load
+    public dump(writer: ClassWriter): void {
+        writer.property('name', this.name);
+        writer.property('block_input', this.block_input);
+    }
+
+    public load(reader: ClassReader): void {
+        this.name = reader.get<string>('name');
+        this.block_input = reader.get<boolean>('block_input') ?? false;
+    }
+}
+
+export enum ViewportUpdateMode {
+    Always, Never, Once
+}
+
+export type CursorStyle = 'default' | 'none' | 'context-menu' | 'help' | 'pointer' | 'progress' | 'wait' |
+    'cell' | 'crosshair' | 'text' | 'vertical-text' | 'alias' | 'copy' | 'move' | 'no-drop' | 'not-allowed' | 'grab' |
+    'grabbing' | 'e-resize' | 'n-resize' | 'ne-resize' | 'nw-resize' | 's-resize' | 'se-resize' | 'sw-resize' |
+    'w-resize' | 'ew-resize' | 'ns-resize' | 'nesw-resize' | 'nwse-resize' | 'col-resize' | 'row-resize' | 'all-scroll' |
+    'zoom-in' | 'zoom-out';
+
+export class Viewport extends Node {
+    public static readonly class_name: string = "Viewport";
+
+    // input manager
+    public readonly mouse_event_manager: ViewportMouseInputEventManager;
+    public readonly key_event_manager: ViewportKeyInputEventManager;
+    public readonly action_event_manager: ViewportActionInputEventManager;
+
+    private readonly input_manager: ViewportInputManager;
+
+    public world_3d: World3D | undefined = undefined;
+    private readonly renderer_3d: Renderer3D;
+    private camera_3d: Camera3D | undefined;
+    public get canvas(): HTMLCanvasElement {
+        return this.renderer_3d.canvas;
+    }
+
+    private readonly _size: Vector2 = new Vector2(0, 0);
+    private is_size_dirty: boolean = false;
+    public get size(): Vector2 {
+        return this._size.clone();
+    }
+    public set size(size: Vector2) {
+        if (!this._size.equals(size)) {
+            this._size.copy(size);
+            this.renderer_3d.resize(this._size.x, this._size.y);
+            this.signal_resized.trigger(this.size);
+            this.is_size_dirty = true;
+        }
+    }
+
+    private _pixel_ratio: number = window.devicePixelRatio;
+    public get pixel_ratio(): number {
+        return this._pixel_ratio;
+    }
+    public set pixel_ratio(pixel_ratio: number) {
+        if (this._pixel_ratio !== pixel_ratio) {
+            this._pixel_ratio = pixel_ratio;
+            this.renderer_3d.set_PixelRatio(this._pixel_ratio);
+        }
+    }
+
+    private _transparent: boolean = false;
+    public get transparent() { return this._transparent; }
+    public set transparent(transparent: boolean) {
+        if (this._transparent !== transparent) {
+            this._transparent = transparent;
+            this.renderer_3d.set_ClearAlpha(this._transparent ? 0 : 1);
+        }
+    }
+
+    private _clear_color: Color = new Color(15658734);
+    public get clear_color() { return this._clear_color; }
+    public set clear_color(clear_color: Color) {
+        this._clear_color = clear_color;
+        this.renderer_3d.set_ClearColor(this._clear_color, this._transparent ? 0 : 1);
+    }
+
+    public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
+
+    public redirect_input_event: boolean = true;
+
+    public physics_picking_when_mouse_event_not_canceled: boolean = true;
+    public physics_picking: boolean = true;
+    private _physics_picking_mask: number = 4294967295;
+    public get physics_picking_mask() { return this._physics_picking_mask; }
+    public set physics_picking_mask(mask: number) {
+        mask = mask & 4294967295;
+        if (this._physics_picking_mask !== mask) {
+            this._physics_picking_mask = mask;
+            if (this._physics_picking_area !== undefined && (this._physics_picking_area.layer & this.physics_picking_mask) === 0) {
+                this.physics_picking_area = undefined;
+            }
+        }
+    }
+    private _physics_picking_area: PickingArea3D | undefined = undefined;
+    private set physics_picking_area(area: PickingArea3D | undefined) {
+        if (this._physics_picking_area !== area) {
+            if (this._physics_picking_area !== undefined) {
+                this._physics_picking_area.on_MouseExited(new MouseInputEvent(this, this.input_manager.mouse_position, this.input_manager.mouse_position_normalized, false, false, false, false));
+            }
+            this._physics_picking_area = area;
+            if (this._physics_picking_area !== undefined) {
+                this._physics_picking_area.on_MouseEntered(new MouseInputEvent(this, this.input_manager.mouse_position, this.input_manager.mouse_position_normalized, false, false, false, false));
+            }
+        }
+    }
+
+    private _cursor_style: CursorStyle = 'default';
+    public get cursor_style(): CursorStyle { return this._cursor_style; }
+    public set cursor_style(cursor_style: CursorStyle) {
+        if (this._cursor_style !== cursor_style) {
+            this._cursor_style = cursor_style;
+            this.canvas.style.cursor = this._cursor_style;
+        }
+    }
+
+    // signals
+    public readonly signal_before_render: SignalEmitter<() => void> = new SignalEmitter();
+    public readonly signal_after_render: SignalEmitter<() => void> = new SignalEmitter();
+    public readonly signal_resized: SignalEmitter<(size: Vector2) => void> = new SignalEmitter();
+
+    constructor() {
+        super();
+        this.renderer_3d = new Renderer3D(document.createElement('canvas'), { antialias: true });
+        this.renderer_3d.set_PixelRatio(this.pixel_ratio);
+        this.renderer_3d.set_ClearColor(this.clear_color, this.transparent ? 0 : 1);
+        this.mouse_event_manager = new ViewportMouseInputEventManager(this);
+        this.key_event_manager = new ViewportKeyInputEventManager(this);
+        this.action_event_manager = new ViewportActionInputEventManager(this);
+        this.mouse_event_manager.signal_mouse_event.connect(this._on_InputEvent);
+        this.key_event_manager.signal_key_event.connect(this._on_InputEvent);
+        this.input_manager = new ViewportInputManager(this);
+    }
+
+    private mouse_event_canceled: boolean = false;
+
+    private _on_InputEvent = this.on_InputEvent.bind(this);
+    private on_InputEvent(event: InputEvent) {
+        const action_input_event = this.action_event_manager.parse_ActionInputEvent(event);
+        if (action_input_event !== undefined) {
+            if (this.redirect_input_event) {
+                this.redirect_InputEvent(action_input_event);
+            }
+            else {
+                this.propagate_InputEvent(action_input_event, this);
+            }
+        }
+        if (this.redirect_input_event) {
+            this.redirect_InputEvent(event);
+        }
+        else {
+            this.propagate_InputEvent(event, this);
+        }
+        // check mouse event cancel for physics picking
+        if (event instanceof MouseInputEvent || event instanceof MouseEnterLeaveInputEvent) {
+            this.mouse_event_canceled = event.canceled;
+        }
+    }
+
+    private redirect_InputEvent(event: InputEvent) {
+        if (event.canceled) return;
+        const redirect_target = this.get_OwnWorld3DViewport();
+        if (redirect_target !== undefined) {
+            redirect_target.push_InputEvent(event, this);
+        }
+    }
+
+    private propagate_InputEventInternal(node: Node, event: InputEvent, target: Viewport | undefined) {
+        if (node.block_input) return;
+        if (node instanceof Viewport) {
+            if (node === target) {
+                node.push_InputEvent(event, undefined);
+            }
+            return;
+        }
+        node._input(event, true);
+        if (event.canceled) return;
+        node.signal_input.trigger(event, true);
+        if (event.canceled) return;
+        for (const child of node.children) {
+            this.propagate_InputEventInternal(child, event, target);
+            if (event.canceled) return;
+        }
+        node._input(event, false);
+        if (event.canceled) return;
+        node.signal_input.trigger(event, false);
+        return;
+    }
+
+    private propagate_InputEvent(event: InputEvent, target: Viewport | undefined) {
+        if (event.canceled) return;
+        this._input(event, true);
+        if (event.canceled) return;
+        this.signal_input.trigger(event, true);
+        for (const child of this.children) {
+            this.propagate_InputEventInternal(child, event, target);
+            if (event.canceled) return;
+        }
+        this._input(event, false);
+        if (event.canceled) return;
+        this.signal_input.trigger(event, false);
+        return;
+    }
+
+    public emulate_InputEvent(event: InputEvent) {
+        this.on_InputEvent(event);
+    }
+
+    public push_InputEvent(event: InputEvent, target: Viewport | undefined = undefined) {
+        this.propagate_InputEvent(event, target);
+    }
+
+    public set_ActiveCamera3D(camera: Camera3D) {
+        if (this.camera_3d !== camera) {
+            if (this.camera_3d !== undefined) {
+                this.camera_3d._current = false;
+            }
+            this.camera_3d = camera;
+            this.camera_3d._current = true;
+            this.is_size_dirty = true;
+        }
+    }
+
+    public clear_Camera3D(camera: Camera3D) {
+        if (this.camera_3d === camera) {
+            this.camera_3d._current = false;
+            this.camera_3d = undefined;
+            this.is_size_dirty = true;
+        }
+    }
+
+    public _notification(what: NodeNotification): void {
+        switch (what) {
+            case NodeNotification.EnteredTree: {
+                const scenetree = this.get_SceneTree();
+                if (scenetree !== undefined) {
+                    scenetree.add_Viewport(this);
+                }
+                return;
+            }
+            case NodeNotification.ExitingTree: {
+                const scenetree = this.get_SceneTree();
+                if (scenetree !== undefined) {
+                    scenetree.remove_Viewport(this);
+                }
+                return;
+            }
+            case NodeNotification.Dispose: {
+                this.renderer_3d.dispose();
+                this.world_3d?.dispose();
+                this.mouse_event_manager.dispose();
+                this.key_event_manager.dispose();
+                return;
+            }
+            case NodeNotification.InternalAfterPhysicsProcess: {
+                this.process_PhysicsPicking();
+                break;
+            }
+        }
+    }
+
+    public get_Input() {
+        return this.input_manager;
+    }
+
+    public get_World3D(): World3D | undefined {
+        return this.world_3d;
+    }
+
+    public get_Camera3D(): Camera3D | undefined {
+        return this.camera_3d;
+    }
+
+    private get_OwnWorld3DViewport(): Viewport | undefined {
+        if (this.world_3d !== undefined) return this;
+        const parent = this.get_Parent();
+        if (parent !== undefined) {
+            return parent.get_Viewport()?.get_OwnWorld3DViewport();
+        }
+        return undefined;
+    }
+
+    private get_RenderableWorld3D(): World3D | undefined {
+        if (this.world_3d !== undefined) return this.world_3d;
+        const parent = this.get_Parent();
+        if (parent !== undefined) {
+            return parent.get_Viewport()?.get_RenderableWorld3D();
+        }
+        return undefined;
+    }
+
+    public before_InternalBeforeRender(): void {
+        const camera_3d = this.get_Camera3D();
+        if (camera_3d !== undefined) {
+            camera_3d._notification(NodeNotification.SetupCamera);
+            if (this.is_size_dirty) {
+                camera_3d.update_ViewportSize(this.size);
+                this.is_size_dirty = false;
+            }
+        }
+    }
+
+    public render(): void {
+        if (this.update_mode === ViewportUpdateMode.Never) return;
+        if (this.update_mode === ViewportUpdateMode.Once) {
+            this.update_mode = ViewportUpdateMode.Never;
+        }
+        this.signal_before_render.trigger();
+        const world_3d = this.get_RenderableWorld3D();
+        const camera_3d = this.get_Camera3D();
+        if (camera_3d !== undefined && world_3d !== undefined) {
+            this.renderer_3d.render(world_3d, this, camera_3d);
+        }
+        this.signal_after_render.trigger();
+    }
+
+    public process_PhysicsPicking(): void {
+        if (this.physics_picking && this.input_manager.is_mouse_inside) {
+            const picking_world = this.get_RenderableWorld3D()?.get_PickingWorld();
+            const camera_3d = this.get_Camera3D();
+            if (picking_world === undefined ||
+                camera_3d === undefined ||
+                (this.physics_picking_when_mouse_event_not_canceled === true && this.mouse_event_canceled)) {
+                this.physics_picking_area = undefined;
+                return;
+            };
+            this.input_manager.mouse_position_normalized;
+            const raycast = new Raycaster();
+            raycast.setFromCamera(new Vector2().fromArray(this.input_manager.mouse_position_normalized.array), camera_3d.get_Camera());
+            const ray_picking_option = new RayPickingOption(
+                raycast.ray.origin,
+                raycast.ray.origin.clone().addScaledVector(raycast.ray.direction, 100000),
+                this.physics_picking_mask,
+                camera_3d,
+                this,
+                PickingOrder.OffsetOrdered,
+                PickingSide.Front
+            );
+            const ray_picking_results = picking_world.perform_RayPicking(ray_picking_option);
+            if (ray_picking_results.length > 0) {
+                this.physics_picking_area = ray_picking_results[0].area;
+            }
+            else {
+                this.physics_picking_area = undefined;
+            }
+        }
+        else {
+            this.physics_picking_area = undefined;
+        }
+    }
+}

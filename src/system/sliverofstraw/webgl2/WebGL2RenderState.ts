@@ -163,6 +163,16 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         return false;
     }
 
+    private depth_mask_state: boolean | null = null;
+    public set_DepthMaskProxy(flag: boolean) {
+        if (this.depth_mask_state !== flag) {
+            this.depth_mask_state = flag;
+            this.gl.depthMask(flag);
+            return true;
+        }
+        return false;
+    }
+
     private viewport_state: [number | null, number | null, number | null, number | null] = [null, null, null, null];
     public set_ViewportProxy(x: number, y: number, w: number, h: number) {
         const [_x, _y, _w, _h] = this.viewport_state;

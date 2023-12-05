@@ -1,4 +1,4 @@
-import { OrbitCamera3D } from '@/system/engine/nodes/camera_3ds/OrbitCamera3D';
+import { OrbitCamera3D } from '@/system/engine/nodes/camera3ds/OrbitCamera3D';
 
 export class EditorOrbitCamera3D extends OrbitCamera3D {
     public _ready(): void {

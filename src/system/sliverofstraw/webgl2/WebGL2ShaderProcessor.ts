@@ -34,7 +34,6 @@ precision highp sampler3D;
 
 uniform WorldUniforms {
     mat4 camera_world;
-    mat4 camera_view;
     mat4 camera_projection;
     vec2 screen_size;
     float time;

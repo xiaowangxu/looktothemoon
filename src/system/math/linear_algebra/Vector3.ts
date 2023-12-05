@@ -1,13 +1,12 @@
 import { lerp } from "../Scalar";
 import type { Matrix3 } from "./Matrix3";
 import type { Matrix4 } from "./Matrix4";
-import type { MatrixLike } from "./MatrixLike";
 import type { VectorLike } from "./VectorLike";
 
 export class Vector3 implements VectorLike {
-    public x: number;
-    public y: number;
-    public z: number;
+    public readonly x: number;
+    public readonly y: number;
+    public readonly z: number;
 
     get dimension(): number { return 3; }
     get array(): number[] { return [this.x, this.y, this.z]; }
@@ -104,6 +103,18 @@ export class Vector3 implements VectorLike {
     negate(): Vector3 {
         return new Vector3(-this.x, -this.y, -this.z);
     }
+    distance(b: Vector3) {
+        const x = this.x - b.x;
+        const y = this.y - b.y;
+        const z = this.z - b.z;
+        return Math.sqrt(x * x + y * y + z * z);
+    }
+    squared_distance(b: Vector3) {
+        const x = this.x - b.x;
+        const y = this.y - b.y;
+        const z = this.z - b.z;
+        return x * x + y * y + z * z;
+    }
 
     equal(b: Vector3): boolean {
         return this.x === b.x && this.y === b.y && this.z === b.z;
@@ -123,18 +134,8 @@ export class Vector3 implements VectorLike {
             (n31 * x + n32 * y + n33 * z + n34) * w,
         );
     }
-
-    public set(x: number = 0, y: number = 0, z: number = 0) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
 }
 
 export function vec3(x: number = 0, y: number = 0, z: number = 0) {
-    return new Vector3(x, y, z);
-}
-
-export function euler(x: number = 0, y: number = 0, z: number = 0) {
     return new Vector3(x, y, z);
 }

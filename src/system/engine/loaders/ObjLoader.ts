@@ -1,9 +1,9 @@
 import { Result } from '@/system/utils/Result';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { type Mesh, Material } from 'three';
-import { MeshInstance3D } from '../nodes/visual_instances/geometry_3ds/MeshInstance3D';
-import { ThreeGeometryResource } from '../resources/GeometryResource';
-import { ThreeMaterialResource } from '../resources/MaterialResource';
+import { MeshInstance3D } from '../nodes/node3ds/visual_instance3ds/geometry_3ds/MeshInstance3D';
+import { ThreeGeometryResource } from '../resources/resources/GeometryResource';
+import { ThreeMaterialResource } from '../resources/resources/MaterialResource';
 
 export class ObjLoader {
     constructor() {

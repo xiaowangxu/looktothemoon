@@ -1,14 +1,9 @@
-import { Euler, Quaternion, Vector2, Vector3 } from "three";
+import { clamp } from "../math/Scalar";
+import { Euler } from "../math/linear_algebra/Euler";
+import { Vector2 } from "../math/linear_algebra/Vector2";
+import { Vector3 } from "../math/linear_algebra/Vector3";
+import { Quaternion } from "../math/linear_algebra/Quaternion";
 import { SignalEmitter } from "../utils/SignalEmitter";
-import { clamp } from "./MathF";
-
-export enum TransitionType {
-    Linear, Sine, Quad, Cubic, Quart, Quint, Expo, Back, Elastic, Circle, Bounce
-}
-
-export enum EasingType {
-    In, Out, InOut
-}
 
 export class TweenBase {
     protected _started: boolean = false;
@@ -43,6 +38,8 @@ export class TweenBase {
         this.finished = true;
     }
 }
+
+// structure tweens
 
 export class TweenSequence extends TweenBase {
     private readonly tweens: TweenBase[] = [];
@@ -159,21 +156,95 @@ export class TweenParallel extends TweenBase {
     }
 }
 
-export class Tween extends TweenBase {
+export class TweenLoop extends TweenBase {
+    private readonly tween: TweenBase;
+    private readonly loop_times: number;
+    private current_loop_idx: number = 0;
+
+    public readonly signal_looped: SignalEmitter<(loop: number, total: number) => void> = new SignalEmitter();
+
+    constructor(tween: TweenBase, loop_times: number) {
+        super();
+        this.tween = tween;
+        this.loop_times = loop_times;
+    }
+
+    public start() {
+        if (this.loop_times <= 0) {
+            this.started = true;
+            this.finished = true;
+        }
+        else {
+            this.current_loop_idx = 0;
+            this.started = true;
+            this.finished = this.start_Tween();
+        }
+    }
+
+    private start_Tween(): boolean {
+        if (this.current_loop_idx < this.loop_times) {
+            this.tween.start();
+            if (this.tween.finished) {
+                this.signal_looped.trigger(this.current_loop_idx + 1, this.loop_times);
+                this.current_loop_idx++;
+                if (this.current_loop_idx >= this.loop_times) {
+                    return true;
+                }
+                else {
+                    return this.start_Tween();
+                }
+            }
+            else {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public process(delta: number): void {
+        if (this.running) {
+            this.tween.process(delta);
+            if (this.tween.finished) {
+                this.signal_looped.trigger(this.current_loop_idx + 1, this.loop_times);
+                this.current_loop_idx++;
+                if (this.current_loop_idx >= this.loop_times) {
+                    this.finished = true;
+                }
+                else {
+                    this.finished = this.start_Tween();
+                }
+            }
+        }
+    }
+}
+
+// interpolate tweens
+
+export enum TransitionType {
+    Linear, Sine, Quad, Cubic, Quart, Quint, Expo, Back, Elastic, Circle, Bounce
+}
+
+export enum EasingType {
+    In, Out, InOut
+}
+
+export class InterpolateTween extends TweenBase {
     private readonly duration: number;
     private readonly transition: TransitionType;
     private readonly easing: EasingType;
+    public reversed: boolean = false;
 
     private _current: number = 0;
     public get current() { return this._current; }
     private _value: number = 0;
-    public get value() { return this._value; }
+    public get value() { return this.reversed ? (1 - this._value) : this._value; }
 
-    constructor(duration: number, transition: TransitionType, easing: EasingType) {
+    constructor(duration: number, transition: TransitionType, easing: EasingType, reversed: boolean = false) {
         super();
         this.duration = Math.max(0, duration);
         this.transition = transition;
         this.easing = easing;
+        this.reversed = reversed;
     }
 
     public start() {
@@ -200,7 +271,7 @@ export class Tween extends TweenBase {
             else {
                 const c = this._current + delta;
                 this._current = clamp(c, 0, this.duration);
-                this._value = Tween.calculate_TransitionEasing(this._current / this.duration, this.transition, this.easing);
+                this._value = InterpolateTween.calculate_TransitionEasing(this._current / this.duration, this.transition, this.easing);
             }
         }
     }
@@ -304,7 +375,7 @@ export class Tween extends TweenBase {
             }
             case TransitionType.Bounce: {
                 switch (easing) {
-                    case EasingType.In: return 1 - Tween.calculate_TransitionEasing(x, TransitionType.Bounce, EasingType.Out);
+                    case EasingType.In: return 1 - InterpolateTween.calculate_TransitionEasing(x, TransitionType.Bounce, EasingType.Out);
                     case EasingType.Out: {
                         const n1 = 7.5625;
                         const d1 = 2.75;
@@ -320,19 +391,19 @@ export class Tween extends TweenBase {
                         }
                     }
                     case EasingType.InOut: return (x < 0.5
-                        ? (1 - Tween.calculate_TransitionEasing(1 - 2 * x, TransitionType.Bounce, EasingType.Out)) / 2
-                        : (1 + Tween.calculate_TransitionEasing(2 * x - 1, TransitionType.Bounce, EasingType.Out)) / 2);
+                        ? (1 - InterpolateTween.calculate_TransitionEasing(1 - 2 * x, TransitionType.Bounce, EasingType.Out)) / 2
+                        : (1 + InterpolateTween.calculate_TransitionEasing(2 * x - 1, TransitionType.Bounce, EasingType.Out)) / 2);
                 }
             }
         }
     }
 }
 
-export class MethodTween extends Tween {
+export class MethodTween extends InterpolateTween {
     private readonly method: (value: number) => void;
 
-    constructor(method: (value: number) => void, duration: number, transition: TransitionType, easing: EasingType) {
-        super(duration, transition, easing);
+    constructor(method: (value: number) => void, duration: number, transition: TransitionType, easing: EasingType, reversed: boolean = false) {
+        super(duration, transition, easing, reversed);
         this.method = method;
     }
 
@@ -351,29 +422,15 @@ export class MethodTween extends Tween {
     }
 }
 
-export class CallbackTween extends TweenBase {
-    private readonly callback: () => void;
-
-    constructor(callback: () => void) {
-        super();
-        this.callback = callback;
-    }
-
-    public start(): void {
-        this.callback();
-        this.finished = true;
-    }
-}
-
-export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extends Obj[Key]> extends Tween {
+export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extends Obj[Key]> extends InterpolateTween {
     public readonly object: Obj;
     public readonly key: Key;
     public readonly initial: Val;
     public readonly target: Val;
     private readonly lerp: (a: any, b: any, v: number) => any;
 
-    constructor(object: Obj, key: Key, target: Val, duration: number, transition: TransitionType, easing: EasingType, lerp: ((a: Val, b: Val, v: number) => Val) | undefined = undefined) {
-        super(duration, transition, easing);
+    constructor(object: Obj, key: Key, target: Val, duration: number, transition: TransitionType, easing: EasingType, reversed: boolean = false, lerp: ((a: Val, b: Val, v: number) => Val) | undefined = undefined) {
+        super(duration, transition, easing, reversed);
         this.object = object;
         this.key = key;
         this.initial = this.object[this.key] as Val;
@@ -389,17 +446,17 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
             else if (typeof (this.target) === 'boolean') {
                 this.lerp = PropertyTween.LerpFuncs.Boolean;
             }
-            else if (this.target instanceof Vector2) {
-                this.lerp = PropertyTween.LerpFuncs.Vector2;
-            }
-            else if (this.target instanceof Vector3) {
-                this.lerp = PropertyTween.LerpFuncs.Vector3;
-            }
             else if (this.target instanceof Euler) {
                 this.lerp = PropertyTween.LerpFuncs.Euler;
             }
             else if (this.target instanceof Quaternion) {
                 this.lerp = PropertyTween.LerpFuncs.Quaternion;
+            }
+            else if (this.target instanceof Vector2) {
+                this.lerp = PropertyTween.LerpFuncs.Vector2;
+            }
+            else if (this.target instanceof Vector3) {
+                this.lerp = PropertyTween.LerpFuncs.Vector3;
             }
             else {
                 throw new Error(`property '${String(this.key)}' is not lerpable`);
@@ -426,14 +483,30 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
     public static LerpFuncs = {
         Number: (a: number, b: number, v: number) => a + (b - a) * v,
         Boolean: (a: boolean, b: boolean, v: number) => v < 1 ? a : b,
-        Vector2: (a: Vector2, b: Vector2, v: number) => new Vector2().lerpVectors(a, b, v),
-        Vector3: (a: Vector3, b: Vector3, v: number) => new Vector3().lerpVectors(a, b, v),
         Quaternion: (a: Quaternion, b: Quaternion, v: number) => a.slerp(b, v),
         Euler: (a: Euler, b: Euler, v: number) => {
-            const quat_a = new Quaternion().setFromEuler(a);
-            const quat_b = new Quaternion().setFromEuler(b);
-            return new Euler().setFromQuaternion(quat_a.slerp(quat_b, v));
+            const quat_a = Quaternion.from_Euler(a);
+            const quat_b = Quaternion.from_Euler(b);
+            return Euler.from_Quaternion(quat_a.slerp(quat_b, v), a.order);
         },
+        Vector2: (a: Vector2, b: Vector2, v: number) => a.lerp(b, v),
+        Vector3: (a: Vector3, b: Vector3, v: number) => a.lerp(b, v),
+    }
+}
+
+// trigger tweens
+
+export class CallbackTween extends TweenBase {
+    private readonly callback: () => void;
+
+    constructor(callback: () => void) {
+        super();
+        this.callback = callback;
+    }
+
+    public start(): void {
+        this.callback();
+        this.finished = true;
     }
 }
 
@@ -471,6 +544,41 @@ export class TimerTween extends TweenBase {
                 const c = this._current + delta;
                 this._current = clamp(c, 0, this.duration);
             }
+        }
+    }
+}
+
+// adaptor tweens
+
+type ResverseableTween = TweenBase & { reversed: boolean };
+
+export class TweenPingPong extends TweenBase {
+    private readonly tween: ResverseableTween;
+
+    private ping: boolean = true;
+
+    constructor(tween: ResverseableTween) {
+        super();
+        this.tween = tween;
+        this.ping = !this.tween.reversed;
+    }
+
+    public start() {
+        this.started = true;
+        this.finished = this.start_Tween();
+    }
+
+    private start_Tween(): boolean {
+        this.tween.reversed = !this.ping;
+        this.tween.start();
+        this.ping = !this.ping;
+        return this.tween.finished;
+    }
+
+    public process(delta: number): void {
+        if (this.running) {
+            this.tween.process(delta);
+            this.finished = this.tween.finished;
         }
     }
 }
