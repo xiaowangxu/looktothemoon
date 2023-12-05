@@ -15,7 +15,7 @@ import { vec4 } from "../math/linear_algebra/Vector4";
 const calculights = `
 ivec3 lights_size = textureSize(lights, 0);
 int lights_count = lights_size.x * lights_size.y;
-const int lights_max_count = 128;
+const int lights_max_count = 32;
 for (int i = 0; i < lights_count; i++) {
 	if (i >= lights_max_count) break;
 	int x = i % lights_size.x;
@@ -369,7 +369,15 @@ const quad_vertexShaderSource = process_WebGL2ShaderCode(RenderStateShaderType.V
 const quad_fragmentShaderSource = process_WebGL2ShaderCode(RenderStateShaderType.Fragment,
 	quad_attributes, quad_uniforms, quad_varyings, quad_outputs,
 	`vec2 uv = gl_FragCoord.xy / screen_size;
-o_color = vec4(texture(u_result, uv).rgba);`
+o_color = vec4(texture(u_result, uv).rgba);
+float r = o_color.r;
+o_color.r = r <= 0.0031308 ? (12.92 * r) : (1.055 * pow(r, 1.0 / 2.4) - 0.055);
+float g = o_color.g;
+o_color.g = g <= 0.0031308 ? (12.92 * g) : (1.055 * pow(g, 1.0 / 2.4) - 0.055);
+float b = o_color.b;
+o_color.b = b <= 0.0031308 ? (12.92 * b) : (1.055 * pow(b, 1.0 / 2.4) - 0.055);
+// o_color.rgb = o_color.r > 1.0 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
+`
 );
 const quad_vert_shader = render_device.render_state.create_Shader(RenderStateShaderType.Vertex, quad_vertexShaderSource).expect();
 const quad_frag_shader = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, quad_fragmentShaderSource).expect();
@@ -431,16 +439,18 @@ function render(time: number) {
 	render_device.set_WorldUniform('time', new Float32Array([time]));
 	// render_device.update_Lights();
 
-	// stage = 'depth_prepass';
+	stage = 'depth_prepass';
 
 	render_state.use_FrameBuffer(frame_buffer);
 	render_state.set_ViewportProxy(0, 0, 1024, 1024);
+	render_state.set_ScissorProxy(0, 0, 1024, 1024);
 	render_state.set_ClearColorProxy(0.9, 0.9, 0.9, 1);
+	render_state.set_DepthFuncProxy(render_state.gl.LEQUAL);
 	render_state.set_DepthMaskProxy(true);
 	render_state.gl.clear(render_state.gl.COLOR_BUFFER_BIT | render_state.gl.DEPTH_BUFFER_BIT);
 
 	const model_world = Matrix4.from_BasisPosition(Matrix3.make_RotateY(time / 3).compose(Matrix3.make_RotateX(time / 2.12)), vec3(0, 0, -0.5));
-	material.set_Uniform<RenderStateValueType.Mat4>(stage, 'model_world', model_world);
+	material.set_Uniform<RenderStateValueType.Mat4>(undefined, 'model_world', model_world);
 	render_device.render_Renderable(stage, renderable_surface);
 
 	const model_world_right0 = Matrix4.from_BasisPosition(Matrix3.make_Scale(0.5, 0.5, 0.5).compose(Matrix3.make_RotateY(time / 2)), vec3(2, 0, 0));

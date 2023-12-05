@@ -66,8 +66,8 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState> {
 
     public update_Lights() {
         const texture = this.lights_texture.expect;
-        const light_width = 64;
-        const light_height = 64;
+        const light_width = 128;
+        const light_height = 128;
         this.render_state.alloc_Texture3D(texture, light_width, light_height, 2, 0);
         this.render_state.active_Texture(texture, WebGL2RenderDevice.LightsTextureUnit);
         const lights = new Float32Array(light_width * light_height * 4 * 2);
@@ -80,7 +80,7 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState> {
 
                 light_pos_type[idx] = (Math.random() - 0.5) * 5;
                 light_pos_type[idx + 1] = (Math.random() - 0.5) * 5;
-                light_pos_type[idx + 2] = -0.85;
+                light_pos_type[idx + 2] = -0.75;
                 let type = Math.floor(Math.random() * 8);
                 if (type >= 2) type = 2;
                 light_pos_type[idx + 3] = type;
@@ -88,7 +88,7 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState> {
                 light_color_intensity[idx] = Math.random();
                 light_color_intensity[idx + 1] = Math.random();
                 light_color_intensity[idx + 2] = Math.random();
-                light_color_intensity[idx + 3] = type === 2 ? 0.5 : 0.01;
+                light_color_intensity[idx + 3] = type === 2 ? 1.0 : 0.005;
             }
         }
         this.render_state.update_Texture3D(texture, 0, lights, light_width, light_height, 2, 0, 0, 0);
@@ -99,8 +99,8 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState> {
         this.render_state.update_Texture3D(texture, 0, new Float32Array([
             0.0, 0.0, 0.0, 0,
             -1.0, 1.0, 1.0, 1,
-            1.0, 1.0, 1.0, 0.2,
-            1.0, 1.0, 1.0, 0.3,
+            1.0, 1.0, 1.0, 0.1,
+            1.0, 1.0, 1.0, 0.1,
         ]), 2, 1, 2, 0, 0, 0);
     }
 

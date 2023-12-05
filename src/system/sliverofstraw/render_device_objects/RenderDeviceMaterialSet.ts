@@ -135,10 +135,17 @@ export abstract class RenderDeviceMaterialSet<
         return program.value;
     }
 
-    public set_Uniform<Val extends RenderStateValueType>(name: string, uniform: string, value: RenderStateValueTypeKey<T, Val>) {
-        const uniformset = this.programs_ref.get(name)?.uniforms;
-        if (uniformset === undefined) return;
-        uniformset.set_Uniform<Val>(uniform, value);
+    public set_Uniform<Val extends RenderStateValueType>(name: string | undefined, uniform: string, value: RenderStateValueTypeKey<T, Val>) {
+        if (name === undefined) {
+            for (const {uniforms} of this.programs_ref.values()) {
+                uniforms.set_Uniform<Val>(uniform, value);
+            }
+        }
+        else {
+            const uniforms = this.programs_ref.get(name)?.uniforms;
+            if (uniforms === undefined) return;
+            uniforms.set_Uniform<Val>(uniform, value);
+        }
     }
 
     public push_Uniform(name: string, uniform: string) {
