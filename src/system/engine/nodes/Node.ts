@@ -397,7 +397,7 @@ export class Viewport extends Node {
     private _size: Vector2 = vec2(0, 0);
     private is_size_dirty: boolean = false;
     public get size(): Vector2 {
-        return this._size.clone();
+        return this._size;
     }
     public set size(size: Vector2) {
         if (!this._size.equal(size)) {
@@ -685,11 +685,10 @@ export class Viewport extends Node {
                 return;
             };
             this.input_manager.mouse_position_normalized;
-            const raycast = new Raycaster();
-            raycast.setFromCamera(new Vector2().fromArray(this.input_manager.mouse_position_normalized.array), camera_3d.get_Camera());
+            const ray = camera_3d.get_Camera().project_Ray(this.input_manager.mouse_position_normalized);
             const ray_picking_option = new RayPickingOption(
-                raycast.ray.origin,
-                raycast.ray.origin.clone().addScaledVector(raycast.ray.direction, 100000),
+                ray.origin,
+                ray.origin.add_Scaled(1000, ray.direction),
                 this.physics_picking_mask,
                 camera_3d,
                 this,

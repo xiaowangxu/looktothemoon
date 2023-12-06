@@ -163,7 +163,6 @@ export class Matrix4 implements MatrixLike<Matrix4> {
             0, 2 * h, 0, - y,
             0, 0, z_inverse, - z,
             0, 0, 0, 1,
-
         );
     }
 
@@ -303,15 +302,6 @@ export class Matrix4 implements MatrixLike<Matrix4> {
             if (this.elements[i] !== b.elements[i]) return false;
         }
         return true;
-    }
-
-    clone(): Matrix4 {
-        return new Matrix4(
-            this.elements[0], this.elements[1], this.elements[2], this.elements[3],
-            this.elements[4], this.elements[5], this.elements[6], this.elements[7],
-            this.elements[8], this.elements[9], this.elements[10], this.elements[11],
-            this.elements[12], this.elements[13], this.elements[14], this.elements[15],
-        );
     }
 }
 

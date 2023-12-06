@@ -125,10 +125,6 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
     equal(b: Vector4): boolean {
         return this.x === b.x && this.y === b.y && this.z === b.z && this.w === b.w;
     }
-
-    clone(): Vector4 {
-        return new Vector4(this.x, this.y, this.z, this.w);
-    }
 }
 
 export function vec4(x: number = 0, y: number = 0, z: number = 0, w: number = 0) {

@@ -26,6 +26,4 @@ export interface MatrixLike<Mat extends MatrixLike<Mat>> {
     compose(b: Mat): Mat;
 
     equal(b: Mat): boolean;
-
-    clone(): Mat;
 }

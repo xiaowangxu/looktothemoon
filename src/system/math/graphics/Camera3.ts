@@ -6,8 +6,9 @@ import { Matrix3 } from "../linear_algebra/Matrix3";
 import { Matrix4 } from "../linear_algebra/Matrix4";
 import { Vector2 } from "../linear_algebra/Vector2";
 import { Vector3 } from "../linear_algebra/Vector3";
+import { Frustum3 } from "./Frustum3";
 
-type Frustum3 = FrustumLike<Vector3, Matrix3>;
+// type Frustum3 = FrustumLike<Vector3, Matrix3>;
 
 export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     protected _projection: Matrix4 = Matrix4.make_Identity();
@@ -40,7 +41,9 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
         return new Ray3(this.unproject_Point(ndc), this.unproject_Normal(ndc));
     }
 
-    public abstract get_Frustum(): Frustum3;
+    public get_Frustum(): Frustum3 {
+        return Frustum3.from_Projection(this.global_transform.inverse().compose(this.projection));
+    }
 
     public is_PointInView(point: Vector3): boolean {
         return this.get_Frustum().intersect_Point(point, true);
@@ -117,10 +120,6 @@ export class OrthographicCamera3 extends Camera3 {
     public unproject_Normal(point: Vector2): Vector3 {
         return new Vector3(0, 0, -1).transform(this.global_transform.basis).normalize();
     }
-
-    public get_Frustum(): Frustum3 {
-        throw new Error("Method not implemented.");
-    }
 }
 
 export class PerspectiveCamera3 extends Camera3 {
@@ -187,9 +186,5 @@ export class PerspectiveCamera3 extends Camera3 {
     public unproject_Normal(ndc: Vector2): Vector3 {
         const p = this.unproject_Point(ndc, this.near);
         return this.global_transform.position.direction_to(p);
-    }
-
-    public get_Frustum(): Frustum3 {
-        throw new Error("Method not implemented.");
     }
 }

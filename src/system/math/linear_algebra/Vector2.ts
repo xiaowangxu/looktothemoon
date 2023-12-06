@@ -116,10 +116,6 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
     equal(b: Vector2): boolean {
         return this.x === b.x && this.y === b.y;
     }
-
-    clone(): Vector2 {
-        return new Vector2(this.x, this.y);
-    }
 }
 
 export function vec2(x: number = 0, y: number = 0) {

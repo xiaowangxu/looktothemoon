@@ -27,8 +27,8 @@ export class ViewportMouseInputEventManager {
     public get is_mouse_inside() { return this._is_mouse_inside; }
     private _mouse_position: Vector2 = vec2(0, 0);
     private _mouse_position_normalized: Vector2 = vec2(0, 0);
-    public get mouse_position() { return this._mouse_position.clone(); }
-    public get mouse_position_normalized() { return this._mouse_position_normalized.clone(); }
+    public get mouse_position() { return this._mouse_position; }
+    public get mouse_position_normalized() { return this._mouse_position_normalized; }
 
     private readonly mouse_button_map: Map<MouseButton, boolean> = new Map([
         [MouseButton.Left, false],

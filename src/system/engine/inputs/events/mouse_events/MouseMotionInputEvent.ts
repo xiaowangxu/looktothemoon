@@ -14,7 +14,7 @@ export class MouseMotionInputEvent extends MouseInputEvent {
         ctrl: boolean, shift: boolean, alt: boolean, meta: boolean
     ) {
         super(viewport, position, position_normalized, ctrl, shift, alt, meta);
-        this.relative = relative.clone();
-        this.relative_normalized = relative_normalized.clone();
+        this.relative = relative;
+        this.relative_normalized = relative_normalized;
     }
 }

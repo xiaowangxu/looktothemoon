@@ -174,21 +174,6 @@ export class Quaternion {
         return Math.acos(dot * dot * 2 - 1);
     }
 
-    // public Matrix3 Basis() {
-    //         Scalar d = this.SquaredLength;
-    //         Scalar s = 2 / d;
-    //         Scalar x = this.Vector.X, y = this.Vector.Y, z = this.Vector.Z, w = this.Vector.W;
-    //         Scalar xs = x * s, ys = y * s, zs = z * s;
-    //         Scalar wx = w * xs, wy = w * ys, wz = w * zs;
-    //         Scalar xx = x * xs, xy = x * ys, xz = x * zs;
-    //         Scalar yy = y * ys, yz = y * zs, zz = z * zs;
-    //     return new Matrix3(
-    //         new Vector3(1 - (yy + zz), xy - wz, xz + wy),
-    //         new Vector3(xy + wz, 1 - (xx + zz), yz - wx),
-    //         new Vector3(xz - wy, yz + wx, 1 - (xx + yy))
-    //     );
-    // }
-
     public slerp(b: Quaternion, weight: number) {
         let ax = this.x,
             ay = this.y,

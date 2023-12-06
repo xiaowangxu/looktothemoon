@@ -123,10 +123,6 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         return this.x === b.x && this.y === b.y && this.z === b.z;
     }
 
-    clone(): Vector3 {
-        return new Vector3(this.x, this.y, this.z);
-    }
-
     public apply_Matrix4(mat: Matrix4) {
         // 0 4 8  12
         // 1 5 9  13

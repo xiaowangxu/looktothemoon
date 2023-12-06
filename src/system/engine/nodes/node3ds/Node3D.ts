@@ -113,7 +113,7 @@ export class Node3D extends Node {
                 this.is_global_transform_dirty = false;
             }
         }
-        return this._global_transform.clone();
+        return this._global_transform;
     }
     public set global_transform(transform: Matrix4) {
         const parent = this.get_Parent();

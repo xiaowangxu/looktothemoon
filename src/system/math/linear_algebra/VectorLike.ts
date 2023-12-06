@@ -38,6 +38,4 @@ export interface VectorLike<Vec extends VectorLike<Vec, Mat>, Mat extends Matrix
     direction_to(b: Vec): Vec;
 
     equal(b: Vec): boolean;
-
-    clone(): Vec;
 }

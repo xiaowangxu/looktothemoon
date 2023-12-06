@@ -10,7 +10,7 @@ export class MouseInputEvent extends ComposeInputEvent {
 
     constructor(viewport: Viewport | undefined, position: Vector2, position_normalized: Vector2, ctrl: boolean, shift: boolean, alt: boolean, meta: boolean) {
         super(viewport, ctrl, shift, alt, meta);
-        this.position = position.clone();
-        this.position_normalized = position_normalized.clone();
+        this.position = position;
+        this.position_normalized = position_normalized;
     }
 }

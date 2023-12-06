@@ -157,13 +157,6 @@ export class Matrix2 implements MatrixLike<Matrix2> {
         }
         return true;
     }
-
-    clone(): Matrix2 {
-        return new Matrix2(
-            this.elements[0], this.elements[1],
-            this.elements[2], this.elements[3],
-        );
-    }
 }
 
 export function mat2(n11: number, n12: number, n21: number, n22: number) {

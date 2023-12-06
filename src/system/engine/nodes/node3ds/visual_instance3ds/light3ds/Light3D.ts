@@ -1,5 +1,5 @@
+import type { ClassReader, ClassWriter } from "../../../../classes/ClassWriterReader";
 import { Color } from 'three';
-import type { ClassReader, ClassWriter } from "../../../classes/ClassWriterReader";
 import { VisualInstance3D } from "../VisualInstance3D";
 
 export abstract class Light3D extends VisualInstance3D {

@@ -281,7 +281,7 @@ export class OrbitCamera3D extends Node3D {
     private get is_position_tween_finished() { return this.position_tween === undefined || this.position_tween.finished; }
 
     public set_Position(position: Vector3, animate: boolean = false) {
-        const pos = position.clone();
+        const pos = position;
         if (!animate) {
             this.local_position = vec3(position.x, position.y, position.z);
         }

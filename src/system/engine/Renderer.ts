@@ -1,7 +1,7 @@
-import { WebGLRenderer, type Camera, Scene, BoxGeometry, MeshBasicMaterial, Mesh, GridHelper, Color, PCFSoftShadowMap } from "three";
-import { World3D } from "./worlds/world3ds/World3D";
-import type { Viewport } from "./Viewport";
+import type { Viewport } from "./nodes/Node";
 import type { Camera3D } from "./nodes/camera3ds/Camera3D";
+import { WebGLRenderer, Color, PCFSoftShadowMap } from "three";
+import { World3D } from "./worlds/world3ds/World3D";
 
 export interface RendererCreationOption {
     antialias?: boolean,
