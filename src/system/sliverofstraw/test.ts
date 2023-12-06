@@ -431,8 +431,10 @@ render_device.render_state.set_CapabilityProxy(render_state.gl.CULL_FACE, true);
 
 function render(time: number) {
 	const camera = EditorViewport.get_Camera3D()!.get_Camera()!;
-	const camera_world = mat4(...camera.matrixWorld.elements).transpose();
-	const camera_projection = mat4(...camera.projectionMatrix.elements).transpose();
+	const camera_world = camera.global_transform;
+	const camera_projection = camera.projection;
+	// const ray = camera.project_Ray(EditorViewport.get_Input().mouse_position_normalized);
+	// console.log(`${ray.direction.x}, ${ray.direction.y}, ${ray.direction.z}`);
 	render_device.set_WorldUniform('camera_world', camera_world.typed_transposed_array_f32);
 	render_device.set_WorldUniform('camera_projection', camera_projection.typed_transposed_array_f32);
 

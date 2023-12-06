@@ -1,6 +1,6 @@
-import { Vector2 } from "three";
 import { NodeNotification, Node } from "./Node";
 import { Viewport } from "./Node";
+import { Vector2 } from "../../math/linear_algebra/Vector2";
 
 export class ViewportDomContainer extends Node {
     public static readonly class_name: string = "ViewportDomContainer";
@@ -11,9 +11,9 @@ export class ViewportDomContainer extends Node {
     private _size: Vector2 | undefined = undefined;
     private is_size_dirty: boolean = false;
     private set size(size: Vector2) {
-        if (this._size === undefined || !this._size.equals(size)) {
-            if (this._size === undefined) this._size = size.clone();
-            else this._size.copy(size);
+        if (this._size === undefined || !this._size.equal(size)) {
+            if (this._size === undefined) this._size = size;
+            else this._size = size;
             this.is_size_dirty = true;
         }
     }

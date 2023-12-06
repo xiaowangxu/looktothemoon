@@ -1,4 +1,3 @@
-import { Vector3 as THREEVec3, Euler, Vector2 as THREEVec2, Ray, Raycaster, Plane, Line3 } from 'three';
 import { Node3D } from "../node3ds/Node3D";
 import { InterpolateCamera3D } from '@/system/engine/nodes/camera3ds/InterpolateCamera3D';
 import { Tau, clamp } from '@/system/math/Scalar';
@@ -11,6 +10,7 @@ import { EasingType, MethodTween, PropertyTween, TransitionType, TweenBase, Twee
 import { Vector3, vec3 } from '@/system/math/linear_algebra/Vector3';
 import { Vector2, vec2 } from '@/system/math/linear_algebra/Vector2';
 import { euler } from '@/system/math/linear_algebra/Euler';
+import { Plane3 } from '@/system/math/geometries/Plane3';
 
 export class OrbitCamera3D extends Node3D {
     public static readonly class_name: string = "OrbitCamera3D";
@@ -180,9 +180,7 @@ export class OrbitCamera3D extends Node3D {
 
         const zoom_tween = this.zoom_to_cursor ?
             new MethodTween(v => {
-
                 const zoom = current_zoom + (new_target - current_zoom) * v;
-
                 const mouse_inside = this.get_Viewport()?.get_Input().is_mouse_inside ?? false;
                 const mouse_position_normalized = this.get_Viewport()?.get_Input().mouse_position_normalized;
                 if (mouse_inside && mouse_position_normalized !== undefined) {
@@ -190,27 +188,18 @@ export class OrbitCamera3D extends Node3D {
                     if (camera !== undefined) {
                         const cam = camera.get_Camera();
                         const dir = this.camera_arm.to_Global(vec3(0, 0, 1)).minus(this.global_position).normalize();
-                        const plane = new Plane().setFromNormalAndCoplanarPoint(new THREEVec3(dir.x, dir.y, dir.z), new THREEVec3().fromArray(this.global_position.array));
-
-                        const raycaster = new Raycaster();
-                        raycaster.setFromCamera(new THREEVec2(0, 0), cam);
-                        const ray = raycaster.ray;
-                        const center = plane.intersectLine(new Line3(ray.origin, ray.origin.clone().addScaledVector(ray.direction, 100000)), new THREEVec3());
-
-                        const raycaster2 = new Raycaster();
-                        raycaster2.setFromCamera(new THREEVec2().fromArray(mouse_position_normalized.array), cam);
-                        const ray2 = raycaster2.ray;
-                        const mouse = plane.intersectLine(new Line3(ray2.origin, ray2.origin.clone().addScaledVector(ray2.direction, 100000)), new THREEVec3());
-
-                        if (center !== null && mouse !== null) {
-                            const delta = mouse.sub(center).multiplyScalar(1 - this.camera.zoom / zoom);
+                        const plane = Plane3.from_PointAndNormal(this.global_position, dir);
+                        const ray = cam.project_Ray(vec2(0, 0));
+                        const center = plane.intersect_UncappedRay(ray);
+                        const ray_mouse = cam.project_Ray(mouse_position_normalized);
+                        const mouse = plane.intersect_UncappedRay(ray_mouse);
+                        if (center !== undefined && mouse !== undefined) {
+                            const delta = mouse.minus(center).mult_Number(1 - this.camera.zoom / zoom);
                             this.set_Position(this.local_position.add(vec3(delta.x, delta.y, delta.z)), false);
                         }
                     }
                 }
-
                 this.camera.zoom = zoom;
-
             }, this.zoom_duration, TransitionType.Quad, EasingType.Out) :
             new PropertyTween(this.camera, 'zoom', new_target, this.zoom_duration, TransitionType.Quad, EasingType.Out);
 
@@ -237,17 +226,13 @@ export class OrbitCamera3D extends Node3D {
         const camera = viewport.get_Camera3D();
         if (camera === undefined) return;
 
-        const raycaster = new Raycaster();
-        raycaster.setFromCamera(new THREEVec2().fromArray(relative_normalized.negate().array), camera.get_Camera());
-        const ray = raycaster.ray;
-
         const dir = this.camera_arm.to_Global(vec3(0, 0, 1)).minus(this.global_position).normalize();
-        const plane = new Plane().setFromNormalAndCoplanarPoint(new THREEVec3(dir.x, dir.y, dir.z), new THREEVec3().fromArray(this.global_position.array));
+        const plane = Plane3.from_PointAndNormal(this.global_position, dir);
+        const ray = camera.get_Camera().project_Ray(relative_normalized.negate());
+        const result = plane.intersect_UncappedRay(ray);
 
-        const result = plane.intersectLine(new Line3(ray.origin, ray.origin.clone().addScaledVector(ray.direction, 100000)), new THREEVec3());
-
-        if (result !== null) {
-            this.set_Position(vec3(result.x, result.y, result.z), false);
+        if (result !== undefined) {
+            this.set_Position(result, false);
         }
     }
 

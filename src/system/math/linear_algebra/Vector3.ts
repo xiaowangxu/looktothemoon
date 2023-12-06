@@ -3,7 +3,7 @@ import type { Matrix3 } from "./Matrix3";
 import type { Matrix4 } from "./Matrix4";
 import type { VectorLike } from "./VectorLike";
 
-export class Vector3 implements VectorLike {
+export class Vector3 implements VectorLike<Vector3, Matrix3> {
     public readonly x: number;
     public readonly y: number;
     public readonly z: number;
@@ -103,17 +103,20 @@ export class Vector3 implements VectorLike {
     negate(): Vector3 {
         return new Vector3(-this.x, -this.y, -this.z);
     }
-    distance(b: Vector3) {
+    distance_to(b: Vector3) {
         const x = this.x - b.x;
         const y = this.y - b.y;
         const z = this.z - b.z;
         return Math.sqrt(x * x + y * y + z * z);
     }
-    squared_distance(b: Vector3) {
+    squared_distance_to(b: Vector3) {
         const x = this.x - b.x;
         const y = this.y - b.y;
         const z = this.z - b.z;
         return x * x + y * y + z * z;
+    }
+    direction_to(b: Vector3) {
+        return b.minus(this).normalize();
     }
 
     equal(b: Vector3): boolean {
@@ -124,8 +127,12 @@ export class Vector3 implements VectorLike {
         return new Vector3(this.x, this.y, this.z);
     }
 
-    public apple_Transformation(transformation: Matrix4) {
-        const [n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44] = transformation.elements;
+    public apply_Matrix4(mat: Matrix4) {
+        // 0 4 8  12
+        // 1 5 9  13
+        // 2 6 10 14
+        // 3 7 11 15
+        const [n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44] = mat.elements;
         const { x, y, z } = this;
         const w = 1 / (n41 * x + n42 * y + n43 * z + n44);
         return new Vector3(

@@ -1,8 +1,9 @@
 import { lerp } from "../Scalar";
+import type { Matrix2 } from "./Matrix2";
 import type { MatrixLike } from "./MatrixLike";
 import type { VectorLike } from "./VectorLike";
 
-export class Vector2 implements VectorLike {
+export class Vector2 implements VectorLike<Vector2, Matrix2> {
     public readonly x: number;
     public readonly y: number;
 
@@ -75,8 +76,13 @@ export class Vector2 implements VectorLike {
     cross(b: Vector2): number {
         return this.x * b.y - b.x * this.y;
     }
-    transform(matrix: MatrixLike): Vector2 {
-        throw new Error("Method not implemented.");
+    transform(matrix: Matrix2): Vector2 {
+        const [n11, n12, n21, n22] = matrix.elements;
+        const { x, y } = this;
+        return new Vector2(
+            n11 * x + n12 * y ,
+            n21 * x + n22 * y ,
+        );
     }
     min(b: Vector2): Vector2 {
         return new Vector2(Math.min(this.x, b.x), Math.min(this.y, b.y));
@@ -93,15 +99,18 @@ export class Vector2 implements VectorLike {
     negate(): Vector2 {
         return new Vector2(-this.x, -this.y);
     }
-    distance(b: Vector2) {
+    distance_to(b: Vector2) {
         const x = this.x - b.x;
         const y = this.y - b.y;
         return Math.sqrt(x * x + y * y);
     }
-    squared_distance(b: Vector2) {
+    squared_distance_to(b: Vector2) {
         const x = this.x - b.x;
         const y = this.y - b.y;
         return x * x + y * y;
+    }
+    direction_to(b: Vector2) {
+        return b.minus(this).normalize();
     }
 
     equal(b: Vector2): boolean {

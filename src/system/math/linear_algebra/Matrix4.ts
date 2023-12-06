@@ -2,7 +2,7 @@ import type { MatrixLike } from "./MatrixLike";
 import { Matrix3 } from "./Matrix3";
 import { Vector3 } from "./Vector3";
 
-export class Matrix4 implements MatrixLike {
+export class Matrix4 implements MatrixLike<Matrix4> {
     // [ n11 n12 n13 n14 ]
     // [ n21 n22 n23 n24 ]
     // [ n31 n32 n33 n34 ]
@@ -70,13 +70,6 @@ export class Matrix4 implements MatrixLike {
     get typed_transposed_array_f64(): Float64Array { return new Float64Array(this.transposed_array); }
     get typed_transposed_array_f32(): Float32Array { return new Float32Array(this.transposed_array); }
     
-    // get rank(): number {
-    //     throw new Error("Method not implemented.");
-    // }
-    // get full_rank(): boolean {
-    //     throw new Error("Method not implemented.");
-    // }
-
     public get basis() {
         return new Matrix3(
             this.elements[0], this.elements[1], this.elements[2],

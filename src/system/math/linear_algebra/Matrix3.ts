@@ -1,10 +1,11 @@
 import { Euler, EulerOrder } from "./Euler";
-import { Matrix4 } from "./Matrix4";
+import { Matrix2 } from "./Matrix2";
 import type { MatrixLike } from "./MatrixLike";
 import type { Quaternion } from "./Quaternion";
+import { Vector2 } from "./Vector2";
 import { Vector3 } from "./Vector3";
 
-export class Matrix3 implements MatrixLike {
+export class Matrix3 implements MatrixLike<Matrix3> {
     // [ n11 n12 n13 ]
     // [ n21 n22 n23 ]
     // [ n31 n32 n33 ]
@@ -47,12 +48,19 @@ export class Matrix3 implements MatrixLike {
     get typed_transposed_array_f64(): Float64Array { return new Float64Array(this.transposed_array); }
     get typed_transposed_array_f32(): Float32Array { return new Float32Array(this.transposed_array); }
 
-    // get rank(): number {
-    //     throw new Error("Method not implemented.");
-    // }
-    // get full_rank(): boolean {
-    //     throw new Error("Method not implemented.");
-    // }
+    public get basis() {
+        return new Matrix2(
+            this.elements[0], this.elements[1],
+            this.elements[3], this.elements[4],
+        );
+    }
+
+    public get position() {
+        return new Vector2(
+            this.elements[2],
+            this.elements[5],
+        );
+    }
 
     constructor(n11: number, n12: number, n13: number, n21: number, n22: number, n23: number, n31: number, n32: number, n33: number) {
         this.elements[0] = n11; this.elements[1] = n12; this.elements[2] = n13;

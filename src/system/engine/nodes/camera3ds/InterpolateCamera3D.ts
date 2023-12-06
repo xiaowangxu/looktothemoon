@@ -1,9 +1,10 @@
-import { Epsilon } from '../../../math/Scalar';
+import { Deg2Rad, Epsilon } from '../../../math/Scalar';
 import { NodeNotification } from "../Node";
 import { Camera3D } from "./Camera3D";
-import { Camera, PerspectiveCamera, OrthographicCamera, Vector2, Vector3, Quaternion, Euler } from 'three';
 import { Matrix4 } from '@/system/math/linear_algebra/Matrix4';
 import { vec3 } from '@/system/math/linear_algebra/Vector3';
+import { Camera3, OrthographicCamera3, PerspectiveCamera3 } from '@/system/math/graphics/Camera3';
+import type { Vector2 } from '@/system/math/linear_algebra/Vector2';
 
 export class InterpolateCamera3D extends Camera3D {
     public static readonly class_name: string = "InterpolateCamera3D";
@@ -11,8 +12,8 @@ export class InterpolateCamera3D extends Camera3D {
     private static MaxOffsetDistance = 20;
     private static OrthographicMaxOffsetDistance = 1000;
 
-    private readonly persp_camera: PerspectiveCamera = new PerspectiveCamera(90, 1, 0.1, 2500);
-    private readonly orth_camera: OrthographicCamera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 2500);
+    private readonly persp_camera: PerspectiveCamera3 = new PerspectiveCamera3();
+    private readonly orth_camera: OrthographicCamera3 = new OrthographicCamera3();
 
     private _reference_distance: number = 1;
     public get reference_distance() { return this._reference_distance; }
@@ -75,16 +76,12 @@ export class InterpolateCamera3D extends Camera3D {
 
     constructor() {
         super();
-        this.persp_camera.matrixAutoUpdate = false;
-        this.persp_camera.matrixWorldAutoUpdate = false;
-        this.orth_camera.matrixAutoUpdate = false;
-        this.orth_camera.matrixWorldAutoUpdate = false;
         this.update_Camera();
     }
 
     protected on_VisualMaskChanged(): void {
-        this.persp_camera.layers.mask = this.visual_mask;
-        this.orth_camera.layers.mask = this.visual_mask;
+        this.persp_camera.mask = this.visual_mask;
+        this.orth_camera.mask = this.visual_mask;
     }
 
     private update_Camera() {
@@ -100,7 +97,7 @@ export class InterpolateCamera3D extends Camera3D {
         // offset
         const half_zoom = (this.reference_zoom / this.zoom) / 2;
         this.offset_distance = half_fov === 0 ? InterpolateCamera3D.OrthographicMaxOffsetDistance : (half_zoom / Math.tan(half_fov)) - this.reference_distance;
-        this.persp_camera.fov = this.fov;
+        this.persp_camera.fov = this.fov * Deg2Rad;
         this.persp_camera.near = this.near;
 
         // far
@@ -115,21 +112,17 @@ export class InterpolateCamera3D extends Camera3D {
         // zoom
         this.orth_camera.zoom = this.zoom;
 
-        this.persp_camera.updateProjectionMatrix();
-        this.orth_camera.updateProjectionMatrix();
         this.update_CameraTransform();
     }
 
     private update_CameraTransform() {
         const offset_distance = this.use_orth ? InterpolateCamera3D.OrthographicMaxOffsetDistance : this.offset_distance;
         const _global_transform = Matrix4.from_BasisPosition(undefined, vec3(0, 0, offset_distance)).compose(this.global_transform);
-        this.persp_camera.matrixWorld.fromArray(_global_transform.transposed_array);
-        this.persp_camera.matrixWorldInverse.copy(this.persp_camera.matrixWorld).invert();
-        this.orth_camera.matrixWorld.copy(this.persp_camera.matrixWorld);
-        this.orth_camera.matrixWorldInverse.copy(this.persp_camera.matrixWorldInverse);
+        this.persp_camera.global_transform = _global_transform;
+        this.orth_camera.global_transform = _global_transform;
     }
 
-    public get_Camera(): Camera {
+    public get_Camera(): Camera3 {
         return this.use_orth ? this.orth_camera : this.persp_camera;
     }
 
@@ -150,14 +143,11 @@ export class InterpolateCamera3D extends Camera3D {
             this._reference_zoom = zoom;
             this._reference_distance = distance;
 
-            const aspect = this.orth_camera.right / this.orth_camera.top;
+            const aspect = this.orth_camera.aspect;
             const h = this._reference_zoom;
-            this.orth_camera.top = h / 2;
-            this.orth_camera.bottom = -h / 2;
             const w = aspect * h;
-            this.orth_camera.left = -w / 2;
-            this.orth_camera.right = w / 2;
-            this.orth_camera.updateProjectionMatrix();
+            this.orth_camera.width = w;
+            this.orth_camera.height = h;
 
             this.update_Camera();
         }
@@ -183,13 +173,9 @@ export class InterpolateCamera3D extends Camera3D {
         }
         const aspect = x / y;
         this.persp_camera.aspect = aspect;
-        this.persp_camera.updateProjectionMatrix();
         const h = this.reference_zoom;
-        this.orth_camera.top = h / 2;
-        this.orth_camera.bottom = -h / 2;
         const w = aspect * h;
-        this.orth_camera.left = -w / 2;
-        this.orth_camera.right = w / 2;
-        this.orth_camera.updateProjectionMatrix();
+        this.orth_camera.width = w;
+        this.orth_camera.height = h;
     }
 }

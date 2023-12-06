@@ -174,11 +174,11 @@ export class Node3D extends Node {
 
     // apis
     public to_Global(local_position: Vector3) {
-        return local_position.apple_Transformation(this.global_transform);
+        return local_position.apply_Matrix4(this.global_transform);
     }
 
     public to_Local(global_position: Vector3) {
-        return global_position.apple_Transformation(this.global_transform.inverse());
+        return global_position.apply_Matrix4(this.global_transform.inverse());
     }
 
     // save / load

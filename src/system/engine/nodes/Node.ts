@@ -1,4 +1,9 @@
-import { Vector2, Color, Raycaster } from "three";
+import type { Camera3D } from "./camera3ds/Camera3D";
+import type { ClassReader, ClassWriter } from "../classes/ClassWriterReader";
+import type { PickingArea3D } from "./node3ds/physics3ds/PickingArea3D";
+import { SceneTree } from "../SceneTree";
+import { Vector2, vec2 } from "@/system/math/linear_algebra/Vector2";
+import { Color, Raycaster } from "three";
 import { SignalEmitter } from "../../utils/SignalEmitter";
 import { Renderer3D } from "../Renderer";
 import { World3D } from "../worlds/world3ds/World3D";
@@ -11,10 +16,6 @@ import { ViewportMouseInputEventManager } from "../inputs/managers/ViewportMouse
 import { ViewportActionInputEventManager } from "../inputs/managers/ViewportActionInputEventManager";
 import { ViewportInputManager } from "../inputs/managers/ViewportInputManager";
 import { ClassBase } from "../classes/ClassBase";
-import type { PickingArea3D } from "./node3ds/physics3ds/PickingArea3D";
-import type { ClassReader, ClassWriter } from "../classes/ClassWriterReader";
-import { SceneTree } from "../SceneTree";
-import type { Camera3D } from "./camera3ds/Camera3D";
 
 export enum NodeNotification {
     ExitingTree,
@@ -393,14 +394,14 @@ export class Viewport extends Node {
         return this.renderer_3d.canvas;
     }
 
-    private readonly _size: Vector2 = new Vector2(0, 0);
+    private _size: Vector2 = vec2(0, 0);
     private is_size_dirty: boolean = false;
     public get size(): Vector2 {
         return this._size.clone();
     }
     public set size(size: Vector2) {
-        if (!this._size.equals(size)) {
-            this._size.copy(size);
+        if (!this._size.equal(size)) {
+            this._size = size;
             this.renderer_3d.resize(this._size.x, this._size.y);
             this.signal_resized.trigger(this.size);
             this.is_size_dirty = true;

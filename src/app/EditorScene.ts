@@ -19,6 +19,7 @@ EditorViewportContainer.dom = document.querySelector('#viewport') ?? undefined;
 
 // viewport
 export const EditorViewport = new Viewport();
+EditorViewport.physics_picking = false;
 EditorViewport.transparent = true;
 EditorViewport.clear_color = new Color(0xf2f2f2);
 EditorViewport.world_3d = new World3D();

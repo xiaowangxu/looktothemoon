@@ -47,7 +47,7 @@ export class Renderer3D {
     public render(world: World3D, viewport: Viewport, camera: Camera3D): void {
         const world_3d = world.get_VisualWorld();
         world_3d.trigger_BeforeRender(viewport, camera);
-        this.renderer.render(world_3d.get_VisualScene(), camera.get_Camera());
+        // this.renderer.render(world_3d.get_VisualScene(), camera.get_Camera());
     }
 
     public get_Info() {

@@ -3,7 +3,7 @@ import type { Matrix4 } from "./Matrix4";
 import type { MatrixLike } from "./MatrixLike";
 import type { VectorLike } from "./VectorLike";
 
-export class Vector4 implements VectorLike {
+export class Vector4 implements VectorLike<Vector4, Matrix4> {
     public readonly x: number;
     public readonly y: number;
     public readonly z: number;
@@ -104,19 +104,22 @@ export class Vector4 implements VectorLike {
     negate(): Vector4 {
         return new Vector4(-this.x, -this.y, -this.z, -this.w);
     }
-    distance(b: Vector4) {
+    distance_to(b: Vector4) {
         const x = this.x - b.x;
         const y = this.y - b.y;
         const z = this.z - b.z;
         const w = this.w - b.w;
         return Math.sqrt(x * x + y * y + z * z + w * w);
     }
-    squared_distance(b: Vector4) {
+    squared_distance_to(b: Vector4) {
         const x = this.x - b.x;
         const y = this.y - b.y;
         const z = this.z - b.z;
         const w = this.w - b.w;
         return x * x + y * y + z * z + w * w;
+    }
+    direction_to(b: Vector4) {
+        return b.minus(this).normalize();
     }
 
     equal(b: Vector4): boolean {

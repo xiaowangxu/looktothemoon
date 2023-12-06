@@ -1,6 +1,6 @@
 import type { MatrixLike } from "./MatrixLike";
 
-export interface VectorLike {
+export interface VectorLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
     get dimension(): number;
     get array(): number[];
     get typed_array_f64(): Float64Array;
@@ -15,28 +15,29 @@ export interface VectorLike {
 
     index(index: number): number;
 
-    add(b: VectorLike): VectorLike;
-    add_Number(b: number): VectorLike;
-    minus(b: VectorLike): VectorLike;
-    minus_Number(b: number): VectorLike;
-    mult(b: VectorLike): VectorLike;
-    mult_Number(b: number): VectorLike;
-    div(b: VectorLike): VectorLike;
-    div_Number(b: number): VectorLike;
-    add_Scaled(num: number, b: VectorLike): VectorLike;
+    add(b: Vec): Vec;
+    add_Number(b: number): Vec;
+    minus(b: Vec): Vec;
+    minus_Number(b: number): Vec;
+    mult(b: Vec): Vec;
+    mult_Number(b: number): Vec;
+    div(b: Vec): Vec;
+    div_Number(b: number): Vec;
+    add_Scaled(num: number, b: Vec): Vec;
 
-    lerp(b: VectorLike, weight: number): VectorLike;
-    dot(b: VectorLike): number;
-    transform(matrix: MatrixLike): VectorLike;
-    min(b: VectorLike): VectorLike;
-    max(b: VectorLike): VectorLike;
-    abs(): VectorLike;
-    normalize(): VectorLike;
-    negate(): VectorLike;
-    distance(b: VectorLike): number;
-    squared_distance(b: VectorLike): number;
+    lerp(b: Vec, weight: number): Vec;
+    dot(b: Vec): number;
+    transform(matrix: Mat): Vec;
+    min(b: Vec): Vec;
+    max(b: Vec): Vec;
+    abs(): Vec;
+    normalize(): Vec;
+    negate(): Vec;
+    distance_to(b: Vec): number;
+    squared_distance_to(b: Vec): number;
+    direction_to(b: Vec): Vec;
 
-    equal(b: VectorLike): boolean;
+    equal(b: Vec): boolean;
 
-    clone(): VectorLike;
+    clone(): Vec;
 }

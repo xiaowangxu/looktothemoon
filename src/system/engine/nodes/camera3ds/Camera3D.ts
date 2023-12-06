@@ -1,6 +1,7 @@
-import { type Camera, Vector2 } from "three";
+import { type Camera3 } from "../../../math/graphics/Camera3";
 import { NodeNotification } from "../Node";
 import { Node3D } from "../node3ds/Node3D";
+import { Vector2 } from "@/system/math/linear_algebra/Vector2";
 
 export class Camera3D extends Node3D {
     public static readonly class_name: string = "Camera3D";
@@ -32,7 +33,7 @@ export class Camera3D extends Node3D {
         throw new Error('abstract method');
     }
 
-    public get_Camera(): Camera {
+    public get_Camera(): Camera3 {
         throw new Error('abstract method');
     }
 
@@ -57,5 +58,4 @@ export class Camera3D extends Node3D {
     public update_ViewportSize(size: Vector2) {
         throw new Error('abstract method');
     }
-
 }

@@ -1,15 +1,24 @@
-import { Deg2Rad } from "../Scalar";
-import { Matrix4 } from "../linear_algebra/Matrix4";
 import type { CameraLike } from "./CameraLike";
+import type { FrustumLike } from "./FrustumLike";
+import { Deg2Rad } from "../Scalar";
+import { Ray3 } from "../geometries/Ray3";
+import { Matrix3 } from "../linear_algebra/Matrix3";
+import { Matrix4 } from "../linear_algebra/Matrix4";
+import { Vector2 } from "../linear_algebra/Vector2";
+import { Vector3 } from "../linear_algebra/Vector3";
 
-export abstract class Camera3 implements CameraLike<Matrix4> {
+type Frustum3 = FrustumLike<Vector3, Matrix3>;
+
+export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     protected _projection: Matrix4 = Matrix4.make_Identity();
     get projection() { return this._projection; }
 
     protected _global_transform: Matrix4 = Matrix4.make_Identity();
     get global_transform() { return this._global_transform; }
-    set global_transformrld(transform: Matrix4) {
-        this._global_transform = transform;
+    set global_transform(transform: Matrix4) {
+        const position = transform.position;
+        const [rotation, _] = transform.basis.get_RotationScale();
+        this._global_transform = Matrix4.from_BasisPosition(Matrix3.from_Euler(rotation), position);
     }
 
     protected _mask: number = 0xffffffff;
@@ -21,7 +30,21 @@ export abstract class Camera3 implements CameraLike<Matrix4> {
     }
     get mask() { return this._mask; }
 
-    public abstract get_Frustum(): any;
+    public project_Point(point: Vector3): Vector2 {
+        const p = point.apply_Matrix4(this.global_transform.inverse()).apply_Matrix4(this.projection);
+        return new Vector2(p.x, p.y);
+    }
+    public abstract unproject_Point(ndc: Vector2, depth?: number): Vector3;
+    public abstract unproject_Normal(ndc: Vector2): Vector3;
+    public project_Ray(ndc: Vector2): Ray3 {
+        return new Ray3(this.unproject_Point(ndc), this.unproject_Normal(ndc));
+    }
+
+    public abstract get_Frustum(): Frustum3;
+
+    public is_PointInView(point: Vector3): boolean {
+        return this.get_Frustum().intersect_Point(point, true);
+    }
 }
 
 export class OrthographicCamera3 extends Camera3 {
@@ -81,18 +104,27 @@ export class OrthographicCamera3 extends Camera3 {
     }
 
     protected update() {
-        const half_w = this.width / (2 * this.zoom);
-        const half_h = this.height / (2 * this.zoom);
-        this._projection = Matrix4.make_OrthogonalProjection(-half_w, half_w, half_h, -half_h, this.near, this.far);
+        const half_width = this.width / (2 * this.zoom);
+        const half_height = this.height / (2 * this.zoom);
+        this._projection = Matrix4.make_OrthogonalProjection(-half_width, half_width, half_height, -half_height, this.near, this.far);
     }
 
-    public get_Frustum() {
+    public unproject_Point(point: Vector2, depth: number = this.near): Vector3 {
+        const half_width = this.width / (2 * this.zoom);
+        const half_height = this.height / (2 * this.zoom);
+        return new Vector3(point.x * half_width, point.y * half_height, -depth).apply_Matrix4(this.global_transform);
+    }
+    public unproject_Normal(point: Vector2): Vector3 {
+        return new Vector3(0, 0, -1).transform(this.global_transform.basis).normalize();
+    }
+
+    public get_Frustum(): Frustum3 {
         throw new Error("Method not implemented.");
     }
 }
 
 export class PerspectiveCamera3 extends Camera3 {
-    protected _fov: number = 70;
+    protected _fov: number = 70 * Deg2Rad;
     public get fov() { return this._fov; }
     public set fov(fov: number) {
         if (this._fov !== fov) {
@@ -128,16 +160,36 @@ export class PerspectiveCamera3 extends Camera3 {
         }
     }
 
+    public get width() {
+        return this.aspect * this.height;
+    }
+
+    public get height() {
+        return this.near * Math.tan(this.fov / 2) * 2;
+    }
+
     constructor() {
         super();
         this.update();
     }
 
     protected update() {
-        this._projection = Matrix4.make_PerspectiveFovProjection(this.fov * Deg2Rad, this.aspect, this.near, this.far);
+        this._projection = Matrix4.make_PerspectiveFovProjection(this.fov, this.aspect, this.near, this.far);
     }
 
-    public get_Frustum() {
+    public unproject_Point(ndc: Vector2, depth: number = this.near): Vector3 {
+        if (depth === 0) return this.global_transform.position;
+        const half_height = this.near * Math.tan(this.fov / 2);
+        const half_width = this.aspect * half_height;
+        const p = new Vector3(ndc.x * half_width, ndc.y * half_height, -depth);
+        return p.apply_Matrix4(this.global_transform);
+    }
+    public unproject_Normal(ndc: Vector2): Vector3 {
+        const p = this.unproject_Point(ndc, this.near);
+        return this.global_transform.position.direction_to(p);
+    }
+
+    public get_Frustum(): Frustum3 {
         throw new Error("Method not implemented.");
     }
 }

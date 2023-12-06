@@ -1,4 +1,4 @@
-export interface MatrixLike {
+export interface MatrixLike<Mat extends MatrixLike<Mat>> {
     get row_dimension(): number;
     get col_dimension(): number;
     get determinant(): number;
@@ -9,26 +9,23 @@ export interface MatrixLike {
     get typed_transposed_array_f64(): Float64Array;
     get typed_transposed_array_f32(): Float32Array;
 
-    // get rank(): number;
-    // get full_rank(): boolean;
-
     index(row: number, col: number): number;
 
-    add(b: MatrixLike): MatrixLike;
-    add_Number(b: number): MatrixLike;
-    minus(b: MatrixLike): MatrixLike;
-    minus_Number(b: number): MatrixLike;
-    mult(b: MatrixLike): MatrixLike;
-    mult_Number(b: number): MatrixLike;
-    div(b: MatrixLike): MatrixLike;
-    div_Number(b: number): MatrixLike;
-    addScaled(num: number, b: MatrixLike): MatrixLike;
+    add(b: Mat): Mat;
+    add_Number(b: number): Mat;
+    minus(b: Mat): Mat;
+    minus_Number(b: number): Mat;
+    mult(b: Mat): Mat;
+    mult_Number(b: number): Mat;
+    div(b: Mat): Mat;
+    div_Number(b: number): Mat;
+    addScaled(num: number, b: Mat): Mat;
 
-    transpose(): MatrixLike;
-    inverse(): MatrixLike;
-    compose(b: MatrixLike): MatrixLike;
+    transpose(): Mat;
+    inverse(): Mat;
+    compose(b: Mat): Mat;
 
-    equal(b: MatrixLike): boolean;
+    equal(b: Mat): boolean;
 
-    clone(): MatrixLike;
+    clone(): Mat;
 }
