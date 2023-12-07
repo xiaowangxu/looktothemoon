@@ -10,6 +10,7 @@ import type { FrameBufferAttachment, RenderStateFrameBuffer } from "./render_sta
 import { RenderStateProgram } from "./render_state_objects/RenderStateProgram";
 import type { RenderStateShader } from "./render_state_objects/RenderStateShader";
 import type { RenderStateTexture, RenderStateTextureSampler } from "./render_state_objects/RenderStateTexture";
+import type { RenderStateTextureUniformSlot, RenderStateValueUniformSlot } from "./render_state_objects/RenderStateUniformSlot";
 import type { RenderStateVertexArray, RenderStateVertexArrayView } from "./render_state_objects/RenderStateVertexArray";
 
 export enum RenderStateShaderType {
@@ -34,27 +35,43 @@ export enum RenderStateDataType {
     UnsignedInt, UnsignedByte, UnsignedShort,
 }
 
-export enum RenderStateValueType {
-    Int, Float, Vec2, Vec3, Vec4, Mat3, Mat4, Tex2D, Tex2DArray, Tex3D
+export enum RenderStateUniformType {
+    Uint, Int, Float, Vec2, Vec3, Vec4, Mat3, Mat4, Tex2D, Tex2DArray, Tex3D
 }
 
-export interface RenderStateValueTypeMap<RS extends RenderState<RS>> {
-    Int: number,
-    Float: number,
-    Vec2: Vector2,
-    Vec3: Vector3,
-    Vec4: Vector4,
-    Mat3: Matrix3,
-    Mat4: Matrix4,
-    Tex2D: RenderStateTexture<RS> | undefined,
-    Tex2DArray: RenderStateTexture<RS> | undefined,
-    Tex3D: RenderStateTexture<RS> | undefined,
+export type RenderStateValueUniformType = RenderStateUniformType.Uint |  RenderStateUniformType.Int | RenderStateUniformType.Float | RenderStateUniformType.Vec2 | RenderStateUniformType.Vec3 | RenderStateUniformType.Vec4 | RenderStateUniformType.Mat3 | RenderStateUniformType.Mat4;
+export type RenderStateTextureUniformType = RenderStateUniformType.Tex2D | RenderStateUniformType.Tex2DArray | RenderStateUniformType.Tex3D;
+
+export interface RenderStateUniformTypeSlotMap<RS extends RenderState<RS>> {
+    Uint: [number, RenderStateValueUniformSlot<RS, RenderStateUniformType.Uint, number, Uint32Array>],
+    Int: [number, RenderStateValueUniformSlot<RS, RenderStateUniformType.Int, number, Int32Array>],
+    Float: [number, RenderStateValueUniformSlot<RS, RenderStateUniformType.Float, number, Float32Array>],
+    Vec2: [Vector2, RenderStateValueUniformSlot<RS, RenderStateUniformType.Vec2, Vector2, Float32Array>],
+    Vec3: [Vector3, RenderStateValueUniformSlot<RS, RenderStateUniformType.Vec3, Vector3, Float32Array>],
+    Vec4: [Vector4, RenderStateValueUniformSlot<RS, RenderStateUniformType.Vec4, Vector4, Float32Array>],
+    Mat3: [Matrix3, RenderStateValueUniformSlot<RS, RenderStateUniformType.Mat3, Matrix3, Float32Array>],
+    Mat4: [Matrix4, RenderStateValueUniformSlot<RS, RenderStateUniformType.Mat4, Matrix4, Float32Array>],
+    Tex2D: [
+        { texture?: RenderStateTexture<RS> | undefined, sampler?: RenderStateTextureSampler<RS> | undefined },
+        RenderStateTextureUniformSlot<RS, RenderStateUniformType.Tex2D, RenderStateTexture<RS>, RenderStateTextureSampler<RS>>
+    ],
+    Tex2DArray: [
+        { texture?: RenderStateTexture<RS> | undefined, sampler?: RenderStateTextureSampler<RS> | undefined },
+        RenderStateTextureUniformSlot<RS, RenderStateUniformType.Tex2DArray, RenderStateTexture<RS>, RenderStateTextureSampler<RS>>
+    ],
+    Tex3D: [
+        { texture?: RenderStateTexture<RS> | undefined, sampler?: RenderStateTextureSampler<RS> | undefined },
+        RenderStateTextureUniformSlot<RS, RenderStateUniformType.Tex3D, RenderStateTexture<RS>, RenderStateTextureSampler<RS>>
+    ],
 }
+
 type ValueOf<T> = T[keyof T];
-export type RenderStateAllValueType<RS extends RenderState<RS>> = ValueOf<RenderStateValueTypeMap<RS>>;
-export type RenderStateValueTypeKey<RS extends RenderState<RS>, T extends RenderStateValueType> = RenderStateValueTypeMap<RS>[Extract<ValueOf<{
-    [K in keyof typeof RenderStateValueType]: [K, typeof RenderStateValueType[K]]
-}>, [any, T]>[0]];
+export type RenderStateUniformTypeMap<RS extends RenderState<RS>, T extends RenderStateUniformType> = RenderStateUniformTypeSlotMap<RS>[Extract<ValueOf<{
+    [K in keyof typeof RenderStateUniformType]: [K, typeof RenderStateUniformType[K]]
+}>, [any, T]>[0]][0];
+export type RenderStateUniformSlotTypeMap<RS extends RenderState<RS>, T extends RenderStateUniformType> = RenderStateUniformTypeSlotMap<RS>[Extract<ValueOf<{
+    [K in keyof typeof RenderStateUniformType]: [K, typeof RenderStateUniformType[K]]
+}>, [any, T]>[0]][1];
 
 export enum RenderStateTextureType {
     Tex2D, CubeMap, Tex3D, Tex2DArray
@@ -73,7 +90,7 @@ export enum RenderStateTextureMagFilter { Linear, Nearest }
 
 export enum RenderStateTextureMinFilter { Linear, Nearest, NearestMipmapNearest, LinearMipmapNearest, NearestMipmapLinear, LinearMipmapLinear }
 
-export type RenderStateUniformVectorType = Uint16Array | Int16Array | Uint8Array | Int8Array | Uint32Array | Int32Array | Float32Array | Float64Array;
+export type RenderStateUniformVectorType = Uint16Array | Uint32Array | Int16Array | Uint8Array | Int8Array | Uint32Array | Int32Array | Float32Array | Float64Array;
 
 export abstract class RenderState<T extends RenderState<T>> {
     public readonly render_device: RenderDevice<T>;
@@ -148,10 +165,10 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     // texture sampler
 
-    public abstract create_TextureSampler(wrap_s: RenderStateTextureWrap, wrap_t: RenderStateTextureWrap, min_filter: RenderStateTextureMinFilter, mag_filter: RenderStateTextureMagFilter):
+    public abstract create_TextureSampler(wrap_s: RenderStateTextureWrap, wrap_t: RenderStateTextureWrap, wrap_r: RenderStateTextureWrap, min_filter: RenderStateTextureMinFilter, mag_filter: RenderStateTextureMagFilter):
         Result<RenderStateTextureSampler<T>, Error>;
 
-    public abstract set_TextureSamplerParameters(sampler: RenderStateTextureSampler<T>, wrap_s?: RenderStateTextureWrap, wrap_t?: RenderStateTextureWrap, min_filter?: RenderStateTextureMinFilter, mag_filter?: RenderStateTextureMagFilter): void;
+    public abstract set_TextureSamplerParameters(sampler: RenderStateTextureSampler<T>, wrap_s?: RenderStateTextureWrap, wrap_t?: RenderStateTextureWrap, wrap_r?: RenderStateTextureWrap, min_filter?: RenderStateTextureMinFilter, mag_filter?: RenderStateTextureMagFilter): void;
 
     public abstract delete_TextureSampler(sampler: RenderStateTextureSampler<T>): void;
 
@@ -165,7 +182,7 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     // uniform
 
-    public abstract set_ProgramUniform<Val extends RenderStateValueType>(program: RenderStateProgram<T>, uniform_location: any, uniform_type: Val, data: RenderStateValueTypeKey<T, Val>): void;
+    public abstract set_ProgramUniform<VT extends RenderStateUniformType>(program: RenderStateProgram<T>, uniform_location: any, uniform_type: VT, data: RenderStateUniformSlotTypeMap<T, VT>): void;
 
     // draw
 

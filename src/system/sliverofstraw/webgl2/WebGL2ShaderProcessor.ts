@@ -1,17 +1,18 @@
-import { RenderStateShaderType, RenderStateValueType } from "../RenderState";
+import { RenderStateShaderType, RenderStateUniformType } from "../RenderState";
 
-function get_ShaderMemberType(data_type: RenderStateValueType) {
+function get_ShaderMemberType(data_type: RenderStateUniformType) {
     switch (data_type) {
-        case RenderStateValueType.Float: return 'float';
-        case RenderStateValueType.Int: return 'int';
-        case RenderStateValueType.Vec2: return 'vec2';
-        case RenderStateValueType.Vec3: return 'vec3';
-        case RenderStateValueType.Vec4: return 'vec4';
-        case RenderStateValueType.Mat3: return 'mat3';
-        case RenderStateValueType.Mat4: return 'mat4';
-        case RenderStateValueType.Tex2D: return 'sampler2D';
-        case RenderStateValueType.Tex3D: return 'sampler3D';
-        case RenderStateValueType.Tex2DArray: return 'sampler2DArray';
+        case RenderStateUniformType.Uint: return 'uint';
+        case RenderStateUniformType.Int: return 'int';
+        case RenderStateUniformType.Float: return 'float';
+        case RenderStateUniformType.Vec2: return 'vec2';
+        case RenderStateUniformType.Vec3: return 'vec3';
+        case RenderStateUniformType.Vec4: return 'vec4';
+        case RenderStateUniformType.Mat3: return 'mat3';
+        case RenderStateUniformType.Mat4: return 'mat4';
+        case RenderStateUniformType.Tex2D: return 'sampler2D';
+        case RenderStateUniformType.Tex3D: return 'sampler3D';
+        case RenderStateUniformType.Tex2DArray: return 'sampler2DArray';
         default: {
             const n: never = data_type;
             return n;
@@ -21,15 +22,15 @@ function get_ShaderMemberType(data_type: RenderStateValueType) {
 
 export function process_WebGL2ShaderCode(
     type: RenderStateShaderType,
-    attributes: { [name: string]: { type: RenderStateValueType, location?: number } } | undefined,
-    uniforms: { [name: string]: { type: RenderStateValueType } } | undefined,
-    varyings: { [name: string]: { type: RenderStateValueType } } | undefined,
-    outputs: { [name: string]: { type: RenderStateValueType, location: number } } | undefined,
+    attributes: { [name: string]: { type: RenderStateUniformType, location?: number } } | undefined,
+    uniforms: { [name: string]: { type: RenderStateUniformType } } | undefined,
+    varyings: { [name: string]: { type: RenderStateUniformType } } | undefined,
+    outputs: { [name: string]: { type: RenderStateUniformType, location: number } } | undefined,
     code: string
 ) {
     const header = `#version 300 es
 precision highp float;
-precision highp sampler2DArray;
+precision highp usampler2DArray;
 precision highp sampler3D;
 
 uniform WorldUniforms {
@@ -40,7 +41,8 @@ uniform WorldUniforms {
 };
 
 uniform mat4 model_world;
-uniform sampler2DArray lights;`;
+uniform uint light_mask;
+uniform usampler2DArray lights;`;
     if (type === RenderStateShaderType.Vertex) {
         const attrs = Object.entries(attributes ?? {}).map(([name, { type, location }]) => `${location === undefined ? '' : `layout(location = ${location}) `}in ${get_ShaderMemberType(type)} ${name};`);
         const unifs = Object.entries(uniforms ?? {}).map(([name, { type }]) => `uniform ${get_ShaderMemberType(type)} ${name};`);

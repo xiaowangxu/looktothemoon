@@ -1,6 +1,6 @@
-import { texture } from "three/examples/jsm/nodes/Nodes.js";
-import { RenderStateTexture, RenderStateTextureSampler } from "../../render_state_objects/RenderStateTexture";
 import type { WebGL2RenderState } from "../WebGL2RenderState";
+import { RenderStateTexture, RenderStateTextureSampler } from "../../render_state_objects/RenderStateTexture";
+import { RenderStateObject } from "../../RenderStateObject";
 import { Ref } from "@/system/utils/RefCounted";
 
 export class WebGL2RenderStateTexture extends RenderStateTexture<WebGL2RenderState> {
@@ -11,7 +11,7 @@ export class WebGL2RenderStateTexture extends RenderStateTexture<WebGL2RenderSta
     public readonly texel_format: number;
     public readonly data_type: number;
 
-    constructor(render_state: WebGL2RenderState, texture: WebGLTexture, type: number, constant: boolean, format: number, texel_format: number, levels: number, data_type: number, wrap_s: number, wrap_t: number,  wrap_r: number, min_filter: number, mag_filter: number) {
+    constructor(render_state: WebGL2RenderState, texture: WebGLTexture, type: number, constant: boolean, format: number, texel_format: number, levels: number, data_type: number, wrap_s: number, wrap_t: number, wrap_r: number, min_filter: number, mag_filter: number) {
         super(render_state, type, constant, format, levels, wrap_s, wrap_t, wrap_r, min_filter, mag_filter);
         this.texture = texture;
         this.texel_format = texel_format;
@@ -22,8 +22,29 @@ export class WebGL2RenderStateTexture extends RenderStateTexture<WebGL2RenderSta
 export class WebGL2RenderStateTextureSampler extends RenderStateTextureSampler<WebGL2RenderState> {
     public readonly sampler: WebGLSampler;
 
-    constructor(render_state: WebGL2RenderState, sampler: WebGLSampler, wrap_s: number, wrap_t: number, min_filter: number, mag_filter: number) {
-        super(render_state, wrap_s, wrap_t, min_filter, mag_filter);
+    constructor(render_state: WebGL2RenderState, sampler: WebGLSampler, wrap_s: number, wrap_t: number, wrap_r: number, min_filter: number, mag_filter: number) {
+        super(render_state, wrap_s, wrap_t, wrap_r, min_filter, mag_filter);
         this.sampler = sampler;
+    }
+}
+
+export class WebGL2RenderStateSampledTexture extends RenderStateObject<WebGL2RenderState> {
+    public slot: number | undefined = undefined;
+
+    private readonly texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
+    private readonly sampler_ref: Ref<WebGL2RenderStateTextureSampler> = new Ref();
+
+    public get texture() { return this.texture_ref.value; }
+    public get sampler() { return this.sampler_ref.value; }
+
+    constructor(render_state: WebGL2RenderState, texture: WebGL2RenderStateTexture | undefined, sampler: WebGL2RenderStateTextureSampler | undefined) {
+        super(render_state);
+        this.texture_ref.value = texture;
+        this.sampler_ref.value = sampler;
+    }
+
+    public dispose(): void {
+        this.texture_ref.clear();
+        this.sampler_ref.clear();
     }
 }

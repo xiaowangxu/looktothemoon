@@ -11,11 +11,11 @@ export abstract class RenderStateTexture<T extends RenderState<T>> extends Rende
     public readonly format: number;
     public readonly levels: number;
 
-    public readonly wrap_s: number;
-    public readonly wrap_t: number;
-    public readonly wrap_r: number;
-    public readonly min_filter: number;
-    public readonly mag_filter: number;
+    public wrap_s: number;
+    public wrap_t: number;
+    public wrap_r: number;
+    public min_filter: number;
+    public mag_filter: number;
 
     constructor(render_state: T, type: number, constant: boolean, format: number, levels: number, wrap_s: number, wrap_t: number, wrap_r: number, min_filter: number, mag_filter: number) {
         super(render_state);
@@ -36,15 +36,17 @@ export abstract class RenderStateTexture<T extends RenderState<T>> extends Rende
 }
 
 export abstract class RenderStateTextureSampler<T extends RenderState<T>> extends RenderStateObject<T> {
-    public readonly wrap_s: number;
-    public readonly wrap_t: number;
-    public readonly min_filter: number;
-    public readonly mag_filter: number;
+    public wrap_s: number;
+    public wrap_t: number;
+    public wrap_r: number;
+    public min_filter: number;
+    public mag_filter: number;
 
-    constructor(render_state: T, wrap_s: number, wrap_t: number, min_filter: number, mag_filter: number) {
+    constructor(render_state: T, wrap_s: number, wrap_t: number, wrap_r: number, min_filter: number, mag_filter: number) {
         super(render_state);
         this.wrap_s = wrap_s;
         this.wrap_t = wrap_t;
+        this.wrap_r = wrap_r;
         this.min_filter = min_filter;
         this.mag_filter = mag_filter;
     }

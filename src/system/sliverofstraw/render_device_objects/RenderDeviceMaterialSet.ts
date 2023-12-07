@@ -1,88 +1,50 @@
-import { Ref, type ToRefed } from "@/system/utils/RefCounted";
+import { Ref, unref } from "@/system/utils/RefCounted";
 import { RenderDeviceObject } from "../RenderDeviceObject";
-import { RenderStateValueType, type RenderState, type RenderStateValueTypeMap, type RenderStateValueTypeKey, type RenderStateAllValueType } from "../RenderState";
+import { RenderStateUniformType, type RenderState, type RenderStateUniformSlotTypeMap, type RenderStateValueUniformType, type RenderStateUniformVectorType, type RenderStateTextureUniformType, type RenderStateUniformTypeSlotMap, type RenderStateUniformTypeMap } from "../RenderState";
 import type { RenderStateProgram } from "../render_state_objects/RenderStateProgram";
 import type { RenderDevice } from "../RenderDevice";
 import type { RenderStateShader } from "../render_state_objects/RenderStateShader";
-import { unref } from "../../utils/RefCounted";
+import { RenderStateTextureUniformSlot, RenderStateUniformSlot, RenderStateValueUniformSlot } from "../render_state_objects/RenderStateUniformSlot";
+import type { RenderStateTexture, RenderStateTextureSampler } from "../render_state_objects/RenderStateTexture";
 
 type ProgramMap<T extends RenderState<T>, Program extends RenderStateProgram<T>> = Map<string, { program: Ref<Program>, uniforms: RenderDeviceUniformSet<T> }>;
 
-type UniformValueTypeByTypeName<RS extends RenderState<RS>> = {
-    [K in (keyof (typeof RenderStateValueType))]: {
-        type: (typeof RenderStateValueType)[K];
-        default: RenderStateValueTypeMap<RS>[K]
-    };
+export type UniformValueTypeByTypeName<RS extends RenderState<RS>> = {
+    [K in (keyof (typeof RenderStateUniformType))]: {
+        type: (typeof RenderStateUniformType)[K],
+        default: RenderStateUniformTypeSlotMap<RS>[K][0],
+    }
 };
-export type UniformInitSet<RS extends RenderState<RS>> = { [name: string]: UniformValueTypeByTypeName<RS>[keyof typeof RenderStateValueType] };
-export type UniformSetItemType<RS extends RenderState<RS>> = { type: RenderStateValueType, default: ToRefed<RenderStateAllValueType<RS>>, value: ToRefed<RenderStateAllValueType<RS>> | undefined, location: any, changed: boolean }
+export type UniformInitSet<RS extends RenderState<RS>> = { [name: string]: UniformValueTypeByTypeName<RS>[keyof typeof RenderStateUniformType] };
 
 export class RenderDeviceUniformSet<RS extends RenderState<RS>> {
-    protected uniforms: Map<string, UniformSetItemType<RS>> = new Map();
+    protected uniforms: Map<string, Ref<RenderStateUniformSlot<RS, RenderStateUniformType>>> = new Map();
 
-    protected is_Texture(type: RenderStateValueType) {
-        return type === RenderStateValueType.Tex2D || type === RenderStateValueType.Tex2DArray || type === RenderStateValueType.Tex3D;
-    }
-
-    public add_Uniform<T extends RenderStateValueType>(name: string, type: T, location: any, default_value: RenderStateValueTypeKey<RS, T>) {
+    public add_Uniform(name: string, uniform_slot: RenderStateUniformSlot<RS, RenderStateUniformType>) {
         if (this.uniforms.has(name)) return;
-        this.uniforms.set(name, {
-            type: type,
-            default: this.is_Texture(type) ? (default_value === undefined ? undefined : new Ref(default_value)) : default_value,
-            value: undefined,
-            location: location,
-            changed: true,
-        });
+        this.uniforms.set(name, new Ref(uniform_slot));
     }
 
-    public set_Uniform<T extends RenderStateValueType>(name: string, value: RenderStateValueTypeKey<RS, T>) {
+    public get_Uniform<T extends RenderStateUniformType>(name: string) {
+        return unref(this.uniforms.get(name)) as (RenderStateUniformSlotTypeMap<RS, T> | undefined);
+    }
+
+    public commit_Uniform(name: string) {
         if (this.uniforms.has(name)) {
-            const obj = this.uniforms.get(name)!;
-            if (this.is_Texture(obj.type)) {
-                if (obj.value !== undefined) {
-                    if (value === undefined) {
-                        (obj.value as Ref<RenderStateValueTypeKey<RS, T>>).clear();
-                        obj.value = undefined;
-                    }
-                    else {
-                        (obj.value as Ref<RenderStateValueTypeKey<RS, T>>).value = value;
-                    }
-                }
-                else {
-                    obj.value = new Ref(value);
-                }
-            }
-            else {
-                obj.value = value;
-            }
-            obj.changed = true;
+            this.uniforms.get(name)!.expect.commit();
         }
     }
 
-    protected push_UniformInternal(render_state: RS, program: RenderStateProgram<RS>, obj: UniformSetItemType<RS>) {
-        const { changed, location, type, default: default_value, value } = obj;
-        if (!changed) return;
-        render_state.set_ProgramUniform(program, location, type, unref(value ?? default_value));
-        obj.changed = false;
-    }
-
-    public push_Uniform(render_state: RS, program: RenderStateProgram<RS>, name: string) {
-        if (this.uniforms.has(name)) {
-            const obj = this.uniforms.get(name)!;
-            this.push_UniformInternal(render_state, program, obj);
-        }
-    }
-
-    public push_AllUniform(render_state: RS, program: RenderStateProgram<RS>) {
+    public commit_AllUniform() {
         for (const obj of this.uniforms.values()) {
-            this.push_UniformInternal(render_state, program, obj);
+            obj.expect.commit();
         }
     }
 
-    public clear() {
+    public dispose() {
+        console.log(">>> dispose <RenderDeviceUniformSet>");
         for (const obj of this.uniforms.values()) {
-            if (obj.default instanceof Ref) obj.default.clear();
-            if (obj.value instanceof Ref) obj.value.clear();
+            obj.clear();
         }
         this.uniforms.clear();
     }
@@ -131,41 +93,93 @@ export abstract class RenderDeviceMaterialSet<
         const obj = this.programs_ref.get(name);
         if (obj === undefined) return;
         const { program, uniforms: uniformset } = obj;
-        uniformset.push_AllUniform(this.render_state, program.expect);
+        uniformset.commit_AllUniform();
         return program.value;
     }
 
-    public set_Uniform<Val extends RenderStateValueType>(name: string | undefined, uniform: string, value: RenderStateValueTypeKey<T, Val>) {
+    public get_Uniform<Val extends RenderStateUniformType>(name: undefined, uniform: string): RenderStateUniformSlotTypeMap<T, Val>[];
+    public get_Uniform<Val extends RenderStateUniformType>(name: string, uniform: string): RenderStateUniformSlotTypeMap<T, Val> | undefined;
+    public get_Uniform<Val extends RenderStateUniformType>(name: string | undefined, uniform: string): RenderStateUniformSlotTypeMap<T, Val>[] | RenderStateUniformSlotTypeMap<T, Val> | undefined {
         if (name === undefined) {
-            for (const {uniforms} of this.programs_ref.values()) {
-                uniforms.set_Uniform<Val>(uniform, value);
+            const results = [];
+            for (const { uniforms } of this.programs_ref.values()) {
+                const uniform_slot = uniforms.get_Uniform(uniform);
+                if (uniform_slot !== undefined) {
+                    results.push(uniform_slot);
+                }
             }
+            return results;
         }
         else {
             const uniforms = this.programs_ref.get(name)?.uniforms;
-            if (uniforms === undefined) return;
-            uniforms.set_Uniform<Val>(uniform, value);
+            if (uniforms === undefined) return undefined;
+            return uniforms.get_Uniform(uniform);
         }
     }
 
-    public push_Uniform(name: string, uniform: string) {
-        const obj = this.programs_ref.get(name);
-        if (obj === undefined) return;
-        const { program, uniforms: uniformset } = obj;
-        uniformset.push_Uniform(this.render_state, program.expect, uniform);
+    public set_ValueUniform<VT extends RenderStateValueUniformType>(name: string | undefined, uniform: string, value: RenderStateUniformTypeMap<T, VT>) {
+        if (name === undefined) {
+            const uniform_slots = this.get_Uniform<VT>(name, uniform) as RenderStateValueUniformSlot<T, VT, RenderStateUniformTypeMap<T, VT>, RenderStateUniformVectorType>[];
+            for (const uniform_slot of uniform_slots) {
+                uniform_slot.value = value;
+            }
+        }
+        else {
+            const uniform_slot = this.get_Uniform<VT>(name, uniform) as RenderStateValueUniformSlot<T, VT, RenderStateUniformTypeMap<T, VT>, RenderStateUniformVectorType> | undefined;
+            if (uniform_slot !== undefined) {
+                uniform_slot.value = value;
+            }
+        }
     }
 
-    public push_AllUniform(name: string) {
+    public set_TextureUniform<VT extends RenderStateTextureUniformType>(name: string | undefined, uniform: string, texture?: RenderStateTexture<T>) {
+        if (name === undefined) {
+            const uniform_slots = this.get_Uniform<VT>(name, uniform) as RenderStateTextureUniformSlot<T, VT, RenderStateTexture<T>, RenderStateTextureSampler<T>>[];
+            for (const uniform_slot of uniform_slots) {
+                uniform_slot.texture = texture;
+            }
+        }
+        else {
+            const uniform_slot = this.get_Uniform<VT>(name, uniform) as RenderStateTextureUniformSlot<T, VT, RenderStateTexture<T>, RenderStateTextureSampler<T>> | undefined;
+            if (uniform_slot !== undefined) {
+                uniform_slot.texture = texture;
+            }
+        }
+    }
+
+    public set_TextureSamplerUniform<VT extends RenderStateTextureUniformType>(name: string | undefined, uniform: string, sampler?: RenderStateTextureSampler<T>) {
+        if (name === undefined) {
+            const uniform_slots = this.get_Uniform<VT>(name, uniform) as RenderStateTextureUniformSlot<T, VT, RenderStateTexture<T>, RenderStateTextureSampler<T>>[];
+            for (const uniform_slot of uniform_slots) {
+                uniform_slot.sampler = sampler;
+            }
+        }
+        else {
+            const uniform_slot = this.get_Uniform<VT>(name, uniform) as RenderStateTextureUniformSlot<T, VT, RenderStateTexture<T>, RenderStateTextureSampler<T>> | undefined;
+            if (uniform_slot !== undefined) {
+                uniform_slot.sampler = sampler;
+            }
+        }
+    }
+
+    public commit_Uniform(name: string, uniform: string) {
         const obj = this.programs_ref.get(name);
         if (obj === undefined) return;
-        const { program, uniforms: uniformset } = obj;
-        uniformset.push_AllUniform(this.render_state, program.expect);
+        const { uniforms: uniformset } = obj;
+        uniformset.commit_Uniform(uniform);
+    }
+
+    public commit_AllUniform(name: string) {
+        const obj = this.programs_ref.get(name);
+        if (obj === undefined) return;
+        const { uniforms: uniformset } = obj;
+        uniformset.commit_AllUniform();
     }
 
     private clear_Programs() {
         for (const { program, uniforms } of this.programs_ref.values()) {
+            uniforms.dispose();
             program.clear();
-            uniforms.clear();
         }
         this.programs_ref.clear();
     }

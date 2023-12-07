@@ -13,7 +13,7 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState> {
     private static readonly WorldUniformsName: string = 'WorldUniforms';
     private static readonly WorldUniformsItems: string[] = ['camera_world', 'camera_projection', 'screen_size', 'time'];
     public static readonly WorldUniformsUnit: number = 0;
-    public static readonly EmptyTextureUnit: number = 0;
+    public static readonly EmptyTextureUnit: number = 1;
     public static readonly LightsTextureUnit: number = 1;
 
     public readonly empty_texture: Ref<WebGL2RenderStateTexture> = new Ref();
@@ -59,49 +59,61 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState> {
     }
 
     private setup_LightsTexture() {
-        const texture = this.render_state.create_Texture(RenderStateTextureType.Tex2DArray, false, RenderStateTextureFormat.RGBA32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+        const texture = this.render_state.create_Texture(RenderStateTextureType.Tex2DArray, false, RenderStateTextureFormat.R32UI, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
         this.lights_texture.value = texture;
         this.update_Lights();
     }
 
     public update_Lights() {
         const texture = this.lights_texture.expect;
+
         const light_width = 128;
         const light_height = 128;
-        this.render_state.alloc_Texture3D(texture, light_width, light_height, 2, 0);
+        const param_count = 9;
+
+        this.render_state.alloc_Texture3D(texture, light_width, light_height, param_count, 0);
         this.render_state.active_Texture(texture, WebGL2RenderDevice.LightsTextureUnit);
-        const lights = new Float32Array(light_width * light_height * 4 * 2);
-        const light_pos_type = new Float32Array(lights.buffer, 0, light_width * light_height * 4);
-        const light_color_intensity = new Float32Array(lights.buffer, light_width * light_height * 4 * Float32Array.BYTES_PER_ELEMENT, light_width * light_height * 4);
+
+        const lights = new Float32Array(light_width * light_height * param_count);
+
+        const layer = light_width * light_height * Float32Array.BYTES_PER_ELEMENT;
+
+        const light_pos_x = new Float32Array(lights.buffer, layer * 0, light_width * light_height);
+        const light_pos_y = new Float32Array(lights.buffer, layer * 1, light_width * light_height);
+        const light_pos_z = new Float32Array(lights.buffer, layer * 2, light_width * light_height);
+        const light_type = new Uint32Array(lights.buffer, layer * 3, light_width * light_height);
+        const light_color_r = new Float32Array(lights.buffer, layer * 4, light_width * light_height);
+        const light_color_g = new Float32Array(lights.buffer, layer * 5, light_width * light_height);
+        const light_color_b = new Float32Array(lights.buffer, layer * 6, light_width * light_height);
+        const light_intensity = new Float32Array(lights.buffer, layer * 7, light_width * light_height);
+        const light_mask = new Uint32Array(lights.buffer, layer * 8, light_width * light_height);
+
         for (let y = 0; y < light_height; y++) {
             for (let x = 0; x < light_width; x++) {
                 const id = y * light_width + x;
-                const idx = id * 4;
 
-                light_pos_type[idx] = (Math.random() - 0.5) * 5;
-                light_pos_type[idx + 1] = (Math.random() - 0.5) * 5;
-                light_pos_type[idx + 2] = -0.75;
-                let type = Math.floor(Math.random() * 8);
-                if (type >= 2) type = 2;
-                light_pos_type[idx + 3] = type;
+                light_pos_x[id] = (Math.random() - 0.5) * 5;
+                light_pos_y[id] = (Math.random() - 0.5) * 5;
+                light_pos_z[id] = -0.75;
 
-                light_color_intensity[idx] = Math.random();
-                light_color_intensity[idx + 1] = Math.random();
-                light_color_intensity[idx + 2] = Math.random();
-                light_color_intensity[idx + 3] = type === 2 ? 1.0 : 0.005;
+                light_type[id] = 2;
+
+                light_color_r[id] = Math.random();
+                light_color_g[id] = Math.random();
+                light_color_b[id] = Math.random();
+                light_intensity[id] = 1.0;
+
+                light_mask[id] = 0xffffffff;
             }
         }
-        this.render_state.update_Texture3D(texture, 0, lights, light_width, light_height, 2, 0, 0, 0);
 
-        this.render_state.update_Texture3D(texture, 0, new Float32Array([
-            1.0, 0.0, 0.0, 8
-        ]), 1, 1, 1, 0, 0, 1);
-        this.render_state.update_Texture3D(texture, 0, new Float32Array([
-            0.0, 0.0, 0.0, 0,
-            -1.0, 1.0, 1.0, 1,
-            1.0, 1.0, 1.0, 0.1,
-            1.0, 1.0, 1.0, 0.1,
-        ]), 2, 1, 2, 0, 0, 0);
+        light_type[0] = 0;
+        light_color_r[0] = 1.0;
+        light_color_g[0] = 1.0;
+        light_color_b[0] = 1.0;
+        light_intensity[0] = 0.1;
+
+        this.render_state.update_Texture3D(texture, 0, new Uint32Array(lights.buffer), light_width, light_height, param_count, 0, 0, 0);
     }
 
     public set_WorldUniform(name: string, data: ArrayBufferView) {

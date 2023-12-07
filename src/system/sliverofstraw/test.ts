@@ -2,7 +2,7 @@ import { Matrix3 } from "../math/linear_algebra/Matrix3";
 import { Matrix4, mat4 } from "../math/linear_algebra/Matrix4";
 import { Vector3, vec3 } from "../math/linear_algebra/Vector3";
 import { vec2 } from "../math/linear_algebra/Vector2";
-import { RenderStateBufferUsage, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateTextureWrap, RenderStateValueType } from "./RenderState";
+import { RenderStateBufferUsage, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateTextureWrap, RenderStateUniformType } from "./RenderState";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector3AttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceMatrix4AttributeBuffer } from "./render_device_objects/RenderDeviceAttributeBuffer";
 import { WebGL2RenderDevice } from "./webgl2/WebGL2RenderDevice";
 import { WebGL2RenderState, WebGL2RenderStateFrameBufferAttachmentPoint } from "./webgl2/WebGL2RenderState";
@@ -17,21 +17,38 @@ ivec3 lights_size = textureSize(lights, 0);
 int lights_count = lights_size.x * lights_size.y;
 const int lights_max_count = 32;
 for (int i = 0; i < lights_count; i++) {
+
 	if (i >= lights_max_count) break;
+
 	int x = i % lights_size.x;
 	int y = i / lights_size.x;
-	vec4 l_position_type = texelFetch(lights, ivec3(x, y, 0), 0);
-	vec3 l_position = l_position_type.rgb;
-	int l_type = int(l_position_type.a);
-	if (l_type < 0) continue;
-	vec4 l_color_intensity = texelFetch(lights, ivec3(x, y, 1), 0);
-	float l_intensity = l_color_intensity.a;
-	vec3 l_color = l_color_intensity.rgb;
-	if (l_type == 0) {
+
+	uint l_pos_x = texelFetch(lights, ivec3(x, y, 0), 0).r;
+	uint l_pos_y = texelFetch(lights, ivec3(x, y, 1), 0).r;
+	uint l_pos_z = texelFetch(lights, ivec3(x, y, 2), 0).r;
+	uint l_type = texelFetch(lights, ivec3(x, y, 3), 0).r;
+
+	vec3 l_position = vec3(uintBitsToFloat(l_pos_x), uintBitsToFloat(l_pos_y), uintBitsToFloat(l_pos_z));
+	
+	if (l_type < uint(0)) continue;
+
+	uint l_mask = texelFetch(lights, ivec3(x, y, 8), 0).r;
+
+	if ((l_mask & light_mask) == uint(0)) continue;
+
+	uint l_color_r = texelFetch(lights, ivec3(x, y, 4), 0).r;
+	uint l_color_g = texelFetch(lights, ivec3(x, y, 5), 0).r;
+	uint l_color_b = texelFetch(lights, ivec3(x, y, 6), 0).r;
+	uint _l_intensity = texelFetch(lights, ivec3(x, y, 7), 0).r;
+
+	vec3 l_color = vec3(uintBitsToFloat(l_color_r), uintBitsToFloat(l_color_g), uintBitsToFloat(l_color_b));
+	float l_intensity = uintBitsToFloat(_l_intensity);
+
+	if (l_type == uint(0)) {
 		// ambient light
 		light_color += vec4(l_color, 1.0) * l_intensity;
 	}
-	else if (l_type == 1) {
+	else if (l_type == uint(1)) {
 		// directional light
 		vec3 l_dir = normalize(l_position);
 		float dot_normal = dot(normal, l_dir);
@@ -39,7 +56,7 @@ for (int i = 0; i < lights_count; i++) {
 			light_color += dot_normal * vec4(l_color, 1.0) * l_intensity;
 		}
 	}
-	else if (l_type == 2) {
+	else if (l_type == uint(2)) {
 		// point light
 		float l_distance = distance(l_position, v_world);
 		vec3 l_lookat = normalize(l_position - v_world);
@@ -63,7 +80,7 @@ const render_device = new WebGL2RenderDevice(canvas);
 // texture
 import { FImage } from './test-image';
 import { EditorViewport } from "../../app/EditorScene";
-const texture = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, RenderStateTextureWrap.MirrorRepeat).expect();
+const texture = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, RenderStateTextureWrap.MirrorRepeat, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
 render_device.render_state.alloc_Texture2D(texture, 256, 256, 0, FImage);
 render_device.render_state.generate_Mipmap(texture);
 
@@ -179,13 +196,13 @@ surface.set_AttributeBuffer(RenderStatePrimitiveType.Triangles, {
 
 // shader
 const attributes = {
-	a_position: { type: RenderStateValueType.Vec3 },
-	a_normal: { type: RenderStateValueType.Vec3 },
-	a_uv: { type: RenderStateValueType.Vec2 },
+	a_position: { type: RenderStateUniformType.Vec3 },
+	a_normal: { type: RenderStateUniformType.Vec3 },
+	a_uv: { type: RenderStateUniformType.Vec2 },
 };
-const uniforms = { u_color: { type: RenderStateValueType.Vec4 }, u_texture: { type: RenderStateValueType.Tex2D } };
-const varyings = { v_world: { type: RenderStateValueType.Vec3 }, v_normal: { type: RenderStateValueType.Vec3 }, v_uv: { type: RenderStateValueType.Vec2 } };
-const outputs = { o_color: { type: RenderStateValueType.Vec4, location: 0 }, o_color1: { type: RenderStateValueType.Vec4, location: 1 } };
+const uniforms = { u_color: { type: RenderStateUniformType.Vec4 }, u_texture: { type: RenderStateUniformType.Tex2D }, u_texture2: { type: RenderStateUniformType.Tex2D } };
+const varyings = { v_world: { type: RenderStateUniformType.Vec3 }, v_normal: { type: RenderStateUniformType.Vec3 }, v_uv: { type: RenderStateUniformType.Vec2 } };
+const outputs = { o_color: { type: RenderStateUniformType.Vec4, location: 0 }, o_color1: { type: RenderStateUniformType.Vec4, location: 1 } };
 
 const f_vertexShaderSource = process_WebGL2ShaderCode(RenderStateShaderType.Vertex,
 	attributes, uniforms, varyings, outputs,
@@ -202,7 +219,10 @@ const f_fragmentShaderSource = process_WebGL2ShaderCode(RenderStateShaderType.Fr
 const f_fragmentShaderSource2 = process_WebGL2ShaderCode(RenderStateShaderType.Fragment,
 	attributes, uniforms, varyings, outputs,
 	`vec3 normal = normalize(v_normal);
-vec4 albedo_color = vec4(1.0, 1.0, 1.0, 1.0);
+vec4 albedo_color = texture(u_texture2, v_uv); // vec4(1.0, 1.0, 1.0, 1.0);
+if (v_uv.x + v_uv.y > 1.0) {
+	albedo_color = texture(u_texture, v_uv); // texture(u_texture, v_uv);
+}
 vec4 light_color = vec4(0.0, 0.0, 0.0, 1.0);
 
 ${calculights}
@@ -216,6 +236,9 @@ const vert_shader = render_device.render_state.create_Shader(RenderStateShaderTy
 const frag_shader = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, f_fragmentShaderSource).expect();
 const frag_shader2 = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, f_fragmentShaderSource2).expect();
 
+const sampler = render_device.render_state.create_TextureSampler(RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+const sampler2 = render_device.render_state.create_TextureSampler(RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Linear, RenderStateTextureMagFilter.Linear).expect();
+
 const material = new WebGL2RenderDeviceMaterialSet(render_device,
 	vert_shader, {},
 	{
@@ -226,8 +249,9 @@ const material = new WebGL2RenderDeviceMaterialSet(render_device,
 		test: {
 			shader: frag_shader2,
 			uniforms: {
-				u_color: { type: RenderStateValueType.Vec4, default: vec4(1, 1, 1, 1) },
-				u_texture: { type: RenderStateValueType.Tex2D, default: undefined },
+				u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
+				u_texture: { type: RenderStateUniformType.Tex2D, default: { texture: texture, sampler: sampler } },
+				u_texture2: { type: RenderStateUniformType.Tex2D, default: { texture: texture, sampler: sampler2 } },
 			}
 		}
 	}
@@ -241,8 +265,9 @@ let stage = 'test';
 
 const render_state = render_device.render_state as WebGL2RenderState;
 
-material.set_Uniform<RenderStateValueType.Tex2D>(stage, 'u_texture', texture);
-material.set_Uniform<RenderStateValueType.Tex2D>(stage, 'u_texture2', texture2);
+material.set_TextureUniform<RenderStateUniformType.Tex2D>(stage, 'u_texture', render_device.empty_texture.expect);
+material.set_TextureUniform<RenderStateUniformType.Tex2D>(stage, 'u_texture2', render_device.empty_texture.expect);
+// material.set_TextureUniform<RenderStateUniformType.Tex2D>(stage, 'u_texture2', texture);
 
 // #endregion
 
@@ -266,14 +291,14 @@ surface2.set_AttributeBuffer(RenderStatePrimitiveType.Triangles, {
 }, indexbuffer);
 surface2.set_InstanceCount(13);
 const attributes2 = {
-	a_position: { type: RenderStateValueType.Vec3 },
-	a_normal: { type: RenderStateValueType.Vec3 },
-	a_uv: { type: RenderStateValueType.Vec2 },
-	a_model_world: { type: RenderStateValueType.Mat4 },
+	a_position: { type: RenderStateUniformType.Vec3 },
+	a_normal: { type: RenderStateUniformType.Vec3 },
+	a_uv: { type: RenderStateUniformType.Vec2 },
+	a_model_world: { type: RenderStateUniformType.Mat4 },
 };
-const uniforms2 = { u_color: { type: RenderStateValueType.Vec4 }, u_texture: { type: RenderStateValueType.Tex2D }, u_texture2: { type: RenderStateValueType.Tex2D } };
-const varyings2 = { v_world: { type: RenderStateValueType.Vec3 }, v_normal: { type: RenderStateValueType.Vec3 }, v_uv: { type: RenderStateValueType.Vec2 } };
-const outputs2 = { o_color: { type: RenderStateValueType.Vec4, location: 0 }, o_color1: { type: RenderStateValueType.Vec4, location: 1 } };
+const uniforms2 = { u_color: { type: RenderStateUniformType.Vec4 }, u_texture: { type: RenderStateUniformType.Tex2D }, u_texture2: { type: RenderStateUniformType.Tex2D } };
+const varyings2 = { v_world: { type: RenderStateUniformType.Vec3 }, v_normal: { type: RenderStateUniformType.Vec3 }, v_uv: { type: RenderStateUniformType.Vec2 } };
+const outputs2 = { o_color: { type: RenderStateUniformType.Vec4, location: 0 }, o_color1: { type: RenderStateUniformType.Vec4, location: 1 } };
 const f_vertexShaderSource2 = process_WebGL2ShaderCode(RenderStateShaderType.Vertex,
 	attributes2, uniforms2, varyings2, outputs2,
 	`vec4 world = a_model_world * vec4(a_position, 1.0);
@@ -306,9 +331,9 @@ const material2 = new WebGL2RenderDeviceMaterialSet(render_device,
 		test: {
 			shader: frag_shader3,
 			uniforms: {
-				u_color: { type: RenderStateValueType.Vec4, default: vec4(1, 1, 1, 1) },
-				u_texture: { type: RenderStateValueType.Tex2D, default: undefined },
-				u_texture2: { type: RenderStateValueType.Tex2D, default: undefined },
+				u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
+				u_texture: { type: RenderStateUniformType.Tex2D, default: {} },
+				u_texture2: { type: RenderStateUniformType.Tex2D, default: {} },
 			}
 		}
 	}
@@ -331,8 +356,8 @@ render_device.render_state.alloc_Texture2D(texture4, 2, 2, 0, new Uint8ClampedAr
 	255, 255, 255, 255,
 	255, 255, 255, 255,
 ]));
-material2.set_Uniform<RenderStateValueType.Tex2D>(stage, 'u_texture', texture);
-material2.set_Uniform<RenderStateValueType.Tex2D>(stage, 'u_texture2', texture4);
+material2.set_TextureUniform<RenderStateUniformType.Tex2D>(stage, 'u_texture', texture);
+material2.set_TextureUniform<RenderStateUniformType.Tex2D>(stage, 'u_texture2', texture4);
 
 // #endregion
 
@@ -356,12 +381,12 @@ quad_surface.set_AttributeBuffer(
 	index
 );
 const quad_attributes = {
-	a_position: { type: RenderStateValueType.Vec3 },
-	a_uv: { type: RenderStateValueType.Vec2 },
+	a_position: { type: RenderStateUniformType.Vec3 },
+	a_uv: { type: RenderStateUniformType.Vec2 },
 };
-const quad_uniforms = { u_result: { type: RenderStateValueType.Tex2D }, u_result1: { type: RenderStateValueType.Tex2D } };
+const quad_uniforms = { u_result: { type: RenderStateUniformType.Tex2D }, u_result1: { type: RenderStateUniformType.Tex2D } };
 const quad_varyings = {};
-const quad_outputs = { o_color: { type: RenderStateValueType.Vec4, location: 0 } };
+const quad_outputs = { o_color: { type: RenderStateUniformType.Vec4, location: 0 } };
 const quad_vertexShaderSource = process_WebGL2ShaderCode(RenderStateShaderType.Vertex,
 	quad_attributes, quad_uniforms, quad_varyings, quad_outputs,
 	`gl_Position = vec4(a_position, 1.0);`
@@ -391,8 +416,8 @@ const quad_material = new WebGL2RenderDeviceMaterialSet(render_device,
 		test: {
 			shader: quad_frag_shader,
 			uniforms: {
-				u_result: { type: RenderStateValueType.Tex2D, default: undefined },
-				u_result1: { type: RenderStateValueType.Tex2D, default: undefined },
+				u_result: { type: RenderStateUniformType.Tex2D, default: {} },
+				u_result1: { type: RenderStateUniformType.Tex2D, default: {} },
 			}
 		}
 	}
@@ -417,7 +442,7 @@ render_device.render_state.set_FrameBufferAttachment(frame_buffer2, WebGL2Render
 render_device.render_state.set_FrameBufferAttachment(frame_buffer2, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_buffer_depth_tex);
 render_device.render_state.enable_FrameBuffer(frame_buffer2);
 
-quad_material.set_Uniform<RenderStateValueType.Tex2D>('test', 'u_result', frame_buffer_tex);
+quad_material.set_TextureUniform<RenderStateUniformType.Tex2D>('test', 'u_result', frame_buffer_tex);
 
 // #endregion
 
@@ -428,6 +453,9 @@ render_device.set_WorldUniform('camera_world', camera_world.typed_transposed_arr
 render_device.set_WorldUniform('camera_projection', camera_projection.typed_transposed_array_f32);
 render_device.set_WorldUniform('screen_size', vec2(1024, 1024).typed_array_f32);
 render_device.render_state.set_CapabilityProxy(render_state.gl.CULL_FACE, true);
+
+material.set_ValueUniform<RenderStateUniformType.Uint>(undefined, 'light_mask', 0x40);
+material2.set_ValueUniform<RenderStateUniformType.Uint>(undefined, 'light_mask', 0xffffffbf);
 
 function render(time: number) {
 	const camera = EditorViewport.get_Camera3D()!.get_Camera()!;
@@ -452,7 +480,7 @@ function render(time: number) {
 	render_state.gl.clear(render_state.gl.COLOR_BUFFER_BIT | render_state.gl.DEPTH_BUFFER_BIT);
 
 	const model_world = Matrix4.from_BasisPosition(Matrix3.make_RotateY(time / 3).compose(Matrix3.make_RotateX(time / 2.12)), vec3(0, 0, -0.5));
-	material.set_Uniform<RenderStateValueType.Mat4>(undefined, 'model_world', model_world);
+	material.set_ValueUniform<RenderStateUniformType.Mat4>(undefined, 'model_world', model_world);
 	render_device.render_Renderable(stage, renderable_surface);
 
 	const model_world_right0 = Matrix4.from_BasisPosition(Matrix3.make_Scale(0.5, 0.5, 0.5).compose(Matrix3.make_RotateY(time / 2)), vec3(2, 0, 0));
@@ -509,3 +537,10 @@ function animation() {
 }
 
 animation();
+
+setTimeout(() => {
+	material.set_TextureSamplerUniform('test', 'u_texture', sampler2);
+}, 1000);
+
+// renderable_surface.dispose();
+// renderable_surface2.dispose();
