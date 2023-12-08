@@ -3,6 +3,7 @@ import type { Line3 } from "./Line3";
 import type { Ray3 } from "./Ray3";
 import { Epsilon, is_ApproxZero } from "../Scalar";
 import { Vector3 } from "../linear_algebra/Vector3";
+import type { Sphere3 } from "./Sphere3";
 
 export class Plane3 {
     // ax + by + cz = d
@@ -67,9 +68,25 @@ export class Plane3 {
             (this.normal.dot(point) > (this.distance - Epsilon)) :
             (this.normal.dot(point) > this.distance);
     }
-    
+
+    public is_PointBelow(point: Vector3, touching: boolean = false) {
+        return touching ?
+            (-this.normal.dot(point) > (this.distance - Epsilon)) :
+            (-this.normal.dot(point) > this.distance);
+    }
+
+    public is_SphereOver(sphere: Sphere3, touching: boolean = false) {
+        const signed_distance = this.signed_distance_to_Point(sphere.center);
+        return signed_distance > (touching ? (sphere.radius - Epsilon) : sphere.radius);
+    }
+
+    public is_SphereBelow(sphere: Sphere3, touching: boolean = false) {
+        const signed_distance = -this.signed_distance_to_Point(sphere.center);
+        return signed_distance > (touching ? (sphere.radius - Epsilon) : sphere.radius);
+    }
+
     // intersect
-    
+
     public intersect_Point(point: Vector3) {
         return is_ApproxZero(this.normal.dot(point) - this.distance);
     }

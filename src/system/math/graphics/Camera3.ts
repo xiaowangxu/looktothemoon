@@ -1,5 +1,4 @@
 import type { CameraLike } from "./CameraLike";
-import type { FrustumLike } from "./FrustumLike";
 import { Deg2Rad } from "../Scalar";
 import { Ray3 } from "../geometries/Ray3";
 import { Matrix3 } from "../linear_algebra/Matrix3";
@@ -7,8 +6,6 @@ import { Matrix4 } from "../linear_algebra/Matrix4";
 import { Vector2 } from "../linear_algebra/Vector2";
 import { Vector3 } from "../linear_algebra/Vector3";
 import { Frustum3 } from "./Frustum3";
-
-// type Frustum3 = FrustumLike<Vector3, Matrix3>;
 
 export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     protected _projection: Matrix4 = Matrix4.make_Identity();
@@ -31,6 +28,8 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     }
     get mask() { return this._mask; }
 
+    public abstract get is_orthogonal(): boolean;
+
     public project_Point(point: Vector3): Vector2 {
         const p = point.apply_Matrix4(this.global_transform.inverse()).apply_Matrix4(this.projection);
         return new Vector2(p.x, p.y);
@@ -43,10 +42,6 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
 
     public get_Frustum(): Frustum3 {
         return Frustum3.from_Projection(this.global_transform.inverse().compose(this.projection));
-    }
-
-    public is_PointInView(point: Vector3): boolean {
-        return this.get_Frustum().intersect_Point(point, true);
     }
 }
 
@@ -100,6 +95,8 @@ export class OrthographicCamera3 extends Camera3 {
             this.update();
         }
     }
+
+    public get is_orthogonal(): boolean { return true; }
 
     constructor() {
         super();
@@ -166,6 +163,8 @@ export class PerspectiveCamera3 extends Camera3 {
     public get height() {
         return this.near * Math.tan(this.fov / 2) * 2;
     }
+
+    public get is_orthogonal(): boolean { return false; }
 
     constructor() {
         super();

@@ -1,4 +1,5 @@
 import { Plane3 } from "../geometries/Plane3";
+import type { Sphere3 } from "../geometries/Sphere3";
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import type { Matrix4 } from "../linear_algebra/Matrix4";
 import { Vector3 } from "../linear_algebra/Vector3";
@@ -50,13 +51,23 @@ export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
         );
     }
 
-    public intersect_Point(point: Vector3, touching?: boolean | undefined): boolean {
-        if (!this.near.is_PointOver(point, touching)) return false;
-        if (!this.top.is_PointOver(point, touching)) return false;
-        if (!this.right.is_PointOver(point, touching)) return false;
-        if (!this.bottom.is_PointOver(point, touching)) return false;
-        if (!this.left.is_PointOver(point, touching)) return false;
-        if (!this.far.is_PointOver(point, touching)) return false;
+    public contain_Point(point: Vector3, touching?: boolean | undefined): boolean {
+        if (this.near.is_PointBelow(point, !touching)) return false;
+        if (this.top.is_PointBelow(point, !touching)) return false;
+        if (this.right.is_PointBelow(point, !touching)) return false;
+        if (this.bottom.is_PointBelow(point, !touching)) return false;
+        if (this.left.is_PointBelow(point, !touching)) return false;
+        if (this.far.is_PointBelow(point, !touching)) return false;
+        return true;
+    }
+
+    public contain_Sphere(sphere: Sphere3, touching?: boolean | undefined ): boolean {
+        if (this.near.is_SphereBelow(sphere, !touching)) return false;
+        if (this.top.is_SphereBelow(sphere, !touching)) return false;
+        if (this.right.is_SphereBelow(sphere, !touching)) return false;
+        if (this.bottom.is_SphereBelow(sphere, !touching)) return false;
+        if (this.left.is_SphereBelow(sphere, !touching)) return false;
+        if (this.far.is_SphereBelow(sphere, !touching)) return false;
         return true;
     }
 }

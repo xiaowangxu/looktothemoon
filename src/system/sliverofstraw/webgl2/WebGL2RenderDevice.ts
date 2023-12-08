@@ -11,7 +11,7 @@ const frag_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Fragme
 
 export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState> {
     private static readonly WorldUniformsName: string = 'WorldUniforms';
-    private static readonly WorldUniformsItems: string[] = ['camera_world', 'camera_projection', 'screen_size', 'time'];
+    private static readonly WorldUniformsItems: string[] = ['camera_world', 'camera_projection', 'screen_size', 'time', 'camera_is_orthogonal'];
     public static readonly WorldUniformsUnit: number = 0;
     public static readonly EmptyTextureUnit: number = 1;
     public static readonly LightsTextureUnit: number = 1;
@@ -92,22 +92,42 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState> {
             for (let x = 0; x < light_width; x++) {
                 const id = y * light_width + x;
 
-                light_pos_x[id] = (Math.random() - 0.5) * 5;
-                light_pos_y[id] = (Math.random() - 0.5) * 5;
-                light_pos_z[id] = -0.75;
+                light_pos_x[id] = (Math.random() - 0.5) * 8;
+                light_pos_y[id] = (Math.random() - 0.5) * 8;
+                light_pos_z[id] = (Math.random() - 0.75) * 2;
 
-                light_type[id] = 2;
+                light_type[id] = 3;
+
+                // const c = Math.random() * 3;
+                // if (c < 1) {
+                //     light_color_r[id] = 1;
+                //     light_color_g[id] = 0;
+                //     light_color_b[id] = 0;
+                // }
+                // else if (c < 2) {
+                //     light_color_r[id] = 0;
+                //     light_color_g[id] = 1;
+                //     light_color_b[id] = 0;
+                // }
+                // else {
+                //     light_color_r[id] = 0;
+                //     light_color_g[id] = 0;
+                //     light_color_b[id] = 1;
+                // }
 
                 light_color_r[id] = Math.random();
                 light_color_g[id] = Math.random();
                 light_color_b[id] = Math.random();
-                light_intensity[id] = 1.0;
+                light_intensity[id] = 0.5;
 
                 light_mask[id] = 0xffffffff;
             }
         }
 
-        light_type[0] = 0;
+        light_type[0] = 2;
+        light_pos_x[0] = 1.0;
+        light_pos_y[0] = 1.0;
+        light_pos_z[0] = 1.0;
         light_color_r[0] = 1.0;
         light_color_g[0] = 1.0;
         light_color_b[0] = 1.0;

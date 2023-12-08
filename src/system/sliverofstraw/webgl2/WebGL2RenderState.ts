@@ -860,7 +860,6 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         this.use_ProgramProxy(program.program);
         switch (uniform_type) {
             case RenderStateUniformType.Uint: {
-                console.log((data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Uint>).typed_array);
                 this.gl.uniform1uiv(uniform_location, (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Uint>).typed_array);
                 return;
             }
