@@ -1,15 +1,17 @@
 import { Ref } from "@/system/utils/RefCounted";
-import { RenderDevice, type RDCanvas } from "../RenderDevice";
-import { WebGL2RenderState } from "./WebGL2RenderState";
-import { RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStateShaderType, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType } from "../RenderState";
+import { RenderDevice, type RDCanvas, type RenderDeviceInitOption } from "../RenderDevice";
+import { WebGL2RenderState, type WebGL2RenderStateInitOption } from "./WebGL2RenderState";
+import { RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStateShaderType, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, type RenderStateInitOption } from "../RenderState";
 import type { WebGL2RenderStateBuffer } from "./webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import { process_WebGL2ShaderCode } from "./WebGL2ShaderProcessor";
 import type { WebGL2RenderStateTexture } from "./webgl2_render_state_objects/WebGL2RenderStateTexture";
 
+export interface WebGL2RenderDeviceInitOption extends RenderDeviceInitOption, WebGL2RenderStateInitOption { }
+
 const vertex_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Vertex, undefined, undefined, undefined, undefined, '');
 const frag_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Fragment, undefined, undefined, undefined, undefined, '');
 
-export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState> {
+export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState, WebGL2RenderDeviceInitOption> {
     private static readonly WorldUniformsName: string = 'WorldUniforms';
     private static readonly WorldUniformsItems: string[] = ['camera_world', 'camera_projection', 'screen_size', 'time', 'camera_is_orthogonal'];
     public static readonly WorldUniformsUnit: number = 0;
@@ -22,8 +24,8 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState> {
     private world_uniform_buffer: Ref<WebGL2RenderStateBuffer> = new Ref();
     private world_uniform_setting: { [name: string]: { index: number, offset: number } } = {};
 
-    constructor(canvas: RDCanvas) {
-        super(canvas, WebGL2RenderState);
+    constructor(canvas: RDCanvas, option: WebGL2RenderDeviceInitOption) {
+        super(canvas, WebGL2RenderState, option);
         this.setup_WorldUniformBuffer();
         this.setup_EmptyTexture();
         this.setup_LightsTexture();

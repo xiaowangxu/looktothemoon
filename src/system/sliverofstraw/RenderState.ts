@@ -3,15 +3,17 @@ import type { Matrix4 } from "../math/linear_algebra/Matrix4";
 import type { Vector2 } from "../math/linear_algebra/Vector2";
 import type { Vector3 } from "../math/linear_algebra/Vector3";
 import type { Vector4 } from "../math/linear_algebra/Vector4";
-import { Result } from "../utils/Result";
 import type { RenderDevice } from "./RenderDevice";
-import { RenderStateBuffer, RenderStateBufferView } from "./render_state_objects/RenderStateBuffer";
 import type { FrameBufferAttachment, RenderStateFrameBuffer } from "./render_state_objects/RenderStateFrameBuffer";
-import { RenderStateProgram } from "./render_state_objects/RenderStateProgram";
 import type { RenderStateShader } from "./render_state_objects/RenderStateShader";
 import type { RenderStateTexture, RenderStateTextureSampler } from "./render_state_objects/RenderStateTexture";
 import type { RenderStateTextureUniformSlot, RenderStateValueUniformSlot } from "./render_state_objects/RenderStateUniformSlot";
 import type { RenderStateVertexArray, RenderStateVertexArrayView } from "./render_state_objects/RenderStateVertexArray";
+import type { RenderStateProgram } from "./render_state_objects/RenderStateProgram";
+import type { RenderStateBuffer, RenderStateBufferView } from "./render_state_objects/RenderStateBuffer";
+import { Result } from "../utils/Result";
+
+export interface RenderStateInitOption { }
 
 export enum RenderStateShaderType {
     Vertex, Fragment,
@@ -39,7 +41,7 @@ export enum RenderStateUniformType {
     Uint, Int, Float, Vec2, Vec3, Vec4, Mat3, Mat4, Tex2D, Tex2DArray, Tex3D
 }
 
-export type RenderStateValueUniformType = RenderStateUniformType.Uint |  RenderStateUniformType.Int | RenderStateUniformType.Float | RenderStateUniformType.Vec2 | RenderStateUniformType.Vec3 | RenderStateUniformType.Vec4 | RenderStateUniformType.Mat3 | RenderStateUniformType.Mat4;
+export type RenderStateValueUniformType = RenderStateUniformType.Uint | RenderStateUniformType.Int | RenderStateUniformType.Float | RenderStateUniformType.Vec2 | RenderStateUniformType.Vec3 | RenderStateUniformType.Vec4 | RenderStateUniformType.Mat3 | RenderStateUniformType.Mat4;
 export type RenderStateTextureUniformType = RenderStateUniformType.Tex2D | RenderStateUniformType.Tex2DArray | RenderStateUniformType.Tex3D;
 
 export interface RenderStateUniformTypeSlotMap<RS extends RenderState<RS>> {
@@ -96,7 +98,7 @@ export abstract class RenderState<T extends RenderState<T>> {
     public readonly render_device: RenderDevice<T>;
     public get render_state() { return this.render_device.render_state; }
 
-    constructor(render_device: RenderDevice<T>) {
+    constructor(render_device: RenderDevice<T>, option: RenderStateInitOption) {
         this.render_device = render_device;
     }
 

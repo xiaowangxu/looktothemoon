@@ -1,6 +1,6 @@
 import { Result } from "@/system/utils/Result";
 import type { RenderDevice } from "../RenderDevice";
-import { RenderState, RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateUniformType, RenderStateTextureWrap, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureFormat, RenderStateTextureType, type RenderStateUniformSlotTypeMap, type RenderStateTextureUniformType } from "../RenderState";
+import { RenderState, RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateUniformType, RenderStateTextureWrap, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureFormat, RenderStateTextureType, type RenderStateUniformSlotTypeMap, type RenderStateTextureUniformType, type RenderStateInitOption as RenderStateInitOption } from "../RenderState";
 import { WebGL2RenderStateBuffer, WebGL2RenderStateBufferView } from "./webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import { WebGL2RenderStateShader } from "./webgl2_render_state_objects/WebGL2RenderStateShader";
 import { WebGL2RenderStateProgram } from "./webgl2_render_state_objects/WebGL2RenderStateProgram";
@@ -12,15 +12,17 @@ import { type FrameBufferAttachment } from "../render_state_objects/RenderStateF
 import type { RenderStateTextureUniformSlot } from "../render_state_objects/RenderStateUniformSlot";
 import type { WebGL2RenderStateTextureUniformSlot } from "./webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 
+export interface WebGL2RenderStateInitOption extends RenderStateInitOption {
+    preserve_texture_count: number,
+    enabled_ext_float_color_buffer?: boolean,
+    canvas_antialias?: boolean,
+}
+
 export enum WebGL2RenderStateFrameBufferAttachmentPoint {
-    Color0, Color1,
-    Color2, Color3,
-    Color4, Color5,
-    Color6, Color7,
-    Color8, Color9,
-    Color10, Color11,
-    Color12, Color13,
-    Color14, Color15,
+    Color0, Color1, Color2, Color3,
+    Color4, Color5, Color6, Color7,
+    Color8, Color9, Color10, Color11,
+    Color12, Color13, Color14, Color15,
     Depth, DepthStencil,
 }
 
@@ -28,8 +30,8 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public readonly gl: WebGL2RenderingContext;
 
     private static readonly TextureSlotBase = 1;
-    private static readonly TextureSlotPreserved = 5;
 
+    private readonly texture_slot_preserved;
     public readonly max_texture_slot: number;
     public readonly user_texture_slot_count: number;
     private readonly active_sampled_texture_slots: (WeakRef<WebGL2RenderStateSampledTexture> | undefined)[];
@@ -219,15 +221,28 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
 
     // #endregion
 
-    constructor(render_device: RenderDevice<WebGL2RenderState>) {
-        super(render_device);
-        const gl = this.render_device.canvas.getContext('webgl2', { antialias: true });
+    constructor(render_device: RenderDevice<WebGL2RenderState>, option: WebGL2RenderStateInitOption) {
+        super(render_device, option);
+
+        const {
+            preserve_texture_count,
+            enabled_ext_float_color_buffer = true,
+            canvas_antialias = true,
+        } = option;
+
+        const gl = this.render_device.canvas.getContext('webgl2', { antialias: canvas_antialias });
+
         if (gl === null) throw new Error('<WebGL2RenderState> constructor: failed to get webgl2 context');
-        const color_buffer_float_ext = gl.getExtension('EXT_color_buffer_float');
-        if (color_buffer_float_ext === null) throw new Error('<WebGL2RenderState> constructor: failed to get webgl2 color buffer float extension');
         this.gl = gl as WebGL2RenderingContext;
+
+        if (enabled_ext_float_color_buffer) {
+            const color_buffer_float_ext = gl.getExtension('EXT_color_buffer_float');
+            if (color_buffer_float_ext === null) throw new Error('<WebGL2RenderState> constructor: failed to get webgl2 color buffer float extension');
+        }
+
         this.max_texture_slot = this.gl.getParameter(this.gl.MAX_TEXTURE_IMAGE_UNITS);
-        this.user_texture_slot_count = this.max_texture_slot - WebGL2RenderState.TextureSlotBase - WebGL2RenderState.TextureSlotPreserved;
+        this.texture_slot_preserved = WebGL2RenderState.TextureSlotBase + Math.max(0, Math.floor(preserve_texture_count));
+        this.user_texture_slot_count = this.max_texture_slot - this.texture_slot_preserved;
         if (this.user_texture_slot_count <= 0) throw new Error('<WebGL2RenderState> constructor: texture unit not enough');
         this.active_sampled_texture_slots = new Array(this.user_texture_slot_count);
     }
@@ -726,7 +741,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
 
         if (texture_slot === undefined || texture_slot.value === undefined) {
             this.active_sampled_texture_slots[current_slot] = new WeakRef(sampled_texture);
-            const slot = WebGL2RenderState.TextureSlotPreserved + current_slot;
+            const slot = this.texture_slot_preserved + current_slot;
             sampled_texture.slot = slot;
             this.active_Texture(texture, slot);
             this.set_TextureSlotSampler(slot, sampler);
@@ -735,7 +750,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             const old_texture = texture_slot.value;
             old_texture.slot = undefined;
             this.active_sampled_texture_slots[current_slot] = new WeakRef(sampled_texture);
-            const slot = WebGL2RenderState.TextureSlotPreserved + current_slot;
+            const slot = this.texture_slot_preserved + current_slot;
             sampled_texture.slot = slot;
             this.active_Texture(texture, slot);
             this.set_TextureSlotSampler(slot, sampler);

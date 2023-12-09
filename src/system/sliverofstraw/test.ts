@@ -76,7 +76,8 @@ const onscreen = document.getElementById('test-canvas') as HTMLCanvasElement;
 const on_screen_ctx = onscreen.getContext('2d');
 
 const canvas = new OffscreenCanvas(1024, 1024);
-const render_device = new WebGL2RenderDevice(canvas);
+const render_device = new WebGL2RenderDevice(canvas, { preserve_texture_count: 4 });
+console.log(render_device);
 
 // #region surface
 
@@ -4716,7 +4717,7 @@ const f_fragmentShaderSource = process_WebGL2ShaderCode(RenderStateShaderType.Fr
 const f_fragmentShaderSource2 = process_WebGL2ShaderCode(RenderStateShaderType.Fragment,
 	attributes, uniforms, varyings, outputs,
 	`vec3 normal = normalize(v_normal);
-vec4 albedo_color = vec4(1.0, 1.0, 1.0, 1.0);
+vec4 albedo_color = vec4(1.0, 0.0, 0.0, 1.0);
 // if (v_uv.x + v_uv.y > 1.0) {
 // 	albedo_color = texture(u_texture, v_uv); // texture(u_texture, v_uv);
 // }
@@ -4732,7 +4733,7 @@ const vert_shader = render_device.render_state.create_Shader(RenderStateShaderTy
 const frag_shader = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, f_fragmentShaderSource).expect();
 const frag_shader2 = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, f_fragmentShaderSource2).expect();
 
-const sampler = render_device.render_state.create_TextureSampler(RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+const sampler = render_device.render_state.create_TextureSampler(RenderStateTextureWrap.Repeat, RenderStateTextureWrap.Repeat, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
 const sampler2 = render_device.render_state.create_TextureSampler(RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Linear, RenderStateTextureMagFilter.Linear).expect();
 
 const material = new WebGL2RenderDeviceMaterialSet(render_device,
@@ -4908,19 +4909,19 @@ ${calculights}
 o_color = albedo_color * vec4(diffuse, 1.0) + vec4(specular, 0.0);
 // o_color = vec4(0.5, 0.5, 1.0, 0.2);
 o_color1 = vec4(normal, 1.0);`,
-// `float light_strength = dot(normal, light_direction);
-// if (light_strength > 0.0) {
-// 	if (light_type == uint(2)) {
-// 		diffuse += light_strength * light_color * light_attenuation;
-// 	}
-// 	else {
-// 		float l_strength = clamp(light_attenuation * light_strength, 0.0, 1.0);
-// 		diffuse += light_color * (l_strength < 0.1 ? 0.0 : (l_strength < 0.2 ? 0.05 : (l_strength < 0.4 ? 0.3 : l_strength < 0.8 ? 0.7 : 1.0 )));
-// 	}
-// }`
+	`float light_strength = dot(normal, light_direction);
+if (light_strength > 0.0) {
+    diffuse += light_strength * light_color * light_attenuation;
+    vec3 half_direction = normalize(light_direction + view_direction);  
+    float beckmann = beckmannDistribution(dot(normal, half_direction), texture(u_texture, v_uv * vec2(4.0, 4.0)).g / 4.0 + 0.01);
+    specular += beckmann * light_color * light_attenuation;
+}`
 );
 const vert_shader2 = render_device.render_state.create_Shader(RenderStateShaderType.Vertex, f_vertexShaderSource2).expect();
 const frag_shader3 = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, f_fragmentShaderSource3).expect();
+
+const sampler3 = render_device.render_state.create_TextureSampler(RenderStateTextureWrap.Repeat, RenderStateTextureWrap.Repeat, RenderStateTextureWrap.Repeat, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+
 const material2 = new WebGL2RenderDeviceMaterialSet(render_device,
 	vert_shader2, {},
 	{
@@ -4932,7 +4933,7 @@ const material2 = new WebGL2RenderDeviceMaterialSet(render_device,
 			shader: frag_shader3,
 			uniforms: {
 				u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
-				u_texture: { type: RenderStateUniformType.Tex2D, default: {} },
+				u_texture: { type: RenderStateUniformType.Tex2D, default: { sampler: sampler3, texture: render_device.empty_texture.expect } },
 				u_texture2: { type: RenderStateUniformType.Tex2D, default: {} },
 			}
 		}
@@ -4956,7 +4957,7 @@ render_device.render_state.alloc_Texture2D(texture4, 2, 2, 0, new Uint8ClampedAr
 	255, 255, 255, 255,
 	255, 255, 255, 255,
 ]));
-material2.set_TextureUniform<RenderStateUniformType.Tex2D>(stage, 'u_texture', texture);
+// material2.set_TextureUniform<RenderStateUniformType.Tex2D>(stage, 'u_texture', texture);
 material2.set_TextureUniform<RenderStateUniformType.Tex2D>(stage, 'u_texture2', texture4);
 
 // #endregion
@@ -5092,7 +5093,7 @@ function render(time: number) {
 	const model_world_bottom1 = Matrix4.from_BasisPosition(Matrix3.make_Scale(1, 1, 1).compose(Matrix3.make_RotateX(time / 2)), vec3(-2, -2, 1));
 	const model_world_right1 = Matrix4.from_BasisPosition(Matrix3.make_Scale(1, 1, 1).compose(Matrix3.make_RotateY(time / 2)), vec3(2, 2, 0.75));
 
-	const model_world_plane = Matrix4.from_BasisPosition(Matrix3.make_Scale(8, 8, 0.1).compose(Matrix3.make_RotateZ(time/5)), vec3(0, 0, -1.5)); // Math.sin(time / 5) * 0.5
+	const model_world_plane = Matrix4.from_BasisPosition(Matrix3.make_Scale(6, 6, 0.1).compose(Matrix3.make_RotateZ(time / 5)), vec3(0, 0, -1.75)); // Math.sin(time / 5) * 0.5
 
 	const model_world_light1 = Matrix4.from_BasisPosition(Matrix3.make_Scale(0.0, 0.0, 0.0), vec3(1, 1, Math.sin(time) + 1.2));
 	const model_world_light2 = Matrix4.from_BasisPosition(Matrix3.make_Scale(0.0, 0.0, 0.0), vec3(-1, -1, Math.sin(time) + 1.2));
