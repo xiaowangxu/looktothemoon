@@ -1,16 +1,16 @@
 import { Node3D } from "../node3ds/Node3D";
 import { InterpolateCamera3D } from '@/system/engine/nodes/camera3ds/InterpolateCamera3D';
-import { Tau, clamp } from '@/system/math/Scalar';
+import { Tau, clamp } from '@/system/fivepebble/Scalar';
 import { ActionInputEvent } from "../../inputs/events/ActionInputEvent";
 import { MouseButtonInputEvent, MouseButton } from "../../inputs/events/mouse_events/MouseButton";
 import { MouseMotionInputEvent } from "../../inputs/events/mouse_events/MouseMotionInputEvent";
 import { MouseEnterLeaveInputEvent } from "../../inputs/events/mouse_events/MouseEnterLeaveInputEvent";
 import { type InputEvent } from "../../inputs/InputEvent";
 import { EasingType, MethodTween, PropertyTween, TransitionType, TweenBase, TweenParallel } from '@/system/engine/Tween';
-import { Vector3, vec3 } from '@/system/math/linear_algebra/Vector3';
-import { Vector2, vec2 } from '@/system/math/linear_algebra/Vector2';
-import { euler } from '@/system/math/linear_algebra/Euler';
-import { Plane3 } from '@/system/math/geometries/Plane3';
+import { Vector3, vec3 } from '@/system/fivepebble/linear_algebra/Vector3';
+import { Vector2, vec2 } from '@/system/fivepebble/linear_algebra/Vector2';
+import { euler } from '@/system/fivepebble/linear_algebra/Euler';
+import { Plane3 } from '@/system/fivepebble/geometries/Plane3';
 
 export class OrbitCamera3D extends Node3D {
     public static readonly class_name: string = "OrbitCamera3D";

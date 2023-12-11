@@ -40,18 +40,7 @@ export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
         return new Frustum3(top, right, bottom, left, near, far);
     }
 
-    public apply_Matrix4(mat: Matrix4, non_uniform_scale: boolean = false) {
-        return new Frustum3(
-            this.top.apply_Matrix4(mat, non_uniform_scale),
-            this.right.apply_Matrix4(mat, non_uniform_scale),
-            this.bottom.apply_Matrix4(mat, non_uniform_scale),
-            this.left.apply_Matrix4(mat, non_uniform_scale),
-            this.near.apply_Matrix4(mat, non_uniform_scale),
-            this.far.apply_Matrix4(mat, non_uniform_scale),
-        );
-    }
-
-    public contain_Point(point: Vector3, touching?: boolean | undefined): boolean {
+    contain_Point(point: Vector3, touching?: boolean | undefined): boolean {
         if (this.near.is_PointBelow(point, !touching)) return false;
         if (this.top.is_PointBelow(point, !touching)) return false;
         if (this.right.is_PointBelow(point, !touching)) return false;
@@ -61,7 +50,7 @@ export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
         return true;
     }
 
-    public contain_Sphere(sphere: Sphere3, touching?: boolean | undefined ): boolean {
+    contain_Sphere(sphere: Sphere3, touching?: boolean | undefined ): boolean {
         if (this.near.is_SphereBelow(sphere, !touching)) return false;
         if (this.top.is_SphereBelow(sphere, !touching)) return false;
         if (this.right.is_SphereBelow(sphere, !touching)) return false;
@@ -69,5 +58,16 @@ export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
         if (this.left.is_SphereBelow(sphere, !touching)) return false;
         if (this.far.is_SphereBelow(sphere, !touching)) return false;
         return true;
+    }
+
+    public apply_Matrix4(mat: Matrix4, non_uniform_scale: boolean = false) {
+        return new Frustum3(
+            this.top.apply_Matrix4(mat, non_uniform_scale),
+            this.right.apply_Matrix4(mat, non_uniform_scale),
+            this.bottom.apply_Matrix4(mat, non_uniform_scale),
+            this.left.apply_Matrix4(mat, non_uniform_scale),
+            this.near.apply_Matrix4(mat, non_uniform_scale),
+            this.far.apply_Matrix4(mat, non_uniform_scale),
+        );
     }
 }

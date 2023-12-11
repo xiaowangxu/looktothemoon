@@ -1,7 +1,7 @@
-import { Matrix3 } from "../math/linear_algebra/Matrix3";
-import { Matrix4, mat4 } from "../math/linear_algebra/Matrix4";
-import { Vector3, vec3 } from "../math/linear_algebra/Vector3";
-import { vec2 } from "../math/linear_algebra/Vector2";
+import { Matrix3 } from "../fivepebble/linear_algebra/Matrix3";
+import { Matrix4, mat4 } from "../fivepebble/linear_algebra/Matrix4";
+import { Vector3, vec3 } from "../fivepebble/linear_algebra/Vector3";
+import { vec2 } from "../fivepebble/linear_algebra/Vector2";
 import { RenderStateBufferUsage, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateTextureWrap, RenderStateUniformType } from "./RenderState";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector3AttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceMatrix4AttributeBuffer } from "./render_device_objects/RenderDeviceAttributeBuffer";
 import { WebGL2RenderDevice } from "./webgl2/WebGL2RenderDevice";
@@ -10,7 +10,7 @@ import { process_WebGL2ShaderCode } from "./webgl2/WebGL2ShaderProcessor";
 import { WebGL2RenderDeviceMaterialSet } from "./webgl2/webgl2_render_device_objects/WebGL2RenderDeviceMaterialSet";
 import { WebGL2RenderDeviceRenderableSurface } from "./webgl2/webgl2_render_device_objects/WebGL2RenderDeviceRenderableSurface";
 import { WebGL2RenderDeviceSurface } from "./webgl2/webgl2_render_device_objects/WebGL2RenderDeviceSurface";
-import { vec4 } from "../math/linear_algebra/Vector4";
+import { vec4 } from "../fivepebble/linear_algebra/Vector4";
 
 const calculights = `
 ivec3 lights_size = textureSize(lights, 0);
@@ -23,7 +23,11 @@ const int lights_max_count = 64;
 vec3 diffuse = vec3(0.0);
 vec3 specular = vec3(0.0);
 
-for (int i = 0; i < lights_count; i++) {
+// vec2 view_position = gl_FragCoord.xy / screen_size * 4.0;
+// int idx = int(view_position.x) + int(view_position.y) * 4;
+int idx = 0;
+
+for (int i = idx; i < lights_count; i++) {
 
 	if (i >= lights_max_count) break;
 
@@ -55,7 +59,8 @@ for (int i = 0; i < lights_count; i++) {
 
 	if (l_type == uint(1)) {
 		// ambient light
-		diffuse += l_color * l_intensity;
+		// diffuse += l_color * l_intensity;
+		light(l_type, normal, c_dir, normal, l_color, l_intensity, diffuse, specular);
 	}
 	else if (l_type == uint(2)) {
 		// directional light
@@ -84,8 +89,8 @@ console.log(render_device);
 // texture
 import { FImage } from './test-image';
 import { EditorViewport } from "../../app/EditorScene";
-import { plane3 } from "../math/geometries/Plane3";
-import { sphere3 } from "../math/geometries/Sphere3";
+import { plane3 } from "../fivepebble/geometries/Plane3";
+import { sphere3 } from "../fivepebble/geometries/Sphere3";
 const texture = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, RenderStateTextureWrap.MirrorRepeat, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
 render_device.render_state.alloc_Texture2D(texture, 256, 256, 0, FImage);
 render_device.render_state.generate_Mipmap(texture);
@@ -4908,14 +4913,7 @@ ${calculights}
 
 o_color = albedo_color * vec4(diffuse, 1.0) + vec4(specular, 0.0);
 // o_color = vec4(0.5, 0.5, 1.0, 0.2);
-o_color1 = vec4(normal, 1.0);`,
-	`float light_strength = dot(normal, light_direction);
-if (light_strength > 0.0) {
-    diffuse += light_strength * light_color * light_attenuation;
-    vec3 half_direction = normalize(light_direction + view_direction);  
-    float beckmann = beckmannDistribution(dot(normal, half_direction), texture(u_texture, v_uv * vec2(4.0, 4.0)).g / 4.0 + 0.01);
-    specular += beckmann * light_color * light_attenuation;
-}`
+o_color1 = vec4(normal, 1.0);`
 );
 const vert_shader2 = render_device.render_state.create_Shader(RenderStateShaderType.Vertex, f_vertexShaderSource2).expect();
 const frag_shader3 = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, f_fragmentShaderSource3).expect();

@@ -1,11 +1,13 @@
+import type { PlaneLike } from "./PlaneLike";
 import type { Matrix4 } from "../linear_algebra/Matrix4";
 import type { Line3 } from "./Line3";
 import type { Ray3 } from "./Ray3";
+import type { Sphere3 } from "./Sphere3";
+import type { Matrix3 } from "../linear_algebra/Matrix3";
 import { Epsilon, is_ApproxZero } from "../Scalar";
 import { Vector3 } from "../linear_algebra/Vector3";
-import type { Sphere3 } from "./Sphere3";
 
-export class Plane3 {
+export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     // ax + by + cz = d
     // where point = (x, y, z)
     //       normal = (a, b, c)
@@ -40,6 +42,22 @@ export class Plane3 {
         return new Plane3(normal.div_Number(length), d / length);
     }
 
+    // #region Geometry Bounded
+
+    signed_distance_to_Point(point: Vector3) {
+        return this.normal.dot(point) - this.distance;
+    }
+
+    distance_to_Point(point: Vector3) {
+        return Math.abs(this.normal.dot(point) - this.distance);
+    }
+    
+    project_Point(point: Vector3) {
+        return point.add_Scaled(-this.signed_distance_to_Point(point), this.normal);
+    }
+
+    // #endregion
+
     public apply_Matrix4(mat: Matrix4, non_uniform_scale: boolean = false) {
         const point = this.normal.mult_Number(this.distance).apply_Matrix4(mat);
         const normal = this.normal.transform(
@@ -49,18 +67,6 @@ export class Plane3 {
         ).normalize();
         const distance = normal.dot(point);
         return new Plane3(normal, distance);
-    }
-
-    public signed_distance_to_Point(point: Vector3) {
-        return this.normal.dot(point) - this.distance;
-    }
-
-    public distance_to_Point(point: Vector3) {
-        return Math.abs(this.normal.dot(point) - this.distance);
-    }
-
-    public project_Point(point: Vector3) {
-        return point.add_Scaled(-this.signed_distance_to_Point(point), this.normal);
     }
 
     public is_PointOver(point: Vector3, touching: boolean = false) {

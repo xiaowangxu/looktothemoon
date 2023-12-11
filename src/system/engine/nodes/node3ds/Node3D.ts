@@ -1,8 +1,8 @@
 import type { ClassReader, ClassWriter } from "../../classes/ClassWriterReader";
-import { Vector3, vec3 } from "../../../math/linear_algebra/Vector3";
-import { Euler, euler } from "../../../math/linear_algebra/Euler";
-import { Matrix4 } from "../../../math/linear_algebra/Matrix4";
-import { Matrix3 } from "../../../math/linear_algebra/Matrix3";
+import { Vector3, vec3 } from "../../../fivepebble/linear_algebra/Vector3";
+import { Euler, euler } from "../../../fivepebble/linear_algebra/Euler";
+import { Matrix4 } from "../../../fivepebble/linear_algebra/Matrix4";
+import { Matrix3 } from "../../../fivepebble/linear_algebra/Matrix3";
 import { Node, NodeNotification } from "../Node";
 
 

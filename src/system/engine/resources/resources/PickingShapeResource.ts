@@ -4,7 +4,7 @@ import type { Viewport } from "../../Viewport";
 import type { Camera3D } from "../../nodes/camera3ds/Camera3D";
 import { type RaycastResult } from "../../worlds/world3ds/PhysicsWorld3D";
 import { PickingSide, type PickingShape3D } from "../../worlds/world3ds/PickingWorld3D";
-import { Epsilon, lerp } from '../../../math/Scalar';
+import { Epsilon, lerp } from '../../../fivepebble/Scalar';
 import { MeshBVH } from 'three-mesh-bvh';
 import type { GeometryResource } from "./GeometryResource";
 import type { ClassReader, ClassWriter } from "../../classes/ClassWriterReader";

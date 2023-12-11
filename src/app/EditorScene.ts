@@ -10,8 +10,8 @@ import { ShortCut } from "@/system/engine/inputs/ShortCut";
 import { Axis } from "./nodes/Axis";
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { DependencyGraph } from "./singletons/DependencyGraph";
-import { vec3 } from "@/system/math/linear_algebra/Vector3";
-import { vec2 } from "@/system/math/linear_algebra/Vector2";
+import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();

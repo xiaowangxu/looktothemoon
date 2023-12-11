@@ -4,7 +4,7 @@ import { MouseButton, MouseButtonInputEvent } from "../events/mouse_events/Mouse
 import { MouseMotionInputEvent } from "../events/mouse_events/MouseMotionInputEvent";
 import { MouseEnterLeaveInputEvent } from "../events/mouse_events/MouseEnterLeaveInputEvent";
 import { InputEventFromViewport } from "../events/InputEventFromViewport";
-import { Vector2, vec2 } from "@/system/math/linear_algebra/Vector2";
+import { Vector2, vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
 export class ViewportMouseInputEventManager {
     private readonly viewport: Viewport;

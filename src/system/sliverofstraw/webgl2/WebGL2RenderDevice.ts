@@ -126,14 +126,20 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState, WebGL2Re
             }
         }
 
-        light_type[0] = 2;
-        light_pos_x[0] = 1.0;
-        light_pos_y[0] = 1.0;
-        light_pos_z[0] = 1.0;
+        light_type[0] = 1;
         light_color_r[0] = 1.0;
         light_color_g[0] = 1.0;
         light_color_b[0] = 1.0;
-        light_intensity[0] = 0.1;
+        light_intensity[0] = 1.0;
+
+        light_type[1] = 2;
+        light_pos_x[1] = 1.0;
+        light_pos_y[1] = 1.0;
+        light_pos_z[1] = 1.0;
+        light_color_r[1] = 1.0;
+        light_color_g[1] = 1.0;
+        light_color_b[1] = 1.0;
+        light_intensity[1] = 0.1;
 
         this.render_state.update_Texture3D(texture, 0, new Uint32Array(lights.buffer), light_width, light_height, param_count, 0, 0, 0);
     }

@@ -1,5 +1,5 @@
 import type { Viewport } from "../../../nodes/Node";
-import { Vector2 } from "../../../../math/linear_algebra/Vector2";
+import { Vector2 } from "../../../../fivepebble/linear_algebra/Vector2";
 import { InputEvent } from "../../InputEvent";
 import { MouseInputEvent } from "./MouseInputEvent";
 

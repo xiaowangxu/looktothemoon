@@ -5,7 +5,7 @@ import type { MaterialResource } from "../../resources/resources/MaterialResourc
 import { SignalEmitter } from "../../../utils/SignalEmitter";
 import type { Viewport } from "../../Viewport";
 import type { Camera3D } from "../../nodes/camera3ds/Camera3D";
-import { Matrix4 as MyMat4 } from "../../../math/linear_algebra/Matrix4";
+import { Matrix4 as MyMat4 } from "../../../fivepebble/linear_algebra/Matrix4";
 
 export class VisualWorld3D {
     private readonly scene: Scene = new Scene();

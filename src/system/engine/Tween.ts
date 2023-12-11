@@ -1,8 +1,8 @@
-import { clamp } from "../math/Scalar";
-import { Euler } from "../math/linear_algebra/Euler";
-import { Vector2 } from "../math/linear_algebra/Vector2";
-import { Vector3 } from "../math/linear_algebra/Vector3";
-import { Quaternion } from "../math/linear_algebra/Quaternion";
+import { clamp } from "../fivepebble/Scalar";
+import { Euler } from "../fivepebble/linear_algebra/Euler";
+import { Vector2 } from "../fivepebble/linear_algebra/Vector2";
+import { Vector3 } from "../fivepebble/linear_algebra/Vector3";
+import { Quaternion } from "../fivepebble/linear_algebra/Quaternion";
 import { SignalEmitter } from "../utils/SignalEmitter";
 
 export class TweenBase {

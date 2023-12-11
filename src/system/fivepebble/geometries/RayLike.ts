@@ -1,8 +1,9 @@
 import type { VectorLike } from "../linear_algebra/VectorLike";
 import type { LineLike } from "../geometries/LineLike";
 import type { MatrixLike } from "../linear_algebra/MatrixLike";
+import type { GeometryLike } from "./GeometryLike";
 
-export interface RayLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
+export interface RayLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> extends GeometryLike<Vec, Mat> {
     get origin(): Vec;
     get direction(): Vec;
 

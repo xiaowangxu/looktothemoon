@@ -1,6 +1,6 @@
 import { NodeNotification, Node } from "./Node";
 import { Viewport } from "./Node";
-import { Vector2 } from "../../math/linear_algebra/Vector2";
+import { Vector2 } from "../../fivepebble/linear_algebra/Vector2";
 
 export class ViewportDomContainer extends Node {
     public static readonly class_name: string = "ViewportDomContainer";

@@ -1,4 +1,4 @@
-import { clamp } from "@/system/math/Scalar";
+import { clamp } from "@/system/fivepebble/Scalar";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry_3ds/MeshInstance3D";
 import { GeometryResource, SegmentLineGeometryResource, ThreeGeometryResource } from "@/system/engine/resources/resources/GeometryResource";
 import { LineMaterialResource, MaterialResource, ThreeMaterialResource } from "@/system/engine/resources/resources/MaterialResource";

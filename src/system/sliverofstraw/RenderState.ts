@@ -1,8 +1,8 @@
-import type { Matrix3 } from "../math/linear_algebra/Matrix3";
-import type { Matrix4 } from "../math/linear_algebra/Matrix4";
-import type { Vector2 } from "../math/linear_algebra/Vector2";
-import type { Vector3 } from "../math/linear_algebra/Vector3";
-import type { Vector4 } from "../math/linear_algebra/Vector4";
+import type { Matrix3 } from "../fivepebble/linear_algebra/Matrix3";
+import type { Matrix4 } from "../fivepebble/linear_algebra/Matrix4";
+import type { Vector2 } from "../fivepebble/linear_algebra/Vector2";
+import type { Vector3 } from "../fivepebble/linear_algebra/Vector3";
+import type { Vector4 } from "../fivepebble/linear_algebra/Vector4";
 import type { RenderDevice } from "./RenderDevice";
 import type { FrameBufferAttachment, RenderStateFrameBuffer } from "./render_state_objects/RenderStateFrameBuffer";
 import type { RenderStateShader } from "./render_state_objects/RenderStateShader";

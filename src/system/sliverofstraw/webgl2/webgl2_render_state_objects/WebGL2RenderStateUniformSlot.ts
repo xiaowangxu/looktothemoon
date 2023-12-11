@@ -1,12 +1,12 @@
 import { type RenderStateUniformVectorType, RenderStateUniformType, type RenderStateTextureUniformType } from "../../RenderState";
 import type { WebGL2RenderState } from "../WebGL2RenderState";
 import type { WebGL2RenderStateProgram } from "./WebGL2RenderStateProgram";
-import type { Vector2 } from "@/system/math/linear_algebra/Vector2";
-import type { Vector3 } from "@/system/math/linear_algebra/Vector3";
-import type { Vector4 } from "@/system/math/linear_algebra/Vector4";
-import type { Matrix3 } from "@/system/math/linear_algebra/Matrix3";
+import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { RenderStateTextureUniformSlot, RenderStateValueUniformSlot } from "../../render_state_objects/RenderStateUniformSlot";
-import type { Matrix4 } from "@/system/math/linear_algebra/Matrix4";
+import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { WebGL2RenderStateSampledTexture, type WebGL2RenderStateTexture, type WebGL2RenderStateTextureSampler } from "./WebGL2RenderStateTexture";
 import { Ref } from "@/system/utils/RefCounted";
 

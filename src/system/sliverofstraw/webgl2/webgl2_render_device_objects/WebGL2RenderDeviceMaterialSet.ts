@@ -7,7 +7,7 @@ import {
     WebGL2RenderStateMat3UniformSlot, WebGL2RenderStateMat4UniformSlot, WebGL2RenderStateTextureUniformSlot, WebGL2RenderStateUintUniformSlot,
 } from "../webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 import { Ref } from "@/system/utils/RefCounted";
-import { Matrix4 } from "@/system/math/linear_algebra/Matrix4";
+import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { RenderStateUniformType } from "../../RenderState";
 import { RenderDeviceMaterialSet, RenderDeviceUniformSet, type UniformInitSet } from "../../render_device_objects/RenderDeviceMaterialSet";
 import type { WebGL2RenderStateTexture, WebGL2RenderStateTextureSampler } from "../webgl2_render_state_objects/WebGL2RenderStateTexture";

@@ -1,9 +1,9 @@
-import { Epsilon } from "../../../math/Scalar";
+import { Epsilon } from "../../../fivepebble/Scalar";
 import { NodeNotification } from "../Node";
 import { Node3D } from "./Node3D";
 import { Raycaster, Vector2, Plane, Line3, Vector3 } from "three";
 import type { ClassReader, ClassWriter } from "../../classes/ClassWriterReader";
-import { vec3 } from "@/system/math/linear_algebra/Vector3";
+import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 
 export class FixSizeNode3D extends Node3D {
     public static readonly class_name: string = "FixSizeNode3D";

@@ -3,7 +3,7 @@ import { MouseMotionInputEvent } from "@/system/engine/inputs/events/mouse_event
 import { MouseEnterLeaveInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseEnterLeaveInputEvent";
 import { MouseInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseInputEvent";
 import { InputEvent } from "@/system/engine/inputs/InputEvent";
-import { Epsilon, Tau, clamp } from "@/system/math/Scalar";
+import { Epsilon, Tau, clamp } from "@/system/fivepebble/Scalar";
 import { NodeNotification } from "@/system/engine/nodes/Node";
 import { type CursorStyle, Viewport } from "@/system/engine/nodes/Node";
 import { Node3D } from "@/system/engine/nodes/node3ds/Node3D";
@@ -16,8 +16,8 @@ import { LineMaterialResource, ThreeMaterialResource } from "@/system/engine/res
 import { PickingBVHResource, PickingCylinderResource, PickingSphereResource } from "@/system/engine/resources/resources/PickingShapeResource";
 import { Vector3, ConeGeometry, MeshMatcapMaterial, MeshBasicMaterial, SphereGeometry, CylinderGeometry, Color, Euler, Quaternion, Line3, Vector2, Raycaster, Plane, TorusGeometry, DoubleSide, Ray } from 'three';
 import { SignalEmitter } from '@/system/utils/SignalEmitter';
-import { vec3 } from "@/system/math/linear_algebra/Vector3";
-import { euler } from "@/system/math/linear_algebra/Euler";
+import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { euler } from "@/system/fivepebble/linear_algebra/Euler";
 
 function get_ClosestPointsOnLineSegmentsParameters(l0: Line3, l1: Line3): [p0: number, p1: number] {
     const p = l0.end.clone().sub(l0.start);

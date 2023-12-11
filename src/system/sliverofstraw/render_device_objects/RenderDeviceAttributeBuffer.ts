@@ -3,10 +3,10 @@ import { RenderDeviceObject } from "../RenderDeviceObject";
 import { RenderStateDataType, type RenderState, RenderStateBufferType, RenderStateBufferUsage } from "../RenderState";
 import type { RenderStateBuffer, RenderStateBufferView } from "../render_state_objects/RenderStateBuffer";
 import type { RenderDevice } from "../RenderDevice";
-import type { Vector3 } from "@/system/math/linear_algebra/Vector3";
-import type { Vector2 } from "@/system/math/linear_algebra/Vector2";
+import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { RenderStateVertexArray } from "../render_state_objects/RenderStateVertexArray";
-import type { Matrix4 } from "@/system/math/linear_algebra/Matrix4";
+import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 
 export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
     extends RenderDeviceObject<T>

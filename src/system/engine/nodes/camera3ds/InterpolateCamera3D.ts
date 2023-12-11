@@ -1,10 +1,10 @@
-import { Deg2Rad, Epsilon } from '../../../math/Scalar';
+import { Deg2Rad, Epsilon } from '../../../fivepebble/Scalar';
 import { NodeNotification } from "../Node";
 import { Camera3D } from "./Camera3D";
-import { Matrix4 } from '@/system/math/linear_algebra/Matrix4';
-import { vec3 } from '@/system/math/linear_algebra/Vector3';
-import { Camera3, OrthographicCamera3, PerspectiveCamera3 } from '@/system/math/graphics/Camera3';
-import type { Vector2 } from '@/system/math/linear_algebra/Vector2';
+import { Matrix4 } from '@/system/fivepebble/linear_algebra/Matrix4';
+import { vec3 } from '@/system/fivepebble/linear_algebra/Vector3';
+import { Camera3, OrthographicCamera3, PerspectiveCamera3 } from '@/system/fivepebble/graphics/Camera3';
+import type { Vector2 } from '@/system/fivepebble/linear_algebra/Vector2';
 
 export class InterpolateCamera3D extends Camera3D {
     public static readonly class_name: string = "InterpolateCamera3D";
