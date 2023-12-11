@@ -71,7 +71,7 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState, WebGL2Re
 
         const light_width = 128;
         const light_height = 128;
-        const param_count = 9;
+        const param_count = 16;
 
         this.render_state.alloc_Texture3D(texture, light_width, light_height, param_count, 0);
         this.render_state.active_Texture(texture, WebGL2RenderDevice.LightsTextureUnit);
@@ -80,15 +80,22 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState, WebGL2Re
 
         const layer = light_width * light_height * Float32Array.BYTES_PER_ELEMENT;
 
-        const light_pos_x = new Float32Array(lights.buffer, layer * 0, light_width * light_height);
-        const light_pos_y = new Float32Array(lights.buffer, layer * 1, light_width * light_height);
-        const light_pos_z = new Float32Array(lights.buffer, layer * 2, light_width * light_height);
-        const light_type = new Uint32Array(lights.buffer, layer * 3, light_width * light_height);
-        const light_color_r = new Float32Array(lights.buffer, layer * 4, light_width * light_height);
-        const light_color_g = new Float32Array(lights.buffer, layer * 5, light_width * light_height);
-        const light_color_b = new Float32Array(lights.buffer, layer * 6, light_width * light_height);
-        const light_intensity = new Float32Array(lights.buffer, layer * 7, light_width * light_height);
-        const light_mask = new Uint32Array(lights.buffer, layer * 8, light_width * light_height);
+        const      light_type = new  Uint32Array(lights.buffer, layer *  0, light_width * light_height);
+        const     light_pos_x = new Float32Array(lights.buffer, layer *  1, light_width * light_height);
+        const     light_pos_y = new Float32Array(lights.buffer, layer *  2, light_width * light_height);
+        const     light_pos_z = new Float32Array(lights.buffer, layer *  3, light_width * light_height);
+        const     light_dir_x = new Float32Array(lights.buffer, layer *  4, light_width * light_height);
+        const     light_dir_y = new Float32Array(lights.buffer, layer *  5, light_width * light_height);
+        const     light_dir_z = new Float32Array(lights.buffer, layer *  6, light_width * light_height);
+        const   light_color_r = new Float32Array(lights.buffer, layer *  7, light_width * light_height);
+        const   light_color_g = new Float32Array(lights.buffer, layer *  8, light_width * light_height);
+        const   light_color_b = new Float32Array(lights.buffer, layer *  9, light_width * light_height);
+        const light_intensity = new Float32Array(lights.buffer, layer * 10, light_width * light_height);
+        const      light_mask = new  Uint32Array(lights.buffer, layer * 11, light_width * light_height);
+        const    light_shadow = new  Uint32Array(lights.buffer, layer * 12, light_width * light_height);
+        const   light_param_0 = new Float32Array(lights.buffer, layer * 13, light_width * light_height);
+        const   light_param_1 = new Float32Array(lights.buffer, layer * 14, light_width * light_height);
+        const   light_param_2 = new Float32Array(lights.buffer, layer * 15, light_width * light_height);
 
         for (let y = 0; y < light_height; y++) {
             for (let x = 0; x < light_width; x++) {
@@ -126,11 +133,14 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState, WebGL2Re
             }
         }
 
-        light_type[0] = 1;
+        light_type[0] = 2;
+        light_pos_x[0] = -1.0;
+        light_pos_y[0] = -1.0;
+        light_pos_z[0] = -1.0;
         light_color_r[0] = 1.0;
-        light_color_g[0] = 1.0;
-        light_color_b[0] = 1.0;
-        light_intensity[0] = 1.0;
+        light_color_g[0] = 0.0;
+        light_color_b[0] = 0.0;
+        light_intensity[0] = 0.5;
 
         light_type[1] = 2;
         light_pos_x[1] = 1.0;

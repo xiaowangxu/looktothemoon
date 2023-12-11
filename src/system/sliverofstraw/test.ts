@@ -33,33 +33,32 @@ for (int i = idx; i < lights_count; i++) {
 
 	int x = i % lights_size.x;
 	int y = i / lights_size.x;
-
-	uint l_pos_x = texelFetch(lights, ivec3(x, y, 0), 0).r;
-	uint l_pos_y = texelFetch(lights, ivec3(x, y, 1), 0).r;
-	uint l_pos_z = texelFetch(lights, ivec3(x, y, 2), 0).r;
-	uint l_type = texelFetch(lights, ivec3(x, y, 3), 0).r;
+	
+	uint l_type = texelFetch(lights, ivec3(x, y, 0), 0).r;
+	uint l_pos_x = texelFetch(lights, ivec3(x, y, 1), 0).r;
+	uint l_pos_y = texelFetch(lights, ivec3(x, y, 2), 0).r;
+	uint l_pos_z = texelFetch(lights, ivec3(x, y, 3), 0).r;
+	uint l_dir_x = texelFetch(lights, ivec3(x, y, 4), 0).r;
+	uint l_dir_y = texelFetch(lights, ivec3(x, y, 5), 0).r;
+	uint l_dir_z = texelFetch(lights, ivec3(x, y, 6), 0).r;
+	uint l_color_r = texelFetch(lights, ivec3(x, y, 7), 0).r;
+	uint l_color_g = texelFetch(lights, ivec3(x, y, 8), 0).r;
+	uint l_color_b = texelFetch(lights, ivec3(x, y, 9), 0).r;
+	uint _l_intensity = texelFetch(lights, ivec3(x, y, 10), 0).r;
+	uint l_mask = texelFetch(lights, ivec3(x, y, 11), 0).r;
 
 	vec3 l_position = vec3(uintBitsToFloat(l_pos_x), uintBitsToFloat(l_pos_y), uintBitsToFloat(l_pos_z));
-	
-	if (l_type == uint(0)) continue;
-
-	uint l_mask = texelFetch(lights, ivec3(x, y, 8), 0).r;
-
-	if ((l_mask & light_mask) == uint(0)) continue;
-
-	uint l_color_r = texelFetch(lights, ivec3(x, y, 4), 0).r;
-	uint l_color_g = texelFetch(lights, ivec3(x, y, 5), 0).r;
-	uint l_color_b = texelFetch(lights, ivec3(x, y, 6), 0).r;
-	uint _l_intensity = texelFetch(lights, ivec3(x, y, 7), 0).r;
-
+	vec3 l_direction = vec3(uintBitsToFloat(l_dir_x), uintBitsToFloat(l_dir_y), uintBitsToFloat(l_dir_z));
 	vec3 l_color = vec3(uintBitsToFloat(l_color_r), uintBitsToFloat(l_color_g), uintBitsToFloat(l_color_b));
 	float l_intensity = uintBitsToFloat(_l_intensity);
+	
+	if (l_type == uint(0)) continue;
+	if ((l_mask & light_mask) == uint(0)) continue;
 
 	vec3 c_dir = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0, 0.0, 1.0)) : normalize(camera_world[3].xyz - v_world);
 
 	if (l_type == uint(1)) {
 		// ambient light
-		// diffuse += l_color * l_intensity;
 		light(l_type, normal, c_dir, normal, l_color, l_intensity, diffuse, specular);
 	}
 	else if (l_type == uint(2)) {
