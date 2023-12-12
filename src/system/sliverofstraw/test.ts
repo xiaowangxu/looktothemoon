@@ -2,7 +2,7 @@ import { Matrix3 } from "../fivepebble/linear_algebra/Matrix3";
 import { Matrix4, mat4 } from "../fivepebble/linear_algebra/Matrix4";
 import { Vector3, vec3 } from "../fivepebble/linear_algebra/Vector3";
 import { vec2 } from "../fivepebble/linear_algebra/Vector2";
-import { RenderStateBufferUsage, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateTextureWrap, RenderStateUniformType } from "./RenderState";
+import { RenderStateBufferUsage, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateTextureWrap, RenderStateUniformType } from "./RenderState";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector3AttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceMatrix4AttributeBuffer } from "./render_device_objects/RenderDeviceAttributeBuffer";
 import { WebGL2RenderDevice } from "./webgl2/WebGL2RenderDevice";
 import { WebGL2RenderState, WebGL2RenderStateFrameBufferAttachmentPoint } from "./webgl2/WebGL2RenderState";
@@ -15,7 +15,7 @@ import { vec4 } from "../fivepebble/linear_algebra/Vector4";
 const calculights = `
 ivec3 lights_size = textureSize(lights, 0);
 int lights_count = lights_size.x * lights_size.y;
-const int lights_max_count = 64;
+const int LIGHT_MAX_COUNT = 128;
 
 // see light function
 // light_type, light_direction, view_direction, normal, light_color, light_attenuation, inout vec3 diffuse, inout vec3 specular
@@ -29,12 +29,12 @@ int idx = 0;
 
 for (int i = idx; i < lights_count; i++) {
 
-	if (i >= lights_max_count) break;
+	if (i >= LIGHT_MAX_COUNT) break;
 
 	int x = i % lights_size.x;
 	int y = i / lights_size.x;
 	
-	uint l_type = texelFetch(lights, ivec3(x, y, 0), 0).r;
+	uint l_type_id = texelFetch(lights, ivec3(x, y, 0), 0).r;
 	uint l_pos_x = texelFetch(lights, ivec3(x, y, 1), 0).r;
 	uint l_pos_y = texelFetch(lights, ivec3(x, y, 2), 0).r;
 	uint l_pos_z = texelFetch(lights, ivec3(x, y, 3), 0).r;
@@ -44,13 +44,19 @@ for (int i = idx; i < lights_count; i++) {
 	uint l_color_r = texelFetch(lights, ivec3(x, y, 7), 0).r;
 	uint l_color_g = texelFetch(lights, ivec3(x, y, 8), 0).r;
 	uint l_color_b = texelFetch(lights, ivec3(x, y, 9), 0).r;
-	uint _l_intensity = texelFetch(lights, ivec3(x, y, 10), 0).r;
+	uint _l_attenuation = texelFetch(lights, ivec3(x, y, 10), 0).r;
 	uint l_mask = texelFetch(lights, ivec3(x, y, 11), 0).r;
+	uint l_param_0 = texelFetch(lights, ivec3(x, y, 12), 0).r;
+	uint l_param_1 = texelFetch(lights, ivec3(x, y, 13), 0).r;
+	uint l_param_2 = texelFetch(lights, ivec3(x, y, 14), 0).r;
+	uint l_param_3 = texelFetch(lights, ivec3(x, y, 15), 0).r;
 
+	uint l_type = l_type_id & uint(0xffff);
+	uint l_id = l_type_id >> 16;
 	vec3 l_position = vec3(uintBitsToFloat(l_pos_x), uintBitsToFloat(l_pos_y), uintBitsToFloat(l_pos_z));
 	vec3 l_direction = vec3(uintBitsToFloat(l_dir_x), uintBitsToFloat(l_dir_y), uintBitsToFloat(l_dir_z));
 	vec3 l_color = vec3(uintBitsToFloat(l_color_r), uintBitsToFloat(l_color_g), uintBitsToFloat(l_color_b));
-	float l_intensity = uintBitsToFloat(_l_intensity);
+	float l_attenuation = uintBitsToFloat(_l_attenuation);
 	
 	if (l_type == uint(0)) continue;
 	if ((l_mask & light_mask) == uint(0)) continue;
@@ -59,19 +65,36 @@ for (int i = idx; i < lights_count; i++) {
 
 	if (l_type == uint(1)) {
 		// ambient light
-		light(l_type, normal, c_dir, normal, l_color, l_intensity, diffuse, specular);
+		light(l_type, normal, c_dir, normal, l_color, 1.0, diffuse, specular);
 	}
 	else if (l_type == uint(2)) {
 		// directional light
 		vec3 l_dir = normalize(l_position);
-		light(l_type, l_dir, c_dir, normal, l_color, l_intensity, diffuse, specular);
+		light(l_type, l_dir, c_dir, normal, l_color, 1.0, diffuse, specular);
 	}
 	else if (l_type == uint(3)) {
 		// point light
 		float l_distance = distance(l_position, v_world);
 		vec3 l_dir = normalize(l_position - v_world);
-		float l_attenuation = l_intensity / pow(l_distance + 1.0, 2.0);
-		light(l_type, l_dir, c_dir, normal, l_color, l_attenuation, diffuse, specular);
+		float near_distance = uintBitsToFloat(l_param_0);
+		float far_distance = uintBitsToFloat(l_param_1);
+		float distance_w = (l_distance - near_distance) / (far_distance - near_distance);
+		float distance_strength = smoothstep(1.0, 0.0, distance_w);
+		float l_atten = distance_strength / pow(max(l_distance, 1.0), l_attenuation);
+		light(l_type, l_dir, c_dir, normal, l_color, l_atten, diffuse, specular);
+	}
+	else if (l_type == uint(4)) {
+		// spot light
+		vec3 l_dir = normalize(l_position - v_world);
+		float l_dot_dir = dot(l_dir, -normalize(l_direction));
+		float l_distance = distance(l_position, v_world);
+		float angle_strength = smoothstep(cos(uintBitsToFloat(l_param_0)), cos(uintBitsToFloat(l_param_1)), l_dot_dir);
+		float near_distance = uintBitsToFloat(l_param_2);
+		float far_distance = uintBitsToFloat(l_param_3);
+		float distance_w = (l_distance - near_distance) / (far_distance - near_distance);
+		float distance_strength = smoothstep(1.0, 0.0, distance_w);
+		float l_atten = (angle_strength * distance_strength) / pow(max(l_distance, 1.0), l_attenuation);
+		light(l_type, l_dir, c_dir, normal, l_color, l_atten, diffuse, specular);
 	}
 }
 `;
@@ -90,12 +113,12 @@ import { FImage } from './test-image';
 import { EditorViewport } from "../../app/EditorScene";
 import { plane3 } from "../fivepebble/geometries/Plane3";
 import { sphere3 } from "../fivepebble/geometries/Sphere3";
-const texture = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, RenderStateTextureWrap.MirrorRepeat, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-render_device.render_state.alloc_Texture2D(texture, 256, 256, 0, FImage);
+const texture = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.SRGBA8, 1, RenderStateTextureWrap.MirrorRepeat, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+render_device.render_state.alloc_Texture2D(texture, 256, 256, 0, RenderStateTextureDataFormat.RGBA, FImage);
 render_device.render_state.generate_Mipmap(texture);
 
 const texture2 = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, RenderStateTextureWrap.MirrorRepeat, RenderStateTextureWrap.MirrorRepeat, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-render_device.render_state.alloc_Texture2D(texture2, 2, 2, 0, new Uint8ClampedArray([
+render_device.render_state.alloc_Texture2D(texture2, 2, 2, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([
 	255, 0, 255, 255,
 	255, 255, 0, 255,
 	0, 255, 255, 255,
@@ -4721,7 +4744,7 @@ const f_fragmentShaderSource = process_WebGL2ShaderCode(RenderStateShaderType.Fr
 const f_fragmentShaderSource2 = process_WebGL2ShaderCode(RenderStateShaderType.Fragment,
 	attributes, uniforms, varyings, outputs,
 	`vec3 normal = normalize(v_normal);
-vec4 albedo_color = vec4(1.0, 0.0, 0.0, 1.0);
+vec4 albedo_color = vec4(1.0, 1.0, 1.0, 1.0);
 // if (v_uv.x + v_uv.y > 1.0) {
 // 	albedo_color = texture(u_texture, v_uv); // texture(u_texture, v_uv);
 // }
@@ -4912,7 +4935,14 @@ ${calculights}
 
 o_color = albedo_color * vec4(diffuse, 1.0) + vec4(specular, 0.0);
 // o_color = vec4(0.5, 0.5, 1.0, 0.2);
-o_color1 = vec4(normal, 1.0);`
+o_color1 = vec4(normal, 1.0);`,
+	`float light_strength = dot(normal, light_direction);
+if (light_strength > 0.0) {
+    diffuse += light_strength * light_color * light_attenuation;
+    vec3 half_direction = normalize(light_direction + view_direction);  
+    float beckmann = beckmannDistribution(dot(normal, half_direction), texture(u_texture, v_uv * vec2(4.0, 4.0)).g / 4.0 + 0.01);
+    specular += beckmann * light_color * light_attenuation;
+}`
 );
 const vert_shader2 = render_device.render_state.create_Shader(RenderStateShaderType.Vertex, f_vertexShaderSource2).expect();
 const frag_shader3 = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, f_fragmentShaderSource3).expect();
@@ -4941,14 +4971,14 @@ const renderable_surface2 = new WebGL2RenderDeviceRenderableSurface(render_devic
 renderable_surface2.set_Material(material2);
 renderable_surface2.set_Surface(surface2);
 const texture3 = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, RenderStateTextureWrap.MirrorRepeat, RenderStateTextureWrap.MirrorRepeat, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-render_device.render_state.alloc_Texture2D(texture3, 2, 2, 0, new Uint8ClampedArray([
+render_device.render_state.alloc_Texture2D(texture3, 2, 2, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([
 	255, 255, 255, 255,
 	255, 255, 255, 255,
 	255, 0, 0, 255,
 	0, 255, 0, 255,
 ]));
 const texture4 = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, RenderStateTextureWrap.MirrorRepeat, RenderStateTextureWrap.MirrorRepeat, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-render_device.render_state.alloc_Texture2D(texture4, 2, 2, 0, new Uint8ClampedArray([
+render_device.render_state.alloc_Texture2D(texture4, 2, 2, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([
 	0, 0, 255, 255,
 	255, 0, 255, 255,
 	255, 255, 255, 255,
@@ -5028,13 +5058,13 @@ quad_renderable_surface.set_Surface(quad_surface);
 // #region frame buffer
 const frame_buffer = render_device.render_state.create_FrameBuffer().expect();
 const frame_buffer_depth_tex = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.D32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-render_device.render_state.alloc_Texture2D(frame_buffer_depth_tex, 1024, 1024, 0, undefined);
+render_device.render_state.alloc_Texture2D(frame_buffer_depth_tex, 1024, 1024, 0, RenderStateTextureDataFormat.Depth, undefined);
 render_device.render_state.set_FrameBufferAttachment(frame_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_buffer_depth_tex);
 render_device.render_state.enable_FrameBuffer(frame_buffer);
 
 const frame_buffer2 = render_device.render_state.create_FrameBuffer().expect();
 const frame_buffer_tex = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-render_device.render_state.alloc_Texture2D(frame_buffer_tex, 1024, 1024, 0, undefined);
+render_device.render_state.alloc_Texture2D(frame_buffer_tex, 1024, 1024, 0, RenderStateTextureDataFormat.RGBA, undefined);
 render_device.render_state.set_FrameBufferAttachment(frame_buffer2, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, frame_buffer_tex);
 render_device.render_state.set_FrameBufferAttachment(frame_buffer2, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_buffer_depth_tex);
 render_device.render_state.enable_FrameBuffer(frame_buffer2);
@@ -5081,6 +5111,10 @@ function render(time: number) {
 	material.set_ValueUniform<RenderStateUniformType.Mat4>(undefined, 'model_world', model_world);
 	render_device.render_Renderable(stage, renderable_surface);
 
+	const model_world2 = Matrix4.from_BasisPosition(Matrix3.make_Scale(0.4, 0.4, 0.4), vec3(Math.cos(time / 2) * 2.0, 0, 3));
+	material.set_ValueUniform<RenderStateUniformType.Mat4>(undefined, 'model_world', model_world2);
+	render_device.render_Renderable(stage, renderable_surface);
+
 	const model_world_right0 = Matrix4.from_BasisPosition(Matrix3.make_Scale(1, 1, 1).compose(Matrix3.make_RotateY(time / 2)), vec3(2, 0, -1));
 	const model_world_left0 = Matrix4.from_BasisPosition(Matrix3.make_Scale(1, 1, 1).compose(Matrix3.make_RotateY(-time / 2)), vec3(-2, 0, -0.75));
 	const model_world_top0 = Matrix4.from_BasisPosition(Matrix3.make_Scale(1, 1, 1).compose(Matrix3.make_RotateX(-time / 2)), vec3(0, 2, -1));
@@ -5088,7 +5122,7 @@ function render(time: number) {
 	const model_world_left1 = Matrix4.from_BasisPosition(Matrix3.make_Scale(1, 1, 1).compose(Matrix3.make_RotateY(-time / 2)), vec3(-2, 2, 0));
 	const model_world_top1 = Matrix4.from_BasisPosition(Matrix3.make_Scale(1, 1, 1).compose(Matrix3.make_RotateX(time / 2)), vec3(2, -2, 0.25));
 	const model_world_bottom1 = Matrix4.from_BasisPosition(Matrix3.make_Scale(1, 1, 1).compose(Matrix3.make_RotateX(time / 2)), vec3(-2, -2, 1));
-	const model_world_right1 = Matrix4.from_BasisPosition(Matrix3.make_Scale(1, 1, 1).compose(Matrix3.make_RotateY(time / 2)), vec3(2, 2, 0.75));
+	const model_world_right1 = Matrix4.from_BasisPosition(Matrix3.make_Scale(1, 1, 1).compose(Matrix3.make_RotateY(time / 2)), vec3(2, 2, 0.25));
 
 	const model_world_plane = Matrix4.from_BasisPosition(Matrix3.make_Scale(6, 6, 0.1).compose(Matrix3.make_RotateZ(time / 5)), vec3(0, 0, -1.75)); // Math.sin(time / 5) * 0.5
 
@@ -5112,6 +5146,9 @@ function render(time: number) {
 	// render_state.set_CapabilityProxy(render_state.gl.BLEND, true);
 	// render_state.gl.blendFunc(render_state.gl.SRC_ALPHA, render_state.gl.ONE_MINUS_SRC_ALPHA);
 	render_state.gl.clear(render_state.gl.COLOR_BUFFER_BIT);
+	material.set_ValueUniform<RenderStateUniformType.Mat4>(undefined, 'model_world', model_world);
+	render_device.render_Renderable(stage, renderable_surface);
+	material.set_ValueUniform<RenderStateUniformType.Mat4>(undefined, 'model_world', model_world2);
 	render_device.render_Renderable(stage, renderable_surface);
 	render_device.render_Renderable(stage, renderable_surface2);
 

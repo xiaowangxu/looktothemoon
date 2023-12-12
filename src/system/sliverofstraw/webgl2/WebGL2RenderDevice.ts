@@ -1,10 +1,11 @@
 import { Ref } from "@/system/utils/RefCounted";
 import { RenderDevice, type RDCanvas, type RenderDeviceInitOption } from "../RenderDevice";
 import { WebGL2RenderState, type WebGL2RenderStateInitOption } from "./WebGL2RenderState";
-import { RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStateShaderType, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, type RenderStateInitOption } from "../RenderState";
+import { RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStateShaderType, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, type RenderStateInitOption, RenderStateTextureDataFormat } from "../RenderState";
 import type { WebGL2RenderStateBuffer } from "./webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import { process_WebGL2ShaderCode } from "./WebGL2ShaderProcessor";
 import type { WebGL2RenderStateTexture } from "./webgl2_render_state_objects/WebGL2RenderStateTexture";
+import { Deg2Rad, Rad2Ded } from "@/system/fivepebble/Scalar";
 
 export interface WebGL2RenderDeviceInitOption extends RenderDeviceInitOption, WebGL2RenderStateInitOption { }
 
@@ -51,7 +52,7 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState, WebGL2Re
     private setup_EmptyTexture() {
         const texture = this.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
         this.empty_texture.value = texture;
-        this.render_state.alloc_Texture2D(texture, 2, 2, 0, new Uint8ClampedArray([
+        this.render_state.alloc_Texture2D(texture, 2, 2, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([
             255, 0, 255, 255,
             128, 128, 128, 255,
             128, 128, 128, 255,
@@ -69,33 +70,33 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState, WebGL2Re
     public update_Lights() {
         const texture = this.lights_texture.expect;
 
-        const light_width = 128;
-        const light_height = 128;
+        const light_width = 64;
+        const light_height = 64;
         const param_count = 16;
 
-        this.render_state.alloc_Texture3D(texture, light_width, light_height, param_count, 0);
+        this.render_state.alloc_Texture3D(texture, light_width, light_height, param_count, 0, RenderStateTextureDataFormat.RInt);
         this.render_state.active_Texture(texture, WebGL2RenderDevice.LightsTextureUnit);
 
         const lights = new Float32Array(light_width * light_height * param_count);
 
         const layer = light_width * light_height * Float32Array.BYTES_PER_ELEMENT;
 
-        const      light_type = new  Uint32Array(lights.buffer, layer *  0, light_width * light_height);
-        const     light_pos_x = new Float32Array(lights.buffer, layer *  1, light_width * light_height);
-        const     light_pos_y = new Float32Array(lights.buffer, layer *  2, light_width * light_height);
-        const     light_pos_z = new Float32Array(lights.buffer, layer *  3, light_width * light_height);
-        const     light_dir_x = new Float32Array(lights.buffer, layer *  4, light_width * light_height);
-        const     light_dir_y = new Float32Array(lights.buffer, layer *  5, light_width * light_height);
-        const     light_dir_z = new Float32Array(lights.buffer, layer *  6, light_width * light_height);
-        const   light_color_r = new Float32Array(lights.buffer, layer *  7, light_width * light_height);
-        const   light_color_g = new Float32Array(lights.buffer, layer *  8, light_width * light_height);
-        const   light_color_b = new Float32Array(lights.buffer, layer *  9, light_width * light_height);
-        const light_intensity = new Float32Array(lights.buffer, layer * 10, light_width * light_height);
-        const      light_mask = new  Uint32Array(lights.buffer, layer * 11, light_width * light_height);
-        const    light_shadow = new  Uint32Array(lights.buffer, layer * 12, light_width * light_height);
-        const   light_param_0 = new Float32Array(lights.buffer, layer * 13, light_width * light_height);
-        const   light_param_1 = new Float32Array(lights.buffer, layer * 14, light_width * light_height);
-        const   light_param_2 = new Float32Array(lights.buffer, layer * 15, light_width * light_height);
+        const /*    */ light_type_id = new Uint32Array(lights.buffer, layer * 0, light_width * light_height);
+        const /*      */ light_pos_x = new Float32Array(lights.buffer, layer * 1, light_width * light_height);
+        const /*      */ light_pos_y = new Float32Array(lights.buffer, layer * 2, light_width * light_height);
+        const /*      */ light_pos_z = new Float32Array(lights.buffer, layer * 3, light_width * light_height);
+        const /*      */ light_dir_x = new Float32Array(lights.buffer, layer * 4, light_width * light_height);
+        const /*      */ light_dir_y = new Float32Array(lights.buffer, layer * 5, light_width * light_height);
+        const /*      */ light_dir_z = new Float32Array(lights.buffer, layer * 6, light_width * light_height);
+        const /*    */ light_color_r = new Float32Array(lights.buffer, layer * 7, light_width * light_height);
+        const /*    */ light_color_g = new Float32Array(lights.buffer, layer * 8, light_width * light_height);
+        const /*    */ light_color_b = new Float32Array(lights.buffer, layer * 9, light_width * light_height);
+        const /**/ light_attenuation = new Float32Array(lights.buffer, layer * 10, light_width * light_height);
+        const /*       */ light_mask = new Uint32Array(lights.buffer, layer * 11, light_width * light_height);
+        const /*    */ light_param_0 = new Float32Array(lights.buffer, layer * 12, light_width * light_height);
+        const /*    */ light_param_1 = new Float32Array(lights.buffer, layer * 13, light_width * light_height);
+        const /*    */ light_param_2 = new Float32Array(lights.buffer, layer * 14, light_width * light_height);
+        const /*    */ light_param_3 = new Float32Array(lights.buffer, layer * 15, light_width * light_height);
 
         for (let y = 0; y < light_height; y++) {
             for (let x = 0; x < light_width; x++) {
@@ -105,7 +106,7 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState, WebGL2Re
                 light_pos_y[id] = (Math.random() - 0.5) * 8;
                 light_pos_z[id] = (Math.random() - 0.75) * 2;
 
-                light_type[id] = 3;
+                light_type_id[id] = 3;
 
                 // const c = Math.random() * 3;
                 // if (c < 1) {
@@ -124,34 +125,100 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState, WebGL2Re
                 //     light_color_b[id] = 1;
                 // }
 
-                light_color_r[id] = Math.random();
-                light_color_g[id] = Math.random();
-                light_color_b[id] = Math.random();
-                light_intensity[id] = 0.5;
+                light_color_r[id] = Math.random() * 0.2;
+                light_color_g[id] = Math.random() * 0.2;
+                light_color_b[id] = Math.random() * 0.2;
+                light_attenuation[id] = 2.0;
+
+                const radius = Math.random() * 4.0;
+                light_param_0[id] = radius;
+                light_param_1[id] = radius + Math.random();
 
                 light_mask[id] = 0xffffffff;
             }
         }
 
-        light_type[0] = 2;
-        light_pos_x[0] = -1.0;
-        light_pos_y[0] = -1.0;
-        light_pos_z[0] = -1.0;
-        light_color_r[0] = 1.0;
-        light_color_g[0] = 0.0;
-        light_color_b[0] = 0.0;
-        light_intensity[0] = 0.5;
+        light_type_id[0] = 4;
+        light_pos_x[0] = -2.0;
+        light_pos_y[0] = 2.0;
+        light_pos_z[0] = -2.2;
+        light_dir_x[0] = 1.0;
+        light_dir_y[0] = -1.0;
+        light_dir_z[0] = 1.0;
+        light_color_r[0] = 0.0 * 5.0;
+        light_color_g[0] = 0.0 * 5.0;
+        light_color_b[0] = 1.0 * 5.0;
+        light_attenuation[0] = 2.0;
+        light_param_0[0] = 45 * Deg2Rad;
+        light_param_1[0] = 0 * Deg2Rad;
+        light_param_2[0] = 3;
+        light_param_3[0] = 7;
 
-        light_type[1] = 2;
-        light_pos_x[1] = 1.0;
-        light_pos_y[1] = 1.0;
-        light_pos_z[1] = 1.0;
-        light_color_r[1] = 1.0;
-        light_color_g[1] = 1.0;
-        light_color_b[1] = 1.0;
-        light_intensity[1] = 0.1;
+        light_type_id[1] = 4;
+        light_pos_x[1] = 0.3;
+        light_pos_y[1] = 0.3;
+        light_pos_z[1] = 5.0;
+        light_dir_x[1] = 0.0;
+        light_dir_y[1] = 0.0;
+        light_dir_z[1] = -1.0;
+        light_color_r[1] = 1.0 * 10.0;
+        light_color_g[1] = 0.0 * 10.0;
+        light_color_b[1] = 0.0 * 10.0;
+        light_attenuation[1] = 2.0;
+        light_param_0[1] = 12 * Deg2Rad;
+        light_param_1[1] = 4 * Deg2Rad;
+        light_param_2[1] = 10;
+        light_param_3[1] = 10;
 
-        this.render_state.update_Texture3D(texture, 0, new Uint32Array(lights.buffer), light_width, light_height, param_count, 0, 0, 0);
+        light_type_id[2] = 4;
+        light_pos_x[2] = -0.3;
+        light_pos_y[2] = 0.3;
+        light_pos_z[2] = 5.0;
+        light_dir_x[2] = 0.0;
+        light_dir_y[2] = 0.0;
+        light_dir_z[2] = -1.0;
+        light_color_r[2] = 0.0 * 10.0;
+        light_color_g[2] = 1.0 * 10.0;
+        light_color_b[2] = 0.0 * 10.0;
+        light_attenuation[2] = 2.0;
+        light_param_0[2] = 12 * Deg2Rad;
+        light_param_1[2] = 4 * Deg2Rad;
+        light_param_2[2] = 10;
+        light_param_3[2] = 10;
+
+        light_type_id[3] = 4;
+        light_pos_x[3] = 0.0;
+        light_pos_y[3] = -0.15;
+        light_pos_z[3] = 5.0;
+        light_dir_x[3] = 0.0;
+        light_dir_y[3] = 0.0;
+        light_dir_z[3] = -1.0;
+        light_color_r[3] = 0.0 * 10.0;
+        light_color_g[3] = 0.0 * 10.0;
+        light_color_b[3] = 1.0 * 10.0;
+        light_attenuation[3] = 2.0;
+        light_param_0[3] = 12 * Deg2Rad;
+        light_param_1[3] = 4 * Deg2Rad;
+        light_param_2[3] = 10;
+        light_param_3[3] = 10;
+
+        light_type_id[10] = 2;
+        light_pos_x[10] = -1.0;
+        light_pos_y[10] = -1.0;
+        light_pos_z[10] = -1.0;
+        light_color_r[10] = 0.0 * 0.12;
+        light_color_g[10] = 1.0 * 0.12;
+        light_color_b[10] = 0.0 * 0.12;
+
+        light_type_id[11] = 2;
+        light_pos_x[11] = 1.0;
+        light_pos_y[11] = 1.0;
+        light_pos_z[11] = 1.0;
+        light_color_r[11] = 0.0 * 0.06;
+        light_color_g[11] = 1.0 * 0.06;
+        light_color_b[11] = 1.0 * 0.06;
+
+        this.render_state.update_Texture3D(texture, 0, RenderStateTextureDataFormat.RInt, new Uint32Array(lights.buffer), light_width, light_height, param_count, 0, 0, 0);
     }
 
     public set_WorldUniform(name: string, data: ArrayBufferView) {

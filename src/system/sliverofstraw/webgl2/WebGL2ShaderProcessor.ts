@@ -247,29 +247,46 @@ ${GSFs.GGX}
 // light function : fnl
 ${FNLs.Schlick}
 
+// light function
+float beckmannDistribution(float x, float roughness) {
+    float NdotH = max(x, 0.0001);
+    float cos2Alpha = NdotH * NdotH;
+    float tan2Alpha = (cos2Alpha - 1.0) / cos2Alpha;
+    float roughness2 = roughness * roughness;
+    float denom = 3.141592653589793 * roughness2 * cos2Alpha * cos2Alpha;
+    return exp(tan2Alpha / roughness2) / denom;
+}
+
 void light(uint light_type, in vec3 light_direction, in vec3 view_direction, in vec3 normal, in vec3 light_color, in float light_attenuation, inout vec3 diffuse, inout vec3 specular) {
     // code
-${(light ?? `
-float roughness = 0.2; //(sin(time / 3.0) + 1.0) / 2.0 + 0.0001;
-float metalic = 1.0;
-if (light_type == uint(1)) {
-    // diffuse += light_color * light_attenuation * (1.0 - metalic);
-}
-else {
-    float ndotl = max(dot(normal, light_direction), 0.0);
-    float ndotv = max(dot(normal, view_direction), 0.0);
-    if (ndotl > 0.0) {
-        float specular_ndf = ndf(light_direction, view_direction, normal, roughness);
-        float specular_gsf = gsf(light_direction, view_direction, normal, roughness);
-        vec3 specular_fnl = fnl(light_direction, view_direction, normal, vec3(0.44400, 0.52700,	1.09400));
-        vec3 ks = specular_fnl;
-        vec3 kd = vec3(1.0) - ks;
-        kd *= 1.0 - metalic;     
-        diffuse += kd * ndotl * light_color * light_attenuation;
-        specular += (specular_ndf * specular_gsf * specular_fnl) / max(4.0 * ndotv, EPSILON) * light_color * light_attenuation;
-    }
-}
-`).split('\n').map(c => `    ${c}`).join('\n')}
+${(light ?? 
+`float light_strength = dot(normal, light_direction);
+if (light_strength > 0.0) {
+    diffuse += light_strength * light_color * light_attenuation;
+    vec3 half_direction = normalize(light_direction + view_direction);  
+    float beckmann = beckmannDistribution(dot(normal, half_direction), 0.025);
+    specular += beckmann * light_color * light_attenuation;
+}`
+// `float roughness = 0.2; //(sin(time / 3.0) + 1.0) / 2.0 + 0.0001;
+// float metalic = 1.0;
+// if (light_type == uint(1)) {
+//     // diffuse += light_color * light_attenuation * (1.0 - metalic);
+// }
+// else {
+//     float ndotl = max(dot(normal, light_direction), 0.0);
+//     float ndotv = max(dot(normal, view_direction), 0.0);
+//     if (ndotl > 0.0) {
+//         float specular_ndf = ndf(light_direction, view_direction, normal, roughness);
+//         float specular_gsf = gsf(light_direction, view_direction, normal, roughness);
+//         vec3 specular_fnl = fnl(light_direction, view_direction, normal, vec3(0.44400, 0.52700,	1.09400));
+//         vec3 ks = specular_fnl;
+//         vec3 kd = vec3(1.0) - ks;
+//         kd *= 1.0 - metalic;     
+//         diffuse += kd * ndotl * light_color * light_attenuation;
+//         specular += (specular_ndf * specular_gsf * specular_fnl) / max(4.0 * ndotv, EPSILON) * light_color * light_attenuation;
+//     }
+// }`
+).split('\n').map(c => `    ${c}`).join('\n')}
 }
 
 void main() {

@@ -1,6 +1,6 @@
 import { Result } from "@/system/utils/Result";
 import type { RenderDevice } from "../RenderDevice";
-import { RenderState, RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateUniformType, RenderStateTextureWrap, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureFormat, RenderStateTextureType, type RenderStateUniformSlotTypeMap, type RenderStateTextureUniformType, type RenderStateInitOption as RenderStateInitOption } from "../RenderState";
+import { RenderState, RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateUniformType, RenderStateTextureWrap, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureFormat, RenderStateTextureType, type RenderStateUniformSlotTypeMap, type RenderStateTextureUniformType, type RenderStateInitOption as RenderStateInitOption, RenderStateTextureDataFormat } from "../RenderState";
 import { WebGL2RenderStateBuffer, WebGL2RenderStateBufferView } from "./webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import { WebGL2RenderStateShader } from "./webgl2_render_state_objects/WebGL2RenderStateShader";
 import { WebGL2RenderStateProgram } from "./webgl2_render_state_objects/WebGL2RenderStateProgram";
@@ -359,16 +359,36 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         }
     }
 
-    public get_TextureFormatType(internal_format: RenderStateTextureFormat): [internal_format: number, format: number, data_type: number] {
+    public get_TextureFormatType(internal_format: RenderStateTextureFormat): [internal_format: number, data_type: number] {
         switch (internal_format) {
-            case RenderStateTextureFormat.RGBA8: return [this.gl.RGBA8, this.gl.RGBA, this.gl.UNSIGNED_BYTE];
-            case RenderStateTextureFormat.RGBA32F: return [this.gl.RGBA32F, this.gl.RGBA, this.gl.FLOAT];
-            case RenderStateTextureFormat.R32UI: return [this.gl.R32UI, this.gl.RED_INTEGER, this.gl.UNSIGNED_INT];
-            case RenderStateTextureFormat.D24: return [this.gl.DEPTH_COMPONENT24, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_INT];
-            case RenderStateTextureFormat.D32F: return [this.gl.DEPTH_COMPONENT32F, this.gl.DEPTH_COMPONENT, this.gl.FLOAT];
-            case RenderStateTextureFormat.D32FS8: return [this.gl.DEPTH32F_STENCIL8, this.gl.DEPTH_STENCIL, this.gl.FLOAT_32_UNSIGNED_INT_24_8_REV];
+            case RenderStateTextureFormat.SRGBA8: return [this.gl.SRGB8_ALPHA8, this.gl.UNSIGNED_BYTE];
+            case RenderStateTextureFormat.SRGB8: return [this.gl.SRGB8, this.gl.UNSIGNED_BYTE];
+            case RenderStateTextureFormat.RGB8: return [this.gl.RGB8, this.gl.UNSIGNED_BYTE];
+            case RenderStateTextureFormat.RGBA8: return [this.gl.RGBA8, this.gl.UNSIGNED_BYTE];
+            case RenderStateTextureFormat.RGBA32F: return [this.gl.RGBA32F, this.gl.FLOAT];
+            case RenderStateTextureFormat.R32UI: return [this.gl.R32UI, this.gl.UNSIGNED_INT];
+            case RenderStateTextureFormat.D24: return [this.gl.DEPTH_COMPONENT24, this.gl.UNSIGNED_INT];
+            case RenderStateTextureFormat.D32F: return [this.gl.DEPTH_COMPONENT32F, this.gl.FLOAT];
+            case RenderStateTextureFormat.D32FS8: return [this.gl.DEPTH32F_STENCIL8, this.gl.FLOAT_32_UNSIGNED_INT_24_8_REV];
             default: {
                 const n: never = internal_format;
+                return n;
+            }
+        }
+    }
+
+    public get_TextureDataFormatType(format: RenderStateTextureDataFormat): number {
+        switch (format) {
+            case RenderStateTextureDataFormat.RGB: return this.gl.RGB;
+            case RenderStateTextureDataFormat.RGBA: return this.gl.RGBA;
+            case RenderStateTextureDataFormat.RInt: return this.gl.RED_INTEGER;
+            case RenderStateTextureDataFormat.Alpha: return this.gl.ALPHA;
+            case RenderStateTextureDataFormat.Luminance: return this.gl.LUMINANCE;
+            case RenderStateTextureDataFormat.LuminanceAlpha: return this.gl.LUMINANCE_ALPHA;
+            case RenderStateTextureDataFormat.Depth: return this.gl.DEPTH_COMPONENT;
+            case RenderStateTextureDataFormat.DepthStencil: return this.gl.DEPTH_STENCIL;
+            default: {
+                const n: never = format;
                 return n;
             }
         }
@@ -577,8 +597,8 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public create_Texture(type: RenderStateTextureType, constant: boolean, format: RenderStateTextureFormat, levels: number, wrap_s: RenderStateTextureWrap = RenderStateTextureWrap.Clamp, wrap_t: RenderStateTextureWrap = RenderStateTextureWrap.Clamp, wrap_r: RenderStateTextureWrap = RenderStateTextureWrap.Clamp, min_filter: RenderStateTextureMinFilter = RenderStateTextureMinFilter.Linear, mag_filter: RenderStateTextureMagFilter = RenderStateTextureMagFilter.Linear): Result<WebGL2RenderStateTexture, Error> {
         const texture = this.gl.createTexture();
         if (texture === null) return Result.Error(new Error('<WebGL2RenderState> create_Texture: failed to create render state texture'));
-        const [internal_format, texel_format, data_type] = this.get_TextureFormatType(format);
-        return Result.Ok(new WebGL2RenderStateTexture(this.render_state, texture, this.get_TextureType(type), constant, internal_format, texel_format, levels, data_type, this.get_TextureWrap(wrap_s), this.get_TextureWrap(wrap_t), this.get_TextureWrap(wrap_r), this.get_TextureFilter(min_filter), this.get_TextureFilter(mag_filter)));
+        const [internal_format, data_type] = this.get_TextureFormatType(format);
+        return Result.Ok(new WebGL2RenderStateTexture(this.render_state, texture, this.get_TextureType(type), constant, internal_format, levels, data_type, this.get_TextureWrap(wrap_s), this.get_TextureWrap(wrap_t), this.get_TextureWrap(wrap_r), this.get_TextureFilter(min_filter), this.get_TextureFilter(mag_filter)));
     }
 
     public delete_Texture(texture: WebGL2RenderStateTexture): void {
@@ -614,9 +634,9 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
 
     // 2D
 
-    public alloc_Texture2D(texture: WebGL2RenderStateTexture, width: number, height: number, level: number, data?: ArrayBufferView): void {
+    public alloc_Texture2D(texture: WebGL2RenderStateTexture, width: number, height: number, level: number, format: RenderStateTextureDataFormat, data?: ArrayBufferView): void {
         const {
-            type, constant, format: internal_format, texel_format: format, levels, data_type,
+            type, constant, format: internal_format, levels, data_type,
             wrap_s, wrap_t, wrap_r, min_filter, mag_filter
         } = texture;
         if (type !== this.gl.TEXTURE_2D) return;
@@ -625,35 +645,35 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         if (constant) {
             gl.texStorage2D(type, levels, internal_format, width, height);
             if (data !== undefined) {
-                this.update_Texture2D(texture, level, data, width, height);
+                this.update_Texture2D(texture, level, format, data, width, height);
             }
         }
         else {
-            gl.texImage2D(type, level, internal_format, width, height, 0, format, data_type, data ?? null);
+            gl.texImage2D(type, level, internal_format, width, height, 0, this.get_TextureDataFormatType(format), data_type, data ?? null);
         }
         texture.width = width;
         texture.height = height;
         this.set_TextureParameters(texture, wrap_s, wrap_t, wrap_r, min_filter, mag_filter);
     }
 
-    public update_Texture2D(texture: WebGL2RenderStateTexture, level: number, data: ArrayBufferView, width: number, height: number, offset_x: number = 0, offset_y: number = 0, src_offset?: number) {
-        const { texel_format: format, data_type, type } = texture;
+    public update_Texture2D(texture: WebGL2RenderStateTexture, level: number, format: RenderStateTextureDataFormat, data: ArrayBufferView, width: number, height: number, offset_x: number = 0, offset_y: number = 0, src_offset?: number) {
+        const { data_type, type } = texture;
         this.bind_TextureProxy(type, texture.texture);
         if (type === this.gl.TEXTURE_2D) {
             if (src_offset !== undefined) {
-                this.gl.texSubImage2D(type, level, offset_x, offset_y, width, height, format, data_type, data, src_offset);
+                this.gl.texSubImage2D(type, level, offset_x, offset_y, width, height, this.get_TextureDataFormatType(format), data_type, data, src_offset);
             }
             else {
-                this.gl.texSubImage2D(type, level, offset_x, offset_y, width, height, format, data_type, data);
+                this.gl.texSubImage2D(type, level, offset_x, offset_y, width, height, this.get_TextureDataFormatType(format), data_type, data);
             }
         }
     }
 
     // 3D
 
-    public alloc_Texture3D(texture: WebGL2RenderStateTexture, width: number, height: number, depth: number, level: number, data?: ArrayBufferView): void {
+    public alloc_Texture3D(texture: WebGL2RenderStateTexture, width: number, height: number, depth: number, level: number, format: RenderStateTextureDataFormat, data?: ArrayBufferView): void {
         const {
-            type, constant, format: internal_format, texel_format: format, levels, data_type,
+            type, constant, format: internal_format, levels, data_type,
             wrap_s, wrap_t, wrap_r, min_filter, mag_filter
         } = texture;
         const gl = this.gl;
@@ -662,11 +682,11 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         if (constant) {
             gl.texStorage3D(type, levels, internal_format, width, height, depth);
             if (data !== undefined) {
-                this.update_Texture3D(texture, level, data, width, height, depth);
+                this.update_Texture3D(texture, level, format, data, width, height, depth);
             }
         }
         else {
-            gl.texImage3D(type, level, internal_format, width, height, depth, 0, format, data_type, data ?? null);
+            gl.texImage3D(type, level, internal_format, width, height, depth, 0, this.get_TextureDataFormatType(format), data_type, data ?? null);
         }
         texture.width = width;
         texture.height = height;
@@ -674,16 +694,16 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         this.set_TextureParameters(texture, wrap_s, wrap_t, wrap_r, min_filter, mag_filter);
     }
 
-    public update_Texture3D(texture: WebGL2RenderStateTexture, level: number, data: ArrayBufferView, width: number, height: number, depth: number, offset_x: number = 0, offset_y: number = 0, offset_z: number = 0, src_offset?: number) {
-        const { texel_format: format, data_type, type } = texture;
+    public update_Texture3D(texture: WebGL2RenderStateTexture, level: number, format: RenderStateTextureDataFormat, data: ArrayBufferView, width: number, height: number, depth: number, offset_x: number = 0, offset_y: number = 0, offset_z: number = 0, src_offset?: number) {
+        const { data_type, type } = texture;
         this.bind_TextureProxy(type, texture.texture);
         const gl = this.gl;
         if (type === gl.TEXTURE_3D || type === gl.TEXTURE_2D_ARRAY) {
             if (src_offset !== undefined) {
-                this.gl.texSubImage3D(type, level, offset_x, offset_y, offset_z, width, height, depth, format, data_type, data, src_offset);
+                this.gl.texSubImage3D(type, level, offset_x, offset_y, offset_z, width, height, depth, this.get_TextureDataFormatType(format), data_type, data, src_offset);
             }
             else {
-                this.gl.texSubImage3D(type, level, offset_x, offset_y, offset_z, width, height, depth, format, data_type, data);
+                this.gl.texSubImage3D(type, level, offset_x, offset_y, offset_z, width, height, depth, this.get_TextureDataFormatType(format), data_type, data);
             }
         }
     }
