@@ -73,6 +73,17 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         return false;
     }
 
+    // active texture uint
+    private active_texture_slot: number | null = null;
+    public active_TextureSlotProxy(slot: number) {
+        if (this.active_texture_slot !== slot) {
+            this.active_texture_slot = slot;
+            this.gl.activeTexture(slot);
+            return true;
+        }
+        return false;
+    }
+
     // texture
     private texture_state: (WebGLTexture | null)[] = [null, null, null, null];
     public bind_TextureProxy(target: number, texture: WebGLTexture | null) {
@@ -609,6 +620,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public set_TextureParameters(texture: WebGL2RenderStateTexture, wrap_s?: RenderStateTextureWrap | undefined, wrap_t?: RenderStateTextureWrap | undefined, wrap_r?: RenderStateTextureWrap | undefined, min_filter?: RenderStateTextureMinFilter | undefined, mag_filter?: RenderStateTextureMagFilter | undefined): void {
         const gl = this.gl;
         const { type, texture: tex } = texture;
+        this.active_TextureSlotProxy(this.gl.TEXTURE0);
         this.bind_TextureProxy(type, tex);
         if (wrap_s) {
             texture.wrap_s = this.get_TextureWrap(wrap_s);
@@ -640,6 +652,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             wrap_s, wrap_t, wrap_r, min_filter, mag_filter
         } = texture;
         if (type !== this.gl.TEXTURE_2D) return;
+        this.active_TextureSlotProxy(this.gl.TEXTURE0);
         this.bind_TextureProxy(type, texture.texture);
         const gl = this.gl;
         if (constant) {
@@ -658,6 +671,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
 
     public update_Texture2D(texture: WebGL2RenderStateTexture, level: number, format: RenderStateTextureDataFormat, data: ArrayBufferView, width: number, height: number, offset_x: number = 0, offset_y: number = 0, src_offset?: number) {
         const { data_type, type } = texture;
+        this.active_TextureSlotProxy(this.gl.TEXTURE0);
         this.bind_TextureProxy(type, texture.texture);
         if (type === this.gl.TEXTURE_2D) {
             if (src_offset !== undefined) {
@@ -678,6 +692,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         } = texture;
         const gl = this.gl;
         if (type !== gl.TEXTURE_3D && type !== gl.TEXTURE_2D_ARRAY) return;
+        this.active_TextureSlotProxy(this.gl.TEXTURE0);
         this.bind_TextureProxy(type, texture.texture);
         if (constant) {
             gl.texStorage3D(type, levels, internal_format, width, height, depth);
@@ -696,6 +711,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
 
     public update_Texture3D(texture: WebGL2RenderStateTexture, level: number, format: RenderStateTextureDataFormat, data: ArrayBufferView, width: number, height: number, depth: number, offset_x: number = 0, offset_y: number = 0, offset_z: number = 0, src_offset?: number) {
         const { data_type, type } = texture;
+        this.active_TextureSlotProxy(this.gl.TEXTURE0);
         this.bind_TextureProxy(type, texture.texture);
         const gl = this.gl;
         if (type === gl.TEXTURE_3D || type === gl.TEXTURE_2D_ARRAY) {
@@ -713,18 +729,18 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     // end setting texture
 
     public generate_Mipmap(texture: WebGL2RenderStateTexture) {
+        this.active_TextureSlotProxy(this.gl.TEXTURE0);
         this.bind_TextureProxy(texture.type, texture.texture);
         this.gl.generateMipmap(texture.type);
     }
 
     public active_Texture(texture: WebGL2RenderStateTexture, slot: number) {
         const target_point = slot;
-        this.gl.activeTexture(this.gl.TEXTURE0 + target_point);
+        this.active_TextureSlotProxy(this.gl.TEXTURE0 + target_point);
         const binded = this.bind_TextureProxy(texture.type, texture.texture);
         if (!binded) {
             this.gl.bindTexture(texture.type, texture.texture);
         }
-        this.gl.activeTexture(this.gl.TEXTURE0);
     }
 
     public create_SampledTexture(texture: WebGL2RenderStateTexture | undefined, sampler: WebGL2RenderStateTextureSampler | undefined) {
@@ -767,6 +783,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             this.set_TextureSlotSampler(slot, sampler);
         }
         else {
+            // looped arround
             const old_texture = texture_slot.value;
             old_texture.slot = undefined;
             this.active_sampled_texture_slots[current_slot] = new WeakRef(sampled_texture);
