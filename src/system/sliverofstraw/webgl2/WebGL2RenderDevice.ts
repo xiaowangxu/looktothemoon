@@ -64,49 +64,73 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState, WebGL2Re
     private setup_LightsTexture() {
         const texture = this.render_state.create_Texture(RenderStateTextureType.Tex2DArray, false, RenderStateTextureFormat.R32UI, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
         this.lights_texture.value = texture;
+        this.render_state.alloc_Texture3D(texture, this.light_width, this.light_height, this.light_param_count, 0, RenderStateTextureDataFormat.RInt);
         this.update_Lights();
     }
 
+    private light_width = 64;
+    private light_height = 64;
+    private light_param_count = 19;
+    private lights = new Uint32Array(this.light_width * this.light_height * this.light_param_count);
+    private light_layer = this.light_width * this.light_height * Float32Array.BYTES_PER_ELEMENT;
+    private/*    */ light_type_id = new Uint32Array(this.lights.buffer, this.light_layer * 0, this.light_width * this.light_height);
+    private/*      */ light_pos_x = new Float32Array(this.lights.buffer, this.light_layer * 1, this.light_width * this.light_height);
+    private/*      */ light_pos_y = new Float32Array(this.lights.buffer, this.light_layer * 2, this.light_width * this.light_height);
+    private/*      */ light_pos_z = new Float32Array(this.lights.buffer, this.light_layer * 3, this.light_width * this.light_height);
+    private/*      */ light_dir_x = new Float32Array(this.lights.buffer, this.light_layer * 4, this.light_width * this.light_height);
+    private/*      */ light_dir_y = new Float32Array(this.lights.buffer, this.light_layer * 5, this.light_width * this.light_height);
+    private/*      */ light_dir_z = new Float32Array(this.lights.buffer, this.light_layer * 6, this.light_width * this.light_height);
+    private/*    */ light_color_r = new Float32Array(this.lights.buffer, this.light_layer * 7, this.light_width * this.light_height);
+    private/*    */ light_color_g = new Float32Array(this.lights.buffer, this.light_layer * 8, this.light_width * this.light_height);
+    private/*    */ light_color_b = new Float32Array(this.lights.buffer, this.light_layer * 9, this.light_width * this.light_height);
+    private/**/ light_attenuation = new Float32Array(this.lights.buffer, this.light_layer * 10, this.light_width * this.light_height);
+    private/*       */ light_mask = new Uint32Array(this.lights.buffer, this.light_layer * 11, this.light_width * this.light_height);
+    private/*    */ light_param_0 = new Float32Array(this.lights.buffer, this.light_layer * 12, this.light_width * this.light_height);
+    private/*    */ light_param_1 = new Float32Array(this.lights.buffer, this.light_layer * 13, this.light_width * this.light_height);
+    private/*    */ light_param_2 = new Float32Array(this.lights.buffer, this.light_layer * 14, this.light_width * this.light_height);
+    private/*    */ light_param_3 = new Float32Array(this.lights.buffer, this.light_layer * 15, this.light_width * this.light_height);
+    private/*    */ light_shadow_bias = new Float32Array(this.lights.buffer, this.light_layer * 16, this.light_width * this.light_height);
+    private/*    */ light_shadow_normal_bias = new Float32Array(this.lights.buffer, this.light_layer * 17, this.light_width * this.light_height);
+    private/*    */ light_shadow_opacity = new Float32Array(this.lights.buffer, this.light_layer * 18, this.light_width * this.light_height);
+
     public update_Lights() {
+
+        console.time('update lights');
+        
         const texture = this.lights_texture.expect;
 
-        const light_width = 64;
-        const light_height = 64;
-        const param_count = 16;
+        const light_width = this.light_width;
+        const light_height = this.light_height;
 
-        this.render_state.alloc_Texture3D(texture, light_width, light_height, param_count, 0, RenderStateTextureDataFormat.RInt);
-        this.render_state.active_Texture(texture, WebGL2RenderDevice.LightsTextureUnit);
-
-        const lights = new Float32Array(light_width * light_height * param_count);
-
-        const layer = light_width * light_height * Float32Array.BYTES_PER_ELEMENT;
-
-        const /*    */ light_type_id = new Uint32Array(lights.buffer, layer * 0, light_width * light_height);
-        const /*      */ light_pos_x = new Float32Array(lights.buffer, layer * 1, light_width * light_height);
-        const /*      */ light_pos_y = new Float32Array(lights.buffer, layer * 2, light_width * light_height);
-        const /*      */ light_pos_z = new Float32Array(lights.buffer, layer * 3, light_width * light_height);
-        const /*      */ light_dir_x = new Float32Array(lights.buffer, layer * 4, light_width * light_height);
-        const /*      */ light_dir_y = new Float32Array(lights.buffer, layer * 5, light_width * light_height);
-        const /*      */ light_dir_z = new Float32Array(lights.buffer, layer * 6, light_width * light_height);
-        const /*    */ light_color_r = new Float32Array(lights.buffer, layer * 7, light_width * light_height);
-        const /*    */ light_color_g = new Float32Array(lights.buffer, layer * 8, light_width * light_height);
-        const /*    */ light_color_b = new Float32Array(lights.buffer, layer * 9, light_width * light_height);
-        const /**/ light_attenuation = new Float32Array(lights.buffer, layer * 10, light_width * light_height);
-        const /*       */ light_mask = new Uint32Array(lights.buffer, layer * 11, light_width * light_height);
-        const /*    */ light_param_0 = new Float32Array(lights.buffer, layer * 12, light_width * light_height);
-        const /*    */ light_param_1 = new Float32Array(lights.buffer, layer * 13, light_width * light_height);
-        const /*    */ light_param_2 = new Float32Array(lights.buffer, layer * 14, light_width * light_height);
-        const /*    */ light_param_3 = new Float32Array(lights.buffer, layer * 15, light_width * light_height);
+        const/*    */ light_type_id = this.light_type_id;
+        const/*      */ light_pos_x = this.light_pos_x;
+        const/*      */ light_pos_y = this.light_pos_y;
+        const/*      */ light_pos_z = this.light_pos_z;
+        const/*      */ light_dir_x = this.light_dir_x;
+        const/*      */ light_dir_y = this.light_dir_y;
+        const/*      */ light_dir_z = this.light_dir_z;
+        const/*    */ light_color_r = this.light_color_r;
+        const/*    */ light_color_g = this.light_color_g;
+        const/*    */ light_color_b = this.light_color_b;
+        const/**/ light_attenuation = this.light_attenuation;
+        const/*       */ light_mask = this.light_mask;
+        const/*    */ light_param_0 = this.light_param_0;
+        const/*    */ light_param_1 = this.light_param_1;
+        const/*    */ light_param_2 = this.light_param_2;
+        const/*    */ light_param_3 = this.light_param_3;
+        const/*    */ light_shadow_bias = this.light_shadow_bias;
+        const/*    */ light_shadow_normal_bias = this.light_shadow_normal_bias;
+        const/*    */ light_shadow_opacity = this.light_shadow_opacity;
 
         for (let y = 0; y < light_height; y++) {
             for (let x = 0; x < light_width; x++) {
                 const id = y * light_width + x;
+                
+                light_type_id[id] = 3;
 
                 light_pos_x[id] = (Math.random() - 0.5) * 8;
                 light_pos_y[id] = (Math.random() - 0.5) * 8;
                 light_pos_z[id] = (Math.random() - 0.75) * 2;
-
-                light_type_id[id] = 3;
 
                 // const c = Math.random() * 3;
                 // if (c < 1) {
@@ -218,7 +242,8 @@ export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState, WebGL2Re
         light_color_g[11] = 1.0 * 0.06;
         light_color_b[11] = 1.0 * 0.06;
 
-        this.render_state.update_Texture3D(texture, 0, RenderStateTextureDataFormat.RInt, new Uint32Array(lights.buffer), light_width, light_height, param_count, 0, 0, 0);
+        this.render_state.update_Texture3D(texture, 0, RenderStateTextureDataFormat.RInt, this.lights, this.light_width, this.light_height, this.light_param_count, 0, 0, 0);
+        console.timeEnd('update lights');
     }
 
     public set_WorldUniform(name: string, data: ArrayBufferView) {

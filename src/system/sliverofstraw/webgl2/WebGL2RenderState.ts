@@ -11,6 +11,8 @@ import { WebGL2RenderStateFrameBuffer } from "./webgl2_render_state_objects/WebG
 import { type FrameBufferAttachment } from "../render_state_objects/RenderStateFrameBuffer";
 import type { RenderStateTextureUniformSlot } from "../render_state_objects/RenderStateUniformSlot";
 import type { WebGL2RenderStateTextureUniformSlot } from "./webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
+import type { RenderStateRenderBuffer } from "../render_state_objects/RenderStateRenderBuffer";
+import { WebGL2RenderStateRenderBuffer } from "./webgl2_render_state_objects/WebGL2RenderStateRenderBuffer";
 
 export interface WebGL2RenderStateInitOption extends RenderStateInitOption {
     preserve_texture_count: number,
@@ -103,9 +105,20 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         return false;
     }
 
-    // texture
+    // render buffer
+    private render_buffer_state: WebGLRenderbuffer | null = null;
+    public bind_RenderBufferProxy(render_buffer: WebGLRenderbuffer | null) {
+        if (this.render_buffer_state !== render_buffer) {
+            this.render_buffer_state = render_buffer;
+            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, render_buffer);
+            return true;
+        }
+        return false;
+    }
+
+    // frame  buffer
     private frame_buffer_state: (WebGLFramebuffer | null)[] = [null, null, null];
-    public bind_FrameBufferProxy(target: number, texture: WebGLFramebuffer | null) {
+    public bind_FrameBufferProxy(target: number, frame_buffer: WebGLFramebuffer | null) {
         let frame_buffer_state_index = 0;
         switch (target) {
             case this.gl.FRAMEBUFFER: /*         */ frame_buffer_state_index = 0; break;
@@ -113,9 +126,13 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             case this.gl.DRAW_FRAMEBUFFER: /*    */ frame_buffer_state_index = 2; break;
             default: throw new Error('<WebGL2RenderState> bind_FrameBufferProxy: bind target point is invalid');
         }
-        if (this.frame_buffer_state[frame_buffer_state_index] !== texture) {
-            this.frame_buffer_state[frame_buffer_state_index] = texture;
-            this.gl.bindFramebuffer(target, texture);
+        if (this.frame_buffer_state[frame_buffer_state_index] !== frame_buffer) {
+            this.frame_buffer_state[frame_buffer_state_index] = frame_buffer;
+            if (frame_buffer_state_index === 0) {
+                this.frame_buffer_state[1] = frame_buffer;
+                this.frame_buffer_state[2] = frame_buffer;
+            }
+            this.gl.bindFramebuffer(target, frame_buffer);
             return true;
         }
         return false;
@@ -783,9 +800,13 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             this.set_TextureSlotSampler(slot, sampler);
         }
         else {
-            // looped arround
-            const old_texture = texture_slot.value;
-            old_texture.slot = undefined;
+            // looped arround, clear all used texture
+            for (let i = 0; i < this.user_texture_slot_count; i++) {
+                const tex = this.active_sampled_texture_slots[i]!.value!;
+                tex.slot = undefined;
+                this.active_sampled_texture_slots[i] = undefined;
+            }
+            current_slot = 0;
             this.active_sampled_texture_slots[current_slot] = new WeakRef(sampled_texture);
             const slot = this.texture_slot_preserved + current_slot;
             sampled_texture.slot = slot;
@@ -852,6 +873,34 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         console.log("delete texture sampler", sampler.id);
     }
 
+    // Render Buffer
+
+    public create_RenderBuffer(format: RenderStateTextureFormat, samples: number): Result<WebGL2RenderStateRenderBuffer, Error> {
+        const render_buffer = this.gl.createRenderbuffer();
+        if (render_buffer === null) return Result.Error(new Error('<WebGL2RenderState> create_RenderBuffer: failed to create render state render buffer'));
+        return Result.Ok(new WebGL2RenderStateRenderBuffer(this.render_state, render_buffer, this.get_TextureFormatType(format)[0], Math.min(samples, this.gl.getParameter(this.gl.MAX_SAMPLES))));
+    }
+
+    public alloc_RenderBuffer(render_buffer: WebGL2RenderStateRenderBuffer, width: number, height: number): void {
+        this.bind_RenderBufferProxy(render_buffer.render_buffer);
+        const gl = this.gl;
+        const { format: internal_format, samples } = render_buffer;
+        if (samples > 1) {
+            gl.renderbufferStorageMultisample(gl.RENDERBUFFER, samples, internal_format, width, height);
+        }
+        else {
+            gl.renderbufferStorage(gl.RENDERBUFFER, internal_format, width, height);
+
+        }
+        render_buffer.width = width;
+        render_buffer.height = height;
+    }
+
+    public delete_RenderBuffer(render_buffer: WebGL2RenderStateRenderBuffer): void {
+        this.gl.deleteRenderbuffer(render_buffer.render_buffer);
+        console.log("delete render buffer", render_buffer.id);
+    }
+
     // Frame Buffer
 
     public create_FrameBuffer(): Result<WebGL2RenderStateFrameBuffer, Error> {
@@ -863,35 +912,26 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public set_FrameBufferAttachment(frame_buffer: WebGL2RenderStateFrameBuffer, target: WebGL2RenderStateFrameBufferAttachmentPoint, attachment: FrameBufferAttachment<WebGL2RenderState> | undefined): void {
         const gl = this.gl;
         const point = this.get_FrameBufferAttachmentPoint(target);
-        if (frame_buffer.has_Attachment(point)) {
-            if (attachment === undefined) {
-                // remove
-                this.bind_FrameBufferProxy(gl.FRAMEBUFFER, frame_buffer.frame_buffer);
-                gl.framebufferTexture2D(gl.FRAMEBUFFER, point, gl.TEXTURE_2D, null, 0);
-            }
-            else {
-                // reset
-                this.bind_FrameBufferProxy(gl.FRAMEBUFFER, frame_buffer.frame_buffer);
-                if (attachment instanceof WebGL2RenderStateTexture) {
-                    gl.framebufferTexture2D(gl.FRAMEBUFFER, point, gl.TEXTURE_2D, attachment.texture, 0);
-                }
-                else {
-                    // render buffer
-                }
-            }
-            frame_buffer.set_Attachment(point, attachment);
-        }
-        else if (attachment !== undefined) {
+        if (attachment === undefined) {
+            // remove
             this.bind_FrameBufferProxy(gl.FRAMEBUFFER, frame_buffer.frame_buffer);
-            // new
+            gl.framebufferTexture2D(gl.FRAMEBUFFER, point, gl.TEXTURE_2D, null, 0);
+        }
+        else {
+            // reset
+            this.bind_FrameBufferProxy(gl.FRAMEBUFFER, frame_buffer.frame_buffer);
             if (attachment instanceof WebGL2RenderStateTexture) {
                 gl.framebufferTexture2D(gl.FRAMEBUFFER, point, gl.TEXTURE_2D, attachment.texture, 0);
             }
-            else {
+            else if (attachment instanceof WebGL2RenderStateRenderBuffer) {
                 // render buffer
+                gl.framebufferRenderbuffer(gl.FRAMEBUFFER, point, gl.RENDERBUFFER, attachment.render_buffer);
             }
-            frame_buffer.set_Attachment(point, attachment);
+            else {
+                throw new Error('<WebGLRenderState> set_FrameBufferAttachment: unknown attachment type for frame buffer');
+            }
         }
+        frame_buffer.set_Attachment(point, attachment);
     }
 
     public enable_FrameBuffer(frame_buffer: WebGL2RenderStateFrameBuffer) {

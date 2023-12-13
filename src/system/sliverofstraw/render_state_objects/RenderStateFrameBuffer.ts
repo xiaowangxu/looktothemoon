@@ -2,8 +2,9 @@ import { Ref } from "@/system/utils/RefCounted";
 import type { RenderState } from "../RenderState";
 import { RenderStateObject } from "../RenderStateObject";
 import type { RenderStateTexture } from "./RenderStateTexture";
+import type { RenderStateRenderBuffer } from "./RenderStateRenderBuffer";
 
-export type FrameBufferAttachment<RS extends RenderState<RS>> = RenderStateTexture<RS>;
+export type FrameBufferAttachment<RS extends RenderState<RS>> = RenderStateTexture<RS> | RenderStateRenderBuffer<RS>;
 
 export class RenderStateFrameBuffer<T extends RenderState<T>> extends RenderStateObject<T> {
     public attachments_ref: Map<any, Ref<FrameBufferAttachment<T>>> = new Map();

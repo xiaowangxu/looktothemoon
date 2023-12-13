@@ -12,6 +12,7 @@ import type { RenderStateVertexArray, RenderStateVertexArrayView } from "./rende
 import type { RenderStateProgram } from "./render_state_objects/RenderStateProgram";
 import type { RenderStateBuffer, RenderStateBufferView } from "./render_state_objects/RenderStateBuffer";
 import { Result } from "../utils/Result";
+import type { RenderStateRenderBuffer } from "./render_state_objects/RenderStateRenderBuffer";
 
 export interface RenderStateInitOption { }
 
@@ -182,6 +183,14 @@ export abstract class RenderState<T extends RenderState<T>> {
     public abstract set_TextureSamplerParameters(sampler: RenderStateTextureSampler<T>, wrap_s?: RenderStateTextureWrap, wrap_t?: RenderStateTextureWrap, wrap_r?: RenderStateTextureWrap, min_filter?: RenderStateTextureMinFilter, mag_filter?: RenderStateTextureMagFilter): void;
 
     public abstract delete_TextureSampler(sampler: RenderStateTextureSampler<T>): void;
+
+    // render buffer
+
+    public abstract create_RenderBuffer(format: RenderStateTextureFormat, samples: number): Result<RenderStateRenderBuffer<T>, Error>;
+
+    public abstract alloc_RenderBuffer(render_buffer: RenderStateRenderBuffer<T>, width: number, height: number) : void;
+
+    public abstract delete_RenderBuffer(render_buffer: RenderStateRenderBuffer<T>): void;
 
     // frame buffer
 

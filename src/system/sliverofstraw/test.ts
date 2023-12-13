@@ -15,7 +15,7 @@ import { vec4 } from "../fivepebble/linear_algebra/Vector4";
 const calculights = `
 ivec3 lights_size = textureSize(lights, 0);
 int lights_count = lights_size.x * lights_size.y;
-const int LIGHT_MAX_COUNT = 128;
+const int LIGHT_MAX_COUNT = 64;
 
 // see light function
 // light_type, light_direction, view_direction, normal, light_color, light_attenuation, inout vec3 diffuse, inout vec3 specular
@@ -106,6 +106,17 @@ const canvas = new OffscreenCanvas(1024, 1024);
 const render_device = new WebGL2RenderDevice(canvas, { preserve_texture_count: 4 });
 console.log(render_device);
 
+const skybox_texture = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 5, RenderStateTextureWrap.MirrorRepeat, undefined, undefined, RenderStateTextureMinFilter.LinearMipmapLinear, RenderStateTextureMagFilter.Linear).expect();
+
+import skybox_url from 'res://studio.png';
+new ImageLoader().parse(skybox_url).then(res => {
+	const image_res = res.expect();
+	const { width, height, image_data } = image_res;
+	render_device.render_state.alloc_Texture2D(skybox_texture, width, height, 0, RenderStateTextureDataFormat.RGBA, image_data.data);
+	render_device.render_state.generate_Mipmap(skybox_texture);
+	console.log(">>>> skybox loaded");
+});
+
 // #region surface
 
 // texture
@@ -113,6 +124,8 @@ import { FImage } from './test-image';
 import { EditorViewport } from "../../app/EditorScene";
 import { plane3 } from "../fivepebble/geometries/Plane3";
 import { sphere3 } from "../fivepebble/geometries/Sphere3";
+import { RenderStateTextureUniformSlot } from "./render_state_objects/RenderStateUniformSlot";
+import { ImageLoader } from "../engine/loaders/ImageLoader";
 const texture = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.SRGBA8, 1, RenderStateTextureWrap.MirrorRepeat, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
 render_device.render_state.alloc_Texture2D(texture, 256, 256, 0, RenderStateTextureDataFormat.RGBA, FImage);
 render_device.render_state.generate_Mipmap(texture);
@@ -4725,7 +4738,7 @@ const attributes = {
 	a_normal: { type: RenderStateUniformType.Vec3 },
 	a_uv: { type: RenderStateUniformType.Vec2 },
 };
-const uniforms = { u_color: { type: RenderStateUniformType.Vec4 }, u_texture: { type: RenderStateUniformType.Tex2D }, u_texture2: { type: RenderStateUniformType.Tex2D } };
+const uniforms = { u_sky: { type: RenderStateUniformType.Tex2D }, u_color: { type: RenderStateUniformType.Vec4 }, u_texture: { type: RenderStateUniformType.Tex2D }, u_texture2: { type: RenderStateUniformType.Tex2D } };
 const varyings = { v_world: { type: RenderStateUniformType.Vec3 }, v_normal: { type: RenderStateUniformType.Vec3 }, v_uv: { type: RenderStateUniformType.Vec2 } };
 const outputs = { o_color: { type: RenderStateUniformType.Vec4, location: 0 }, o_color1: { type: RenderStateUniformType.Vec4, location: 1 } };
 
@@ -4744,10 +4757,9 @@ const f_fragmentShaderSource = process_WebGL2ShaderCode(RenderStateShaderType.Fr
 const f_fragmentShaderSource2 = process_WebGL2ShaderCode(RenderStateShaderType.Fragment,
 	attributes, uniforms, varyings, outputs,
 	`vec3 normal = normalize(v_normal);
-vec4 albedo_color = vec4(1.0, 1.0, 1.0, 1.0);
-// if (v_uv.x + v_uv.y > 1.0) {
-// 	albedo_color = texture(u_texture, v_uv); // texture(u_texture, v_uv);
-// }
+vec3 lookat_dir = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0, 0.0, 1.0)) : normalize(camera_world[3].xyz - v_world);
+vec3 reflected = reflect(-lookat_dir, normal);
+vec4 albedo_color = skybox(u_sky, reflected, 0.0);// vec4(1.0, 1.0, 1.0, 1.0);
 
 ${calculights}
 
@@ -4773,6 +4785,7 @@ const material = new WebGL2RenderDeviceMaterialSet(render_device,
 		test: {
 			shader: frag_shader2,
 			uniforms: {
+				u_sky: { type: RenderStateUniformType.Tex2D, default: { texture: skybox_texture } },
 				u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
 				u_texture: { type: RenderStateUniformType.Tex2D, default: { texture: texture, sampler: sampler } },
 				u_texture2: { type: RenderStateUniformType.Tex2D, default: { texture: texture, sampler: sampler2 } },
@@ -4915,7 +4928,7 @@ const attributes2 = {
 	a_uv: { type: RenderStateUniformType.Vec2 },
 	a_model_world: { type: RenderStateUniformType.Mat4 },
 };
-const uniforms2 = { u_color: { type: RenderStateUniformType.Vec4 }, u_texture: { type: RenderStateUniformType.Tex2D }, u_texture2: { type: RenderStateUniformType.Tex2D } };
+const uniforms2 = { u_sky: { type: RenderStateUniformType.Tex2D }, u_color: { type: RenderStateUniformType.Vec4 }, u_texture: { type: RenderStateUniformType.Tex2D }, u_texture2: { type: RenderStateUniformType.Tex2D } };
 const varyings2 = { v_world: { type: RenderStateUniformType.Vec3 }, v_normal: { type: RenderStateUniformType.Vec3 }, v_uv: { type: RenderStateUniformType.Vec2 } };
 const outputs2 = { o_color: { type: RenderStateUniformType.Vec4, location: 0 }, o_color1: { type: RenderStateUniformType.Vec4, location: 1 } };
 const f_vertexShaderSource2 = process_WebGL2ShaderCode(RenderStateShaderType.Vertex,
@@ -4929,6 +4942,8 @@ v_world = world.xyz;`
 const f_fragmentShaderSource3 = process_WebGL2ShaderCode(RenderStateShaderType.Fragment,
 	attributes2, uniforms2, varyings2, outputs2,
 	`vec3 normal = normalize(v_normal);
+// vec3 lookat_dir = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0, 0.0, 1.0)) : normalize(camera_world[3].xyz - v_world);
+// vec3 reflected = reflect(-lookat_dir, normal);
 vec4 albedo_color = vec4(0.2, 0.2, 0.2, 1.0);
 
 ${calculights}
@@ -4959,6 +4974,7 @@ const material2 = new WebGL2RenderDeviceMaterialSet(render_device,
 		test: {
 			shader: frag_shader3,
 			uniforms: {
+				u_sky: { type: RenderStateUniformType.Tex2D, default: { texture: skybox_texture } },
 				u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
 				u_texture: { type: RenderStateUniformType.Tex2D, default: { sampler: sampler3, texture: render_device.empty_texture.expect } },
 				u_texture2: { type: RenderStateUniformType.Tex2D, default: {} },
@@ -4989,8 +5005,6 @@ material2.set_TextureUniform<RenderStateUniformType.Tex2D>(stage, 'u_texture2', 
 
 // #endregion
 
-// #region full screen quad test
-
 const position = new RenderDeviceVector2AttributeBuffer(render_device, RenderStateBufferUsage.StaticDraw, [
 	/* 0 */vec2(-1, 1),			//  0 ------ 2
 	/* 1 */vec2(-1, -1),		//  |        |
@@ -5008,6 +5022,49 @@ quad_surface.set_AttributeBuffer(
 	},
 	index
 );
+
+// #region full screen quad skybox
+const skybox_attributes = {
+	a_position: { type: RenderStateUniformType.Vec3 },
+	a_uv: { type: RenderStateUniformType.Vec2 },
+};
+const skybox_uniforms = { u_sky: { type: RenderStateUniformType.Tex2D } };
+const skybox_varyings = {};
+const skybox_outputs = { o_color: { type: RenderStateUniformType.Vec4, location: 0 } };
+const skybox_vertexShaderSource = process_WebGL2ShaderCode(RenderStateShaderType.Vertex,
+	skybox_attributes, skybox_uniforms, skybox_varyings, skybox_outputs,
+	`gl_Position = vec4(a_position, 1.0);
+gl_Position.z = 1.0;`
+);
+const skybox_fragmentShaderSource = process_WebGL2ShaderCode(RenderStateShaderType.Fragment,
+	skybox_attributes, skybox_uniforms, skybox_varyings, skybox_outputs,
+	`vec2 uv = gl_FragCoord.xy / screen_size;
+vec4 dir = mat4(mat3(camera_world)) * inverse(camera_projection) * vec4((uv * 2.0 - 1.0), 1.0, 1.0);
+vec3 R = normalize(dir.xyz);
+float theta = atan(R.z, R.x);
+float gamma = acos(R.y);
+o_color = texture(u_sky, vec2(theta / TAU + 0.5, gamma / PI));`
+);
+const skybox_vert_shader = render_device.render_state.create_Shader(RenderStateShaderType.Vertex, skybox_vertexShaderSource).expect();
+const skybox_frag_shader = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, skybox_fragmentShaderSource).expect();
+
+const skybox_material = new WebGL2RenderDeviceMaterialSet(render_device,
+	skybox_vert_shader, {},
+	{
+		test: {
+			shader: skybox_frag_shader,
+			uniforms: {
+				u_sky: { type: RenderStateUniformType.Tex2D, default: { texture: skybox_texture } }
+			}
+		}
+	}
+);
+const skybox_renderable_surface = new WebGL2RenderDeviceRenderableSurface(render_device);
+skybox_renderable_surface.set_Material(skybox_material);
+skybox_renderable_surface.set_Surface(quad_surface);
+// #endregion
+
+// #region full screen quad test
 const quad_attributes = {
 	a_position: { type: RenderStateUniformType.Vec3 },
 	a_uv: { type: RenderStateUniformType.Vec2 },
@@ -5056,18 +5113,25 @@ quad_renderable_surface.set_Surface(quad_surface);
 // #endregion
 
 // #region frame buffer
+const msaa = 8;
 const frame_buffer = render_device.render_state.create_FrameBuffer().expect();
-const frame_buffer_depth_tex = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.D32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-render_device.render_state.alloc_Texture2D(frame_buffer_depth_tex, 1024, 1024, 0, RenderStateTextureDataFormat.Depth, undefined);
+const frame_buffer_depth_tex = render_device.render_state.create_RenderBuffer(RenderStateTextureFormat.D32F, msaa).expect();
+render_device.render_state.alloc_RenderBuffer(frame_buffer_depth_tex, 1024, 1024);
 render_device.render_state.set_FrameBufferAttachment(frame_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_buffer_depth_tex);
 render_device.render_state.enable_FrameBuffer(frame_buffer);
 
 const frame_buffer2 = render_device.render_state.create_FrameBuffer().expect();
-const frame_buffer_tex = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-render_device.render_state.alloc_Texture2D(frame_buffer_tex, 1024, 1024, 0, RenderStateTextureDataFormat.RGBA, undefined);
-render_device.render_state.set_FrameBufferAttachment(frame_buffer2, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, frame_buffer_tex);
+const frame_buffer_render_buffer = render_device.render_state.create_RenderBuffer(RenderStateTextureFormat.RGBA32F, msaa).expect();
+render_device.render_state.alloc_RenderBuffer(frame_buffer_render_buffer, 1024, 1024);
+render_device.render_state.set_FrameBufferAttachment(frame_buffer2, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, frame_buffer_render_buffer);
 render_device.render_state.set_FrameBufferAttachment(frame_buffer2, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_buffer_depth_tex);
 render_device.render_state.enable_FrameBuffer(frame_buffer2);
+
+const frame_buffer_copy = render_device.render_state.create_FrameBuffer().expect();
+const frame_buffer_tex = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+render_device.render_state.alloc_Texture2D(frame_buffer_tex, 1024, 1024, 0, RenderStateTextureDataFormat.RGBA, undefined);
+render_device.render_state.set_FrameBufferAttachment(frame_buffer_copy, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, frame_buffer_tex);
+render_device.render_state.enable_FrameBuffer(frame_buffer_copy);
 
 quad_material.set_TextureUniform<RenderStateUniformType.Tex2D>('test', 'u_result', frame_buffer_tex);
 
@@ -5152,12 +5216,20 @@ function render(time: number) {
 	render_device.render_Renderable(stage, renderable_surface);
 	render_device.render_Renderable(stage, renderable_surface2);
 
+	// skybox
+	render_state.set_DepthFuncProxy(render_state.gl.LEQUAL);
+	render_device.render_Renderable(stage, skybox_renderable_surface);
+
+	// copy
+	render_state.bind_FrameBufferProxy(render_state.gl.READ_FRAMEBUFFER, frame_buffer2.frame_buffer);
+	render_state.bind_FrameBufferProxy(render_state.gl.DRAW_FRAMEBUFFER, frame_buffer_copy.frame_buffer);
+	render_state.gl.blitFramebuffer(0, 0, 1024, 1024, 0, 0, 1024, 1024, render_state.gl.COLOR_BUFFER_BIT, render_state.gl.NEAREST);
+
+	// put on screen
 	render_state.use_FrameBuffer(undefined);
 	render_state.set_DepthFuncProxy(render_state.gl.LEQUAL);
-	// render_state.set_CapabilityProxy(render_state.gl.BLEND, false);
 	render_state.gl.clear(render_state.gl.COLOR_BUFFER_BIT | render_state.gl.DEPTH_BUFFER_BIT);
 	render_device.render_Renderable(stage, quad_renderable_surface);
-
 	on_screen_ctx?.drawImage(canvas, 0, 0);
 }
 
@@ -5175,6 +5247,3 @@ animation();
 
 // renderable_surface.dispose();
 // renderable_surface2.dispose();
-
-const plane = plane3(vec3(0, 1, 0), 0);
-console.log(plane.is_PointBelow(vec3(0, 0, 0), true));

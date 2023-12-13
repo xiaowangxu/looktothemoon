@@ -238,6 +238,13 @@ ${varys.join('\n')}
 // outputs
 ${outps.join('\n')}
 
+// skybox_sample
+vec4 skybox(sampler2D sky, vec3 normal, float lod) {
+    float theta = atan(normal.z, normal.x);
+    float gamma = acos(normal.y);
+    return texture(sky, vec2(theta / TAU + 0.5, gamma / PI), lod);
+}
+
 // light function : ndf
 ${NDFs.GGX}
 
@@ -264,7 +271,7 @@ ${(light ??
 if (light_strength > 0.0) {
     diffuse += light_strength * light_color * light_attenuation;
     vec3 half_direction = normalize(light_direction + view_direction);  
-    float beckmann = beckmannDistribution(dot(normal, half_direction), 0.025);
+    float beckmann = beckmannDistribution(dot(normal, half_direction), 0.01);
     specular += beckmann * light_color * light_attenuation;
 }`
 // `float roughness = 0.2; //(sin(time / 3.0) + 1.0) / 2.0 + 0.0001;
