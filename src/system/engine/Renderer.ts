@@ -53,5 +53,4 @@ export class Renderer3D {
     public get_Info() {
         return this.renderer.info;
     }
-
 }

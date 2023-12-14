@@ -58,6 +58,7 @@ export abstract class RenderDeviceMaterialSet<
     extends RenderDeviceObject<T>
 {
     protected programs_ref: ProgramMap<T, Program> = new Map();
+    public readonly vertex_shader_id : number;
 
     protected abstract bind_ProgramUniforms(program: Program, uniforms: UniformInitSet<T>): RenderDeviceUniformSet<T>;
 
@@ -79,6 +80,7 @@ export abstract class RenderDeviceMaterialSet<
     constructor(render_device: RenderDevice<T>, vertex: Shader, uniforms: UniformInitSet<T>, fragments_set: { [name: string]: { shader: Shader, uniforms: UniformInitSet<T> } }) {
         super(render_device);
         this.set_Shaders(vertex, uniforms, fragments_set);
+        this.vertex_shader_id = vertex.id;
     }
 
     public has_Program(name: string) {

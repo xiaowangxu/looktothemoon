@@ -1,6 +1,6 @@
 import { Result } from "@/system/utils/Result";
 import type { RenderDevice } from "../RenderDevice";
-import { RenderState, RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateUniformType, RenderStateTextureWrap, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureFormat, RenderStateTextureType, type RenderStateUniformSlotTypeMap, type RenderStateTextureUniformType, type RenderStateInitOption as RenderStateInitOption, RenderStateTextureDataFormat } from "../RenderState";
+import { RenderState, RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateUniformType, RenderStateTextureWrap, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureFormat, RenderStateTextureType, type RenderStateUniformSlotTypeMap, type RenderStateTextureUniformType, type RenderStateInitOption as RenderStateInitOption, RenderStateTextureDataFormat, RenderStateFrameBufferPart } from "../RenderState";
 import { WebGL2RenderStateBuffer, WebGL2RenderStateBufferView } from "./webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import { WebGL2RenderStateShader } from "./webgl2_render_state_objects/WebGL2RenderStateShader";
 import { WebGL2RenderStateProgram } from "./webgl2_render_state_objects/WebGL2RenderStateProgram";
@@ -8,7 +8,7 @@ import { WebGL2RenderStateVertexArray, WebGL2RenderStateVertexArrayView } from "
 import { WebGL2RenderStateSampledTexture, WebGL2RenderStateTexture, WebGL2RenderStateTextureSampler } from "./webgl2_render_state_objects/WebGL2RenderStateTexture";
 import { WeakRef } from "@/system/utils/RefCounted";
 import { WebGL2RenderStateFrameBuffer } from "./webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
-import { type FrameBufferAttachment } from "../render_state_objects/RenderStateFrameBuffer";
+import { RenderStateFrameBuffer, type FrameBufferAttachment } from "../render_state_objects/RenderStateFrameBuffer";
 import type { RenderStateTextureUniformSlot } from "../render_state_objects/RenderStateUniformSlot";
 import type { WebGL2RenderStateTextureUniformSlot } from "./webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 import type { RenderStateRenderBuffer } from "../render_state_objects/RenderStateRenderBuffer";
@@ -16,6 +16,7 @@ import { WebGL2RenderStateRenderBuffer } from "./webgl2_render_state_objects/Web
 
 export interface WebGL2RenderStateInitOption extends RenderStateInitOption {
     preserve_texture_count: number,
+    enabled_oes_float_linear_texture?: boolean,
     enabled_ext_float_color_buffer?: boolean,
     canvas_antialias?: boolean,
 }
@@ -57,6 +58,10 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             default: throw new Error('<WebGL2RenderState> bind_BufferProxy: bind target point is invalid');
         }
         if (this.buffer_state[buffer_state_index] !== buffer) {
+            if (buffer_state_index === 1) {
+                // index buffer
+                this.bind_VertexArrayProxy(null);
+            }
             this.buffer_state[buffer_state_index] = buffer;
             this.gl.bindBuffer(target, buffer);
             return true;
@@ -255,6 +260,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         const {
             preserve_texture_count,
             enabled_ext_float_color_buffer = true,
+            enabled_oes_float_linear_texture = true,
             canvas_antialias = true,
         } = option;
 
@@ -266,6 +272,11 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         if (enabled_ext_float_color_buffer) {
             const color_buffer_float_ext = gl.getExtension('EXT_color_buffer_float');
             if (color_buffer_float_ext === null) throw new Error('<WebGL2RenderState> constructor: failed to get webgl2 color buffer float extension');
+        }
+
+        if (enabled_oes_float_linear_texture) {
+            const texture_float_linear_ext = gl.getExtension('OES_texture_float_linear');
+            if (texture_float_linear_ext === null) throw new Error('<WebGL2RenderState> constructor: failed to get webgl2 texture float extension');
         }
 
         this.max_texture_slot = this.gl.getParameter(this.gl.MAX_TEXTURE_IMAGE_UNITS);
@@ -449,6 +460,14 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         }
     }
 
+    public get_FrameBufferPartBits(target: RenderStateFrameBufferPart) {
+        let result = 0;
+        if (target & RenderStateFrameBufferPart.Color) result |= this.gl.COLOR_BUFFER_BIT;
+        if (target & RenderStateFrameBufferPart.Depth) result |= this.gl.DEPTH_BUFFER_BIT;
+        if (target & RenderStateFrameBufferPart.Stencil) result |= this.gl.STENCIL_BUFFER_BIT;
+        return result;
+    }
+
     // #endregion 
 
     // Shader
@@ -617,7 +636,6 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         if (!binded) {
             this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.buffer);
         }
-        this.bind_VertexArrayProxy(null);
     }
 
     // Texture
@@ -934,6 +952,25 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         frame_buffer.set_Attachment(point, attachment);
     }
 
+    public blit_FrameBuffer(src: WebGL2RenderStateFrameBuffer, dst: WebGL2RenderStateFrameBuffer,
+        parts: RenderStateFrameBufferPart, filter: RenderStateTextureMagFilter,
+        src_x: number, src_y: number, src_w: number, src_h: number,
+        dst_x?: number, dst_y?: number, dst_w?: number, dst_h?: number
+    ): void {
+        const gl = this.gl;
+        const src_x1 = src_x + src_w;
+        const src_y1 = src_y + src_h;
+        if (dst_x === undefined) dst_x = src_x;
+        if (dst_y === undefined) dst_y = src_y;
+        if (dst_w === undefined) dst_w = src_w;
+        if (dst_h === undefined) dst_h = src_h;
+        const dst_x1 = dst_x + dst_w;
+        const dst_y1 = dst_y + dst_h;
+        this.bind_FrameBufferProxy(gl.READ_FRAMEBUFFER, src.frame_buffer);
+        this.bind_FrameBufferProxy(gl.DRAW_FRAMEBUFFER, dst.frame_buffer);
+        gl.blitFramebuffer(src_x, src_y, src_x1, src_y1, dst_x, dst_y, dst_x1, dst_y1, this.get_FrameBufferPartBits(parts), this.get_TextureFilter(filter));
+    }
+
     public enable_FrameBuffer(frame_buffer: WebGL2RenderStateFrameBuffer) {
         const gl = this.gl;
         this.bind_FrameBufferProxy(gl.FRAMEBUFFER, frame_buffer.frame_buffer);
@@ -989,7 +1026,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
                 const uniform = data as WebGL2RenderStateTextureUniformSlot;
                 const sampled_texture = uniform.sampled_texture;
                 const slot = this.get_SampledTextureSlot(sampled_texture);
-                console.log("use texture slot", slot);
+                // console.log("use texture slot", slot);
                 this.gl.uniform1i(uniform_location, slot);
                 return;
             }

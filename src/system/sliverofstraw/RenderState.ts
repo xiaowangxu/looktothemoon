@@ -24,6 +24,12 @@ export enum RenderStateBufferType {
     Index, Array, Uniform
 }
 
+export enum RenderStateFrameBufferPart {
+    Color = 0b001,
+    Depth = 0b010,
+    Stencil = 0b100,
+}
+
 export enum RenderStateBufferUsage {
     StaticCopy, StaticDraw, StaticRead,
     DynamicCopy, DynamicDraw, DynamicRead,
@@ -188,7 +194,7 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     public abstract create_RenderBuffer(format: RenderStateTextureFormat, samples: number): Result<RenderStateRenderBuffer<T>, Error>;
 
-    public abstract alloc_RenderBuffer(render_buffer: RenderStateRenderBuffer<T>, width: number, height: number) : void;
+    public abstract alloc_RenderBuffer(render_buffer: RenderStateRenderBuffer<T>, width: number, height: number): void;
 
     public abstract delete_RenderBuffer(render_buffer: RenderStateRenderBuffer<T>): void;
 
@@ -197,6 +203,12 @@ export abstract class RenderState<T extends RenderState<T>> {
     public abstract create_FrameBuffer(): Result<RenderStateFrameBuffer<T>, Error>;
 
     public abstract set_FrameBufferAttachment(frame_buffer: RenderStateFrameBuffer<T>, target: any, attachment: FrameBufferAttachment<T> | undefined): void;
+
+    public abstract blit_FrameBuffer(src: RenderStateFrameBuffer<T>, dst: RenderStateFrameBuffer<T>,
+        parts: RenderStateFrameBufferPart, filter: RenderStateTextureMagFilter,
+        src_x: number, src_y: number, src_w: number, src_h: number,
+        dst_x?: number, dst_y?: number, dst_w?: number, dst_h?: number,
+    ): void;
 
     public abstract delete_FrameBuffer(frame_buffer: RenderStateFrameBuffer<T>): void;
 

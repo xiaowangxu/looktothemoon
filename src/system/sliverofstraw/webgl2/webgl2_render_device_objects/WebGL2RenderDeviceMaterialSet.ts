@@ -15,8 +15,7 @@ import type { WebGL2RenderStateTexture, WebGL2RenderStateTextureSampler } from "
 type WebGL2RenderStateUniformSlots = WebGL2RenderStateIntUniformSlot | WebGL2RenderStateFloatUniformSlot |
     WebGL2RenderStateVec2UniformSlot | WebGL2RenderStateVec3UniformSlot | WebGL2RenderStateVec4UniformSlot |
     WebGL2RenderStateMat3UniformSlot | WebGL2RenderStateMat4UniformSlot |
-    WebGL2RenderStateTextureUniformSlot
-    ;
+    WebGL2RenderStateTextureUniformSlot;
 
 export class WebGL2RenderDeviceUniformSet extends RenderDeviceUniformSet<WebGL2RenderState> {
     protected uniforms: Map<string, Ref<WebGL2RenderStateUniformSlots>> = new Map();
@@ -46,7 +45,7 @@ export class WebGL2RenderDeviceMaterialSet extends RenderDeviceMaterialSet<WebGL
         if (lights_location !== null) {
             uniform.add_Uniform(
                 'lights',
-                new WebGL2RenderStateTextureUniformSlot(this.render_state, program, RenderStateUniformType.Tex2DArray, lights_location, (this.render_device as WebGL2RenderDevice).lights_texture.expect, undefined)
+                new WebGL2RenderStateIntUniformSlot(this.render_state, program, lights_location, 2)
             );
         }
 

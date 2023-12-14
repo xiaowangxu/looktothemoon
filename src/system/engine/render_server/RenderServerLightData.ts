@@ -1,0 +1,136 @@
+import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
+import { Ref } from "@/system/utils/RefCounted";
+import { RenderServer } from "./RenderServer";
+import { RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType } from "@/system/sliverofstraw/RenderState";
+import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import type { Color } from "@/system/fivepebble/graphics/Color";
+
+export enum RenderServerLightType {
+    AmbientLight = 1,
+    DirectionalLight = 2,
+    PointLight = 3,
+    SpotLight = 4,
+}
+
+export class RenderServerLightsData {
+    private static LightParamCount = 19;
+
+    private readonly lights_texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
+
+    public get lights_texture() { return this.lights_texture_ref.expect; }
+
+    public readonly texture_width;
+    public readonly texture_height;
+    public readonly max_light_count;
+
+    // lights data
+    private readonly/*              */lights_data: Uint32Array;
+    private readonly/*           */ light_type_id: Uint32Array;
+    private readonly/*             */ light_pos_x: Float32Array;
+    private readonly/*             */ light_pos_y: Float32Array;
+    private readonly/*             */ light_pos_z: Float32Array;
+    private readonly/*             */ light_dir_x: Float32Array;
+    private readonly/*             */ light_dir_y: Float32Array;
+    private readonly/*             */ light_dir_z: Float32Array;
+    private readonly/*           */ light_color_r: Float32Array;
+    private readonly/*           */ light_color_g: Float32Array;
+    private readonly/*           */ light_color_b: Float32Array;
+    private readonly/*       */ light_attenuation: Float32Array;
+    private readonly/*              */ light_mask: Uint32Array;
+    private readonly/*           */ light_param_0: Float32Array;
+    private readonly/*           */ light_param_1: Float32Array;
+    private readonly/*           */ light_param_2: Float32Array;
+    private readonly/*           */ light_param_3: Float32Array;
+    private readonly/*       */ light_shadow_bias: Float32Array;
+    private readonly/**/ light_shadow_normal_bias: Float32Array;
+    private readonly/*    */ light_shadow_opacity: Float32Array;
+
+    constructor(width: number, height: number) {
+        this.texture_width = width;
+        this.texture_height = height;
+        const max_light_count = this.max_light_count = this.texture_width * this.texture_height;
+        // texture
+        const texture = RenderServer.render_state.create_Texture(RenderStateTextureType.Tex2DArray, false, RenderStateTextureFormat.R32UI, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+        this.lights_texture_ref.value = texture;
+        RenderServer.render_state.alloc_Texture3D(texture, this.texture_width, this.texture_height, RenderServerLightsData.LightParamCount, 0, RenderStateTextureDataFormat.RInt);
+        // data
+        this.lights_data = new Uint32Array(max_light_count * RenderServerLightsData.LightParamCount);
+        const light_layer_bytes = max_light_count * Uint32Array.BYTES_PER_ELEMENT;
+        /*           */this.light_type_id = new Uint32Array(this.lights_data.buffer, light_layer_bytes * 0, max_light_count);
+        /*             */this.light_pos_x = new Float32Array(this.lights_data.buffer, light_layer_bytes * 1, max_light_count);
+        /*             */this.light_pos_y = new Float32Array(this.lights_data.buffer, light_layer_bytes * 2, max_light_count);
+        /*             */this.light_pos_z = new Float32Array(this.lights_data.buffer, light_layer_bytes * 3, max_light_count);
+        /*             */this.light_dir_x = new Float32Array(this.lights_data.buffer, light_layer_bytes * 4, max_light_count);
+        /*             */this.light_dir_y = new Float32Array(this.lights_data.buffer, light_layer_bytes * 5, max_light_count);
+        /*             */this.light_dir_z = new Float32Array(this.lights_data.buffer, light_layer_bytes * 6, max_light_count);
+        /*           */this.light_color_r = new Float32Array(this.lights_data.buffer, light_layer_bytes * 7, max_light_count);
+        /*           */this.light_color_g = new Float32Array(this.lights_data.buffer, light_layer_bytes * 8, max_light_count);
+        /*           */this.light_color_b = new Float32Array(this.lights_data.buffer, light_layer_bytes * 9, max_light_count);
+        /*       */this.light_attenuation = new Float32Array(this.lights_data.buffer, light_layer_bytes * 10, max_light_count);
+        /*              */this.light_mask = new Uint32Array(this.lights_data.buffer, light_layer_bytes * 11, max_light_count);
+        /*           */this.light_param_0 = new Float32Array(this.lights_data.buffer, light_layer_bytes * 12, max_light_count);
+        /*           */this.light_param_1 = new Float32Array(this.lights_data.buffer, light_layer_bytes * 13, max_light_count);
+        /*           */this.light_param_2 = new Float32Array(this.lights_data.buffer, light_layer_bytes * 14, max_light_count);
+        /*           */this.light_param_3 = new Float32Array(this.lights_data.buffer, light_layer_bytes * 15, max_light_count);
+        /*       */this.light_shadow_bias = new Float32Array(this.lights_data.buffer, light_layer_bytes * 16, max_light_count);
+        /**/this.light_shadow_normal_bias = new Float32Array(this.lights_data.buffer, light_layer_bytes * 17, max_light_count);
+        /*    */this.light_shadow_opacity = new Float32Array(this.lights_data.buffer, light_layer_bytes * 18, max_light_count);
+        this.light_attenuation.fill(2);
+        this.light_mask.fill(0xffffffff);
+    }
+
+    private _index_array: [number, number] = [0, 0];
+    private get_Index(id: number): [number, number] {
+        this._index_array[0] = id % this.texture_width;
+        this._index_array[1] = Math.floor(id / this.texture_width);
+        return this._index_array;
+    }
+
+    public set_Light(id: number,
+        type?: RenderServerLightType, lid?: number,
+        position?: Vector3, direction?: Vector3, color?: Color, attenuation?: number,
+        mask?: number,
+        param_0?: number, param_1?: number, param_2?: number, param_3?: number,
+        shadow_bias?: number, shadow_normal_bias?: number, shadow_opacity?: number
+    ) {
+        if (id < 0 || id >= this.max_light_count) return;
+        if (type !== undefined || lid !== undefined) {
+            const type_id = this.light_type_id[id];
+            if (type === undefined) type = type_id & 0xffff;
+            if (lid === undefined) lid = type_id >> 16;
+            this.light_type_id[id] = (lid << 16) | (type & 0xffff);
+        }
+        if (position !== undefined) {
+            this.light_pos_x[id] = position.x;
+            this.light_pos_y[id] = position.y;
+            this.light_pos_z[id] = position.z;
+        }
+        if (direction !== undefined) {
+            this.light_dir_x[id] = direction.x;
+            this.light_dir_y[id] = direction.y;
+            this.light_dir_z[id] = direction.z;
+        }
+        if (color !== undefined) {
+            this.light_color_r[id] = color.x;
+            this.light_color_g[id] = color.y;
+            this.light_color_b[id] = color.z;
+        }
+        if (attenuation !== undefined)/*           */this.light_attenuation[id] = attenuation;
+        if (mask !== undefined)/*                  */this.light_mask[id] = mask & 0xffffffff;
+        if (param_0 !== undefined)/*               */this.light_param_0[id] = param_0;
+        if (param_1 !== undefined)/*               */this.light_param_1[id] = param_1;
+        if (param_2 !== undefined)/*               */this.light_param_2[id] = param_2;
+        if (param_3 !== undefined)/*               */this.light_param_3[id] = param_3;
+        if (shadow_bias !== undefined)/*           */this.light_shadow_bias[id] = shadow_bias;
+        if (shadow_normal_bias !== undefined)/*    */this.light_shadow_normal_bias[id] = shadow_normal_bias;
+        if (shadow_opacity !== undefined)/*        */this.light_shadow_opacity[id] = shadow_opacity;
+    }
+
+    public push_AllLightsData() {
+        RenderServer.render_state.update_Texture3D(this.lights_texture, 0, RenderStateTextureDataFormat.RInt, this.lights_data, this.texture_width, this.texture_height, RenderServerLightsData.LightParamCount, 0, 0, 0);
+    }
+
+    public dispose() {
+        this.lights_texture_ref.clear();
+    }
+}

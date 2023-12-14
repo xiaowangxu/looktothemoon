@@ -5,13 +5,15 @@ import type { WebGL2RenderStateProgram } from "../webgl2_render_state_objects/We
 import type { WebGL2RenderStateVertexArray } from "../webgl2_render_state_objects/WebGL2RenderStateVertexArray";
 
 export class WebGL2RenderDeviceSurface extends RenderDeviceSurface<WebGL2RenderState, WebGL2RenderStateVertexArray> {
-    
+    private bound_vertex_shader_id: number = -1;
 
     constructor(render_device: WebGL2RenderDevice) {
         super(render_device);
     }
 
     public bound_Program(program: WebGL2RenderStateProgram) {
+        const vertex_shader_id = program.vert_shader_ref.expect.id;
+        if (vertex_shader_id === this.bound_vertex_shader_id) return;
         const vertex_array = this.vertex_array_ref.expect as WebGL2RenderStateVertexArray;
         const rs = this.render_state;
         for (const [_, buffer_ref] of this.buffer_refs) {
@@ -35,6 +37,7 @@ export class WebGL2RenderDeviceSurface extends RenderDeviceSurface<WebGL2RenderS
                 buffer.expect.toggle_VertexArray(vertex_array, attribute_location, true);
             }
         }
+        this.bound_vertex_shader_id = vertex_shader_id;
         this.changed = false;
     }
 }

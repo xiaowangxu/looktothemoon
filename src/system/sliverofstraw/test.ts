@@ -2,15 +2,19 @@ import { Matrix3 } from "../fivepebble/linear_algebra/Matrix3";
 import { Matrix4, mat4 } from "../fivepebble/linear_algebra/Matrix4";
 import { Vector3, vec3 } from "../fivepebble/linear_algebra/Vector3";
 import { vec2 } from "../fivepebble/linear_algebra/Vector2";
-import { RenderStateBufferUsage, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateTextureWrap, RenderStateUniformType } from "./RenderState";
+import { RenderStateBufferUsage, RenderStateFrameBufferPart, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateTextureWrap, RenderStateUniformType } from "./RenderState";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector3AttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceMatrix4AttributeBuffer } from "./render_device_objects/RenderDeviceAttributeBuffer";
-import { WebGL2RenderDevice } from "./webgl2/WebGL2RenderDevice";
 import { WebGL2RenderState, WebGL2RenderStateFrameBufferAttachmentPoint } from "./webgl2/WebGL2RenderState";
 import { process_WebGL2ShaderCode } from "./webgl2/WebGL2ShaderProcessor";
 import { WebGL2RenderDeviceMaterialSet } from "./webgl2/webgl2_render_device_objects/WebGL2RenderDeviceMaterialSet";
 import { WebGL2RenderDeviceRenderableSurface } from "./webgl2/webgl2_render_device_objects/WebGL2RenderDeviceRenderableSurface";
 import { WebGL2RenderDeviceSurface } from "./webgl2/webgl2_render_device_objects/WebGL2RenderDeviceSurface";
 import { vec4 } from "../fivepebble/linear_algebra/Vector4";
+import { color } from "../fivepebble/graphics/Color";
+import { EditorViewport } from "../../app/EditorScene";
+import { RenderServer } from "../engine/render_server/RenderServer";
+import { RenderServerLightType, RenderServerLightsData } from "../engine/render_server/RenderServerLightData";
+import { Deg2Rad } from "../fivepebble/Scalar";
 
 const calculights = `
 ivec3 lights_size = textureSize(lights, 0);
@@ -102,35 +106,212 @@ for (int i = idx; i < lights_count; i++) {
 const onscreen = document.getElementById('test-canvas') as HTMLCanvasElement;
 const on_screen_ctx = onscreen.getContext('2d');
 
-const canvas = new OffscreenCanvas(1024, 1024);
-const render_device = new WebGL2RenderDevice(canvas, { preserve_texture_count: 4 });
-console.log(render_device);
+const render_device = RenderServer;
+const lights_data = new RenderServerLightsData(64, 64);
 
-const skybox_texture = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 5, RenderStateTextureWrap.MirrorRepeat, undefined, undefined, RenderStateTextureMinFilter.LinearMipmapLinear, RenderStateTextureMagFilter.Linear).expect();
+function update_Lights() {
+	for (let i = 0; i < lights_data.max_light_count; i++) {
+		const radius = Math.random() * 4.0;
+		lights_data.set_Light(
+			i,
+			RenderServerLightType.PointLight,
+			undefined,
+			vec3((Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8, (Math.random() - 0.75) * 2),
+			vec3(0, 0, 0),
+			color(Math.random() * 0.2, Math.random() * 0.2, Math.random() * 0.2),
+			2.0,
+			undefined,
+			radius,
+			radius + Math.random(),
+		);
+	}
 
-import skybox_url from 'res://studio.png';
-new ImageLoader().parse(skybox_url).then(res => {
-	const image_res = res.expect();
-	const { width, height, image_data } = image_res;
-	render_device.render_state.alloc_Texture2D(skybox_texture, width, height, 0, RenderStateTextureDataFormat.RGBA, image_data.data);
-	render_device.render_state.generate_Mipmap(skybox_texture);
-	console.log(">>>> skybox loaded");
-});
+	lights_data.set_Light(0, RenderServerLightType.SpotLight, undefined, vec3(-2, 2, -2.2), vec3(1, -1, 1), color(0, 0, 5), 2.0, 0xffffffff, 45 * Deg2Rad, 0 * Deg2Rad, 3, 7);
+	lights_data.set_Light(1, RenderServerLightType.SpotLight, undefined, vec3(0.3, 0.3, 5.0), vec3(0, 0, -1), color(10, 0, 0), 2.0, 0xffffffff, 12 * Deg2Rad, 4 * Deg2Rad, 10, 11);
+	lights_data.set_Light(2, RenderServerLightType.SpotLight, undefined, vec3(-0.3, 0.3, 5.0), vec3(0, 0, -1), color(0, 10, 0), 2.0, 0xffffffff, 12 * Deg2Rad, 4 * Deg2Rad, 10, 11);
+	lights_data.set_Light(3, RenderServerLightType.SpotLight, undefined, vec3(0.0, -0.15, 5.0), vec3(0, 0, -1), color(0, 0, 10), 2.0, 0xffffffff, 12 * Deg2Rad, 4 * Deg2Rad, 10, 11);
+
+	lights_data.set_Light(10, RenderServerLightType.DirectionalLight, undefined, vec3(-1, -1, -1), undefined, color(0, 0.12, 0));
+	lights_data.set_Light(11, RenderServerLightType.DirectionalLight, undefined, vec3(1, 1, 1), undefined, color(0.2, 0.2, 0.2));
+}
+
+update_Lights();
+
+console.log(lights_data);
+lights_data.push_AllLightsData();
+render_device.use_LightsData(lights_data);
+
+// scene
+
+const quad_position = new RenderDeviceVector2AttributeBuffer(render_device, RenderStateBufferUsage.StaticDraw, [
+	/* 0 */vec2(-1, 1),			//   1  0 ------ 2
+	/* 1 */vec2(-1, -1),		//   |  |        |
+	/* 2 */vec2(1, 1),			//   |  |        |
+	/* 3 */vec2(1, -1),			//  -1  1 ------ 3
+	//     -1 ------ 1
+]);
+const quad_index = new RenderDeviceIndexAttributeBuffer(render_device, RenderStateBufferUsage.StaticDraw, [
+	0, 1, 2, 3
+]);
+const quad_surface = new WebGL2RenderDeviceSurface(render_device);
+quad_surface.set_AttributeBuffer(
+	RenderStatePrimitiveType.TriangleStrip,
+	{
+		a_position: quad_position,
+	},
+	quad_index
+);
+
+const skybox_texture = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 4, undefined, undefined, undefined, RenderStateTextureMinFilter.Linear, RenderStateTextureMagFilter.Linear).expect();
+
+// #region physics sky
+
+const rayleigh_sky_shader = `
+	float rayleigh = 2.0;
+	vec4 rayleigh_color = vec4(0.06, 0.28, 0.6, 1.0);
+	float mie  = 0.005;
+	float mie_eccentricity = 0.8;
+	vec4 mie_color = vec4(0.79, 0.5, 0.49, 1.0);	
+	float turbidity = 10.0;
+	float sun_disk_scale = 1.0;
+	vec4 ground_color = vec4(0.1, 0.07, 0.034, 1.0);
+	float exposure = 3.0;
+	float date = time / 5.0;
+	vec3 LIGHT0_DIRECTION = vec3(cos(date), (sin(date) + 1.0) / 2.0, 0.0);
+	float LIGHT0_ENERGY = 1.0;
+	float LIGHT0_SIZE = 0.025;
+	vec3 LIGHT0_COLOR = vec3(1.0, 1.0, 1.0);
+	vec3 EYEDIR = normal;
+
+	float zenith_angle = clamp(dot(UP, normalize(LIGHT0_DIRECTION)), -1.0, 1.0 );
+	float sun_energy = max(0.0, 1.0 - exp(-((PI * 0.5) - acos(zenith_angle)))) * LIGHT0_ENERGY;
+	float sun_fade = 1.0 - clamp(1.0 - exp(LIGHT0_DIRECTION.y), 0.0, 1.0);
+
+	// Rayleigh coefficients.
+	float rayleigh_coefficient = rayleigh - ( 1.0 * ( 1.0 - sun_fade ) );
+	vec3 rayleigh_beta = rayleigh_coefficient * rayleigh_color.rgb * 0.0001;
+	// mie coefficients from Preetham
+	vec3 mie_beta = turbidity * mie * mie_color.rgb * 0.000434;
+
+	// Optical length.
+	float zenith = acos(max(0.0, dot(UP, EYEDIR)));
+	float optical_mass = 1.0 / (cos(zenith) + 0.15 * pow(93.885 - degrees(zenith), -1.253));
+	float rayleigh_scatter = rayleigh_zenith_size * optical_mass;
+	float mie_scatter = mie_zenith_size * optical_mass;
+
+	// Light extinction based on thickness of atmosphere.
+	vec3 extinction = exp(-(rayleigh_beta * rayleigh_scatter + mie_beta * mie_scatter));
+
+	// In scattering.
+	float cos_theta = dot(EYEDIR, normalize(LIGHT0_DIRECTION));
+
+	float rayleigh_phase = (3.0 / (16.0 * PI)) * (1.0 + pow(cos_theta * 0.5 + 0.5, 2.0));
+	vec3 betaRTheta = rayleigh_beta * rayleigh_phase;
+
+	float mie_phase = henyey_greenstein(cos_theta, mie_eccentricity);
+	vec3 betaMTheta = mie_beta * mie_phase;
+
+	vec3 Lin = pow(sun_energy * ((betaRTheta + betaMTheta) / (rayleigh_beta + mie_beta)) * (1.0 - extinction), vec3(1.5));
+	// Hack from https://github.com/mrdoob/three.js/blob/master/examples/jsm/objects/Sky.js
+	Lin *= mix(vec3(1.0), pow(sun_energy * ((betaRTheta + betaMTheta) / (rayleigh_beta + mie_beta)) * extinction, vec3(0.5)), clamp(pow(1.0 - zenith_angle, 5.0), 0.0, 1.0));
+
+	// Hack in the ground color.
+	Lin  *= mix(ground_color.rgb, vec3(1.0), smoothstep(-0.1, 0.1, dot(UP, EYEDIR)));
+
+	// Solar disk and out-scattering.
+	float sunAngularDiameterCos = cos(LIGHT0_SIZE * sun_disk_scale);
+	float sunAngularDiameterCos2 = cos(LIGHT0_SIZE * sun_disk_scale*0.5);
+	float sundisk = smoothstep(sunAngularDiameterCos, sunAngularDiameterCos2, cos_theta);
+	vec3 L0 = (sun_energy * extinction) * sundisk * LIGHT0_COLOR;
+
+	vec3 color = Lin + L0;
+	o_color = vec4(pow(color, vec3(1.0 / (1.2 + (1.2 * sun_fade)))), 1.0);
+	o_color.rgb *= exposure;
+`
+
+render_device.render_state.alloc_Texture2D(skybox_texture, 2048, 1024, 0, RenderStateTextureDataFormat.RGBA);
+const physics_sky_frame_buffer = render_device.render_state.create_FrameBuffer().expect();
+render_device.render_state.set_FrameBufferAttachment(physics_sky_frame_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, skybox_texture);
+render_device.render_state.enable_FrameBuffer(physics_sky_frame_buffer);
+const physics_sky_attributes = { a_position: { type: RenderStateUniformType.Vec3 } };
+const physics_sky_uniforms = {};
+const physics_sky_varyings = { v_uv: { type: RenderStateUniformType.Vec2 } };
+const physics_sky_outputs = { o_color: { type: RenderStateUniformType.Vec4, location: 0 } };
+const physics_sky_vertexShaderSource = process_WebGL2ShaderCode(RenderStateShaderType.Vertex,
+	physics_sky_attributes, physics_sky_uniforms, physics_sky_varyings, physics_sky_outputs,
+	`gl_Position = vec4(a_position, 1.0);
+gl_Position.z = 1.0;
+v_uv = (a_position.xy + 1.0) / 2.0;`
+);
+const physics_sky_fragmentShaderSource = process_WebGL2ShaderCode(RenderStateShaderType.Fragment,
+	physics_sky_attributes, physics_sky_uniforms, physics_sky_varyings, physics_sky_outputs,
+	`
+// return texture(sky, vec2(theta / TAU + 0.5, gamma / PI), lod);
+float theta = (v_uv.x - 0.5) * TAU;
+float gamma = v_uv.y * PI;
+float singamma = sin(gamma);
+vec3 normal = normalize(vec3(singamma * cos(theta), cos(gamma), singamma * sin(theta)));
+${rayleigh_sky_shader}
+`,
+	undefined,
+	`
+// Optical length at zenith for molecules.
+const float rayleigh_zenith_size = 8.4e3;
+const float mie_zenith_size = 1.25e3;
+const vec3 UP = vec3( 0.0, 1.0, 0.0 );
+
+float henyey_greenstein(float cos_theta, float g) {
+	const float k = 0.0795774715459;
+	return k * (1.0 - g * g) / (pow(1.0 + g * g - 2.0 * g * cos_theta, 1.5));
+}
+`
+);
+const physics_sky_vert_shader = render_device.render_state.create_Shader(RenderStateShaderType.Vertex, physics_sky_vertexShaderSource).expect();
+const physics_sky_frag_shader = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, physics_sky_fragmentShaderSource).expect();
+const physics_sky_material = new WebGL2RenderDeviceMaterialSet(render_device,
+	physics_sky_vert_shader, {},
+	{
+		default: {
+			shader: physics_sky_frag_shader,
+			uniforms: {}
+		},
+		test: {
+			shader: physics_sky_frag_shader,
+			uniforms: {}
+		}
+	}
+);
+const physics_sky_renderable_surface = new WebGL2RenderDeviceRenderableSurface(render_device);
+physics_sky_renderable_surface.set_Material(physics_sky_material);
+physics_sky_renderable_surface.set_Surface(quad_surface);
+
+// // draw sky
+// render_device.render_state.use_FrameBuffer(physics_sky_frame_buffer);
+// render_device.render_state.set_ViewportProxy(0, 0, 2048, 2048);
+// render_device.render_state.set_ScissorProxy(0, 0, 2048, 2048);
+// render_device.render_Renderable('default', physics_sky_renderable_surface);
+// // render_device.render_state.generate_Mipmap(skybox_texture);
+
+// #endregion
+
+// import skybox_url from 'res://studio.png';
+// new ImageLoader().parse(skybox_url).then(res => {
+// 	const image_res = res.expect();
+// 	const { width, height, image_data } = image_res;
+// 	render_device.render_state.alloc_Texture2D(skybox_texture, width, height, 0, RenderStateTextureDataFormat.RGBA, image_data.data);
+// 	render_device.render_state.generate_Mipmap(skybox_texture);
+// 	console.log(">>>> skybox loaded");
+// });
 
 // #region surface
 
 // texture
 import { FImage } from './test-image';
-import { EditorViewport } from "../../app/EditorScene";
-import { plane3 } from "../fivepebble/geometries/Plane3";
-import { sphere3 } from "../fivepebble/geometries/Sphere3";
-import { RenderStateTextureUniformSlot } from "./render_state_objects/RenderStateUniformSlot";
-import { ImageLoader } from "../engine/loaders/ImageLoader";
-const texture = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.SRGBA8, 1, RenderStateTextureWrap.MirrorRepeat, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+const texture = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.SRGBA8, 1, RenderStateTextureWrap.MirrorRepeat, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
 render_device.render_state.alloc_Texture2D(texture, 256, 256, 0, RenderStateTextureDataFormat.RGBA, FImage);
 render_device.render_state.generate_Mipmap(texture);
 
-const texture2 = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, RenderStateTextureWrap.MirrorRepeat, RenderStateTextureWrap.MirrorRepeat, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+const texture2 = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA8, 1, RenderStateTextureWrap.MirrorRepeat, RenderStateTextureWrap.MirrorRepeat, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
 render_device.render_state.alloc_Texture2D(texture2, 2, 2, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([
 	255, 0, 255, 255,
 	255, 255, 0, 255,
@@ -4986,14 +5167,14 @@ const material2 = new WebGL2RenderDeviceMaterialSet(render_device,
 const renderable_surface2 = new WebGL2RenderDeviceRenderableSurface(render_device);
 renderable_surface2.set_Material(material2);
 renderable_surface2.set_Surface(surface2);
-const texture3 = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, RenderStateTextureWrap.MirrorRepeat, RenderStateTextureWrap.MirrorRepeat, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+const texture3 = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA8, 1, RenderStateTextureWrap.MirrorRepeat, RenderStateTextureWrap.MirrorRepeat, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
 render_device.render_state.alloc_Texture2D(texture3, 2, 2, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([
 	255, 255, 255, 255,
 	255, 255, 255, 255,
 	255, 0, 0, 255,
 	0, 255, 0, 255,
 ]));
-const texture4 = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, RenderStateTextureWrap.MirrorRepeat, RenderStateTextureWrap.MirrorRepeat, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+const texture4 = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA8, 1, RenderStateTextureWrap.MirrorRepeat, RenderStateTextureWrap.MirrorRepeat, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
 render_device.render_state.alloc_Texture2D(texture4, 2, 2, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([
 	0, 0, 255, 255,
 	255, 0, 255, 255,
@@ -5005,51 +5186,23 @@ material2.set_TextureUniform<RenderStateUniformType.Tex2D>(stage, 'u_texture2', 
 
 // #endregion
 
-const position = new RenderDeviceVector2AttributeBuffer(render_device, RenderStateBufferUsage.StaticDraw, [
-	/* 0 */vec2(-1, 1),			//  0 ------ 2
-	/* 1 */vec2(-1, -1),		//  |        |
-	/* 2 */vec2(1, 1),			//  |        |
-	/* 3 */vec2(1, -1),			//  1 ------ 3
-]);
-const index = new RenderDeviceIndexAttributeBuffer(render_device, RenderStateBufferUsage.StaticDraw, [
-	0, 1, 2, 3
-]);
-const quad_surface = new WebGL2RenderDeviceSurface(render_device);
-quad_surface.set_AttributeBuffer(
-	RenderStatePrimitiveType.TriangleStrip,
-	{
-		a_position: position,
-	},
-	index
-);
-
 // #region full screen quad skybox
-const skybox_attributes = {
-	a_position: { type: RenderStateUniformType.Vec3 },
-	a_uv: { type: RenderStateUniformType.Vec2 },
-};
+const skybox_attributes = { a_position: { type: RenderStateUniformType.Vec3 } };
 const skybox_uniforms = { u_sky: { type: RenderStateUniformType.Tex2D } };
-const skybox_varyings = {};
+const skybox_varyings = { v_uv: { type: RenderStateUniformType.Vec2 } };
 const skybox_outputs = { o_color: { type: RenderStateUniformType.Vec4, location: 0 } };
-const skybox_vertexShaderSource = process_WebGL2ShaderCode(RenderStateShaderType.Vertex,
-	skybox_attributes, skybox_uniforms, skybox_varyings, skybox_outputs,
-	`gl_Position = vec4(a_position, 1.0);
-gl_Position.z = 1.0;`
-);
 const skybox_fragmentShaderSource = process_WebGL2ShaderCode(RenderStateShaderType.Fragment,
 	skybox_attributes, skybox_uniforms, skybox_varyings, skybox_outputs,
-	`vec2 uv = gl_FragCoord.xy / screen_size;
-vec4 dir = mat4(mat3(camera_world)) * inverse(camera_projection) * vec4((uv * 2.0 - 1.0), 1.0, 1.0);
+	`vec4 dir = mat4(mat3(camera_world)) * inverse(camera_projection) * vec4((v_uv * 2.0 - 1.0), 1.0, 1.0);
 vec3 R = normalize(dir.xyz);
 float theta = atan(R.z, R.x);
 float gamma = acos(R.y);
 o_color = texture(u_sky, vec2(theta / TAU + 0.5, gamma / PI));`
 );
-const skybox_vert_shader = render_device.render_state.create_Shader(RenderStateShaderType.Vertex, skybox_vertexShaderSource).expect();
 const skybox_frag_shader = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, skybox_fragmentShaderSource).expect();
 
 const skybox_material = new WebGL2RenderDeviceMaterialSet(render_device,
-	skybox_vert_shader, {},
+	physics_sky_vert_shader, {},
 	{
 		test: {
 			shader: skybox_frag_shader,
@@ -5065,21 +5218,13 @@ skybox_renderable_surface.set_Surface(quad_surface);
 // #endregion
 
 // #region full screen quad test
-const quad_attributes = {
-	a_position: { type: RenderStateUniformType.Vec3 },
-	a_uv: { type: RenderStateUniformType.Vec2 },
-};
+const quad_attributes = { a_position: { type: RenderStateUniformType.Vec3 } };
 const quad_uniforms = { u_result: { type: RenderStateUniformType.Tex2D }, u_result1: { type: RenderStateUniformType.Tex2D } };
-const quad_varyings = {};
+const quad_varyings = { v_uv: { type: RenderStateUniformType.Vec2 } };
 const quad_outputs = { o_color: { type: RenderStateUniformType.Vec4, location: 0 } };
-const quad_vertexShaderSource = process_WebGL2ShaderCode(RenderStateShaderType.Vertex,
-	quad_attributes, quad_uniforms, quad_varyings, quad_outputs,
-	`gl_Position = vec4(a_position, 1.0);`
-);
 const quad_fragmentShaderSource = process_WebGL2ShaderCode(RenderStateShaderType.Fragment,
 	quad_attributes, quad_uniforms, quad_varyings, quad_outputs,
-	`vec2 uv = gl_FragCoord.xy / screen_size;
-o_color = vec4(texture(u_result, uv).rgba);
+	`o_color = vec4(texture(u_result, v_uv).rgba);
 float r = o_color.r;
 o_color.r = r <= 0.0031308 ? (12.92 * r) : (1.055 * pow(r, 1.0 / 2.4) - 0.055);
 float g = o_color.g;
@@ -5088,10 +5233,9 @@ float b = o_color.b;
 o_color.b = b <= 0.0031308 ? (12.92 * b) : (1.055 * pow(b, 1.0 / 2.4) - 0.055);
 `
 );
-const quad_vert_shader = render_device.render_state.create_Shader(RenderStateShaderType.Vertex, quad_vertexShaderSource).expect();
 const quad_frag_shader = render_device.render_state.create_Shader(RenderStateShaderType.Fragment, quad_fragmentShaderSource).expect();
 const quad_material = new WebGL2RenderDeviceMaterialSet(render_device,
-	quad_vert_shader, {},
+	physics_sky_vert_shader, {},
 	{
 		default: {
 			shader: quad_frag_shader,
@@ -5128,7 +5272,7 @@ render_device.render_state.set_FrameBufferAttachment(frame_buffer2, WebGL2Render
 render_device.render_state.enable_FrameBuffer(frame_buffer2);
 
 const frame_buffer_copy = render_device.render_state.create_FrameBuffer().expect();
-const frame_buffer_tex = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+const frame_buffer_tex = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
 render_device.render_state.alloc_Texture2D(frame_buffer_tex, 1024, 1024, 0, RenderStateTextureDataFormat.RGBA, undefined);
 render_device.render_state.set_FrameBufferAttachment(frame_buffer_copy, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, frame_buffer_tex);
 render_device.render_state.enable_FrameBuffer(frame_buffer_copy);
@@ -5149,6 +5293,12 @@ material.set_ValueUniform<RenderStateUniformType.Uint>(undefined, 'light_mask', 
 material2.set_ValueUniform<RenderStateUniformType.Uint>(undefined, 'light_mask', 0xffffffbf);
 
 function render(time: number) {
+	const date = time / 5.0;
+	const LIGHT0_DIRECTION = vec3(Math.cos(date), (Math.sin(date) + 1.0) / 2.0, 0.0);
+
+	lights_data.set_Light(11, undefined, undefined, LIGHT0_DIRECTION);
+	lights_data.push_AllLightsData();
+
 	const camera = EditorViewport.get_Camera3D()!.get_Camera()!;
 	const camera_world = camera.global_transform;
 	const camera_projection = camera.projection;
@@ -5160,6 +5310,12 @@ function render(time: number) {
 
 	render_device.set_WorldUniform('time', new Float32Array([time]));
 	// render_device.update_Lights();
+
+	// draw sky
+	render_device.render_state.use_FrameBuffer(physics_sky_frame_buffer);
+	render_device.render_state.set_ViewportProxy(0, 0, skybox_texture.width, skybox_texture.height);
+	render_device.render_state.set_ScissorProxy(0, 0, skybox_texture.width, skybox_texture.height);
+	render_device.render_Renderable('default', physics_sky_renderable_surface);
 
 	stage = 'depth_prepass';
 
@@ -5217,20 +5373,20 @@ function render(time: number) {
 	render_device.render_Renderable(stage, renderable_surface2);
 
 	// skybox
+
+	// sky
 	render_state.set_DepthFuncProxy(render_state.gl.LEQUAL);
 	render_device.render_Renderable(stage, skybox_renderable_surface);
 
 	// copy
-	render_state.bind_FrameBufferProxy(render_state.gl.READ_FRAMEBUFFER, frame_buffer2.frame_buffer);
-	render_state.bind_FrameBufferProxy(render_state.gl.DRAW_FRAMEBUFFER, frame_buffer_copy.frame_buffer);
-	render_state.gl.blitFramebuffer(0, 0, 1024, 1024, 0, 0, 1024, 1024, render_state.gl.COLOR_BUFFER_BIT, render_state.gl.NEAREST);
+	render_state.blit_FrameBuffer(frame_buffer2, frame_buffer_copy, RenderStateFrameBufferPart.Color, RenderStateTextureMagFilter.Nearest, 0, 0, 1024, 1024);
 
 	// put on screen
 	render_state.use_FrameBuffer(undefined);
 	render_state.set_DepthFuncProxy(render_state.gl.LEQUAL);
 	render_state.gl.clear(render_state.gl.COLOR_BUFFER_BIT | render_state.gl.DEPTH_BUFFER_BIT);
 	render_device.render_Renderable(stage, quad_renderable_surface);
-	on_screen_ctx?.drawImage(canvas, 0, 0);
+	on_screen_ctx?.drawImage(render_device.canvas, 0, 0);
 }
 
 let time = 0;

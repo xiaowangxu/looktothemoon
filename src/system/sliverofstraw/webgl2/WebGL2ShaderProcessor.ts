@@ -184,6 +184,7 @@ export function process_WebGL2ShaderCode(
     outputs: { [name: string]: { type: RenderStateUniformType, location: number } } | undefined,
     code: string,
     light?: string,
+    extras?: string,
 ) {
     const header = `#version 300 es
 precision highp float;
@@ -217,6 +218,9 @@ ${unifs.join('\n')}
 
 // varyings
 ${varys.join('\n')}
+
+// extras
+${extras ?? ''}
 
 void main() {
     // code
@@ -295,6 +299,9 @@ if (light_strength > 0.0) {
 // }`
 ).split('\n').map(c => `    ${c}`).join('\n')}
 }
+
+// extras
+${extras ?? ''}
 
 void main() {
     // code
