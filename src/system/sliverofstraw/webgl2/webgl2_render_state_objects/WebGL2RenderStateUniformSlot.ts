@@ -206,7 +206,7 @@ export class WebGL2RenderStateTextureUniformSlot extends RenderStateTextureUnifo
     }
 
     public commit(): void {
-        if (this.changed || this.sampled_texture_ref.value === undefined) {
+        if (this.changed || this.sampled_texture_ref.is_empty) {
             this.sampled_texture_ref.value = this.render_state.create_SampledTexture(this.texture, this.sampler);
         }
         const sampled_texture = this.sampled_texture_ref.expect;

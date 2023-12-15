@@ -8,7 +8,7 @@ export abstract class RefCountedBase implements RefCounted {
     private _ref_count: number = 0;
     public ref_count() { return this._ref_count; }
     public ref() { this._ref_count++; }
-    public unref(){
+    public unref() {
         if (this._ref_count === 0) return;
         this._ref_count--;
         if (this._ref_count === 0) {
@@ -19,7 +19,7 @@ export abstract class RefCountedBase implements RefCounted {
     public abstract dispose(): void;
 }
 
-export type ToRefed<T> = T extends RefCounted ? Ref<T> : T; 
+export type ToRefed<T> = T extends RefCounted ? Ref<T> : T;
 
 export function unref<V, T extends RefCounted>(item: V | Ref<T>) {
     if (item instanceof Ref) return item.expect;
@@ -45,6 +45,8 @@ export class Ref<T extends RefCounted> {
         if (this.ref === undefined) throw new Error('failed to get ref counted object');
         return this.ref;
     }
+
+    public get is_empty() { return this.ref === undefined; }
 
     constructor(item: T | undefined = undefined) {
         this.value = item;
@@ -74,7 +76,9 @@ export class RefArray<T extends RefCounted> {
     }
 
     private unref_All() {
-        this.refs.forEach(r => r.clear());
+        for (const ref of this.refs) {
+            ref.clear();
+        }
     }
 
     public clear() {
@@ -96,6 +100,18 @@ export class RefArray<T extends RefCounted> {
             const item = ref.value;
             ref.value = undefined;
             return item;
+        }
+    }
+
+    public slice(start?: number, end?: number): RefArray<T> {
+        const slice_refs = this.refs.slice(start, end);
+        return new RefArray<T>(slice_refs.map(i => i.expect));
+    }
+
+    public remove(start: number, count: number = 1) {
+        const item_ref = this.refs.splice(start, count);
+        for (const ref of item_ref) {
+            ref.clear();
         }
     }
 }

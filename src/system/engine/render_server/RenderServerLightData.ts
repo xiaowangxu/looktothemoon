@@ -1,9 +1,11 @@
 import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
 import { Ref } from "@/system/utils/RefCounted";
-import { RenderServer } from "./RenderServer";
+import { RenderServerDevice } from "./RenderServer";
 import { RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType } from "@/system/sliverofstraw/RenderState";
 import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { Color } from "@/system/fivepebble/graphics/Color";
+import { RenderDeviceObject } from "@/system/sliverofstraw/RenderDeviceObject";
+import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 
 export enum RenderServerLightType {
     AmbientLight = 1,
@@ -12,7 +14,7 @@ export enum RenderServerLightType {
     SpotLight = 4,
 }
 
-export class RenderServerLightsData {
+export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState> {
     private static LightParamCount = 19;
 
     private readonly lights_texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
@@ -45,14 +47,15 @@ export class RenderServerLightsData {
     private readonly/**/ light_shadow_normal_bias: Float32Array;
     private readonly/*    */ light_shadow_opacity: Float32Array;
 
-    constructor(width: number, height: number) {
+    constructor(render_server: RenderServerDevice, width: number, height: number) {
+        super(render_server);
         this.texture_width = width;
         this.texture_height = height;
         const max_light_count = this.max_light_count = this.texture_width * this.texture_height;
         // texture
-        const texture = RenderServer.render_state.create_Texture(RenderStateTextureType.Tex2DArray, false, RenderStateTextureFormat.R32UI, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+        const texture = this.render_state.create_Texture(RenderStateTextureType.Tex2DArray, false, RenderStateTextureFormat.R32UI, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
         this.lights_texture_ref.value = texture;
-        RenderServer.render_state.alloc_Texture3D(texture, this.texture_width, this.texture_height, RenderServerLightsData.LightParamCount, 0, RenderStateTextureDataFormat.RInt);
+        this.render_state.alloc_Texture3D(texture, this.texture_width, this.texture_height, RenderServerLightsData.LightParamCount, 0, RenderStateTextureDataFormat.RInt);
         // data
         this.lights_data = new Uint32Array(max_light_count * RenderServerLightsData.LightParamCount);
         const light_layer_bytes = max_light_count * Uint32Array.BYTES_PER_ELEMENT;
@@ -127,7 +130,7 @@ export class RenderServerLightsData {
     }
 
     public push_AllLightsData() {
-        RenderServer.render_state.update_Texture3D(this.lights_texture, 0, RenderStateTextureDataFormat.RInt, this.lights_data, this.texture_width, this.texture_height, RenderServerLightsData.LightParamCount, 0, 0, 0);
+        this.render_state.update_Texture3D(this.lights_texture, 0, RenderStateTextureDataFormat.RInt, this.lights_data, this.texture_width, this.texture_height, RenderServerLightsData.LightParamCount, 0, 0, 0);
     }
 
     public dispose() {

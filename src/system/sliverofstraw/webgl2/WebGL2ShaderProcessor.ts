@@ -274,9 +274,11 @@ ${(light ??
 `float light_strength = dot(normal, light_direction);
 if (light_strength > 0.0) {
     diffuse += light_strength * light_color * light_attenuation;
-    vec3 half_direction = normalize(light_direction + view_direction);  
-    float beckmann = beckmannDistribution(dot(normal, half_direction), 0.01);
-    specular += beckmann * light_color * light_attenuation;
+    if (light_type != uint(2)) {
+        vec3 half_direction = normalize(light_direction + view_direction);  
+        float beckmann = beckmannDistribution(dot(normal, half_direction), 0.01);
+        specular += beckmann * light_color * light_attenuation;
+    }
 }`
 // `float roughness = 0.2; //(sin(time / 3.0) + 1.0) / 2.0 + 0.0001;
 // float metalic = 1.0;

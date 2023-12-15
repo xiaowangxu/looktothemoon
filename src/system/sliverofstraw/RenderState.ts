@@ -146,17 +146,15 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     // Vertex Array
 
-    public abstract create_VertexArray(primitive_type: RenderStatePrimitiveType, offset: number, count: number, instance_count: number):
+    public abstract create_VertexArray(primitive_type: RenderStatePrimitiveType, offset: number, count: number):
         Result<RenderStateVertexArray<T>, Error>;
 
     public abstract delete_VertexArray(vertex_array: RenderStateVertexArray<T>): void;
 
-    public abstract create_VertexArrayView(vertex_array: RenderStateVertexArray<T>, offset: number, count: number, instance_count: number):
+    public abstract create_VertexArrayView(vertex_array: RenderStateVertexArray<T>, offset: number, count: number):
         Result<RenderStateVertexArrayView<T>, Error>;
 
     public abstract toggle_VertexArrayAttribute(vertex_array: RenderStateVertexArray<T>, attribute_location: number, enabled: boolean): void;
-
-    public abstract set_VertexArrayInstanceCount(vertex_array: RenderStateVertexArray<T>, instance_count: number): void;
 
     public abstract set_VertexArrayAttributeBuffer(vertex_array: RenderStateVertexArray<T>,
         attribute_location: number, buffer: RenderStateBuffer<T> | RenderStateBufferView<T>): void;
@@ -220,7 +218,9 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     public abstract use_FrameBuffer(frame_buffer: RenderStateFrameBuffer<T> | undefined): void;
 
-    public abstract draw_Arrays(program: RenderStateProgram<T>, vertex_array: RenderStateVertexArray<T> | RenderStateVertexArrayView<T>): void;
+    public abstract clear_FrameBuffer(frame_buffer: RenderStateFrameBuffer<T> | undefined, mask: RenderStateFrameBufferPart): void;
 
-    public abstract draw_Elements(program: RenderStateProgram<T>, vertex_array: RenderStateVertexArray<T> | RenderStateVertexArrayView<T>, index_data_type: RenderStateDataType): void;
+    public abstract draw_Arrays(program: RenderStateProgram<T>, vertex_array: RenderStateVertexArray<T> | RenderStateVertexArrayView<T>, instance_count: number): void;
+
+    public abstract draw_Elements(program: RenderStateProgram<T>, vertex_array: RenderStateVertexArray<T> | RenderStateVertexArrayView<T>, index_data_type: RenderStateDataType, instance_count: number): void;
 }

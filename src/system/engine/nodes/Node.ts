@@ -387,6 +387,8 @@ export class Viewport extends Node {
 
     private readonly input_manager: ViewportInputManager;
 
+    public render_priority: number = 0;
+
     public world_3d: World3D | undefined = undefined;
     private readonly renderer_3d: Renderer3D;
     private camera_3d: Camera3D | undefined;
@@ -424,7 +426,7 @@ export class Viewport extends Node {
     public set transparent(transparent: boolean) {
         if (this._transparent !== transparent) {
             this._transparent = transparent;
-            this.renderer_3d.set_ClearAlpha(this._transparent ? 0 : 1);
+            // this.renderer_3d.set_ClearAlpha(this._transparent ? 0 : 1);
         }
     }
 
@@ -432,7 +434,7 @@ export class Viewport extends Node {
     public get clear_color() { return this._clear_color; }
     public set clear_color(clear_color: Color) {
         this._clear_color = clear_color;
-        this.renderer_3d.set_ClearColor(this._clear_color, this._transparent ? 0 : 1);
+        // this.renderer_3d.set_ClearColor(this._clear_color, this._transparent ? 0 : 1);
     }
 
     public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
@@ -481,9 +483,9 @@ export class Viewport extends Node {
 
     constructor() {
         super();
-        this.renderer_3d = new Renderer3D(document.createElement('canvas'), { antialias: true });
+        this.renderer_3d = new Renderer3D(document.createElement('canvas'));
         this.renderer_3d.set_PixelRatio(this.pixel_ratio);
-        this.renderer_3d.set_ClearColor(this.clear_color, this.transparent ? 0 : 1);
+        // this.renderer_3d.set_ClearColor(this.clear_color, this.transparent ? 0 : 1);
         this.mouse_event_manager = new ViewportMouseInputEventManager(this);
         this.key_event_manager = new ViewportKeyInputEventManager(this);
         this.action_event_manager = new ViewportActionInputEventManager(this);

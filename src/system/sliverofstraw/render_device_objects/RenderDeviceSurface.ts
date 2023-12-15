@@ -21,6 +21,9 @@ export abstract class RenderDeviceSurface<
     public get index_type() { return this.index_refs.expect.data_type; }
     public get indexed() { return this.index_refs.value !== undefined; }
 
+    private _instance_count: number = 1;
+    public get instance_count() { return this._instance_count; }
+
     public changed: boolean = false;
 
     constructor(render_device: RenderDevice<T>) {
@@ -37,7 +40,7 @@ export abstract class RenderDeviceSurface<
     public set_AttributeBuffer(primitive_type: RenderStatePrimitiveType, buffers: { [name: string]: RenderDeviceAttributeBuffer<T> }, index?: RenderDeviceIndexAttributeBuffer<T>, vertex_count?: number) {
         this.changed = true;
         if (index === undefined && vertex_count === undefined) throw new Error('<RenderDeviceSurface> set_AttributeBuffer: can not set attribute since both index buffer and vertex count is undefined');
-        this.vertex_array_ref.value = this.render_state.create_VertexArray(primitive_type, 0, vertex_count ?? index!.element_count, 0).expect() as Vert;
+        this.vertex_array_ref.value = this.render_state.create_VertexArray(primitive_type, 0, vertex_count ?? index!.element_count).expect() as Vert;
         const map: BufferMap<T> = new Map();
         for (const [attribute, buffer] of Object.entries(buffers)) {
             map.set(attribute, {
@@ -54,7 +57,7 @@ export abstract class RenderDeviceSurface<
     }
 
     public set_InstanceCount(count: number) {
-        this.render_state.set_VertexArrayInstanceCount(this.vertex_array, count);
+        this._instance_count = count;
     }
 
     public get_AttributeBuffer<Buffer extends RenderDeviceAttributeBuffer<T>>(attribute: string) {

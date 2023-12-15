@@ -5,6 +5,7 @@ import type { RenderStateBuffer, RenderStateBufferView } from "../render_state_o
 import type { RenderDevice } from "../RenderDevice";
 import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { RenderStateVertexArray } from "../render_state_objects/RenderStateVertexArray";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 
@@ -22,6 +23,8 @@ export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buff
     public abstract get element_count(): number;
     public get byte_count() { return this.element_count * this.element_byte_count };
 
+    public abstract data: ArrayBufferView;
+
     constructor(render_device: RenderDevice<T>, per_instance_count: number = 0) {
         super(render_device);
         this.per_instance_count = per_instance_count;
@@ -30,6 +33,10 @@ export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buff
     public abstract set_Data(data: any[]): void;
 
     public abstract update_Data(data: any[], offset: number): void;
+
+    public upload_Data() {
+        this.render_state.update_Buffer(this.buffer_ref.expect, this.data, 0);
+    }
 
     public bound_VertexArray(vertex_array: RenderStateVertexArray<T>, attribute_location: number) {
         this.render_state.set_VertexArrayAttributeBuffer(vertex_array, attribute_location, this.buffer);
@@ -54,6 +61,8 @@ export class RenderDeviceVector2AttributeBuffer<T extends RenderState<T>, Buffer
     private _element_count: number = 0;
     public get element_count(): number { return this._element_count; }
 
+    public data: Float32Array = new Float32Array(0);
+
     constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Vector2[], per_instance_count: number = 0) {
         super(render_device, per_instance_count);
         this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 2, RenderStateDataType.Float, false, this.per_instance_count).expect() as Buffer;
@@ -70,6 +79,7 @@ export class RenderDeviceVector2AttributeBuffer<T extends RenderState<T>, Buffer
             float32array[i++] = vec2.x;
             float32array[i++] = vec2.y;
         }
+        this.data = float32array;
         this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, float32array);
     }
 
@@ -78,7 +88,7 @@ export class RenderDeviceVector2AttributeBuffer<T extends RenderState<T>, Buffer
         const element_count = data.length * 2;
         const element_bytes = element_count * this.element_byte_count;
         if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceVector2AttributeBuffer> update_Data: data overflow');
-        const float32array = new Float32Array(element_count);
+        const float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
         for (let i = 0, j = 0; i < element_count;) {
             const vec2 = data[j++];
             float32array[i++] = vec2.x;
@@ -97,6 +107,8 @@ export class RenderDeviceVector3AttributeBuffer<T extends RenderState<T>, Buffer
     private _element_count: number = 0;
     public get element_count(): number { return this._element_count; }
 
+    public data: Float32Array = new Float32Array(0);
+
     constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Vector3[], per_instance_count: number = 0) {
         super(render_device, per_instance_count);
         this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 3, RenderStateDataType.Float, false, this.per_instance_count).expect() as Buffer;
@@ -114,6 +126,7 @@ export class RenderDeviceVector3AttributeBuffer<T extends RenderState<T>, Buffer
             float32array[i++] = vec3.y;
             float32array[i++] = vec3.z;
         }
+        this.data = float32array;
         this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, float32array);
     }
 
@@ -122,12 +135,62 @@ export class RenderDeviceVector3AttributeBuffer<T extends RenderState<T>, Buffer
         const element_count = data.length * 3;
         const element_bytes = element_count * this.element_byte_count;
         if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceVector3AttributeBuffer> update_Data: data overflow');
-        const float32array = new Float32Array(element_count);
+        const float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
         for (let i = 0, j = 0; i < element_count;) {
             const vec3 = data[j++];
             float32array[i++] = vec3.x;
             float32array[i++] = vec3.y;
             float32array[i++] = vec3.z;
+        }
+        this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
+    }
+}
+
+export class RenderDeviceVector4AttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
+    extends RenderDeviceAttributeBuffer<T, Buffer>
+{
+    public get element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
+
+    public get data_type(): RenderStateDataType { return RenderStateDataType.Float; }
+    private _element_count: number = 0;
+    public get element_count(): number { return this._element_count; }
+
+    public data: Float32Array = new Float32Array(0);
+
+    constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Vector4[], per_instance_count: number = 0) {
+        super(render_device, per_instance_count);
+        this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 4, RenderStateDataType.Float, false, this.per_instance_count).expect() as Buffer;
+        if (data !== undefined) this.set_Data(data);
+    }
+
+    public set_Data(data: Vector4[]): void {
+        const vec4_count = data.length;
+        const element_count = vec4_count * 4;
+        this._element_count = element_count;
+        const float32array = new Float32Array(element_count);
+        for (let i = 0, j = 0; i < element_count;) {
+            const vec4 = data[j++];
+            float32array[i++] = vec4.x;
+            float32array[i++] = vec4.y;
+            float32array[i++] = vec4.z;
+            float32array[i++] = vec4.w;
+        }
+        this.data = float32array;
+        this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, float32array);
+    }
+
+    public update_Data(data: Vector4[], offset: number): void {
+        const offset_bytes = offset * 4 * this.element_byte_count;
+        const element_count = data.length * 4;
+        const element_bytes = element_count * this.element_byte_count;
+        if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceVector3AttributeBuffer> update_Data: data overflow');
+        const float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
+        for (let i = 0, j = 0; i < element_count;) {
+            const vec4 = data[j++];
+            float32array[i++] = vec4.x;
+            float32array[i++] = vec4.y;
+            float32array[i++] = vec4.z;
+            float32array[i++] = vec4.w;
         }
         this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
     }
@@ -142,6 +205,8 @@ export class RenderDeviceIndexAttributeBuffer<T extends RenderState<T>, Buffer e
     private _element_count: number = 0;
     public get element_count(): number { return this._element_count; }
 
+    public data: Uint32Array = new Uint32Array(0);
+
     constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: number[]) {
         super(render_device);
         this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Index, usage, 1, RenderStateDataType.UnsignedInt, false, 0).expect() as Buffer;
@@ -152,6 +217,7 @@ export class RenderDeviceIndexAttributeBuffer<T extends RenderState<T>, Buffer e
         const element_count = data.length;
         this._element_count = element_count;
         const uint32array = new Uint32Array(data);
+        this.data = uint32array;
         this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, uint32array);
     }
 
@@ -160,7 +226,8 @@ export class RenderDeviceIndexAttributeBuffer<T extends RenderState<T>, Buffer e
         const element_count = data.length;
         const element_bytes = element_count * this.element_byte_count;
         if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceIndexAttributeBuffer> update_Data: data overflow');
-        const uint32array = new Uint32Array(data);
+        const uint32array = new Uint32Array(this.data.buffer, offset_bytes, element_count);
+        uint32array.set(data);
         this.render_state.update_Buffer(this.buffer_ref.expect, uint32array, offset_bytes);
     }
 }
@@ -178,6 +245,8 @@ export class RenderDeviceMatrix4AttributeBuffer<T extends RenderState<T>, Buffer
     public get data_type(): RenderStateDataType { return RenderStateDataType.Float; }
     private _element_count: number = 0;
     public get element_count(): number { return this._element_count; }
+
+    public data: Float32Array = new Float32Array(0);
 
     constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Matrix4[], per_instance_count: number = 0) {
         super(render_device, per_instance_count);
@@ -201,6 +270,7 @@ export class RenderDeviceMatrix4AttributeBuffer<T extends RenderState<T>, Buffer
             const mat4 = data[j];
             float32array.set(mat4.typed_transposed_array_f32, j * 16);
         }
+        this.data = float32array;
         this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, float32array);
     }
 
@@ -210,7 +280,7 @@ export class RenderDeviceMatrix4AttributeBuffer<T extends RenderState<T>, Buffer
         const element_count = mat4_count * 16;
         const element_bytes = element_count * this.element_byte_count;
         if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceMatrix4AttributeBuffer> update_Data: data overflow');
-        const float32array = new Float32Array(element_count);
+        const float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
         for (let j = 0; j < mat4_count; j++) {
             const mat4 = data[j];
             float32array.set(mat4.typed_transposed_array_f32, j * 16);

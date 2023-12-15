@@ -6,14 +6,12 @@ export class RenderStateVertexArray<T extends RenderState<T>> extends RenderStat
     public readonly primitive_type: number;
     public readonly offset: number;
     public readonly count: number;
-    public instance_count: number;
 
-    constructor(render_state: T, primitive_type: number, offset: number, count: number, instance_count: number) {
+    constructor(render_state: T, primitive_type: number, offset: number, count: number) {
         super(render_state);
         this.primitive_type = primitive_type;
         this.offset = offset;
         this.count = count;
-        this.instance_count = instance_count;
     }
 
     public dispose(): void {
@@ -27,14 +25,12 @@ export class RenderStateVertexArrayView<T extends RenderState<T>> extends Render
     public get primitive_type() { return this.vertex_array_ref.expect.primitive_type; }
     public readonly offset: number;
     public readonly count: number;
-    public readonly instance_count: number;
 
-    constructor(render_state: T, vertex_array: RenderStateVertexArray<T>, offset: number, count: number, instance_count: number) {
+    constructor(render_state: T, vertex_array: RenderStateVertexArray<T>, offset: number, count: number) {
         super(render_state);
         this.vertex_array_ref.value = vertex_array;
         this.offset = offset;
         this.count = count;
-        this.instance_count = instance_count;
     }
 
     public dispose() {

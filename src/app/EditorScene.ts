@@ -32,14 +32,6 @@ EditorViewport.add_Child(EditorCamera);
 const World = new Node3D();
 World.local_scale = vec3(0.01, 0.01, 0.01);
 
-const axis = new Axis();
-World.add_Child(axis);
-axis.local_scale = vec3(100000, 100000, 100000);
-axis.local_position = vec3(0, 0, 0);
-// const wireframe_box = new WireframeBox();
-// wireframe_box.box = new Box3(new Vector3(-100, -100, -300), new Vector3(200, 400, -200));
-// World.add_Child(wireframe_box);
-
 export const EditorSceneTree = new SceneTree(EditorViewportContainer);
 EditorSceneTree.register_Singleton(DependencyGraph);
 EditorViewport.add_Child(World);
@@ -59,6 +51,17 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut([
     new MouseButtonInputEvent(MouseButton.WheelDown, true, false, false, undefined, vec2(0, 0), vec2(0, 0), false, false, false, false),
     new MouseButtonInputEvent(MouseButton.WheelDown, true, false, false, undefined, vec2(0, 0), vec2(0, 0), true, false, false, false),
 ]));
+
+// viewport 0
+const EditorViewportContainer0 = new ViewportDomContainer();
+EditorViewportContainer0.dom = document.querySelector('#viewport0') ?? undefined;
+const EditorViewport0 = new Viewport();
+EditorViewport0.world_3d = new World3D();
+EditorViewport0.physics_picking = false;
+EditorViewportContainer0.add_Child(EditorViewport0);
+const EditorCamera0 = new EditorOrbitCamera3D();
+EditorViewport0.add_Child(EditorCamera0);
+EditorViewport.add_Child(EditorViewportContainer0);
 
 export function createEditorViewport() {
     EditorSceneTree.start_Loop();

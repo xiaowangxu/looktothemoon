@@ -2,7 +2,7 @@ import { Matrix3 } from "../fivepebble/linear_algebra/Matrix3";
 import { Matrix4, mat4 } from "../fivepebble/linear_algebra/Matrix4";
 import { Vector3, vec3 } from "../fivepebble/linear_algebra/Vector3";
 import { vec2 } from "../fivepebble/linear_algebra/Vector2";
-import { RenderStateBufferUsage, RenderStateFrameBufferPart, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateTextureWrap, RenderStateUniformType } from "./RenderState";
+import { RenderStateBufferUsage, RenderStateDataType, RenderStateFrameBufferPart, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateTextureWrap, RenderStateUniformType } from "./RenderState";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector3AttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceMatrix4AttributeBuffer } from "./render_device_objects/RenderDeviceAttributeBuffer";
 import { WebGL2RenderState, WebGL2RenderStateFrameBufferAttachmentPoint } from "./webgl2/WebGL2RenderState";
 import { process_WebGL2ShaderCode } from "./webgl2/WebGL2ShaderProcessor";
@@ -107,7 +107,7 @@ const onscreen = document.getElementById('test-canvas') as HTMLCanvasElement;
 const on_screen_ctx = onscreen.getContext('2d');
 
 const render_device = RenderServer;
-const lights_data = new RenderServerLightsData(64, 64);
+const lights_data = RenderServer.create_LightsData(64, 64);
 
 function update_Lights() {
 	for (let i = 0; i < lights_data.max_light_count; i++) {
@@ -132,7 +132,7 @@ function update_Lights() {
 	lights_data.set_Light(3, RenderServerLightType.SpotLight, undefined, vec3(0.0, -0.15, 5.0), vec3(0, 0, -1), color(0, 0, 10), 2.0, 0xffffffff, 12 * Deg2Rad, 4 * Deg2Rad, 10, 11);
 
 	lights_data.set_Light(10, RenderServerLightType.DirectionalLight, undefined, vec3(-1, -1, -1), undefined, color(0, 0.12, 0));
-	lights_data.set_Light(11, RenderServerLightType.DirectionalLight, undefined, vec3(1, 1, 1), undefined, color(0.2, 0.2, 0.2));
+	lights_data.set_Light(11, RenderServerLightType.DirectionalLight, undefined, vec3(1, 1, 1), undefined, color(0.4, 0.4, 0.4));
 }
 
 update_Lights();
@@ -307,6 +307,7 @@ physics_sky_renderable_surface.set_Surface(quad_surface);
 
 // texture
 import { FImage } from './test-image';
+import { RenderServerGeometry } from "../engine/render_server/RenderServerGeometry";
 const texture = render_device.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.SRGBA8, 1, RenderStateTextureWrap.MirrorRepeat, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
 render_device.render_state.alloc_Texture2D(texture, 256, 256, 0, RenderStateTextureDataFormat.RGBA, FImage);
 render_device.render_state.generate_Mipmap(texture);
@@ -5292,6 +5293,18 @@ render_device.render_state.set_CapabilityProxy(render_state.gl.CULL_FACE, true);
 material.set_ValueUniform<RenderStateUniformType.Uint>(undefined, 'light_mask', 0x40);
 material2.set_ValueUniform<RenderStateUniformType.Uint>(undefined, 'light_mask', 0xffffffbf);
 
+const box = new RenderServerGeometry(render_device);
+box.set_Geometry(
+	RenderStatePrimitiveType.Triangles,
+	{
+		position: positionbuffer2,
+		normal: normalbuffer2,
+		uv: uvbuffer2
+	},
+	indexbuffer2
+);
+console.log(box);
+
 function render(time: number) {
 	const date = time / 5.0;
 	const LIGHT0_DIRECTION = vec3(Math.cos(date), (Math.sin(date) + 1.0) / 2.0, 0.0);
@@ -5359,7 +5372,12 @@ function render(time: number) {
 	], 0);
 	render_device.render_Renderable(stage, renderable_surface2);
 
+	const model_world3 = Matrix4.from_BasisPosition(Matrix3.make_Scale(2, 2, 2), vec3(0, Math.cos(time / 2) * 2.0, 3));
+	material.set_ValueUniform<RenderStateUniformType.Mat4>(undefined, 'model_world', model_world3);
+	render_device.render_state.draw_Elements(material.get_Program(stage)!, box.vertex_array, RenderStateDataType.UnsignedInt, 1);
+
 	stage = 'test';
+
 	render_state.use_FrameBuffer(frame_buffer2);
 	render_state.set_DepthFuncProxy(render_state.gl.EQUAL);
 	render_state.set_DepthMaskProxy(false);
@@ -5403,3 +5421,4 @@ animation();
 
 // renderable_surface.dispose();
 // renderable_surface2.dispose();
+

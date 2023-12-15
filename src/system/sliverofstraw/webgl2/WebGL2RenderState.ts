@@ -550,6 +550,10 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         this.gl.bindBufferBase(this.gl.UNIFORM_BUFFER, index, buffer.buffer);
     }
 
+    public bind_VertexShaderAttributeLocation(program: WebGL2RenderStateProgram, attribute: string, location: number) {
+        this.gl.bindAttribLocation(program.program, location, attribute);
+    }
+
     // Buffer
 
     public create_Buffer(type: RenderStateBufferType, usage: RenderStateBufferUsage, data_size: number, data_type: RenderStateDataType, data_normalize: boolean, divisor: number):
@@ -591,11 +595,11 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
 
     // Vertex Array
 
-    public create_VertexArray(primitive_type: RenderStatePrimitiveType, offset: number, count: number, instance_count: number = 0):
+    public create_VertexArray(primitive_type: RenderStatePrimitiveType, offset: number, count: number):
         Result<WebGL2RenderStateVertexArray, Error> {
         const vertex_array = this.gl.createVertexArray();
         if (vertex_array === null) return Result.Error(new Error('<WebGL2RenderState> create_VertexArray: failed to create render state vertex array'));
-        return Result.Ok(new WebGL2RenderStateVertexArray(this.render_state, vertex_array, this.get_PrimitiveType(primitive_type), offset, count, instance_count));
+        return Result.Ok(new WebGL2RenderStateVertexArray(this.render_state, vertex_array, this.get_PrimitiveType(primitive_type), offset, count));
     }
 
     public delete_VertexArray(vertex_array: WebGL2RenderStateVertexArray): void {
@@ -603,14 +607,9 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         console.log("delete vertex array", vertex_array.id);
     }
 
-    public set_VertexArrayInstanceCount(vertex_array: WebGL2RenderStateVertexArray, instance_count: number = 1) {
-        const c = Math.floor(Math.max(0, instance_count));
-        vertex_array.instance_count = c;
-    }
-
-    public create_VertexArrayView(vertex_array: WebGL2RenderStateVertexArray, offset: number, count: number, instance_count: number = 1):
+    public create_VertexArrayView(vertex_array: WebGL2RenderStateVertexArray, offset: number, count: number):
         Result<WebGL2RenderStateVertexArrayView, Error> {
-        return Result.Ok(new WebGL2RenderStateVertexArrayView(this.render_state, vertex_array, offset, count, instance_count));
+        return Result.Ok(new WebGL2RenderStateVertexArrayView(this.render_state, vertex_array, offset, count));
     }
 
     public toggle_VertexArrayAttribute(vertex_array: WebGL2RenderStateVertexArray, attribute_location: number, enable: boolean): void {
@@ -1048,25 +1047,30 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         else this.bind_FrameBufferProxy(this.gl.FRAMEBUFFER, frame_buffer.frame_buffer);
     }
 
-    public draw_Arrays(program: WebGL2RenderStateProgram, vertex_array: WebGL2RenderStateVertexArray | WebGL2RenderStateVertexArrayView): void {
+    public clear_FrameBuffer(frame_buffer: WebGL2RenderStateFrameBuffer | undefined, mask: RenderStateFrameBufferPart) {
+        this.use_FrameBuffer(frame_buffer);
+        this.gl.clear(this.get_FrameBufferPartBits(mask));
+    }
+
+    public draw_Arrays(program: WebGL2RenderStateProgram, vertex_array: WebGL2RenderStateVertexArray | WebGL2RenderStateVertexArrayView, instance_count: number): void {
         this.use_ProgramProxy(program.program);
         this.bind_VertexArrayProxy(vertex_array.vertex_array);
-        if (vertex_array.instance_count <= 0) {
+        if (instance_count <= 1) {
             this.gl.drawArrays(vertex_array.primitive_type, vertex_array.offset, vertex_array.count);
         }
         else {
-            this.gl.drawArraysInstanced(vertex_array.primitive_type, vertex_array.offset, vertex_array.count, vertex_array.instance_count);
+            this.gl.drawArraysInstanced(vertex_array.primitive_type, vertex_array.offset, vertex_array.count, instance_count);
         }
     }
 
-    public draw_Elements(program: WebGL2RenderStateProgram, vertex_array: WebGL2RenderStateVertexArray | WebGL2RenderStateVertexArrayView, index_data_type: RenderStateDataType): void {
+    public draw_Elements(program: WebGL2RenderStateProgram, vertex_array: WebGL2RenderStateVertexArray | WebGL2RenderStateVertexArrayView, index_data_type: RenderStateDataType, instance_count: number): void {
         this.use_ProgramProxy(program.program);
         this.bind_VertexArrayProxy(vertex_array.vertex_array);
-        if (vertex_array.instance_count <= 0) {
+        if (instance_count <= 1) {
             this.gl.drawElements(vertex_array.primitive_type, vertex_array.count, this.get_DataType(index_data_type), vertex_array.offset);
         }
         else {
-            this.gl.drawElementsInstanced(vertex_array.primitive_type, vertex_array.count, this.get_DataType(index_data_type), vertex_array.offset, vertex_array.instance_count);
+            this.gl.drawElementsInstanced(vertex_array.primitive_type, vertex_array.count, this.get_DataType(index_data_type), vertex_array.offset, instance_count);
         }
     }
 }

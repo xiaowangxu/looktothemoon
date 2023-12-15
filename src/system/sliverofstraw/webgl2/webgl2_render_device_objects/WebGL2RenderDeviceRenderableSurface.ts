@@ -28,10 +28,10 @@ export class WebGL2RenderDeviceRenderableSurface extends RenderDeviceRenderableS
             const { depth_test } = material;
             rs.set_CapabilityProxy(rs.gl.DEPTH_TEST, depth_test);
             if (surface.indexed) {
-                rs.draw_Elements(program, vertex_array, surface.index_type);
+                rs.draw_Elements(program, vertex_array, surface.index_type, surface.instance_count);
             }
             else {
-                rs.draw_Arrays(program, vertex_array);
+                rs.draw_Arrays(program, vertex_array, surface.instance_count);
             }
         }
     }

@@ -1,4 +1,4 @@
-import type { RenderStateInitOption, RenderState } from "./RenderState";
+import type { RenderState } from "./RenderState";
 
 export interface RenderDeviceInitOption { }
 

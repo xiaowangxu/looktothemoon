@@ -3,6 +3,7 @@ import { Clock } from "../utils/Clock";
 import { ShortCutActionMap } from "./inputs/InputActionMap";
 import { Singletion } from "./singletions/Singletion";
 import { Node, Viewport } from "./nodes/Node";
+import type { World3D } from "./worlds/world3ds/World3D";
 
 export class SceneTree {
     private readonly input_action_map: ShortCutActionMap = new ShortCutActionMap();
@@ -52,7 +53,15 @@ export class SceneTree {
             viewport.before_InternalBeforeRender();
         }
         this.root.propagate_InternalBeforeRender(this.delta);
+        const worlds = new Set<World3D>();
         for (const viewport of this.viewports) {
+            const world = viewport.get_World3D();
+            if (world !== undefined) worlds.add(world);
+        }
+        for (const world of worlds) {
+            world.trigger_BeforeRender(this);
+        }
+        for (const viewport of [...this.viewports].sort((a, b) => a.render_priority - b.render_priority)) {
             viewport.render();
         }
         // queue free
@@ -89,7 +98,7 @@ export class SceneTree {
     }
 
     // apis
-    
+
     public register_Singleton(singletion: typeof Singletion) {
         const name = singletion.singleton_name;
         if (this.singletions.has(name)) throw new Error(`singleton ${name} already existed`);
