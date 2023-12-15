@@ -29,8 +29,8 @@ export abstract class RenderStateBuffer<T extends RenderState<T>> extends Render
     }
 }
 
-export abstract class RenderStateBufferView<T extends RenderState<T>> extends RenderStateObject<T> {
-    public readonly buffer_ref: Ref<RenderStateBuffer<T>> = new Ref();
+export abstract class RenderStateBufferView<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>> extends RenderStateObject<T> {
+    public readonly buffer_ref: Ref<Buffer> = new Ref();
 
     public get type() { return this.buffer_ref.expect.type; }
     public get usage() { return this.buffer_ref.expect.type; }
@@ -41,7 +41,7 @@ export abstract class RenderStateBufferView<T extends RenderState<T>> extends Re
     public readonly data_offset: number;
     public readonly divisor: number;
 
-    constructor(render_state: T, buffer: RenderStateBuffer<T>, data_size: number, data_stride: number, data_offset: number, divisor: number) {
+    constructor(render_state: T, buffer: Buffer, data_size: number, data_stride: number, data_offset: number, divisor: number) {
         super(render_state);
         this.buffer_ref.value = buffer;
         this.data_size = data_size;

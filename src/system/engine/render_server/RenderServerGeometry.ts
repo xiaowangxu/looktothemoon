@@ -5,7 +5,7 @@ import type { WebGL2RenderStateVertexArray, WebGL2RenderStateVertexArrayView } f
 import type { RenderStateBuffer } from "@/system/sliverofstraw/render_state_objects/RenderStateBuffer";
 import type { WebGL2RenderStateBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import { Ref, RefArray } from "@/system/utils/RefCounted";
-import { type RenderDeviceIndexAttributeBuffer, RenderDeviceAttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
+import { type RenderDeviceIndexAttributeBuffer, RenderDeviceAttributeBuffer, RenderDeviceAttributeBufferView } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { type RenderState, type RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 
@@ -31,10 +31,12 @@ type RenderServerGeometryArray<RS extends RenderState<RS>, Buffer extends Render
     }
 };
 
+type IndexAttributeBuffer = RenderDeviceIndexAttributeBuffer<WebGL2RenderState> | RenderDeviceAttributeBufferView<WebGL2RenderState, RenderStateBuffer<WebGL2RenderState>, RenderDeviceIndexAttributeBuffer<WebGL2RenderState>>;
+
 export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> {
     protected readonly vertex_array_attributes_map: Map<string, { attribute: Ref<RenderDeviceAttributeBuffer<WebGL2RenderState>>, location: number }> = new Map();
     protected readonly vertex_array_ref: Ref<WebGL2RenderStateVertexArray> = new Ref();
-    protected readonly vertex_array_index_ref: Ref<RenderDeviceIndexAttributeBuffer<WebGL2RenderState>> = new Ref();
+    protected readonly vertex_array_index_ref: Ref<IndexAttributeBuffer> = new Ref();
     protected readonly vertex_array_groups_ref: RefArray<WebGL2RenderStateVertexArrayView> = new RefArray();
     protected _bbox: Box3 = new Box3();
 
@@ -68,7 +70,7 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
         this.vertex_array_groups_ref.remove(index);
     }
 
-    public set_Geometry(primitive_type: RenderStatePrimitiveType, array: RenderServerGeometryArray<WebGL2RenderState>, index?: RenderDeviceIndexAttributeBuffer<WebGL2RenderState>, vertex_count?: number) {
+    public set_Geometry(primitive_type: RenderStatePrimitiveType, array: RenderServerGeometryArray<WebGL2RenderState>, index?: IndexAttributeBuffer, vertex_count?: number) {
         if (this.has_geometry) {
             this.clear_Geometry();
         }

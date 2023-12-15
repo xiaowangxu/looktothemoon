@@ -1,6 +1,6 @@
 import { Result } from "@/system/utils/Result";
 import type { RenderDevice } from "../RenderDevice";
-import { RenderState, RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateUniformType, RenderStateTextureWrap, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureFormat, RenderStateTextureType, type RenderStateUniformSlotTypeMap, type RenderStateTextureUniformType, type RenderStateInitOption as RenderStateInitOption, RenderStateTextureDataFormat, RenderStateFrameBufferPart } from "../RenderState";
+import { RenderState, RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateUniformType, RenderStateTextureWrap, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureFormat, RenderStateTextureType, type RenderStateUniformSlotTypeMap, type RenderStateInitOption as RenderStateInitOption, RenderStateTextureDataFormat, RenderStateFrameBufferPart } from "../RenderState";
 import { WebGL2RenderStateBuffer, WebGL2RenderStateBufferView } from "./webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import { WebGL2RenderStateShader } from "./webgl2_render_state_objects/WebGL2RenderStateShader";
 import { WebGL2RenderStateProgram } from "./webgl2_render_state_objects/WebGL2RenderStateProgram";
@@ -8,10 +8,8 @@ import { WebGL2RenderStateVertexArray, WebGL2RenderStateVertexArrayView } from "
 import { WebGL2RenderStateSampledTexture, WebGL2RenderStateTexture, WebGL2RenderStateTextureSampler } from "./webgl2_render_state_objects/WebGL2RenderStateTexture";
 import { WeakRef } from "@/system/utils/RefCounted";
 import { WebGL2RenderStateFrameBuffer } from "./webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
-import { RenderStateFrameBuffer, type FrameBufferAttachment } from "../render_state_objects/RenderStateFrameBuffer";
-import type { RenderStateTextureUniformSlot } from "../render_state_objects/RenderStateUniformSlot";
+import { type FrameBufferAttachment } from "../render_state_objects/RenderStateFrameBuffer";
 import type { WebGL2RenderStateTextureUniformSlot } from "./webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
-import type { RenderStateRenderBuffer } from "../render_state_objects/RenderStateRenderBuffer";
 import { WebGL2RenderStateRenderBuffer } from "./webgl2_render_state_objects/WebGL2RenderStateRenderBuffer";
 
 export interface WebGL2RenderStateInitOption extends RenderStateInitOption {

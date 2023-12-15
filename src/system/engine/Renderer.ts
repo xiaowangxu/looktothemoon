@@ -6,13 +6,10 @@ import { RenderServerLightType } from "./render_server/RenderServerLightData";
 import { vec3 } from "../fivepebble/linear_algebra/Vector3";
 import { color } from "../fivepebble/graphics/Color";
 import { Deg2Rad } from "../fivepebble/Scalar";
-import { RenderStateBufferUsage, RenderStateDataType, RenderStateFrameBufferPart, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateUniformType } from "../sliverofstraw/RenderState";
-import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer } from "../sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
+import { RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateUniformType } from "../sliverofstraw/RenderState";
+import { RenderDeviceAttributeBufferView, RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer } from "../sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { Vector2, vec2 } from "../fivepebble/linear_algebra/Vector2";
-import { WebGL2RenderStateFloatUniformSlot, WebGL2RenderStateTextureUniformSlot } from "../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
-import { WebGL2RenderStateFrameBufferAttachmentPoint } from "../sliverofstraw/webgl2/WebGL2RenderState";
-import type { WebGL2RenderStateTexture } from "../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
-import type { WebGL2RenderStateFrameBuffer } from "../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
+import { WebGL2RenderStateTextureUniformSlot } from "../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 
 const RS = RenderServer;
 const lights_data = RenderServer.create_LightsData(64, 64);
