@@ -924,7 +924,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         return Result.Ok(new WebGL2RenderStateFrameBuffer(this.render_state, frame_buffer));
     }
 
-    public set_FrameBufferAttachment(frame_buffer: WebGL2RenderStateFrameBuffer, target: WebGL2RenderStateFrameBufferAttachmentPoint, attachment: FrameBufferAttachment<WebGL2RenderState> | undefined): void {
+    public set_FrameBufferAttachment(frame_buffer: WebGL2RenderStateFrameBuffer, target: WebGL2RenderStateFrameBufferAttachmentPoint, attachment: FrameBufferAttachment<WebGL2RenderState> | undefined, level: number = 0, layer?: number): void {
         const gl = this.gl;
         const point = this.get_FrameBufferAttachmentPoint(target);
         if (attachment === undefined) {
@@ -936,7 +936,20 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             // reset
             this.bind_FrameBufferProxy(gl.FRAMEBUFFER, frame_buffer.frame_buffer);
             if (attachment instanceof WebGL2RenderStateTexture) {
-                gl.framebufferTexture2D(gl.FRAMEBUFFER, point, gl.TEXTURE_2D, attachment.texture, 0);
+                switch (attachment.type) {
+                    case gl.TEXTURE_2D: {
+                        gl.framebufferTexture2D(gl.FRAMEBUFFER, point, gl.TEXTURE_2D, attachment.texture, 0);
+                        break;
+                    }
+                    case gl.TEXTURE_2D_ARRAY: {
+                        if (layer === undefined) throw new Error('<WebGLRenderState> set_FrameBufferAttachment: missing layer when attaching texture 2d array to frame buffer');
+                        gl.framebufferTextureLayer(gl.FRAMEBUFFER, point, attachment.texture, level, layer);
+                        break;
+                    }
+                    default: {
+                        throw new Error('<WebGLRenderState> set_FrameBufferAttachment: unknown texture type when attaching to frame buffer');
+                    }
+                }
             }
             else if (attachment instanceof WebGL2RenderStateRenderBuffer) {
                 // render buffer

@@ -113,7 +113,7 @@ export class Renderer3D {
 	private base_size: Vector2 = new Vector2(0, 0);
 	private size: Vector2 = new Vector2(0, 0);
 	private pixel_ratio: number = 1;
-	
+
 	private size_changed: boolean = true;
 
 	constructor(canvas: HTMLCanvasElement) {
@@ -167,7 +167,7 @@ export class Renderer3D {
 		}
 
 		// on screen
-		uniform_screen_slot.texture = sky_texture;
+		uniform_screen_slot.texture = sky_texture.expect;
 		uniform_screen_slot.commit();
 		RS.render_state.use_FrameBuffer(undefined);
 		RS.render_state.set_ViewportProxy(0, 0, x, y);

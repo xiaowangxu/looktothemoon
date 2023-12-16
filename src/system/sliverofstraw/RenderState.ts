@@ -200,7 +200,7 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     public abstract create_FrameBuffer(): Result<RenderStateFrameBuffer<T>, Error>;
 
-    public abstract set_FrameBufferAttachment(frame_buffer: RenderStateFrameBuffer<T>, target: any, attachment: FrameBufferAttachment<T> | undefined): void;
+    public abstract set_FrameBufferAttachment(frame_buffer: RenderStateFrameBuffer<T>, target: any, attachment: FrameBufferAttachment<T> | undefined, level: number, layer?: number): void;
 
     public abstract blit_FrameBuffer(src: RenderStateFrameBuffer<T>, dst: RenderStateFrameBuffer<T>,
         parts: RenderStateFrameBufferPart, filter: RenderStateTextureMagFilter,

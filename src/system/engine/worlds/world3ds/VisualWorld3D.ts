@@ -13,6 +13,7 @@ import { WebGL2RenderStateFloatUniformSlot } from "@/system/sliverofstraw/webgl2
 import { RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { SceneTree } from "../../SceneTree";
+import { Ref } from "@/system/utils/RefCounted";
 
 // #region sky
 
@@ -141,44 +142,44 @@ const uniform_time_slot = new WebGL2RenderStateFloatUniformSlot(RenderServer.ren
 // #endregion
 
 export class VisualWorld3D {
-    private readonly scene: Scene = new Scene();
+	private readonly scene: Scene = new Scene();
 
-    // signal
-    public signal_before_render: SignalEmitter<() => void> = new SignalEmitter();
+	// signal
+	public signal_before_render: SignalEmitter<() => void> = new SignalEmitter();
 
-    public readonly sky_texture: WebGL2RenderStateTexture;
-	public readonly sky_frame_buffer: WebGL2RenderStateFrameBuffer;
+	public readonly sky_texture: Ref<WebGL2RenderStateTexture> = new Ref();
+	public readonly sky_frame_buffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
 
-    private readonly random = Math.random();
+	private readonly random = Math.random();
 
-    constructor() {
-        this.scene.matrixAutoUpdate = false;
-        this.scene.matrixWorldAutoUpdate = false;
+	constructor() {
+		this.scene.matrixAutoUpdate = false;
+		this.scene.matrixWorldAutoUpdate = false;
 
-        this.sky_texture = RenderServer.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 4, undefined, undefined, undefined, RenderStateTextureMinFilter.Linear, RenderStateTextureMagFilter.Linear).expect();
-		RenderServer.render_state.alloc_Texture2D(this.sky_texture, 2048, 1024, 0, RenderStateTextureDataFormat.RGBA);
-		this.sky_frame_buffer = RenderServer.render_state.create_FrameBuffer().expect();
-		RenderServer.render_state.set_FrameBufferAttachment(this.sky_frame_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.sky_texture);
-		RenderServer.render_state.enable_FrameBuffer(this.sky_frame_buffer);
-    }
+		this.sky_texture.value = RenderServer.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 4, undefined, undefined, undefined, RenderStateTextureMinFilter.Linear, RenderStateTextureMagFilter.Linear).expect();
+		RenderServer.render_state.alloc_Texture2D(this.sky_texture.expect, 2048, 1024, 0, RenderStateTextureDataFormat.RGBA);
+		this.sky_frame_buffer.value = RenderServer.render_state.create_FrameBuffer().expect();
+		RenderServer.render_state.set_FrameBufferAttachment(this.sky_frame_buffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.sky_texture.expect);
+		RenderServer.render_state.enable_FrameBuffer(this.sky_frame_buffer.expect);
+	}
 
-    public get_VisualScene() {
-        return this.scene;
-    }
+	public get_VisualScene() {
+		return this.scene;
+	}
 
-    public trigger_BeforeRender(scene_tree: SceneTree) {
-        this.signal_before_render.trigger();
-        this.update_Sky(scene_tree);
-    }
+	public trigger_BeforeRender(scene_tree: SceneTree) {
+		this.signal_before_render.trigger();
+		this.update_Sky(scene_tree);
+	}
 
-    private update_Sky(scene_tree: SceneTree) {
-        // sky
+	private update_Sky(scene_tree: SceneTree) {
+		// sky
 		uniform_time_slot.value = scene_tree.time * (this.random + 1.0) * 2;
 		uniform_time_slot.commit();
-		RenderServer.render_state.use_FrameBuffer(this.sky_frame_buffer);
-		RenderServer.render_state.set_ViewportProxy(0, 0, this.sky_texture.width, this.sky_texture.height);
-		RenderServer.render_state.set_ScissorProxy(0, 0, this.sky_texture.width, this.sky_texture.height);
+		RenderServer.render_state.use_FrameBuffer(this.sky_frame_buffer.expect);
+		RenderServer.render_state.set_ViewportProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
+		RenderServer.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
 		RenderServer.render_state.draw_Elements(sky_program, quad_surface.vertex_array, RenderStateDataType.UnsignedInt, 1);
-        RenderServer.render_state.generate_Mipmap(this.sky_texture);
-    }
+		RenderServer.render_state.generate_Mipmap(this.sky_texture.expect);
+	}
 }
