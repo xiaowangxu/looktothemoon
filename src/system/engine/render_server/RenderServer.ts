@@ -11,6 +11,8 @@ import { RenderServerGeometry } from "./RenderServerGeometry";
 const vertex_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Vertex, undefined, undefined, undefined, undefined, '');
 const frag_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Fragment, undefined, undefined, undefined, undefined, '');
 
+export enum RenderServerPlainColorTexture { White, Black, Transparent, }
+
 export class RenderServerDevice extends WebGL2RenderDevice {
     private static readonly WorldUniformsName: string = 'WorldUniforms';
     private static readonly WorldUniformsItems: string[] = ['camera_world', 'camera_projection', 'screen_size', 'time', 'camera_is_orthogonal'];
@@ -19,6 +21,11 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     public static readonly LightsTextureUnit: number = 2;
 
     public readonly empty_texture: Ref<WebGL2RenderStateTexture> = new Ref();
+    public readonly plain_color_textures = {
+        white: new Ref<WebGL2RenderStateTexture>(),
+        black: new Ref<WebGL2RenderStateTexture>(),
+        transparent: new Ref<WebGL2RenderStateTexture>(),
+    }
     public readonly lights_data: Ref<RenderServerLightsData> = new Ref();
 
     private world_uniform_buffer: Ref<WebGL2RenderStateBuffer> = new Ref();
@@ -28,6 +35,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         super(canvas, { preserve_texture_count: 6 });
         this.setup_WorldUniformBuffer();
         this.setup_EmptyTexture();
+        this.setup_PlainColorTextures();
     }
 
     private setup_EmptyTexture() {
@@ -35,11 +43,35 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         this.empty_texture.value = texture;
         this.render_state.alloc_Texture2D(texture, 2, 2, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([
             255, 0, 255, 255,
-            128, 128, 128, 255,
-            128, 128, 128, 255,
+            0, 255, 255, 255,
+            0, 255, 255, 255,
             255, 0, 255, 255,
         ]));
         this.render_state.active_Texture(texture, RenderServerDevice.EmptyTextureUnit);
+    }
+
+    private setup_PlainColorTextures() {
+        const plain_color_white = this.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1).expect();
+        this.render_state.alloc_Texture2D(plain_color_white, 1, 1, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([255, 255, 255, 255]));
+        this.plain_color_textures.white.value = plain_color_white;
+        const plain_color_black = this.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1).expect();
+        this.render_state.alloc_Texture2D(plain_color_black, 1, 1, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([0, 0, 0, 255]));
+        this.plain_color_textures.black.value = plain_color_black;
+        const plain_color_transparent = this.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1).expect();
+        this.render_state.alloc_Texture2D(plain_color_transparent, 1, 1, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([255, 255, 255, 255]));
+        this.plain_color_textures.transparent.value = plain_color_transparent;
+    }
+
+    public get_PlainColorTexture(color: RenderServerPlainColorTexture): WebGL2RenderStateTexture {
+        switch (color) {
+            case RenderServerPlainColorTexture.White: return this.plain_color_textures.white.expect;
+            case RenderServerPlainColorTexture.Black: return this.plain_color_textures.black.expect;
+            case RenderServerPlainColorTexture.Transparent: return this.plain_color_textures.transparent.expect;
+            default: {
+                const n: never = color;
+                throw new Error();
+            }
+        }
     }
 
     private setup_WorldUniformBuffer() {
@@ -58,7 +90,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
 
         this.render_state.bind_UniformBuffer(this.world_uniform_buffer.expect, RenderServerDevice.WorldUniformsUnit);
     }
-    
+
     public set_WorldUniform(name: string, data: ArrayBufferView) {
         const setting = this.world_uniform_setting[name];
         if (setting !== undefined) {
@@ -84,6 +116,9 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         this.world_uniform_buffer.clear();
         this.empty_texture.clear();
         this.lights_data.clear();
+        this.plain_color_textures.white.clear();
+        this.plain_color_textures.black.clear();
+        this.plain_color_textures.transparent.clear();
     }
 }
 

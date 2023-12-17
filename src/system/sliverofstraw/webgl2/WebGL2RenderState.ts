@@ -492,13 +492,18 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         console.log("delete shader", shader.id);
     }
 
-    public create_Program(vert_shader: WebGL2RenderStateShader, frag_shader: WebGL2RenderStateShader):
+    public create_Program(vert_shader: WebGL2RenderStateShader, frag_shader: WebGL2RenderStateShader, vert_attributes_locations?: { [key: string]: number }):
         Result<WebGL2RenderStateProgram, Error> {
         const gl = this.gl;
         const program = gl.createProgram();
         if (program === null) return Result.Error(new Error('<WebGL2RenderState> create_Program: failed to create render state program'));
         gl.attachShader(program, vert_shader.shader);
         gl.attachShader(program, frag_shader.shader);
+        if (vert_attributes_locations !== undefined) {
+            for (const [attribute, location] of Object.entries(vert_attributes_locations)) {
+                gl.bindAttribLocation(program, location, attribute);
+            }
+        }
         gl.linkProgram(program);
         const success = gl.getProgramParameter(program, gl.LINK_STATUS);
         if (success) {
@@ -546,10 +551,6 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public bind_UniformBuffer(buffer: WebGL2RenderStateBuffer, index: number) {
         this.bind_BufferProxy(this.gl.UNIFORM_BUFFER, buffer.buffer);
         this.gl.bindBufferBase(this.gl.UNIFORM_BUFFER, index, buffer.buffer);
-    }
-
-    public bind_VertexShaderAttributeLocation(program: WebGL2RenderStateProgram, attribute: string, location: number) {
-        this.gl.bindAttribLocation(program.program, location, attribute);
     }
 
     // Buffer

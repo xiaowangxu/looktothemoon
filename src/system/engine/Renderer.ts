@@ -1,12 +1,12 @@
 import type { Viewport } from "./nodes/Node";
 import type { Camera3D } from "./nodes/camera3ds/Camera3D";
 import { World3D } from "./worlds/world3ds/World3D";
-import { RenderServer } from "./render_server/RenderServer";
+import { RenderServer, RenderServerPlainColorTexture } from "./render_server/RenderServer";
 import { RenderServerLightType } from "./render_server/RenderServerLightData";
 import { vec3 } from "../fivepebble/linear_algebra/Vector3";
 import { color } from "../fivepebble/graphics/Color";
 import { Deg2Rad } from "../fivepebble/Scalar";
-import { RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateUniformType } from "../sliverofstraw/RenderState";
+import { RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureType, RenderStateUniformType } from "../sliverofstraw/RenderState";
 import { RenderDeviceAttributeBufferView, RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer } from "../sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { Vector2, vec2 } from "../fivepebble/linear_algebra/Vector2";
 import { WebGL2RenderStateTextureUniformSlot } from "../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
@@ -149,7 +149,7 @@ export class Renderer3D {
 		const cam_projection = cam.projection;
 		const cam_frustum = cam.get_Frustum();
 
-		const sky_texture = world.get_VisualWorld().sky_texture;
+		const sky_texture = world.get_VisualWorld().sky_texture.expect;
 
 		const { x, y } = this.size;
 
@@ -167,7 +167,7 @@ export class Renderer3D {
 		}
 
 		// on screen
-		uniform_screen_slot.texture = sky_texture.expect;
+		uniform_screen_slot.texture = sky_texture;
 		uniform_screen_slot.commit();
 		RS.render_state.use_FrameBuffer(undefined);
 		RS.render_state.set_ViewportProxy(0, 0, x, y);
