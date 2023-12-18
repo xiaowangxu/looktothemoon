@@ -205,7 +205,24 @@ export class OrbitCamera3D extends Node3D {
 
         this.zoom_tween = zoom_tween;
         this.get_SceneTree()?.start_Tween(this.zoom_tween);
+    }
 
+    public set_Zoom(zoom: number, animate: boolean = false) {
+        if (!this.zoom_enable) return;
+
+        if (this.zoom_tween !== undefined) {
+            this.get_SceneTree()?.stop_Tween(this.zoom_tween);
+        }
+
+        this.target_zoom = zoom;
+        if (animate) {
+            const zoom_tween = new PropertyTween(this.camera, 'zoom', this.target_zoom, this.zoom_duration, TransitionType.Quad, EasingType.Out);
+            this.zoom_tween = zoom_tween;
+            this.get_SceneTree()?.start_Tween(this.zoom_tween);
+        }
+        else {
+            this.camera.zoom = this.target_zoom;
+        }
     }
 
     // rotate

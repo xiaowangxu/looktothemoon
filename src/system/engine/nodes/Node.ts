@@ -642,7 +642,7 @@ export class Viewport extends Node {
         return undefined;
     }
 
-    private get_RenderableWorld3D(): World3D | undefined {
+    public get_RenderableWorld3D(): World3D | undefined {
         if (this.world_3d !== undefined) return this.world_3d;
         const parent = this.get_Parent();
         if (parent !== undefined) {

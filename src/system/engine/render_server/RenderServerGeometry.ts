@@ -34,9 +34,9 @@ type RenderServerGeometryArray<RS extends RenderState<RS>, Buffer extends Render
 type IndexAttributeBuffer = RenderDeviceIndexAttributeBuffer<WebGL2RenderState> | RenderDeviceAttributeBufferView<WebGL2RenderState, RenderStateBuffer<WebGL2RenderState>, RenderDeviceIndexAttributeBuffer<WebGL2RenderState>>;
 
 export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> {
-    protected readonly vertex_array_attributes_map: Map<string, { attribute: Ref<RenderDeviceAttributeBuffer<WebGL2RenderState>>, location: number }> = new Map();
+    protected vertex_array_attributes_map: Map<string, { attribute: Ref<RenderDeviceAttributeBuffer<WebGL2RenderState>>, location: number }> = new Map();
     protected readonly vertex_array_ref: Ref<WebGL2RenderStateVertexArray> = new Ref();
-    protected readonly vertex_array_index_ref: Ref<IndexAttributeBuffer> = new Ref();
+    protected vertex_array_index_ref: Ref<IndexAttributeBuffer> = new Ref();
     protected readonly vertex_array_groups_ref: RefArray<WebGL2RenderStateVertexArrayView> = new RefArray();
     protected _bbox: Box3 = new Box3();
 
@@ -71,31 +71,33 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
     }
 
     public set_Geometry(primitive_type: RenderStatePrimitiveType, array: RenderServerGeometryArray<WebGL2RenderState>, index?: IndexAttributeBuffer, vertex_count?: number) {
-        if (this.has_geometry) {
-            this.clear_Geometry();
-        }
         const count = index?.element_count ?? vertex_count;
         if (count === undefined) throw new Error('<RenderServerGeometry> set_Geometry: vertex count is known');
         const vertex_array = this.render_state.create_VertexArray(primitive_type, 0, count).expect();
+        const vertex_array_attributes_map = new Map();
         for (const [name, attribute] of Object.entries(array)) {
             if (attribute instanceof RenderDeviceAttributeBuffer) {
                 // is system buffer
                 const location: number | undefined = (RenderServerGeometryAttributeLoctions as Record<string, number>)[name];
                 if (location === undefined) throw new Error('<RenderServerGeometry> set_Geometry: attribute\'s location is not system determinded');
-                this.vertex_array_attributes_map.set(name, { attribute: new Ref(attribute), location });
+                vertex_array_attributes_map.set(name, { attribute: new Ref(attribute), location });
                 attribute.bound_VertexArray(vertex_array, location);
                 attribute.toggle_VertexArray(vertex_array, location, true);
             }
             else {
                 const { attribute: _attribute, location } = attribute;
-                this.vertex_array_attributes_map.set(name, { attribute: new Ref(_attribute), location });
+                vertex_array_attributes_map.set(name, { attribute: new Ref(_attribute), location });
                 this.render_state.set_VertexArrayAttributeBuffer(vertex_array, location, _attribute.buffer as WebGL2RenderStateBuffer);
             }
         }
+        const vertex_array_index_ref: Ref<IndexAttributeBuffer> = new Ref();
         if (index !== undefined) {
-            this.vertex_array_index_ref.value = index;
+            vertex_array_index_ref.value = index;
             this.render_state.set_VertexArrayIndexBuffer(vertex_array, index.buffer as WebGL2RenderStateBuffer);
         }
+        this.clear_Geometry();
+        this.vertex_array_attributes_map = vertex_array_attributes_map;
+        this.vertex_array_index_ref = vertex_array_index_ref;
         this.vertex_array_ref.value = vertex_array;
     }
 

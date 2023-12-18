@@ -138,7 +138,7 @@ function update_Lights() {
 update_Lights();
 
 console.log(lights_data);
-lights_data.push_AllLightsData();
+lights_data.commit_AllLightsData();
 render_device.use_LightsData(lights_data);
 
 // scene
@@ -5310,7 +5310,7 @@ function render(time: number) {
 	const LIGHT0_DIRECTION = vec3(Math.cos(date), (Math.sin(date) + 1.0) / 2.0, 0.0);
 
 	lights_data.set_Light(11, undefined, undefined, LIGHT0_DIRECTION);
-	lights_data.push_AllLightsData();
+	lights_data.commit_AllLightsData();
 
 	const camera = EditorViewport.get_Camera3D()!.get_Camera()!;
 	const camera_world = camera.global_transform;

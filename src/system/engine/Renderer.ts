@@ -1,15 +1,22 @@
 import type { Viewport } from "./nodes/Node";
 import type { Camera3D } from "./nodes/camera3ds/Camera3D";
 import { World3D } from "./worlds/world3ds/World3D";
-import { RenderServer, RenderServerPlainColorTexture } from "./render_server/RenderServer";
+import { RenderServer, RenderServerDevice, RenderServerPlainColorTexture } from "./render_server/RenderServer";
 import { RenderServerLightType } from "./render_server/RenderServerLightData";
 import { vec3 } from "../fivepebble/linear_algebra/Vector3";
 import { color } from "../fivepebble/graphics/Color";
 import { Deg2Rad } from "../fivepebble/Scalar";
-import { RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureType, RenderStateUniformType } from "../sliverofstraw/RenderState";
+import { RenderStateBufferUsage, RenderStateDataType, RenderStateFrameBufferPart, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateUniformType } from "../sliverofstraw/RenderState";
 import { RenderDeviceAttributeBufferView, RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer } from "../sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { Vector2, vec2 } from "../fivepebble/linear_algebra/Vector2";
-import { WebGL2RenderStateTextureUniformSlot } from "../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
+import { WebGL2RenderStateIntUniformSlot, WebGL2RenderStateTextureUniformSlot } from "../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
+import type { WebGL2RenderStateFrameBuffer } from "../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
+import { Ref } from "../utils/RefCounted";
+import { WebGL2RenderStateFrameBufferAttachmentPoint } from "../sliverofstraw/webgl2/WebGL2RenderState";
+import type { WebGL2RenderStateTexture } from "../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
+import type { WebGL2RenderStateRenderBuffer } from "../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateRenderBuffer";
+import { Matrix4 } from "../fivepebble/linear_algebra/Matrix4";
+import { Matrix3 } from "../fivepebble/linear_algebra/Matrix3";
 
 const RS = RenderServer;
 const lights_data = RenderServer.create_LightsData(64, 64);
@@ -41,6 +48,19 @@ function update_Lights() {
 }
 
 update_Lights();
+lights_data.commit_AllLightsData();
+
+// sky texture indoor
+const skybox_texture = RS.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA8, 8, undefined, undefined, undefined, RenderStateTextureMinFilter.Linear, RenderStateTextureMagFilter.Linear).expect();
+// RS.render_state.alloc_Texture2D(skybox_texture, 2048, 1024, 0, RenderStateTextureDataFormat.RGBA);
+import skybox_url from 'res://studio.png';
+import { ImageLoader } from "./loaders/ImageLoader";
+new ImageLoader().parse(skybox_url).then(res => {
+	const image_res = res.expect();
+	const { width, height, image_data } = image_res;
+	RS.render_state.alloc_Texture2D(skybox_texture, width, height, 0, RenderStateTextureDataFormat.RGBA, image_data.data);
+	RS.render_state.generate_Mipmap(skybox_texture);
+});
 
 // #region quad surface
 
@@ -69,11 +89,10 @@ out vec2 v_uv;
 void main() {
 	gl_Position = vec4(a_position, 1.0, 1.0);
 	v_uv = (a_position + 1.0) / 2.0;
-}
-`;
+}`;
 const quad_vert_shader = RS.render_state.create_Shader(RenderStateShaderType.Vertex, quad_vert_shader_code).expect();
 
-// #endregion 
+// #endregion
 
 // #region full screen quad
 
@@ -87,7 +106,7 @@ uniform sampler2D screen;
 layout(location = 0) out vec4 o_color;
 
 void main() {
-	o_color = vec4(texture(screen, vec2(v_uv.x, 1.0 - v_uv.y)).rgba);
+	o_color = vec4(texture(screen, vec2(v_uv.x, v_uv.y)).rgba);
 	float r = o_color.r;
 	o_color.r = r <= 0.0031308 ? (12.92 * r) : (1.055 * pow(r, 1.0 / 2.4) - 0.055);
 	float g = o_color.g;
@@ -106,12 +125,60 @@ const uniform_screen_slot = new WebGL2RenderStateTextureUniformSlot(RS.render_st
 
 // #endregion
 
+// #region sky dome
+
+const skydome_frag_shader_code = `#version 300 es
+precision highp float;
+precision highp usampler2DArray;
+precision highp sampler3D;
+
+const float PI = 3.1415926535;
+const float TAU = 6.283185307;
+const float EPSILON = 0.00001;
+
+uniform WorldUniforms {
+    mat4 camera_world;
+    mat4 camera_projection;
+    vec2 screen_size;
+    float time;
+    bool camera_is_orthogonal;
+};
+
+in vec2 v_uv;
+
+uniform sampler2D sky;
+
+layout(location = 0) out vec4 o_color;
+
+void main() {
+	vec4 dir = mat4(mat3(camera_world)) * inverse(camera_projection) * vec4((v_uv * 2.0 - 1.0), 1.0, 1.0);
+	vec3 R = normalize(dir.xyz);
+	float theta = atan(R.z, R.x);
+	float gamma = acos(R.y);
+	o_color = texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
+}
+`;
+const skydome_frag_shader = RS.render_state.create_Shader(RenderStateShaderType.Fragment, skydome_frag_shader_code).expect();
+const skydome_program = RS.render_state.create_Program(quad_vert_shader, skydome_frag_shader).expect();
+
+const uniform_sky_location = RS.render_state.get_ProgramUniformLocation(skydome_program, 'sky');
+const uniform_sky_slot = new WebGL2RenderStateIntUniformSlot(RS.render_state, skydome_program, uniform_sky_location!, RenderServerDevice.SkyTextureUnit);
+uniform_sky_slot.commit();
+
+// #endregion
+
 export class Renderer3D {
 	public readonly canvas: HTMLCanvasElement;
 	private readonly ctx: CanvasRenderingContext2D;
 
-	private base_size: Vector2 = new Vector2(0, 0);
-	private size: Vector2 = new Vector2(0, 0);
+	private readonly frame_buffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
+	private readonly frame_buffer_depth: Ref<WebGL2RenderStateRenderBuffer> = new Ref();
+	private readonly frame_buffer_color: Ref<WebGL2RenderStateRenderBuffer> = new Ref();
+	private readonly frame_buffer_copy: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
+	private readonly frame_buffer_texture: Ref<WebGL2RenderStateTexture> = new Ref();
+
+	private base_size: Vector2 = new Vector2(1, 1);
+	private size: Vector2 = new Vector2(1, 1);
 	private pixel_ratio: number = 1;
 
 	private size_changed: boolean = true;
@@ -123,6 +190,30 @@ export class Renderer3D {
 		const ctx = this.canvas.getContext('2d');
 		if (ctx === null) throw new Error('<Renderer3D> constructor: can not create canvas 2d context');
 		this.ctx = ctx;
+
+		const msaa = 4;
+		const frame_buffer = RS.render_state.create_FrameBuffer().expect();
+		const frame_buffer_depth_tex = RS.render_state.create_RenderBuffer(RenderStateTextureFormat.D32F, msaa).expect();
+		RS.render_state.alloc_RenderBuffer(frame_buffer_depth_tex, 1024, 1024);
+		RS.render_state.set_FrameBufferAttachment(frame_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_buffer_depth_tex);
+		const frame_buffer_color_tex = RS.render_state.create_RenderBuffer(RenderStateTextureFormat.RGBA32F, msaa).expect();
+		RS.render_state.alloc_RenderBuffer(frame_buffer_color_tex, 1024, 1024);
+		RS.render_state.set_FrameBufferAttachment(frame_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, frame_buffer_color_tex);
+		RS.render_state.set_FrameBufferAttachment(frame_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_buffer_depth_tex);
+		RS.render_state.enable_FrameBuffer(frame_buffer);
+
+		this.frame_buffer_depth.value = frame_buffer_depth_tex;
+		this.frame_buffer_color.value = frame_buffer_color_tex;
+		this.frame_buffer.value = frame_buffer;
+
+		const frame_buffer_copy = RS.render_state.create_FrameBuffer().expect();
+		const frame_buffer_texture = RS.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+		RS.render_state.alloc_Texture2D(frame_buffer_texture, 1024, 1024, 0, RenderStateTextureDataFormat.RGBA, undefined);
+		RS.render_state.set_FrameBufferAttachment(frame_buffer_copy, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, frame_buffer_texture);
+		RS.render_state.enable_FrameBuffer(frame_buffer_copy);
+
+		this.frame_buffer_texture.value = frame_buffer_texture;
+		this.frame_buffer_copy.value = frame_buffer_copy;
 	}
 
 	public resize(width: number, height: number) {
@@ -149,7 +240,15 @@ export class Renderer3D {
 		const cam_projection = cam.projection;
 		const cam_frustum = cam.get_Frustum();
 
-		const sky_texture = world.get_VisualWorld().sky_texture.expect;
+		RenderServer.set_WorldUniform('camera_world', cam_world.typed_transposed_array_f32);
+		RenderServer.set_WorldUniform('camera_projection', cam_projection.typed_transposed_array_f32);
+		RenderServer.set_WorldUniform('camera_is_orthogonal', cam.is_orthogonal ? new Int32Array([1]) : new Int32Array([0]));
+		RenderServer.set_WorldUniform('time', new Float32Array([time]));
+
+		const world_3d = world.get_VisualWorld();
+		RS.use_LightsData(lights_data);
+		const sky_texture = world_3d.sky_texture.expect;
+		RS.use_SkyTexture(sky_texture);
 
 		const { x, y } = this.size;
 
@@ -160,14 +259,51 @@ export class Renderer3D {
 			this.canvas.height = y;
 			const rs_size_w = Math.max(RS.canvas.width, x);
 			const rs_size_h = Math.max(RS.canvas.height, y);
+			RS.render_state.alloc_RenderBuffer(this.frame_buffer_depth.expect, x, y);
+			RS.render_state.alloc_RenderBuffer(this.frame_buffer_color.expect, x, y);
+			RS.render_state.alloc_Texture2D(this.frame_buffer_texture.expect, x, y, 0, RenderStateTextureDataFormat.RGBA, undefined);
 			if (RS.canvas.width !== rs_size_w || RS.canvas.height !== rs_size_h) {
 				RS.canvas.width = rs_size_w;
 				RS.canvas.height = rs_size_h;
 			}
 		}
 
+		// draw scene
+		RS.render_state.clear_FrameBuffer(this.frame_buffer.expect, RenderStateFrameBufferPart.Depth);
+		RS.render_state.set_ViewportProxy(0, 0, x, y);
+		RS.render_state.set_ScissorProxy(0, 0, x, y);
+		RS.render_state.set_DepthFuncProxy(RS.render_state.gl.LEQUAL);
+		RS.render_state.set_DepthMaskProxy(true);
+		RS.render_state.set_CapabilityProxy(RS.render_state.gl.DEPTH_TEST, true);
+		RS.render_state.set_CapabilityProxy(RS.render_state.gl.CULL_FACE, true);
+
+		// draw meshes
+		const meshes = [world_3d.cube_mesh, world_3d.cube_mesh];
+		const materials = [world_3d.cube_material1, world_3d.cube_material2];
+		let rendered = 0;
+		for (const [idx, mesh] of meshes.entries()) {
+			const geo = mesh.expect;
+			const mat = materials[idx].expect;
+			const model_world = idx === 0 ? Matrix4.from_BasisPosition(undefined, vec3(-2, 0, 0)) : Matrix4.from_BasisPosition(Matrix3.make_RotateY(time).compose(Matrix3.make_RotateZ(time / 2.0)), vec3(2, 0, 0));
+			const not_culled = cam_frustum.contain_Box(geo.bbox.apply_Matrix4(model_world));
+			if (not_culled) {
+				rendered++;
+				mat.set_UniformOverride('model_world', model_world);
+				mat.commit_AllUniformOverride('shading');
+				RS.render_state.draw_Elements(mat.get_Program('shading')!, geo.vertex_array, RenderStateDataType.UnsignedInt, 1);
+			}
+		}
+		console.log(`rendered: ${rendered} / ${meshes.length}`);
+
+		// draw sky
+		RS.render_state.set_DepthFuncProxy(RS.render_state.gl.LEQUAL);
+		RS.render_state.draw_Elements(skydome_program, quad_surface.vertex_array, RenderStateDataType.UnsignedInt, 1);
+
+		// blit
+		RS.render_state.blit_FrameBuffer(this.frame_buffer.expect, this.frame_buffer_copy.expect, RenderStateFrameBufferPart.Color, RenderStateTextureMagFilter.Nearest, 0, 0, x, y);
+
 		// on screen
-		uniform_screen_slot.texture = sky_texture;
+		uniform_screen_slot.texture = this.frame_buffer_texture.expect;
 		uniform_screen_slot.commit();
 		RS.render_state.use_FrameBuffer(undefined);
 		RS.render_state.set_ViewportProxy(0, 0, x, y);

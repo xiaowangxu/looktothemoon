@@ -7,6 +7,8 @@ import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/web
 import { Ref } from "@/system/utils/RefCounted";
 import { RenderServerLightsData } from "./RenderServerLightData";
 import { RenderServerGeometry } from "./RenderServerGeometry";
+import { RenderServerShader } from "./RenderServerShader";
+import { RenderServerMaterial } from "./RenderServerMaterial";
 
 const vertex_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Vertex, undefined, undefined, undefined, undefined, '');
 const frag_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Fragment, undefined, undefined, undefined, undefined, '');
@@ -19,6 +21,8 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     public static readonly WorldUniformsUnit: number = 0;
     public static readonly EmptyTextureUnit: number = 1;
     public static readonly LightsTextureUnit: number = 2;
+    public static readonly LightsClusterTextureUnit: number = 3;
+    public static readonly SkyTextureUnit: number = 4;
 
     public readonly empty_texture: Ref<WebGL2RenderStateTexture> = new Ref();
     public readonly plain_color_textures = {
@@ -26,7 +30,8 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         black: new Ref<WebGL2RenderStateTexture>(),
         transparent: new Ref<WebGL2RenderStateTexture>(),
     }
-    public readonly lights_data: Ref<RenderServerLightsData> = new Ref();
+    public readonly lights_data_ref: Ref<RenderServerLightsData> = new Ref();
+    public readonly sky_texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
 
     private world_uniform_buffer: Ref<WebGL2RenderStateBuffer> = new Ref();
     private world_uniform_setting: { [name: string]: { index: number, offset: number } } = {};
@@ -89,6 +94,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         this.render_state.alloc_Buffer(this.world_uniform_buffer.expect, size);
 
         this.render_state.bind_UniformBuffer(this.world_uniform_buffer.expect, RenderServerDevice.WorldUniformsUnit);
+        console.log(this);
     }
 
     public set_WorldUniform(name: string, data: ArrayBufferView) {
@@ -103,19 +109,36 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     }
 
     public use_LightsData(lights_data: RenderServerLightsData) {
-        const texture = lights_data.lights_texture;
-        this.lights_data.value = lights_data;
-        this.render_state.active_Texture(texture, RenderServerDevice.LightsTextureUnit);
+        if (this.lights_data_ref.value !== lights_data) {
+            const texture = lights_data.lights_texture;
+            this.lights_data_ref.value = lights_data;
+            this.render_state.active_Texture(texture, RenderServerDevice.LightsTextureUnit);
+        }
+    }
+
+    public use_SkyTexture(sky: WebGL2RenderStateTexture) {
+        if (this.sky_texture_ref.value !== sky) {
+            this.sky_texture_ref.value = sky;
+            this.render_state.active_Texture(sky, RenderServerDevice.SkyTextureUnit);
+        }
     }
 
     public create_Geometry() {
         return new RenderServerGeometry(this);
     }
 
+    public create_Shader() {
+        return new RenderServerShader(this);
+    }
+
+    public create_Material() {
+        return new RenderServerMaterial(this);
+    }
+
     public dispose(): void {
         this.world_uniform_buffer.clear();
         this.empty_texture.clear();
-        this.lights_data.clear();
+        this.lights_data_ref.clear();
         this.plain_color_textures.white.clear();
         this.plain_color_textures.black.clear();
         this.plain_color_textures.transparent.clear();

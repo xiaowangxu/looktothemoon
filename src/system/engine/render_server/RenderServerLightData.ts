@@ -82,11 +82,12 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
         this.light_mask.fill(0xffffffff);
     }
 
-    private _index_array: [number, number] = [0, 0];
+    static #index_array: [number, number] = [0, 0];
+    
     private get_Index(id: number): [number, number] {
-        this._index_array[0] = id % this.texture_width;
-        this._index_array[1] = Math.floor(id / this.texture_width);
-        return this._index_array;
+        RenderServerLightsData.#index_array[0] = id % this.texture_width;
+        RenderServerLightsData.#index_array[1] = Math.floor(id / this.texture_width);
+        return RenderServerLightsData.#index_array;
     }
 
     public set_Light(id: number,
@@ -129,7 +130,7 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
         if (shadow_opacity !== undefined)/*        */this.light_shadow_opacity[id] = shadow_opacity;
     }
 
-    public push_AllLightsData() {
+    public commit_AllLightsData() {
         this.render_state.update_Texture3D(this.lights_texture, 0, RenderStateTextureDataFormat.RInt, this.lights_data, this.texture_width, this.texture_height, RenderServerLightsData.LightParamCount, 0, 0, 0);
     }
 
