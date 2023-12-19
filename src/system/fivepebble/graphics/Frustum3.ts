@@ -28,10 +28,11 @@ export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
         // notice that we use ax + by + cz = d as plane equation in Plane3
         // so the distance should be negated compared to the code in the web page
         // use column-major data
-        const [me0, me4, me8, me12,
-            me1, me5, me9, me13,
-            me2, me6, me10, me14,
-            me3, me7, me11, me15] = projection.elements;
+        const me0 = projection.n11, me4 = projection.n12, me8 = projection.n13, me12 = projection.n14;
+        const me1 = projection.n21, me5 = projection.n22, me9 = projection.n23, me13 = projection.n24;
+        const me2 = projection.n31, me6 = projection.n32, me10 = projection.n33, me14 = projection.n34;
+        const me3 = projection.n41, me7 = projection.n42, me11 = projection.n43, me15 = projection.n44;
+        
         const top = Plane3.from_Components(me3 - me1, me7 - me5, me11 - me9, -(me15 - me13));
         const right = Plane3.from_Components(me3 - me0, me7 - me4, me11 - me8, -(me15 - me12));
         const bottom = Plane3.from_Components(me3 + me1, me7 + me5, me11 + me9, -(me15 + me13));

@@ -37,6 +37,8 @@ export abstract class RenderStateValueUniformSlot<
 
     protected changed: boolean = true;
 
+    public get result(): V { return this.value ?? this.default_value; }
+
     public abstract get value(): V | undefined;
     public abstract set value(value: V | undefined);
 

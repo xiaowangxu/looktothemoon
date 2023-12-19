@@ -23,10 +23,7 @@ export enum NodeNotification {
     ExitedTree,
     EnteredReady,
     Ready,
-    InternalBeforeProcess,
     Process,
-    InternalAfterProcess,
-    InternalBeforePhysicsProcess,
     PhysicsProcess,
     InternalAfterPhysicsProcess,
     SetupCamera,
@@ -57,6 +54,8 @@ export class Node extends ClassBase {
     private first_time_ready: boolean = true;
 
     public block_input: boolean = false;
+    public block_process: boolean = false;
+    public block_physics_process: boolean = false;
 
     // signals
     public readonly signal_exiting_tree: SignalEmitter<() => void> = new SignalEmitter();
@@ -140,15 +139,8 @@ export class Node extends ClassBase {
         }
     }
 
-    public propagate_InternalBeforeProcess(delta: number) {
-        for (const child of this.children) {
-            child.propagate_InternalBeforeProcess(delta);
-        }
-        // internal before process
-        this.nofity(NodeNotification.InternalBeforeProcess);
-    }
-
     public propagate_Process(delta: number) {
+        if (this.block_process) return;
         for (const child of this.children) {
             child.propagate_Process(delta);
         }
@@ -158,23 +150,8 @@ export class Node extends ClassBase {
         this.signal_process.trigger(delta);
     }
 
-    public propagate_InternalAfterProcess(delta: number) {
-        for (const child of this.children) {
-            child.propagate_InternalAfterProcess(delta);
-        }
-        // internal before process
-        this.nofity(NodeNotification.InternalAfterProcess);
-    }
-
-    public propagate_InternalBeforePhysicsProcess(delta: number) {
-        for (const child of this.children) {
-            child.propagate_InternalBeforePhysicsProcess(delta);
-        }
-        // internal before process
-        this.nofity(NodeNotification.InternalBeforePhysicsProcess);
-    }
-
     public propagate_PhysicsProcess(delta: number) {
+        if (this.block_physics_process) return;
         for (const child of this.children) {
             child.propagate_PhysicsProcess(delta);
         }

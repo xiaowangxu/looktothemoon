@@ -35,6 +35,8 @@ EditorCamera.zoom_to_cursor = false;
 // World 
 const World = new Node3D();
 World.local_scale = vec3(0.01, 0.01, 0.01);
+World.block_process = true;
+World.block_physics_process = true;
 
 export const EditorSceneTree = new SceneTree(EditorViewportContainer);
 EditorSceneTree.register_Singleton(DependencyGraph);
@@ -56,26 +58,26 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut([
     new MouseButtonInputEvent(MouseButton.WheelDown, true, false, false, undefined, vec2(0, 0), vec2(0, 0), true, false, false, false),
 ]));
 
-// viewport 0
-const EditorViewportContainer0 = new ViewportDomContainer();
-EditorViewportContainer0.dom = document.querySelector('#viewport0') ?? undefined;
-const EditorViewport0 = new Viewport();
-EditorViewport0.physics_picking = false;
-EditorViewportContainer0.add_Child(EditorViewport0);
-const EditorCamera0 = new EditorOrbitCamera3D();
-EditorCamera0.zoom_to_cursor = false;
-EditorViewport0.add_Child(EditorCamera0);
-EditorViewport.add_Child(EditorViewportContainer0);
+// // viewport 0
+// const EditorViewportContainer0 = new ViewportDomContainer();
+// EditorViewportContainer0.dom = document.querySelector('#viewport0') ?? undefined;
+// const EditorViewport0 = new Viewport();
+// EditorViewport0.physics_picking = false;
+// EditorViewportContainer0.add_Child(EditorViewport0);
+// const EditorCamera0 = new EditorOrbitCamera3D();
+// EditorCamera0.zoom_to_cursor = false;
+// EditorViewport0.add_Child(EditorCamera0);
+// EditorViewport.add_Child(EditorViewportContainer0);
 
 // Box
 const geometry = new TorusGeometryResource();
 
-for (let i = 0; i <= 30; i++) {
-    for (let j = 0; j <= 30; j++) {
+for (let i = 0; i <= 100; i++) {
+    for (let j = 0; j <= 100; j++) {
         const Mesh2 = new MeshInstance3D();
         Mesh2.geometry = geometry;
-        Mesh2.local_scale = vec3(1, 1, 1);
-        Mesh2.local_position = vec3((i / 30 * 2 - 1) * 100, (j / 30 * 2 - 1) * 100, 0);
+        Mesh2.local_scale = vec3(2, 2, 2);
+        Mesh2.local_position = vec3((i / 100 * 2 - 1) * 500, (j / 100 * 2 - 1) * 500, 0);
         World.add_Child(Mesh2);
     }
 }
@@ -100,20 +102,20 @@ for (let i = 0; i <= 30; i++) {
 // EditorViewport2.add_Child(EditorCamera2);
 // EditorViewport.add_Child(EditorViewportContainer2);
 
-EditorViewport.signal_input.connect((evt, pro) => {
-    if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {
-        Mesh.local_position = vec3();
-        EditorSceneTree.start_Tween(
-            new PropertyTween(
-                Mesh,
-                'local_position',
-                vec3(-100, -100, -100),
-                2, TransitionType.Bounce, EasingType.Out
-            )
-        );
-        // EditorViewport.get_World3D()?.get_VisualWorld().cube_material2.expect.set_UniformOverride('u_color', new Vector4(Math.random(), Math.random(), Math.random(), 1.0))
-    }
-});
+// EditorViewport.signal_input.connect((evt, pro) => {
+//     if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {
+//         Mesh.local_position = vec3();
+//         EditorSceneTree.start_Tween(
+//             new PropertyTween(
+//                 Mesh,
+//                 'local_position',
+//                 vec3(-100, -100, -100),
+//                 2, TransitionType.Bounce, EasingType.Out
+//             )
+//         );
+//         // EditorViewport.get_World3D()?.get_VisualWorld().cube_material2.expect.set_UniformOverride('u_color', new Vector4(Math.random(), Math.random(), Math.random(), 1.0))
+//     }
+// });
 
 // EditorViewport0.signal_input.connect((evt, pro) => {
 //     if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {

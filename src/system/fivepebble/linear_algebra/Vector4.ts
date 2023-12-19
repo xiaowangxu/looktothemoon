@@ -79,9 +79,12 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
     dot(b: Vector4): number {
         return this.x * b.x + this.y * b.y + this.z * b.z + this.w * b.w;
     }
-    transform(matrix: Matrix4): Vector4 {
-        const [n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44] = matrix.elements;
-        const { x, y, z, w } = this;
+    transform(mat: Matrix4): Vector4 {
+        const n11 = mat.n11, n12 = mat.n12, n13 = mat.n13, n14 = mat.n14;
+        const n21 = mat.n21, n22 = mat.n22, n23 = mat.n23, n24 = mat.n24;
+        const n31 = mat.n31, n32 = mat.n32, n33 = mat.n33, n34 = mat.n34;
+        const n41 = mat.n41, n42 = mat.n42, n43 = mat.n43, n44 = mat.n44;
+        const x = this.x, y = this.y, z = this.z, w = this.w;
         return new Vector4(
             n11 * x + n12 * y + n13 * z + n14 * w,
             n21 * x + n22 * y + n23 * z + n24 * w,

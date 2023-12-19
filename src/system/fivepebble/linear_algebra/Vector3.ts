@@ -128,8 +128,11 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         // 1 5 9  13
         // 2 6 10 14
         // 3 7 11 15
-        const [n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44] = mat.elements;
-        const { x, y, z } = this;
+        const n11 = mat.n11, n12 = mat.n12, n13 = mat.n13, n14 = mat.n14;
+        const n21 = mat.n21, n22 = mat.n22, n23 = mat.n23, n24 = mat.n24;
+        const n31 = mat.n31, n32 = mat.n32, n33 = mat.n33, n34 = mat.n34;
+        const n41 = mat.n41, n42 = mat.n42, n43 = mat.n43, n44 = mat.n44;
+        const x = this.x, y = this.y, z = this.z;
         const w = 1 / (n41 * x + n42 * y + n43 * z + n44);
         return new Vector3(
             (n11 * x + n12 * y + n13 * z + n14) * w,

@@ -18,11 +18,8 @@ export abstract class WebGL2RenderStateValueUniformSlot<
 {
     protected readonly location: WebGLUniformLocation;
 
-    public get value(): V | undefined { return this._value }
-    public set value(value: V | undefined) {
-        this._value = value;
-        this.changed = true;
-    }
+    public abstract get value(): V | undefined;
+    public abstract set value(value: V | undefined);
 
     constructor(render_state: WebGL2RenderState, program: WebGL2RenderStateProgram, type: VT, location: WebGLUniformLocation, default_value: V) {
         super(render_state, program, type, default_value);
@@ -40,6 +37,7 @@ export abstract class WebGL2RenderStateValueUniformSlot<
 // Uint, Float, Vec2, Vec3, Vec4, Mat3, Mat4
 
 export class WebGL2RenderStateUintUniformSlot extends WebGL2RenderStateValueUniformSlot<RenderStateUniformType.Uint, number, Uint32Array> {
+    public get value() { return this._value; }
     public set value(value: number | undefined) {
         if (this._value !== value) {
             this._value = value;
@@ -55,6 +53,7 @@ export class WebGL2RenderStateUintUniformSlot extends WebGL2RenderStateValueUnif
 }
 
 export class WebGL2RenderStateIntUniformSlot extends WebGL2RenderStateValueUniformSlot<RenderStateUniformType.Int, number, Int32Array> {
+    public get value() { return this._value; }
     public set value(value: number | undefined) {
         if (this._value !== value) {
             this._value = value;
@@ -70,6 +69,7 @@ export class WebGL2RenderStateIntUniformSlot extends WebGL2RenderStateValueUnifo
 }
 
 export class WebGL2RenderStateFloatUniformSlot extends WebGL2RenderStateValueUniformSlot<RenderStateUniformType.Float, number, Float32Array> {
+    public get value() { return this._value; }
     public set value(value: number | undefined) {
         if (this._value !== value) {
             this._value = value;
@@ -85,6 +85,7 @@ export class WebGL2RenderStateFloatUniformSlot extends WebGL2RenderStateValueUni
 }
 
 export class WebGL2RenderStateVec2UniformSlot extends WebGL2RenderStateValueUniformSlot<RenderStateUniformType.Vec2, Vector2, Float32Array> {
+    public get value() { return this._value; }
     public set value(value: Vector2 | undefined) {
         if (this._value === undefined) {
             if (value !== undefined) {
@@ -106,6 +107,7 @@ export class WebGL2RenderStateVec2UniformSlot extends WebGL2RenderStateValueUnif
 }
 
 export class WebGL2RenderStateVec3UniformSlot extends WebGL2RenderStateValueUniformSlot<RenderStateUniformType.Vec3, Vector3, Float32Array> {
+    public get value() { return this._value; }
     public set value(value: Vector3 | undefined) {
         if (this._value === undefined) {
             if (value !== undefined) {
@@ -127,6 +129,7 @@ export class WebGL2RenderStateVec3UniformSlot extends WebGL2RenderStateValueUnif
 }
 
 export class WebGL2RenderStateVec4UniformSlot extends WebGL2RenderStateValueUniformSlot<RenderStateUniformType.Vec4, Vector4, Float32Array> {
+    public get value() { return this._value; }
     public set value(value: Vector4 | undefined) {
         if (this._value === undefined) {
             if (value !== undefined) {
@@ -148,6 +151,7 @@ export class WebGL2RenderStateVec4UniformSlot extends WebGL2RenderStateValueUnif
 }
 
 export class WebGL2RenderStateMat3UniformSlot extends WebGL2RenderStateValueUniformSlot<RenderStateUniformType.Mat3, Matrix3, Float32Array> {
+    public get value() { return this._value; }
     public set value(value: Matrix3 | undefined) {
         if (this._value === undefined) {
             if (value !== undefined) {
@@ -169,6 +173,7 @@ export class WebGL2RenderStateMat3UniformSlot extends WebGL2RenderStateValueUnif
 }
 
 export class WebGL2RenderStateMat4UniformSlot extends WebGL2RenderStateValueUniformSlot<RenderStateUniformType.Mat4, Matrix4, Float32Array> {
+    public get value() { return this._value; }
     public set value(value: Matrix4 | undefined) {
         if (this._value === undefined) {
             if (value !== undefined) {

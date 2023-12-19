@@ -289,8 +289,17 @@ export class Renderer3D {
 			}
 		}
 
+		
+		// draw scene
+		RS.render_state.set_ViewportProxy(0, 0, x, y);
+		RS.render_state.set_ScissorProxy(0, 0, x, y);
+		RS.render_state.set_DepthFuncProxy(RS.render_state.gl.LEQUAL);
+		RS.render_state.set_DepthMaskProxy(true);
+		RS.render_state.set_CapabilityProxy(RS.render_state.gl.DEPTH_TEST, true);
+		RS.render_state.set_CapabilityProxy(RS.render_state.gl.CULL_FACE, true);
+		RS.render_state.clear_FrameBuffer(this.frame_buffer.expect, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth);
+		
 		// prepare render queue
-		this.render_queue.clear();
 		let total_objects_count = 0;
 		let rendered_objects_count = 0;
 		const mat = world_3d.cube_material1.expect;
@@ -300,47 +309,16 @@ export class Renderer3D {
 			const not_culled = !bbox.is_empty && cam_frustum.contain_Box(bbox.apply_Matrix4(global_transform));
 			if ((layer & cam_mask) !== 0 && not_culled) {
 				rendered_objects_count++;
-				this.render_queue.add(mesh.geometry_ref.expect, mat, global_transform, layer);
-			}
-		}
-
-		// draw scene
-
-		// pre z
-		RS.render_state.set_ViewportProxy(0, 0, x, y);
-		RS.render_state.set_ScissorProxy(0, 0, x, y);
-		RS.render_state.set_DepthFuncProxy(RS.render_state.gl.LEQUAL);
-		RS.render_state.set_DepthMaskProxy(true);
-		RS.render_state.set_CapabilityProxy(RS.render_state.gl.DEPTH_TEST, true);
-		RS.render_state.set_CapabilityProxy(RS.render_state.gl.CULL_FACE, true);
-		RS.render_state.clear_FrameBuffer(this.frame_buffer_prez.expect, RenderStateFrameBufferPart.Depth | RenderStateFrameBufferPart.Color);
-
-		for (const { geometry, material, transform, layer } of this.render_queue.solids) {
-			material.set_UniformOverride('model_world', transform);
-			material.set_UniformOverride('layer', layer);
-			mat.commit_AllUniformOverride('pre_z');
-			if (geometry.is_indexed) {
-				RS.render_state.draw_Elements(material.get_Program('pre_z')!, geometry.vertex_array, RenderStateDataType.UnsignedInt, 1);
-			}
-			else {
-				RS.render_state.draw_Arrays(material.get_Program('pre_z')!, geometry.vertex_array, 1);
-			}
-		}
-
-		// shading
-		RS.render_state.set_DepthFuncProxy(RS.render_state.gl.EQUAL);
-		RS.render_state.set_DepthMaskProxy(false);
-		RS.render_state.clear_FrameBuffer(this.frame_buffer.expect, RenderStateFrameBufferPart.Color);
-
-		for (const { geometry, material, transform, layer } of this.render_queue.solids) {
-			material.set_UniformOverride('model_world', transform);
-			material.set_UniformOverride('layer', layer);
-			mat.commit_AllUniformOverride('shading');
-			if (geometry.is_indexed) {
-				RS.render_state.draw_Elements(material.get_Program('shading')!, geometry.vertex_array, RenderStateDataType.UnsignedInt, 1);
-			}
-			else {
-				RS.render_state.draw_Arrays(material.get_Program('shading')!, geometry.vertex_array, 1);
+				mat.set_UniformOverride('model_world', global_transform);
+				mat.set_UniformOverride('layer', layer);
+				mat.commit_AllUniformOverride('shading');
+				const geometry = mesh.geometry_ref.expect;
+				if (geometry.is_indexed) {
+					RS.render_state.draw_Elements(mat.get_Program('shading')!, geometry.vertex_array, RenderStateDataType.UnsignedInt, 1);
+				}
+				else {
+					RS.render_state.draw_Arrays(mat.get_Program('shading')!, geometry.vertex_array, 1);
+				}
 			}
 		}
 

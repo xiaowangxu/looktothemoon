@@ -995,40 +995,62 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     }
 
     // Uniform
-
+    static #matrix3_array: number[] = new Array(9);
+    static #matrix4_array: number[] = new Array(16);
     public set_ProgramUniform<Val extends RenderStateUniformType>(program: WebGL2RenderStateProgram, uniform_location: WebGLUniformLocation, uniform_type: Val, data: RenderStateUniformSlotTypeMap<WebGL2RenderState, Val>): void {
         this.use_ProgramProxy(program.program);
         switch (uniform_type) {
             case RenderStateUniformType.Uint: {
-                this.gl.uniform1uiv(uniform_location, (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Uint>).typed_array);
+                this.gl.uniform1ui(uniform_location, (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Uint>).result);
                 return;
             }
             case RenderStateUniformType.Int: {
-                this.gl.uniform1iv(uniform_location, (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Int>).typed_array);
+                this.gl.uniform1i(uniform_location, (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Int>).result);
                 return;
             }
             case RenderStateUniformType.Float: {
-                this.gl.uniform1fv(uniform_location, (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Int>).typed_array);
+                this.gl.uniform1f(uniform_location, (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Int>).result);
                 return;
             }
             case RenderStateUniformType.Vec2: {
-                this.gl.uniform2fv(uniform_location, (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Vec2>).typed_array);
+                const vec2 = (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Vec2>).result;
+                this.gl.uniform2f(uniform_location, vec2.x, vec2.y);
                 return;
             }
             case RenderStateUniformType.Vec3: {
-                this.gl.uniform3fv(uniform_location, (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Vec3>).typed_array);
+                const vec3 = (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Vec3>).result;
+                this.gl.uniform3f(uniform_location, vec3.x, vec3.y, vec3.z);
                 return;
             }
             case RenderStateUniformType.Vec4: {
-                this.gl.uniform4fv(uniform_location, (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Vec4>).typed_array);
+                const vec4 = (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Vec4>).result;
+                this.gl.uniform4f(uniform_location, vec4.x, vec4.y, vec4.z, vec4.w);
                 return;
             }
             case RenderStateUniformType.Mat3: {
-                this.gl.uniformMatrix3fv(uniform_location, true, (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Mat3>).typed_array);
+                const mat3 = (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Mat3>).result;
+                this.gl.uniformMatrix3fv(uniform_location, true, mat3.array);
                 return;
             }
             case RenderStateUniformType.Mat4: {
-                this.gl.uniformMatrix4fv(uniform_location, true, (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Mat4>).typed_array);
+                const mat4 = (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Mat4>).result;
+                WebGL2RenderState.#matrix4_array[0] = mat4.n11;
+                WebGL2RenderState.#matrix4_array[1] = mat4.n12;
+                WebGL2RenderState.#matrix4_array[2] = mat4.n13;
+                WebGL2RenderState.#matrix4_array[3] = mat4.n14;
+                WebGL2RenderState.#matrix4_array[4] = mat4.n21;
+                WebGL2RenderState.#matrix4_array[5] = mat4.n22;
+                WebGL2RenderState.#matrix4_array[6] = mat4.n23;
+                WebGL2RenderState.#matrix4_array[7] = mat4.n24;
+                WebGL2RenderState.#matrix4_array[8] = mat4.n31;
+                WebGL2RenderState.#matrix4_array[9] = mat4.n32;
+                WebGL2RenderState.#matrix4_array[10] = mat4.n33;
+                WebGL2RenderState.#matrix4_array[11] = mat4.n34;
+                WebGL2RenderState.#matrix4_array[12] = mat4.n41;
+                WebGL2RenderState.#matrix4_array[13] = mat4.n42;
+                WebGL2RenderState.#matrix4_array[14] = mat4.n43;
+                WebGL2RenderState.#matrix4_array[15] = mat4.n44;
+                this.gl.uniformMatrix4fv(uniform_location, true, WebGL2RenderState.#matrix4_array);
                 return;
             }
             case RenderStateUniformType.Tex2D:

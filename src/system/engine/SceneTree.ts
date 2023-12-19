@@ -45,10 +45,8 @@ export class SceneTree {
         this.delta = this.clock.delta;
         this.frame_id++;
         // internal process process
-        this.root.propagate_InternalBeforeProcess(this.delta);
         this.root.propagate_Process(this.delta);
         this.process_Tween(this.delta);
-        this.root.propagate_InternalAfterProcess(this.delta);
         for (const viewport of this.viewports) {
             viewport.before_InternalBeforeRender();
         }
@@ -88,13 +86,13 @@ export class SceneTree {
 
     private _physics_loop_func = this.physics_loop.bind(this);
     private physics_loop() {
-        this.physics_clock.tick();
-        this.physics_time = this.physics_clock.duration;
-        this.physics_delta = this.physics_clock.delta;
-        // internal physics process process
-        this.root.propagate_InternalBeforePhysicsProcess(this.physics_delta);
-        this.root.propagate_PhysicsProcess(this.physics_delta);
-        this.root.propagate_InternalAfterPhysicsProcess(this.physics_delta);
+        // this.physics_clock.tick();
+        // this.physics_time = this.physics_clock.duration;
+        // this.physics_delta = this.physics_clock.delta;
+        // // internal physics process process
+        // this.root.propagate_InternalBeforePhysicsProcess(this.physics_delta);
+        // this.root.propagate_PhysicsProcess(this.physics_delta);
+        // this.root.propagate_InternalAfterPhysicsProcess(this.physics_delta);
     }
 
     // apis
