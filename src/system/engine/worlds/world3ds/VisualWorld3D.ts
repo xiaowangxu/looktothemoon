@@ -12,10 +12,14 @@ import type { RenderServerGeometry } from "../../render_server/RenderServerGeome
 import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { Vector3, vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Vector4, vec4 } from "@/system/fivepebble/linear_algebra/Vector4";
-import { RenderServerShader } from "../../render_server/RenderServerShader";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
-import { Box3 } from "@/system/fivepebble/geometries/Box3";
+import { Box3, box3 } from "@/system/fivepebble/geometries/Box3";
 import type { RenderServerMaterial } from "../../render_server/RenderServerMaterial";
+import { WorldObject } from "../WorldObject";
+import { Rid, type RID } from "../../Rid";
+import { GeometryResource } from "../../resources/geometry_resources/GeometryResource";
+import type { MaterialResource } from "../../resources/material_resources/MaterialResource";
+import { BoxGeometryResource } from "../../resources/geometry_resources/PrimitiveGeometryResource";
 
 // #region sky
 
@@ -208,6 +212,8 @@ uniform usampler2DArray lights;
 // uniforms
 uniform sampler2D u_sky;
 uniform vec4 u_color;
+uniform float u_roughness;
+uniform bool u_usesky;
 
 // varyings
 in vec3 v_world;
@@ -278,7 +284,7 @@ void light(uint light_type, in vec3 light_direction, in vec3 view_direction, in 
         diffuse += light_strength * light_color * light_attenuation;
         if (light_type != uint(2)) {
             vec3 half_direction = normalize(light_direction + view_direction);  
-            float beckmann = beckmannDistribution(dot(normal, half_direction), 0.01);
+            float beckmann = beckmannDistribution(dot(normal, half_direction), u_roughness);
             specular += beckmann * light_color * light_attenuation;
         }
     }
@@ -290,11 +296,12 @@ void main() {
     // code
     vec3 normal = normalize(v_normal);
 	vec3 view_dir = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0, 0.0, 1.0)) : normalize(camera_world[3].xyz - v_world);
-    vec4 albedo_color = skybox(u_sky, reflect(-view_dir, normal), 1.0) * vec4(u_color.rgb, 1.0);
+	vec4 sky = skybox(u_sky, reflect(-view_dir, normal), 1.0);
+    vec4 albedo_color = (u_usesky ? sky : vec4(1.0)) * vec4(u_color.rgb, 1.0);
     
     ivec3 lights_size = textureSize(lights, 0);
     int lights_count = lights_size.x * lights_size.y;
-    const int LIGHT_MAX_COUNT = 64;
+    const int LIGHT_MAX_COUNT = 16;
     
     // see light function
     // light_type, light_direction, view_direction, normal, light_color, light_attenuation, inout vec3 diffuse, inout vec3 specular
@@ -377,19 +384,84 @@ void main() {
     	}
     }
     
-    
     o_color = albedo_color * vec4(diffuse, 1.0) + vec4(specular, 0.0);
 }`;
 
 // #endregion
 
+export class VisualWorld3DMesh extends WorldObject {
+	public readonly geometry_ref: Ref<RenderServerGeometry> = new Ref();
+	protected readonly materials_map: Map<number, Ref<RenderServerMaterial>> = new Map();
+	protected readonly material_override_ref: Ref<RenderServerMaterial> = new Ref();
+
+	public global_transform: Matrix4 = Matrix4.make_Identity();
+	public visible: boolean = true;
+	public layer: number = 0xffffffff;
+
+	public get bbox() { return this.geometry_ref.value?.bbox ?? box3(); }
+
+	constructor(rid: RID) {
+		super(rid);
+	}
+
+	public set_Geometry(geometry: RenderServerGeometry | undefined) {
+		this.geometry_ref.value = geometry;
+	}
+
+	public set_SurfaceMaterial(surface_idx: number, material: RenderServerMaterial | undefined) {
+		if (this.geometry_ref.is_empty) return;
+		const geometry = this.geometry_ref.expect;
+		if (surface_idx < 0 || surface_idx >= geometry.surface_count) return;
+		if (this.materials_map.has(surface_idx)) {
+			this.materials_map.get(surface_idx)!.value = material;
+		}
+		else {
+			this.materials_map.set(surface_idx, new Ref(material));
+		}
+	}
+
+	public set_MaterialOverride(material: RenderServerMaterial | undefined) {
+		this.material_override_ref.value = material;
+	}
+
+	public set_GlobalTransform(mat: Matrix4) {
+		this.global_transform = mat;
+	}
+
+	public set_Visible(visible: boolean) {
+		this.visible = visible;
+	}
+
+	public set_Layer(layer: number) {
+		this.layer = layer;
+	}
+
+	public clear_Materials() {
+		this.material_override_ref.clear();
+		for (const mat of this.materials_map.values()) {
+			mat.clear();
+		}
+		this.materials_map.clear();
+	}
+
+	public dispose(): void {
+		this.geometry_ref.clear();
+		this.clear_Materials();
+	}
+}
+
 export class VisualWorld3D {
+	protected readonly meshes_map: Map<RID, VisualWorld3DMesh> = new Map();
+
+	public get meshes() { return this.meshes_map.values(); }
+
 	// signal
 	public signal_before_render: SignalEmitter<() => void> = new SignalEmitter();
 
 	public readonly sky_texture: Ref<WebGL2RenderStateTexture> = new Ref();
 	public readonly sky_frame_buffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
 	public readonly cube_mesh: Ref<RenderServerGeometry> = new Ref();
+	public readonly cube_geometry: Ref<BoxGeometryResource> = new Ref(new BoxGeometryResource());
 	public readonly cube_material1: Ref<RenderServerMaterial> = new Ref();
 	public readonly cube_material2: Ref<RenderServerMaterial> = new Ref();
 
@@ -408,19 +480,98 @@ export class VisualWorld3D {
 	}
 
 	// Sky
-
+	private sky_changed: boolean = true;
 	private update_Sky(scene_tree: SceneTree) {
-		// sky
-		uniform_time_slot.value = scene_tree.time;
-		uniform_time_slot.commit();
-		RenderServer.render_state.use_FrameBuffer(this.sky_frame_buffer.expect);
-		RenderServer.render_state.set_ViewportProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
-		RenderServer.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
-		RenderServer.render_state.draw_Elements(sky_program, quad_surface.vertex_array, RenderStateDataType.UnsignedInt, 1);
-		RenderServer.render_state.generate_Mipmap(this.sky_texture.expect);
+		if (this.sky_changed) {
+			this.sky_changed = false;
+			// sky
+			uniform_time_slot.value = scene_tree.time;
+			uniform_time_slot.commit();
+			RenderServer.render_state.use_FrameBuffer(this.sky_frame_buffer.expect);
+			RenderServer.render_state.set_ViewportProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
+			RenderServer.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
+			RenderServer.render_state.draw_Elements(sky_program, quad_surface.vertex_array, RenderStateDataType.UnsignedInt, 1);
+			RenderServer.render_state.generate_Mipmap(this.sky_texture.expect);
+		}
 	}
 
 	// Mesh
+
+	public create_Mesh(): RID {
+		const rid = Rid();
+		const mesh = new VisualWorld3DMesh(rid);
+		this.meshes_map.set(rid, mesh);
+		return rid;
+	}
+
+	protected get_Mesh(rid: RID): VisualWorld3DMesh | undefined {
+		return this.meshes_map.get(rid);
+	}
+
+	public free_Mesh(rid: RID) {
+		const instance = this.get_Mesh(rid);
+		if (instance === undefined) return;
+		instance.dispose();
+		this.meshes_map.delete(rid);
+	}
+
+	public set_MeshGeometry(rid: RID, geometry: GeometryResource | undefined) {
+		const instance = this.get_Mesh(rid);
+		if (instance) {
+			if (geometry === undefined) {
+				instance.set_Geometry(undefined);
+			}
+			else {
+				instance.set_Geometry(geometry.geometry);
+			}
+		}
+	}
+
+	public set_MeshSurfaceMaterial(rid: RID, surface_idx: number, material: MaterialResource | undefined) {
+		const instance = this.get_Mesh(rid);
+		if (instance) {
+			if (material === undefined) {
+				instance.set_SurfaceMaterial(surface_idx, undefined);
+			}
+			else {
+				instance.set_SurfaceMaterial(surface_idx, material.material);
+			}
+		}
+	}
+
+	public set_MeshMaterialOverride(rid: RID, material: MaterialResource | undefined) {
+		const instance = this.get_Mesh(rid);
+		if (instance) {
+			if (material === undefined) {
+				instance.set_MaterialOverride(undefined);
+			}
+			else {
+				instance.set_MaterialOverride(material.material);
+			}
+		}
+	}
+
+	public set_MeshGlobalTransform(rid: RID, transform: Matrix4) {
+		const instance = this.get_Mesh(rid);
+		if (instance) {
+			instance.set_GlobalTransform(transform);
+		}
+	}
+
+	public set_MeshVisibility(rid: RID, visible: boolean) {
+		const instance = this.get_Mesh(rid);
+		if (instance) {
+			instance.set_Visible(visible);
+		}
+	}
+
+	public set_MeshLayer(rid: RID, layer: number) {
+		const instance = this.get_Mesh(rid);
+		if (instance) {
+			instance.set_Layer(layer);
+		}
+	}
+
 
 	private test() {
 		const cube_geometry = RenderServer.create_Geometry();
@@ -5125,12 +5276,20 @@ export class VisualWorld3D {
 
 		const vert_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Vertex, cube_vert_shader_code).expect();
 		const frag_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, cube_frag_shader_code).expect();
+		const prez_frag_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, `#version 300 es
+		precision highp float; void main() {}`).expect();
 		cube_shader.set_Shaders(
 			vert_shader,
 			{
 				model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.make_Identity() }
 			},
 			{
+				pre_z: {
+					shader: prez_frag_shader,
+					uniforms: {
+						model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.make_Identity() },
+					}
+				},
 				shading: {
 					shader: frag_shader,
 					uniforms: {
@@ -5139,6 +5298,8 @@ export class VisualWorld3D {
 						lights: { type: RenderStateUniformType.Int, default: RenderServerDevice.LightsTextureUnit },
 						u_sky: { type: RenderStateUniformType.Int, default: RenderServerDevice.SkyTextureUnit },
 						u_color: { type: RenderStateUniformType.Vec4, default: vec4(1.0, 1.0, 1.0, 1.0) },
+						u_roughness: { type: RenderStateUniformType.Float, default: 0.01 },
+						u_usesky: { type: RenderStateUniformType.Int, default: 1 },
 					}
 				}
 			}
@@ -5148,17 +5309,15 @@ export class VisualWorld3D {
 		cube_material1.set_Material(cube_shader, {
 			model_world: RenderStateUniformType.Mat4,
 			u_color: RenderStateUniformType.Vec4,
+			u_roughness: RenderStateUniformType.Float,
+			u_usesky: RenderStateUniformType.Int,
 		});
 		this.cube_material1.value = cube_material1;
 
-		const cube_material2 = RenderServer.create_Material();
-		cube_material2.set_Material(cube_shader, {
-			model_world: RenderStateUniformType.Mat4,
-			u_color: RenderStateUniformType.Vec4,
-		});
-		this.cube_material2.value = cube_material2;
-
 		cube_material1.set_UniformOverride('u_color', vec4(1.0, 0.0, 0.0, 1.0));
-		cube_material2.set_UniformOverride('u_color', vec4(0.0, 0.0, 1.0, 1.0));
+	}
+
+	public dispose() {
+
 	}
 }

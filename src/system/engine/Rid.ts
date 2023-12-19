@@ -1,7 +1,7 @@
-export type RID = string;
+export type RID = number;
 
-let counter = 0n;
+let rid_counter = 0;
 
-export function Rid() {
-    return (counter++).toString();
+export function Rid(): RID {
+    return rid_counter++;
 }

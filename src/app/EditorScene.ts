@@ -11,7 +11,9 @@ import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { DependencyGraph } from "./singletons/DependencyGraph";
 import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
-import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
+import { BoxGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
+import { EasingType, PropertyTween, TransitionType } from "@/system/engine/Tween";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -65,6 +67,19 @@ EditorCamera0.zoom_to_cursor = false;
 EditorViewport0.add_Child(EditorCamera0);
 EditorViewport.add_Child(EditorViewportContainer0);
 
+// Box
+const geometry = new TorusGeometryResource();
+
+for (let i = 0; i <= 30; i++) {
+    for (let j = 0; j <= 30; j++) {
+        const Mesh2 = new MeshInstance3D();
+        Mesh2.geometry = geometry;
+        Mesh2.local_scale = vec3(1, 1, 1);
+        Mesh2.local_position = vec3((i / 30 * 2 - 1) * 100, (j / 30 * 2 - 1) * 100, 0);
+        World.add_Child(Mesh2);
+    }
+}
+
 // // viewport 1
 // const EditorViewportContainer1 = new ViewportDomContainer();
 // EditorViewportContainer1.dom = document.querySelector('#viewport1') ?? undefined;
@@ -87,7 +102,16 @@ EditorViewport.add_Child(EditorViewportContainer0);
 
 EditorViewport.signal_input.connect((evt, pro) => {
     if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {
-        EditorViewport.get_World3D()?.get_VisualWorld().cube_material2.expect.set_UniformOverride('u_color', new Vector4(Math.random(), Math.random(), Math.random(), 1.0))
+        Mesh.local_position = vec3();
+        EditorSceneTree.start_Tween(
+            new PropertyTween(
+                Mesh,
+                'local_position',
+                vec3(-100, -100, -100),
+                2, TransitionType.Bounce, EasingType.Out
+            )
+        );
+        // EditorViewport.get_World3D()?.get_VisualWorld().cube_material2.expect.set_UniformOverride('u_color', new Vector4(Math.random(), Math.random(), Math.random(), 1.0))
     }
 });
 

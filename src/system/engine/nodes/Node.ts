@@ -5,7 +5,7 @@ import { SceneTree } from "../SceneTree";
 import { Vector2, vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { Color, Raycaster } from "three";
 import { SignalEmitter } from "../../utils/SignalEmitter";
-import { Renderer3D } from "../Renderer";
+import { Renderer3D } from "../renderer/Renderer3D";
 import { World3D } from "../worlds/world3ds/World3D";
 import { PickingOrder, PickingSide, RayPickingOption } from "../worlds/world3ds/PickingWorld3D";
 import { MouseEnterLeaveInputEvent } from "../inputs/events/mouse_events/MouseEnterLeaveInputEvent";

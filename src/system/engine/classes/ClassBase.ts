@@ -1,11 +1,11 @@
 import type { ClassReader, ClassWriter } from "./ClassWriterReader";
-import { Rid } from "../Rid";
+import { Rid, type RID } from "../Rid";
 
 export class ClassBase {
     public static readonly class_name: string = "ClassBase";
     public static readonly use_custom_instantiater: boolean = false;
 
-    public readonly rid: string = Rid();
+    public readonly rid: RID = Rid();
 
     public dump(writer: ClassWriter) {
         throw new Error("abstract method");

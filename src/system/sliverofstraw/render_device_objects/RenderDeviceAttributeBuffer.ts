@@ -25,18 +25,22 @@ export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buff
     public get item_count() { return this.element_count / this.per_item_element_count; }
     public get byte_count() { return this.element_count * this.per_element_byte_count };
 
-    public abstract data: ArrayBufferView;
+    public abstract get data(): ArrayBufferView;
 
     constructor(render_device: RenderDevice<T>, per_instance_count: number = 0) {
         super(render_device);
         this.per_instance_count = per_instance_count;
     }
 
-    public abstract set_Data(data: any[]): void;
+    public abstract alloc_Data(data: any[]): void;
+    public abstract alloc_Data(count: number): void;
+    public abstract alloc_Data(data: any[] | number): void;
 
-    public abstract update_Data(data: any[], offset: number): void;
+    public abstract update_Data(data: any, offset: number, commit?: boolean): void;
+    public abstract update_Data(data: any[], offset: number, commit?: boolean): void;
+    public abstract update_Data(data: any[] | any, offset: number, commit?: boolean): void;
 
-    public upload_Data() {
+    public commit_Data() {
         this.render_state.update_Buffer(this.buffer_ref.expect, this.data, 0);
     }
 
@@ -79,9 +83,13 @@ export class RenderDeviceAttributeBufferView<T extends RenderState<T>, Buffer ex
         this.buffer_ref.value = this.render_state.create_BufferView(attribute_buffer.buffer, attribute_buffer.per_item_element_count, stride_in_bytes, offset_in_bytes, this.per_instance_count).expect() as RenderStateBufferView<T, Buffer>;
     }
 
-    public set_Data(data: any[]): void { }
+    public alloc_Data(data: any[]): void;
+    public alloc_Data(count: number): void;
+    public alloc_Data(data: any[] | number): void { }
 
-    public update_Data(data: any[], offset: number): void { }
+    public update_Data(data: any, offset: number, commit?: boolean): void;
+    public update_Data(data: any[], offset: number, commit?: boolean): void;
+    public update_Data(data: any[] | any, offset: number, commit: boolean = true): void { }
 
     public dispose(): void {
         this.attribute_buffer_ref.clear();
@@ -99,40 +107,56 @@ export class RenderDeviceVector2AttributeBuffer<T extends RenderState<T>, Buffer
     private _element_count: number = 0;
     public get element_count(): number { return this._element_count; }
 
-    public data: Float32Array = new Float32Array(0);
+    private _data: Float32Array = new Float32Array(0);
+    public get data() { return this._data; }
 
-    constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Vector2[], per_instance_count: number = 0) {
+    constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Vector2[] | number, per_instance_count: number = 0) {
         super(render_device, per_instance_count);
         this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 2, RenderStateDataType.Float, false, this.per_instance_count).expect() as Buffer;
-        if (data !== undefined) this.set_Data(data);
+        if (data !== undefined) this.alloc_Data(data as any);
     }
 
-    public set_Data(data: Vector2[]): void {
-        const vec2_count = data.length;
+    public alloc_Data(data: Vector2[]): void;
+    public alloc_Data(count: number): void;
+    public alloc_Data(data: Vector2[] | number): void {
+        const is_count = !(data instanceof Array);
+        const vec2_count = is_count ? data : data.length;
         const element_count = vec2_count * 2;
         this._element_count = element_count;
         const float32array = new Float32Array(element_count);
-        for (let i = 0, j = 0; i < element_count;) {
-            const vec2 = data[j++];
-            float32array[i++] = vec2.x;
-            float32array[i++] = vec2.y;
+        if (!is_count) {
+            for (let i = 0, j = 0; i < element_count;) {
+                const vec2 = data[j++];
+                float32array[i++] = vec2.x;
+                float32array[i++] = vec2.y;
+            }
         }
-        this.data = float32array;
-        this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, float32array);
+        this._data = float32array;
+        this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, is_count ? undefined : float32array);
     }
 
-    public update_Data(data: Vector2[], offset: number): void {
+    public update_Data(data: Vector2[], offset: number, commit?: boolean): void;
+    public update_Data(data: Vector2, offset: number, commit?: boolean): void;
+    public update_Data(data: Vector2[] | Vector2, offset: number, commit: boolean = true): void {
+        const single = !(data instanceof Array);
         const offset_bytes = offset * 2 * this.per_element_byte_count;
-        const element_count = data.length * 2;
+        const element_count = (single ? 1 : data.length) * 2;
         const element_bytes = element_count * this.per_element_byte_count;
         if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceVector2AttributeBuffer> update_Data: data overflow');
-        const float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
-        for (let i = 0, j = 0; i < element_count;) {
-            const vec2 = data[j++];
-            float32array[i++] = vec2.x;
-            float32array[i++] = vec2.y;
+        const float32array = new Float32Array(this._data.buffer, offset_bytes, element_count);
+        if (single) {
+            float32array[0] = data.x;
+            float32array[1] = data.y;
         }
-        this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
+        else {
+            for (let i = 0, j = 0; i < element_count;) {
+                const vec2 = data[j++];
+                float32array[i++] = vec2.x;
+                float32array[i++] = vec2.y;
+            }
+        }
+        if (commit)
+            this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
     }
 }
 
@@ -146,42 +170,59 @@ export class RenderDeviceVector3AttributeBuffer<T extends RenderState<T>, Buffer
     private _element_count: number = 0;
     public get element_count(): number { return this._element_count; }
 
-    public data: Float32Array = new Float32Array(0);
+    private _data: Float32Array = new Float32Array(0);
+    public get data() { return this._data; }
 
-    constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Vector3[], per_instance_count: number = 0) {
+    constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Vector3[] | number, per_instance_count: number = 0) {
         super(render_device, per_instance_count);
         this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 3, RenderStateDataType.Float, false, this.per_instance_count).expect() as Buffer;
-        if (data !== undefined) this.set_Data(data);
+        if (data !== undefined) this.alloc_Data(data as any);
     }
 
-    public set_Data(data: Vector3[]): void {
-        const vec3_count = data.length;
+    public alloc_Data(data: Vector3[]): void;
+    public alloc_Data(count: number): void;
+    public alloc_Data(data: Vector3[] | number): void {
+        const is_count = !(data instanceof Array);
+        const vec3_count = is_count ? data : data.length;
         const element_count = vec3_count * 3;
         this._element_count = element_count;
         const float32array = new Float32Array(element_count);
-        for (let i = 0, j = 0; i < element_count;) {
-            const vec3 = data[j++];
-            float32array[i++] = vec3.x;
-            float32array[i++] = vec3.y;
-            float32array[i++] = vec3.z;
+        if (!is_count) {
+            for (let i = 0, j = 0; i < element_count;) {
+                const vec3 = data[j++];
+                float32array[i++] = vec3.x;
+                float32array[i++] = vec3.y;
+                float32array[i++] = vec3.z;
+            }
         }
-        this.data = float32array;
-        this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, float32array);
+        this._data = float32array;
+        this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, is_count ? undefined : float32array);
     }
 
-    public update_Data(data: Vector3[], offset: number): void {
+    public update_Data(data: Vector3[], offset: number, commit?: boolean): void;
+    public update_Data(data: Vector3, offset: number, commit?: boolean): void;
+    public update_Data(data: Vector3[] | Vector3, offset: number, commit: boolean = true): void {
+        const single = !(data instanceof Array);
         const offset_bytes = offset * 3 * this.per_element_byte_count;
-        const element_count = data.length * 3;
+        const element_count = (single ? 1 : data.length) * 3;
         const element_bytes = element_count * this.per_element_byte_count;
         if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceVector3AttributeBuffer> update_Data: data overflow');
-        const float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
-        for (let i = 0, j = 0; i < element_count;) {
-            const vec3 = data[j++];
-            float32array[i++] = vec3.x;
-            float32array[i++] = vec3.y;
-            float32array[i++] = vec3.z;
+        const float32array = new Float32Array(this._data.buffer, offset_bytes, element_count);
+        if (single) {
+            float32array[0] = data.x;
+            float32array[1] = data.y;
+            float32array[2] = data.z;
         }
-        this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
+        else {
+            for (let i = 0, j = 0; i < element_count;) {
+                const vec3 = data[j++];
+                float32array[i++] = vec3.x;
+                float32array[i++] = vec3.y;
+                float32array[i++] = vec3.z;
+            }
+        }
+        if (commit)
+            this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
     }
 }
 
@@ -195,44 +236,62 @@ export class RenderDeviceVector4AttributeBuffer<T extends RenderState<T>, Buffer
     private _element_count: number = 0;
     public get element_count(): number { return this._element_count; }
 
-    public data: Float32Array = new Float32Array(0);
+    private _data: Float32Array = new Float32Array(0);
+    public get data() { return this._data; }
 
-    constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Vector4[], per_instance_count: number = 0) {
+    constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Vector4[] | number, per_instance_count: number = 0) {
         super(render_device, per_instance_count);
         this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 4, RenderStateDataType.Float, false, this.per_instance_count).expect() as Buffer;
-        if (data !== undefined) this.set_Data(data);
+        if (data !== undefined) this.alloc_Data(data as any);
     }
 
-    public set_Data(data: Vector4[]): void {
-        const vec4_count = data.length;
+    public alloc_Data(data: Vector4[]): void;
+    public alloc_Data(count: number): void;
+    public alloc_Data(data: Vector4[] | number): void {
+        const is_count = !(data instanceof Array);
+        const vec4_count = is_count ? data : data.length;
         const element_count = vec4_count * 4;
         this._element_count = element_count;
         const float32array = new Float32Array(element_count);
-        for (let i = 0, j = 0; i < element_count;) {
-            const vec4 = data[j++];
-            float32array[i++] = vec4.x;
-            float32array[i++] = vec4.y;
-            float32array[i++] = vec4.z;
-            float32array[i++] = vec4.w;
+        if (!is_count) {
+            for (let i = 0, j = 0; i < element_count;) {
+                const vec4 = data[j++];
+                float32array[i++] = vec4.x;
+                float32array[i++] = vec4.y;
+                float32array[i++] = vec4.z;
+                float32array[i++] = vec4.w;
+            }
         }
-        this.data = float32array;
-        this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, float32array);
+        this._data = float32array;
+        this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, is_count ? undefined : float32array);
     }
 
-    public update_Data(data: Vector4[], offset: number): void {
+    public update_Data(data: Vector4[], offset: number, commit?: boolean): void;
+    public update_Data(data: Vector4, offset: number, commit?: boolean): void;
+    public update_Data(data: Vector4[] | Vector4, offset: number, commit: boolean = true): void {
+        const single = !(data instanceof Array);
         const offset_bytes = offset * 4 * this.per_element_byte_count;
-        const element_count = data.length * 4;
+        const element_count = (single ? 1 : data.length) * 4;
         const element_bytes = element_count * this.per_element_byte_count;
         if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceVector3AttributeBuffer> update_Data: data overflow');
-        const float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
-        for (let i = 0, j = 0; i < element_count;) {
-            const vec4 = data[j++];
-            float32array[i++] = vec4.x;
-            float32array[i++] = vec4.y;
-            float32array[i++] = vec4.z;
-            float32array[i++] = vec4.w;
+        const float32array = new Float32Array(this._data.buffer, offset_bytes, element_count);
+        if (single) {
+            float32array[0] = data.x;
+            float32array[1] = data.y;
+            float32array[2] = data.z;
+            float32array[3] = data.w;
         }
-        this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
+        else {
+            for (let i = 0, j = 0; i < element_count;) {
+                const vec4 = data[j++];
+                float32array[i++] = vec4.x;
+                float32array[i++] = vec4.y;
+                float32array[i++] = vec4.z;
+                float32array[i++] = vec4.w;
+            }
+        }
+        if (commit)
+            this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
     }
 }
 
@@ -246,30 +305,43 @@ export class RenderDeviceIndexAttributeBuffer<T extends RenderState<T>, Buffer e
     private _element_count: number = 0;
     public get element_count(): number { return this._element_count; }
 
-    public data: Uint32Array = new Uint32Array(0);
+    private _data: Uint32Array = new Uint32Array(0);
+    public get data() { return this._data; }
 
-    constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: number[]) {
+    constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: number[] | number) {
         super(render_device);
         this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Index, usage, 1, RenderStateDataType.UnsignedInt, false, 0).expect() as Buffer;
-        if (data !== undefined) this.set_Data(data);
+        if (data !== undefined) this.alloc_Data(data as any);
     }
 
-    public set_Data(data: number[]): void {
-        const element_count = data.length;
+    public alloc_Data(data: number[]): void;
+    public alloc_Data(count: number): void;
+    public alloc_Data(data: number[] | number): void {
+        const is_count = !(data instanceof Array);
+        const element_count = is_count ? data : data.length;
         this._element_count = element_count;
-        const uint32array = new Uint32Array(data);
-        this.data = uint32array;
-        this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, uint32array);
+        const uint32array = is_count ? new Uint32Array(element_count) : new Uint32Array(data);
+        this._data = uint32array;
+        this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, is_count ? undefined : uint32array);
     }
 
-    public update_Data(data: number[], offset: number): void {
+    public update_Data(data: number[], offset: number, commit?: boolean): void;
+    public update_Data(data: number, offset: number, commit?: boolean): void;
+    public update_Data(data: number[] | number, offset: number, commit: boolean = true): void {
+        const single = !(data instanceof Array);
         const offset_bytes = offset * this.per_element_byte_count;
-        const element_count = data.length;
+        const element_count = single ? 1 : data.length;
         const element_bytes = element_count * this.per_element_byte_count;
         if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceIndexAttributeBuffer> update_Data: data overflow');
-        const uint32array = new Uint32Array(this.data.buffer, offset_bytes, element_count);
-        uint32array.set(data);
-        this.render_state.update_Buffer(this.buffer_ref.expect, uint32array, offset_bytes);
+        const uint32array = new Uint32Array(this._data.buffer, offset_bytes, element_count);
+        if (single) {
+            uint32array[0] = data;
+        }
+        else {
+            uint32array.set(data);
+        }
+        if (commit)
+            this.render_state.update_Buffer(this.buffer_ref.expect, uint32array, offset_bytes);
     }
 }
 
@@ -288,9 +360,10 @@ export class RenderDeviceMatrix4AttributeBuffer<T extends RenderState<T>, Buffer
     private _element_count: number = 0;
     public get element_count(): number { return this._element_count; }
 
-    public data: Float32Array = new Float32Array(0);
+    private _data: Float32Array = new Float32Array(0);
+    public get data() { return this._data; }
 
-    constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Matrix4[], per_instance_count: number = 0) {
+    constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Matrix4[] | number, per_instance_count: number = 0) {
         super(render_device, per_instance_count);
         const buffer = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 16, RenderStateDataType.Float, false, this.per_instance_count).expect() as Buffer;
         this.buffer_ref.value = buffer;
@@ -300,34 +373,48 @@ export class RenderDeviceMatrix4AttributeBuffer<T extends RenderState<T>, Buffer
         this.buffer_slice_row_1.value = this.render_state.create_BufferView(buffer, 4, byte_per_matrix, 1 * byte_per_row, this.per_instance_count).expect();
         this.buffer_slice_row_2.value = this.render_state.create_BufferView(buffer, 4, byte_per_matrix, 2 * byte_per_row, this.per_instance_count).expect();
         this.buffer_slice_row_3.value = this.render_state.create_BufferView(buffer, 4, byte_per_matrix, 3 * byte_per_row, this.per_instance_count).expect();
-        if (data !== undefined) this.set_Data(data);
+        if (data !== undefined) this.alloc_Data(data as any);
     }
 
-    public set_Data(data: Matrix4[]): void {
-        const mat4_count = data.length;
+    public alloc_Data(data: Matrix4[]): void;
+    public alloc_Data(count: number): void;
+    public alloc_Data(data: Matrix4[] | number): void {
+        const is_count = !(data instanceof Array);
+        const mat4_count = is_count ? data : data.length;
         const element_count = mat4_count * 16;
         this._element_count = element_count;
         const float32array = new Float32Array(element_count);
-        for (let j = 0; j < mat4_count; j++) {
-            const mat4 = data[j];
-            float32array.set(mat4.typed_transposed_array_f32, j * 16);
+        if (!is_count) {
+            for (let j = 0; j < mat4_count; j++) {
+                const mat4 = data[j];
+                float32array.set(mat4.typed_transposed_array_f32, j * 16);
+            }
         }
-        this.data = float32array;
-        this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, float32array);
+        this._data = float32array;
+        this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, is_count ? undefined : float32array);
     }
 
-    public update_Data(data: Matrix4[], offset: number): void {
+    public update_Data(data: Matrix4[], offset: number, commit?: boolean): void;
+    public update_Data(data: Matrix4, offset: number, commit?: boolean): void;
+    public update_Data(data: Matrix4[] | Matrix4, offset: number, commit: boolean = true): void {
+        const single = !(data instanceof Array);
         const offset_bytes = offset * 16 * this.per_element_byte_count;
-        const mat4_count = data.length;
+        const mat4_count = single ? 1 : data.length;
         const element_count = mat4_count * 16;
         const element_bytes = element_count * this.per_element_byte_count;
         if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceMatrix4AttributeBuffer> update_Data: data overflow');
-        const float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
-        for (let j = 0; j < mat4_count; j++) {
-            const mat4 = data[j];
-            float32array.set(mat4.typed_transposed_array_f32, j * 16);
+        const float32array = new Float32Array(this._data.buffer, offset_bytes, element_count);
+        if (single) {
+            float32array.set(data.typed_transposed_array_f32, 0);
         }
-        this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
+        else {
+            for (let j = 0; j < mat4_count; j++) {
+                const mat4 = data[j];
+                float32array.set(mat4.typed_transposed_array_f32, j * 16);
+            }
+        }
+        if (commit)
+            this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
     }
 
     public bound_VertexArray(vertex_array: RenderStateVertexArray<T>, attribute_location: number): void {

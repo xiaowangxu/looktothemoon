@@ -1,22 +1,22 @@
-import type { Viewport } from "./nodes/Node";
-import type { Camera3D } from "./nodes/camera3ds/Camera3D";
-import { World3D } from "./worlds/world3ds/World3D";
-import { RenderServer, RenderServerDevice, RenderServerPlainColorTexture } from "./render_server/RenderServer";
-import { RenderServerLightType } from "./render_server/RenderServerLightData";
-import { vec3 } from "../fivepebble/linear_algebra/Vector3";
-import { color } from "../fivepebble/graphics/Color";
-import { Deg2Rad } from "../fivepebble/Scalar";
-import { RenderStateBufferUsage, RenderStateDataType, RenderStateFrameBufferPart, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateUniformType } from "../sliverofstraw/RenderState";
-import { RenderDeviceAttributeBufferView, RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer } from "../sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
-import { Vector2, vec2 } from "../fivepebble/linear_algebra/Vector2";
-import { WebGL2RenderStateIntUniformSlot, WebGL2RenderStateTextureUniformSlot } from "../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
-import type { WebGL2RenderStateFrameBuffer } from "../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
-import { Ref } from "../utils/RefCounted";
-import { WebGL2RenderStateFrameBufferAttachmentPoint } from "../sliverofstraw/webgl2/WebGL2RenderState";
-import type { WebGL2RenderStateTexture } from "../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
-import type { WebGL2RenderStateRenderBuffer } from "../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateRenderBuffer";
-import { Matrix4 } from "../fivepebble/linear_algebra/Matrix4";
-import { Matrix3 } from "../fivepebble/linear_algebra/Matrix3";
+import type { Viewport } from "../nodes/Node";
+import type { Camera3D } from "../nodes/camera3ds/Camera3D";
+import { World3D } from "../worlds/world3ds/World3D";
+import { RenderServer, RenderServerDevice, RenderServerPlainColorTexture } from "../render_server/RenderServer";
+import { RenderServerLightType } from "../render_server/RenderServerLightData";
+import { vec3 } from "../../fivepebble/linear_algebra/Vector3";
+import { color } from "../../fivepebble/graphics/Color";
+import { Deg2Rad } from "../../fivepebble/Scalar";
+import { RenderStateBufferUsage, RenderStateDataType, RenderStateFrameBufferPart, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateUniformType } from "../../sliverofstraw/RenderState";
+import { RenderDeviceAttributeBufferView, RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer } from "../../sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
+import { Vector2, vec2 } from "../../fivepebble/linear_algebra/Vector2";
+import { WebGL2RenderStateIntUniformSlot, WebGL2RenderStateTextureUniformSlot } from "../../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
+import type { WebGL2RenderStateFrameBuffer } from "../../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
+import { Ref } from "../../utils/RefCounted";
+import { WebGL2RenderStateFrameBufferAttachmentPoint } from "../../sliverofstraw/webgl2/WebGL2RenderState";
+import type { WebGL2RenderStateTexture } from "../../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
+import type { WebGL2RenderStateRenderBuffer } from "../../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateRenderBuffer";
+import { Matrix4 } from "../../fivepebble/linear_algebra/Matrix4";
+import { Matrix3 } from "../../fivepebble/linear_algebra/Matrix3";
 
 const RS = RenderServer;
 const lights_data = RenderServer.create_LightsData(64, 64);
@@ -54,7 +54,9 @@ lights_data.commit_AllLightsData();
 const skybox_texture = RS.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA8, 8, undefined, undefined, undefined, RenderStateTextureMinFilter.Linear, RenderStateTextureMagFilter.Linear).expect();
 // RS.render_state.alloc_Texture2D(skybox_texture, 2048, 1024, 0, RenderStateTextureDataFormat.RGBA);
 import skybox_url from 'res://studio.png';
-import { ImageLoader } from "./loaders/ImageLoader";
+import { ImageLoader } from "../loaders/ImageLoader";
+import type { RenderServerGeometry } from "../render_server/RenderServerGeometry";
+import type { RenderServerMaterial } from "../render_server/RenderServerMaterial";
 new ImageLoader().parse(skybox_url).then(res => {
 	const image_res = res.expect();
 	const { width, height, image_data } = image_res;
@@ -113,8 +115,6 @@ void main() {
 	o_color.g = g <= 0.0031308 ? (12.92 * g) : (1.055 * pow(g, 1.0 / 2.4) - 0.055);
 	float b = o_color.b;
 	o_color.b = b <= 0.0031308 ? (12.92 * b) : (1.055 * pow(b, 1.0 / 2.4) - 0.055);
-	if (v_uv.x < 0.01) o_color = vec4(0.0, v_uv.y, 0.0, 1.0);
-	if (v_uv.y < 0.01) o_color = vec4(v_uv.x, 0.0, 0.0, 1.0);
 }
 `;
 const onscreen_frag_shader = RS.render_state.create_Shader(RenderStateShaderType.Fragment, onscreen_frag_shader_code).expect();
@@ -167,10 +167,24 @@ uniform_sky_slot.commit();
 
 // #endregion
 
+class Renderer3DQueue {
+	public solids: { geometry: RenderServerGeometry, material: RenderServerMaterial, transform: Matrix4, layer: number }[] = [];
+
+	public clear() {
+		this.solids = [];
+	}
+
+	public add(geometry: RenderServerGeometry, material: RenderServerMaterial, transform: Matrix4, layer: number) {
+		this.solids.push({ geometry, material, transform, layer });
+	}
+}
+
 export class Renderer3D {
 	public readonly canvas: HTMLCanvasElement;
 	private readonly ctx: CanvasRenderingContext2D;
 
+	private readonly render_queue: Renderer3DQueue = new Renderer3DQueue();
+	private readonly frame_buffer_prez: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
 	private readonly frame_buffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
 	private readonly frame_buffer_depth: Ref<WebGL2RenderStateRenderBuffer> = new Ref();
 	private readonly frame_buffer_color: Ref<WebGL2RenderStateRenderBuffer> = new Ref();
@@ -192,9 +206,15 @@ export class Renderer3D {
 		this.ctx = ctx;
 
 		const msaa = 4;
-		const frame_buffer = RS.render_state.create_FrameBuffer().expect();
 		const frame_buffer_depth_tex = RS.render_state.create_RenderBuffer(RenderStateTextureFormat.D32F, msaa).expect();
 		RS.render_state.alloc_RenderBuffer(frame_buffer_depth_tex, 1024, 1024);
+
+		const frame_buffer_prez = RS.render_state.create_FrameBuffer().expect();
+		this.frame_buffer_prez.value = frame_buffer_prez;
+		RS.render_state.set_FrameBufferAttachment(frame_buffer_prez, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_buffer_depth_tex);
+		RS.render_state.enable_FrameBuffer(frame_buffer_prez);
+
+		const frame_buffer = RS.render_state.create_FrameBuffer().expect();
 		RS.render_state.set_FrameBufferAttachment(frame_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_buffer_depth_tex);
 		const frame_buffer_color_tex = RS.render_state.create_RenderBuffer(RenderStateTextureFormat.RGBA32F, msaa).expect();
 		RS.render_state.alloc_RenderBuffer(frame_buffer_color_tex, 1024, 1024);
@@ -239,6 +259,7 @@ export class Renderer3D {
 		const cam_world = cam.global_transform;
 		const cam_projection = cam.projection;
 		const cam_frustum = cam.get_Frustum();
+		const cam_mask = cam.mask;
 
 		RenderServer.set_WorldUniform('camera_world', cam_world.typed_transposed_array_f32);
 		RenderServer.set_WorldUniform('camera_projection', cam_projection.typed_transposed_array_f32);
@@ -268,34 +289,62 @@ export class Renderer3D {
 			}
 		}
 
+		// prepare render queue
+		this.render_queue.clear();
+		let total_objects_count = 0;
+		let rendered_objects_count = 0;
+		const mat = world_3d.cube_material1.expect;
+		for (const mesh of world_3d.meshes) {
+			total_objects_count++;
+			const { layer, bbox, global_transform } = mesh;
+			const not_culled = !bbox.is_empty && cam_frustum.contain_Box(bbox.apply_Matrix4(global_transform));
+			if ((layer & cam_mask) !== 0 && not_culled) {
+				rendered_objects_count++;
+				this.render_queue.add(mesh.geometry_ref.expect, mat, global_transform, layer);
+			}
+		}
+
 		// draw scene
-		RS.render_state.clear_FrameBuffer(this.frame_buffer.expect, RenderStateFrameBufferPart.Depth);
+
+		// pre z
 		RS.render_state.set_ViewportProxy(0, 0, x, y);
 		RS.render_state.set_ScissorProxy(0, 0, x, y);
 		RS.render_state.set_DepthFuncProxy(RS.render_state.gl.LEQUAL);
 		RS.render_state.set_DepthMaskProxy(true);
 		RS.render_state.set_CapabilityProxy(RS.render_state.gl.DEPTH_TEST, true);
 		RS.render_state.set_CapabilityProxy(RS.render_state.gl.CULL_FACE, true);
+		RS.render_state.clear_FrameBuffer(this.frame_buffer_prez.expect, RenderStateFrameBufferPart.Depth | RenderStateFrameBufferPart.Color);
 
-		// draw meshes
-		const meshes = [world_3d.cube_mesh, world_3d.cube_mesh];
-		const materials = [world_3d.cube_material1, world_3d.cube_material2];
-		let rendered = 0;
-		for (const [idx, mesh] of meshes.entries()) {
-			const geo = mesh.expect;
-			const mat = materials[idx].expect;
-			const model_world = idx === 0 ? Matrix4.from_BasisPosition(undefined, vec3(-2, 0, 0)) : Matrix4.from_BasisPosition(Matrix3.make_RotateY(time).compose(Matrix3.make_RotateZ(time / 2.0)), vec3(2, 0, 0));
-			const not_culled = cam_frustum.contain_Box(geo.bbox.apply_Matrix4(model_world));
-			if (not_culled) {
-				rendered++;
-				mat.set_UniformOverride('model_world', model_world);
-				mat.commit_AllUniformOverride('shading');
-				RS.render_state.draw_Elements(mat.get_Program('shading')!, geo.vertex_array, RenderStateDataType.UnsignedInt, 1);
+		for (const { geometry, material, transform, layer } of this.render_queue.solids) {
+			material.set_UniformOverride('model_world', transform);
+			material.set_UniformOverride('layer', layer);
+			mat.commit_AllUniformOverride('pre_z');
+			if (geometry.is_indexed) {
+				RS.render_state.draw_Elements(material.get_Program('pre_z')!, geometry.vertex_array, RenderStateDataType.UnsignedInt, 1);
+			}
+			else {
+				RS.render_state.draw_Arrays(material.get_Program('pre_z')!, geometry.vertex_array, 1);
 			}
 		}
-		console.log(`rendered: ${rendered} / ${meshes.length}`);
 
-		// draw sky
+		// shading
+		RS.render_state.set_DepthFuncProxy(RS.render_state.gl.EQUAL);
+		RS.render_state.set_DepthMaskProxy(false);
+		RS.render_state.clear_FrameBuffer(this.frame_buffer.expect, RenderStateFrameBufferPart.Color);
+
+		for (const { geometry, material, transform, layer } of this.render_queue.solids) {
+			material.set_UniformOverride('model_world', transform);
+			material.set_UniformOverride('layer', layer);
+			mat.commit_AllUniformOverride('shading');
+			if (geometry.is_indexed) {
+				RS.render_state.draw_Elements(material.get_Program('shading')!, geometry.vertex_array, RenderStateDataType.UnsignedInt, 1);
+			}
+			else {
+				RS.render_state.draw_Arrays(material.get_Program('shading')!, geometry.vertex_array, 1);
+			}
+		}
+
+		// // draw sky
 		RS.render_state.set_DepthFuncProxy(RS.render_state.gl.LEQUAL);
 		RS.render_state.draw_Elements(skydome_program, quad_surface.vertex_array, RenderStateDataType.UnsignedInt, 1);
 
@@ -305,20 +354,19 @@ export class Renderer3D {
 		// on screen
 		uniform_screen_slot.texture = this.frame_buffer_texture.expect;
 		uniform_screen_slot.commit();
-		RS.render_state.use_FrameBuffer(undefined);
 		RS.render_state.set_ViewportProxy(0, 0, x, y);
 		RS.render_state.set_ScissorProxy(0, 0, x, y);
+		RS.render_state.clear_FrameBuffer(undefined, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth);
 		RS.render_state.draw_Elements(onscreen_program, quad_surface.vertex_array, RenderStateDataType.UnsignedInt, 1);
 
+		this.ctx.globalCompositeOperation = 'source-over';
 		this.ctx.drawImage(RS.canvas, 0, RS.canvas.height - y, x, y, 0, 0, x, y);
-		this.ctx.beginPath();
-		this.ctx.moveTo(100, 100);
-		this.ctx.lineTo(200, 100);
-		this.ctx.lineTo(200, 200);
-		this.ctx.strokeStyle = `hsl(${(time * 100 + parseFloat(viewport.readable_name) * 4) % 360}deg, 50%, 50%)`;
-		this.ctx.lineWidth = 5;
-		this.ctx.stroke();
-		this.ctx.closePath();
+		this.ctx.font = '20px consolas';
+		this.ctx.fillStyle = 'white';
+		this.ctx.textBaseline = 'hanging';
+		this.ctx.globalCompositeOperation = 'difference';
+		this.ctx.fillText(`FrameDelta: ${viewport.get_SceneTree()!.delta.toFixed(4)} ms`, 10, 10);
+		this.ctx.fillText(`RenderObjs: ${rendered_objects_count} / ${total_objects_count}`, 10, 30);
 	}
 
 	public dispose() {
