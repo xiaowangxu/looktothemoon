@@ -301,7 +301,7 @@ void main() {
     
     ivec3 lights_size = textureSize(lights, 0);
     int lights_count = lights_size.x * lights_size.y;
-    const int LIGHT_MAX_COUNT = 64;
+    const int LIGHT_MAX_COUNT = 32;
     
     // see light function
     // light_type, light_direction, view_direction, normal, light_color, light_attenuation, inout vec3 diffuse, inout vec3 specular

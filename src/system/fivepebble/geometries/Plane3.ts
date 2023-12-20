@@ -28,10 +28,10 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
 
     public static from_Points(a: Vector3, b: Vector3, c: Vector3, clockwise: boolean = false) {
         if (clockwise) {
-            const normal = (a.minus(c)).cross(a.minus(b)).normalize();
+            const normal = (a.sub(c)).cross(a.sub(b)).normalize();
             return new Plane3(normal, normal.dot(a));
         } else {
-            const normal = (a.minus(b)).cross(a.minus(c)).normalize();
+            const normal = (a.sub(b)).cross(a.sub(c)).normalize();
             return new Plane3(normal, normal.dot(a));
         }
     }
@@ -142,7 +142,7 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     }
 
     public intersect_Line(line: Line3): Vector3 | undefined {
-        const segment = line.start.minus(line.end);
+        const segment = line.start.sub(line.end);
         const den = this.normal.dot(segment);
         if (is_ApproxZero(den)) {
             return undefined;

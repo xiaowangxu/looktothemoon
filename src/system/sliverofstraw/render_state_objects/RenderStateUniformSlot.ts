@@ -33,8 +33,6 @@ export abstract class RenderStateValueUniformSlot<
     protected _value: V | undefined;
     protected default_value: V;
 
-    public abstract get typed_array(): AT;
-
     protected changed: boolean = true;
 
     public get result(): V { return this.value ?? this.default_value; }

@@ -32,7 +32,7 @@ export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
         const me1 = projection.n21, me5 = projection.n22, me9 = projection.n23, me13 = projection.n24;
         const me2 = projection.n31, me6 = projection.n32, me10 = projection.n33, me14 = projection.n34;
         const me3 = projection.n41, me7 = projection.n42, me11 = projection.n43, me15 = projection.n44;
-        
+
         const top = Plane3.from_Components(me3 - me1, me7 - me5, me11 - me9, -(me15 - me13));
         const right = Plane3.from_Components(me3 - me0, me7 - me4, me11 - me8, -(me15 - me12));
         const bottom = Plane3.from_Components(me3 + me1, me7 + me5, me11 + me9, -(me15 + me13));
@@ -52,49 +52,40 @@ export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
         return true;
     }
 
+    static #point: Vector3 = new Vector3();
+
     contain_Box(box: Box3): boolean {
-        let x: number, y: number, z: number;
+        const p = Frustum3.#point;
         const near = this.near;
         {
-            x = near.normal.x > 0 ? box.max.x : box.min.x;
-            y = near.normal.y > 0 ? box.max.y : box.min.y;
-            z = near.normal.z > 0 ? box.max.z : box.min.z;
-            if (near.signed_distance_to_Point(new Vector3(x, y, z)) < 0) return false;
+            p.set(near.normal.x > 0 ? box.max.x : box.min.x, near.normal.y > 0 ? box.max.y : box.min.y, near.normal.z > 0 ? box.max.z : box.min.z);
+            if (near.signed_distance_to_Point(p) < 0) return false;
         }
         const far = this.far;
         {
-            x = far.normal.x > 0 ? box.max.x : box.min.x;
-            y = far.normal.y > 0 ? box.max.y : box.min.y;
-            z = far.normal.z > 0 ? box.max.z : box.min.z;
-            if (far.signed_distance_to_Point(new Vector3(x, y, z)) < 0) return false;
+            p.set(far.normal.x > 0 ? box.max.x : box.min.x, far.normal.y > 0 ? box.max.y : box.min.y, far.normal.z > 0 ? box.max.z : box.min.z);
+            if (far.signed_distance_to_Point(p) < 0) return false;
         }
         const left = this.left;
         {
-            x = left.normal.x > 0 ? box.max.x : box.min.x;
-            y = left.normal.y > 0 ? box.max.y : box.min.y;
-            z = left.normal.z > 0 ? box.max.z : box.min.z;
-            if (left.signed_distance_to_Point(new Vector3(x, y, z)) < 0) return false;
+            p.set(left.normal.x > 0 ? box.max.x : box.min.x, left.normal.y > 0 ? box.max.y : box.min.y, left.normal.z > 0 ? box.max.z : box.min.z);
+            if (left.signed_distance_to_Point(p) < 0) return false;
         }
         const right = this.right;
         {
-            x = right.normal.x > 0 ? box.max.x : box.min.x;
-            y = right.normal.y > 0 ? box.max.y : box.min.y;
-            z = right.normal.z > 0 ? box.max.z : box.min.z;
-            if (right.signed_distance_to_Point(new Vector3(x, y, z)) < 0) return false;
+            p.set(right.normal.x > 0 ? box.max.x : box.min.x, right.normal.y > 0 ? box.max.y : box.min.y, right.normal.z > 0 ? box.max.z : box.min.z);
+            if (right.signed_distance_to_Point(p) < 0) return false;
         }
         const top = this.top;
         {
-            x = top.normal.x > 0 ? box.max.x : box.min.x;
-            y = top.normal.y > 0 ? box.max.y : box.min.y;
-            z = top.normal.z > 0 ? box.max.z : box.min.z;
-            if (top.signed_distance_to_Point(new Vector3(x, y, z)) < 0) return false;
+            p.set(top.normal.x > 0 ? box.max.x : box.min.x,
+                top.normal.y > 0 ? box.max.y : box.min.y, top.normal.z > 0 ? box.max.z : box.min.z);
+            if (top.signed_distance_to_Point(p) < 0) return false;
         }
         const bottom = this.bottom;
         {
-            x = bottom.normal.x > 0 ? box.max.x : box.min.x;
-            y = bottom.normal.y > 0 ? box.max.y : box.min.y;
-            z = bottom.normal.z > 0 ? box.max.z : box.min.z;
-            if (bottom.signed_distance_to_Point(new Vector3(x, y, z)) < 0) return false;
+            p.set(bottom.normal.x > 0 ? box.max.x : box.min.x, bottom.normal.y > 0 ? box.max.y : box.min.y, bottom.normal.z > 0 ? box.max.z : box.min.z);
+            if (bottom.signed_distance_to_Point(p) < 0) return false;
         }
         return true;
     }

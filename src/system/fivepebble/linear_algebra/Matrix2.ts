@@ -1,41 +1,36 @@
+import { lerp } from "../Scalar";
 import type { MatrixLike } from "./MatrixLike";
 import type { Vector2 } from "./Vector2";
 
 export class Matrix2 implements MatrixLike<Matrix2> {
     // [ n11 n12 ]
     // [ n21 n22 ]
-    public readonly elements: number[] = new Array(4);
+    // n11 n12 n21 n22
+
+    public n11: number;
+    public n12: number;
+    public n21: number;
+    public n22: number;
 
     get row_dimension(): number { return 2; }
     get col_dimension(): number { return 2; }
     get determinant(): number {
-        const [a, b, c, d] = this.elements;
-        return a * d - b * c;
+        return this.n11 * this.n22 - this.n12 * this.n21;
     }
     get array(): number[] {
-        const arr = new Array(4);
-        arr[0] = this.elements[0];
-        arr[1] = this.elements[1];
-        arr[2] = this.elements[2];
-        arr[3] = this.elements[3];
-        return arr;
+        return [this.n11, this.n12, this.n21, this.n22];
     }
-    get typed_array_f64(): Float64Array { return new Float64Array(this.elements); }
-    get typed_array_f32(): Float32Array { return new Float32Array(this.elements); }
+    get typed_array_f64(): Float64Array { return new Float64Array(this.array); }
+    get typed_array_f32(): Float32Array { return new Float32Array(this.array); }
     get transposed_array(): number[] {
-        const arr = new Array(4);
-        arr[0] = this.elements[0];
-        arr[1] = this.elements[2];
-        arr[2] = this.elements[1];
-        arr[3] = this.elements[3];
-        return arr;
+        return [this.n11, this.n21, this.n12, this.n22];
     }
     get typed_transposed_array_f64(): Float64Array { return new Float64Array(this.transposed_array); }
     get typed_transposed_array_f32(): Float32Array { return new Float32Array(this.transposed_array); }
 
     constructor(n11: number, n12: number, n21: number, n22: number) {
-        this.elements[0] = n11; this.elements[1] = n12;
-        this.elements[3] = n21; this.elements[4] = n22;
+        this.n11 = n11; this.n12 = n12;
+        this.n21 = n21; this.n22 = n22;
     }
 
     public static make_Identity(): Matrix2 {
@@ -67,95 +62,209 @@ export class Matrix2 implements MatrixLike<Matrix2> {
 
     index(row: number, col: number): number {
         if (row < 0 || row > 1 || col < 0 || col > 1) return 0;
-        return this.elements[row * 2 + col];
+        return this.array[row * 2 + col];
     }
 
     add(b: Matrix2): Matrix2 {
         return new Matrix2(
-            this.elements[0] + b.elements[0], this.elements[1] + b.elements[1],
-            this.elements[2] + b.elements[2], this.elements[3] + b.elements[3],
+            this.n11 + b.n11, this.n12 + b.n12,
+            this.n21 + b.n21, this.n22 + b.n22,
         );
     }
+    adds(b: Matrix2): Matrix2 {
+        this.n11 = this.n11 + b.n11; this.n12 = this.n12 + b.n12;
+        this.n21 = this.n21 + b.n21; this.n22 = this.n22 + b.n22;
+        return this;
+    }
+
     add_Number(b: number): Matrix2 {
         return new Matrix2(
-            this.elements[0] + b, this.elements[1] + b,
-            this.elements[2] + b, this.elements[3] + b,
+            this.n11 + b, this.n12 + b,
+            this.n21 + b, this.n22 + b,
         );
     }
-    minus(b: Matrix2): Matrix2 {
+    adds_Number(a: Matrix2, b: number): Matrix2 {
+        this.n11 = a.n11 + b; this.n12 = a.n12 + b;
+        this.n21 = a.n21 + b; this.n22 = a.n22 + b;
+        return this;
+    }
+
+    sub(b: Matrix2): Matrix2 {
         return new Matrix2(
-            this.elements[0] - b.elements[0], this.elements[1] - b.elements[1],
-            this.elements[2] - b.elements[2], this.elements[3] - b.elements[3],
+            this.n11 - b.n11, this.n12 - b.n12,
+            this.n21 - b.n21, this.n22 - b.n22,
         );
     }
-    minus_Number(b: number): Matrix2 {
+    subs(b: Matrix2): Matrix2 {
+        this.n11 = this.n11 - b.n11; this.n12 = this.n12 - b.n12;
+        this.n21 = this.n21 - b.n21; this.n22 = this.n22 - b.n22;
+        return this;
+    }
+
+    sub_Number(b: number): Matrix2 {
         return new Matrix2(
-            this.elements[0] - b, this.elements[1] - b,
-            this.elements[2] - b, this.elements[3] - b,
+            this.n11 - b, this.n12 - b,
+            this.n21 - b, this.n22 - b,
         );
     }
+    subs_Number(a: Matrix2, b: number): Matrix2 {
+        this.n11 = a.n11 - b; this.n12 = a.n12 - b;
+        this.n21 = a.n21 - b; this.n22 = a.n22 - b;
+        return this;
+    }
+
     mult(b: Matrix2): Matrix2 {
         return new Matrix2(
-            this.elements[0] * b.elements[0], this.elements[1] * b.elements[1],
-            this.elements[2] * b.elements[2], this.elements[3] * b.elements[3],
+            this.n11 * b.n11, this.n12 * b.n12,
+            this.n21 * b.n21, this.n22 * b.n22,
         );
     }
+    mults(b: Matrix2): Matrix2 {
+        this.n11 = this.n11 * b.n11; this.n12 = this.n12 * b.n12;
+        this.n21 = this.n21 * b.n21; this.n22 = this.n22 * b.n22;
+        return this;
+    }
+
     mult_Number(b: number): Matrix2 {
         return new Matrix2(
-            this.elements[0] * b, this.elements[1] * b,
-            this.elements[2] * b, this.elements[3] * b,
+            this.n11 * b, this.n12 * b,
+            this.n21 * b, this.n22 * b,
         );
     }
+    mults_Number(a: Matrix2, b: number): Matrix2 {
+        this.n11 = a.n11 * b; this.n12 = a.n12 * b;
+        this.n21 = a.n21 * b; this.n22 = a.n22 * b;
+        return this;
+    }
+
     div(b: Matrix2): Matrix2 {
         return new Matrix2(
-            this.elements[0] / b.elements[0], this.elements[1] / b.elements[1],
-            this.elements[2] / b.elements[2], this.elements[3] / b.elements[3],
+            this.n11 / b.n11, this.n12 / b.n12,
+            this.n21 / b.n21, this.n22 / b.n22,
         );
     }
+    divs(b: Matrix2): Matrix2 {
+        this.n11 = this.n11 / b.n11; this.n12 = this.n12 / b.n12;
+        this.n21 = this.n21 / b.n21; this.n22 = this.n22 / b.n22;
+        return this;
+    }
+
     div_Number(b: number): Matrix2 {
         return new Matrix2(
-            this.elements[0] / b, this.elements[1] / b,
-            this.elements[2] / b, this.elements[3] / b,
+            this.n11 / b, this.n12 / b,
+            this.n21 / b, this.n22 / b,
         );
     }
-    addScaled(num: number, b: Matrix2): Matrix2 {
+    divs_Number(a: Matrix2, b: number): Matrix2 {
+        this.n11 = a.n11 / b; this.n12 = a.n12 / b;
+        this.n21 = a.n21 / b; this.n22 = a.n22 / b;
+        return this;
+    }
+
+    add_Scaled(num: number, b: Matrix2): Matrix2 {
         return new Matrix2(
-            this.elements[0] + b.elements[0] * num, this.elements[1] + b.elements[1] * num,
-            this.elements[2] + b.elements[2] * num, this.elements[3] + b.elements[3] * num,
+            this.n11 + b.n11 * num, this.n12 + b.n12 * num,
+            this.n21 + b.n21 * num, this.n22 + b.n22 * num,
         );
     }
+    adds_Scaled(a: Matrix2, num: number, b: Matrix2): Matrix2 {
+        this.n11 = a.n11 + b.n11 * num; this.n12 = a.n12 + b.n12 * num;
+        this.n21 = a.n21 + b.n21 * num; this.n22 = a.n22 + b.n22 * num;
+        return this;
+    }
+
+    lerp(b: Matrix2, weight: number): Matrix2 {
+        return new Matrix2(
+            lerp(this.n11, b.n11, weight), lerp(this.n12, b.n12, weight),
+            lerp(this.n21, b.n21, weight), lerp(this.n22, b.n22, weight),
+        );
+    }
+    lerps(a: Matrix2, b: Matrix2, weight: number): Matrix2 {
+        this.n11 = lerp(a.n11, b.n11, weight); this.n12 = lerp(a.n12, b.n12, weight);
+        this.n21 = lerp(a.n21, b.n21, weight); this.n22 = lerp(a.n22, b.n22, weight);
+        return this;
+    }
+
     transpose(): Matrix2 {
         return new Matrix2(
-            this.elements[0], this.elements[2],
-            this.elements[1], this.elements[3],
+            this.n11, this.n21,
+            this.n12, this.n22,
         );
     }
+    transposes(a: Matrix2): Matrix2 {
+        this.n11 = a.n11; this.n12 = a.n21;
+        this.n21 = a.n12; this.n22 = a.n22;
+        return this;
+    }
+
     inverse(): Matrix2 {
         const det = this.determinant;
         if (det === 0) return new Matrix2(0, 0, 0, 0);
-        const [n11, n12, n21, n22] = this.elements;
+        const n11 = this.n11, n12 = this.n12;
+        const n21 = this.n21, n22 = this.n22;
         const idet = 1 / det;
         return new Matrix2(n22 * idet, n12 * -idet, n21 * -idet, n11 * idet);
     }
+    inverses(a: Matrix2): Matrix2 {
+        const det = a.determinant;
+        if (det === 0) {
+            this.n11 = 0;
+            this.n12 = 0;
+            this.n21 = 0;
+            this.n22 = 0;
+            return this;
+        }
+        const n11 = a.n11, n12 = a.n12;
+        const n21 = a.n21, n22 = a.n22;
+        const idet = 1 / det;
+        this.n11 = n22 * idet;
+        this.n12 = n12 * -idet;
+        this.n21 = n21 * -idet;
+        this.n22 = n11 * idet;
+        return this;
+    }
+
     /**
      * b * this
      */
     compose(b: Matrix2): Matrix2 {
         // [ b11 b12 ] * [ n11 n12 ]   
         // [ b21 b22 ]   [ n21 n22 ]   
-        const [n11, n12, n21, n22] = this.elements;
-        const [b11, b12, b21, b22] = b.elements;
+        const n11 = this.n11, n12 = this.n12;
+        const n21 = this.n21, n22 = this.n22;
+        const b11 = b.n11, b12 = b.n12;
+        const b21 = b.n21, b22 = b.n22;
         return new Matrix2(
             b11 * n11 + b12 * n21, b11 * n12 + b12 * n22,
             b21 * n11 + b22 * n21, b21 * n12 + b22 * n22,
         );
     }
+    composes(a: Matrix2, b: Matrix2): Matrix2 {
+        const n11 = a.n11, n12 = a.n12;
+        const n21 = a.n21, n22 = a.n22;
+        const b11 = b.n11, b12 = b.n12;
+        const b21 = b.n21, b22 = b.n22;
+        this.n11 = b11 * n11 + b12 * n21; this.n12 = b11 * n12 + b12 * n22;
+        this.n21 = b21 * n11 + b22 * n21; this.n22 = b21 * n12 + b22 * n22;
+        return this;
+    }
 
     equal(b: Matrix2): boolean {
-        for (let i = 0; i < 4; i++) {
-            if (this.elements[i] !== b.elements[i]) return false;
-        }
+        if (this.n11 !== b.n11) return false;
+        if (this.n12 !== b.n12) return false;
+        if (this.n21 !== b.n21) return false;
+        if (this.n22 !== b.n22) return false;
         return true;
+    }
+    set(n11: number, n12: number, n21: number, n22: number) {
+        this.n11 = n11; this.n12 = n12;
+        this.n21 = n21; this.n22 = n22;
+        return this;
+    }
+    copy(b: Matrix2) {
+        this.n11 = b.n11; this.n12 = b.n12;
+        this.n21 = b.n21; this.n22 = b.n22;
+        return this;
     }
 }
 

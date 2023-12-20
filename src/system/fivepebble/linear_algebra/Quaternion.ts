@@ -5,10 +5,10 @@ import { Vector3 } from "./Vector3";
 import type { Vector4 } from "./Vector4";
 
 export class Quaternion {
-    public readonly x: number;
-    public readonly y: number;
-    public readonly z: number;
-    public readonly w: number;
+    public x: number;
+    public y: number;
+    public z: number;
+    public w: number;
 
     get length(): number { return Math.sqrt(this.squared_length); }
     get squared_length(): number { return this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w; }
@@ -103,7 +103,9 @@ export class Quaternion {
     }
 
     public static from_RotateMatrix(matrix: Matrix3) {
-        const [m11, m12, m13, m21, m22, m23, m31, m32, m33] = matrix.elements;
+        const m11 = matrix.n11, m12 = matrix.n12, m13 = matrix.n13;
+        const m21 = matrix.n21, m22 = matrix.n22, m23 = matrix.n23;
+        const m31 = matrix.n31, m32 = matrix.n32, m33 = matrix.n33;
         const trace = m11 + m22 + m33;
         if (trace > 0) {
             const s = 0.5 / Math.sqrt(trace + 1.0);
@@ -122,7 +124,7 @@ export class Quaternion {
                 (m13 + m31) / s,
                 (m32 - m23) / s,
             );
-        } 
+        }
         else if (m22 > m33) {
             const s = 2.0 * Math.sqrt(1.0 + m22 - m11 - m33);
             return new Quaternion(
@@ -165,8 +167,24 @@ export class Quaternion {
         return new Quaternion(this.x / length, this.y / length, this.z / length, this.w / length);
     }
 
+    public normalizes(a: Quaternion): Quaternion {
+        const length = a.length;
+        this.x = a.x / length;
+        this.y = a.y / length;
+        this.z = a.z / length;
+        this.w = a.w / length;
+        return this;
+    }
+
     public inverse() {
         return new Quaternion(-this.x, -this.y, -this.z, this.w);
+    }
+    public inverses(a: Quaternion): Quaternion {
+        this.x = -a.x;
+        this.y = -a.y;
+        this.z = -a.z;
+        this.w = a.w;
+        return this;
     }
 
     public angle_To(b: Quaternion) {
@@ -218,6 +236,66 @@ export class Quaternion {
             scale0 * az + scale1 * bz,
             scale0 * aw + scale1 * bw
         );
+    }
+    public slerps(a: Quaternion, b: Quaternion, weight: number) : Quaternion {
+        let ax = this.x,
+            ay = this.y,
+            az = this.z,
+            aw = this.w;
+        let bx = b.x,
+            by = b.y,
+            bz = b.z,
+            bw = b.w;
+
+        let scale0, scale1;
+
+        // calc cosine
+        let cosom = ax * bx + ay * by + az * bz + aw * bw;
+
+        // adjust signs (if necessary)
+        if (cosom < 0) {
+            cosom = -cosom;
+            bx = -bx;
+            by = -by;
+            bz = -bz;
+            bw = -bw;
+        }
+        // calculate coefficients
+        if (1 - cosom > Epsilon) {
+            // standard case (slerp)
+            const omega = Math.acos(cosom);
+            const sinom = Math.sin(omega);
+            scale0 = Math.sin((1.0 - weight) * omega) / sinom;
+            scale1 = Math.sin(weight * omega) / sinom;
+        }
+        else {
+            // "from" and "to" quaternions are very close
+            //  ... so we can do a linear interpolation
+            scale0 = 1.0 - weight;
+            scale1 = weight;
+        }
+
+        this.x = scale0 * ax + scale1 * bx;
+        this.y = scale0 * ay + scale1 * by;
+        this.z = scale0 * az + scale1 * bz;
+        this.w = scale0 * aw + scale1 * bw;
+        return this;
+    }
+
+    public equal(b: Quaternion): boolean {
+        return this.x === b.x && this.y === b.y && this.z === b.z && this.w === b.w;
+    }
+    public set(x: number, y: number, z: number, w: number): void {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.w = w;
+    }
+    public copy(b: Quaternion | Vector4): void {
+        this.x = b.x;
+        this.y = b.y;
+        this.z = b.z;
+        this.w = b.w;
     }
 }
 

@@ -7,12 +7,12 @@ export class Box3 implements BoxLike<Vector3, Matrix3> {
     public readonly min: Vector3;
     public readonly max: Vector3;
 
-    public get size() { return this.max.minus(this.min); }
-    public get is_empty() { return this.min.equal(this.max); }
+    public get size() { return this.max.sub(this.min); }
+    public get is_empty() { return this.min.x >= this.max.x || this.min.y >= this.max.y || this.min.z >= this.max.z; }
 
     constructor(min: Vector3 = new Vector3(), max: Vector3 = new Vector3()) {
-        this.min = min.min(max);
-        this.max = min.max(max);
+        this.min = min;
+        this.max = max;
     }
 
     public static from_Points(points: Vector3[]) {
@@ -31,22 +31,60 @@ export class Box3 implements BoxLike<Vector3, Matrix3> {
     }
 
     enlarge(amount: number): BoxLike<Vector3, Matrix3> {
-        return new Box3(this.min.minus_Number(amount), this.max.add_Number(amount));
+        return new Box3(this.min.sub_Number(amount), this.max.add_Number(amount));
     }
 
     static #points: [Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3] = [new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
-    
+
     public apply_Matrix4(mat: Matrix4): Box3 {
-        if (this.is_empty) return this;
-        Box3.#points[0] = new Vector3(this.min.x, this.min.y, this.min.z).apply_Matrix4(mat); // 000
-        Box3.#points[1] = new Vector3(this.min.x, this.min.y, this.max.z).apply_Matrix4(mat); // 001
-        Box3.#points[2] = new Vector3(this.min.x, this.max.y, this.min.z).apply_Matrix4(mat); // 010
-        Box3.#points[3] = new Vector3(this.min.x, this.max.y, this.max.z).apply_Matrix4(mat); // 011
-        Box3.#points[4] = new Vector3(this.max.x, this.min.y, this.min.z).apply_Matrix4(mat); // 100
-        Box3.#points[5] = new Vector3(this.max.x, this.min.y, this.max.z).apply_Matrix4(mat); // 101
-        Box3.#points[6] = new Vector3(this.max.x, this.max.y, this.min.z).apply_Matrix4(mat); // 110
-        Box3.#points[7] = new Vector3(this.max.x, this.max.y, this.max.z).apply_Matrix4(mat); // 111
+        if (this.min.x >= this.max.x || this.min.y >= this.max.y || this.min.z >= this.max.z) return new Box3();
+        const p0 = Box3.#points[0];
+        const p1 = Box3.#points[1];
+        const p2 = Box3.#points[2];
+        const p3 = Box3.#points[3];
+        const p4 = Box3.#points[4];
+        const p5 = Box3.#points[5];
+        const p6 = Box3.#points[6];
+        const p7 = Box3.#points[7];
+        p0.set(this.min.x, this.min.y, this.min.z).applys_Matrix4(p0, mat); // 000
+        p1.set(this.min.x, this.min.y, this.max.z).applys_Matrix4(p1, mat); // 001
+        p2.set(this.min.x, this.max.y, this.min.z).applys_Matrix4(p2, mat); // 010
+        p3.set(this.min.x, this.max.y, this.max.z).applys_Matrix4(p3, mat); // 011
+        p4.set(this.max.x, this.min.y, this.min.z).applys_Matrix4(p4, mat); // 100
+        p5.set(this.max.x, this.min.y, this.max.z).applys_Matrix4(p5, mat); // 101
+        p6.set(this.max.x, this.max.y, this.min.z).applys_Matrix4(p6, mat); // 110
+        p7.set(this.max.x, this.max.y, this.max.z).applys_Matrix4(p7, mat); // 111
         return Box3.from_Points(Box3.#points);
+    }
+    public applys_Matrix4(a: Box3, mat: Matrix4): Box3 {
+        if (a.min.x >= a.max.x || a.min.y >= a.max.y || a.min.z >= a.max.z) {
+            this.min.set(0, 0, 0);
+            this.max.set(0, 0, 0);
+            return this;
+        }
+        const p0 = Box3.#points[0];
+        const p1 = Box3.#points[1];
+        const p2 = Box3.#points[2];
+        const p3 = Box3.#points[3];
+        const p4 = Box3.#points[4];
+        const p5 = Box3.#points[5];
+        const p6 = Box3.#points[6];
+        const p7 = Box3.#points[7];
+        p0.set(a.min.x, a.min.y, a.min.z).applys_Matrix4(p0, mat); // 000
+        p1.set(a.min.x, a.min.y, a.max.z).applys_Matrix4(p1, mat); // 001
+        p2.set(a.min.x, a.max.y, a.min.z).applys_Matrix4(p2, mat); // 010
+        p3.set(a.min.x, a.max.y, a.max.z).applys_Matrix4(p3, mat); // 011
+        p4.set(a.max.x, a.min.y, a.min.z).applys_Matrix4(p4, mat); // 100
+        p5.set(a.max.x, a.min.y, a.max.z).applys_Matrix4(p5, mat); // 101
+        p6.set(a.max.x, a.max.y, a.min.z).applys_Matrix4(p6, mat); // 110
+        p7.set(a.max.x, a.max.y, a.max.z).applys_Matrix4(p7, mat); // 111
+        this.min.x = Math.min(p0.x, p1.x, p2.x, p3.x, p4.x, p5.x, p6.x, p7.x);
+        this.min.y = Math.min(p0.y, p1.y, p2.y, p3.y, p4.y, p5.y, p6.y, p7.y);
+        this.min.z = Math.min(p0.z, p1.z, p2.z, p3.z, p4.z, p5.z, p6.z, p7.z);
+        this.max.x = Math.max(p0.x, p1.x, p2.x, p3.x, p4.x, p5.x, p6.x, p7.x);
+        this.max.y = Math.max(p0.y, p1.y, p2.y, p3.y, p4.y, p5.y, p6.y, p7.y);
+        this.max.z = Math.max(p0.z, p1.z, p2.z, p3.z, p4.z, p5.z, p6.z, p7.z);
+        return this;
     }
 }
 

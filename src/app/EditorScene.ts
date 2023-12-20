@@ -35,6 +35,7 @@ EditorCamera.zoom_to_cursor = false;
 // World 
 const World = new Node3D();
 World.local_scale = vec3(0.01, 0.01, 0.01);
+World.block_input = true;
 World.block_process = true;
 World.block_physics_process = true;
 
@@ -72,12 +73,12 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut([
 // Box
 const geometry = new TorusGeometryResource();
 
-for (let i = 0; i <= 100; i++) {
-    for (let j = 0; j <= 100; j++) {
+for (let i = 0; i <= 50; i++) {
+    for (let j = 0; j <= 50; j++) {
         const Mesh2 = new MeshInstance3D();
         Mesh2.geometry = geometry;
-        Mesh2.local_scale = vec3(2, 2, 2);
-        Mesh2.local_position = vec3((i / 100 * 2 - 1) * 500, (j / 100 * 2 - 1) * 500, 0);
+        Mesh2.local_scale = vec3(10, 10, 10);
+        Mesh2.local_position = vec3((i / 100 * 2 - 1) * 2000, (j / 100 * 2 - 1) * 2000, 0);
         World.add_Child(Mesh2);
     }
 }

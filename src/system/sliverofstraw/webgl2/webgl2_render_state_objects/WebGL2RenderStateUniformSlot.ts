@@ -48,8 +48,6 @@ export class WebGL2RenderStateUintUniformSlot extends WebGL2RenderStateValueUnif
     constructor(render_state: WebGL2RenderState, program: WebGL2RenderStateProgram, location: WebGLUniformLocation, default_value: number) {
         super(render_state, program, RenderStateUniformType.Uint, location, default_value);
     }
-
-    public get typed_array(): Uint32Array { return new Uint32Array([this._value ?? this.default_value]); }
 }
 
 export class WebGL2RenderStateIntUniformSlot extends WebGL2RenderStateValueUniformSlot<RenderStateUniformType.Int, number, Int32Array> {
@@ -64,8 +62,6 @@ export class WebGL2RenderStateIntUniformSlot extends WebGL2RenderStateValueUnifo
     constructor(render_state: WebGL2RenderState, program: WebGL2RenderStateProgram, location: WebGLUniformLocation, default_value: number) {
         super(render_state, program, RenderStateUniformType.Int, location, default_value);
     }
-
-    public get typed_array(): Int32Array { return new Int32Array([this._value ?? this.default_value]); }
 }
 
 export class WebGL2RenderStateFloatUniformSlot extends WebGL2RenderStateValueUniformSlot<RenderStateUniformType.Float, number, Float32Array> {
@@ -102,8 +98,6 @@ export class WebGL2RenderStateVec2UniformSlot extends WebGL2RenderStateValueUnif
     constructor(render_state: WebGL2RenderState, program: WebGL2RenderStateProgram, location: WebGLUniformLocation, default_value: Vector2) {
         super(render_state, program, RenderStateUniformType.Vec2, location, default_value);
     }
-
-    public get typed_array(): Float32Array { return (this._value ?? this.default_value).typed_array_f32; }
 }
 
 export class WebGL2RenderStateVec3UniformSlot extends WebGL2RenderStateValueUniformSlot<RenderStateUniformType.Vec3, Vector3, Float32Array> {
@@ -124,8 +118,6 @@ export class WebGL2RenderStateVec3UniformSlot extends WebGL2RenderStateValueUnif
     constructor(render_state: WebGL2RenderState, program: WebGL2RenderStateProgram, location: WebGLUniformLocation, default_value: Vector3) {
         super(render_state, program, RenderStateUniformType.Vec3, location, default_value);
     }
-
-    public get typed_array(): Float32Array { return (this._value ?? this.default_value).typed_array_f32; }
 }
 
 export class WebGL2RenderStateVec4UniformSlot extends WebGL2RenderStateValueUniformSlot<RenderStateUniformType.Vec4, Vector4, Float32Array> {
@@ -146,8 +138,6 @@ export class WebGL2RenderStateVec4UniformSlot extends WebGL2RenderStateValueUnif
     constructor(render_state: WebGL2RenderState, program: WebGL2RenderStateProgram, location: WebGLUniformLocation, default_value: Vector4) {
         super(render_state, program, RenderStateUniformType.Vec4, location, default_value);
     }
-
-    public get typed_array(): Float32Array { return (this._value ?? this.default_value).typed_array_f32; }
 }
 
 export class WebGL2RenderStateMat3UniformSlot extends WebGL2RenderStateValueUniformSlot<RenderStateUniformType.Mat3, Matrix3, Float32Array> {
@@ -168,8 +158,6 @@ export class WebGL2RenderStateMat3UniformSlot extends WebGL2RenderStateValueUnif
     constructor(render_state: WebGL2RenderState, program: WebGL2RenderStateProgram, location: WebGLUniformLocation, default_value: Matrix3) {
         super(render_state, program, RenderStateUniformType.Mat3, location, default_value);
     }
-
-    public get typed_array(): Float32Array { return (this._value ?? this.default_value).typed_array_f32; }
 }
 
 export class WebGL2RenderStateMat4UniformSlot extends WebGL2RenderStateValueUniformSlot<RenderStateUniformType.Mat4, Matrix4, Float32Array> {
@@ -190,8 +178,6 @@ export class WebGL2RenderStateMat4UniformSlot extends WebGL2RenderStateValueUnif
     constructor(render_state: WebGL2RenderState, program: WebGL2RenderStateProgram, location: WebGLUniformLocation, default_value: Matrix4) {
         super(render_state, program, RenderStateUniformType.Mat4, location, default_value);
     }
-
-    public get typed_array(): Float32Array { return (this._value ?? this.default_value).typed_array_f32; }
 }
 
 // Tex2D, Tex2DArray, Tex3D

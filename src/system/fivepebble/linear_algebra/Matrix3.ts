@@ -1,3 +1,4 @@
+import { lerp } from "../Scalar";
 import { Euler, EulerOrder } from "./Euler";
 import { Matrix2 } from "./Matrix2";
 import type { MatrixLike } from "./MatrixLike";
@@ -9,63 +10,53 @@ export class Matrix3 implements MatrixLike<Matrix3> {
     // [ n11 n12 n13 ]
     // [ n21 n22 n23 ]
     // [ n31 n32 n33 ]
-    public readonly elements: number[] = new Array(9);
+    // n11 n12 n13 n21 n22 n23 n31 n32 n33 
+
+    public n11: number;
+    public n12: number;
+    public n13: number;
+    public n21: number;
+    public n22: number;
+    public n23: number;
+    public n31: number;
+    public n32: number;
+    public n33: number;
 
     get row_dimension(): number { return 3; }
     get col_dimension(): number { return 3; }
     get determinant(): number {
-        const [a, b, c, d, e, f, g, h, i] = this.elements;
+        const a = this.n11, b = this.n12, c = this.n13, d = this.n21, e = this.n22, f = this.n23, g = this.n31, h = this.n32, i = this.n33;
         return a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
     }
     get array(): number[] {
-        const arr = new Array(9);
-        arr[0] = this.elements[0];
-        arr[1] = this.elements[1];
-        arr[2] = this.elements[2];
-        arr[3] = this.elements[3];
-        arr[4] = this.elements[4];
-        arr[5] = this.elements[5];
-        arr[6] = this.elements[6];
-        arr[7] = this.elements[7];
-        arr[8] = this.elements[8];
-        return arr;
+        return [this.n11, this.n12, this.n13, this.n21, this.n22, this.n23, this.n31, this.n32, this.n33];
     }
-    get typed_array_f64(): Float64Array { return new Float64Array(this.elements); }
-    get typed_array_f32(): Float32Array { return new Float32Array(this.elements); }
+    get typed_array_f64(): Float64Array { return new Float64Array(this.array); }
+    get typed_array_f32(): Float32Array { return new Float32Array(this.array); }
     get transposed_array(): number[] {
-        const arr = new Array(9);
-        arr[0] = this.elements[0];
-        arr[1] = this.elements[3];
-        arr[2] = this.elements[6];
-        arr[3] = this.elements[1];
-        arr[4] = this.elements[4];
-        arr[5] = this.elements[7];
-        arr[6] = this.elements[2];
-        arr[7] = this.elements[5];
-        arr[8] = this.elements[8];
-        return arr;
+        return [this.n11, this.n21, this.n31, this.n12, this.n22, this.n32, this.n13, this.n23, this.n33];
     }
     get typed_transposed_array_f64(): Float64Array { return new Float64Array(this.transposed_array); }
     get typed_transposed_array_f32(): Float32Array { return new Float32Array(this.transposed_array); }
 
     public get basis() {
         return new Matrix2(
-            this.elements[0], this.elements[1],
-            this.elements[3], this.elements[4],
+            this.n11, this.n12,
+            this.n21, this.n22,
         );
     }
 
     public get position() {
         return new Vector2(
-            this.elements[2],
-            this.elements[5],
+            this.n13,
+            this.n23,
         );
     }
 
     constructor(n11: number, n12: number, n13: number, n21: number, n22: number, n23: number, n31: number, n32: number, n33: number) {
-        this.elements[0] = n11; this.elements[1] = n12; this.elements[2] = n13;
-        this.elements[3] = n21; this.elements[4] = n22; this.elements[5] = n23;
-        this.elements[6] = n31; this.elements[7] = n32; this.elements[8] = n33;
+        this.n11 = n11; this.n12 = n12; this.n13 = n13;
+        this.n21 = n21; this.n22 = n22; this.n23 = n23;
+        this.n31 = n31; this.n32 = n32; this.n33 = n33;
     }
 
     public static make_Identity(): Matrix3 {
@@ -190,84 +181,170 @@ export class Matrix3 implements MatrixLike<Matrix3> {
 
     index(row: number, col: number): number {
         if (row < 0 || row > 2 || col < 0 || col > 2) return 0;
-        return this.elements[row * 3 + col];
+        return this.array[row * 3 + col];
     }
 
     add(b: Matrix3): Matrix3 {
         return new Matrix3(
-            this.elements[0] + b.elements[0], this.elements[1] + b.elements[1], this.elements[2] + b.elements[2],
-            this.elements[3] + b.elements[3], this.elements[4] + b.elements[4], this.elements[5] + b.elements[5],
-            this.elements[6] + b.elements[6], this.elements[7] + b.elements[7], this.elements[8] + b.elements[8],
+            this.n11 + b.n11, this.n12 + b.n12, this.n13 + b.n13,
+            this.n21 + b.n21, this.n22 + b.n22, this.n23 + b.n23,
+            this.n31 + b.n31, this.n32 + b.n32, this.n33 + b.n33,
         );
     }
+    adds(a: Matrix3, b: Matrix3): Matrix3 {
+        this.n11 = a.n11 + b.n11; this.n12 = a.n12 + b.n12; this.n13 = a.n13 + b.n13;
+        this.n21 = a.n21 + b.n21; this.n22 = a.n22 + b.n22; this.n23 = a.n23 + b.n23;
+        this.n31 = a.n31 + b.n31; this.n32 = a.n32 + b.n32; this.n33 = a.n33 + b.n33;
+        return this;
+    }
+
     add_Number(b: number): Matrix3 {
         return new Matrix3(
-            this.elements[0] + b, this.elements[1] + b, this.elements[2] + b,
-            this.elements[3] + b, this.elements[4] + b, this.elements[5] + b,
-            this.elements[6] + b, this.elements[7] + b, this.elements[8] + b,
+            this.n11 + b, this.n12 + b, this.n13 + b,
+            this.n21 + b, this.n22 + b, this.n23 + b,
+            this.n31 + b, this.n32 + b, this.n33 + b,
         );
     }
-    minus(b: Matrix3): Matrix3 {
+    adds_Number(a: Matrix3, b: number): Matrix3 {
+        this.n11 = a.n11 + b; this.n12 = a.n12 + b; this.n13 = a.n13 + b;
+        this.n21 = a.n21 + b; this.n22 = a.n22 + b; this.n23 = a.n23 + b;
+        this.n31 = a.n31 + b; this.n32 = a.n32 + b; this.n33 = a.n33 + b;
+        return this;
+    }
+
+    sub(b: Matrix3): Matrix3 {
         return new Matrix3(
-            this.elements[0] - b.elements[0], this.elements[1] - b.elements[1], this.elements[2] - b.elements[2],
-            this.elements[3] - b.elements[3], this.elements[4] - b.elements[4], this.elements[5] - b.elements[5],
-            this.elements[6] - b.elements[6], this.elements[7] - b.elements[7], this.elements[8] - b.elements[8],
+            this.n11 - b.n11, this.n12 - b.n12, this.n13 - b.n13,
+            this.n21 - b.n21, this.n22 - b.n22, this.n23 - b.n23,
+            this.n31 - b.n31, this.n32 - b.n32, this.n33 - b.n33,
         );
     }
-    minus_Number(b: number): Matrix3 {
+    subs(a: Matrix3, b: Matrix3): Matrix3 {
+        this.n11 = a.n11 - b.n11; this.n12 = a.n12 - b.n12; this.n13 = a.n13 - b.n13;
+        this.n21 = a.n21 - b.n21; this.n22 = a.n22 - b.n22; this.n23 = a.n23 - b.n23;
+        this.n31 = a.n31 - b.n31; this.n32 = a.n32 - b.n32; this.n33 = a.n33 - b.n33;
+        return this;
+    }
+
+    sub_Number(b: number): Matrix3 {
         return new Matrix3(
-            this.elements[0] - b, this.elements[1] - b, this.elements[2] - b,
-            this.elements[3] - b, this.elements[4] - b, this.elements[5] - b,
-            this.elements[6] - b, this.elements[7] - b, this.elements[8] - b,
+            this.n11 - b, this.n12 - b, this.n13 - b,
+            this.n21 - b, this.n22 - b, this.n23 - b,
+            this.n31 - b, this.n32 - b, this.n33 - b,
         );
     }
+    subs_Number(a: Matrix3, b: number): Matrix3 {
+        this.n11 = a.n11 - b; this.n12 = a.n12 - b; this.n13 = a.n13 - b;
+        this.n21 = a.n21 - b; this.n22 = a.n22 - b; this.n23 = a.n23 - b;
+        this.n31 = a.n31 - b; this.n32 = a.n32 - b; this.n33 = a.n33 - b;
+        return this;
+    }
+
     mult(b: Matrix3): Matrix3 {
         return new Matrix3(
-            this.elements[0] * b.elements[0], this.elements[1] * b.elements[1], this.elements[2] * b.elements[2],
-            this.elements[3] * b.elements[3], this.elements[4] * b.elements[4], this.elements[5] * b.elements[5],
-            this.elements[6] * b.elements[6], this.elements[7] * b.elements[7], this.elements[8] * b.elements[8],
+            this.n11 * b.n11, this.n12 * b.n12, this.n13 * b.n13,
+            this.n21 * b.n21, this.n22 * b.n22, this.n23 * b.n23,
+            this.n31 * b.n31, this.n32 * b.n32, this.n33 * b.n33,
         );
     }
+    mults(a: Matrix3, b: Matrix3): Matrix3 {
+        this.n11 = a.n11 * b.n11; this.n12 = a.n12 * b.n12; this.n13 = a.n13 * b.n13;
+        this.n21 = a.n21 * b.n21; this.n22 = a.n22 * b.n22; this.n23 = a.n23 * b.n23;
+        this.n31 = a.n31 * b.n31; this.n32 = a.n32 * b.n32; this.n33 = a.n33 * b.n33;
+        return this;
+    }
+
     mult_Number(b: number): Matrix3 {
         return new Matrix3(
-            this.elements[0] * b, this.elements[1] * b, this.elements[2] * b,
-            this.elements[3] * b, this.elements[4] * b, this.elements[5] * b,
-            this.elements[6] * b, this.elements[7] * b, this.elements[8] * b,
+            this.n11 * b, this.n12 * b, this.n13 * b,
+            this.n21 * b, this.n22 * b, this.n23 * b,
+            this.n31 * b, this.n32 * b, this.n33 * b,
         );
     }
+    mults_Number(a: Matrix3, b: number): Matrix3 {
+        this.n11 = a.n11 * b; this.n12 = a.n12 * b; this.n13 = a.n13 * b;
+        this.n21 = a.n21 * b; this.n22 = a.n22 * b; this.n23 = a.n23 * b;
+        this.n31 = a.n31 * b; this.n32 = a.n32 * b; this.n33 = a.n33 * b;
+        return this;
+    }
+
     div(b: Matrix3): Matrix3 {
         return new Matrix3(
-            this.elements[0] / b.elements[0], this.elements[1] / b.elements[1], this.elements[2] / b.elements[2],
-            this.elements[3] / b.elements[3], this.elements[4] / b.elements[4], this.elements[5] / b.elements[5],
-            this.elements[6] / b.elements[6], this.elements[7] / b.elements[7], this.elements[8] / b.elements[8],
+            this.n11 / b.n11, this.n12 / b.n12, this.n13 / b.n13,
+            this.n21 / b.n21, this.n22 / b.n22, this.n23 / b.n23,
+            this.n31 / b.n31, this.n32 / b.n32, this.n33 / b.n33,
         );
     }
+    divs(a: Matrix3, b: Matrix3): Matrix3 {
+        this.n11 = a.n11 / b.n11; this.n12 = a.n12 / b.n12; this.n13 = a.n13 / b.n13;
+        this.n21 = a.n21 / b.n21; this.n22 = a.n22 / b.n22; this.n23 = a.n23 / b.n23;
+        this.n31 = a.n31 / b.n31; this.n32 = a.n32 / b.n32; this.n33 = a.n33 / b.n33;
+        return this;
+    }
+
     div_Number(b: number): Matrix3 {
         return new Matrix3(
-            this.elements[0] / b, this.elements[1] / b, this.elements[2] / b,
-            this.elements[3] / b, this.elements[4] / b, this.elements[5] / b,
-            this.elements[6] / b, this.elements[7] / b, this.elements[8] / b,
+            this.n11 / b, this.n12 / b, this.n13 / b,
+            this.n21 / b, this.n22 / b, this.n23 / b,
+            this.n31 / b, this.n32 / b, this.n33 / b,
         );
     }
-    addScaled(num: number, b: Matrix3): Matrix3 {
+    divs_Number(a: Matrix3, b: number): Matrix3 {
+        this.n11 = a.n11 / b; this.n12 = a.n12 / b; this.n13 = a.n13 / b;
+        this.n21 = a.n21 / b; this.n22 = a.n22 / b; this.n23 = a.n23 / b;
+        this.n31 = a.n31 / b; this.n32 = a.n32 / b; this.n33 = a.n33 / b;
+        return this;
+    }
+
+    add_Scaled(num: number, b: Matrix3): Matrix3 {
         return new Matrix3(
-            this.elements[0] + b.elements[0] * num, this.elements[1] + b.elements[1] * num, this.elements[2] + b.elements[2] * num,
-            this.elements[3] + b.elements[3] * num, this.elements[4] + b.elements[4] * num, this.elements[5] + b.elements[5] * num,
-            this.elements[6] + b.elements[6] * num, this.elements[7] + b.elements[7] * num, this.elements[8] + b.elements[8] * num,
+            this.n11 + b.n11 * num, this.n12 + b.n12 * num, this.n13 + b.n13 * num,
+            this.n21 + b.n21 * num, this.n22 + b.n22 * num, this.n23 + b.n23 * num,
+            this.n31 + b.n31 * num, this.n32 + b.n32 * num, this.n33 + b.n33 * num,
         );
     }
+    adds_Scaled(a: Matrix3, num: number, b: Matrix3): Matrix3 {
+        this.n11 = a.n11 + b.n11 * num; this.n12 = a.n12 + b.n12 * num; this.n13 = a.n13 + b.n13 * num;
+        this.n21 = a.n21 + b.n21 * num; this.n22 = a.n22 + b.n22 * num; this.n23 = a.n23 + b.n23 * num;
+        this.n31 = a.n31 + b.n31 * num; this.n32 = a.n32 + b.n32 * num; this.n33 = a.n33 + b.n33 * num;
+        return this;
+    }
+
+    lerp(b: Matrix3, weight: number): Matrix3 {
+        return new Matrix3(
+            lerp(this.n11, b.n11, weight), lerp(this.n12, b.n12, weight), lerp(this.n13, b.n13, weight),
+            lerp(this.n21, b.n21, weight), lerp(this.n22, b.n22, weight), lerp(this.n23, b.n23, weight),
+            lerp(this.n31, b.n31, weight), lerp(this.n32, b.n32, weight), lerp(this.n33, b.n33, weight),
+        );
+    }
+    lerps(a: Matrix3, b: Matrix3, weight: number): Matrix3 {
+        this.n11 = lerp(a.n11, b.n11, weight); this.n12 = lerp(a.n12, b.n12, weight), this.n13 = lerp(a.n13, b.n13, weight);
+        this.n21 = lerp(a.n21, b.n21, weight); this.n22 = lerp(a.n22, b.n22, weight), this.n23 = lerp(a.n23, b.n23, weight);
+        this.n31 = lerp(a.n31, b.n31, weight); this.n32 = lerp(a.n32, b.n32, weight), this.n33 = lerp(a.n33, b.n33, weight);
+        return this;
+    }
+
     transpose(): Matrix3 {
         // [ 1 2 3 ]      [ 1 4 7 ]
         // [ 4 5 6 ]  ->  [ 2 5 8 ]
         // [ 7 8 9 ]      [ 3 6 9 ]
         return new Matrix3(
-            this.elements[0], this.elements[3], this.elements[6],
-            this.elements[1], this.elements[4], this.elements[7],
-            this.elements[2], this.elements[5], this.elements[8],
+            this.n11, this.n21, this.n31,
+            this.n12, this.n22, this.n32,
+            this.n13, this.n23, this.n33,
         );
     }
+    transposes(a: Matrix3): Matrix3 {
+        this.n11 = a.n11; this.n12 = a.n21; this.n13 = a.n31;
+        this.n21 = a.n12; this.n22 = a.n22; this.n23 = a.n32;
+        this.n31 = a.n13; this.n32 = a.n23; this.n33 = a.n33;
+        return this;
+    }
+
     inverse(): Matrix3 {
-        const [n11, n21, n31, n12, n22, n32, n13, n23, n33] = this.elements;
+        const n11 = this.n11, n21 = this.n21, n31 = this.n31;
+        const n12 = this.n12, n22 = this.n22, n32 = this.n32;
+        const n13 = this.n13, n23 = this.n23, n33 = this.n33;
         const t11 = n33 * n22 - n32 * n23;
         const t12 = n32 * n13 - n33 * n12;
         const t13 = n23 * n12 - n22 * n13;
@@ -286,6 +363,39 @@ export class Matrix3 implements MatrixLike<Matrix3> {
             (n22 * n11 - n21 * n12) * det_inverse,
         );
     }
+    inverses(a: Matrix3): Matrix3 {
+        const n11 = a.n11, n21 = a.n21, n31 = a.n31;
+        const n12 = a.n12, n22 = a.n22, n32 = a.n32;
+        const n13 = a.n13, n23 = a.n23, n33 = a.n33;
+        const t11 = n33 * n22 - n32 * n23;
+        const t12 = n32 * n13 - n33 * n12;
+        const t13 = n23 * n12 - n22 * n13;
+        const det = n11 * t11 + n21 * t12 + n31 * t13;
+        if (det === 0) {
+            this.n11 = 0;
+            this.n21 = 0;
+            this.n31 = 0;
+            this.n12 = 0;
+            this.n22 = 0;
+            this.n32 = 0;
+            this.n13 = 0;
+            this.n23 = 0;
+            this.n33 = 0;
+            return this;
+        }
+        const det_inverse = 1 / det;
+        this.n11 = t11 * det_inverse;
+        this.n21 = (n31 * n23 - n33 * n21) * det_inverse;
+        this.n31 = (n32 * n21 - n31 * n22) * det_inverse;
+        this.n12 = t12 * det_inverse;
+        this.n22 = (n33 * n11 - n31 * n13) * det_inverse;
+        this.n32 = (n31 * n12 - n32 * n11) * det_inverse;
+        this.n13 = t13 * det_inverse;
+        this.n23 = (n21 * n13 - n23 * n11) * det_inverse;
+        this.n33 = (n22 * n11 - n21 * n12) * det_inverse;
+        return this;
+    }
+
     /**
      * b * this
      */
@@ -293,24 +403,66 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         // [ b11 b12 b13 ]   [ n11 n12 n13 ]   
         // [ b21 b22 b23 ] * [ n21 n22 n23 ]   
         // [ b31 b32 b33 ]   [ n31 n32 n33 ]   
-        const [n11, n12, n13, n21, n22, n23, n31, n32, n33] = this.elements;
-        const [b11, b12, b13, b21, b22, b23, b31, b32, b33] = b.elements;
+        const n11 = this.n11, n21 = this.n21, n31 = this.n31;
+        const n12 = this.n12, n22 = this.n22, n32 = this.n32;
+        const n13 = this.n13, n23 = this.n23, n33 = this.n33;
+        const b11 = b.n11, b21 = b.n21, b31 = b.n31;
+        const b12 = b.n12, b22 = b.n22, b32 = b.n32;
+        const b13 = b.n13, b23 = b.n23, b33 = b.n33;
         return new Matrix3(
             b11 * n11 + b12 * n21 + b13 * n31, b11 * n12 + b12 * n22 + b13 * n32, b11 * n13 + b12 * n23 + b13 * n33,
             b21 * n11 + b22 * n21 + b23 * n31, b21 * n12 + b22 * n22 + b23 * n32, b21 * n13 + b22 * n23 + b23 * n33,
             b31 * n11 + b32 * n21 + b33 * n31, b31 * n12 + b32 * n22 + b33 * n32, b31 * n13 + b32 * n23 + b33 * n33,
         );
     }
+    composes(a: Matrix3, b: Matrix3): Matrix3 {
+        const n11 = a.n11, n21 = a.n21, n31 = a.n31;
+        const n12 = a.n12, n22 = a.n22, n32 = a.n32;
+        const n13 = a.n13, n23 = a.n23, n33 = a.n33;
+        const b11 = b.n11, b21 = b.n21, b31 = b.n31;
+        const b12 = b.n12, b22 = b.n22, b32 = b.n32;
+        const b13 = b.n13, b23 = b.n23, b33 = b.n33;
+        this.n11 = b11 * n11 + b12 * n21 + b13 * n31;
+        this.n21 = b11 * n12 + b12 * n22 + b13 * n32;
+        this.n31 = b11 * n13 + b12 * n23 + b13 * n33;
+        this.n12 = b21 * n11 + b22 * n21 + b23 * n31;
+        this.n22 = b21 * n12 + b22 * n22 + b23 * n32;
+        this.n32 = b21 * n13 + b22 * n23 + b23 * n33;
+        this.n13 = b31 * n11 + b32 * n21 + b33 * n31;
+        this.n23 = b31 * n12 + b32 * n22 + b33 * n32;
+        this.n33 = b31 * n13 + b32 * n23 + b33 * n33;
+        return this;
+    }
 
     equal(b: Matrix3): boolean {
-        for (let i = 0; i < 9; i++) {
-            if (this.elements[i] !== b.elements[i]) return false;
-        }
+        if (this.n11 !== b.n11) return false;
+        if (this.n12 !== b.n12) return false;
+        if (this.n13 !== b.n13) return false;
+        if (this.n21 !== b.n21) return false;
+        if (this.n22 !== b.n22) return false;
+        if (this.n23 !== b.n23) return false;
+        if (this.n31 !== b.n31) return false;
+        if (this.n32 !== b.n32) return false;
+        if (this.n33 !== b.n33) return false;
         return true;
+    }
+    set(n11: number, n12: number, n13: number, n21: number, n22: number, n23: number, n31: number, n32: number, n33: number) {
+        this.n11 = n11; this.n12 = n12; this.n13 = n13;
+        this.n21 = n21; this.n22 = n22; this.n23 = n23;
+        this.n31 = n31; this.n32 = n32; this.n33 = n33;
+        return this;
+    }
+    copy(b: Matrix3) {
+        this.n11 = b.n11; this.n12 = b.n12; this.n13 = b.n13;
+        this.n21 = b.n21; this.n22 = b.n22; this.n23 = b.n23;
+        this.n31 = b.n31; this.n32 = b.n32; this.n33 = b.n33;
+        return this;
     }
 
     public get_RotationScale(order: EulerOrder = EulerOrder.XYZ): [Euler, Vector3] {
-        const [n11, n12, n13, n21, n22, n23, n31, n32, n33] = this.elements;
+        const n11 = this.n11, n21 = this.n21, n31 = this.n31;
+        const n12 = this.n12, n22 = this.n22, n32 = this.n32;
+        const n13 = this.n13, n23 = this.n23, n33 = this.n33;
         const scale = new Vector3(
             new Vector3(n11, n21, n31).length,
             new Vector3(n12, n22, n32).length,

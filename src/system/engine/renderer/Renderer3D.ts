@@ -57,6 +57,7 @@ import skybox_url from 'res://studio.png';
 import { ImageLoader } from "../loaders/ImageLoader";
 import type { RenderServerGeometry } from "../render_server/RenderServerGeometry";
 import type { RenderServerMaterial } from "../render_server/RenderServerMaterial";
+import { Box3 } from "@/system/fivepebble/geometries/Box3";
 new ImageLoader().parse(skybox_url).then(res => {
 	const image_res = res.expect();
 	const { width, height, image_data } = image_res;
@@ -205,7 +206,7 @@ export class Renderer3D {
 		if (ctx === null) throw new Error('<Renderer3D> constructor: can not create canvas 2d context');
 		this.ctx = ctx;
 
-		const msaa = 4;
+		const msaa = 2;
 		const frame_buffer_depth_tex = RS.render_state.create_RenderBuffer(RenderStateTextureFormat.D32F, msaa).expect();
 		RS.render_state.alloc_RenderBuffer(frame_buffer_depth_tex, 1024, 1024);
 
@@ -253,6 +254,8 @@ export class Renderer3D {
 		}
 	}
 
+	static #box: Box3 = new Box3();
+
 	public render(world: World3D, viewport: Viewport, camera: Camera3D): void {
 		const time = viewport.get_SceneTree()!.time;
 		const cam = camera.get_Camera();
@@ -289,7 +292,7 @@ export class Renderer3D {
 			}
 		}
 
-		
+
 		// draw scene
 		RS.render_state.set_ViewportProxy(0, 0, x, y);
 		RS.render_state.set_ScissorProxy(0, 0, x, y);
@@ -298,16 +301,18 @@ export class Renderer3D {
 		RS.render_state.set_CapabilityProxy(RS.render_state.gl.DEPTH_TEST, true);
 		RS.render_state.set_CapabilityProxy(RS.render_state.gl.CULL_FACE, true);
 		RS.render_state.clear_FrameBuffer(this.frame_buffer.expect, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth);
-		
+
 		// prepare render queue
 		let total_objects_count = 0;
 		let rendered_objects_count = 0;
+		const box = Renderer3D.#box;
 		const mat = world_3d.cube_material1.expect;
 		for (const mesh of world_3d.meshes) {
 			total_objects_count++;
 			const { layer, bbox, global_transform } = mesh;
-			const not_culled = !bbox.is_empty && cam_frustum.contain_Box(bbox.apply_Matrix4(global_transform));
-			if ((layer & cam_mask) !== 0 && not_culled) {
+			if (bbox.is_empty) return;
+			box.applys_Matrix4(bbox, global_transform);
+			if ((layer & cam_mask) !== 0 && cam_frustum.contain_Box(box)) {
 				rendered_objects_count++;
 				mat.set_UniformOverride('model_world', global_transform);
 				mat.set_UniformOverride('layer', layer);

@@ -8,7 +8,7 @@ export enum EulerOrder {
 }
 
 export class Euler extends Vector3 {
-    public readonly order: EulerOrder;
+    public order: EulerOrder;
 
     constructor(x: number = 0, y: number = 0, z: number = 0, order: EulerOrder = EulerOrder.XYZ) {
         super(x, y, z);
@@ -21,7 +21,9 @@ export class Euler extends Vector3 {
 
     public static from_RotateMatrix(matrix: Matrix3, order: EulerOrder) {
         // assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
-        const [m11, m12, m13, m21, m22, m23, m31, m32, m33] = matrix.elements;
+        const m11 = matrix.n11, m12 = matrix.n12, m13 = matrix.n13;
+        const m21 = matrix.n21, m22 = matrix.n22, m23 = matrix.n23;
+        const m31 = matrix.n31, m32 = matrix.n32, m33 = matrix.n33;
         switch (order) {
             case EulerOrder.XYZ: {
                 const _y = Math.asin(clamp(m13, - 1, 1));
@@ -142,6 +144,22 @@ export class Euler extends Vector3 {
                 return new Euler();
             }
         }
+    }
+
+    public equal(b: Euler): boolean {
+        return this.x === b.x && this.y === b.y && this.z === b.z && this.order === b.order;
+    }
+    public set(x: number, y: number, z: number, order: EulerOrder = EulerOrder.XYZ): void {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.order = order;
+    }
+    public copy(b: Euler): void {
+        this.x = b.x;
+        this.y = b.y;
+        this.z = b.z;
+        this.order = b.order;
     }
 }
 
