@@ -86,6 +86,26 @@ export class Box3 implements BoxLike<Vector3, Matrix3> {
         this.max.z = Math.max(p0.z, p1.z, p2.z, p3.z, p4.z, p5.z, p6.z, p7.z);
         return this;
     }
+
+    public set(min_x: number,min_y: number,min_z: number, max_x: number,max_y: number,max_z: number) {
+        this.min.x = min_x;
+        this.min.y = min_y;
+        this.min.z = min_z;
+        this.max.x = max_x;
+        this.max.y = max_y;
+        this.max.z = max_z;
+        return this;
+    }
+
+    copy(b: Box3): Box3 {
+        this.min.x = b.min.x;
+        this.min.y = b.min.y;
+        this.min.z = b.min.z;
+        this.max.x = b.max.x;
+        this.max.y = b.max.y;
+        this.max.z = b.max.z;
+        return this;
+    }
 }
 
 export function box3(min: Vector3 = new Vector3(), max: Vector3 = new Vector3()) {

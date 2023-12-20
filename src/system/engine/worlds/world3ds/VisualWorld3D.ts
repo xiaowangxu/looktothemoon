@@ -169,9 +169,10 @@ uniform WorldUniforms {
 uniform mat4 model_world;
         
 // attributes
-in vec3 a_position;
-in vec3 a_normal;
-in vec2 a_uv;
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec3 a_normal;
+layout(location = 4) in vec2 a_uv;
+layout(location = 6) in mat4 a_instance_transform;
 
 // varyings
 out vec3 v_world;
@@ -182,9 +183,10 @@ out vec2 v_uv;
 
 void main() {
     // code
-    vec4 world = model_world * vec4(a_position, 1.0);
+	mat4 _model_world = model_world * a_instance_transform;
+    vec4 world = _model_world * vec4(a_position, 1.0);
     gl_Position = camera_projection * inverse(camera_world) * world;
-    v_normal = normalize(mat3(transpose(inverse(model_world))) * a_normal);
+    v_normal = normalize(mat3(transpose(inverse(_model_world))) * a_normal);
     v_uv = a_uv;
     v_world = world.xyz;
 }`;
@@ -301,7 +303,7 @@ void main() {
     
     ivec3 lights_size = textureSize(lights, 0);
     int lights_count = lights_size.x * lights_size.y;
-    const int LIGHT_MAX_COUNT = 32;
+    int LIGHT_MAX_COUNT = 16;
     
     // see light function
     // light_type, light_direction, view_direction, normal, light_color, light_attenuation, inout vec3 diffuse, inout vec3 specular
@@ -395,17 +397,48 @@ export class VisualWorld3DMesh extends WorldObject {
 	protected readonly material_override_ref: Ref<RenderServerMaterial> = new Ref();
 
 	public global_transform: Matrix4 = Matrix4.make_Identity();
-	public visible: boolean = true;
+	public _visible: boolean = true;
 	public layer: number = 0xffffffff;
 
-	public get bbox() { return this.geometry_ref.value?.bbox ?? box3(); }
+	public get visible() {
+		return this._visible && !this._is_bbox_empty;
+	}
+
+	public get has_geometry() {
+		return !this.geometry_ref.is_empty && this.geometry_ref.expect.has_geometry;
+	}
+
+	public get bbox() { return this._bbox; }
+	private _is_bbox_empty: boolean = true;
+	private _bbox: Box3 = new Box3();
 
 	constructor(rid: RID) {
 		super(rid);
 	}
 
+	private on_geometry_bbox_changed = (bbox: Box3) => {
+		this.update_BBox();
+	}
+
+	private update_BBox() {
+		if (!this.has_geometry) {
+			this._bbox.set(0, 0, 0, 0, 0, 0);
+		}
+		else {
+			this._bbox.applys_Matrix4(this.geometry_ref.value!.bbox, this.global_transform);
+		}
+		this._is_bbox_empty = this._bbox.is_empty;
+	}
+
 	public set_Geometry(geometry: RenderServerGeometry | undefined) {
+		if (!this.geometry_ref.is_empty) {
+			this.geometry_ref.expect.singal_bbox_changed.disconnect(this.on_geometry_bbox_changed);
+		}
 		this.geometry_ref.value = geometry;
+		if (!this.geometry_ref.is_empty) {
+			this.geometry_ref.expect.singal_bbox_changed.connect(this.on_geometry_bbox_changed);
+		}
+		this.update_BBox();
 	}
 
 	public set_SurfaceMaterial(surface_idx: number, material: RenderServerMaterial | undefined) {
@@ -426,10 +459,11 @@ export class VisualWorld3DMesh extends WorldObject {
 
 	public set_GlobalTransform(mat: Matrix4) {
 		this.global_transform = mat;
+		this.update_BBox();
 	}
 
 	public set_Visible(visible: boolean) {
-		this.visible = visible;
+		this._visible = visible;
 	}
 
 	public set_Layer(layer: number) {
@@ -571,7 +605,6 @@ export class VisualWorld3D {
 			instance.set_Layer(layer);
 		}
 	}
-
 
 	private test() {
 		const cube_geometry = RenderServer.create_Geometry();
@@ -5314,7 +5347,7 @@ export class VisualWorld3D {
 		});
 		this.cube_material1.value = cube_material1;
 
-		cube_material1.set_UniformOverride('u_color', vec4(1.0, 0.0, 0.0, 1.0));
+		// cube_material1.set_UniformOverride('u_color', vec4(1.0, 0.0, 0.0, 1.0));
 	}
 
 	public dispose() {

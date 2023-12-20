@@ -38,13 +38,13 @@ function update_Lights() {
 		);
 	}
 
-	lights_data.set_Light(0, RenderServerLightType.SpotLight, undefined, vec3(-2, 2, -2.2), vec3(1, -1, 1), color(0, 0, 5), 2.0, 0xffffffff, 45 * Deg2Rad, 0 * Deg2Rad, 3, 7);
-	lights_data.set_Light(1, RenderServerLightType.SpotLight, undefined, vec3(0.3, 0.3, 5.0), vec3(0, 0, -1), color(10, 0, 0), 2.0, 0xffffffff, 12 * Deg2Rad, 4 * Deg2Rad, 10, 11);
-	lights_data.set_Light(2, RenderServerLightType.SpotLight, undefined, vec3(-0.3, 0.3, 5.0), vec3(0, 0, -1), color(0, 10, 0), 2.0, 0xffffffff, 12 * Deg2Rad, 4 * Deg2Rad, 10, 11);
-	lights_data.set_Light(3, RenderServerLightType.SpotLight, undefined, vec3(0.0, -0.15, 5.0), vec3(0, 0, -1), color(0, 0, 10), 2.0, 0xffffffff, 12 * Deg2Rad, 4 * Deg2Rad, 10, 11);
+	lights_data.set_Light(2, RenderServerLightType.SpotLight, undefined, vec3(-2, 2, -2.2), vec3(1, -1, 1), color(0, 0, 5), 2.0, 0xffffffff, 45 * Deg2Rad, 0 * Deg2Rad, 3, 7);
+	lights_data.set_Light(3, RenderServerLightType.SpotLight, undefined, vec3(0.3, 0.3, 5.0), vec3(0, 0, -1), color(10, 0, 0), 2.0, 0xffffffff, 12 * Deg2Rad, 4 * Deg2Rad, 10, 11);
+	lights_data.set_Light(4, RenderServerLightType.SpotLight, undefined, vec3(-0.3, 0.3, 5.0), vec3(0, 0, -1), color(0, 10, 0), 2.0, 0xffffffff, 12 * Deg2Rad, 4 * Deg2Rad, 10, 11);
+	lights_data.set_Light(5, RenderServerLightType.SpotLight, undefined, vec3(0.0, -0.15, 5.0), vec3(0, 0, -1), color(0, 0, 10), 2.0, 0xffffffff, 12 * Deg2Rad, 4 * Deg2Rad, 10, 11);
 
-	lights_data.set_Light(10, RenderServerLightType.DirectionalLight, undefined, vec3(-1, -1, -1), undefined, color(0, 0.12, 0));
-	lights_data.set_Light(11, RenderServerLightType.DirectionalLight, undefined, vec3(1, 1, 1), undefined, color(0.4, 0.4, 0.4));
+	lights_data.set_Light(0, RenderServerLightType.DirectionalLight, undefined, vec3(-1, -1, -1), undefined, color(0, 0.12, 0));
+	lights_data.set_Light(1, RenderServerLightType.DirectionalLight, undefined, vec3(1, 1, 1), undefined, color(0.4, 0.4, 0.4));
 }
 
 update_Lights();
@@ -168,23 +168,10 @@ uniform_sky_slot.commit();
 
 // #endregion
 
-class Renderer3DQueue {
-	public solids: { geometry: RenderServerGeometry, material: RenderServerMaterial, transform: Matrix4, layer: number }[] = [];
-
-	public clear() {
-		this.solids = [];
-	}
-
-	public add(geometry: RenderServerGeometry, material: RenderServerMaterial, transform: Matrix4, layer: number) {
-		this.solids.push({ geometry, material, transform, layer });
-	}
-}
-
 export class Renderer3D {
 	public readonly canvas: HTMLCanvasElement;
 	private readonly ctx: CanvasRenderingContext2D;
 
-	private readonly render_queue: Renderer3DQueue = new Renderer3DQueue();
 	private readonly frame_buffer_prez: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
 	private readonly frame_buffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
 	private readonly frame_buffer_depth: Ref<WebGL2RenderStateRenderBuffer> = new Ref();
@@ -235,6 +222,8 @@ export class Renderer3D {
 
 		this.frame_buffer_texture.value = frame_buffer_texture;
 		this.frame_buffer_copy.value = frame_buffer_copy;
+
+		this.fps_array.fill(0);
 	}
 
 	public resize(width: number, height: number) {
@@ -254,8 +243,8 @@ export class Renderer3D {
 		}
 	}
 
-	static #box: Box3 = new Box3();
-
+	private fps_array: number[] = new Array(512);
+	private fps_pointer: number = 0;
 	public render(world: World3D, viewport: Viewport, camera: Camera3D): void {
 		const time = viewport.get_SceneTree()!.time;
 		const cam = camera.get_Camera();
@@ -305,24 +294,27 @@ export class Renderer3D {
 		// prepare render queue
 		let total_objects_count = 0;
 		let rendered_objects_count = 0;
-		const box = Renderer3D.#box;
 		const mat = world_3d.cube_material1.expect;
 		for (const mesh of world_3d.meshes) {
 			total_objects_count++;
-			const { layer, bbox, global_transform } = mesh;
-			if (bbox.is_empty) return;
-			box.applys_Matrix4(bbox, global_transform);
-			if ((layer & cam_mask) !== 0 && cam_frustum.contain_Box(box)) {
+			const { layer, bbox, global_transform, visible } = mesh;
+			if (!visible || !mesh.has_geometry) continue;
+			if ((layer & cam_mask) !== 0 && cam_frustum.contain_Box(bbox, false)) {
 				rendered_objects_count++;
 				mat.set_UniformOverride('model_world', global_transform);
 				mat.set_UniformOverride('layer', layer);
 				mat.commit_AllUniformOverride('shading');
 				const geometry = mesh.geometry_ref.expect;
 				if (geometry.is_indexed) {
-					RS.render_state.draw_Elements(mat.get_Program('shading')!, geometry.vertex_array, RenderStateDataType.UnsignedInt, 1);
+					if (geometry.has_surface) {
+						RS.render_state.draw_Elements(mat.get_Program('shading')!, geometry.vertex_array_groups_ref.value![0]!, RenderStateDataType.UnsignedInt, geometry.instance_count);
+					}
+					else {
+						RS.render_state.draw_Elements(mat.get_Program('shading')!, geometry.vertex_array, RenderStateDataType.UnsignedInt, geometry.instance_count);
+					}
 				}
 				else {
-					RS.render_state.draw_Arrays(mat.get_Program('shading')!, geometry.vertex_array, 1);
+					RS.render_state.draw_Arrays(mat.get_Program('shading')!, geometry.vertex_array, geometry.instance_count);
 				}
 			}
 		}
@@ -342,6 +334,10 @@ export class Renderer3D {
 		RS.render_state.clear_FrameBuffer(undefined, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth);
 		RS.render_state.draw_Elements(onscreen_program, quad_surface.vertex_array, RenderStateDataType.UnsignedInt, 1);
 
+		const fps = 1 / viewport.get_SceneTree()!.delta;
+		this.fps_array[this.fps_pointer++] = fps;
+		this.fps_pointer %= this.fps_array.length;
+
 		this.ctx.globalCompositeOperation = 'source-over';
 		this.ctx.drawImage(RS.canvas, 0, RS.canvas.height - y, x, y, 0, 0, x, y);
 		this.ctx.font = '20px consolas';
@@ -350,6 +346,30 @@ export class Renderer3D {
 		this.ctx.globalCompositeOperation = 'difference';
 		this.ctx.fillText(`FrameDelta: ${viewport.get_SceneTree()!.delta.toFixed(4)} ms`, 10, 10);
 		this.ctx.fillText(`RenderObjs: ${rendered_objects_count} / ${total_objects_count}`, 10, 30);
+
+		this.ctx.globalCompositeOperation = 'source-over';
+		const scale = 1;
+		this.ctx.beginPath();
+		this.ctx.moveTo(0, y);
+		let _fps = this.fps_array[this.fps_pointer];
+		this.ctx.lineTo(0, y - _fps * scale);
+		for (let i = 0; i < this.fps_array.length; i++) {
+			const id = (this.fps_pointer + i) % this.fps_array.length;
+			_fps = this.fps_array[id];
+			const _x = x * i / (this.fps_array.length - 1);
+			this.ctx.lineTo(_x, y - _fps * scale);
+		}
+		this.ctx.lineTo(x, y);
+		this.ctx.closePath();
+		this.ctx.fillStyle = 'rgba(255, 200, 0, 0.5)';
+		this.ctx.fill();
+
+		this.ctx.beginPath();
+		this.ctx.moveTo(0, y - 60 * scale);
+		this.ctx.lineTo(x, y - 60 * scale);
+		this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+		this.ctx.lineWidth = 1;
+		this.ctx.stroke();
 	}
 
 	public dispose() {

@@ -4984,7 +4984,7 @@ let stage = 'test';
 
 const render_state = render_device.render_state as WebGL2RenderState;
 
-material.set_TextureUniform<RenderStateUniformType.Tex2D>(stage, 'u_texture', render_device.empty_texture.expect);
+material.set_TextureUniform<RenderStateUniformType.Tex2D>(stage, 'u_texture', render_device.empty_texture_ref.expect);
 // material.set_TextureUniform<RenderStateUniformType.Tex2D>(stage, 'u_texture2', render_device.empty_texture.expect);
 // material.set_TextureUniform<RenderStateUniformType.Tex2D>(stage, 'u_texture2', texture);
 
@@ -5158,7 +5158,7 @@ const material2 = new WebGL2RenderDeviceMaterialSet(render_device,
 			uniforms: {
 				u_sky: { type: RenderStateUniformType.Tex2D, default: { texture: skybox_texture } },
 				u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
-				u_texture: { type: RenderStateUniformType.Tex2D, default: { sampler: sampler3, texture: render_device.empty_texture.expect } },
+				u_texture: { type: RenderStateUniformType.Tex2D, default: { sampler: sampler3, texture: render_device.empty_texture_ref.expect } },
 				u_texture2: { type: RenderStateUniformType.Tex2D, default: {} },
 			}
 		}

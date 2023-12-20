@@ -54,7 +54,8 @@ export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
 
     static #point: Vector3 = new Vector3();
 
-    contain_Box(box: Box3): boolean {
+    contain_Box(box: Box3, check_empty: boolean = true): boolean {
+        if (check_empty && box.is_empty) return false;
         const p = Frustum3.#point;
         const near = this.near;
         {

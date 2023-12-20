@@ -5,6 +5,8 @@ import { Singletion } from "./singletions/Singletion";
 import { Node, Viewport } from "./nodes/Node";
 import type { World3D } from "./worlds/world3ds/World3D";
 
+const arr = new Array(10000);
+
 export class SceneTree {
     private readonly input_action_map: ShortCutActionMap = new ShortCutActionMap();
     private readonly root: Node;

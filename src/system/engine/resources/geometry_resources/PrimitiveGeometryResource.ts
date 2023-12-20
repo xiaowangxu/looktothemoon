@@ -168,9 +168,10 @@ export class BoxGeometryResource extends GeometryResource {
                 normal: normal_buffer,
                 uv: uv_buffer,
             },
-            index_buffer
+            index_buffer,
+            36,
+            box3(vec3(-half_w, -half_h, -half_d), vec3(half_w, half_h, half_d))
         );
-        this.geometry.set_BBox(box3(vec3(-half_w, -half_h, -half_d), vec3(half_w, half_h, half_d)));
     }
 }
 
@@ -287,6 +288,9 @@ export class TorusGeometryResource extends GeometryResource {
         index_buffer.commit_Data();
 
         // build geometry
+
+        const outer_radius = radius + tube_radius;
+
         this.geometry.set_Geometry(
             RenderStatePrimitiveType.Triangles,
             {
@@ -294,14 +298,12 @@ export class TorusGeometryResource extends GeometryResource {
                 normal: normal_buffer,
                 uv: uv_buffer,
             },
-            index_buffer
+            index_buffer,
+            index_count,
+            box3(
+                vec3(-outer_radius, -outer_radius, -tube_radius),
+                vec3(outer_radius, outer_radius, tube_radius),
+            )
         );
-
-        const outer_radius = radius + tube_radius;
-
-        this.geometry.set_BBox(box3(
-            vec3(-outer_radius, -outer_radius, -tube_radius),
-            vec3(outer_radius, outer_radius, tube_radius),
-        ));
     }
 }

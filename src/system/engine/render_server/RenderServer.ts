@@ -9,6 +9,9 @@ import { RenderServerLightsData } from "./RenderServerLightData";
 import { RenderServerGeometry } from "./RenderServerGeometry";
 import { RenderServerShader } from "./RenderServerShader";
 import { RenderServerMaterial } from "./RenderServerMaterial";
+import { RenderDeviceMatrix4AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
+import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
+import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 
 const vertex_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Vertex, undefined, undefined, undefined, undefined, '');
 const frag_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Fragment, undefined, undefined, undefined, undefined, '');
@@ -24,7 +27,12 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     public static readonly LightsClusterTextureUnit: number = 3;
     public static readonly SkyTextureUnit: number = 4;
 
-    public readonly empty_texture: Ref<WebGL2RenderStateTexture> = new Ref();
+    public readonly identity_transform_attribute_buffer_ref: Ref<RenderDeviceMatrix4AttributeBuffer<WebGL2RenderState>> = new Ref();
+    public get identity_transform_attribute_buffer() { return this.identity_transform_attribute_buffer_ref.expect; }
+
+    public readonly empty_texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
+    public get empty_texture() { return this.empty_texture_ref.expect; }
+
     public readonly plain_color_textures = {
         white: new Ref<WebGL2RenderStateTexture>(),
         black: new Ref<WebGL2RenderStateTexture>(),
@@ -38,14 +46,19 @@ export class RenderServerDevice extends WebGL2RenderDevice {
 
     constructor(canvas: RDCanvas) {
         super(canvas, { preserve_texture_count: 6 });
+        this.setup_IdentityTransformAttributeBuffer();
         this.setup_WorldUniformBuffer();
         this.setup_EmptyTexture();
         this.setup_PlainColorTextures();
     }
 
+    private setup_IdentityTransformAttributeBuffer() {
+        this.identity_transform_attribute_buffer_ref.value = new RenderDeviceMatrix4AttributeBuffer(this, RenderStateBufferUsage.StaticDraw, [Matrix4.make_Identity()], 1);
+    }
+
     private setup_EmptyTexture() {
         const texture = this.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-        this.empty_texture.value = texture;
+        this.empty_texture_ref.value = texture;
         this.render_state.alloc_Texture2D(texture, 2, 2, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([
             255, 0, 255, 255,
             0, 255, 255, 255,
@@ -137,7 +150,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
 
     public dispose(): void {
         this.world_uniform_buffer.clear();
-        this.empty_texture.clear();
+        this.empty_texture_ref.clear();
         this.lights_data_ref.clear();
         this.plain_color_textures.white.clear();
         this.plain_color_textures.black.clear();

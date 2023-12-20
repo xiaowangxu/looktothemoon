@@ -8,6 +8,7 @@ import { Ref, RefArray } from "@/system/utils/RefCounted";
 import { type RenderDeviceIndexAttributeBuffer, RenderDeviceAttributeBuffer, RenderDeviceAttributeBufferView } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { type RenderState, type RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
+import { SignalEmitter } from "@/system/utils/SignalEmitter";
 
 const RenderServerGeometryAttributeLoctions = {
     position: 0,
@@ -16,10 +17,12 @@ const RenderServerGeometryAttributeLoctions = {
     color: 3,
     uv: 4,
     uv2: 5,
-    instance_matrix: 6,
-    instance_matrix1: 7,
-    instance_matrix2: 8,
-    instance_matrix3: 9,
+    instance_transform: 6,
+    instance_transform1: 7,
+    instance_transform2: 8,
+    instance_transform3: 9,
+    uv3: 10,
+    uv4: 11,
 };
 
 type RenderServerGeometryArray<RS extends RenderState<RS>, Buffer extends RenderStateBuffer<RS> = RenderStateBuffer<RS>> = {
@@ -37,14 +40,14 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
     protected vertex_array_attributes_map: Map<string, { attribute: Ref<RenderDeviceAttributeBuffer<WebGL2RenderState>>, location: number }> = new Map();
     protected readonly vertex_array_ref: Ref<WebGL2RenderStateVertexArray> = new Ref();
     protected vertex_array_index_ref: Ref<IndexAttributeBuffer> = new Ref();
-    protected readonly vertex_array_groups_ref: RefArray<WebGL2RenderStateVertexArrayView> = new RefArray();
+    public readonly vertex_array_groups_ref: RefArray<WebGL2RenderStateVertexArrayView> = new RefArray();
     protected _bbox: Box3 = new Box3();
 
     public get vertex_array() { return this.vertex_array_ref.expect; }
 
     public get is_indexed() { return !this.vertex_array_index_ref.is_empty; }
     public get has_geometry() { return !this.vertex_array_ref.is_empty; }
-    public get has_surface() { return !this.vertex_array_ref.is_empty; }
+    public get has_surface() { return this.vertex_array_groups_ref.length > 0; }
     public get surface_count() {
         const length = this.vertex_array_groups_ref.length;
         if (length <= 0) return this.vertex_array_ref.is_empty ? 0 : 1;
@@ -52,11 +55,24 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
     }
     public get bbox() { return this._bbox; }
 
+    public instance_count: number = 1;
+
+    // signal
+    public readonly singal_bbox_changed: SignalEmitter<(bbox: Box3) => void> = new SignalEmitter();
+
     constructor(render_device: RenderServerDevice) {
         super(render_device);
     }
 
-    public clear_Geometry() {
+    public get_AttributeBuffer(name: string) {
+        return this.vertex_array_attributes_map.get(name)?.attribute.expect;
+    }
+
+    public get_IndexAttributeBuffer() {
+        return this.vertex_array_index_ref.value;
+    }
+
+    private clear_GeometryInternal() {
         this.vertex_array_groups_ref.clear();
         this.vertex_array_ref.clear();
         for (const attri of this.vertex_array_attributes_map.values()) {
@@ -66,11 +82,17 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
         this.vertex_array_index_ref.clear();
     }
 
+    public clear_Geometry() {
+        this.clear_GeometryInternal();
+        this._bbox.set(0, 0, 0, 0, 0, 0);
+        this.singal_bbox_changed.trigger(this._bbox);
+    }
+
     public clear_Surface(index: number) {
         this.vertex_array_groups_ref.remove(index);
     }
 
-    public set_Geometry(primitive_type: RenderStatePrimitiveType, array: RenderServerGeometryArray<WebGL2RenderState>, index?: IndexAttributeBuffer, vertex_count?: number) {
+    public set_Geometry(primitive_type: RenderStatePrimitiveType, array: RenderServerGeometryArray<WebGL2RenderState>, index?: IndexAttributeBuffer, vertex_count?: number, bbox?: Box3) {
         const count = index?.element_count ?? vertex_count;
         if (count === undefined) throw new Error('<RenderServerGeometry> set_Geometry: vertex count is known');
         const vertex_array = this.render_state.create_VertexArray(primitive_type, 0, count).expect();
@@ -90,12 +112,26 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
                 this.render_state.set_VertexArrayAttributeBuffer(vertex_array, location, _attribute.buffer as WebGL2RenderStateBuffer);
             }
         }
+        if (array.instance_transform === undefined) {
+            const location = RenderServerGeometryAttributeLoctions.instance_transform;
+            const attribute = (this.render_device as RenderServerDevice).identity_transform_attribute_buffer;
+            vertex_array_attributes_map.set('instance_transfrom', { attribute: new Ref(attribute), location });
+            attribute.bound_VertexArray(vertex_array, location);
+            attribute.toggle_VertexArray(vertex_array, location, true);
+        }
         const vertex_array_index_ref: Ref<IndexAttributeBuffer> = new Ref();
         if (index !== undefined) {
             vertex_array_index_ref.value = index;
             this.render_state.set_VertexArrayIndexBuffer(vertex_array, index.buffer as WebGL2RenderStateBuffer);
         }
-        this.clear_Geometry();
+        this.clear_GeometryInternal();
+        if (bbox !== undefined) {
+            this.set_BBox(bbox);
+        }
+        else {
+            this._bbox.set(0, 0, 0, 0, 0, 0);
+            this.singal_bbox_changed.trigger(this._bbox);
+        }
         this.vertex_array_attributes_map = vertex_array_attributes_map;
         this.vertex_array_index_ref = vertex_array_index_ref;
         this.vertex_array_ref.value = vertex_array;
@@ -108,10 +144,12 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
     }
 
     public set_BBox(bbox: Box3) {
-        this._bbox = bbox;
+        this._bbox.copy(bbox);
+        this.singal_bbox_changed.trigger(this._bbox);
     }
 
     public dispose(): void {
-        this.clear_Geometry();
+        this.clear_GeometryInternal();
+        this.singal_bbox_changed.clear();
     }
 }

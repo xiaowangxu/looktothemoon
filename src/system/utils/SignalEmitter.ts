@@ -4,42 +4,52 @@ export interface SignalBindOption {
 
 export class SignalEmitter<T extends (...args: any[]) => void> {
 
-    private readonly callbacks: Map<symbol, T> = new Map();
-    private readonly callbacks_once: Map<symbol, T> = new Map();
+    private has_callbacks: boolean = false;
+    private readonly callbacks: Set<T> = new Set();
+    private has_callbacks_once: boolean = false;
+    private readonly callbacks_once: Set<T> = new Set();
 
     constructor() { }
 
     public connect(callback: T, option?: SignalBindOption) {
-        const sym = Symbol();
         const { once = false } = option ?? {};
-        let f: T = callback;
         if (once) {
-            this.callbacks_once.set(sym, f);
+            this.callbacks_once.add(callback);
+            this.has_callbacks_once = true;
         }
         else {
-            this.callbacks.set(sym, f);
+            this.callbacks.add(callback);
+            this.has_callbacks = true;
         }
-        return sym;
     }
 
-    public disconnect(sym: symbol) {
-        this.callbacks.delete(sym);
-        this.callbacks_once.delete(sym);
+    public disconnect(callback: T) {
+        this.callbacks.delete(callback);
+        this.callbacks_once.delete(callback);
+        this.has_callbacks = this.callbacks.size > 0;
+        this.has_callbacks_once = this.callbacks_once.size > 0;
     }
 
     public trigger(...args: Parameters<T>) {
-        for (const callback of this.callbacks.values()) {
-            callback(...args);
+        if (this.has_callbacks) {
+            for (const callback of this.callbacks) {
+                callback(...args);
+            }
         }
-        for (const callback of this.callbacks_once.values()) {
-            callback(...args);
+        if (this.has_callbacks_once) {
+            for (const callback of this.callbacks_once) {
+                callback(...args);
+            }
+            this.callbacks_once.clear();
+            this.has_callbacks_once = false;
         }
-        this.callbacks_once.clear();
     }
 
     public clear() {
         this.callbacks.clear();
         this.callbacks_once.clear();
+        this.has_callbacks = false;
+        this.has_callbacks_once = false;
     }
 
     public wait(): Promise<Parameters<T>> {

@@ -14,6 +14,14 @@ import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
 import { BoxGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
 import { EasingType, PropertyTween, TransitionType } from "@/system/engine/Tween";
+import { Ref } from "@/system/utils/RefCounted";
+import { GeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
+import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
+import { box3 } from "@/system/fivepebble/geometries/Box3";
+import { RenderDeviceMatrix4AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
+import { RenderServer } from "@/system/engine/render_server/RenderServer";
+import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
+import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -30,7 +38,6 @@ EditorViewportContainer.add_Child(EditorViewport);
 const EditorCamera = new EditorOrbitCamera3D();
 EditorViewport.add_Child(EditorCamera);
 EditorCamera.set_Zoom(0.3);
-EditorCamera.zoom_to_cursor = false;
 
 // World 
 const World = new Node3D();
@@ -71,17 +78,47 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut([
 // EditorViewport.add_Child(EditorViewportContainer0);
 
 // Box
-const geometry = new TorusGeometryResource();
+const geometry = new BoxGeometryResource();
 
-for (let i = 0; i <= 50; i++) {
-    for (let j = 0; j <= 50; j++) {
-        const Mesh2 = new MeshInstance3D();
-        Mesh2.geometry = geometry;
-        Mesh2.local_scale = vec3(10, 10, 10);
-        Mesh2.local_position = vec3((i / 100 * 2 - 1) * 2000, (j / 100 * 2 - 1) * 2000, 0);
-        World.add_Child(Mesh2);
+const instance_transform = new RenderDeviceMatrix4AttributeBuffer(RenderServer, RenderStateBufferUsage.DynamicDraw, 100 * 100, 1);
+const multi_geometry = new GeometryResource();
+multi_geometry.geometry.set_Geometry(
+    RenderStatePrimitiveType.Triangles,
+    {
+        position: geometry.geometry.get_AttributeBuffer('position')!,
+        normal: geometry.geometry.get_AttributeBuffer('normal')!,
+        uv: geometry.geometry.get_AttributeBuffer('uv')!,
+        instance_transform
+    },
+    geometry.geometry.get_IndexAttributeBuffer()!,
+    undefined,
+    box3(vec3(-1000, -1000, -1000), vec3(1000, 1000, 1000))
+);
+multi_geometry.geometry.instance_count = instance_transform.item_count;
+
+const Mesh2 = new MeshInstance3D();
+Mesh2.geometry = multi_geometry;
+World.add_Child(Mesh2);
+
+for (let i = 0; i < 100; i++) {
+    for (let j = 0; j < 100; j++) {
+        const id = i * 100 + j;
+        const mat = Matrix4.from_BasisPosition(Matrix3.make_Scale(5, 5, 5), vec3((i / 100 * 2 - 1) * 1000, (j / 100 * 2 - 1) * 1000, 0));
+        instance_transform.update_Data(mat, id, false);
     }
 }
+instance_transform.commit_Data();
+console.log(instance_transform);
+
+// for (let i = 0; i <= 0; i++) {
+//     for (let j = 0; j <= 0; j++) {
+//         const Mesh2 = new MeshInstance3D();
+//         Mesh2.geometry = multi_geometry;
+//         Mesh2.local_scale = vec3(10, 10, 10);
+//         // Mesh2.local_position = vec3((i / 100 * 2 - 1) * 2000, (j / 100 * 2 - 1) * 2000, 0);
+//         World.add_Child(Mesh2);
+//     }
+// }
 
 // // viewport 1
 // const EditorViewportContainer1 = new ViewportDomContainer();
@@ -103,20 +140,21 @@ for (let i = 0; i <= 50; i++) {
 // EditorViewport2.add_Child(EditorCamera2);
 // EditorViewport.add_Child(EditorViewportContainer2);
 
-// EditorViewport.signal_input.connect((evt, pro) => {
-//     if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {
-//         Mesh.local_position = vec3();
-//         EditorSceneTree.start_Tween(
-//             new PropertyTween(
-//                 Mesh,
-//                 'local_position',
-//                 vec3(-100, -100, -100),
-//                 2, TransitionType.Bounce, EasingType.Out
-//             )
-//         );
-//         // EditorViewport.get_World3D()?.get_VisualWorld().cube_material2.expect.set_UniformOverride('u_color', new Vector4(Math.random(), Math.random(), Math.random(), 1.0))
-//     }
-// });
+EditorViewport.signal_input.connect((evt, pro) => {
+    if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {
+        // for (const mesh of World.children) {
+        //     const m = mesh as MeshInstance3D;
+        //     EditorSceneTree.start_Tween(
+        //         new PropertyTween(
+        //             m as MeshInstance3D,
+        //             'local_position',
+        //             vec3(m.local_position.x, m.local_position.y, (Math.random() * 2 - 1) * 1000),
+        //             2, TransitionType.Bounce, EasingType.Out
+        //         )
+        //     );
+        // }
+    }
+});
 
 // EditorViewport0.signal_input.connect((evt, pro) => {
 //     if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {

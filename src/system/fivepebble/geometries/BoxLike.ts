@@ -10,4 +10,6 @@ export interface BoxLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLik
     get is_empty(): boolean;
 
     enlarge(amount: number): BoxLike<Vec, Mat>;
+
+    copy(b: BoxLike<Vec, Mat>): BoxLike<Vec, Mat>;
 }
