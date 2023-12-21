@@ -675,6 +675,26 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = b.n44;
         return this;
     }
+    clone(): Matrix4 {
+        return new Matrix4(
+            this.n11,
+            this.n12,
+            this.n13,
+            this.n14,
+            this.n21,
+            this.n22,
+            this.n23,
+            this.n24,
+            this.n31,
+            this.n32,
+            this.n33,
+            this.n34,
+            this.n41,
+            this.n42,
+            this.n43,
+            this.n44,
+        );
+    }
 }
 
 export function mat4(n11: number, n12: number, n13: number, n14: number,

@@ -5,7 +5,6 @@ import { Matrix4 } from "../../../fivepebble/linear_algebra/Matrix4";
 import { Matrix3 } from "../../../fivepebble/linear_algebra/Matrix3";
 import { Node, NodeNotification } from "../Node";
 
-
 export class Node3D extends Node {
     public static readonly class_name: string = "Node3D";
 

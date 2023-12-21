@@ -1,17 +1,21 @@
 import { clamp, is_ApproxEqual } from "../Scalar";
 import { Matrix3 } from "./Matrix3";
 import type { Quaternion } from "./Quaternion";
-import { Vector3 } from "./Vector3";
 
 export enum EulerOrder {
     XYZ, YXZ, ZXY, ZYX, YZX, XZY
 }
 
-export class Euler extends Vector3 {
+export class Euler {
+    public x: number;
+    public y: number;
+    public z: number;
     public order: EulerOrder;
 
     constructor(x: number = 0, y: number = 0, z: number = 0, order: EulerOrder = EulerOrder.XYZ) {
-        super(x, y, z);
+        this.x = x;
+        this.y = y;
+        this.z = z;
         this.order = order;
     }
 
@@ -160,6 +164,9 @@ export class Euler extends Vector3 {
         this.y = b.y;
         this.z = b.z;
         this.order = b.order;
+    }
+    public clone(): Euler {
+        return new Euler(this.x, this.y, this.z, this.order);
     }
 }
 

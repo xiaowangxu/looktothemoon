@@ -266,6 +266,14 @@ export class Matrix2 implements MatrixLike<Matrix2> {
         this.n21 = b.n21; this.n22 = b.n22;
         return this;
     }
+    clone(): Matrix2 {
+        return new Matrix2(
+            this.n11,
+            this.n12,
+            this.n21,
+            this.n22,
+        );
+    }
 }
 
 export function mat2(n11: number, n12: number, n21: number, n22: number) {

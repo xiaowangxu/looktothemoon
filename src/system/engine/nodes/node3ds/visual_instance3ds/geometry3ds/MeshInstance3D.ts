@@ -38,6 +38,36 @@ export class MeshInstance3D extends GeometryInstance3D {
         }
     }
 
+    private _surface_materials_map: Map<number, Ref<MaterialResource>> = new Map();
+    public set_SurfaceMaterial(surface_idx: number, material: MaterialResource | undefined) {
+        if (surface_idx < 0) return;
+        if (this._surface_materials_map.has(surface_idx)) {
+            const old_material_ref = this._surface_materials_map.get(surface_idx)!;
+            if (material === undefined) {
+                old_material_ref.clear();
+                this._surface_materials_map.delete(surface_idx);
+            }
+            else {
+                old_material_ref.value = material;
+            }
+            if (this.mesh_rid !== undefined) {
+                const visual_world = this.get_Viewport()?.get_World3D()?.get_VisualWorld();
+                if (visual_world !== undefined) {
+                    visual_world.set_MeshSurfaceMaterial(this.mesh_rid, surface_idx, material);
+                }
+            }
+        }
+        else if (material !== undefined) {
+            this._surface_materials_map.set(surface_idx, new Ref(material));
+            if (this.mesh_rid !== undefined) {
+                const visual_world = this.get_Viewport()?.get_World3D()?.get_VisualWorld();
+                if (visual_world !== undefined) {
+                    visual_world.set_MeshSurfaceMaterial(this.mesh_rid, surface_idx, material);
+                }
+            }
+        }
+    }
+
     protected on_VisualLayerChanged(): void {
         if (this.mesh_rid !== undefined) {
             const visual_world = this.get_Viewport()?.get_World3D()?.get_VisualWorld();
@@ -78,6 +108,9 @@ export class MeshInstance3D extends GeometryInstance3D {
                         if (this.material !== undefined) {
                             visual_world.set_MeshMaterialOverride(this.mesh_rid, this.material);
                         }
+                        for (const [surface_idx, material] of this._surface_materials_map.entries()) {
+                            visual_world.set_MeshSurfaceMaterial(this.mesh_rid, surface_idx, material.expect);
+                        }
                         visual_world.set_MeshLayer(this.mesh_rid, this.visual_layer);
                         // visual_world.set_MeshCastShadow(this.mesh_rid, this.cast_shadow);
                         // visual_world.set_MeshReceiveShadow(this.mesh_rid, this.receive_shadow);
@@ -110,6 +143,10 @@ export class MeshInstance3D extends GeometryInstance3D {
             case NodeNotification.Dispose: {
                 this._geometry.clear();
                 this._material_override.clear();
+                for (const value of this._surface_materials_map.values()) {
+                    value.clear();
+                }
+                this._surface_materials_map.clear();
                 break;
             }
         }

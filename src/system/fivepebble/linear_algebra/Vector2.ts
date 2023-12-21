@@ -208,6 +208,9 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
         this.y = b.y;
         return this;
     }
+    clone(): Vector2 {
+        return new Vector2(this.x, this.y);
+    }
 }
 
 export function vec2(x: number = 0, y: number = 0) {

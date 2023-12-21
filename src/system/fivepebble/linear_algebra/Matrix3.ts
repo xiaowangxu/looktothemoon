@@ -458,15 +458,31 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         this.n31 = b.n31; this.n32 = b.n32; this.n33 = b.n33;
         return this;
     }
+    clone(): Matrix3 {
+        return new Matrix3(
+            this.n11,
+            this.n21,
+            this.n31,
+            this.n12,
+            this.n22,
+            this.n32,
+            this.n13,
+            this.n23,
+            this.n33,
+        );
+    }
+
+    static #rotation_scale_decompose: [Euler, Vector3] = [new Euler(), new Vector3()];
 
     public get_RotationScale(order: EulerOrder = EulerOrder.XYZ): [Euler, Vector3] {
         const n11 = this.n11, n21 = this.n21, n31 = this.n31;
         const n12 = this.n12, n22 = this.n22, n32 = this.n32;
         const n13 = this.n13, n23 = this.n23, n33 = this.n33;
+        const vec = new Vector3();
         const scale = new Vector3(
-            new Vector3(n11, n21, n31).length,
-            new Vector3(n12, n22, n32).length,
-            new Vector3(n13, n23, n33).length,
+            vec.set(n11, n21, n31).length,
+            vec.set(n12, n22, n32).length,
+            vec.set(n13, n23, n33).length,
         );
         const euler = Euler.from_RotateMatrix(
             new Matrix3(
@@ -476,7 +492,9 @@ export class Matrix3 implements MatrixLike<Matrix3> {
             ),
             order
         );
-        return [euler, scale];
+        Matrix3.#rotation_scale_decompose[0] = euler;
+        Matrix3.#rotation_scale_decompose[1] = scale;
+        return Matrix3.#rotation_scale_decompose;
     }
 }
 

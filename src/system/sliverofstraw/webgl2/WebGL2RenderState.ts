@@ -1059,7 +1059,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
                 const uniform = data as WebGL2RenderStateTextureUniformSlot;
                 const sampled_texture = uniform.sampled_texture;
                 const slot = this.get_SampledTextureSlot(sampled_texture);
-                // console.log("use texture slot", slot);
+                console.log("use texture slot", slot);
                 this.gl.uniform1i(uniform_location, slot);
                 return;
             }

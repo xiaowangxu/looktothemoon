@@ -21,8 +21,6 @@ const RenderServerGeometryAttributeLoctions = {
     instance_transform1: 7,
     instance_transform2: 8,
     instance_transform3: 9,
-    uv3: 10,
-    uv4: 11,
 };
 
 type RenderServerGeometryArray<RS extends RenderState<RS>, Buffer extends RenderStateBuffer<RS> = RenderStateBuffer<RS>> = {
@@ -37,22 +35,28 @@ type RenderServerGeometryArray<RS extends RenderState<RS>, Buffer extends Render
 type IndexAttributeBuffer = RenderDeviceIndexAttributeBuffer<WebGL2RenderState> | RenderDeviceAttributeBufferView<WebGL2RenderState, RenderStateBuffer<WebGL2RenderState>, RenderDeviceIndexAttributeBuffer<WebGL2RenderState>>;
 
 export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> {
+
+    public static readonly GeometryAttributesCode = `layout(location = 0) in vec3 a_position;
+    layout(location = 1) in vec3 a_normal;
+    layout(location = 2) in vec3 a_tangent;
+    layout(location = 3) in vec3 a_color;
+    layout(location = 4) in vec2 a_uv;
+    layout(location = 5) in vec2 a_uv2;
+    layout(location = 6) in mat4 a_instance_transform;`;
+
     protected vertex_array_attributes_map: Map<string, { attribute: Ref<RenderDeviceAttributeBuffer<WebGL2RenderState>>, location: number }> = new Map();
     protected readonly vertex_array_ref: Ref<WebGL2RenderStateVertexArray> = new Ref();
     protected vertex_array_index_ref: Ref<IndexAttributeBuffer> = new Ref();
     public readonly vertex_array_groups_ref: RefArray<WebGL2RenderStateVertexArrayView> = new RefArray();
     protected _bbox: Box3 = new Box3();
 
-    public get vertex_array() { return this.vertex_array_ref.expect; }
+    public get_Geometry() { return this.vertex_array_ref.value; }
+    public get_Surface(index: number) { return this.vertex_array_groups_ref.get(index, false); }
 
     public get is_indexed() { return !this.vertex_array_index_ref.is_empty; }
     public get has_geometry() { return !this.vertex_array_ref.is_empty; }
     public get has_surface() { return this.vertex_array_groups_ref.length > 0; }
-    public get surface_count() {
-        const length = this.vertex_array_groups_ref.length;
-        if (length <= 0) return this.vertex_array_ref.is_empty ? 0 : 1;
-        return length;
-    }
+    public get surface_count() { return this.vertex_array_groups_ref.length; }
     public get bbox() { return this._bbox; }
 
     public instance_count: number = 1;

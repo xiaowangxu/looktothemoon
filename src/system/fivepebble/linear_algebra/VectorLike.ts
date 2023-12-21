@@ -65,4 +65,5 @@ export interface VectorLike<Vec extends VectorLike<Vec, Mat>, Mat extends Matrix
     equal(b: Vec): boolean;
     set(...args: number[]): Vec;
     copy(b: Vec): Vec;
+    clone(): Vec;
 }

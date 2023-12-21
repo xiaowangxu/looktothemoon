@@ -53,4 +53,5 @@ export interface MatrixLike<Mat extends MatrixLike<Mat>> {
     equal(b: Mat): boolean;
     set(...args: number[]): Mat;
     copy(b: Mat): Mat;
+    clone(): Mat;
 }

@@ -58,6 +58,8 @@ import { ImageLoader } from "../loaders/ImageLoader";
 import type { RenderServerGeometry } from "../render_server/RenderServerGeometry";
 import type { RenderServerMaterial } from "../render_server/RenderServerMaterial";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
+import { RenderServerShaderPass } from "../render_server/RenderServerShader";
+import type { WebGL2RenderStateVertexArray, WebGL2RenderStateVertexArrayView } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateVertexArray";
 new ImageLoader().parse(skybox_url).then(res => {
 	const image_res = res.expect();
 	const { width, height, image_data } = image_res;
@@ -168,9 +170,69 @@ uniform_sky_slot.commit();
 
 // #endregion
 
+export class Renderer3DQueue {
+	public readonly solid_max_count: number;
+	public readonly solid_geometry_queue: Array<WebGL2RenderStateVertexArray | WebGL2RenderStateVertexArrayView | undefined>;
+	public readonly solid_indexed_queue: Array<boolean>;
+	public readonly solid_instance_count_queue: Array<number>;
+	public readonly solid_material_queue: Array<RenderServerMaterial | undefined>;
+	public readonly solid_transform_queue: Array<Matrix4>;
+	public readonly solid_layer_queue: Array<number>;
+
+	private last_solid_pointer: number = -1;
+	public solid_pointer: number = -1;
+
+	public get is_solid_full() { return this.solid_max_count <= 0 || this.solid_pointer >= this.solid_max_count; }
+
+	constructor(solid_preserved: number = 65536) {
+		this.solid_max_count = solid_preserved;
+		this.solid_geometry_queue = new Array(solid_preserved);
+		this.solid_indexed_queue = new Array(solid_preserved);
+		this.solid_instance_count_queue = new Array(solid_preserved);
+		this.solid_material_queue = new Array(solid_preserved);
+		this.solid_transform_queue = new Array(solid_preserved);
+		this.solid_layer_queue = new Array(solid_preserved);
+		for (let i = 0; i < 65536; i++) {
+			this.solid_geometry_queue[i] = undefined;
+			this.solid_indexed_queue[i] = false;
+			this.solid_instance_count_queue[i] = 1;
+			this.solid_material_queue[i] = undefined;
+			this.solid_transform_queue[i] = Matrix4.make_Identity();
+			this.solid_layer_queue[i] = 0xffffffff;
+		}
+	}
+
+	public add(vertex_array: WebGL2RenderStateVertexArray | WebGL2RenderStateVertexArrayView, material: RenderServerMaterial, indexed: boolean, instance_count: number, transform: Matrix4, layer: number) {
+		if (this.is_solid_full) return;
+		this.solid_pointer++;
+		this.solid_geometry_queue[this.solid_pointer] = vertex_array;
+		this.solid_indexed_queue[this.solid_pointer] = indexed;
+		this.solid_instance_count_queue[this.solid_pointer] = instance_count;
+		this.solid_material_queue[this.solid_pointer] = material;
+		this.solid_transform_queue[this.solid_pointer].copy(transform);
+		this.solid_layer_queue[this.solid_pointer] = layer;
+	}
+
+	public reset() {
+		if (this.last_solid_pointer > this.solid_pointer) {
+			this.solid_geometry_queue.fill(undefined, this.solid_pointer + 1, this.last_solid_pointer + 1);
+			this.solid_material_queue.fill(undefined, this.solid_pointer + 1, this.last_solid_pointer + 1);
+		}
+		this.last_solid_pointer = this.solid_pointer;
+		this.solid_pointer = -1;
+	}
+
+	public dispose() {
+		this.solid_geometry_queue.fill(undefined, 0, this.solid_max_count);
+		this.solid_material_queue.fill(undefined, 0, this.solid_max_count);
+	}
+}
+
 export class Renderer3D {
 	public readonly canvas: HTMLCanvasElement;
 	private readonly ctx: CanvasRenderingContext2D;
+
+	private readonly render_queue_1 = new Renderer3DQueue();
 
 	private readonly frame_buffer_prez: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
 	private readonly frame_buffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
@@ -224,6 +286,8 @@ export class Renderer3D {
 		this.frame_buffer_copy.value = frame_buffer_copy;
 
 		this.fps_array.fill(0);
+
+		console.log(this.render_queue_1);
 	}
 
 	public resize(width: number, height: number) {
@@ -281,6 +345,19 @@ export class Renderer3D {
 			}
 		}
 
+		// fill up render queue
+		let total_objects_count = 0;
+		let rendered_objects_count = 0;
+		this.render_queue_1.reset();
+		for (const mesh of world_3d.meshes) {
+			total_objects_count++;
+			const layer = mesh.layer;
+			const bbox = mesh.bbox;
+			const visible = mesh.visible;
+			if (!visible || (layer & cam_mask) === 0 || !cam_frustum.contain_Box(bbox, false)) continue;
+			rendered_objects_count++;
+			mesh.fill_RenderQueue(this.render_queue_1);
+		}
 
 		// draw scene
 		RS.render_state.set_ViewportProxy(0, 0, x, y);
@@ -291,37 +368,34 @@ export class Renderer3D {
 		RS.render_state.set_CapabilityProxy(RS.render_state.gl.CULL_FACE, true);
 		RS.render_state.clear_FrameBuffer(this.frame_buffer.expect, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth);
 
-		// prepare render queue
-		let total_objects_count = 0;
-		let rendered_objects_count = 0;
-		const mat = world_3d.cube_material1.expect;
-		for (const mesh of world_3d.meshes) {
-			total_objects_count++;
-			const { layer, bbox, global_transform, visible } = mesh;
-			if (!visible || !mesh.has_geometry) continue;
-			if ((layer & cam_mask) !== 0 && cam_frustum.contain_Box(bbox, false)) {
-				rendered_objects_count++;
-				mat.set_UniformOverride('model_world', global_transform);
-				mat.set_UniformOverride('layer', layer);
-				mat.commit_AllUniformOverride('shading');
-				const geometry = mesh.geometry_ref.expect;
-				if (geometry.is_indexed) {
-					if (geometry.has_surface) {
-						RS.render_state.draw_Elements(mat.get_Program('shading')!, geometry.vertex_array_groups_ref.value![0]!, RenderStateDataType.UnsignedInt, geometry.instance_count);
-					}
-					else {
-						RS.render_state.draw_Elements(mat.get_Program('shading')!, geometry.vertex_array, RenderStateDataType.UnsignedInt, geometry.instance_count);
-					}
+		// render queue 1 solid
+		let draw_calls = 0;
+		for (let i = 0; i <= this.render_queue_1.solid_pointer; i++) {
+			const geometry = this.render_queue_1.solid_geometry_queue[i];
+			const indexed = this.render_queue_1.solid_indexed_queue[i];
+			const instance_count = this.render_queue_1.solid_instance_count_queue[i];
+			const material = this.render_queue_1.solid_material_queue[i];
+			const transform = this.render_queue_1.solid_transform_queue[i];
+			const layer = this.render_queue_1.solid_layer_queue[i];
+			if (material === undefined) continue;
+			const program = material.get_Program(RenderServerShaderPass.Shade);
+			if (geometry !== undefined && program !== undefined) {
+				material.set_UniformOverride('model_world', transform);
+				material.set_UniformOverride('layer', layer);
+				material.commit_AllUniformOverride(RenderServerShaderPass.Shade);
+				draw_calls++;
+				if (indexed) {
+					RS.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
 				}
 				else {
-					RS.render_state.draw_Arrays(mat.get_Program('shading')!, geometry.vertex_array, geometry.instance_count);
+					RS.render_state.draw_Arrays(program, geometry, instance_count);
 				}
 			}
 		}
 
 		// // draw sky
 		RS.render_state.set_DepthFuncProxy(RS.render_state.gl.LEQUAL);
-		RS.render_state.draw_Elements(skydome_program, quad_surface.vertex_array, RenderStateDataType.UnsignedInt, 1);
+		RS.render_state.draw_Elements(skydome_program, quad_surface.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
 
 		// blit
 		RS.render_state.blit_FrameBuffer(this.frame_buffer.expect, this.frame_buffer_copy.expect, RenderStateFrameBufferPart.Color, RenderStateTextureMagFilter.Nearest, 0, 0, x, y);
@@ -332,22 +406,15 @@ export class Renderer3D {
 		RS.render_state.set_ViewportProxy(0, 0, x, y);
 		RS.render_state.set_ScissorProxy(0, 0, x, y);
 		RS.render_state.clear_FrameBuffer(undefined, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth);
-		RS.render_state.draw_Elements(onscreen_program, quad_surface.vertex_array, RenderStateDataType.UnsignedInt, 1);
+		RS.render_state.draw_Elements(onscreen_program, quad_surface.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+
+		this.ctx.globalCompositeOperation = 'source-over';
+		this.ctx.drawImage(RS.canvas, 0, RS.canvas.height - y, x, y, 0, 0, x, y);
 
 		const fps = 1 / viewport.get_SceneTree()!.delta;
 		this.fps_array[this.fps_pointer++] = fps;
 		this.fps_pointer %= this.fps_array.length;
 
-		this.ctx.globalCompositeOperation = 'source-over';
-		this.ctx.drawImage(RS.canvas, 0, RS.canvas.height - y, x, y, 0, 0, x, y);
-		this.ctx.font = '20px consolas';
-		this.ctx.fillStyle = 'white';
-		this.ctx.textBaseline = 'hanging';
-		this.ctx.globalCompositeOperation = 'difference';
-		this.ctx.fillText(`FrameDelta: ${viewport.get_SceneTree()!.delta.toFixed(4)} ms`, 10, 10);
-		this.ctx.fillText(`RenderObjs: ${rendered_objects_count} / ${total_objects_count}`, 10, 30);
-
-		this.ctx.globalCompositeOperation = 'source-over';
 		const scale = 1;
 		this.ctx.beginPath();
 		this.ctx.moveTo(0, y);
@@ -370,6 +437,14 @@ export class Renderer3D {
 		this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
 		this.ctx.lineWidth = 1;
 		this.ctx.stroke();
+
+		this.ctx.font = '20px consolas';
+		this.ctx.fillStyle = 'white';
+		this.ctx.textBaseline = 'bottom';
+		this.ctx.globalCompositeOperation = 'difference';
+		this.ctx.fillText(`FrameDelta: ${viewport.get_SceneTree()!.delta.toFixed(4)} ms`, 10, y - 8);
+		this.ctx.fillText(`RenderObjs: ${rendered_objects_count} / ${total_objects_count}`, 10, y - 30);
+		this.ctx.fillText(`Draw Calls: ${draw_calls}`, 10, y - 55);
 	}
 
 	public dispose() {

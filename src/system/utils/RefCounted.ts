@@ -69,6 +69,22 @@ export class RefArray<T extends RefCounted> {
 
     public get length() { return this.refs.length; }
 
+    public get(index: number, as_ref: true): Ref<T> | undefined
+    public get(index: number, as_ref: false): T | undefined
+    public get(index: number, as_ref: true | false = true): Ref<T> | T | undefined {
+        const ref : Ref<T> | undefined = this.refs[index];
+        if (as_ref) return ref;
+        if (ref === undefined) return undefined;
+        else {
+            return ref.value;
+        }
+    }
+
+    public set(index: number, value: T | undefined) {
+        if (index < 0 || index >= this.length) return;
+        this.refs[index].value = value;
+    }
+
     constructor(items: (T | undefined)[] | undefined = undefined) {
         if (items !== undefined) {
             this.value = items;
@@ -84,6 +100,19 @@ export class RefArray<T extends RefCounted> {
     public clear() {
         this.unref_All();
         this.refs = [];
+    }
+
+    public resize(length: number) {
+        const current_length = this.length;
+        if (current_length === length) return;
+        else if (current_length < length) {
+            for (let i = current_length; i < length; i++) {
+                this.push(undefined);
+            }
+        }
+        else {
+            this.remove(length, current_length - length);
+        }
     }
 
     public push(item: T | undefined) {

@@ -2,7 +2,7 @@ import { GeometryResource } from "./GeometryResource";
 import { RenderServer } from "../../render_server/RenderServer";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceVector3AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
-import { type Vector3, vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { Vector3, vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { type Vector2, vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { box3 } from "@/system/fivepebble/geometries/Box3";
 import { Tau } from '@/system/fivepebble/Scalar';
@@ -41,6 +41,32 @@ export class BoxGeometryResource extends GeometryResource {
     constructor() {
         super();
         this.update_Geometry();
+    }
+
+    public set_Parameter(width?: number, height?: number, depth?: number) {
+        let changed = false;
+        if (width !== undefined) {
+            width = Math.max(width, 0);
+            if (this._width !== width) {
+                changed ||= true;
+                this._width = width;
+            }
+        }
+        if (height !== undefined) {
+            height = Math.max(height, 0);
+            if (this._height !== height) {
+                changed ||= true;
+                this._height = height;
+            }
+        }
+        if (depth !== undefined) {
+            depth = Math.max(depth, 0);
+            if (this._depth !== depth) {
+                changed ||= true;
+                this._depth = depth;
+            }
+        }
+        if (changed) this.update_Geometry();
     }
 
     public update_Geometry() {
@@ -172,6 +198,12 @@ export class BoxGeometryResource extends GeometryResource {
             36,
             box3(vec3(-half_w, -half_h, -half_d), vec3(half_w, half_h, half_d))
         );
+        this.geometry.add_Surface(0 * index_buffer.per_element_byte_count, 6);
+        this.geometry.add_Surface(6 * index_buffer.per_element_byte_count, 6);
+        this.geometry.add_Surface(12 * index_buffer.per_element_byte_count, 6);
+        this.geometry.add_Surface(18 * index_buffer.per_element_byte_count, 6);
+        this.geometry.add_Surface(24 * index_buffer.per_element_byte_count, 6);
+        this.geometry.add_Surface(30 * index_buffer.per_element_byte_count, 6);
     }
 }
 
@@ -218,6 +250,39 @@ export class TorusGeometryResource extends GeometryResource {
     constructor() {
         super();
         this.update_Geometry();
+    }
+
+    public set_Parameter(radius?: number, tube_radius?: number, segments?: number, tube_segments?: number) {
+        let changed = false;
+        if (radius !== undefined) {
+            radius = Math.max(radius, 0);
+            if (this._radius !== radius) {
+                changed ||= true;
+                this._radius = radius;
+            }
+        }
+        if (tube_radius !== undefined) {
+            tube_radius = Math.max(tube_radius, 0);
+            if (this._tube_radius !== tube_radius) {
+                changed ||= true;
+                this._tube_radius = tube_radius;
+            }
+        }
+        if (segments !== undefined) {
+            segments = Math.max(Math.floor(segments), 3);
+            if (this._segments !== segments) {
+                changed ||= true;
+                this._segments = segments;
+            }
+        }
+        if (tube_segments !== undefined) {
+            tube_segments = Math.max(Math.floor(tube_segments), 3);
+            if (this._tube_segments !== tube_segments) {
+                changed ||= true;
+                this._tube_segments = tube_segments;
+            }
+        }
+        if (changed) this.update_Geometry();
     }
 
     public update_Geometry() {
@@ -307,3 +372,158 @@ export class TorusGeometryResource extends GeometryResource {
         );
     }
 }
+
+// export class SphereGeometryResource extends GeometryResource {
+//     protected _radius: number = 1;
+//     protected _width_segments: number = 32;
+//     protected _height_Segments: number = 16;
+
+//     public get radius() { return this._radius; }
+//     public get width_segments() { return this._width_segments; }
+//     public get height_Segments() { return this._height_Segments; }
+
+//     public set radius(radius: number) {
+//         radius = Math.max(radius, 0);
+//         if (this._radius !== radius) {
+//             this._radius = radius;
+//             this.update_Geometry();
+//         }
+//     }
+//     public set width_segments(width_segments: number) {
+//         width_segments = Math.max(Math.floor(width_segments), 3);
+//         if (this._width_segments !== width_segments) {
+//             this._width_segments = width_segments;
+//             this.update_Geometry();
+//         }
+//     }
+//     public set height_Segments(height_Segments: number) {
+//         height_Segments = Math.max(Math.floor(height_Segments), 2);
+//         if (this._height_Segments !== height_Segments) {
+//             this._height_Segments = height_Segments;
+//             this.update_Geometry();
+//         }
+//     }
+
+//     constructor() {
+//         super();
+//         this.update_Geometry();
+//     }
+
+//     public set_Parameter(radius?: number, width_segments?: number, height_Segments?: number) {
+//         let changed = false;
+//         if (radius !== undefined) {
+//             radius = Math.max(radius, 0);
+//             if (this._radius !== radius) {
+//                 changed ||= true;
+//                 this._radius = radius;
+//             }
+//         }
+//         if (width_segments !== undefined) {
+//             width_segments = Math.max(Math.floor(width_segments), 3);
+//             if (this._width_segments !== width_segments) {
+//                 changed ||= true;
+//                 this._width_segments = width_segments;
+//             }
+//         }
+//         if (height_Segments !== undefined) {
+//             height_Segments = Math.max(Math.floor(height_Segments), 2);
+//             if (this._height_Segments !== height_Segments) {
+//                 changed ||= true;
+//                 this._height_Segments = height_Segments;
+//             }
+//         }
+//         if (changed) this.update_Geometry();
+//     }
+
+//     public update_Geometry() {
+//         // const radius = this.radius;
+//         // const width_segments = this.width_segments;
+//         // const height_segments = this.height_Segments;
+//         // const theta_start = 0;
+//         // const theta_end = Math.PI;
+//         // const theta_length = Math.PI;
+//         // const phi_start = 0;
+//         // const phi_length = Tau;
+
+//         // // buffers
+
+//         // const indices = [];
+//         // const vertices = [];
+//         // const normals = [];
+//         // const uvs = [];
+
+//         // // generate vertices, normals and uvs
+
+//         // const vertex_count = (width_segments + 1) * (height_segments + 1);
+
+//         // const position_buffer = new RenderDeviceVector3AttributeBuffer(RenderServer, RenderStateBufferUsage.StaticDraw, vertex_count);
+//         // const normal_buffer = new RenderDeviceVector3AttributeBuffer(RenderServer, RenderStateBufferUsage.StaticDraw, vertex_count);
+//         // const uv_buffer = new RenderDeviceVector2AttributeBuffer(RenderServer, RenderStateBufferUsage.StaticDraw, vertex_count);
+
+//         // const vertex = new Vector3();
+
+//         // for (let iy = 0; iy <= height_segments; iy++) {
+//         //     const verticesRow = [];
+//         //     const v = iy / height_segments;
+//         //     // special case for the poles
+//         //     let uOffset = 0;
+//         //     if (iy === 0 && theta_start === 0) {
+//         //         uOffset = 0.5 / width_segments;
+//         //     } else if (iy === height_segments && theta_end === Math.PI) {
+//         //         uOffset = - 0.5 / width_segments;
+//         //     }
+//         //     for (let ix = 0; ix <= width_segments; ix++) {
+//         //         const idx = iy * (width_segments + 1) + ix;
+//         //         const u = ix / width_segments;
+//         //         vertex.set(
+//         //             - radius * Math.cos(phi_start + u * phi_length) * Math.sin(theta_start + v * theta_length),
+//         //             radius * Math.cos(theta_start + v * theta_length),
+//         //             radius * Math.sin(phi_start + u * phi_length) * Math.sin(theta_start + v * theta_length)
+//         //         );
+//         //         // vertex
+//         //         position_buffer.data[idx * 3 + 0] = vertex.x;
+//         //         position_buffer.data[idx * 3 + 1] = vertex.y;
+//         //         position_buffer.data[idx * 3 + 2] = vertex.z;
+//         //         // normal
+//         //         vertex.normalizes(vertex);
+//         //         normal_buffer.data[idx * 3 + 0] = vertex.x;
+//         //         normal_buffer.data[idx * 3 + 1] = vertex.y;
+//         //         normal_buffer.data[idx * 3 + 2] = vertex.z;
+//         //         // uv
+
+//         //         uvs.push(u + uOffset, 1 - v);
+
+//         //         verticesRow.push(index++);
+
+//         //     }
+
+//         //     grid.push(verticesRow);
+
+//         // }
+
+//         // // indices
+
+//         // for (let iy = 0; iy < height_segments; iy++) {
+//         //     for (let ix = 0; ix < width_segments; ix++) {
+                
+//         //         const a = grid[iy][ix + 1];
+//         //         const b = grid[iy][ix];
+//         //         const c = grid[iy + 1][ix];
+//         //         const d = grid[iy + 1][ix + 1];
+
+//         //         if (iy !== 0 || theta_start > 0) indices.push(a, b, d);
+//         //         if (iy !== height_segments - 1 || theta_end < Math.PI) indices.push(b, c, d);
+
+//         //     }
+
+//         // }
+
+//         // // build geometry
+
+//         // this.setIndex(indices);
+//         // this.setAttribute('position', new Float32BufferAttribute(vertices, 3));
+//         // this.setAttribute('normal', new Float32BufferAttribute(normals, 3));
+//         // this.setAttribute('uv', new Float32BufferAttribute(uvs, 2));
+
+//     }
+// }

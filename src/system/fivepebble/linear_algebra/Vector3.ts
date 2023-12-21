@@ -231,6 +231,9 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         this.z = b.z;
         return this;
     }
+    clone(): Vector3 {
+        return new Vector3(this.x, this.y, this.z);
+    }
 
     public apply_Matrix4(mat: Matrix4) {
         // 0 4 8  12

@@ -4,6 +4,7 @@ import { Vector2 } from "../fivepebble/linear_algebra/Vector2";
 import { Vector3 } from "../fivepebble/linear_algebra/Vector3";
 import { Quaternion } from "../fivepebble/linear_algebra/Quaternion";
 import { SignalEmitter } from "../utils/SignalEmitter";
+import { Vector4 } from "../fivepebble/linear_algebra/Vector4";
 
 export class TweenBase {
     protected _started: boolean = false;
@@ -458,6 +459,9 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
             else if (this.target instanceof Vector3) {
                 this.lerp = PropertyTween.LerpFuncs.Vector3;
             }
+            else if (this.target instanceof Vector4) {
+                this.lerp = PropertyTween.LerpFuncs.Vector4;
+            }
             else {
                 throw new Error(`property '${String(this.key)}' is not lerpable`);
             }
@@ -491,6 +495,7 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
         },
         Vector2: (a: Vector2, b: Vector2, v: number) => a.lerp(b, v),
         Vector3: (a: Vector3, b: Vector3, v: number) => a.lerp(b, v),
+        Vector4: (a: Vector3, b: Vector3, v: number) => a.lerp(b, v),
     }
 }
 

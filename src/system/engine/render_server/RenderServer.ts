@@ -19,9 +19,22 @@ const frag_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Fragme
 export enum RenderServerPlainColorTexture { White, Black, Transparent, }
 
 export class RenderServerDevice extends WebGL2RenderDevice {
-    private static readonly WorldUniformsName: string = 'WorldUniforms';
-    private static readonly WorldUniformsItems: string[] = ['camera_world', 'camera_projection', 'screen_size', 'time', 'camera_is_orthogonal'];
+
+    public static readonly WorldUniformsCode = `uniform WorldUniforms {
+    mat4 camera_world;
+    mat4 camera_projection;
+    vec2 screen_size;
+    float time;
+    bool camera_is_orthogonal;
+};`
+
+    public static readonly FrameOutputBufferCode = `layout(location = 0) out vec4 o_color;
+layout(location = 1) out vec3 o_normal;`
+
+    public static readonly WorldUniformsName: string = 'WorldUniforms';
+    public static readonly WorldUniformsItems: string[] = ['camera_world', 'camera_projection', 'screen_size', 'time', 'camera_is_orthogonal'];
     public static readonly WorldUniformsUnit: number = 0;
+
     public static readonly EmptyTextureUnit: number = 1;
     public static readonly LightsTextureUnit: number = 2;
     public static readonly LightsClusterTextureUnit: number = 3;

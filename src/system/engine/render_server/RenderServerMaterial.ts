@@ -1,7 +1,7 @@
 import { RenderDeviceObject } from "@/system/sliverofstraw/RenderDeviceObject";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { Ref } from "@/system/utils/RefCounted";
-import type { RenderServerShader } from "./RenderServerShader";
+import type { RenderServerShader, RenderServerShaderPass } from "./RenderServerShader";
 import type { RenderServerDevice } from "./RenderServer";
 import { RenderStateUniformType } from "@/system/sliverofstraw/RenderState";
 import { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
@@ -10,14 +10,17 @@ import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
+import type { SignalEmitter } from "@/system/utils/SignalEmitter";
 
 type UniformOverrideValueType = number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined;
 type UniformOverrideType = Ref<WebGL2RenderStateTexture> | UniformOverrideValueType;
+export type RenderServerMaterialUniforms = { [name: string]: RenderStateUniformType };
 
 export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> {
     private readonly shader_ref: Ref<RenderServerShader> = new Ref();
     private uniforms_override: Map<string, { type: RenderStateUniformType, value: UniformOverrideType }> = new Map();
 
+    public get shader() { return this.shader_ref.expect; }
     public get has_shader() { return !this.shader_ref.is_empty; }
 
     constructor(render_device: RenderServerDevice) {
@@ -35,7 +38,12 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
         this.uniforms_override.clear();
     }
 
-    public set_Material(shader: RenderServerShader, uniforms: { [name: string]: RenderStateUniformType }) {
+    private clear_Material() {
+        this.shader_ref.clear();
+        this.clear_UniformOverride();
+    }
+
+    public set_Material(shader: RenderServerShader, uniforms: RenderServerMaterialUniforms) {
         this.shader_ref.value = shader;
         const uniform_override: Map<string, { type: RenderStateUniformType, value: UniformOverrideType | undefined }> = new Map();
         for (const [name, type] of Object.entries(uniforms)) {
@@ -67,8 +75,6 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
         this.uniforms_override = uniform_override;
     }
 
-    public set_UniformOverride(uniform: string, value: number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined): void
-    public set_UniformOverride(uniform: string, value: WebGL2RenderStateTexture | undefined): void
     public set_UniformOverride(uniform: string, value: WebGL2RenderStateTexture | number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined): void {
         if (!this.uniforms_override.has(uniform)) return;
         const uniform_override = this.uniforms_override.get(uniform)!
@@ -120,7 +126,7 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
         }
     }
 
-    public commit_AllUniformOverride(stage: string) {
+    public commit_AllUniformOverride(stage: RenderServerShaderPass) {
         if (!this.has_shader) return;
         const shader = this.shader_ref.expect;
         for (const [name, { type, value }] of this.uniforms_override.entries()) {
@@ -151,11 +157,12 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
         shader.commit_AllUniform(stage);
     }
 
-    public get_Program(stage: string) {
+    public get_Program(stage: RenderServerShaderPass) {
         return this.shader_ref.value?.get_Program(stage);
     }
 
     public dispose(): void {
-        this.clear_UniformOverride();
+        console.log(">>> dispose <RenderServerMaterial>");
+        this.clear_Material();
     }
 }
