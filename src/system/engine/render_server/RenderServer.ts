@@ -20,6 +20,10 @@ export enum RenderServerPlainColorTexture { White, Black, Transparent, }
 
 export class RenderServerDevice extends WebGL2RenderDevice {
 
+    public static readonly ConstantsCode =`const float PI = 3.1415926535;
+const float TAU = 6.283185307;
+const float EPSILON = 0.00001;`
+
     public static readonly WorldUniformsCode = `uniform WorldUniforms {
     mat4 camera_world;
     mat4 camera_projection;

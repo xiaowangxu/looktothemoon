@@ -20,6 +20,8 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
     private readonly shader_ref: Ref<RenderServerShader> = new Ref();
     private uniforms_override: Map<string, { type: RenderStateUniformType, value: UniformOverrideType }> = new Map();
 
+    public is_transparent: boolean = false;
+
     public get shader() { return this.shader_ref.expect; }
     public get has_shader() { return !this.shader_ref.is_empty; }
 

@@ -5,9 +5,10 @@ import { RenderServer, RenderServerDevice, RenderServerPlainColorTexture } from 
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import type { UniformInitSet } from "../../render_server/RenderServerShader";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
-import { vec4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import { Vector4, vec4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
-import { Color } from "@/system/fivepebble/graphics/Color";
+import type { Color } from "@/system/fivepebble/graphics/Color";
+import { Epsilon } from "@/system/fivepebble/Scalar";
 
 export class PlainColorMaterialResource extends MaterialResource {
 
@@ -22,9 +23,7 @@ export class PlainColorMaterialResource extends MaterialResource {
     precision highp usampler2DArray;
     precision highp sampler3D;
     
-    const float PI = 3.1415926535;
-    const float TAU = 6.283185307;
-    const float EPSILON = 0.00001;
+    ${RenderServerDevice.ConstantsCode}
     
     ${RenderServerDevice.WorldUniformsCode}
     
@@ -91,13 +90,14 @@ export class PlainColorMaterialResource extends MaterialResource {
 
     public get uniforms() { return PlainColorMaterialResource.#uniforms; }
 
-    private readonly _color: Color = new Color(1, 1, 1, 1);
+    private _color: Color = new Vector4(1, 1, 1, 1);
 
-    public get color() { return this._color.clone(); }
+    public get color() { return this._color; }
     public set color(color: Color) {
         if (!this._color.equal(color)) {
-            this._color.copy(color);
-            this.material.set_UniformOverride('u_color', this._color.clone());
+            this._color = color;
+            this.material.set_UniformOverride('u_color', this._color);
+            this.material.is_transparent = this._color.a < (1.0 - Epsilon);
         }
     }
 
@@ -126,6 +126,7 @@ export class PlainColorMaterialResource extends MaterialResource {
             }
         );
         this.material.set_Material(shader, PlainColorMaterialResource.#uniforms);
+        this.material.is_transparent = false;
     }
 }
 
@@ -225,5 +226,6 @@ export class NormalMaterialResource extends MaterialResource {
             }
         );
         this.material.set_Material(shader, NormalMaterialResource.#uniforms);
+        this.material.is_transparent = false;
     }
 }

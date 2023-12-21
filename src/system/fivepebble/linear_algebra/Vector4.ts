@@ -9,6 +9,12 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
     public z: number;
     public w: number;
 
+    // color 
+    public get r() { return this.x; }
+    public get g() { return this.y; }
+    public get b() { return this.z; }
+    public get a() { return this.w; }
+
     get dimension(): number { return 4; }
     get array(): number[] { return [this.x, this.y, this.z, this.w]; }
     get typed_array_f64(): Float64Array { return new Float64Array(this.array); }

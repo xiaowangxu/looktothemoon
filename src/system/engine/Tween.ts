@@ -495,7 +495,7 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
         },
         Vector2: (a: Vector2, b: Vector2, v: number) => a.lerp(b, v),
         Vector3: (a: Vector3, b: Vector3, v: number) => a.lerp(b, v),
-        Vector4: (a: Vector3, b: Vector3, v: number) => a.lerp(b, v),
+        Vector4: (a: Vector4, b: Vector4, v: number) => a.lerp(b, v),
     }
 }
 

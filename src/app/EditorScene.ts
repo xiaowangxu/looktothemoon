@@ -178,7 +178,7 @@ EditorViewport.signal_input.connect((evt, pro) => {
             new PropertyTween(
                 material1,
                 'color',
-                color(Math.random(), Math.random(), Math.random(), 1),
+                color(Math.random(), Math.random(), Math.random(), Math.random() < 0.5 ? 0 : 1),
                 2, TransitionType.Bounce, EasingType.Out
             )
         );
