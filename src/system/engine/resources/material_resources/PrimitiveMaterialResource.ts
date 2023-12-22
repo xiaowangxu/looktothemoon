@@ -229,3 +229,106 @@ export class NormalMaterialResource extends MaterialResource {
         this.material.is_transparent = false;
     }
 }
+
+export class UVMaterialResource extends MaterialResource {
+
+    static #uniforms: RenderServerMaterialUniforms = {
+        model_world: RenderStateUniformType.Mat4,
+    };
+
+    static #vertex_shader = `#version 300 es
+    precision highp float;
+    precision highp usampler2DArray;
+    precision highp sampler3D;
+    
+    const float PI = 3.1415926535;
+    const float TAU = 6.283185307;
+    const float EPSILON = 0.00001;
+    
+    ${RenderServerDevice.WorldUniformsCode}
+    
+    ${RenderServerGeometry.GeometryAttributesCode}
+    
+    uniform mat4 model_world;
+    
+    out vec3 v_world;
+    out vec3 v_normal;
+    out vec2 v_uv;
+    
+    void main() {
+        mat4 _model_world = model_world * a_instance_transform;
+        vec4 world = _model_world * vec4(a_position, 1.0);
+        gl_Position = camera_projection * inverse(camera_world) * world;
+        v_normal = normalize(mat3(transpose(inverse(_model_world))) * a_normal);
+        v_uv = a_uv;
+        v_world = world.xyz;
+    }`;
+    static #vertex_uniforms: UniformInitSet<WebGL2RenderState> = {
+        model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.make_Identity() },
+    };
+    static #fragment_prez_shader = `#version 300 es
+    precision highp float;
+    precision highp usampler2DArray;
+    precision highp sampler3D;
+
+    ${RenderServerDevice.WorldUniformsCode}
+    
+    in vec3 v_world;
+    in vec3 v_normal;
+    in vec2 v_uv;
+
+    ${RenderServerDevice.FrameOutputBufferCode}
+
+    void main() {
+        o_normal = normalize(v_normal);
+    }`;
+    static #fragment_prez_uniforms: UniformInitSet<WebGL2RenderState> = {};
+    static #fragment_shade_shader = `#version 300 es
+    precision highp float;
+    precision highp usampler2DArray;
+    precision highp sampler3D;
+
+    ${RenderServerDevice.WorldUniformsCode}
+
+    in vec3 v_world;
+    in vec3 v_normal;
+    in vec2 v_uv;
+
+    ${RenderServerDevice.FrameOutputBufferCode}
+
+    void main() {
+        o_color = vec4(v_uv, 0.0, 1.0);
+        o_normal = normalize(v_normal);
+    }`;
+    static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {};
+
+    public get uniforms() { return UVMaterialResource.#uniforms; }
+
+    constructor() {
+        super();
+        this.update_Material();
+    }
+
+    public update_Material() {
+        const shader = RenderServer.create_Shader();
+        const vertex_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Vertex, UVMaterialResource.#vertex_shader).expect();
+        const fragment_prez_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, UVMaterialResource.#fragment_prez_shader).expect();
+        const fragment_shade_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, UVMaterialResource.#fragment_shade_shader).expect();
+        shader.set_Shaders(
+            vertex_shader,
+            UVMaterialResource.#vertex_uniforms,
+            {
+                prez: {
+                    shader: fragment_prez_shader,
+                    uniforms: UVMaterialResource.#fragment_prez_uniforms,
+                },
+                shade: {
+                    shader: fragment_shade_shader,
+                    uniforms: UVMaterialResource.#fragment_shade_uniforms,
+                }
+            }
+        );
+        this.material.set_Material(shader, UVMaterialResource.#uniforms);
+        this.material.is_transparent = false;
+    }
+}

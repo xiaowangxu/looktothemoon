@@ -499,6 +499,40 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
     }
 }
 
+export class PropertyMethodTween<T> extends TweenBase {
+    private _property_tween: PropertyTween<PropertyMethodTween<T>, 'tween_value', T>;
+    private _initial_value: T;
+    
+    public get tween_value(): T { return this._initial_value; };
+    public set tween_value(value: T) {
+        this.method(value);    
+    }
+
+    private readonly method: (value: T) => void;
+
+    constructor(method: (value: T) => void, start: T, end: T, duration: number, transition: TransitionType, easing: EasingType, reversed: boolean = false, lerp: ((a: T, b: T, v: number) => T) | undefined = undefined) {
+        super();
+        this.method = method;
+        this._initial_value = start;
+        this._property_tween = new PropertyTween(this, 'tween_value', end, duration, transition, easing, reversed, lerp);
+    }
+
+    public start(): void {
+        this._property_tween.start();
+        this.started = true;
+        if (this._property_tween.finished) {
+            this.finished = true;
+        }
+    }
+
+    public process(delta: number): void {
+        this._property_tween.process(delta);
+        if (this._property_tween.finished) {
+            this.finished = true;
+        }
+    }
+}
+
 // trigger tweens
 
 export class CallbackTween extends TweenBase {

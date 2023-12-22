@@ -373,157 +373,211 @@ export class TorusGeometryResource extends GeometryResource {
     }
 }
 
-// export class SphereGeometryResource extends GeometryResource {
-//     protected _radius: number = 1;
-//     protected _width_segments: number = 32;
-//     protected _height_Segments: number = 16;
+export class CylinderGeometryResource extends GeometryResource {
+    protected _radius: number = 0.5;
+    protected _height: number = 1;
+    protected _segments: number = 32;
 
-//     public get radius() { return this._radius; }
-//     public get width_segments() { return this._width_segments; }
-//     public get height_Segments() { return this._height_Segments; }
+    public get radius() { return this._radius; }
+    public get height() { return this._height; }
+    public get segments() { return this._segments; }
 
-//     public set radius(radius: number) {
-//         radius = Math.max(radius, 0);
-//         if (this._radius !== radius) {
-//             this._radius = radius;
-//             this.update_Geometry();
-//         }
-//     }
-//     public set width_segments(width_segments: number) {
-//         width_segments = Math.max(Math.floor(width_segments), 3);
-//         if (this._width_segments !== width_segments) {
-//             this._width_segments = width_segments;
-//             this.update_Geometry();
-//         }
-//     }
-//     public set height_Segments(height_Segments: number) {
-//         height_Segments = Math.max(Math.floor(height_Segments), 2);
-//         if (this._height_Segments !== height_Segments) {
-//             this._height_Segments = height_Segments;
-//             this.update_Geometry();
-//         }
-//     }
+    public set radius(radius: number) {
+        radius = Math.max(radius, 0);
+        if (this._radius !== radius) {
+            this._radius = radius;
+            this.update_Geometry();
+        }
+    }
+    public set height(height: number) {
+        height = Math.max(height, 0);
+        if (this._height !== height) {
+            this._height = height;
+            this.update_Geometry();
+        }
+    }
+    public set segments(segments: number) {
+        segments = Math.max(Math.floor(segments), 3);
+        if (this._segments !== segments) {
+            this._segments = segments;
+            this.update_Geometry();
+        }
+    }
 
-//     constructor() {
-//         super();
-//         this.update_Geometry();
-//     }
+    constructor() {
+        super();
+        this.update_Geometry();
+    }
 
-//     public set_Parameter(radius?: number, width_segments?: number, height_Segments?: number) {
-//         let changed = false;
-//         if (radius !== undefined) {
-//             radius = Math.max(radius, 0);
-//             if (this._radius !== radius) {
-//                 changed ||= true;
-//                 this._radius = radius;
-//             }
-//         }
-//         if (width_segments !== undefined) {
-//             width_segments = Math.max(Math.floor(width_segments), 3);
-//             if (this._width_segments !== width_segments) {
-//                 changed ||= true;
-//                 this._width_segments = width_segments;
-//             }
-//         }
-//         if (height_Segments !== undefined) {
-//             height_Segments = Math.max(Math.floor(height_Segments), 2);
-//             if (this._height_Segments !== height_Segments) {
-//                 changed ||= true;
-//                 this._height_Segments = height_Segments;
-//             }
-//         }
-//         if (changed) this.update_Geometry();
-//     }
+    public set_Parameter(radius?: number, height?: number, segments?: number) {
+        let changed = false;
+        if (radius !== undefined) {
+            radius = Math.max(radius, 0);
+            if (this._radius !== radius) {
+                changed ||= true;
+                this._radius = radius;
+            }
+        }
+        if (height !== undefined) {
+            height = Math.max(height, 0);
+            if (this._height !== height) {
+                changed ||= true;
+                this._height = height;
+            }
+        }
+        if (segments !== undefined) {
+            segments = Math.max(Math.floor(segments), 3);
+            if (this._segments !== segments) {
+                changed ||= true;
+                this._segments = segments;
+            }
+        }
+        if (changed) this.update_Geometry();
+    }
 
-//     public update_Geometry() {
-//         // const radius = this.radius;
-//         // const width_segments = this.width_segments;
-//         // const height_segments = this.height_Segments;
-//         // const theta_start = 0;
-//         // const theta_end = Math.PI;
-//         // const theta_length = Math.PI;
-//         // const phi_start = 0;
-//         // const phi_length = Tau;
+    public update_Geometry() {
+        const segments = this.segments;
+        const radius = this.radius;
+        const height = this.height;
+        const half_height = height / 2;
 
-//         // // buffers
+        const ring_count = segments + 1;
+        const vertex_count = ring_count * 2 * 2 + 2;
 
-//         // const indices = [];
-//         // const vertices = [];
-//         // const normals = [];
-//         // const uvs = [];
+        const position_buffer = new RenderDeviceVector3AttributeBuffer(RenderServer, RenderStateBufferUsage.StaticDraw, vertex_count);
+        const normal_buffer = new RenderDeviceVector3AttributeBuffer(RenderServer, RenderStateBufferUsage.StaticDraw, vertex_count);
+        const uv_buffer = new RenderDeviceVector2AttributeBuffer(RenderServer, RenderStateBufferUsage.StaticDraw, vertex_count);
 
-//         // // generate vertices, normals and uvs
+        for (let i = 0; i <= segments; i++) {
+            const t = i / segments * Tau;
+            const x = Math.cos(t);
+            const z = Math.sin(t);
 
-//         // const vertex_count = (width_segments + 1) * (height_segments + 1);
+            const top_vec3_idx = i * 3;
+            const bottom_vec3_idx = (i + ring_count) * 3;
 
-//         // const position_buffer = new RenderDeviceVector3AttributeBuffer(RenderServer, RenderStateBufferUsage.StaticDraw, vertex_count);
-//         // const normal_buffer = new RenderDeviceVector3AttributeBuffer(RenderServer, RenderStateBufferUsage.StaticDraw, vertex_count);
-//         // const uv_buffer = new RenderDeviceVector2AttributeBuffer(RenderServer, RenderStateBufferUsage.StaticDraw, vertex_count);
+            // position
+            position_buffer.data[top_vec3_idx + 0] = x * radius;
+            position_buffer.data[top_vec3_idx + 1] = half_height;
+            position_buffer.data[top_vec3_idx + 2] = z * radius;
+            position_buffer.data[bottom_vec3_idx + 0] = x * radius;
+            position_buffer.data[bottom_vec3_idx + 1] = -half_height;
+            position_buffer.data[bottom_vec3_idx + 2] = z * radius;
+            // normal
+            normal_buffer.data[top_vec3_idx + 0] = x;
+            normal_buffer.data[top_vec3_idx + 1] = 0;
+            normal_buffer.data[top_vec3_idx + 2] = z;
+            normal_buffer.data[bottom_vec3_idx + 0] = x;
+            normal_buffer.data[bottom_vec3_idx + 1] = 0;
+            normal_buffer.data[bottom_vec3_idx + 2] = z;
 
-//         // const vertex = new Vector3();
+            const top_cap_vec3_idx = (i + ring_count * 2) * 3;
+            const bottom_cap_vec3_idx = (i + ring_count * 3) * 3;
 
-//         // for (let iy = 0; iy <= height_segments; iy++) {
-//         //     const verticesRow = [];
-//         //     const v = iy / height_segments;
-//         //     // special case for the poles
-//         //     let uOffset = 0;
-//         //     if (iy === 0 && theta_start === 0) {
-//         //         uOffset = 0.5 / width_segments;
-//         //     } else if (iy === height_segments && theta_end === Math.PI) {
-//         //         uOffset = - 0.5 / width_segments;
-//         //     }
-//         //     for (let ix = 0; ix <= width_segments; ix++) {
-//         //         const idx = iy * (width_segments + 1) + ix;
-//         //         const u = ix / width_segments;
-//         //         vertex.set(
-//         //             - radius * Math.cos(phi_start + u * phi_length) * Math.sin(theta_start + v * theta_length),
-//         //             radius * Math.cos(theta_start + v * theta_length),
-//         //             radius * Math.sin(phi_start + u * phi_length) * Math.sin(theta_start + v * theta_length)
-//         //         );
-//         //         // vertex
-//         //         position_buffer.data[idx * 3 + 0] = vertex.x;
-//         //         position_buffer.data[idx * 3 + 1] = vertex.y;
-//         //         position_buffer.data[idx * 3 + 2] = vertex.z;
-//         //         // normal
-//         //         vertex.normalizes(vertex);
-//         //         normal_buffer.data[idx * 3 + 0] = vertex.x;
-//         //         normal_buffer.data[idx * 3 + 1] = vertex.y;
-//         //         normal_buffer.data[idx * 3 + 2] = vertex.z;
-//         //         // uv
+            normal_buffer.data[top_cap_vec3_idx + 0] = 0;
+            normal_buffer.data[top_cap_vec3_idx + 1] = 1;
+            normal_buffer.data[top_cap_vec3_idx + 2] = 0;
+            normal_buffer.data[bottom_cap_vec3_idx + 0] = 0;
+            normal_buffer.data[bottom_cap_vec3_idx + 1] = -1;
+            normal_buffer.data[bottom_cap_vec3_idx + 2] = 0;
+            // uv
+            const u = 1 - i / segments;
+            uv_buffer.data[i * 2 + 0] = u;
+            uv_buffer.data[i * 2 + 1] = 1;
+            uv_buffer.data[(i + ring_count) * 2 + 0] = u;
+            uv_buffer.data[(i + ring_count) * 2 + 1] = 0;
+        }
 
-//         //         uvs.push(u + uOffset, 1 - v);
+        // set top / bottom cap
+        const mid_pole_idx = ring_count * 4;
 
-//         //         verticesRow.push(index++);
+        const mid_pole_vec3_idx = mid_pole_idx * 3;
+        const mid_pole_vec2_idx = mid_pole_idx * 2;
 
-//         //     }
+        position_buffer.data[mid_pole_vec3_idx + 0] = 0;
+        position_buffer.data[mid_pole_vec3_idx + 1] = half_height;
+        position_buffer.data[mid_pole_vec3_idx + 2] = 0;
+        position_buffer.data[mid_pole_vec3_idx + 3] = 0;
+        position_buffer.data[mid_pole_vec3_idx + 4] = -half_height;
+        position_buffer.data[mid_pole_vec3_idx + 5] = 0;
+        normal_buffer.data[mid_pole_vec3_idx + 0] = 0;
+        normal_buffer.data[mid_pole_vec3_idx + 1] = 1;
+        normal_buffer.data[mid_pole_vec3_idx + 2] = 0;
+        normal_buffer.data[mid_pole_vec3_idx + 3] = 0;
+        normal_buffer.data[mid_pole_vec3_idx + 4] = -1;
+        normal_buffer.data[mid_pole_vec3_idx + 5] = 0;
+        uv_buffer.data[mid_pole_vec2_idx + 0] = 0;
+        uv_buffer.data[mid_pole_vec2_idx + 1] = 1;
+        uv_buffer.data[mid_pole_vec2_idx + 2] = 0;
+        uv_buffer.data[mid_pole_vec2_idx + 3] = 1;
 
-//         //     grid.push(verticesRow);
+        const ring_vec3_com_count = ring_count * 3;
+        const ring_vec2_com_count = ring_count * 2;
 
-//         // }
+        position_buffer.data.set(new Float32Array(position_buffer.data.buffer, 0, ring_vec3_com_count), ring_vec2_com_count * 3);
+        position_buffer.data.set(new Float32Array(position_buffer.data.buffer, ring_vec3_com_count * Float32Array.BYTES_PER_ELEMENT, ring_vec3_com_count), ring_vec3_com_count * 3);
+        uv_buffer.data.set(new Float32Array(uv_buffer.data.buffer, 0, ring_vec2_com_count), ring_vec2_com_count * 2);
+        uv_buffer.data.set(new Float32Array(uv_buffer.data.buffer, ring_vec2_com_count * Float32Array.BYTES_PER_ELEMENT, ring_vec2_com_count), ring_vec3_com_count * 2);
 
-//         // // indices
+        const index_count = segments * 6 * 2;
 
-//         // for (let iy = 0; iy < height_segments; iy++) {
-//         //     for (let ix = 0; ix < width_segments; ix++) {
-                
-//         //         const a = grid[iy][ix + 1];
-//         //         const b = grid[iy][ix];
-//         //         const c = grid[iy + 1][ix];
-//         //         const d = grid[iy + 1][ix + 1];
+        const index_buffer = new RenderDeviceIndexAttributeBuffer(RenderServer, RenderStateBufferUsage.StaticDraw, index_count);
 
-//         //         if (iy !== 0 || theta_start > 0) indices.push(a, b, d);
-//         //         if (iy !== height_segments - 1 || theta_end < Math.PI) indices.push(b, c, d);
+        for (let i = 0; i < segments; i++) {
+            const top_idx = i;
+            const bottom_idx = top_idx + ring_count;
+            const top_next_idx = top_idx + 1;
+            const bottom_next_idx = top_next_idx + ring_count;
 
-//         //     }
+            const idx = i * 6;
 
-//         // }
+            index_buffer.data[idx + 0] = bottom_idx;
+            index_buffer.data[idx + 1] = top_idx;
+            index_buffer.data[idx + 2] = bottom_next_idx;
+            index_buffer.data[idx + 3] = bottom_next_idx;
+            index_buffer.data[idx + 4] = top_idx;
+            index_buffer.data[idx + 5] = top_next_idx;
+        }
 
-//         // // build geometry
+        // cap
 
-//         // this.setIndex(indices);
-//         // this.setAttribute('position', new Float32BufferAttribute(vertices, 3));
-//         // this.setAttribute('normal', new Float32BufferAttribute(normals, 3));
-//         // this.setAttribute('uv', new Float32BufferAttribute(uvs, 2));
+        for (let i = 0; i < segments; i++) {
+            const top_idx = i + ring_count * 2;
+            const bottom_idx = top_idx + ring_count;
+            const top_next_idx = top_idx + 1;
+            const bottom_next_idx = top_next_idx + ring_count;
 
-//     }
-// }
+            const idx = segments * 6 + i * 3;
+
+            index_buffer.data[idx + 0] = top_next_idx;
+            index_buffer.data[idx + 1] = top_idx;
+            index_buffer.data[idx + 2] = mid_pole_idx;
+            index_buffer.data[idx + segments * 3 + 0] = bottom_idx;
+            index_buffer.data[idx + segments * 3 + 1] = bottom_next_idx;
+            index_buffer.data[idx + segments * 3 + 2] = mid_pole_idx + 1;
+        }
+
+        position_buffer.commit_Data();
+        normal_buffer.commit_Data();
+        uv_buffer.commit_Data();
+        index_buffer.commit_Data();
+
+        this.geometry.set_Geometry(
+            RenderStatePrimitiveType.Triangles,
+            {
+                position: position_buffer,
+                normal: normal_buffer,
+                uv: uv_buffer,
+            },
+            index_buffer,
+            index_count,
+            box3(
+                vec3(-radius, -half_height, -radius),
+                vec3(radius, half_height, radius),
+            )
+        );
+        this.geometry.add_Surface(0, segments * 6);
+        this.geometry.add_Surface(segments * 6 * index_buffer.per_element_byte_count, segments * 3);
+        this.geometry.add_Surface(segments * 9 * index_buffer.per_element_byte_count, segments * 3);
+    }
+}

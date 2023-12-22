@@ -46,7 +46,7 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
 }
 
 export class OrthographicCamera3 extends Camera3 {
-    protected _width: number = 2;
+    protected _width: number = 1;
     public get width() { return this._width; }
     public set width(width: number) {
         if (this._width !== width) {
@@ -55,7 +55,7 @@ export class OrthographicCamera3 extends Camera3 {
         }
     }
 
-    protected _height: number = 2;
+    protected _height: number = 1;
     public get height() { return this._height; }
     public set height(height: number) {
         if (this._height !== height) {

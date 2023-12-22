@@ -193,9 +193,11 @@ precision highp sampler3D;
 
 ${Consts}
 
-uniform WorldUniforms {
+layout(std140) uniform WorldUniforms {
     mat4 camera_world;
+    mat4 camera_view;
     mat4 camera_projection;
+    mat4 camera_inv_projection;
     vec2 screen_size;
     float time;
     bool camera_is_orthogonal;

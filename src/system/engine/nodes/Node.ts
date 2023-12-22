@@ -24,6 +24,7 @@ export enum NodeNotification {
     EnteredReady,
     Ready,
     Process,
+    InternalAfterProcess,
     PhysicsProcess,
     InternalAfterPhysicsProcess,
     SetupCamera,
@@ -148,6 +149,14 @@ export class Node extends ClassBase {
         this.nofity(NodeNotification.Process);
         this._process(delta);
         this.signal_process.trigger(delta);
+    }
+
+    public propagate_InternalAfterProcess(delta: number) {
+        for (const child of this.children) {
+            child.propagate_InternalAfterProcess(delta);
+        }
+        // internal before process
+        this.nofity(NodeNotification.InternalAfterProcess);
     }
 
     public propagate_PhysicsProcess(delta: number) {
@@ -398,21 +407,9 @@ export class Viewport extends Node {
         }
     }
 
-    private _transparent: boolean = false;
-    public get transparent() { return this._transparent; }
-    public set transparent(transparent: boolean) {
-        if (this._transparent !== transparent) {
-            this._transparent = transparent;
-            // this.renderer_3d.set_ClearAlpha(this._transparent ? 0 : 1);
-        }
-    }
-
-    private _clear_color: Color = new Color(15658734);
-    public get clear_color() { return this._clear_color; }
-    public set clear_color(clear_color: Color) {
-        this._clear_color = clear_color;
-        // this.renderer_3d.set_ClearColor(this._clear_color, this._transparent ? 0 : 1);
-    }
+    public transparent: boolean = false;
+    public color_map: boolean = true;
+    public debug: boolean = false;
 
     public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
 
@@ -461,8 +458,8 @@ export class Viewport extends Node {
     constructor() {
         super();
         this.renderer_3d = new Renderer3D(document.createElement('canvas'));
+        this.renderer_3d.resize(this.size.x, this.size.y);
         this.renderer_3d.set_PixelRatio(this.pixel_ratio);
-        // this.renderer_3d.set_ClearColor(this.clear_color, this.transparent ? 0 : 1);
         this.mouse_event_manager = new ViewportMouseInputEventManager(this);
         this.key_event_manager = new ViewportKeyInputEventManager(this);
         this.action_event_manager = new ViewportActionInputEventManager(this);
@@ -641,14 +638,15 @@ export class Viewport extends Node {
 
     public render(): void {
         if (this.update_mode === ViewportUpdateMode.Never) return;
-        if (this.update_mode === ViewportUpdateMode.Once) {
+        const once = this.update_mode === ViewportUpdateMode.Once;
+        if (once) {
             this.update_mode = ViewportUpdateMode.Never;
         }
         this.signal_before_render.trigger();
         const world_3d = this.get_RenderableWorld3D();
         const camera_3d = this.get_Camera3D();
         if (camera_3d !== undefined && world_3d !== undefined) {
-            this.renderer_3d.render(world_3d, this, camera_3d);
+            this.renderer_3d.render(world_3d, this, camera_3d, once);
         }
         this.signal_after_render.trigger();
     }

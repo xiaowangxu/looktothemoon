@@ -1,7 +1,6 @@
-import type { RDCanvas } from "@/system/sliverofstraw/RenderDevice";
-import { RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStateShaderType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType } from "@/system/sliverofstraw/RenderState";
+import type { RenderDeviceCanvas } from "@/system/sliverofstraw/RenderDevice";
+import { RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType } from "@/system/sliverofstraw/RenderState";
 import { WebGL2RenderDevice } from "@/system/sliverofstraw/webgl2/WebGL2RenderDevice";
-import { process_WebGL2ShaderCode } from "@/system/sliverofstraw/webgl2/WebGL2ShaderProcessor";
 import type { WebGL2RenderStateBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
 import { Ref } from "@/system/utils/RefCounted";
@@ -13,36 +12,88 @@ import { RenderDeviceMatrix4AttributeBuffer } from "@/system/sliverofstraw/rende
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 
-const vertex_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Vertex, undefined, undefined, undefined, undefined, '');
-const frag_shader_source = process_WebGL2ShaderCode(RenderStateShaderType.Fragment, undefined, undefined, undefined, undefined, '');
-
-export enum RenderServerPlainColorTexture { White, Black, Transparent, }
+export enum RenderServerPlainColorTexture { White, Black, Transparent }
 
 export class RenderServerDevice extends WebGL2RenderDevice {
 
-    public static readonly ConstantsCode =`const float PI = 3.1415926535;
-const float TAU = 6.283185307;
-const float EPSILON = 0.00001;`
-
-    public static readonly WorldUniformsCode = `uniform WorldUniforms {
+    // Codes
+    public static readonly ConstantsCode = `const float PI = 3.1415926535;\nconst float TAU = 6.283185307;\nconst float EPSILON = 0.00001;`
+    public static readonly WorldUniformsName: string = 'WorldUniforms';
+    public static readonly WorldUniformsUnit: number = 0;
+    public static readonly WorldUniformsCode = `layout(std140) uniform WorldUniforms {
     mat4 camera_world;
+    mat4 camera_view;
     mat4 camera_projection;
+    mat4 camera_inv_projection;
     vec2 screen_size;
     float time;
     bool camera_is_orthogonal;
 };`
+    public static readonly FrameOutputBufferCode = `layout(location = 0) out vec4 o_color;\nlayout(location = 1) out vec3 o_normal;`
 
-    public static readonly FrameOutputBufferCode = `layout(location = 0) out vec4 o_color;
-layout(location = 1) out vec3 o_normal;`
-
-    public static readonly WorldUniformsName: string = 'WorldUniforms';
-    public static readonly WorldUniformsItems: string[] = ['camera_world', 'camera_projection', 'screen_size', 'time', 'camera_is_orthogonal'];
-    public static readonly WorldUniformsUnit: number = 0;
-
+    // Texture Units Defs
     public static readonly EmptyTextureUnit: number = 1;
     public static readonly LightsTextureUnit: number = 2;
     public static readonly LightsClusterTextureUnit: number = 3;
     public static readonly SkyTextureUnit: number = 4;
+
+    // world uniforms layout std140
+    // 
+    //   |-------------|-------------|-------------|-------------|
+    //   |    Byte4    |    Byte8    |    Byte12   |    Byte16   |
+    //   |-------------|-------------|-------------|-------------| ---- 0 Bytes ------+
+    //   |  cam_world  |             |             |             |                    |
+    //   |      0      |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |  64 Bytes
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------| ---- 64 Bytes  ----+
+    //   |   cam_view  |             |             |             |                    |
+    //   |      64     |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |  64 Bytes
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------| ---- 128 Bytes ----+
+    //   |   cam_proj  |             |             |             |                    |
+    //   |     128     |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |  64 Bytes
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------| ---- 192 Bytes ----+
+    //   |   inv_proj  |             |             |             |                    |
+    //   |     192     |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |  64 Bytes
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------| ---- 256 Bytes ----+
+    //   | screen_size |             |     time    | orthogonal  |                    |  16 Bytes
+    //   |     256     |             |     264     |     268     |                    |
+    //   |-------------|-------------|-------------|-------------| ---- 272 Bytes ----+
+    //   
+    //   total 272 Bytes => 68 * 4 float32s
+
+    private world_uniforms_buffer_ref: Ref<WebGL2RenderStateBuffer> = new Ref();
+
+    private readonly world_uniforms_buffer_data: Float32Array = new Float32Array(68);
+    private readonly world_uniforms_camera_world: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 0, 16);
+    private readonly world_uniforms_camera_view: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 64, 16);
+    private readonly world_uniforms_camera_projection: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 128, 16);
+    private readonly world_uniforms_camera_inv_projection: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 192, 16);
+    private readonly world_uniforms_screen_size: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 256, 2);
+    private readonly world_uniforms_time: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 264, 1);
+    private readonly world_uniforms_camera_is_orthogonal: Uint32Array = new Uint32Array(this.world_uniforms_buffer_data.buffer, 268, 1);
 
     public readonly identity_transform_attribute_buffer_ref: Ref<RenderDeviceMatrix4AttributeBuffer<WebGL2RenderState>> = new Ref();
     public get identity_transform_attribute_buffer() { return this.identity_transform_attribute_buffer_ref.expect; }
@@ -58,19 +109,24 @@ layout(location = 1) out vec3 o_normal;`
     public readonly lights_data_ref: Ref<RenderServerLightsData> = new Ref();
     public readonly sky_texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
 
-    private world_uniform_buffer: Ref<WebGL2RenderStateBuffer> = new Ref();
-    private world_uniform_setting: { [name: string]: { index: number, offset: number } } = {};
-
-    constructor(canvas: RDCanvas) {
+    constructor(canvas: RenderDeviceCanvas) {
         super(canvas, { preserve_texture_count: 6 });
         this.setup_IdentityTransformAttributeBuffer();
-        this.setup_WorldUniformBuffer();
+        this.setup_WorldUniformsBuffer();
         this.setup_EmptyTexture();
         this.setup_PlainColorTextures();
     }
 
+    // Setup
+
     private setup_IdentityTransformAttributeBuffer() {
         this.identity_transform_attribute_buffer_ref.value = new RenderDeviceMatrix4AttributeBuffer(this, RenderStateBufferUsage.StaticDraw, [Matrix4.make_Identity()], 1);
+    }
+
+    private setup_WorldUniformsBuffer() {
+        this.world_uniforms_buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Uniform, RenderStateBufferUsage.DynamicDraw, 1, RenderStateDataType.Float, false, 0).expect();
+        this.render_state.alloc_Buffer(this.world_uniforms_buffer_ref.expect, this.world_uniforms_buffer_data.byteLength);
+        this.render_state.bind_UniformBuffer(this.world_uniforms_buffer_ref.expect, RenderServerDevice.WorldUniformsUnit);
     }
 
     private setup_EmptyTexture() {
@@ -97,6 +153,8 @@ layout(location = 1) out vec3 o_normal;`
         this.plain_color_textures.transparent.value = plain_color_transparent;
     }
 
+    // Setting / Getting
+
     public get_PlainColorTexture(color: RenderServerPlainColorTexture): WebGL2RenderStateTexture {
         switch (color) {
             case RenderServerPlainColorTexture.White: return this.plain_color_textures.white.expect;
@@ -109,30 +167,113 @@ layout(location = 1) out vec3 o_normal;`
         }
     }
 
-    private setup_WorldUniformBuffer() {
-        const vert = this.render_state.create_Shader(RenderStateShaderType.Vertex, vertex_shader_source).expect();
-        const frag = this.render_state.create_Shader(RenderStateShaderType.Fragment, frag_shader_source).expect();
-        const program = this.render_state.create_Program(vert, frag).expect();
+    static #matrix: Matrix4 = Matrix4.make_Identity();
 
-        const location = this.render_state.get_ProgramUniformBlockLocation(program, RenderServerDevice.WorldUniformsName);
-        const size = this.render_state.get_ProgramUniformBlockSize(program, location);
-        const settings = this.render_state.get_ProgramUniformBlockMemberIndexOffsets(program, RenderServerDevice.WorldUniformsItems);
-        if (settings === null) throw new Error('<RenderServerDevice> setup_WorldUniformBuffer: failed');
-
-        this.world_uniform_setting = settings;
-        this.world_uniform_buffer.value = this.render_state.create_Buffer(RenderStateBufferType.Uniform, RenderStateBufferUsage.DynamicDraw, 1, RenderStateDataType.Float, false, 0).expect();
-        this.render_state.alloc_Buffer(this.world_uniform_buffer.expect, size);
-
-        this.render_state.bind_UniformBuffer(this.world_uniform_buffer.expect, RenderServerDevice.WorldUniformsUnit);
-        console.log(this);
+    public set_WorldUniforms(camera_world: Matrix4, camera_projection: Matrix4, camera_is_orthogonal: boolean, screen_width: number, screen_height: number, time: number) {
+        // camera world
+        {
+            this.world_uniforms_camera_world[0] = camera_world.n11;
+            this.world_uniforms_camera_world[1] = camera_world.n21;
+            this.world_uniforms_camera_world[2] = camera_world.n31;
+            this.world_uniforms_camera_world[3] = camera_world.n41;
+            this.world_uniforms_camera_world[4] = camera_world.n12;
+            this.world_uniforms_camera_world[5] = camera_world.n22;
+            this.world_uniforms_camera_world[6] = camera_world.n32;
+            this.world_uniforms_camera_world[7] = camera_world.n42;
+            this.world_uniforms_camera_world[8] = camera_world.n13;
+            this.world_uniforms_camera_world[9] = camera_world.n23;
+            this.world_uniforms_camera_world[10] = camera_world.n33;
+            this.world_uniforms_camera_world[11] = camera_world.n43;
+            this.world_uniforms_camera_world[12] = camera_world.n14;
+            this.world_uniforms_camera_world[13] = camera_world.n24;
+            this.world_uniforms_camera_world[14] = camera_world.n34;
+            this.world_uniforms_camera_world[15] = camera_world.n44;
+        }
+        // camera view
+        {
+            const matrix = RenderServerDevice.#matrix.inverses(camera_world);
+            this.world_uniforms_camera_view[0] = matrix.n11;
+            this.world_uniforms_camera_view[1] = matrix.n21;
+            this.world_uniforms_camera_view[2] = matrix.n31;
+            this.world_uniforms_camera_view[3] = matrix.n41;
+            this.world_uniforms_camera_view[4] = matrix.n12;
+            this.world_uniforms_camera_view[5] = matrix.n22;
+            this.world_uniforms_camera_view[6] = matrix.n32;
+            this.world_uniforms_camera_view[7] = matrix.n42;
+            this.world_uniforms_camera_view[8] = matrix.n13;
+            this.world_uniforms_camera_view[9] = matrix.n23;
+            this.world_uniforms_camera_view[10] = matrix.n33;
+            this.world_uniforms_camera_view[11] = matrix.n43;
+            this.world_uniforms_camera_view[12] = matrix.n14;
+            this.world_uniforms_camera_view[13] = matrix.n24;
+            this.world_uniforms_camera_view[14] = matrix.n34;
+            this.world_uniforms_camera_view[15] = matrix.n44;
+        }
+        // camera projection
+        {
+            this.world_uniforms_camera_projection[0] = camera_projection.n11;
+            this.world_uniforms_camera_projection[1] = camera_projection.n21;
+            this.world_uniforms_camera_projection[2] = camera_projection.n31;
+            this.world_uniforms_camera_projection[3] = camera_projection.n41;
+            this.world_uniforms_camera_projection[4] = camera_projection.n12;
+            this.world_uniforms_camera_projection[5] = camera_projection.n22;
+            this.world_uniforms_camera_projection[6] = camera_projection.n32;
+            this.world_uniforms_camera_projection[7] = camera_projection.n42;
+            this.world_uniforms_camera_projection[8] = camera_projection.n13;
+            this.world_uniforms_camera_projection[9] = camera_projection.n23;
+            this.world_uniforms_camera_projection[10] = camera_projection.n33;
+            this.world_uniforms_camera_projection[11] = camera_projection.n43;
+            this.world_uniforms_camera_projection[12] = camera_projection.n14;
+            this.world_uniforms_camera_projection[13] = camera_projection.n24;
+            this.world_uniforms_camera_projection[14] = camera_projection.n34;
+            this.world_uniforms_camera_projection[15] = camera_projection.n44;
+        }
+        // camera view
+        {
+            const matrix = RenderServerDevice.#matrix.inverses(camera_projection);
+            this.world_uniforms_camera_inv_projection[0] = matrix.n11;
+            this.world_uniforms_camera_inv_projection[1] = matrix.n21;
+            this.world_uniforms_camera_inv_projection[2] = matrix.n31;
+            this.world_uniforms_camera_inv_projection[3] = matrix.n41;
+            this.world_uniforms_camera_inv_projection[4] = matrix.n12;
+            this.world_uniforms_camera_inv_projection[5] = matrix.n22;
+            this.world_uniforms_camera_inv_projection[6] = matrix.n32;
+            this.world_uniforms_camera_inv_projection[7] = matrix.n42;
+            this.world_uniforms_camera_inv_projection[8] = matrix.n13;
+            this.world_uniforms_camera_inv_projection[9] = matrix.n23;
+            this.world_uniforms_camera_inv_projection[10] = matrix.n33;
+            this.world_uniforms_camera_inv_projection[11] = matrix.n43;
+            this.world_uniforms_camera_inv_projection[12] = matrix.n14;
+            this.world_uniforms_camera_inv_projection[13] = matrix.n24;
+            this.world_uniforms_camera_inv_projection[14] = matrix.n34;
+            this.world_uniforms_camera_inv_projection[15] = matrix.n44;
+        }
+        // camera is orth
+        {
+            this.world_uniforms_camera_is_orthogonal[0] = camera_is_orthogonal ? 1 : 0;
+        }
+        // screen size
+        {
+            this.world_uniforms_screen_size[0] = screen_width;
+            this.world_uniforms_screen_size[1] = screen_height;
+        }
+        // time
+        {
+            this.world_uniforms_time[0] = time;
+        }
+        this.render_state.update_Buffer(this.world_uniforms_buffer_ref.expect, this.world_uniforms_buffer_data);
     }
 
-    public set_WorldUniform(name: string, data: ArrayBufferView) {
-        const setting = this.world_uniform_setting[name];
-        if (setting !== undefined) {
-            this.render_state.update_Buffer(this.world_uniform_buffer.expect, data, setting.offset);
+    public resize(width: number, height: number) {
+        width = Math.max(Math.round(width), 1);
+        height = Math.max(Math.round(height), 1);
+        if (this.canvas.width < width || this.canvas.height < height) {
+            this.canvas.width = width;
+            this.canvas.height = height;
         }
     }
+
+    // Create
 
     public create_LightsData(width: number, height: number) {
         return new RenderServerLightsData(this, width, height);
@@ -166,7 +307,7 @@ layout(location = 1) out vec3 o_normal;`
     }
 
     public dispose(): void {
-        this.world_uniform_buffer.clear();
+        this.world_uniforms_buffer_ref.clear();
         this.empty_texture_ref.clear();
         this.lights_data_ref.clear();
         this.plain_color_textures.white.clear();

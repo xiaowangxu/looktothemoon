@@ -21,6 +21,7 @@ import { GeometryResource } from "../../resources/geometry_resources/GeometryRes
 import type { MaterialResource } from "../../resources/material_resources/MaterialResource";
 import { BoxGeometryResource } from "../../resources/geometry_resources/PrimitiveGeometryResource";
 import type { Renderer3DQueue } from "../../renderer/Renderer3D";
+import type { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
 
 // #region sky
 
@@ -252,10 +253,10 @@ export class VisualWorld3DMesh extends WorldObject {
 
 	// fill render queue
 
-	public fill_RenderQueue(queue: Renderer3DQueue) {
-		if (this.geometry_ref.is_empty) return;
+	public fill_RenderQueue(queue: Renderer3DQueue, mask: number, frustum: Frustum3): boolean {
+		if (!this.visible || (this.layer & mask) === 0 ||  this.geometry_ref.is_empty || !frustum.contain_Box(this.bbox, false)) return false;
 		if (this.is_surface_materials_empty) {
-			if (this.material_override_ref.is_empty) return;
+			if (this.material_override_ref.is_empty) return false;
 			const geometry = this.geometry_ref.expect;
 			const vertex_array = geometry.get_Geometry();
 			if (vertex_array !== undefined) queue.add(vertex_array, this.material_override_ref.expect, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer);
@@ -273,6 +274,7 @@ export class VisualWorld3DMesh extends WorldObject {
 				if (vertex_array_view !== undefined) queue.add(vertex_array_view, material, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer);
 			}
 		}
+		return true;
 	}
 
 	public dispose(): void {
@@ -310,8 +312,8 @@ export class VisualWorld3D {
 	private sky_changed: boolean = true;
 
 	private update_Sky(scene_tree: SceneTree) {
-		if (this.sky_changed) {
-			this.sky_changed = false;
+		// if (this.sky_changed) {
+			// this.sky_changed = false;
 			uniform_time_slot.value = scene_tree.time;
 			uniform_time_slot.commit();
 			RenderServer.render_state.use_FrameBuffer(this.sky_frame_buffer.expect);
@@ -319,7 +321,7 @@ export class VisualWorld3D {
 			RenderServer.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
 			RenderServer.render_state.draw_Elements(sky_program, quad_surface.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
 			RenderServer.render_state.generate_Mipmap(this.sky_texture.expect);
-		}
+		// }
 	}
 
 	// Mesh

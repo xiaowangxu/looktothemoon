@@ -224,7 +224,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
 
     private scissor_state: [number | null, number | null, number | null, number | null] = [null, null, null, null];
     public set_ScissorProxy(x: number, y: number, w: number, h: number) {
-        const [_x, _y, _w, _h] = this.viewport_state;
+        const [_x, _y, _w, _h] = this.scissor_state;
         if (_x !== x || _y !== y || _w !== w || _h !== h) {
             this.scissor_state[0] = x;
             this.scissor_state[1] = y;
@@ -562,10 +562,10 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         return Result.Ok(new WebGL2RenderStateBuffer(this.render_state, buffer, this.get_BufferType(type), this.get_BufferUsage(usage), data_size, this.get_DataType(data_type), data_normalize, 0, 0, divisor));
     }
 
-    public alloc_Buffer(buffer: WebGL2RenderStateBuffer, size: number, data?: ArrayBufferView): void {
+    public alloc_Buffer(buffer: WebGL2RenderStateBuffer, byte_count: number, data?: ArrayBufferView): void {
         this.bind_BufferProxy(buffer.type, buffer.buffer);
         if (data === undefined) {
-            this.gl.bufferData(buffer.type, size, buffer.usage);
+            this.gl.bufferData(buffer.type, byte_count, buffer.usage);
         }
         else {
             this.gl.bufferData(buffer.type, data, buffer.usage);
@@ -630,8 +630,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public set_VertexArrayIndexBuffer(vertex_array: WebGL2RenderStateVertexArray, buffer: WebGL2RenderStateBuffer | WebGL2RenderStateBufferView): void {
         if (buffer.type !== this.gl.ELEMENT_ARRAY_BUFFER) return;
         this.bind_VertexArrayProxy(vertex_array.vertex_array);
-        const binded = this.bind_BufferProxy(this.gl.ELEMENT_ARRAY_BUFFER, buffer.buffer);
-        if (!binded) {
+        if (!this.bind_BufferProxy(this.gl.ELEMENT_ARRAY_BUFFER, buffer.buffer)) {
             this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.buffer);
         }
     }
@@ -654,7 +653,9 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         const gl = this.gl;
         const { type, texture: tex } = texture;
         this.active_TextureSlotProxy(this.gl.TEXTURE0);
-        this.bind_TextureProxy(type, tex);
+        if (!this.bind_TextureProxy(type, tex)) {
+            this.gl.bindTexture(type, tex);
+        }
         if (wrap_s) {
             texture.wrap_s = this.get_TextureWrap(wrap_s);
             gl.texParameteri(type, gl.TEXTURE_WRAP_S, texture.wrap_s);
@@ -686,7 +687,9 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         } = texture;
         if (type !== this.gl.TEXTURE_2D) return;
         this.active_TextureSlotProxy(this.gl.TEXTURE0);
-        this.bind_TextureProxy(type, texture.texture);
+        if (!this.bind_TextureProxy(type, texture.texture)) {
+            this.gl.bindTexture(type, texture.texture);
+        }
         const gl = this.gl;
         if (constant) {
             gl.texStorage2D(type, levels, internal_format, width, height);
@@ -705,7 +708,9 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public update_Texture2D(texture: WebGL2RenderStateTexture, level: number, format: RenderStateTextureDataFormat, data: ArrayBufferView, width: number, height: number, offset_x: number = 0, offset_y: number = 0, src_offset?: number) {
         const { data_type, type } = texture;
         this.active_TextureSlotProxy(this.gl.TEXTURE0);
-        this.bind_TextureProxy(type, texture.texture);
+        if (!this.bind_TextureProxy(type, texture.texture)) {
+            this.gl.bindTexture(type, texture.texture);
+        }
         if (type === this.gl.TEXTURE_2D) {
             if (src_offset !== undefined) {
                 this.gl.texSubImage2D(type, level, offset_x, offset_y, width, height, this.get_TextureDataFormatType(format), data_type, data, src_offset);
@@ -726,7 +731,9 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         const gl = this.gl;
         if (type !== gl.TEXTURE_3D && type !== gl.TEXTURE_2D_ARRAY) return;
         this.active_TextureSlotProxy(this.gl.TEXTURE0);
-        this.bind_TextureProxy(type, texture.texture);
+        if (!this.bind_TextureProxy(type, texture.texture)) {
+            this.gl.bindTexture(type, texture.texture);
+        }
         if (constant) {
             gl.texStorage3D(type, levels, internal_format, width, height, depth);
             if (data !== undefined) {
@@ -745,7 +752,9 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public update_Texture3D(texture: WebGL2RenderStateTexture, level: number, format: RenderStateTextureDataFormat, data: ArrayBufferView, width: number, height: number, depth: number, offset_x: number = 0, offset_y: number = 0, offset_z: number = 0, src_offset?: number) {
         const { data_type, type } = texture;
         this.active_TextureSlotProxy(this.gl.TEXTURE0);
-        this.bind_TextureProxy(type, texture.texture);
+        if (!this.bind_TextureProxy(type, texture.texture)) {
+            this.gl.bindTexture(type, texture.texture);
+        }
         const gl = this.gl;
         if (type === gl.TEXTURE_3D || type === gl.TEXTURE_2D_ARRAY) {
             if (src_offset !== undefined) {
@@ -763,15 +772,16 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
 
     public generate_Mipmap(texture: WebGL2RenderStateTexture) {
         this.active_TextureSlotProxy(this.gl.TEXTURE0);
-        this.bind_TextureProxy(texture.type, texture.texture);
+        if (!this.bind_TextureProxy(texture.type, texture.texture)) {
+            this.gl.bindTexture(texture.type, texture.texture);
+        }
         this.gl.generateMipmap(texture.type);
     }
 
     public active_Texture(texture: WebGL2RenderStateTexture, slot: number) {
         const target_point = slot;
         this.active_TextureSlotProxy(this.gl.TEXTURE0 + target_point);
-        const binded = this.bind_TextureProxy(texture.type, texture.texture);
-        if (!binded) {
+        if (!this.bind_TextureProxy(texture.type, texture.texture)) {
             this.gl.bindTexture(texture.type, texture.texture);
         }
     }
@@ -906,7 +916,6 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         }
         else {
             gl.renderbufferStorage(gl.RENDERBUFFER, internal_format, width, height);
-
         }
         render_buffer.width = width;
         render_buffer.height = height;
@@ -1029,7 +1038,16 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             }
             case RenderStateUniformType.Mat3: {
                 const mat3 = (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Mat3>).result;
-                this.gl.uniformMatrix3fv(uniform_location, true, mat3.array);
+                WebGL2RenderState.#matrix3_array[0] = mat3.n11;
+                WebGL2RenderState.#matrix3_array[1] = mat3.n12;
+                WebGL2RenderState.#matrix3_array[2] = mat3.n13;
+                WebGL2RenderState.#matrix3_array[3] = mat3.n21;
+                WebGL2RenderState.#matrix3_array[4] = mat3.n22;
+                WebGL2RenderState.#matrix3_array[5] = mat3.n23;
+                WebGL2RenderState.#matrix3_array[6] = mat3.n31;
+                WebGL2RenderState.#matrix3_array[7] = mat3.n32;
+                WebGL2RenderState.#matrix3_array[8] = mat3.n33;
+                this.gl.uniformMatrix3fv(uniform_location, true, WebGL2RenderState.#matrix3_array);
                 return;
             }
             case RenderStateUniformType.Mat4: {

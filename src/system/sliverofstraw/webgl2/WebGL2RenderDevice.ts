@@ -1,5 +1,5 @@
 import { Ref } from "@/system/utils/RefCounted";
-import { RenderDevice, type RDCanvas, type RenderDeviceInitOption } from "../RenderDevice";
+import { RenderDevice, type RenderDeviceCanvas, type RenderDeviceInitOption } from "../RenderDevice";
 import { WebGL2RenderState, type WebGL2RenderStateInitOption } from "./WebGL2RenderState";
 import { RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStateShaderType, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, type RenderStateInitOption, RenderStateTextureDataFormat } from "../RenderState";
 import type { WebGL2RenderStateBuffer } from "./webgl2_render_state_objects/WebGL2RenderStateBuffer";
@@ -11,7 +11,7 @@ export interface WebGL2RenderDeviceInitOption extends RenderDeviceInitOption, We
 
 
 export class WebGL2RenderDevice extends RenderDevice<WebGL2RenderState, WebGL2RenderDeviceInitOption> {
-    constructor(canvas: RDCanvas, option: WebGL2RenderDeviceInitOption) {
+    constructor(canvas: RenderDeviceCanvas, option: WebGL2RenderDeviceInitOption) {
         super(canvas, WebGL2RenderState, option);
     }
 

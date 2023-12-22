@@ -135,7 +135,7 @@ export abstract class RenderState<T extends RenderState<T>> {
     public abstract create_Buffer(type: RenderStateBufferType, usage: RenderStateBufferUsage, data_size: number, data_type: RenderStateDataType, data_normalize: boolean, divisor: number):
         Result<RenderStateBuffer<T>, Error>;
 
-    public abstract alloc_Buffer(buffer: RenderStateBuffer<T>, size: number, data?: ArrayBufferView): void;
+    public abstract alloc_Buffer(buffer: RenderStateBuffer<T>, byte_count: number, data?: ArrayBufferView): void;
 
     public abstract update_Buffer(buffer: RenderStateBuffer<T>, data: ArrayBufferView, offset: number, src_offset?: number, length?: number): void;
 

@@ -517,7 +517,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         );
     }
     inverses(a: Matrix4): Matrix4 {
-        const det = this.determinant;
+        const det = a.determinant;
         if (det === 0) {
             this.n11 = 0;
             this.n12 = 0;
