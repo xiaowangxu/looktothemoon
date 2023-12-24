@@ -157,9 +157,11 @@ export class MeshInstance3D extends GeometryInstance3D {
 
     public dump(writer: ClassWriter): void {
         super.dump(writer);
+        writer.property('geometry', this.geometry);
     }
 
     public load(reader: ClassReader): void {
         super.load(reader);
+        this.geometry = reader.get<GeometryResource>('geometry');
     }
 }

@@ -1,6 +1,6 @@
 import { RenderStateShaderType, RenderStateUniformType } from "@/system/sliverofstraw/RenderState";
 import type { RenderServerMaterialUniforms } from "../../render_server/RenderServerMaterial";
-import { MaterialResource } from "./MaterialResource";
+import { MaterialResource, type MaterialReadOnlyUniforms } from "./MaterialResource";
 import { RenderServer, RenderServerDevice, RenderServerPlainColorTexture } from "../../render_server/RenderServer";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import type { UniformInitSet } from "../../render_server/RenderServerShader";
@@ -12,7 +12,7 @@ import { Epsilon } from "@/system/fivepebble/Scalar";
 
 export class PlainColorMaterialResource extends MaterialResource {
 
-    static #uniforms: RenderServerMaterialUniforms = {
+    static #uniforms: MaterialReadOnlyUniforms = {
         model_world: RenderStateUniformType.Mat4,
         u_color: RenderStateUniformType.Vec4,
         u_texture: RenderStateUniformType.Tex2D,
@@ -132,7 +132,7 @@ export class PlainColorMaterialResource extends MaterialResource {
 
 export class NormalMaterialResource extends MaterialResource {
 
-    static #uniforms: RenderServerMaterialUniforms = {
+    static #uniforms: MaterialReadOnlyUniforms = {
         model_world: RenderStateUniformType.Mat4,
     };
 
@@ -232,7 +232,7 @@ export class NormalMaterialResource extends MaterialResource {
 
 export class UVMaterialResource extends MaterialResource {
 
-    static #uniforms: RenderServerMaterialUniforms = {
+    static #uniforms: MaterialReadOnlyUniforms = {
         model_world: RenderStateUniformType.Mat4,
     };
 

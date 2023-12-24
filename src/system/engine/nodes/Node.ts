@@ -342,6 +342,7 @@ export class Node extends ClassBase {
     }
 
     // save / load
+
     public dump(writer: ClassWriter): void {
         writer.property('name', this.name);
         writer.property('block_input', this.block_input);

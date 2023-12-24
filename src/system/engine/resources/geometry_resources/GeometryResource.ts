@@ -3,7 +3,7 @@ import type { RenderServerGeometry } from "../../render_server/RenderServerGeome
 import { Resource } from "../Resource";
 import { RenderServer } from "../../render_server/RenderServer";
 
-export class GeometryResource extends Resource {
+export abstract class GeometryResource extends Resource {
     private readonly geometry_ref: Ref<RenderServerGeometry> = new Ref();
 
     public get geometry() { return this.geometry_ref.expect; }

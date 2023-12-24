@@ -9,52 +9,54 @@ import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 
-export class MaterialResource extends Resource {
-    private readonly material_ref: Ref<RenderServerMaterial> = new Ref();
+export type MaterialReadOnlyUniforms = Readonly<RenderServerMaterialUniforms>;
 
-    public get material() { return this.material_ref.expect; }
+export abstract class MaterialResource extends Resource {
+	private readonly material_ref: Ref<RenderServerMaterial> = new Ref();
 
-    static #empty_uniforms = {}
+	public get material() { return this.material_ref.expect; }
 
-    public get uniforms(): RenderServerMaterialUniforms { return MaterialResource.#empty_uniforms; }
+	static empty_uniforms = {}
 
-    constructor() {
-        super();
-        this.material_ref.value = RenderServer.create_Material();
-    }
+	public get uniforms(): MaterialReadOnlyUniforms { return MaterialResource.empty_uniforms; }
 
-    public set_UniformOverride(uniform: string, value: WebGL2RenderStateTexture | number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined): void {
-        this.material.set_UniformOverride(uniform, value);
-    }
+	constructor() {
+		super();
+		this.material_ref.value = RenderServer.create_Material();
+	}
 
-    protected dispose(): void {
-        console.log(">>> dispose <MaterialResource>", this.rid);
-        this.material_ref.clear();
-    }
+	public set_UniformOverride(uniform: string, value: WebGL2RenderStateTexture | number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined): void {
+		this.material.set_UniformOverride(uniform, value);
+	}
+
+	protected dispose(): void {
+		console.log(">>> dispose <MaterialResource>", this.rid);
+		this.material_ref.clear();
+	}
 }
 
 export class MaterialOverrideResource extends MaterialResource {
-    private readonly override_material_ref: Ref<MaterialResource> = new Ref();
 
-    constructor() {
-        super();
-    }
+	private _uniforms: RenderServerMaterialUniforms | undefined;
 
-    public set_OverrideMaterial(material: MaterialResource) {
-        if (!material.material.has_shader) return;
-        if (this.override_material_ref.value !== material) {
-            this.override_material_ref.value = material;
-            this.material.set_Material(material.material.shader, material.uniforms);
-        }
-    }
+	public get uniforms(): MaterialReadOnlyUniforms { return this._uniforms ?? MaterialResource.empty_uniforms; }
 
-    public set_UniformOverride(uniform: string, value: WebGL2RenderStateTexture | number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined): void {
-        this.material.set_UniformOverride(uniform, value);
-    }
+	constructor() {
+		super();
+	}
 
-    protected dispose(): void {
-        console.log(">>> dispose <MaterialOverrideResource>", this.rid, this.override_material_ref.value?.rid);
-        this.override_material_ref.clear();
-        super.dispose();
-    }
+	public set_OverrideMaterial(material: MaterialResource) {
+		if (!material.material.has_shader) throw new Error('<MaterialOverrideResource> set_OverrideMaterial: base material does not have a shader, maybe it is not properly initialized');
+		this._uniforms = material.uniforms;
+		this.material.set_Material(material.material.shader, material.uniforms);
+	}
+
+	public set_UniformOverride(uniform: string, value: WebGL2RenderStateTexture | number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined): void {
+		this.material.set_UniformOverride(uniform, value);
+	}
+
+	protected dispose(): void {
+		console.log(">>> dispose <MaterialOverrideResource>", this.rid);
+		super.dispose();
+	}
 }

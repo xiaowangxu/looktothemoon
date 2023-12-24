@@ -7,11 +7,11 @@ export class ClassBase {
 
     public readonly rid: RID = Rid();
 
-    public dump(writer: ClassWriter) {
+    public dump(writer: ClassWriter): void {
         throw new Error("abstract method");
     }
 
-    public load(reader: ClassReader) {
+    public load(reader: ClassReader): void {
         throw new Error("abstract method");
     }
 
