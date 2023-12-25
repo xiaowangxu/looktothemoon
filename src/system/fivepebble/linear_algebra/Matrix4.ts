@@ -77,12 +77,26 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         );
     }
 
+    public get_Basis(target: Matrix3): Matrix3 {
+        target.n11 = this.n11; target.n12 = this.n12; target.n13 = this.n13;
+        target.n21 = this.n21; target.n22 = this.n22; target.n23 = this.n23;
+        target.n31 = this.n31; target.n32 = this.n32; target.n33 = this.n33;
+        return target;
+    }
+
     public get position() {
         return new Vector3(
             this.n14,
             this.n24,
             this.n34,
         );
+    }
+
+    public get_Position(target: Vector3): Vector3 {
+        target.x = this.n14;
+        target.y = this.n24;
+        target.z = this.n34;
+        return target;
     }
 
     constructor(n11: number, n12: number, n13: number, n14: number,
@@ -117,6 +131,14 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         );
     }
 
+    public set_Identity() {
+        this.n11 = 1; this.n12 = 0; this.n13 = 0; this.n14 = 0;
+        this.n21 = 0; this.n22 = 1; this.n23 = 0; this.n24 = 0;
+        this.n31 = 0; this.n32 = 0; this.n33 = 1; this.n34 = 0;
+        this.n41 = 0; this.n42 = 0; this.n43 = 0; this.n44 = 1;
+        return this;
+    }
+
     public static from_BasisPosition(basis: Matrix3 = Matrix3.make_Identity(), position: Vector3 = Vector3.make_Zero()): Matrix4 {
         return new Matrix4(
             basis.n11, basis.n12, basis.n13, position.x,
@@ -124,6 +146,14 @@ export class Matrix4 implements MatrixLike<Matrix4> {
             basis.n31, basis.n32, basis.n33, position.z,
             0 /*   */, 0 /*   */, 0 /*   */, 1 /*    */,
         );
+    }
+
+    public set_BasisPosition(basis: Matrix3 = Matrix3.make_Identity(), position: Vector3 = Vector3.make_Zero()) {
+        this.n11 = basis.n11; this.n12 = basis.n12; this.n13 = basis.n13; this.n14 = position.x;
+        this.n21 = basis.n21; this.n22 = basis.n22; this.n23 = basis.n23; this.n24 = position.y;
+        this.n31 = basis.n31; this.n32 = basis.n32; this.n33 = basis.n33; this.n34 = position.z;
+        this.n41 = 0 /*   */; this.n42 = 0 /*   */; this.n43 = 0 /*   */; this.n44 = 1 /*    */;
+        return this;
     }
 
     public static make_PrespectiveProjection(left: number, right: number, top: number, bottom: number, near: number, far: number) {
@@ -583,6 +613,10 @@ export class Matrix4 implements MatrixLike<Matrix4> {
             b41 * n11 + b42 * n21 + b43 * n31 + b44 * n41, b41 * n12 + b42 * n22 + b43 * n32 + b44 * n42, b41 * n13 + b42 * n23 + b43 * n33 + b44 * n43, b41 * n14 + b42 * n24 + b43 * n34 + b44 * n44,
         );
     }
+
+    /**
+     * b * a
+     */
     composes(a: Matrix4, b: Matrix4): Matrix4 {
         // [ b11 b12 b13 b14 ]   [ n11 n12 n13 n14 ]
         // [ b21 b22 b23 b24 ] * [ n21 n22 n23 n24 ]

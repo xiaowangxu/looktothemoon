@@ -34,17 +34,30 @@ export abstract class VisualInstance3D extends Node3D {
         return this._global_visible;
     }
 
-    private _visual_layer: number = 0xffffffff;
-    public get visual_layer() { return this._visual_layer; }
-    public set visual_layer(layer: number) {
+    private _render_queue: number = 0;
+    public get render_queue() { return this._render_queue; }
+    public set render_queue(render_queue: number) {
+        if (this._render_queue !== render_queue) {
+            this._render_queue = render_queue;
+            this.on_RenderQueueChanged();
+        }
+    }
+    
+    protected on_RenderQueueChanged() {
+        throw new Error('abstract method');
+    }
+
+    private _layer: number = 0xffffffff;
+    public get layer() { return this._layer; }
+    public set layer(layer: number) {
         layer = layer & 0xffffffff;
-        if (this._visual_layer !== layer) {
-            this._visual_layer = layer;
-            this.on_VisualLayerChanged();
+        if (this._layer !== layer) {
+            this._layer = layer;
+            this.on_LayerChanged();
         }
     }
 
-    protected on_VisualLayerChanged() {
+    protected on_LayerChanged() {
         throw new Error('abstract method');
     }
 
@@ -85,12 +98,12 @@ export abstract class VisualInstance3D extends Node3D {
     public dump(writer: ClassWriter): void {
         super.dump(writer);
         writer.property('local_visible', this.local_visible);
-        writer.property('visual_layer', this.visual_layer);
+        writer.property('visual_layer', this.layer);
     }
 
     public load(reader: ClassReader): void {
         super.load(reader);
         this.local_visible = reader.get<boolean>('local_visible') ?? true;
-        this.visual_layer = reader.get<number>('visual_layer') ?? 0xffffffff;
+        this.layer = reader.get<number>('visual_layer') ?? 0xffffffff;
     }
 }

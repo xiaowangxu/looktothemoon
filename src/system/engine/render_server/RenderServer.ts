@@ -110,7 +110,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     public readonly sky_texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
 
     constructor(canvas: RenderDeviceCanvas) {
-        super(canvas, { preserve_texture_count: 6 });
+        super(canvas, { preserve_texture_count: 8 });
         this.setup_IdentityTransformAttributeBuffer();
         this.setup_WorldUniformsBuffer();
         this.setup_EmptyTexture();
@@ -267,9 +267,24 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     public resize(width: number, height: number) {
         width = Math.max(Math.round(width), 1);
         height = Math.max(Math.round(height), 1);
-        if (this.canvas.width < width || this.canvas.height < height) {
-            this.canvas.width = width;
-            this.canvas.height = height;
+        const canvas_width = this.canvas.width;
+        const canvas_height = this.canvas.height;
+        if (canvas_width < width) this.canvas.width = width;
+        if (canvas_height < height) this.canvas.height = height;
+    }
+
+    public set_RenderCapabilities(depth_test?: boolean, depth_write?: boolean, depth_func?: number, blend?: boolean) {
+        if (depth_test !== undefined) {
+            this.render_state.set_CapabilityProxy(this.render_state.gl.DEPTH_TEST, depth_test);
+        }
+        if (depth_write !== undefined) {
+            this.render_state.set_DepthMaskProxy(depth_write);
+        }
+        if (depth_func !== undefined) {
+            this.render_state.set_DepthFuncProxy(depth_func);
+        }
+        if (blend !== undefined) {
+            this.render_state.set_CapabilityProxy(this.render_state.gl.BLEND, blend);
         }
     }
 

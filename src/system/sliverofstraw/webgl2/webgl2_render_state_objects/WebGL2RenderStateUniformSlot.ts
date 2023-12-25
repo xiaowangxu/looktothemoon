@@ -85,12 +85,16 @@ export class WebGL2RenderStateVec2UniformSlot extends WebGL2RenderStateValueUnif
     public set value(value: Vector2 | undefined) {
         if (this._value === undefined) {
             if (value !== undefined) {
-                this._value = value;
+                this._value = value.clone();
                 this.changed = true;
             }
         }
-        else if (value === undefined || !this._value.equal(value)) {
-            this._value = value;
+        else if (value === undefined) {
+            this._value = undefined;
+            this.changed = true;
+        }
+        else if (!this._value.equal(value)) {
+            this._value.copy(value);
             this.changed = true;
         }
     }
@@ -105,12 +109,16 @@ export class WebGL2RenderStateVec3UniformSlot extends WebGL2RenderStateValueUnif
     public set value(value: Vector3 | undefined) {
         if (this._value === undefined) {
             if (value !== undefined) {
-                this._value = value;
+                this._value = value.clone();
                 this.changed = true;
             }
         }
-        else if (value === undefined || !this._value.equal(value)) {
-            this._value = value;
+        else if (value === undefined) {
+            this._value = undefined;
+            this.changed = true;
+        }
+        else if (!this._value.equal(value)) {
+            this._value.copy(value);
             this.changed = true;
         }
     }
@@ -125,12 +133,16 @@ export class WebGL2RenderStateVec4UniformSlot extends WebGL2RenderStateValueUnif
     public set value(value: Vector4 | undefined) {
         if (this._value === undefined) {
             if (value !== undefined) {
-                this._value = value;
+                this._value = value.clone();
                 this.changed = true;
             }
         }
-        else if (value === undefined || !this._value.equal(value)) {
-            this._value = value;
+        else if (value === undefined) {
+            this._value = undefined;
+            this.changed = true;
+        }
+        else if (!this._value.equal(value)) {
+            this._value.copy(value);
             this.changed = true;
         }
     }
@@ -145,12 +157,16 @@ export class WebGL2RenderStateMat3UniformSlot extends WebGL2RenderStateValueUnif
     public set value(value: Matrix3 | undefined) {
         if (this._value === undefined) {
             if (value !== undefined) {
-                this._value = value;
+                this._value = value.clone();
                 this.changed = true;
             }
         }
-        else if (value === undefined || !this._value.equal(value)) {
-            this._value = value;
+        else if (value === undefined) {
+            this._value = undefined;
+            this.changed = true;
+        }
+        else if (!this._value.equal(value)) {
+            this._value.copy(value);
             this.changed = true;
         }
     }
@@ -165,12 +181,16 @@ export class WebGL2RenderStateMat4UniformSlot extends WebGL2RenderStateValueUnif
     public set value(value: Matrix4 | undefined) {
         if (this._value === undefined) {
             if (value !== undefined) {
-                this._value = value;
+                this._value = value.clone();
                 this.changed = true;
             }
         }
-        else if (value === undefined || !this._value.equal(value)) {
-            this._value = value;
+        else if (value === undefined) {
+            this._value = undefined;
+            this.changed = true;
+        }
+        else if (!this._value.equal(value)) {
+            this._value.copy(value);
             this.changed = true;
         }
     }

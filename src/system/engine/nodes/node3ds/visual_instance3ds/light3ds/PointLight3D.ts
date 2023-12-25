@@ -43,11 +43,11 @@ export class PointLight3D extends Light3D {
         super();
     }
 
-    protected on_VisualLayerChanged(): void {
+    protected on_LayerChanged(): void {
         if (this.light_rid !== undefined) {
             const visual_world = this.get_Viewport()?.get_World3D()?.get_VisualWorld();
             if (visual_world !== undefined) {
-                visual_world.set_LightLayer(this.light_rid, this.visual_layer);
+                visual_world.set_LightLayer(this.light_rid, this.layer);
             }
         }
     }
@@ -77,7 +77,7 @@ export class PointLight3D extends Light3D {
                     const visual_world = this.get_Viewport()?.get_World3D()?.get_VisualWorld();
                     if (visual_world !== undefined) {
                         this.light_rid = visual_world.create_PointLight();
-                        visual_world.set_LightLayer(this.light_rid, this.visual_layer);
+                        visual_world.set_LightLayer(this.light_rid, this.layer);
                         visual_world.set_LightColor(this.light_rid, this.color);
                         visual_world.set_LightIntensity(this.light_rid, this.intensity);
                         visual_world.set_PointLightDecay(this.light_rid, this.decay);

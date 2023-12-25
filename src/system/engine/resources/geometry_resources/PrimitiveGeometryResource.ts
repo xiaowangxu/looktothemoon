@@ -8,7 +8,11 @@ import { box3 } from "@/system/fivepebble/geometries/Box3";
 import { Tau } from '@/system/fivepebble/Scalar';
 import type { ClassReader, ClassWriter } from "../../classes/ClassWriterReader";
 
-export class BoxGeometryResource extends GeometryResource {
+export abstract class PrimitiveGeometryResource extends GeometryResource {
+	public abstract build(): void;
+}
+
+export class BoxGeometryResource extends PrimitiveGeometryResource {
 	public static class_name: string = 'BoxGeometryResource';
 
 	protected _width: number = 1;
@@ -195,7 +199,7 @@ export class BoxGeometryResource extends GeometryResource {
 	}
 }
 
-export class TorusGeometryResource extends GeometryResource {
+export class TorusGeometryResource extends PrimitiveGeometryResource {
 	protected _radius: number = 1;
 	protected _tube_radius: number = 0.25;
 	protected _segments: number = 32;
@@ -323,21 +327,29 @@ export class TorusGeometryResource extends GeometryResource {
 	}
 }
 
-export class CylinderGeometryResource extends GeometryResource {
+export class CylinderGeometryResource extends PrimitiveGeometryResource {
 	public static class_name: string = 'CylinderGeometryResource';
 
-	protected _radius: number = 0.5;
+	protected _top_radius: number = 0.5;
+	protected _bottom_radius: number = 0.5;
 	protected _height: number = 1;
 	protected _segments: number = 32;
 
-	public get radius() { return this._radius; }
+	public get top_radius() { return this._top_radius; }
+	public get bottom_radius() { return this._bottom_radius; }
 	public get height() { return this._height; }
 	public get segments() { return this._segments; }
 
-	public set radius(radius: number) {
+	public set top_radius(radius: number) {
 		radius = Math.max(radius, 0);
-		if (this._radius !== radius) {
-			this._radius = radius;
+		if (this._top_radius !== radius) {
+			this._top_radius = radius;
+		}
+	}
+	public set bottom_radius(radius: number) {
+		radius = Math.max(radius, 0);
+		if (this._bottom_radius !== radius) {
+			this._bottom_radius = radius;
 		}
 	}
 	public set height(height: number) {
@@ -359,130 +371,167 @@ export class CylinderGeometryResource extends GeometryResource {
 
 	public build() {
 		const segments = this.segments;
-		const radius = this.radius;
+		const top_radius = this.top_radius;
+		const bottom_radius = this.bottom_radius;
 		const height = this.height;
 		const half_height = height / 2;
 
 		const ring_count = segments + 1;
-		const vertex_count = ring_count * 2 * 2 + 2;
+		const top_side_count = ring_count;
+		const bottom_side_count = ring_count;
+		const top_cap_count = ring_count;
+		const bottom_cap_count = ring_count;
+		const top_pole_count = segments;
+		const bottom_pole_count = segments;
+
+		const vertex_count = top_side_count + bottom_side_count + top_cap_count + bottom_cap_count + top_pole_count + bottom_pole_count;
 
 		const position_buffer = new RenderDeviceVector3AttributeBuffer(RenderServer, RenderStateBufferUsage.StaticDraw, vertex_count);
 		const normal_buffer = new RenderDeviceVector3AttributeBuffer(RenderServer, RenderStateBufferUsage.StaticDraw, vertex_count);
 		const uv_buffer = new RenderDeviceVector2AttributeBuffer(RenderServer, RenderStateBufferUsage.StaticDraw, vertex_count);
 
+		// position / normal
+
+		let offset = 0;
+		let length = top_side_count * 3;
+		const position_top_side_buffer = new Float32Array(position_buffer.data.buffer, offset, length);
+		const normal_top_side_buffer = new Float32Array(normal_buffer.data.buffer, offset, length);
+
+		offset += length * Float32Array.BYTES_PER_ELEMENT;
+		length = bottom_side_count * 3
+		const position_bottom_side_buffer = new Float32Array(position_buffer.data.buffer, offset, length);
+		const normal_bottom_side_buffer = new Float32Array(normal_buffer.data.buffer, offset, length);
+
+		offset += length * Float32Array.BYTES_PER_ELEMENT;
+		length = top_cap_count * 3
+		const position_top_cap_buffer = new Float32Array(position_buffer.data.buffer, offset, length);
+		const normal_top_cap_buffer = new Float32Array(normal_buffer.data.buffer, offset, length);
+
+		offset += length * Float32Array.BYTES_PER_ELEMENT;
+		length = bottom_cap_count * 3
+		const position_bottom_cap_buffer = new Float32Array(position_buffer.data.buffer, offset, length);
+		const normal_bottom_cap_buffer = new Float32Array(normal_buffer.data.buffer, offset, length);
+
+		offset += length * Float32Array.BYTES_PER_ELEMENT;
+		length = top_pole_count * 3
+		const position_top_pole_buffer = new Float32Array(position_buffer.data.buffer, offset, length);
+		const normal_top_pole_buffer = new Float32Array(normal_buffer.data.buffer, offset, length);
+
+		offset += length * Float32Array.BYTES_PER_ELEMENT;
+		length = bottom_pole_count * 3
+		const position_bottom_pole_buffer = new Float32Array(position_buffer.data.buffer, offset, length);
+		const normal_bottom_pole_buffer = new Float32Array(normal_buffer.data.buffer, offset, length);
+
+		// uv
+
+		offset = 0;
+		length = top_side_count * 2;
+		const uv_top_side_buffer = new Float32Array(uv_buffer.data.buffer, offset, length);
+
+		offset += length * Float32Array.BYTES_PER_ELEMENT;
+		length = bottom_side_count * 2
+		const uv_bottom_side_buffer = new Float32Array(uv_buffer.data.buffer, offset, length);
+
+		offset += length * Float32Array.BYTES_PER_ELEMENT;
+		length = top_cap_count * 2
+		const uv_top_cap_buffer = new Float32Array(uv_buffer.data.buffer, offset, length);
+
+		offset += length * Float32Array.BYTES_PER_ELEMENT;
+		length = bottom_cap_count * 2
+		const uv_bottom_cap_buffer = new Float32Array(uv_buffer.data.buffer, offset, length);
+
+		offset += length * Float32Array.BYTES_PER_ELEMENT;
+		length = top_pole_count * 2
+		const uv_top_pole_buffer = new Float32Array(uv_buffer.data.buffer, offset, length);
+
+		offset += length * Float32Array.BYTES_PER_ELEMENT;
+		length = bottom_pole_count * 2
+		const uv_bottom_pole_buffer = new Float32Array(uv_buffer.data.buffer, offset, length);
+
+		const slope = height === 0 ? 0 : ((bottom_radius - top_radius) / height);
+		const normal_length = 1 + slope * slope;
+		
 		for (let i = 0; i <= segments; i++) {
 			const t = i / segments * Tau;
 			const x = Math.cos(t);
 			const z = Math.sin(t);
 
-			const top_vec3_idx = i * 3;
-			const bottom_vec3_idx = (i + ring_count) * 3;
+			const vec3_idx = i * 3;
+			const vec2_idx = i * 2;
 
-			// position
-			position_buffer.data[top_vec3_idx + 0] = x * radius;
-			position_buffer.data[top_vec3_idx + 1] = half_height;
-			position_buffer.data[top_vec3_idx + 2] = z * radius;
-			position_buffer.data[bottom_vec3_idx + 0] = x * radius;
-			position_buffer.data[bottom_vec3_idx + 1] = -half_height;
-			position_buffer.data[bottom_vec3_idx + 2] = z * radius;
-			// normal
-			normal_buffer.data[top_vec3_idx + 0] = x;
-			normal_buffer.data[top_vec3_idx + 1] = 0;
-			normal_buffer.data[top_vec3_idx + 2] = z;
-			normal_buffer.data[bottom_vec3_idx + 0] = x;
-			normal_buffer.data[bottom_vec3_idx + 1] = 0;
-			normal_buffer.data[bottom_vec3_idx + 2] = z;
+			position_top_cap_buffer[vec3_idx + 0] = position_top_side_buffer[vec3_idx + 0] = x * top_radius;
+			position_top_cap_buffer[vec3_idx + 1] = position_top_side_buffer[vec3_idx + 1] = half_height;
+			position_top_cap_buffer[vec3_idx + 2] = position_top_side_buffer[vec3_idx + 2] = z * top_radius;
+			position_bottom_cap_buffer[vec3_idx + 0] = position_bottom_side_buffer[vec3_idx + 0] = x * bottom_radius;
+			position_bottom_cap_buffer[vec3_idx + 1] = position_bottom_side_buffer[vec3_idx + 1] = -half_height;
+			position_bottom_cap_buffer[vec3_idx + 2] = position_bottom_side_buffer[vec3_idx + 2] = z * bottom_radius;
 
-			const top_cap_vec3_idx = (i + ring_count * 2) * 3;
-			const bottom_cap_vec3_idx = (i + ring_count * 3) * 3;
+			normal_bottom_side_buffer[vec3_idx + 0] = normal_top_side_buffer[vec3_idx + 0] = x / normal_length;
+			normal_bottom_side_buffer[vec3_idx + 1] = normal_top_side_buffer[vec3_idx + 1] = slope / normal_length;
+			normal_bottom_side_buffer[vec3_idx + 2] = normal_top_side_buffer[vec3_idx + 2] = z / normal_length;
+			normal_bottom_cap_buffer[vec3_idx + 0] = normal_top_cap_buffer[vec3_idx + 0] = 0;
+			normal_bottom_cap_buffer[vec3_idx + 2] = normal_top_cap_buffer[vec3_idx + 2] = 0;
+			normal_top_cap_buffer[vec3_idx + 1] = 1;
+			normal_bottom_cap_buffer[vec3_idx + 1] = -1;
 
-			normal_buffer.data[top_cap_vec3_idx + 0] = 0;
-			normal_buffer.data[top_cap_vec3_idx + 1] = 1;
-			normal_buffer.data[top_cap_vec3_idx + 2] = 0;
-			normal_buffer.data[bottom_cap_vec3_idx + 0] = 0;
-			normal_buffer.data[bottom_cap_vec3_idx + 1] = -1;
-			normal_buffer.data[bottom_cap_vec3_idx + 2] = 0;
-			// uv
 			const u = 1 - i / segments;
-			uv_buffer.data[i * 2 + 0] = u;
-			uv_buffer.data[i * 2 + 1] = 1;
-			uv_buffer.data[(i + ring_count) * 2 + 0] = u;
-			uv_buffer.data[(i + ring_count) * 2 + 1] = 0;
+			uv_top_side_buffer[vec2_idx + 0] = u;
+			uv_top_side_buffer[vec2_idx + 1] = 1;
+			uv_bottom_cap_buffer[vec2_idx + 0] = uv_top_cap_buffer[vec2_idx + 0] = uv_bottom_side_buffer[vec2_idx + 0] = u;
+			uv_bottom_cap_buffer[vec2_idx + 1] = uv_top_cap_buffer[vec2_idx + 1] = uv_bottom_side_buffer[vec2_idx + 1] = 0;
+
+			if (i < segments) {
+				position_top_pole_buffer[vec3_idx + 0] = 0;
+				position_top_pole_buffer[vec3_idx + 1] = half_height;
+				position_top_pole_buffer[vec3_idx + 2] = 0;
+				position_bottom_pole_buffer[vec3_idx + 0] = 0;
+				position_bottom_pole_buffer[vec3_idx + 1] = -half_height;
+				position_bottom_pole_buffer[vec3_idx + 2] = 0;
+
+				normal_bottom_pole_buffer[vec3_idx + 0] = normal_top_pole_buffer[vec3_idx + 0] = 0;
+				normal_bottom_pole_buffer[vec3_idx + 2] = normal_top_pole_buffer[vec3_idx + 2] = 0;
+				normal_top_pole_buffer[vec3_idx + 1] = 1;
+				normal_bottom_pole_buffer[vec3_idx + 1] = -1;
+
+				uv_bottom_pole_buffer[vec2_idx + 0] = uv_top_pole_buffer[vec2_idx + 0] = u;
+				uv_bottom_pole_buffer[vec2_idx + 1] = uv_top_pole_buffer[vec2_idx + 1] = 1;
+			}
 		}
 
-		// set top / bottom cap
-		const mid_pole_idx = ring_count * 4;
-
-		const mid_pole_vec3_idx = mid_pole_idx * 3;
-		const mid_pole_vec2_idx = mid_pole_idx * 2;
-
-		position_buffer.data[mid_pole_vec3_idx + 0] = 0;
-		position_buffer.data[mid_pole_vec3_idx + 1] = half_height;
-		position_buffer.data[mid_pole_vec3_idx + 2] = 0;
-		position_buffer.data[mid_pole_vec3_idx + 3] = 0;
-		position_buffer.data[mid_pole_vec3_idx + 4] = -half_height;
-		position_buffer.data[mid_pole_vec3_idx + 5] = 0;
-		normal_buffer.data[mid_pole_vec3_idx + 0] = 0;
-		normal_buffer.data[mid_pole_vec3_idx + 1] = 1;
-		normal_buffer.data[mid_pole_vec3_idx + 2] = 0;
-		normal_buffer.data[mid_pole_vec3_idx + 3] = 0;
-		normal_buffer.data[mid_pole_vec3_idx + 4] = -1;
-		normal_buffer.data[mid_pole_vec3_idx + 5] = 0;
-		uv_buffer.data[mid_pole_vec2_idx + 0] = 0;
-		uv_buffer.data[mid_pole_vec2_idx + 1] = 1;
-		uv_buffer.data[mid_pole_vec2_idx + 2] = 0;
-		uv_buffer.data[mid_pole_vec2_idx + 3] = 1;
-
-		const ring_vec3_com_count = ring_count * 3;
-		const ring_vec2_com_count = ring_count * 2;
-
-		position_buffer.data.set(new Float32Array(position_buffer.data.buffer, 0, ring_vec3_com_count), ring_vec2_com_count * 3);
-		position_buffer.data.set(new Float32Array(position_buffer.data.buffer, ring_vec3_com_count * Float32Array.BYTES_PER_ELEMENT, ring_vec3_com_count), ring_vec3_com_count * 3);
-		uv_buffer.data.set(new Float32Array(uv_buffer.data.buffer, 0, ring_vec2_com_count), ring_vec2_com_count * 2);
-		uv_buffer.data.set(new Float32Array(uv_buffer.data.buffer, ring_vec2_com_count * Float32Array.BYTES_PER_ELEMENT, ring_vec2_com_count), ring_vec3_com_count * 2);
-
-		const index_count = segments * 6 * 2;
+		const side_index_count = segments * 6;
+		const top_cap_indx_count = segments * 3;
+		const bottom_cap_indx_count = segments * 3;
+		const index_count = side_index_count + top_cap_indx_count + bottom_cap_indx_count;
 
 		const index_buffer = new RenderDeviceIndexAttributeBuffer(RenderServer, RenderStateBufferUsage.StaticDraw, index_count);
 
-		for (let i = 0; i < segments; i++) {
-			const top_idx = i;
-			const bottom_idx = top_idx + ring_count;
-			const top_next_idx = top_idx + 1;
-			const bottom_next_idx = top_next_idx + ring_count;
-
-			const idx = i * 6;
-
-			index_buffer.data[idx + 0] = bottom_idx;
-			index_buffer.data[idx + 1] = top_idx;
-			index_buffer.data[idx + 2] = bottom_next_idx;
-			index_buffer.data[idx + 3] = bottom_next_idx;
-			index_buffer.data[idx + 4] = top_idx;
-			index_buffer.data[idx + 5] = top_next_idx;
-		}
-
-		// cap
+		const index_side_buffer = new Uint32Array(index_buffer.data.buffer, 0, side_index_count);
+		const index_top_cap_buffer = new Uint32Array(index_buffer.data.buffer, side_index_count * Uint32Array.BYTES_PER_ELEMENT, top_cap_indx_count);
+		const index_bottom_cap_buffer = new Uint32Array(index_buffer.data.buffer, (side_index_count + top_cap_indx_count) * Uint32Array.BYTES_PER_ELEMENT, bottom_cap_indx_count);
 
 		for (let i = 0; i < segments; i++) {
-			const top_idx = i + ring_count * 2;
-			const bottom_idx = top_idx + ring_count;
-			const top_next_idx = top_idx + 1;
-			const bottom_next_idx = top_next_idx + ring_count;
+			const index_side_idx = i * 6;
+			index_side_buffer[index_side_idx + 0] = i;
+			index_side_buffer[index_side_idx + 4] = index_side_buffer[index_side_idx + 1] = i + 1;
+			index_side_buffer[index_side_idx + 3] = index_side_buffer[index_side_idx + 2] = i + ring_count;
+			index_side_buffer[index_side_idx + 5] = i + 1 + ring_count;
 
-			const idx = segments * 6 + i * 3;
+			const index_top_cap_idx = i * 3;
+			index_top_cap_buffer[index_top_cap_idx + 0] = i + ring_count * 2;
+			index_top_cap_buffer[index_top_cap_idx + 1] = i + ring_count * 4;
+			index_top_cap_buffer[index_top_cap_idx + 2] = i + ring_count * 2 + 1;
 
-			index_buffer.data[idx + 0] = top_next_idx;
-			index_buffer.data[idx + 1] = top_idx;
-			index_buffer.data[idx + 2] = mid_pole_idx;
-			index_buffer.data[idx + segments * 3 + 0] = bottom_idx;
-			index_buffer.data[idx + segments * 3 + 1] = bottom_next_idx;
-			index_buffer.data[idx + segments * 3 + 2] = mid_pole_idx + 1;
+			index_bottom_cap_buffer[index_top_cap_idx + 0] = i + ring_count * 3;
+			index_bottom_cap_buffer[index_top_cap_idx + 1] = i + ring_count * 3 + 1;
+			index_bottom_cap_buffer[index_top_cap_idx + 2] = i + ring_count * 4 + segments;
 		}
 
 		position_buffer.commit_Data();
 		normal_buffer.commit_Data();
 		uv_buffer.commit_Data();
 		index_buffer.commit_Data();
+
+		const max_radius = Math.max(top_radius, bottom_radius);
 
 		this.geometry.set_Geometry(
 			RenderStatePrimitiveType.Triangles,
@@ -494,8 +543,8 @@ export class CylinderGeometryResource extends GeometryResource {
 			index_buffer,
 			index_count,
 			box3(
-				vec3(-radius, -half_height, -radius),
-				vec3(radius, half_height, radius),
+				vec3(-max_radius, -half_height, -max_radius),
+				vec3(max_radius, half_height, max_radius),
 			)
 		);
 		this.geometry.add_Surface(0, segments * 6);
@@ -506,13 +555,15 @@ export class CylinderGeometryResource extends GeometryResource {
 	// save / load
 
 	public dump(writer: ClassWriter): void {
-		writer.property('radius', this.radius);
+		writer.property('top_radius', this.top_radius);
+		writer.property('bottom_radius', this.bottom_radius);
 		writer.property('height', this.height);
 		writer.property('segments', this.segments);
 	}
 
 	public load(reader: ClassReader): void {
-		this.radius = reader.get<number>('radius') ?? 0.5;
+		this.top_radius = reader.get<number>('top_radius') ?? 0.5;
+		this.bottom_radius = reader.get<number>('bottom_radius') ?? 0.5;
 		this.height = reader.get<number>('height') ?? 1;
 		this.segments = reader.get<number>('segments') ?? 32;
 		this.build();

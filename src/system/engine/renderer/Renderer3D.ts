@@ -246,6 +246,7 @@ export class Renderer3D {
 	public readonly canvas: HTMLCanvasElement;
 	private readonly ctx: CanvasRenderingContext2D;
 
+	private readonly render_queue_0 = new Renderer3DQueue();
 	private readonly render_queue_1 = new Renderer3DQueue();
 
 	private readonly frame_buffer_prez: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
@@ -319,9 +320,59 @@ export class Renderer3D {
 		}
 	}
 
+	private render_Queue(render_queue: Renderer3DQueue, width: number, height: number, sky: boolean = true) {
+		RenderServer.set_RenderCapabilities(true, true, RenderServer.render_state.gl.LEQUAL, false);
+		RenderServer.render_state.set_ViewportProxy(0, 0, width, height);
+		RenderServer.render_state.set_ScissorProxy(0, 0, width, height);
+		RenderServer.render_state.set_CapabilityProxy(RenderServer.render_state.gl.CULL_FACE, true);
+		if (!sky) {
+			RenderServer.render_state.set_ClearColorProxy(0, 0, 0, 0);
+			RenderServer.render_state.clear_FrameBuffer(this.frame_buffer.expect, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth);
+		}
+		else {
+			RenderServer.render_state.clear_FrameBuffer(this.frame_buffer.expect, RenderStateFrameBufferPart.Depth);
+		}
+
+		// render queue 0 solid
+		for (let i = 0; i <= render_queue.solid_pointer; i++) {
+			const geometry = render_queue.solid_geometry_queue[i];
+			const indexed = render_queue.solid_indexed_queue[i];
+			const instance_count = render_queue.solid_instance_count_queue[i];
+			const material = render_queue.solid_material_queue[i];
+			const transform = render_queue.solid_transform_queue[i];
+			const layer = render_queue.solid_layer_queue[i];
+			if (material === undefined) continue;
+			const program = material.get_Program(RenderServerShaderPass.Shade);
+			if (geometry !== undefined && program !== undefined) {
+				material.set_UniformOverride('model_world', transform);
+				material.set_UniformOverride('layer', layer);
+				material.commit_AllUniformOverride(RenderServerShaderPass.Shade);
+				this.draw_calls++;
+				if (indexed) {
+					RenderServer.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
+				}
+				else {
+					RenderServer.render_state.draw_Arrays(program, geometry, instance_count);
+				}
+			}
+		}
+
+		// draw sky
+		if (sky) {
+			RenderServer.render_state.set_DepthFuncProxy(RenderServer.render_state.gl.LEQUAL);
+			RenderServer.render_state.draw_Elements(skydome_program, quad_surface.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+		}
+
+		// blit
+		RenderServer.render_state.blit_FrameBuffer(this.frame_buffer.expect, this.frame_buffer_copy.expect, RenderStateFrameBufferPart.Color, RenderStateTextureMagFilter.Nearest, 0, 0, width, height);
+	}
+
 	private fps_array: number[] = new Array(512);
 	private fps_pointer: number = 0;
+	private draw_calls: number = 0;
 	public render(world: World3D, viewport: Viewport, camera: Camera3D, once: boolean): void {
+		this.draw_calls = 0;
+
 		const is_transparent = viewport.transparent;
 
 		const time = viewport.get_SceneTree()!.time;
@@ -357,76 +408,57 @@ export class Renderer3D {
 		// fill up render queue
 		let total_objects_count = 0;
 		let rendered_objects_count = 0;
+		this.render_queue_0.reset();
 		this.render_queue_1.reset();
 		for (const mesh of world_3d.meshes) {
 			total_objects_count++;
-			if (mesh.fill_RenderQueue(this.render_queue_1, cam_mask, cam_frustum)) rendered_objects_count++;
+			const render_queue = mesh.render_queue;
+			if (mesh.fill_RenderQueue(render_queue === 0 ? this.render_queue_0 : this.render_queue_1, cam_mask, cam_frustum)) rendered_objects_count++;
 		}
 
-		// draw scene
-		RenderServer.render_state.set_ViewportProxy(0, 0, x, y);
-		RenderServer.render_state.set_ScissorProxy(0, 0, x, y);
-		RenderServer.render_state.set_DepthFuncProxy(RenderServer.render_state.gl.LEQUAL);
-		RenderServer.render_state.set_DepthMaskProxy(true);
-		RenderServer.render_state.set_CapabilityProxy(RenderServer.render_state.gl.DEPTH_TEST, true);
-		RenderServer.render_state.set_CapabilityProxy(RenderServer.render_state.gl.CULL_FACE, true);
-		if (is_transparent) {
-			RenderServer.render_state.set_ClearColorProxy(0, 0, 0, 0);
-			RenderServer.render_state.clear_FrameBuffer(this.frame_buffer.expect, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth);
-		}
-		else {
-			RenderServer.render_state.clear_FrameBuffer(this.frame_buffer.expect, RenderStateFrameBufferPart.Depth);
-		}
+		//#region RenderQueue0
 
-		// render queue 1 solid
-		let draw_calls = 0;
-		for (let i = 0; i <= this.render_queue_1.solid_pointer; i++) {
-			const geometry = this.render_queue_1.solid_geometry_queue[i];
-			const indexed = this.render_queue_1.solid_indexed_queue[i];
-			const instance_count = this.render_queue_1.solid_instance_count_queue[i];
-			const material = this.render_queue_1.solid_material_queue[i];
-			const transform = this.render_queue_1.solid_transform_queue[i];
-			const layer = this.render_queue_1.solid_layer_queue[i];
-			if (material === undefined) continue;
-			const program = material.get_Program(RenderServerShaderPass.Shade);
-			if (geometry !== undefined && program !== undefined) {
-				material.set_UniformOverride('model_world', transform);
-				material.set_UniformOverride('layer', layer);
-				material.commit_AllUniformOverride(RenderServerShaderPass.Shade);
-				draw_calls++;
-				if (indexed) {
-					RenderServer.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
-				}
-				else {
-					RenderServer.render_state.draw_Arrays(program, geometry, instance_count);
-				}
-			}
-		}
-
-		if (once) this.render_queue_1.clear();
-
-		// draw sky
-		if (!is_transparent) {
-			RenderServer.render_state.set_DepthFuncProxy(RenderServer.render_state.gl.LEQUAL);
-			RenderServer.render_state.draw_Elements(skydome_program, quad_surface.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
-		}
-
-		// blit
-		RenderServer.render_state.blit_FrameBuffer(this.frame_buffer.expect, this.frame_buffer_copy.expect, RenderStateFrameBufferPart.Color, RenderStateTextureMagFilter.Nearest, 0, 0, x, y);
+		// draw scene queue 0
+		this.render_Queue(this.render_queue_0, x, y, !is_transparent);
 
 		// on screen
+		RenderServer.set_RenderCapabilities(false, false, RenderServer.render_state.gl.ALWAYS, false);
 		RenderServer.render_state.set_ViewportProxy(0, 0, x, y);
 		RenderServer.render_state.set_ScissorProxy(0, 0, x, y);
-		RenderServer.render_state.clear_FrameBuffer(undefined, RenderStateFrameBufferPart.Color);
+		RenderServer.render_state.use_FrameBuffer(undefined);
 		RenderServer.render_state.active_Texture(this.frame_buffer_texture.expect, 0);
 		uniform_colormap_slot.value = viewport.color_map ? 1 : 0;
 		uniform_colormap_slot.commit();
 		RenderServer.render_state.draw_Elements(onscreen_program, quad_surface.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
-		this.ctx.globalCompositeOperation = 'source-over';
+
+		//#endregion
+
+		//#region RenderQueue1
+
+		if (this.render_queue_1.solid_pointer >= 0 || this.render_queue_1.transparent_pointer >= 0) {
+			// draw scene queue 1
+			this.render_Queue(this.render_queue_1, x, y, false);
+			// on screen
+			RenderServer.set_RenderCapabilities(false, false, RenderServer.render_state.gl.ALWAYS, true);
+			RenderServer.render_state.gl.blendFunc(RenderServer.render_state.gl.SRC_ALPHA, RenderServer.render_state.gl.ONE_MINUS_SRC_ALPHA);
+			RenderServer.render_state.use_FrameBuffer(undefined);
+			RenderServer.render_state.active_Texture(this.frame_buffer_texture.expect, 0);
+			uniform_colormap_slot.value = 0;
+			uniform_colormap_slot.commit();
+			RenderServer.render_state.draw_Elements(onscreen_program, quad_surface.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+		}
+
+		//#endregion
+
 		if (is_transparent) {
 			this.ctx.clearRect(0, 0, x, y);
 		}
 		this.ctx.drawImage(RenderServer.canvas, 0, RenderServer.canvas.height - y, x, y, 0, 0, x, y);
+
+		if (once) {
+			this.render_queue_0.clear();
+			this.render_queue_1.clear();
+		}
 
 		// debug
 		if (viewport.debug) {
@@ -457,15 +489,16 @@ export class Renderer3D {
 			this.ctx.stroke();
 
 			this.ctx.font = '20px consolas';
-			this.ctx.fillStyle = 'white';
+			this.ctx.fillStyle = 'rgb(255 0 255)';
 			this.ctx.textBaseline = 'bottom';
-			this.ctx.globalCompositeOperation = 'difference';
 			this.ctx.fillText(`FrameDelta: ${viewport.get_SceneTree()!.delta.toFixed(4)} ms`, 10, y - 8);
 			this.ctx.fillText(`RenderObjs: ${rendered_objects_count} / ${total_objects_count}`, 10, y - 30);
-			this.ctx.fillText(`Draw Calls: ${draw_calls}`, 10, y - 55);
+			this.ctx.fillText(`Draw Calls: ${this.draw_calls}`, 10, y - 55);
 		}
 	}
 
 	public dispose() {
+		this.render_queue_0.dispose();
+		this.render_queue_1.dispose();
 	}
 }

@@ -91,7 +91,6 @@ export class PlainColorMaterialResource extends MaterialResource {
     public get uniforms() { return PlainColorMaterialResource.#uniforms; }
 
     private _color: Color = new Vector4(1, 1, 1, 1);
-
     public get color() { return this._color; }
     public set color(color: Color) {
         if (!this._color.equal(color)) {
@@ -134,6 +133,7 @@ export class NormalMaterialResource extends MaterialResource {
 
     static #uniforms: MaterialReadOnlyUniforms = {
         model_world: RenderStateUniformType.Mat4,
+        u_remap: RenderStateUniformType.Int,
     };
 
     static #vertex_shader = `#version 300 es
@@ -141,9 +141,7 @@ export class NormalMaterialResource extends MaterialResource {
     precision highp usampler2DArray;
     precision highp sampler3D;
     
-    const float PI = 3.1415926535;
-    const float TAU = 6.283185307;
-    const float EPSILON = 0.00001;
+    ${RenderServerDevice.ConstantsCode}
     
     ${RenderServerDevice.WorldUniformsCode}
     
@@ -187,19 +185,33 @@ export class NormalMaterialResource extends MaterialResource {
 
     ${RenderServerDevice.WorldUniformsCode}
 
+    uniform bool u_remap;
+
     in vec3 v_world;
     in vec3 v_normal;
 
     ${RenderServerDevice.FrameOutputBufferCode}
 
     void main() {
+        // camera_world: normalize(mat3(transpose(camera_world)) * normalize(v_normal))
         vec3 normal = normalize(v_normal);
-        o_color = vec4((normal + 1.0) / 2.0, 1.0);
+        o_color = vec4(u_remap ? ((normal + 1.0) / 2.0) : normal, 1.0);
         o_normal = normal;
     }`;
-    static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {};
+    static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
+        u_remap: { type: RenderStateUniformType.Int, default: 1 }
+    };
 
     public get uniforms() { return NormalMaterialResource.#uniforms; }
+
+    private _remap: boolean = true;
+    public get remap() { return this._remap; }
+    public set remap(remap: boolean) {
+        if (this._remap !== remap) {
+            this._remap = remap;
+            this.material.set_UniformOverride('u_remap', this._remap ? 1 : 0);
+        }
+    }
 
     constructor() {
         super();
@@ -241,10 +253,8 @@ export class UVMaterialResource extends MaterialResource {
     precision highp usampler2DArray;
     precision highp sampler3D;
     
-    const float PI = 3.1415926535;
-    const float TAU = 6.283185307;
-    const float EPSILON = 0.00001;
-    
+    ${RenderServerDevice.ConstantsCode}
+
     ${RenderServerDevice.WorldUniformsCode}
     
     ${RenderServerGeometry.GeometryAttributesCode}

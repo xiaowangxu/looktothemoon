@@ -7,7 +7,7 @@ import { Epsilon, Tau, clamp } from "@/system/fivepebble/Scalar";
 import { NodeNotification } from "@/system/engine/nodes/Node";
 import { type CursorStyle, Viewport } from "@/system/engine/nodes/Node";
 import { Node3D } from "@/system/engine/nodes/node3ds/Node3D";
-import { FixSizeNode3D } from "@/system/engine/nodes/node3ds/FixSizeNode3D";
+import { FixSizeNode3D } from "@/system/engine/nodes/node3ds/gizmo3ds/FixSizeNode3D";
 import { PickingArea3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingArea3D";
 import { PickingShape3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingShape3D";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry_3ds/MeshInstance3D";

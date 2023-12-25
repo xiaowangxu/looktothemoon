@@ -67,6 +67,13 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         );
     }
 
+    public set_Identity() {
+        this.n11 = 1; this.n12 = 0; this.n13 = 0;
+        this.n21 = 0; this.n22 = 1; this.n23 = 0;
+        this.n31 = 0; this.n32 = 0; this.n33 = 1;
+        return this;
+    }
+
     public static from_Axis(x: Vector3, y: Vector3, z: Vector3) {
         return new Matrix3(
             x.x, y.x, z.x,
@@ -106,56 +113,85 @@ export class Matrix3 implements MatrixLike<Matrix3> {
     }
 
     public static from_Euler(euler: Euler) {
+        return new Matrix3(0, 0, 0, 0, 0, 0, 0, 0, 0).set_Euler(euler);
+    }
+
+    public set_Euler(euler: Euler) {
         const { x, y, z, order } = euler;
         const a = Math.cos(x), b = Math.sin(x);
         const c = Math.cos(y), d = Math.sin(y);
         const e = Math.cos(z), f = Math.sin(z);
         if (order === EulerOrder.XYZ) {
             const ae = a * e, af = a * f, be = b * e, bf = b * f;
-            return new Matrix3(
-                c * e, - c * f, d,
-                af + be * d, ae - bf * d, - b * c,
-                bf - ae * d, be + af * d, a * c,
-            );
+            this.n11 = c * e;
+            this.n12 = - c * f;
+            this.n13 = d;
+            this.n21 = af + be * d;
+            this.n22 = ae - bf * d;
+            this.n23 = - b * c;
+            this.n31 = bf - ae * d;
+            this.n32 = be + af * d;
+            this.n33 = a * c;
         } else if (order === EulerOrder.YXZ) {
             const ce = c * e, cf = c * f, de = d * e, df = d * f;
-            return new Matrix3(
-                ce + df * b, de * b - cf, a * d,
-                a * f, a * e, - b,
-                cf * b - de, df + ce * b, a * c,
-            );
+            this.n11 = ce + df * b;
+            this.n12 = de * b - cf;
+            this.n13 = a * d;
+            this.n21 = a * f;
+            this.n22 = a * e;
+            this.n23 = - b;
+            this.n31 = cf * b - de;
+            this.n32 = df + ce * b;
+            this.n33 = a * c;
         } else if (order === EulerOrder.ZXY) {
             const ce = c * e, cf = c * f, de = d * e, df = d * f;
-            return new Matrix3(
-                ce - df * b, - a * f, de + cf * b,
-                cf + de * b, a * e, df - ce * b,
-                - a * d, b, a * c,
-            );
+            this.n11 = ce - df * b;
+            this.n12 = - a * f;
+            this.n13 = de + cf * b;
+            this.n21 = cf + de * b;
+            this.n22 = a * e;
+            this.n23 = df - ce * b;
+            this.n31 = - a * d;
+            this.n32 = b;
+            this.n33 = a * c;
         } else if (order === EulerOrder.ZYX) {
             const ae = a * e, af = a * f, be = b * e, bf = b * f;
-            return new Matrix3(
-                c * e, be * d - af, ae * d + bf,
-                c * f, bf * d + ae, af * d - be,
-                - d, b * c, a * c,
-            );
+            this.n11 = c * e;
+            this.n12 = be * d - af;
+            this.n13 = ae * d + bf;
+            this.n21 = c * f;
+            this.n22 = bf * d + ae;
+            this.n23 = af * d - be;
+            this.n31 = - d;
+            this.n32 = b * c;
+            this.n33 = a * c;
         } else if (order === EulerOrder.YZX) {
             const ac = a * c, ad = a * d, bc = b * c, bd = b * d;
-            return new Matrix3(
-                c * e, bd - ac * f, bc * f + ad,
-                f, a * e, - b * e,
-                - d * e, ad * f + bc, ac - bd * f,
-            );
+            this.n11 = c * e;
+            this.n12 = bd - ac * f;
+            this.n13 = bc * f + ad;
+            this.n21 = f;
+            this.n22 = a * e;
+            this.n23 = - b * e;
+            this.n31 = - d * e;
+            this.n32 = ad * f + bc;
+            this.n33 = ac - bd * f;
         } else if (order === EulerOrder.XZY) {
             const ac = a * c, ad = a * d, bc = b * c, bd = b * d;
-            return new Matrix3(
-                c * e, - f, d * e,
-                ac * f + bd, a * e, ad * f - bc,
-                bc * f - ad, b * e, bd * f + ac,
-            );
+            this.n11 = c * e;
+            this.n12 = - f;
+            this.n13 = d * e;
+            this.n21 = ac * f + bd;
+            this.n22 = a * e;
+            this.n23 = ad * f - bc;
+            this.n31 = bc * f - ad;
+            this.n32 = b * e;
+            this.n33 = bd * f + ac;
         } else {
             const n: never = order;
             return Matrix3.make_Identity();
         }
+        return this;
     }
 
     public static from_Quaternion(quat: Quaternion) {
@@ -177,6 +213,13 @@ export class Matrix3 implements MatrixLike<Matrix3> {
             0, y, 0,
             0, 0, z,
         );
+    }
+
+    public set_Scale(x: number, y: number, z: number) {
+        this.n11 = x; this.n12 = 0; this.n13 = 0;
+        this.n21 = 0; this.n22 = y; this.n23 = 0;
+        this.n31 = 0; this.n32 = 0; this.n33 = z;
+        return this;
     }
 
     index(row: number, col: number): number {
@@ -415,6 +458,10 @@ export class Matrix3 implements MatrixLike<Matrix3> {
             b31 * n11 + b32 * n21 + b33 * n31, b31 * n12 + b32 * n22 + b33 * n32, b31 * n13 + b32 * n23 + b33 * n33,
         );
     }
+
+    /**
+     * b * a
+     */
     composes(a: Matrix3, b: Matrix3): Matrix3 {
         const n11 = a.n11, n21 = a.n21, n31 = a.n31;
         const n12 = a.n12, n22 = a.n22, n32 = a.n32;
@@ -423,13 +470,13 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         const b12 = b.n12, b22 = b.n22, b32 = b.n32;
         const b13 = b.n13, b23 = b.n23, b33 = b.n33;
         this.n11 = b11 * n11 + b12 * n21 + b13 * n31;
-        this.n21 = b11 * n12 + b12 * n22 + b13 * n32;
-        this.n31 = b11 * n13 + b12 * n23 + b13 * n33;
-        this.n12 = b21 * n11 + b22 * n21 + b23 * n31;
+        this.n12 = b11 * n12 + b12 * n22 + b13 * n32;
+        this.n13 = b11 * n13 + b12 * n23 + b13 * n33;
+        this.n21 = b21 * n11 + b22 * n21 + b23 * n31;
         this.n22 = b21 * n12 + b22 * n22 + b23 * n32;
-        this.n32 = b21 * n13 + b22 * n23 + b23 * n33;
-        this.n13 = b31 * n11 + b32 * n21 + b33 * n31;
-        this.n23 = b31 * n12 + b32 * n22 + b33 * n32;
+        this.n23 = b21 * n13 + b22 * n23 + b23 * n33;
+        this.n31 = b31 * n11 + b32 * n21 + b33 * n31;
+        this.n32 = b31 * n12 + b32 * n22 + b33 * n32;
         this.n33 = b31 * n13 + b32 * n23 + b33 * n33;
         return this;
     }
@@ -472,20 +519,22 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         );
     }
 
+    static #vector3: Vector3 = new Vector3();
+    static #matrix3: Matrix3 = Matrix3.make_Identity();
     static #rotation_scale_decompose: [Euler, Vector3] = [new Euler(), new Vector3()];
 
-    public get_RotationScale(order: EulerOrder = EulerOrder.XYZ): [Euler, Vector3] {
+    public decompose_RotationScale(order: EulerOrder = EulerOrder.XYZ): [Euler, Vector3] {
         const n11 = this.n11, n21 = this.n21, n31 = this.n31;
         const n12 = this.n12, n22 = this.n22, n32 = this.n32;
         const n13 = this.n13, n23 = this.n23, n33 = this.n33;
-        const vec = new Vector3();
+        const vec = Matrix3.#vector3;
         const scale = new Vector3(
             vec.set(n11, n21, n31).length,
             vec.set(n12, n22, n32).length,
             vec.set(n13, n23, n33).length,
         );
         const euler = Euler.from_RotateMatrix(
-            new Matrix3(
+            Matrix3.#matrix3.set(
                 n11 / scale.x, n12 / scale.y, n13 / scale.z,
                 n21 / scale.x, n22 / scale.y, n23 / scale.z,
                 n31 / scale.x, n32 / scale.y, n33 / scale.z,
@@ -494,6 +543,31 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         );
         Matrix3.#rotation_scale_decompose[0] = euler;
         Matrix3.#rotation_scale_decompose[1] = scale;
+        return Matrix3.#rotation_scale_decompose;
+    }
+
+    public decomposes_RotationScale(target_rotation: Euler, target_scale: Vector3) {
+        const n11 = this.n11, n21 = this.n21, n31 = this.n31;
+        const n12 = this.n12, n22 = this.n22, n32 = this.n32;
+        const n13 = this.n13, n23 = this.n23, n33 = this.n33;
+        const vec = Matrix3.#vector3;
+        target_scale.set(
+            vec.set(n11, n21, n31).length,
+            vec.set(n12, n22, n32).length,
+            vec.set(n13, n23, n33).length,
+        );
+        target_rotation.copy(
+            Euler.from_RotateMatrix(
+                Matrix3.#matrix3.set(
+                    n11 / target_scale.x, n12 / target_scale.y, n13 / target_scale.z,
+                    n21 / target_scale.x, n22 / target_scale.y, n23 / target_scale.z,
+                    n31 / target_scale.x, n32 / target_scale.y, n33 / target_scale.z,
+                ),
+                target_rotation.order
+            )
+        );
+        Matrix3.#rotation_scale_decompose[0] = target_rotation;
+        Matrix3.#rotation_scale_decompose[1] = target_scale;
         return Matrix3.#rotation_scale_decompose;
     }
 }

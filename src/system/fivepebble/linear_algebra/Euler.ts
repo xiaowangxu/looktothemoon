@@ -24,6 +24,10 @@ export class Euler {
     }
 
     public static from_RotateMatrix(matrix: Matrix3, order: EulerOrder) {
+        return new Euler().set_RotateMatrix(matrix, order);
+    }
+
+    public set_RotateMatrix(matrix: Matrix3, order: EulerOrder) {
         // assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
         const m11 = matrix.n11, m12 = matrix.n12, m13 = matrix.n13;
         const m21 = matrix.n21, m22 = matrix.n22, m23 = matrix.n23;
@@ -32,122 +36,110 @@ export class Euler {
             case EulerOrder.XYZ: {
                 const _y = Math.asin(clamp(m13, - 1, 1));
                 if (!is_ApproxEqual(Math.abs(m13), 1)) {
-                    return new Euler(
-                        Math.atan2(- m23, m33),
-                        _y,
-                        Math.atan2(- m12, m11),
-                        order,
-                    );
+                    this.x = Math.atan2(- m23, m33);
+                    this.y = _y;
+                    this.z = Math.atan2(- m12, m11);
+                    this.order = order;
+                    break;
                 }
                 else {
-                    return new Euler(
-                        Math.atan2(m32, m22),
-                        _y,
-                        0,
-                        order,
-                    );
+                    this.x = Math.atan2(m32, m22);
+                    this.y = _y;
+                    this.z = 0;
+                    this.order = order;
+                    break;
                 }
             }
             case EulerOrder.YXZ: {
                 const _x = Math.asin(-clamp(m23, - 1, 1));
                 if (!is_ApproxEqual(Math.abs(m23), 1)) {
-                    return new Euler(
-                        _x,
-                        Math.atan2(m13, m33),
-                        Math.atan2(m21, m22),
-                        order,
-                    );
+                    this.x = _x;
+                    this.y = Math.atan2(m13, m33);
+                    this.z = Math.atan2(m21, m22);
+                    this.order = order;
+                    break;
                 }
                 else {
-                    return new Euler(
-                        _x,
-                        Math.atan2(- m31, m11),
-                        0,
-                        order,
-                    );
+                    this.x = _x;
+                    this.y = Math.atan2(- m31, m11);
+                    this.z = 0;
+                    this.order = order;
+                    break;
                 }
             }
             case EulerOrder.ZXY: {
                 const _x = Math.asin(clamp(m32, - 1, 1));
                 if (!is_ApproxEqual(Math.abs(m32), 1)) {
-                    return new Euler(
-                        _x,
-                        Math.atan2(- m31, m33),
-                        Math.atan2(- m12, m22),
-                        order,
-                    );
+                    this.x = _x;
+                    this.y = Math.atan2(- m31, m33);
+                    this.z = Math.atan2(- m12, m22);
+                    this.order = order;
+                    break;
                 }
                 else {
-                    return new Euler(
-                        _x,
-                        0,
-                        Math.atan2(m21, m11),
-                        order,
-                    );
+                    this.x = _x;
+                    this.y = 0;
+                    this.z = Math.atan2(m21, m11);
+                    this.order = order;
+                    break;
                 }
             }
             case EulerOrder.ZYX: {
                 const _y = Math.asin(- clamp(m31, - 1, 1));
                 if (!is_ApproxEqual(Math.abs(m31), 1)) {
-                    return new Euler(
-                        Math.atan2(m32, m33),
-                        _y,
-                        Math.atan2(m21, m11),
-                        order,
-                    );
+                    this.x = Math.atan2(m32, m33);
+                    this.y = _y;
+                    this.z = Math.atan2(m21, m11);
+                    this.order = order;
+                    break;
                 }
                 else {
-                    return new Euler(
-                        0,
-                        _y,
-                        Math.atan2(- m12, m22),
-                        order,
-                    );
+                    this.x = 0;
+                    this.y = _y;
+                    this.z = Math.atan2(- m12, m22);
+                    this.order = order;
+                    break;
                 }
             }
             case EulerOrder.YZX: {
                 const _z = Math.asin(clamp(m21, - 1, 1));
                 if (!is_ApproxEqual(Math.abs(m21), 1)) {
-                    return new Euler(
-                        Math.atan2(- m23, m22),
-                        Math.atan2(- m31, m11),
-                        _z,
-                        order,
-                    );
+                    this.x = Math.atan2(- m23, m22);
+                    this.y = Math.atan2(- m31, m11);
+                    this.z = _z;
+                    this.order = order;
+                    break;
                 }
                 else {
-                    return new Euler(
-                        0,
-                        Math.atan2(m13, m33),
-                        _z,
-                        order,
-                    );
+                    this.x = 0;
+                    this.y = Math.atan2(m13, m33);
+                    this.z = _z;
+                    this.order = order;
+                    break;
                 }
             }
             case EulerOrder.XZY: {
                 const _z = Math.asin(- clamp(m12, - 1, 1));
                 if (!is_ApproxEqual(Math.abs(m12), 1)) {
-                    return new Euler(
-                        Math.atan2(m32, m22),
-                        Math.atan2(m13, m11),
-                        _z,
-                        order,
-                    );
+                    this.x = Math.atan2(m32, m22);
+                    this.y = Math.atan2(m13, m11);
+                    this.z = _z;
+                    this.order = order;
+                    break;
                 }
                 else {
-                    return new Euler(
-                        Math.atan2(- m23, m33),
-                        0,
-                        _z,
-                        order,
-                    );
+                    this.x = Math.atan2(- m23, m33);
+                    this.y = 0;
+                    this.z = _z;
+                    this.order = order;
+                    break;
                 }
             }
             default: {
                 const n: never = order;
-                return new Euler();
             }
         }
+        return this;
     }
 
     public equal(b: Euler): boolean {

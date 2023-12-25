@@ -12,8 +12,8 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     // where point = (x, y, z)
     //       normal = (a, b, c)
     //       distance = ax + by + cz = d = n * p
-    public readonly normal: Vector3;
-    public readonly distance: number;
+    public normal: Vector3;
+    public distance: number;
 
     public get center() { return this.normal.mult_Number(this.distance); }
 
@@ -24,6 +24,12 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
 
     public static from_PointAndNormal(point: Vector3, normal: Vector3) {
         return new Plane3(normal, normal.dot(point));
+    }
+
+    public set_PointAndNormal(point: Vector3, normal: Vector3) {
+        this.normal.copy(normal);
+        this.distance = normal.dot(point);
+        return this;
     }
 
     public static from_Points(a: Vector3, b: Vector3, c: Vector3, clockwise: boolean = false) {

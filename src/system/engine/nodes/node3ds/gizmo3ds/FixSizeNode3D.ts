@@ -1,9 +1,9 @@
-import { Epsilon } from "../../../fivepebble/Scalar";
-import { NodeNotification } from "../Node";
-import { Node3D } from "./Node3D";
-import { Raycaster, Vector2, Plane, Line3, Vector3 } from "three";
-import type { ClassReader, ClassWriter } from "../../classes/ClassWriterReader";
+import { NodeNotification } from "../../Node";
+import { Node3D } from "../Node3D";
+import type { ClassReader, ClassWriter } from "../../../classes/ClassWriterReader";
 import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import { Plane3 } from "@/system/fivepebble/geometries/Plane3";
 
 export class FixSizeNode3D extends Node3D {
     public static readonly class_name: string = "FixSizeNode3D";
@@ -11,24 +11,24 @@ export class FixSizeNode3D extends Node3D {
     public unit_pixel_count: number = 50;
     public use_active_viewport: boolean = true;
 
+    static #plane: Plane3 = new Plane3(vec3(0, 0, 0), 0);
+
     protected update_Size() {
         const viewport = this.use_active_viewport ? this.get_SceneTree()?.get_ActiveViewports()[0] : this.get_Viewport();
         const camera = viewport?.get_Camera3D()?.get_Camera();
         if (camera === undefined) return;
         const { y: height } = viewport!.size;
         if (height === 0) return;
-        const center_ray = new Raycaster();
-        center_ray.setFromCamera(new Vector2(0, 0), camera);
-        const top_ray = new Raycaster();
-        top_ray.setFromCamera(new Vector2(0, 1), camera);
-        const center = center_ray.ray.origin.clone().addScaledVector(center_ray.ray.direction, 1);
-        const plane = new Plane().setFromNormalAndCoplanarPoint(center_ray.ray.direction, center);
-        const top = plane.intersectLine(new Line3(top_ray.ray.origin.clone(), top_ray.ray.origin.clone().addScaledVector(top_ray.ray.direction, 10000)), new Vector3());
-        if (top === null) return;
-        const distance = center.distanceTo(top);
-        const is_persp = center_ray.ray.origin.distanceTo(top_ray.ray.origin) < Epsilon;
+        const center_ray = camera.project_Ray(vec2(0, 0), 0);
+        const top_ray = camera.project_Ray(vec2(0, 1));
+        const center = center_ray.get_Point(1);
+        const plane = FixSizeNode3D.#plane.set_PointAndNormal(center, center_ray.direction);
+        const top = plane.intersect_UncappedRay(top_ray);
+        if (top === undefined) return;
+        const distance = center.distance_to(top);
+        const is_persp = !camera.is_orthogonal;
         if (is_persp) {
-            const self_distance = new Vector3().fromArray(this.global_position.array).distanceTo(center_ray.ray.origin);
+            const self_distance = this.global_position.distance_to(center_ray.origin);
             const h = self_distance * distance;
             this.local_scale = vec3(h, h, h).mult_Number(this.unit_pixel_count / (height / 2));
         }
@@ -46,7 +46,7 @@ export class FixSizeNode3D extends Node3D {
         }
         super._notification(what);
     }
-    
+
     // save / load
 
     public dump(writer: ClassWriter): void {

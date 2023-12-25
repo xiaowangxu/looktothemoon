@@ -15,7 +15,7 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     get global_transform() { return this._global_transform; }
     set global_transform(transform: Matrix4) {
         const position = transform.position;
-        const [rotation, _] = transform.basis.get_RotationScale();
+        const [rotation, _] = transform.basis.decompose_RotationScale();
         this._global_transform = Matrix4.from_BasisPosition(Matrix3.from_Euler(rotation), position);
     }
 
@@ -36,8 +36,8 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     }
     public abstract unproject_Point(ndc: Vector2, depth?: number): Vector3;
     public abstract unproject_Normal(ndc: Vector2): Vector3;
-    public project_Ray(ndc: Vector2): Ray3 {
-        return new Ray3(this.unproject_Point(ndc), this.unproject_Normal(ndc));
+    public project_Ray(ndc: Vector2, depth?: number): Ray3 {
+        return new Ray3(this.unproject_Point(ndc, depth), this.unproject_Normal(ndc));
     }
 
     public get_Frustum(): Frustum3 {
@@ -182,6 +182,7 @@ export class PerspectiveCamera3 extends Camera3 {
         const p = new Vector3(ndc.x * half_width, ndc.y * half_height, -depth);
         return p.apply_Matrix4(this.global_transform);
     }
+    
     public unproject_Normal(ndc: Vector2): Vector3 {
         const p = this.unproject_Point(ndc, this.near);
         return this.global_transform.position.direction_to(p);

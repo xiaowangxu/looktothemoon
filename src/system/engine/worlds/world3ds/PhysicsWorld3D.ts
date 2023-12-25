@@ -1,4 +1,4 @@
-import { Vector3 } from "three";
+import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 
 export interface RaycastResult {
     position: Vector3;

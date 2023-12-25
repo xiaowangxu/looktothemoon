@@ -68,11 +68,20 @@ export class MeshInstance3D extends GeometryInstance3D {
         }
     }
 
-    protected on_VisualLayerChanged(): void {
+    protected on_LayerChanged(): void {
         if (this.mesh_rid !== undefined) {
             const visual_world = this.get_Viewport()?.get_World3D()?.get_VisualWorld();
             if (visual_world !== undefined) {
-                visual_world.set_MeshLayer(this.mesh_rid, this.visual_layer);
+                visual_world.set_MeshLayer(this.mesh_rid, this.layer);
+            }
+        }
+    }
+
+    protected on_RenderQueueChanged(): void {
+        if (this.mesh_rid !== undefined) {
+            const visual_world = this.get_Viewport()?.get_World3D()?.get_VisualWorld();
+            if (visual_world !== undefined) {
+                visual_world.set_MeshRenderQueue(this.mesh_rid, this.render_queue);
             }
         }
     }
@@ -111,7 +120,8 @@ export class MeshInstance3D extends GeometryInstance3D {
                         for (const [surface_idx, material] of this._surface_materials_map.entries()) {
                             visual_world.set_MeshSurfaceMaterial(this.mesh_rid, surface_idx, material.expect);
                         }
-                        visual_world.set_MeshLayer(this.mesh_rid, this.visual_layer);
+                        visual_world.set_MeshLayer(this.mesh_rid, this.layer);
+                        visual_world.set_MeshRenderQueue(this.mesh_rid, this.render_queue);
                         // visual_world.set_MeshCastShadow(this.mesh_rid, this.cast_shadow);
                         // visual_world.set_MeshReceiveShadow(this.mesh_rid, this.receive_shadow);
                     }

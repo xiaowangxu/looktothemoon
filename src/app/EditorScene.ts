@@ -11,23 +11,15 @@ import { DependencyGraph } from "./singletons/DependencyGraph";
 import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
-import { BoxGeometryResource, CylinderGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
-import { EasingType, PropertyMethodTween, PropertyTween, TransitionType } from "@/system/engine/Tween";
-import { GeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
-import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
-import { box3 } from "@/system/fivepebble/geometries/Box3";
-import { RenderDeviceMatrix4AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
-import { RenderServer } from "@/system/engine/render_server/RenderServer";
-import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
-import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
-import { NormalMaterialResource, PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
+import { BoxGeometryResource, CylinderGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
+import { EasingType, PropertyMethodTween, TransitionType } from "@/system/engine/Tween";
+import { NormalMaterialResource, PlainColorMaterialResource, UVMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { color, color8, type Color } from "@/system/fivepebble/graphics/Color";
 import { MaterialOverrideResource } from "@/system/engine/resources/material_resources/MaterialResource";
-import { vec4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { OrthographicCamera3D } from "@/system/engine/nodes/camera3ds/OrthographicCamera3D";
 import { euler } from "@/system/fivepebble/linear_algebra/Euler";
-import { ClassLoader, ClassSaver } from "@/system/engine/classes/ClassSaverLoader";
-import { PackedSceneResource } from "@/system/engine/resources/resources/PackedSceneResource";
+import { RenderServer } from "@/system/engine/render_server/RenderServer";
+import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/LineGrabber3D";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -35,9 +27,9 @@ EditorViewportContainer.dom = document.querySelector('#viewport') ?? undefined;
 
 // viewport
 export const EditorViewport = new Viewport();
-EditorViewport.physics_picking = false;
-EditorViewport.debug = false;
+EditorViewport.debug = true;
 EditorViewport.world_3d = new World3D();
+EditorViewport.transparent = true;
 EditorViewportContainer.add_Child(EditorViewport);
 // camera
 const EditorCamera = new EditorOrbitCamera3D();
@@ -47,13 +39,16 @@ EditorCamera.set_Zoom(0.3);
 // World 
 const World = new Node3D();
 World.local_scale = vec3(0.01, 0.01, 0.01);
-World.block_input = true;
-World.block_process = true;
-World.block_physics_process = true;
+// World.block_input = true;
+// World.block_process = true;
+// World.block_physics_process = true;
+
+const EditorWorld = new Node3D();
 
 export const EditorSceneTree = new SceneTree(EditorViewportContainer);
 EditorSceneTree.register_Singleton(DependencyGraph);
 EditorViewport.add_Child(World);
+EditorViewport.add_Child(EditorWorld);
 
 EditorSceneTree.get_InputActionMap().add_Action('switch_FrontView', new ShortCut([new KeyInputEvent('1', '1', true, false, undefined, false, false, false, false)]));
 EditorSceneTree.get_InputActionMap().add_Action('switch_LeftView', new ShortCut([new KeyInputEvent('2', '2', true, false, undefined, false, false, false, false)]));
@@ -71,22 +66,24 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut([
 	new MouseButtonInputEvent(MouseButton.WheelDown, true, false, false, undefined, vec2(0, 0), vec2(0, 0), true, false, false, false),
 ]));
 
-// // viewport 0
-// const EditorViewportContainer0 = new ViewportDomContainer();
-// EditorViewportContainer0.dom = document.querySelector('#viewport0') ?? undefined;
-// const EditorViewport0 = new Viewport();
-// EditorViewport0.physics_picking = false;
-// EditorViewportContainer0.add_Child(EditorViewport0);
-// const EditorCamera0 = new EditorOrbitCamera3D();
-// EditorCamera0.zoom_to_cursor = false;
-// EditorViewport0.add_Child(EditorCamera0);
-// EditorViewport.add_Child(EditorViewportContainer0);
+// viewport 0
+const EditorViewportContainer0 = new ViewportDomContainer();
+EditorViewportContainer0.dom = document.querySelector('#viewport0') ?? undefined;
+const EditorViewport0 = new Viewport();
+EditorViewportContainer0.add_Child(EditorViewport0);
+const EditorCamera0 = new EditorOrbitCamera3D();
+EditorCamera0.zoom_to_cursor = false;
+EditorViewport0.add_Child(EditorCamera0);
+EditorViewport.add_Child(EditorViewportContainer0);
 
+const geometry = new CylinderGeometryResource();
+geometry.top_radius = 0;
+geometry.build();
 
 const material1 = new NormalMaterialResource();
 
 const material2 = new PlainColorMaterialResource();
-material2.color = color(1, 0, 1, 1);
+material2.color = color(0.75, 0.75, 0.75, 1);
 
 const material3 = new MaterialOverrideResource();
 material3.set_OverrideMaterial(material2);
@@ -96,48 +93,23 @@ const material4 = new MaterialOverrideResource();
 material4.set_OverrideMaterial(material3);
 material4.set_UniformOverride('u_color', color8(0, 12, 234, 255));
 
-const Mesh1 = new ClassLoader().load<MeshInstance3D>(`{
-    "type": "LTTMClassDescriptor",
-    "meta": {
-      "version": "0.0.1",
-      "date": "2023-12-22T11:57:31.050Z",
-      "author": "LookToTheMoon ClassSaver v0.0.1"
-    },
-    "root": "classref(0)",
-    "instances": [
-      {
-        "type": "MeshInstance3D",
-        "refid": "classref(0)",
-        "unique": false,
-        "property": {
-          "block_input": "boolean(false)",
-          "top_level": "boolean(false)",
-          "local_transform": "matrix4(100,0,0,0,0,100,0,0,0,0,100,0,0,0,0,1)",
-          "local_visible": "boolean(true)",
-          "visual_layer": "number(4294967295)",
-          "cast_shadow": "boolean(false)",
-          "receive_shadow": "boolean(false)",
-          "geometry": "classref(1)"
-        }
-      },
-      {
-        "type": "CylinderGeometryResource",
-        "refid": "classref(1)",
-        "unique": false,
-        "property": {
-          "radius": "number(1)",
-          "height": "number(2)",
-          "segments": "number(64)"
-        }
-      }
-    ]
-  }
-  `).expect();
-// Mesh1.geometry = geometry;
-Mesh1.material = material4;
-// Mesh1.local_scale = vec3(100, 100, 100);
-// Mesh1.local_position = vec3(0, 0, 0);
+const Mesh1 = new MeshInstance3D();
+Mesh1.geometry = geometry;
+Mesh1.material = material2;
+Mesh1.local_scale = vec3(100, 100, 100);
+Mesh1.local_position = vec3(-25, 0, 0);
 World.add_Child(Mesh1);
+
+const LineGrabber1 = new LineGrabber3D();
+const LineGrabber2 = new LineGrabber3D();
+const LineGrabber3 = new LineGrabber3D();
+LineGrabber1.color = color8(0x04, 0xa9, 0x73);
+LineGrabber2.local_rotation = euler(0, 0, -Math.PI / 2);
+LineGrabber3.color = color8(0x46, 0x6f, 0xd6);
+LineGrabber3.local_rotation = euler(Math.PI / 2);
+World.add_Child(LineGrabber1);
+World.add_Child(LineGrabber2);
+World.add_Child(LineGrabber3);
 
 // for (let i = 0; i <= 100; i++) {
 //     for (let j = 0; j <= 100; j++) {
@@ -185,7 +157,8 @@ function create_CompassScene() {
 	sphere_geometry.width = sphere_geometry.height = sphere_geometry.depth = sphere_radius;
 	sphere_geometry.build();
 	const line_geometry = new CylinderGeometryResource();
-	line_geometry.radius = 0.035;
+	line_geometry.top_radius = 0.035;
+	line_geometry.bottom_radius = 0.035;
 	line_geometry.height = distance;
 	line_geometry.segments = 16;
 	line_geometry.build();
@@ -288,7 +261,6 @@ function create_CompassScene() {
 
 	return viewport_container;
 }
-
 
 const EditorCompass = create_CompassScene();
 EditorViewport.add_Child(EditorCompass);

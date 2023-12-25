@@ -9,31 +9,31 @@ export class Node3D extends Node {
     public static readonly class_name: string = "Node3D";
 
     // local
-    private _local_position: Vector3 = vec3();
-    private _local_rotation: Euler = euler();
-    private _local_scale: Vector3 = vec3(1, 1, 1);
+    private readonly _local_position: Vector3 = vec3();
+    private readonly _local_rotation: Euler = euler();
+    private readonly _local_scale: Vector3 = vec3(1, 1, 1);
 
     public get local_position() {
-        return this._local_position;
+        return this._local_position.clone();
     }
     public set local_position(position: Vector3) {
-        this._local_position = position;
+        this._local_position.copy(position);
         this.is_local_transform_dirty = true;
         this.propagate_TransformChanged();
     }
     public get local_rotation() {
-        return this._local_rotation;
+        return this._local_rotation.clone();
     }
     public set local_rotation(rotation: Euler) {
-        this._local_rotation = rotation;
+        this._local_rotation.copy(rotation);
         this.is_local_transform_dirty = true;
         this.propagate_TransformChanged();
     }
     public get local_scale() {
-        return this._local_scale;
+        return this._local_scale.clone();
     }
     public set local_scale(scale: Vector3) {
-        this._local_scale = scale;
+        this._local_scale.copy(scale);
         this.is_local_transform_dirty = true;
         this.propagate_TransformChanged();
     }
@@ -47,31 +47,42 @@ export class Node3D extends Node {
         }
     }
 
-    private _local_transform: Matrix4 = Matrix4.make_Identity();
+    private readonly _local_transform: Matrix4 = Matrix4.make_Identity();
     private is_local_transform_dirty: boolean = false;
+
+    static #basis : Matrix3 = Matrix3.make_Identity();
+    static #vector3 : Vector3 = Vector3.make_Zero();
+    static #matrix4 : Matrix4 = Matrix4.make_Identity();
+    static #basis_rotation : Matrix3 = Matrix3.make_Identity();
+    static #euler : Euler = new Euler();
+
     public get local_transform(): Matrix4 {
         if (this.is_local_transform_dirty) {
-            const basis = Matrix3.make_Scale(this._local_scale.x, this._local_scale.y, this._local_scale.z).compose(Matrix3.from_Euler(this._local_rotation));
-            this._local_transform = Matrix4.from_BasisPosition(basis, this._local_position);
+            const basis = Node3D.#basis;
+            const basis_rotation = Node3D.#basis_rotation;
+            basis.set_Scale(this._local_scale.x, this._local_scale.y, this._local_scale.z);
+            basis_rotation.set_Euler(this._local_rotation);
+            basis.composes(basis_rotation, basis);
+            this._local_transform.set_BasisPosition(basis, this._local_position);
             this.is_local_transform_dirty = false;
         }
-        return this._local_transform;
+        return this._local_transform.clone();
     }
     public set local_transform(transform: Matrix4) {
-        this._local_transform = transform;
-        const [rotation, scale] = this._local_transform.basis.get_RotationScale();
-        this._local_position = this._local_transform.position;
-        this._local_rotation = rotation;
-        this._local_scale = scale;
+        this._local_transform.copy(transform);
+        this._local_transform.basis.decomposes_RotationScale(Node3D.#euler, Node3D.#vector3);
+        this._local_position.copy(this._local_transform.position);
+        this._local_rotation.copy(Node3D.#euler);
+        this._local_scale.copy(Node3D.#vector3);
         this.is_local_transform_dirty = false;
         this.propagate_TransformChanged();
     }
 
     // global
-    private _global_position: Vector3 = vec3();
-    private _global_rotation: Euler = euler();
+    private readonly _global_position: Vector3 = vec3();
+    private readonly _global_rotation: Euler = euler();
 
-    private _global_transform: Matrix4 = Matrix4.make_Identity();
+    private readonly _global_transform: Matrix4 = Matrix4.make_Identity();
     private is_global_transform_dirty: boolean = false;
     protected is_global_transform_changed: boolean = false;
 
@@ -79,45 +90,45 @@ export class Node3D extends Node {
         if (this.is_global_transform_dirty) {
             const _ = this.global_transform;
         }
-        return this._global_position;
+        return this._global_position.clone();
     }
     public set global_position(position: Vector3) {
-        this.global_transform = Matrix4.from_BasisPosition(this.global_transform.basis, position);
+        this.global_transform = Node3D.#matrix4.set_BasisPosition(this.global_transform.get_Basis(Node3D.#basis), position);
     }
     public get global_rotation(): Euler {
         if (this.is_global_transform_dirty) {
             const _ = this.global_transform;
         }
-        return this._global_rotation;
+        return this._global_rotation.clone();
     }
     public set global_rotation(rotation: Euler) {
-        this.global_transform = Matrix4.from_BasisPosition(Matrix3.from_Euler(rotation), this.global_transform.position);
+        this.global_transform = Node3D.#matrix4.set_BasisPosition(Node3D.#basis.set_Euler(rotation), this.global_transform.get_Position(Node3D.#vector3));
     }
 
     public get global_transform(): Matrix4 {
         if (this.is_global_transform_dirty) {
             const parent = this.get_Parent();
             if (!this.top_level && parent !== undefined && parent instanceof Node3D) {
-                this._global_transform = this.local_transform.compose(parent.global_transform!);
+                this._global_transform.composes(this.local_transform, parent.global_transform!);
                 // setup global position / rotation
-                const [rotation, _] = this._global_transform.basis.get_RotationScale();
-                this._global_position = this._global_transform.position;
-                this._global_rotation = rotation;
+                this._global_transform.basis.decomposes_RotationScale(Node3D.#euler, Node3D.#vector3);
+                this._global_position.copy(this._global_transform.get_Position(Node3D.#vector3));
+                this._global_rotation.copy(Node3D.#euler);
                 this.is_global_transform_dirty = false;
             }
             else {
-                this._global_transform = this.local_transform;
-                this._global_position = this.local_position;
-                this._global_rotation = this.local_rotation;
+                this._global_transform.copy(this.local_transform);
+                this._global_position.copy(this.local_position);
+                this._global_rotation.copy(this.local_rotation);
                 this.is_global_transform_dirty = false;
             }
         }
-        return this._global_transform;
+        return this._global_transform.clone();
     }
     public set global_transform(transform: Matrix4) {
         const parent = this.get_Parent();
         if (!this.top_level && parent !== undefined && parent instanceof Node3D) {
-            this.local_transform = transform.compose(parent.global_transform.inverse());
+            this.local_transform = Node3D.#matrix4.composes(transform, Node3D.#matrix4.inverses(parent.global_transform));
         }
         else {
             this.local_transform = transform;
@@ -177,7 +188,8 @@ export class Node3D extends Node {
     }
 
     public to_Local(global_position: Vector3) {
-        return global_position.apply_Matrix4(this.global_transform.inverse());
+        const invert = this.global_transform;
+        return global_position.apply_Matrix4(invert.inverses(invert));
     }
 
     // save / load
