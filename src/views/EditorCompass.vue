@@ -1,5 +1,5 @@
 <template>
-    <SPanel v-once id="compass" style="width: 80px; height: 80px; border-radius: 50%; pointer-events: all;">
+    <SPanel v-once id="compass" style="width: 60px; height: 60px; border-radius: 50%; pointer-events: all;">
     </SPanel>
 </template>
 

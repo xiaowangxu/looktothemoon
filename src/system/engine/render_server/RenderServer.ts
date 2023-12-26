@@ -12,7 +12,7 @@ import { RenderDeviceMatrix4AttributeBuffer } from "@/system/sliverofstraw/rende
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 
-export enum RenderServerPlainColorTexture { White, Black, Transparent }
+export enum RenderServerPlainColorTexture { White, Black, Transparent, Grey }
 
 export class RenderServerDevice extends WebGL2RenderDevice {
 
@@ -30,6 +30,14 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     bool camera_is_orthogonal;
 };`
     public static readonly FrameOutputBufferCode = `layout(location = 0) out vec4 o_color;\nlayout(location = 1) out vec3 o_normal;`
+    public static readonly FrameOiTOutputBufferCode = `layout(location = 0) out vec4 o_color;\nlayout(location = 1) out float o_accum;`
+    public static readonly OitOutputCode = `    // oit
+    color.rgb *= color.a;
+    float _z = gl_FragCoord.z;
+    float _a = color.a;
+    float _w = _a * max(0.01, min(3000.0, 0.03 / (1e-5 + pow(abs(_z) / 200.0, 4.0))));
+    o_color = vec4(color.rgb * _w, color.a);
+    o_accum = color.a * _w;`;
 
     // Texture Units Defs
     public static readonly EmptyTextureUnit: number = 1;
@@ -105,6 +113,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         white: new Ref<WebGL2RenderStateTexture>(),
         black: new Ref<WebGL2RenderStateTexture>(),
         transparent: new Ref<WebGL2RenderStateTexture>(),
+        grey: new Ref<WebGL2RenderStateTexture>(),
     }
     public readonly lights_data_ref: Ref<RenderServerLightsData> = new Ref();
     public readonly sky_texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
@@ -151,6 +160,9 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         const plain_color_transparent = this.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1).expect();
         this.render_state.alloc_Texture2D(plain_color_transparent, 1, 1, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([255, 255, 255, 255]));
         this.plain_color_textures.transparent.value = plain_color_transparent;
+        const plain_color_grey = this.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1).expect();
+        this.render_state.alloc_Texture2D(plain_color_grey, 1, 1, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([227, 227, 227, 255]));
+        this.plain_color_textures.grey.value = plain_color_grey;
     }
 
     // Setting / Getting
@@ -160,6 +172,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
             case RenderServerPlainColorTexture.White: return this.plain_color_textures.white.expect;
             case RenderServerPlainColorTexture.Black: return this.plain_color_textures.black.expect;
             case RenderServerPlainColorTexture.Transparent: return this.plain_color_textures.transparent.expect;
+            case RenderServerPlainColorTexture.Grey: return this.plain_color_textures.grey.expect;
             default: {
                 const n: never = color;
                 throw new Error();

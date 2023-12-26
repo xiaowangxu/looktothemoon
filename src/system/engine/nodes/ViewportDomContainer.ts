@@ -73,7 +73,7 @@ export class ViewportDomContainer extends Node {
             case NodeNotification.InternalBeforeRender: {
                 if (this.is_size_dirty && this._size !== undefined && this.viewport_node !== undefined) {
                     this.viewport_node.size = this._size;
-                    this.viewport_node.pixel_ratio = 1.5;
+                    this.viewport_node.pixel_ratio = window.devicePixelRatio;
                     this.is_size_dirty = false;
                 }
                 return;

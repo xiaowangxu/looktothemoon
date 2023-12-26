@@ -404,6 +404,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             case RenderStateTextureFormat.RGBA8: return [this.gl.RGBA8, this.gl.UNSIGNED_BYTE];
             case RenderStateTextureFormat.RGBA32F: return [this.gl.RGBA32F, this.gl.FLOAT];
             case RenderStateTextureFormat.R32UI: return [this.gl.R32UI, this.gl.UNSIGNED_INT];
+            case RenderStateTextureFormat.R32F: return [this.gl.R32F, this.gl.FLOAT];
             case RenderStateTextureFormat.D24: return [this.gl.DEPTH_COMPONENT24, this.gl.UNSIGNED_INT];
             case RenderStateTextureFormat.D32F: return [this.gl.DEPTH_COMPONENT32F, this.gl.FLOAT];
             case RenderStateTextureFormat.D32FS8: return [this.gl.DEPTH32F_STENCIL8, this.gl.FLOAT_32_UNSIGNED_INT_24_8_REV];
@@ -419,6 +420,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             case RenderStateTextureDataFormat.RGB: return this.gl.RGB;
             case RenderStateTextureDataFormat.RGBA: return this.gl.RGBA;
             case RenderStateTextureDataFormat.RInt: return this.gl.RED_INTEGER;
+            case RenderStateTextureDataFormat.Red: return this.gl.RED;
             case RenderStateTextureDataFormat.Alpha: return this.gl.ALPHA;
             case RenderStateTextureDataFormat.Luminance: return this.gl.LUMINANCE;
             case RenderStateTextureDataFormat.LuminanceAlpha: return this.gl.LUMINANCE_ALPHA;

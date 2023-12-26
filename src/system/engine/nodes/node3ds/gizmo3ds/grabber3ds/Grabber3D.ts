@@ -124,6 +124,29 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
         u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
     };
+    static #fragment_oit_shader = `#version 300 es
+    precision highp float;
+    precision highp usampler2DArray;
+    precision highp sampler3D;
+
+    ${RenderServerDevice.WorldUniformsCode}
+
+    uniform vec4 u_color;
+    
+    in vec3 v_world;
+    in vec3 v_normal;
+    in vec2 v_uv;
+
+    ${RenderServerDevice.FrameOiTOutputBufferCode}
+
+    void main() {
+        vec4 color = u_color;
+
+        ${RenderServerDevice.OitOutputCode}
+    }`;
+    static #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
+        u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
+    };
 
     public get uniforms() { return GrabberPlainColorMaterialResource.#uniforms; }
 
@@ -147,6 +170,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
         const vertex_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Vertex, GrabberPlainColorMaterialResource.#vertex_shader).expect();
         const fragment_prez_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_prez_shader).expect();
         const fragment_shade_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_shade_shader).expect();
+        const fragment_oit_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_oit_shader).expect();
         shader.set_Shaders(
             vertex_shader,
             GrabberPlainColorMaterialResource.#vertex_uniforms,
@@ -158,6 +182,10 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
                 shade: {
                     shader: fragment_shade_shader,
                     uniforms: GrabberPlainColorMaterialResource.#fragment_shade_uniforms,
+                },
+                oit: {
+                    shader: fragment_oit_shader,
+                    uniforms: GrabberPlainColorMaterialResource.#fragment_oit_uniforms,
                 }
             }
         );

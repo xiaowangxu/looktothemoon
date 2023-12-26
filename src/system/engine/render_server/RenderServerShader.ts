@@ -65,6 +65,7 @@ export type UniformInitSet<RS extends RenderState<RS>> = { [name: string]: Unifo
 export const enum RenderServerShaderPass {
     PreZ = 'prez',
     Shade = 'shade',
+    OiT = 'oit',
 }
 
 export class RenderServerShader extends RenderDeviceObject<WebGL2RenderState>
@@ -73,6 +74,8 @@ export class RenderServerShader extends RenderDeviceObject<WebGL2RenderState>
     protected uniform_prez: WebGL2RenderDeviceUniformSet | undefined;
     protected program_shade_ref: Ref<WebGL2RenderStateProgram> = new Ref();
     protected uniform_shade: WebGL2RenderDeviceUniformSet | undefined;
+    protected program_oit_ref: Ref<WebGL2RenderStateProgram> = new Ref();
+    protected uniform_oit: WebGL2RenderDeviceUniformSet | undefined;
 
     constructor(render_device: RenderServerDevice) {
         super(render_device);
@@ -85,6 +88,9 @@ export class RenderServerShader extends RenderDeviceObject<WebGL2RenderState>
         this.program_shade_ref.clear();
         this.uniform_shade?.dispose();
         this.uniform_shade = undefined;
+        this.program_oit_ref.clear();
+        this.uniform_oit?.dispose();
+        this.uniform_oit = undefined;
     }
 
     protected setup_ProgramUniforms(program: WebGL2RenderStateProgram, uniforms: UniformInitSet<WebGL2RenderState>): WebGL2RenderDeviceUniformSet {
@@ -173,7 +179,7 @@ export class RenderServerShader extends RenderDeviceObject<WebGL2RenderState>
         return uniform;
     }
 
-    public set_Shaders(vertex: WebGL2RenderStateShader, vert_uniforms: UniformInitSet<WebGL2RenderState>, fragments_set: { [K in RenderServerShaderPass]: { shader: WebGL2RenderStateShader, uniforms: UniformInitSet<WebGL2RenderState> } }) {
+    public set_Shaders(vertex: WebGL2RenderStateShader, vert_uniforms: UniformInitSet<WebGL2RenderState>, fragments_set: { [K in RenderServerShaderPass]?: { shader: WebGL2RenderStateShader, uniforms: UniformInitSet<WebGL2RenderState> } }) {
         for (const [name, { shader, uniforms: frag_uniforms }] of Object.entries(fragments_set)) {
             const _name = name as RenderServerShaderPass;
             switch (_name) {
@@ -193,6 +199,14 @@ export class RenderServerShader extends RenderDeviceObject<WebGL2RenderState>
                     this.uniform_shade = uniforms;
                     break;
                 }
+                case RenderServerShaderPass.OiT: {
+                    const program = this.render_state.create_Program(vertex, shader).expect();
+                    const uniforms = this.setup_ProgramUniforms(program, { ...vert_uniforms, ...frag_uniforms });
+                    this.program_oit_ref.value = program;
+                    this.uniform_oit?.dispose();
+                    this.uniform_oit = uniforms;
+                    break;
+                }
                 default: {
                     const n: never = _name;
                     break;
@@ -209,6 +223,9 @@ export class RenderServerShader extends RenderDeviceObject<WebGL2RenderState>
             case RenderServerShaderPass.Shade: {
                 return !this.program_shade_ref.is_empty;
             }
+            case RenderServerShaderPass.OiT: {
+                return !this.program_oit_ref.is_empty;
+            }
             default: {
                 const n: never = name;
             }
@@ -222,6 +239,9 @@ export class RenderServerShader extends RenderDeviceObject<WebGL2RenderState>
             }
             case RenderServerShaderPass.Shade: {
                 return this.program_shade_ref.value;
+            }
+            case RenderServerShaderPass.OiT: {
+                return this.program_oit_ref.value;
             }
             default: {
                 const n: never = name;
@@ -238,6 +258,10 @@ export class RenderServerShader extends RenderDeviceObject<WebGL2RenderState>
             }
             case RenderServerShaderPass.Shade: {
                 uniforms = this.uniform_shade;
+                break;
+            }
+            case RenderServerShaderPass.OiT: {
+                uniforms = this.uniform_oit;
                 break;
             }
             default: {
@@ -279,6 +303,10 @@ export class RenderServerShader extends RenderDeviceObject<WebGL2RenderState>
                 this.uniform_shade?.commit_Uniform(uniform);
                 break;
             }
+            case RenderServerShaderPass.OiT: {
+                this.uniform_oit?.commit_Uniform(uniform);
+                break;
+            }
             default: {
                 const n: never = name;
             }
@@ -293,6 +321,10 @@ export class RenderServerShader extends RenderDeviceObject<WebGL2RenderState>
             }
             case RenderServerShaderPass.Shade: {
                 this.uniform_shade?.commit_AllUniform();
+                break;
+            }
+            case RenderServerShaderPass.OiT: {
+                this.uniform_oit?.commit_AllUniform();
                 break;
             }
             default: {

@@ -87,6 +87,31 @@ export class PlainColorMaterialResource extends MaterialResource {
         u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
         u_texture: { type: RenderStateUniformType.Tex2D, default: { texture: RenderServer.get_PlainColorTexture(RenderServerPlainColorTexture.White) } },
     };
+    static #fragment_oit_shader = `#version 300 es
+    precision highp float;
+    precision highp usampler2DArray;
+    precision highp sampler3D;
+
+    ${RenderServerDevice.WorldUniformsCode}
+
+    uniform vec4 u_color;
+    uniform sampler2D u_texture;
+    
+    in vec3 v_world;
+    in vec3 v_normal;
+    in vec2 v_uv;
+
+    ${RenderServerDevice.FrameOiTOutputBufferCode}
+
+    void main() {
+        vec4 color = texture(u_texture, v_uv) * u_color;
+
+        ${RenderServerDevice.OitOutputCode}
+    }`;
+    static #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
+        u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
+        u_texture: { type: RenderStateUniformType.Tex2D, default: { texture: RenderServer.get_PlainColorTexture(RenderServerPlainColorTexture.White) } },
+    };
 
     public get uniforms() { return PlainColorMaterialResource.#uniforms; }
 
@@ -110,6 +135,7 @@ export class PlainColorMaterialResource extends MaterialResource {
         const vertex_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Vertex, PlainColorMaterialResource.#vertex_shader).expect();
         const fragment_prez_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_prez_shader).expect();
         const fragment_shade_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_shade_shader).expect();
+        const fragment_oit_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_oit_shader).expect();
         shader.set_Shaders(
             vertex_shader,
             PlainColorMaterialResource.#vertex_uniforms,
@@ -121,6 +147,10 @@ export class PlainColorMaterialResource extends MaterialResource {
                 shade: {
                     shader: fragment_shade_shader,
                     uniforms: PlainColorMaterialResource.#fragment_shade_uniforms,
+                },
+                oit: {
+                    shader: fragment_oit_shader,
+                    uniforms: PlainColorMaterialResource.#fragment_oit_uniforms,
                 }
             }
         );
