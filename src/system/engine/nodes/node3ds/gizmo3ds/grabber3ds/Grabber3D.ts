@@ -110,6 +110,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     ${RenderServerDevice.WorldUniformsCode}
 
     uniform vec4 u_color;
+    uniform highp sampler2DShadow u_scene_depth;
     
     in vec3 v_world;
     in vec3 v_normal;
@@ -118,11 +119,14 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     ${RenderServerDevice.FrameOutputBufferCode}
 
     void main() {
-        o_color = u_color;
+        float depth = texture(u_scene_depth, vec3(gl_FragCoord.xy / screen_size, gl_FragCoord.z));
+        vec4 hidden_color = mix(u_color, vec4(0.5, 0.5, 0.5, 1.0), 0.5);
+        o_color = depth >= gl_FragCoord.z ? u_color : hidden_color;
         o_normal = normalize(v_normal);
     }`;
     static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
         u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
+        u_scene_depth: { type: RenderStateUniformType.Int, default: 0 },
     };
     static #fragment_oit_shader = `#version 300 es
     precision highp float;
@@ -132,6 +136,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     ${RenderServerDevice.WorldUniformsCode}
 
     uniform vec4 u_color;
+    uniform highp sampler2DShadow u_scene_depth;
     
     in vec3 v_world;
     in vec3 v_normal;
@@ -140,12 +145,15 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     ${RenderServerDevice.FrameOiTOutputBufferCode}
 
     void main() {
-        vec4 color = u_color;
+        float depth = texture(u_scene_depth, vec3(gl_FragCoord.xy / screen_size, gl_FragCoord.z));
+        vec4 hidden_color = mix(u_color, vec4(0.5, 0.5, 0.5, u_color.a), 0.5);
+        vec4 color = depth >= gl_FragCoord.z ? u_color : hidden_color;
 
         ${RenderServerDevice.OitOutputCode}
     }`;
     static #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
         u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
+        u_scene_depth: { type: RenderStateUniformType.Int, default: 0 },
     };
 
     public get uniforms() { return GrabberPlainColorMaterialResource.#uniforms; }

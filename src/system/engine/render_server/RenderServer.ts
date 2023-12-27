@@ -40,10 +40,10 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     o_accum = color.a * _w;`;
 
     // Texture Units Defs
-    public static readonly EmptyTextureUnit: number = 1;
-    public static readonly LightsTextureUnit: number = 2;
-    public static readonly LightsClusterTextureUnit: number = 3;
-    public static readonly SkyTextureUnit: number = 4;
+    public static readonly EmptyTextureUnit: number = 2;
+    public static readonly LightsTextureUnit: number = 3;
+    public static readonly LightsClusterTextureUnit: number = 4;
+    public static readonly SkyTextureUnit: number = 5;
 
     // world uniforms layout std140
     // 
@@ -119,7 +119,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     public readonly sky_texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
 
     constructor(canvas: RenderDeviceCanvas) {
-        super(canvas, { preserve_texture_count: 8 });
+        super(canvas, { preserve_texture_count: 8, texture_slot_base: 2, default_texture_slot: 2 });
         this.setup_IdentityTransformAttributeBuffer();
         this.setup_WorldUniformsBuffer();
         this.setup_EmptyTexture();

@@ -133,6 +133,7 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
     private visual_opacity: number = 1.0;
 
     private update_Visual() {
+        console.log(">>>>>> update visual", this.is_hovering, this.is_grabbing);
         if (this.is_hovering) {
             this.visual_color.set(0xff / 255, 0xbb / 255, 0x00 / 255, this.visual_opacity);
             this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);

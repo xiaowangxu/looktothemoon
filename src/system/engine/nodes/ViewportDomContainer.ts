@@ -38,6 +38,8 @@ export class ViewportDomContainer extends Node {
         }
     }
 
+    public scale: number = 1.0;
+
     constructor() {
         super();
         this.signal_child_added.connect(this.on_ChildAdded.bind(this));
@@ -73,7 +75,7 @@ export class ViewportDomContainer extends Node {
             case NodeNotification.InternalBeforeRender: {
                 if (this.is_size_dirty && this._size !== undefined && this.viewport_node !== undefined) {
                     this.viewport_node.size = this._size;
-                    this.viewport_node.pixel_ratio = window.devicePixelRatio;
+                    this.viewport_node.pixel_ratio = window.devicePixelRatio * this.scale;
                     this.is_size_dirty = false;
                 }
                 return;

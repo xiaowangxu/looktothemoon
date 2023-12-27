@@ -11,7 +11,7 @@ import { DependencyGraph } from "./singletons/DependencyGraph";
 import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
-import { BoxGeometryResource, CylinderGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
+import { BoxGeometryResource, CylinderGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
 import { EasingType, PropertyMethodTween, PropertyTween, TransitionType, TweenLoop, TweenPingPong } from "@/system/engine/Tween";
 import { NormalMaterialResource, PlainColorMaterialResource, UVMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { color, color8, type Color } from "@/system/fivepebble/graphics/Color";
@@ -20,6 +20,7 @@ import { OrthographicCamera3D } from "@/system/engine/nodes/camera3ds/Orthograph
 import { euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { RenderServer } from "@/system/engine/render_server/RenderServer";
 import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/LineGrabber3D";
+import { RenderServerMaterialCullFace } from "@/system/engine/render_server/RenderServerMaterial";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -76,8 +77,7 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut([
 // EditorViewport0.add_Child(EditorCamera0);
 // EditorViewport.add_Child(EditorViewportContainer0);
 
-const geometry = new CylinderGeometryResource();
-geometry.top_radius = 0;
+const geometry = new TorusGeometryResource();
 geometry.build();
 
 const geometry2 = new BoxGeometryResource();
@@ -112,7 +112,11 @@ World.add_Child(LineGrabber3);
 // 	for (let j = 0; j <= 100; j++) {
 // 		const Mesh2 = new MeshInstance3D();
 // 		Mesh2.geometry = geometry;
-// 		Mesh2.material = material1;
+// 		const material = new MaterialOverrideResource();
+// 		material.set_OverrideMaterial(material2);
+// 		material.set_UniformOverride('u_color', color(Math.random(), Math.random(), Math.random(), 0.5));
+// 		material.material.is_transparent = true;
+// 		Mesh2.material = material;
 // 		Mesh2.local_scale = vec3(10, 10, 10);
 // 		Mesh2.local_position = vec3((i / 100 * 2 - 1) * 2000, (j / 100 * 2 - 1) * 2000, 0);
 // 		World.add_Child(Mesh2);

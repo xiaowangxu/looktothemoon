@@ -14,6 +14,8 @@ import { WebGL2RenderStateRenderBuffer } from "./webgl2_render_state_objects/Web
 
 export interface WebGL2RenderStateInitOption extends RenderStateInitOption {
     preserve_texture_count: number,
+    texture_slot_base?: number,
+    default_texture_slot?: number,
     enabled_oes_float_linear_texture?: boolean,
     enabled_ext_float_color_buffer?: boolean,
     canvas_antialias?: boolean,
@@ -30,9 +32,9 @@ export enum WebGL2RenderStateFrameBufferAttachmentPoint {
 export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public readonly gl: WebGL2RenderingContext;
 
-    private static readonly TextureSlotBase = 1;
-
-    private readonly texture_slot_preserved;
+    private readonly texture_slot_base: number;
+    private readonly default_texture_slot: number;
+    private readonly texture_slot_preserved: number;
     public readonly max_texture_slot: number;
     public readonly user_texture_slot_count: number;
     private readonly active_sampled_texture_slots: (WeakRef<WebGL2RenderStateSampledTexture> | undefined)[];
@@ -257,6 +259,8 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
 
         const {
             preserve_texture_count,
+            texture_slot_base = 1,
+            default_texture_slot = 0,
             enabled_ext_float_color_buffer = true,
             enabled_oes_float_linear_texture = true,
             canvas_antialias = false,
@@ -277,8 +281,10 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             if (texture_float_linear_ext === null) throw new Error('<WebGL2RenderState> constructor: failed to get webgl2 texture float extension');
         }
 
+        this.default_texture_slot = default_texture_slot;
+        this.texture_slot_base = texture_slot_base;
         this.max_texture_slot = this.gl.getParameter(this.gl.MAX_TEXTURE_IMAGE_UNITS);
-        this.texture_slot_preserved = WebGL2RenderState.TextureSlotBase + Math.max(0, Math.floor(preserve_texture_count));
+        this.texture_slot_preserved = Math.max(0, this.texture_slot_base, preserve_texture_count);
         this.user_texture_slot_count = this.max_texture_slot - this.texture_slot_preserved;
         if (this.user_texture_slot_count <= 0) throw new Error('<WebGL2RenderState> constructor: texture unit not enough');
         this.active_sampled_texture_slots = new Array(this.user_texture_slot_count);
@@ -786,8 +792,8 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         const { texture, sampler } = sampled_texture;
 
         if (texture === undefined) {
-            sampled_texture.slot = 1;
-            return 1;
+            sampled_texture.slot = this.default_texture_slot;
+            return this.default_texture_slot;
         }
         if (sampled_texture.slot !== undefined) {
             return sampled_texture.slot;
@@ -1069,7 +1075,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
                 const uniform = data as WebGL2RenderStateTextureUniformSlot;
                 const sampled_texture = uniform.sampled_texture;
                 const slot = this.get_SampledTextureSlot(sampled_texture);
-                console.log("use texture slot", slot);
+                // console.log("use texture slot", slot);
                 this.gl.uniform1i(uniform_location, slot);
                 return;
             }

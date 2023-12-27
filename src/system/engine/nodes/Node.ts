@@ -666,7 +666,7 @@ export class Viewport extends Node {
             const ray = camera_3d.get_Camera().project_Ray(this.input_manager.mouse_position_normalized);
             const ray_picking_option = new RayPickingOption(
                 ray.origin,
-                ray.get_Point(1000),
+                ray.get_Point(10000),
                 this.physics_picking_mask,
                 camera_3d,
                 this,

@@ -33,7 +33,7 @@ export class OrbitCamera3D extends Node3D {
     public rotate_enable: boolean = true;
     public pan_enable: boolean = true;
 
-    private _perspective_fov: number = 60;
+    private _perspective_fov: number = 40;
     public get perspective_fov() { return this._perspective_fov; }
     public set perspective_fov(fov: number) {
         fov = clamp(fov, 0, 179);

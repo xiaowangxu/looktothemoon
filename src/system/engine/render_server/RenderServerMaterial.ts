@@ -2,7 +2,7 @@ import { RenderDeviceObject } from "@/system/sliverofstraw/RenderDeviceObject";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { Ref } from "@/system/utils/RefCounted";
 import type { RenderServerShader, RenderServerShaderPass } from "./RenderServerShader";
-import type { RenderServerDevice } from "./RenderServer";
+import { type RenderServerDevice } from "./RenderServer";
 import { RenderStateUniformType } from "@/system/sliverofstraw/RenderState";
 import { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
@@ -10,17 +10,21 @@ import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
-import type { SignalEmitter } from "@/system/utils/SignalEmitter";
 
 type UniformOverrideValueType = number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined;
 type UniformOverrideType = Ref<WebGL2RenderStateTexture> | UniformOverrideValueType;
 export type RenderServerMaterialUniforms = { [name: string]: RenderStateUniformType };
+
+export enum RenderServerMaterialCullFace {
+    Back, Front, None
+}
 
 export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> {
     private readonly shader_ref: Ref<RenderServerShader> = new Ref();
     private uniforms_override: Map<string, { type: RenderStateUniformType, value: UniformOverrideType }> = new Map();
 
     public is_transparent: boolean = false;
+    public cull_face: RenderServerMaterialCullFace = RenderServerMaterialCullFace.Back;
 
     public get shader() { return this.shader_ref.expect; }
     public get has_shader() { return !this.shader_ref.is_empty; }
