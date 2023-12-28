@@ -135,7 +135,7 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
         this.vertex_array_groups_ref.remove(index);
     }
 
-    public set_Geometry(primitive_type: RenderStatePrimitiveType, array: RenderServerGeometryArray<WebGL2RenderState>, index?: IndexAttributeBuffer, vertex_count?: number, bbox?: Box3) {
+    public set_Geometry(primitive_type: RenderStatePrimitiveType, array: RenderServerGeometryArray<WebGL2RenderState>, index?: IndexAttributeBuffer, vertex_count?: number, bbox?: Box3, default_instance_transform_attribute: boolean = true) {
         const count = index?.element_count ?? vertex_count;
         if (count === undefined) throw new Error('<RenderServerGeometry> set_Geometry: vertex count is known');
         const vertex_array = this.render_state.create_VertexArray(primitive_type, 0, count).expect();
@@ -158,7 +158,7 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
                 _attribute.toggle_VertexArray(vertex_array, location, true);
             }
         }
-        if (array.instance_transform === undefined) {
+        if (default_instance_transform_attribute && array.instance_transform === undefined) {
             const location = RenderServerGeometryAttributeLoctions.instance_transform;
             const attribute = (this.render_device as RenderServerDevice).identity_transform_attribute_buffer;
             vertex_array_attributes_map.set('instance_transform', { attribute: new Ref(attribute), location });

@@ -66,7 +66,8 @@ export class MultiLineGeometryResource extends GeometryResource {
             },
             IndexAttributeBuffer.value,
             undefined,
-            box3(vec3(0, 0, 0), vec3(3, 1, 3))
+            box3(vec3(0, 0, 0), vec3(3, 1, 3)),
+            false
         );
         this.geometry.instance_count = 2;
     }
