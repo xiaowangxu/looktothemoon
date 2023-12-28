@@ -3,7 +3,6 @@ import type { ClassReader, ClassWriter } from "../classes/ClassWriterReader";
 import type { PickingArea3D } from "./node3ds/physics3ds/PickingArea3D";
 import { SceneTree } from "../SceneTree";
 import { Vector2, vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
-import { Color, Raycaster } from "three";
 import { SignalEmitter } from "../../utils/SignalEmitter";
 import { Renderer3D } from "../renderer/Renderer3D";
 import { World3D } from "../worlds/world3ds/World3D";

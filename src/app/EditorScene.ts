@@ -21,6 +21,8 @@ import { MultiGeometryResource } from "@/system/engine/resources/geometry_resour
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
 import { ActionInputEvent } from "@/system/engine/inputs/events/ActionInputEvent";
+import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineGeometryResource";
+import { MultiLineMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer();
@@ -113,6 +115,7 @@ Mesh1.geometry = multi_geometry;
 Mesh1.material = material2;
 Mesh1.local_scale = vec3(100, 100, 100);
 Mesh1.local_position = vec3(-25, 0, 0);
+Mesh1.local_visible = true;
 
 Mesh1.set_SurfaceMaterial(2, material3);
 Mesh1.set_SurfaceMaterial(3, material3);
@@ -273,3 +276,15 @@ signal.connect((action) => {
 		EditorViewport.push_InputEvent(new ActionInputEvent('switch_BackView', true, false));
 	}
 });
+
+const multi_line_geometry = new MultiLineGeometryResource();
+const multi_line_material = new MultiLineMaterialResource();
+multi_line_material.color = color8(0xf8, 0x2d, 0x4e);
+multi_line_material.line_width = 4;
+const MeshLine = new MeshInstance3D();
+MeshLine.geometry = multi_line_geometry;
+MeshLine.material = multi_line_material;
+MeshLine.local_scale = vec3(100, 100, 100);
+MeshLine.local_position = vec3(0, 0, -100);
+MeshLine.render_queue = 1;
+World.add_Child(MeshLine);

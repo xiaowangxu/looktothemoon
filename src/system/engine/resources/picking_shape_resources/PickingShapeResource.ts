@@ -1,16 +1,14 @@
-import { BackSide, Camera, DoubleSide, FrontSide, Line3, Ray, Vector2, Vector4, Box3 } from "three";
+
 import { Resource } from "../Resource";
 import type { Viewport } from "../../nodes/Node";
 import type { Camera3D } from "../../nodes/camera3ds/Camera3D";
 import { type RaycastResult } from "../../worlds/world3ds/PhysicsWorld3D";
 import { PickingSide, type PickingShape3D } from "../../worlds/world3ds/PickingWorld3D";
-import { Epsilon, lerp } from '../../../fivepebble/Scalar';
-import { MeshBVH } from 'three-mesh-bvh';
-import type { GeometryResource } from "./GeometryResource";
+import { Epsilon } from '../../../fivepebble/Scalar';
 import type { ClassReader, ClassWriter } from "../../classes/ClassWriterReader";
-import { ValueObject } from "../../classes/ValueObject";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
+import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
 export abstract class PickingShape3DResource extends Resource implements PickingShape3D {
     public static readonly class_name: string = "PickingShape3DResource";

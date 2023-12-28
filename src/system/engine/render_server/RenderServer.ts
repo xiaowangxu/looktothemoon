@@ -26,6 +26,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     vec2 screen_size;
     float time;
     bool camera_is_orthogonal;
+    float pixel_ratio;
 };`
     public static readonly EnvironmentUniformsCode = `layout(std140) uniform EnvironmentUniforms {
     mat4 camera_world;
@@ -111,12 +112,15 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     //   | screen_size |             |     time    | orthogonal  |                    |  16 Bytes
     //   |     256     |             |     264     |     268     |                    |
     //   |-------------|-------------|-------------|-------------| ---- 272 Bytes ----+
+    //   | pixel_ratio |             |             |             |                    |  16 Bytes
+    //   |     272     |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------| ---- 276 Bytes ----+
     //   
-    //   total 272 Bytes => 68 * 4 float32s
+    //   total 276 Bytes => 69 * 4 float32s
 
     private world_uniforms_buffer_ref: Ref<WebGL2RenderStateBuffer> = new Ref();
 
-    private readonly world_uniforms_buffer_data: Float32Array = new Float32Array(68);
+    private readonly world_uniforms_buffer_data: Float32Array = new Float32Array(69);
     private readonly world_uniforms_camera_world: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 0, 16);
     private readonly world_uniforms_camera_view: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 64, 16);
     private readonly world_uniforms_camera_projection: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 128, 16);
@@ -124,6 +128,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     private readonly world_uniforms_screen_size: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 256, 2);
     private readonly world_uniforms_time: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 264, 1);
     private readonly world_uniforms_camera_is_orthogonal: Uint32Array = new Uint32Array(this.world_uniforms_buffer_data.buffer, 268, 1);
+    private readonly world_uniforms_pixel_ratio: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 272, 1);
 
     // Environment Uniforms layout std140
     // 
@@ -360,6 +365,10 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         // time
         {
             this.world_uniforms_time[0] = time;
+        }
+        // pixel ratio
+        {
+            this.world_uniforms_pixel_ratio[0] = window.devicePixelRatio / this._pixel_ratio;
         }
         this.render_state.update_Buffer(this.world_uniforms_buffer_ref.expect, this.world_uniforms_buffer_data);
     }

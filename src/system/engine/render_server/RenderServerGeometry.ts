@@ -10,7 +10,7 @@ import { RenderStatePrimitiveType, type RenderState } from "@/system/sliverofstr
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
 
-const RenderServerGeometryAttributeLoctions = {
+export const RenderServerGeometryAttributeLoctions = {
     position: 0,
     normal: 1,
     tangent: 2,
@@ -21,6 +21,7 @@ const RenderServerGeometryAttributeLoctions = {
     instance_transform1: 7,
     instance_transform2: 8,
     instance_transform3: 9,
+    Max: 10,
 };
 
 type RenderServerGeometryArray<RS extends RenderState<RS>, Buffer extends RenderStateBuffer<RS> = RenderStateBuffer<RS>> = {
@@ -28,7 +29,7 @@ type RenderServerGeometryArray<RS extends RenderState<RS>, Buffer extends Render
     RenderDeviceAttributeBuffer<RS, Buffer> |
     {
         attribute: RenderDeviceAttributeBuffer<RS, Buffer>,
-        location: Exclude<number, (typeof RenderServerGeometryAttributeLoctions)[keyof typeof RenderServerGeometryAttributeLoctions]>
+        location: number,
     }
 };
 

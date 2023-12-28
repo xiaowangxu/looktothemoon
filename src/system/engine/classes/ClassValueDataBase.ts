@@ -16,7 +16,7 @@ import { ShortCut } from "../inputs/ShortCut";
 import { ShortCutActionMap } from "../inputs/InputActionMap";
 import { PlainObject } from "./PlainObject";
 import { ValueObject } from "./ValueObject";
-import { PackedSceneResource } from "../resources/resources/PackedSceneResource";
+import { PackedSceneResource } from "../resources/packed_scene_resources/PackedSceneResource";
 import { BoxGeometryResource, CylinderGeometryResource } from "../resources/geometry_resources/PrimitiveGeometryResource";
 import { MeshInstance3D } from "../nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";

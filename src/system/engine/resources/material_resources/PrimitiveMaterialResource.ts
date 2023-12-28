@@ -38,7 +38,7 @@ export class PlainColorMaterialResource extends MaterialResource {
     void main() {
         mat4 _model_world = model_world * a_instance_transform;
         vec4 world = _model_world * vec4(a_position, 1.0);
-        gl_Position = camera_projection * inverse(camera_world) * world;
+        gl_Position = camera_projection * camera_view * world;
         v_normal = normalize(mat3(transpose(inverse(_model_world))) * a_normal);
         v_uv = a_uv;
         v_world = world.xyz;
