@@ -48,21 +48,19 @@
                     </template>
                 </SPopupMenuButton>
                 <SPopupMenuButton ref="smenu_view_ref" @mouseenter="on_MenuButtonMouseEntered('view')"
-                    @opened="on_MenuOpened('view')" @closed="on_MenuClosed('view')"
-                    @click="(label: any) => { console.log(label); if (label === 'persp') camera_type = false; else if (label === 'orth') camera_type = true; }">
+                    @opened="on_MenuOpened('view')" @closed="on_MenuClosed('view')" @click="on_ViewMenuClicked">
                     <template #button>
                         视图
                     </template>
                     <template #items="{ open, close, triggerSubItemHide }">
-                        <SItem label="顶视图">
-                        </SItem>
-                        <SItem label="底视图" />
+                        <SItem label="前视图" />
                         <SItem label="左视图" />
+                        <SItem label="顶视图" />
                         <SItem label="更多...">
                             <template #subitems>
-                                <SItem label="右视图" icon="FakeCheckBoxActive" />
-                                <SItem label="前视图" icon="FakeCheckBoxActive" />
-                                <SItem label="后视图" icon="FakeCheckBoxActive" />
+                                <SItem label="后视图" />
+                                <SItem label="右视图" />
+                                <SItem label="底视图" />
                             </template>
                         </SItem>
                         <SVSeparator />
@@ -121,6 +119,8 @@ import { ref, watch } from 'vue';
 import SNumberEdit from '@/components/SNumberEdit.vue';
 import SActiveArea from '@/components/SActiveArea.vue';
 import SLabel from '@/components/typography/SLabel.vue';
+
+import { signal } from '../app/EditorScene';
 
 // datas
 type MenuLabel = 'file' | 'edit' | 'select' | 'view';
@@ -187,5 +187,17 @@ function on_MenuButtonMouseEntered(label: MenuLabel) {
 // editor datas
 const camera_type = ref<boolean>(false);
 const zoom = ref<number>(100);
+
+// methods
+function on_ViewMenuClicked(label: any) {
+    console.log(label);
+    if (label === 'persp') {
+        camera_type.value = false;
+    }
+    else if (label === 'orth') {
+        camera_type.value = true;
+    }
+    signal.trigger(label);
+}
 
 </script>

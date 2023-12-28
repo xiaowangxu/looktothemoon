@@ -56,7 +56,7 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
     // private readonly guide_line2: MeshInstance3D = new MeshInstance3D();
     // private readonly guide_material: LineMaterialResource = new LineMaterialResource();
 
-    private _length: number = 1;
+    private _length: number = 0.75;
     public get length() { return this._length; }
     public set length(length: number) {
         if (this._length !== length) {
@@ -133,7 +133,6 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
     private visual_opacity: number = 1.0;
 
     private update_Visual() {
-        console.log(">>>>>> update visual", this.is_hovering, this.is_grabbing);
         if (this.is_hovering) {
             this.visual_color.set(0xff / 255, 0xbb / 255, 0x00 / 255, this.visual_opacity);
             this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);

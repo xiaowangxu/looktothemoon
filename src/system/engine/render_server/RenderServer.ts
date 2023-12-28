@@ -18,9 +18,16 @@ export class RenderServerDevice extends WebGL2RenderDevice {
 
     // Codes
     public static readonly ConstantsCode = `const float PI = 3.1415926535;\nconst float TAU = 6.283185307;\nconst float EPSILON = 0.00001;`
-    public static readonly WorldUniformsName: string = 'WorldUniforms';
-    public static readonly WorldUniformsUnit: number = 0;
     public static readonly WorldUniformsCode = `layout(std140) uniform WorldUniforms {
+    mat4 camera_world;
+    mat4 camera_view;
+    mat4 camera_projection;
+    mat4 camera_inv_projection;
+    vec2 screen_size;
+    float time;
+    bool camera_is_orthogonal;
+};`
+    public static readonly EnvironmentUniformsCode = `layout(std140) uniform EnvironmentUniforms {
     mat4 camera_world;
     mat4 camera_view;
     mat4 camera_projection;
@@ -39,13 +46,28 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     o_color = vec4(color.rgb * _w, color.a);
     o_accum = color.a * _w;`;
 
-    // Texture Units Defs
+    // texture layout
+    //   |-------|-------|-------|-------|-------|-------|-------|-------|
+    //   |   0   |   1   |   2   |   3   |   4   |   5   |   6   |   7   |
+    //   |-------|-------|-------|-------|-------|-------|-------|-------|
+    //   |       |       |       | empty |  lit  | l_cls | l_shd |  sky  |
+    //   |-------|-------|-------|-------|-------|-------|-------|-------|
+    //   |   8   |   9   |   10  |   11  |   12  |   13  |   14  |   15  |
+    //   |-------|-------|-------|-------|-------|-------|-------|-------|
+    //   |  pres |  pres |  pres |  pres |  pres |  pres |  pres |  pres |
+    //   |-------|-------|-------|-------|-------|-------|-------|-------|
+
     public static readonly EmptyTextureUnit: number = 2;
     public static readonly LightsTextureUnit: number = 3;
     public static readonly LightsClusterTextureUnit: number = 4;
     public static readonly SkyTextureUnit: number = 5;
 
-    // world uniforms layout std140
+    public static readonly WorldUniformsName: string = 'WorldUniforms';
+    public static readonly WorldUniformsUnit: number = 0;
+    public static readonly EnvironmentUniformsName: string = 'EnvironmentUniforms';
+    public static readonly EnvironmentUniformsUnit: number = 1;
+
+    // World Uniforms layout std140
     // 
     //   |-------------|-------------|-------------|-------------|
     //   |    Byte4    |    Byte8    |    Byte12   |    Byte16   |
@@ -103,6 +125,59 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     private readonly world_uniforms_time: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 264, 1);
     private readonly world_uniforms_camera_is_orthogonal: Uint32Array = new Uint32Array(this.world_uniforms_buffer_data.buffer, 268, 1);
 
+    // Environment Uniforms layout std140
+    // 
+    //   |-------------|-------------|-------------|-------------|
+    //   |    Byte4    |    Byte8    |    Byte12   |    Byte16   |
+    //   |-------------|-------------|-------------|-------------| ---- 0 Bytes ------+
+    //   |  cam_world  |             |             |             |                    |
+    //   |      0      |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |  64 Bytes
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------| ---- 64 Bytes  ----+
+    //   |   cam_view  |             |             |             |                    |
+    //   |      64     |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |  64 Bytes
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------| ---- 128 Bytes ----+
+    //   |   cam_proj  |             |             |             |                    |
+    //   |     128     |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |  64 Bytes
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------| ---- 192 Bytes ----+
+    //   |   inv_proj  |             |             |             |                    |
+    //   |     192     |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |  64 Bytes
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------| ---- 256 Bytes ----+
+    //   | screen_size |             |     time    | orthogonal  |                    |  16 Bytes
+    //   |     256     |             |     264     |     268     |                    |
+    //   |-------------|-------------|-------------|-------------| ---- 272 Bytes ----+
+    //   
+    //   total 272 Bytes => 68 * 4 float32s
+
+
+    // default values
+
+    private environment_uniforms_buffer_ref: Ref<WebGL2RenderStateBuffer> = new Ref();
+    private readonly environment_uniforms_buffer_data: Float32Array = new Float32Array(68);
+
     public readonly identity_transform_attribute_buffer_ref: Ref<RenderDeviceMatrix4AttributeBuffer<WebGL2RenderState>> = new Ref();
     public get identity_transform_attribute_buffer() { return this.identity_transform_attribute_buffer_ref.expect; }
 
@@ -115,13 +190,19 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         transparent: new Ref<WebGL2RenderStateTexture>(),
         grey: new Ref<WebGL2RenderStateTexture>(),
     }
+
+    // Render Data
+
     public readonly lights_data_ref: Ref<RenderServerLightsData> = new Ref();
+
     public readonly sky_texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
 
     constructor(canvas: RenderDeviceCanvas) {
-        super(canvas, { preserve_texture_count: 8, texture_slot_base: 2, default_texture_slot: 2 });
+        super(canvas, { preserve_texture_count: 8, texture_slot_base: 3, default_texture_slot: 3, canvas_antialias: true, canvas_preserve_drawing_buffer: true });
+        if (this.render_state.user_texture_slot_count < 8) throw new Error('<RenderServerDevice> constructor: not enough user texture slot');
         this.setup_IdentityTransformAttributeBuffer();
         this.setup_WorldUniformsBuffer();
+        this.setup_EnvironmentUniformsBuffer();
         this.setup_EmptyTexture();
         this.setup_PlainColorTextures();
     }
@@ -136,6 +217,12 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         this.world_uniforms_buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Uniform, RenderStateBufferUsage.DynamicDraw, 1, RenderStateDataType.Float, false, 0).expect();
         this.render_state.alloc_Buffer(this.world_uniforms_buffer_ref.expect, this.world_uniforms_buffer_data.byteLength);
         this.render_state.bind_UniformBuffer(this.world_uniforms_buffer_ref.expect, RenderServerDevice.WorldUniformsUnit);
+    }
+
+    private setup_EnvironmentUniformsBuffer() {
+        this.environment_uniforms_buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Uniform, RenderStateBufferUsage.DynamicDraw, 1, RenderStateDataType.Float, false, 0).expect();
+        this.render_state.alloc_Buffer(this.environment_uniforms_buffer_ref.expect, this.environment_uniforms_buffer_data.byteLength);
+        this.render_state.bind_UniformBuffer(this.environment_uniforms_buffer_ref.expect, RenderServerDevice.EnvironmentUniformsUnit);
     }
 
     private setup_EmptyTexture() {
@@ -277,13 +364,31 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         this.render_state.update_Buffer(this.world_uniforms_buffer_ref.expect, this.world_uniforms_buffer_data);
     }
 
-    public resize(width: number, height: number) {
-        width = Math.max(Math.round(width), 1);
-        height = Math.max(Math.round(height), 1);
+    public set_EnvironmentUniforms() {
+        this.render_state.update_Buffer(this.environment_uniforms_buffer_ref.expect, this.environment_uniforms_buffer_data);
+    }
+
+    private _pixel_ratio: number = window.devicePixelRatio;
+    public get pixel_ratio() { return this._pixel_ratio; }
+
+    public set_PixelRatio(ratio: number) {
+        this._pixel_ratio = ratio;
+    }
+
+    private _flushed: boolean = false;
+    public get flushed() { return this._flushed; }
+
+    public set_Size(width: number, height: number) {
+        this._flushed = false;
+        width = Math.max(Math.floor(width * this.pixel_ratio), 1);
+        height = Math.max(Math.floor(height * this.pixel_ratio), 1);
         const canvas_width = this.canvas.width;
         const canvas_height = this.canvas.height;
-        if (canvas_width < width) this.canvas.width = width;
-        if (canvas_height < height) this.canvas.height = height;
+        if (canvas_width !== width || canvas_height !== height) {
+            this.canvas.width = width;
+            this.canvas.height = height;
+            this._flushed = true;
+        }
     }
 
     public set_RenderCapabilities(depth_test?: boolean, depth_write?: boolean, depth_func?: number, blend?: boolean) {
@@ -344,4 +449,6 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     }
 }
 
-export const RenderServer = new RenderServerDevice(new OffscreenCanvas(1024, 1024));
+export const RenderServer3D = new RenderServerDevice(document.getElementById('render-server-canvas') as HTMLCanvasElement);
+
+RenderServer3D.set_Size(0, 0);

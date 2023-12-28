@@ -145,17 +145,19 @@ export class Euler {
     public equal(b: Euler): boolean {
         return this.x === b.x && this.y === b.y && this.z === b.z && this.order === b.order;
     }
-    public set(x: number, y: number, z: number, order: EulerOrder = EulerOrder.XYZ): void {
+    public set(x: number, y: number, z: number, order: EulerOrder = EulerOrder.XYZ) {
         this.x = x;
         this.y = y;
         this.z = z;
         this.order = order;
+        return this;
     }
-    public copy(b: Euler): void {
+    public copy(b: Euler) {
         this.x = b.x;
         this.y = b.y;
         this.z = b.z;
         this.order = b.order;
+        return this;
     }
     public clone(): Euler {
         return new Euler(this.x, this.y, this.z, this.order);

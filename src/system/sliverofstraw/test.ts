@@ -12,7 +12,7 @@ import { WebGL2RenderDeviceSurface } from "./webgl2/webgl2_render_device_objects
 import { vec4 } from "../fivepebble/linear_algebra/Vector4";
 import { color } from "../fivepebble/graphics/Color";
 import { EditorViewport } from "../../app/EditorScene";
-import { RenderServer } from "../engine/render_server/RenderServer";
+import { RenderServer3D } from "../engine/render_server/RenderServer";
 import { RenderServerLightType, RenderServerLightsData } from "../engine/render_server/RenderServerLightData";
 import { Deg2Rad } from "../fivepebble/Scalar";
 
@@ -106,8 +106,8 @@ for (int i = idx; i < lights_count; i++) {
 const onscreen = document.getElementById('test-canvas') as HTMLCanvasElement;
 const on_screen_ctx = onscreen.getContext('2d');
 
-const render_device = RenderServer;
-const lights_data = RenderServer.create_LightsData(64, 64);
+const render_device = RenderServer3D;
+const lights_data = RenderServer3D.create_LightsData(64, 64);
 
 function update_Lights() {
 	for (let i = 0; i < lights_data.max_light_count; i++) {

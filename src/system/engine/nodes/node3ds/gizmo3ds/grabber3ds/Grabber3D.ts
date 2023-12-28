@@ -2,7 +2,7 @@ import { SignalEmitter } from "@/system/utils/SignalEmitter";
 import type { Viewport, CursorStyle } from "../../../Node";
 import { FixSizeNode3D } from "../FixSizeNode3D";
 import { MaterialResource, type MaterialReadOnlyUniforms } from "@/system/engine/resources/material_resources/MaterialResource";
-import { RenderServerDevice, RenderServer, RenderServerPlainColorTexture } from "@/system/engine/render_server/RenderServer";
+import { RenderServerDevice, RenderServer3D, RenderServerPlainColorTexture } from "@/system/engine/render_server/RenderServer";
 import { RenderServerGeometry } from "@/system/engine/render_server/RenderServerGeometry";
 import type { UniformInitSet } from "@/system/engine/render_server/RenderServerShader";
 import { PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
@@ -120,8 +120,10 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
 
     void main() {
         float depth = texture(u_scene_depth, vec3(gl_FragCoord.xy / screen_size, gl_FragCoord.z));
-        vec4 hidden_color = mix(u_color, vec4(0.5, 0.5, 0.5, 1.0), 0.5);
-        o_color = depth >= gl_FragCoord.z ? u_color : hidden_color;
+        vec4 hidden_color = mix(u_color, vec4(0.5, 0.5, 0.5, 1.0), 0.75);
+        bool not_hidden = depth >= gl_FragCoord.z;
+        // if (!not_hidden && smoothstep(0.3, 0.4, mod(gl_FragCoord.y + gl_FragCoord.x, 10.0) / 10.0) <= 0.01) discard;
+        o_color = not_hidden ? u_color : hidden_color;
         o_normal = normalize(v_normal);
     }`;
     static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
@@ -146,8 +148,10 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
 
     void main() {
         float depth = texture(u_scene_depth, vec3(gl_FragCoord.xy / screen_size, gl_FragCoord.z));
-        vec4 hidden_color = mix(u_color, vec4(0.5, 0.5, 0.5, u_color.a), 0.5);
-        vec4 color = depth >= gl_FragCoord.z ? u_color : hidden_color;
+        vec4 hidden_color = mix(u_color, vec4(0.5, 0.5, 0.5, u_color.a), 0.75);
+        bool not_hidden = depth >= gl_FragCoord.z;
+        // if (!not_hidden && smoothstep(0.3, 0.4, mod(gl_FragCoord.y + gl_FragCoord.x, 10.0) / 10.0) <= 0.01) discard;
+        vec4 color = not_hidden ? u_color : hidden_color;
 
         ${RenderServerDevice.OitOutputCode}
     }`;
@@ -174,11 +178,11 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     }
 
     public update_Material() {
-        const shader = RenderServer.create_Shader();
-        const vertex_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Vertex, GrabberPlainColorMaterialResource.#vertex_shader).expect();
-        const fragment_prez_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_prez_shader).expect();
-        const fragment_shade_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_shade_shader).expect();
-        const fragment_oit_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_oit_shader).expect();
+        const shader = RenderServer3D.create_Shader();
+        const vertex_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Vertex, GrabberPlainColorMaterialResource.#vertex_shader).expect();
+        const fragment_prez_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_prez_shader).expect();
+        const fragment_shade_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_shade_shader).expect();
+        const fragment_oit_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_oit_shader).expect();
         shader.set_Shaders(
             vertex_shader,
             GrabberPlainColorMaterialResource.#vertex_uniforms,

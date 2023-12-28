@@ -16,6 +16,7 @@ import { ViewportMouseInputEventManager } from "../inputs/managers/ViewportMouse
 import { ViewportActionInputEventManager } from "../inputs/managers/ViewportActionInputEventManager";
 import { ViewportInputManager } from "../inputs/managers/ViewportInputManager";
 import { ClassBase } from "../classes/ClassBase";
+import { RenderServer3D } from "../render_server/RenderServer";
 
 export enum NodeNotification {
     ExitingTree,
@@ -355,7 +356,7 @@ export class Node extends ClassBase {
 }
 
 export enum ViewportUpdateMode {
-    Always, Never, Once
+    Always, Never, Once, OnceNever,
 }
 
 export type CursorStyle = 'default' | 'none' | 'context-menu' | 'help' | 'pointer' | 'progress' | 'wait' |
@@ -379,32 +380,34 @@ export class Viewport extends Node {
     public world_3d: World3D | undefined = undefined;
     private readonly renderer_3d: Renderer3D;
     private camera_3d: Camera3D | undefined;
-    public get canvas(): HTMLCanvasElement {
+    public get canvas(): HTMLElement {
         return this.renderer_3d.canvas;
     }
 
-    private _size: Vector2 = vec2(0, 0);
+    private readonly _size: Vector2 = vec2(0, 0);
     private is_size_dirty: boolean = false;
     public get size(): Vector2 {
-        return this._size;
+        return this._size.clone();
     }
     public set size(size: Vector2) {
         if (!this._size.equal(size)) {
-            this._size = size;
-            this.renderer_3d.resize(this._size.x, this._size.y);
+            this._size.copy(size);
+            this.renderer_3d.set_Size(this._size);
             this.signal_resized.trigger(this.size);
             this.is_size_dirty = true;
         }
     }
 
-    private _pixel_ratio: number = window.devicePixelRatio;
-    public get pixel_ratio(): number {
-        return this._pixel_ratio;
+    private readonly _position: Vector2 = vec2(0, 0);
+    private is_position_changed: boolean = false;
+    public get position(): Vector2 {
+        return this._position.clone();
     }
-    public set pixel_ratio(pixel_ratio: number) {
-        if (this._pixel_ratio !== pixel_ratio) {
-            this._pixel_ratio = pixel_ratio;
-            this.renderer_3d.set_PixelRatio(this._pixel_ratio);
+    public set position(position: Vector2) {
+        if (!this._position.equal(position)) {
+            this._position.copy(position);
+            this.renderer_3d.set_Position(this._position);
+            this.is_position_changed = true;
         }
     }
 
@@ -458,9 +461,11 @@ export class Viewport extends Node {
 
     constructor() {
         super();
-        this.renderer_3d = new Renderer3D(document.createElement('canvas'));
-        this.renderer_3d.resize(this.size.x, this.size.y);
-        this.renderer_3d.set_PixelRatio(this.pixel_ratio);
+        this.renderer_3d = new Renderer3D(document.createElement('div'));
+        this.canvas.style.width = '100%';
+        this.canvas.style.height = '100%';
+        this.renderer_3d.set_Size(this._size);
+        this.renderer_3d.set_Position(this._position);
         this.mouse_event_manager = new ViewportMouseInputEventManager(this);
         this.key_event_manager = new ViewportKeyInputEventManager(this);
         this.action_event_manager = new ViewportActionInputEventManager(this);
@@ -626,6 +631,8 @@ export class Viewport extends Node {
         return undefined;
     }
 
+    private is_size_changed: boolean = true;
+
     public before_InternalBeforeRender(): void {
         const camera_3d = this.get_Camera3D();
         if (camera_3d !== undefined) {
@@ -633,21 +640,30 @@ export class Viewport extends Node {
             if (this.is_size_dirty) {
                 camera_3d.update_ViewportSize(this.size);
                 this.is_size_dirty = false;
+                this.is_size_changed = true;
             }
         }
     }
 
     public render(): void {
+        const resized = this.is_size_changed;
+        const moved = this.is_position_changed;
+        this.is_size_changed = false;
+        this.is_position_changed = false;
         if (this.update_mode === ViewportUpdateMode.Never) return;
+        if (this.update_mode === ViewportUpdateMode.OnceNever) {
+            if (!RenderServer3D.flushed && !resized && !moved) return;
+            else this.update_mode = ViewportUpdateMode.Once;
+        }
         const once = this.update_mode === ViewportUpdateMode.Once;
         if (once) {
-            this.update_mode = ViewportUpdateMode.Never;
+            this.update_mode = ViewportUpdateMode.OnceNever;
         }
         this.signal_before_render.trigger();
         const world_3d = this.get_RenderableWorld3D();
         const camera_3d = this.get_Camera3D();
         if (camera_3d !== undefined && world_3d !== undefined) {
-            this.renderer_3d.render(world_3d, this, camera_3d, once);
+            this.renderer_3d.render(world_3d, this, once);
         }
         this.signal_after_render.trigger();
     }

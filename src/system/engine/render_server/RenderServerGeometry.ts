@@ -6,7 +6,7 @@ import type { RenderStateBuffer } from "@/system/sliverofstraw/render_state_obje
 import type { WebGL2RenderStateBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import { Ref, RefArray } from "@/system/utils/RefCounted";
 import { type RenderDeviceIndexAttributeBuffer, RenderDeviceAttributeBuffer, RenderDeviceAttributeBufferView } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
-import { type RenderState, type RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
+import { RenderStatePrimitiveType, type RenderState } from "@/system/sliverofstraw/RenderState";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
 
@@ -47,8 +47,7 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
     protected vertex_array_attributes_map: Map<string, { attribute: Ref<RenderDeviceAttributeBuffer<WebGL2RenderState>>, location: number }> = new Map();
     protected readonly vertex_array_ref: Ref<WebGL2RenderStateVertexArray> = new Ref();
     protected vertex_array_index_ref: Ref<IndexAttributeBuffer> = new Ref();
-    public readonly vertex_array_groups_ref: RefArray<WebGL2RenderStateVertexArrayView> = new RefArray();
-    protected _bbox: Box3 = new Box3();
+    protected readonly vertex_array_groups_ref: RefArray<WebGL2RenderStateVertexArrayView> = new RefArray();
 
     public get_Geometry() { return this.vertex_array_ref.value; }
     public get_Surface(index: number) { return this.vertex_array_groups_ref.get(index, false); }
@@ -57,7 +56,14 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
     public get has_geometry() { return !this.vertex_array_ref.is_empty; }
     public get has_surface() { return this.vertex_array_groups_ref.length > 0; }
     public get surface_count() { return this.vertex_array_groups_ref.length; }
+
+    protected _bbox: Box3 = new Box3();
     public get bbox() { return this._bbox; }
+
+    private _vertex_count: number | undefined;
+    public get vertex_count() { return this._vertex_count; }
+    private _primitive_type: RenderStatePrimitiveType | undefined;
+    public get primitive_type() { return this._primitive_type; }
 
     public instance_count: number = 1;
 
@@ -68,8 +74,40 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
         super(render_device);
     }
 
+    public get_AttributeBuffers() {
+        if (!this.has_geometry) return {};
+        const ans: RenderServerGeometryArray<WebGL2RenderState> = {};
+        for (const [name, attr] of this.vertex_array_attributes_map.entries()) {
+            if ((RenderServerGeometryAttributeLoctions as Record<string, number>)[name] !== undefined) {
+                ans[name] = attr.attribute.expect;
+            }
+            else {
+                ans[name] = { attribute: attr.attribute.expect, location: attr.location as never };
+            }
+        }
+        return ans;
+    }
+
+    public get_Surfaces() {
+        if (!this.has_surface) return [];
+        const ans: { offset: number, length: number }[] = [];
+        for (const vertex_array_view of this.vertex_array_groups_ref.value) {
+            if (vertex_array_view !== undefined) {
+                ans.push({
+                    offset: vertex_array_view.offset,
+                    length: vertex_array_view.count,
+                });
+            }
+        }
+        return ans;
+    }
+
     public get_AttributeBuffer(name: string) {
         return this.vertex_array_attributes_map.get(name)?.attribute.expect;
+    }
+
+    public get_AttributeBufferLocation(name: string) {
+        return this.vertex_array_attributes_map.get(name)?.location;
     }
 
     public get_IndexAttributeBuffer() {
@@ -100,6 +138,8 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
         const count = index?.element_count ?? vertex_count;
         if (count === undefined) throw new Error('<RenderServerGeometry> set_Geometry: vertex count is known');
         const vertex_array = this.render_state.create_VertexArray(primitive_type, 0, count).expect();
+        this._primitive_type = primitive_type;
+        this._vertex_count = count;
         const vertex_array_attributes_map = new Map();
         for (const [name, attribute] of Object.entries(array)) {
             if (attribute instanceof RenderDeviceAttributeBuffer) {
@@ -113,13 +153,14 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
             else {
                 const { attribute: _attribute, location } = attribute;
                 vertex_array_attributes_map.set(name, { attribute: new Ref(_attribute), location });
-                this.render_state.set_VertexArrayAttributeBuffer(vertex_array, location, _attribute.buffer as WebGL2RenderStateBuffer);
+                _attribute.bound_VertexArray(vertex_array, location);
+                _attribute.toggle_VertexArray(vertex_array, location, true);
             }
         }
         if (array.instance_transform === undefined) {
             const location = RenderServerGeometryAttributeLoctions.instance_transform;
             const attribute = (this.render_device as RenderServerDevice).identity_transform_attribute_buffer;
-            vertex_array_attributes_map.set('instance_transfrom', { attribute: new Ref(attribute), location });
+            vertex_array_attributes_map.set('instance_transform', { attribute: new Ref(attribute), location });
             attribute.bound_VertexArray(vertex_array, location);
             attribute.toggle_VertexArray(vertex_array, location, true);
         }

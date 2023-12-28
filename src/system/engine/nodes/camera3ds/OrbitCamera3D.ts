@@ -46,8 +46,24 @@ export class OrbitCamera3D extends Node3D {
     }
 
     public get is_orthographic() { return this.camera.is_orthographic; }
-    public get direction() { return this.local_rotation.y; }
-    public get yaw() { return this.camera_arm.local_rotation.x; }
+
+    private _direction: number = 0;
+    public get direction() { return this._direction; }
+    public set direction(direction: number) {
+        if (this._direction !== direction) {
+            this._direction = direction % Tau;
+            this.local_rotation = euler(0, this._direction, 0);
+        }
+    }
+
+    private _yaw: number = 0;
+    public get yaw() { return this._yaw; }
+    public set yaw(yaw: number) {
+        if (this._yaw !== yaw) {
+            this._yaw = yaw % Tau;
+            this.camera_arm.local_rotation = euler(this._yaw, 0, 0);
+        }
+    }
 
     public get visual_mask() { return this.camera.visual_mask; }
     public set visual_mask(mask: number) { this.camera.visual_mask = mask; }
@@ -149,6 +165,14 @@ export class OrbitCamera3D extends Node3D {
                     event.mark_Canceled();
                 }
             }
+            else if (event.action === 'switch_CameraTypeOrth') {
+                this.set_Fov(0, true);
+                event.mark_Canceled();
+            }
+            else if (event.action === 'switch_CameraTypePersp') {
+                this.set_Fov(this.perspective_fov, true);
+                event.mark_Canceled();
+            }
         }
     }
 
@@ -230,7 +254,6 @@ export class OrbitCamera3D extends Node3D {
 
     private rotate(relative: Vector2) {
         if (!this.rotate_enable) return;
-
         const { x, y } = relative;
         this.set_Rotation(this.direction - x * this.rotate_strength, this.yaw - y * this.rotate_strength);
     }
@@ -259,19 +282,19 @@ export class OrbitCamera3D extends Node3D {
     public transform_duration = 0.15;
 
     public set_Rotation(direction: number, yaw: number, animate: boolean = false) {
-        direction = direction % Tau;
+        direction = direction;
         yaw = clamp(yaw % Tau, -Math.PI / 2, Math.PI / 2);
         if (!animate) {
-            this.local_rotation = euler(0, direction, 0);
-            this.camera_arm.local_rotation = euler(yaw, 0, 0);
+            this.direction = direction;
+            this.yaw = yaw;
         }
         else {
             if (this.rotate_tween !== undefined) {
                 this.get_SceneTree()?.stop_Tween(this.rotate_tween);
             }
             this.rotate_tween = new TweenParallel([
-                new PropertyTween(this, 'local_rotation', euler(0, direction, 0), this.transform_duration, TransitionType.Quad, EasingType.Out),
-                new PropertyTween(this.camera_arm, 'local_rotation', euler(yaw, 0, 0), this.transform_duration, TransitionType.Quad, EasingType.Out),
+                new PropertyTween(this, 'direction', direction, this.transform_duration, TransitionType.Quad, EasingType.Out),
+                new PropertyTween(this, 'yaw', yaw, this.transform_duration, TransitionType.Quad, EasingType.Out),
             ]);
             this.get_SceneTree()?.start_Tween(this.rotate_tween);
         }

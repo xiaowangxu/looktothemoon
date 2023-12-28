@@ -19,6 +19,7 @@ export interface WebGL2RenderStateInitOption extends RenderStateInitOption {
     enabled_oes_float_linear_texture?: boolean,
     enabled_ext_float_color_buffer?: boolean,
     canvas_antialias?: boolean,
+    canvas_preserve_drawing_buffer?: boolean,
 }
 
 export enum WebGL2RenderStateFrameBufferAttachmentPoint {
@@ -264,9 +265,10 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             enabled_ext_float_color_buffer = true,
             enabled_oes_float_linear_texture = true,
             canvas_antialias = false,
+            canvas_preserve_drawing_buffer = false,
         } = option;
 
-        const gl = this.render_device.canvas.getContext('webgl2', { antialias: canvas_antialias });
+        const gl = this.render_device.canvas.getContext('webgl2', { antialias: canvas_antialias, preserveDrawingBuffer: canvas_preserve_drawing_buffer });
 
         if (gl === null) throw new Error('<WebGL2RenderState> constructor: failed to get webgl2 context');
         this.gl = gl as WebGL2RenderingContext;
@@ -693,7 +695,9 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         } = texture;
         if (type !== this.gl.TEXTURE_2D) return;
         this.active_TextureSlotProxy(this.gl.TEXTURE0);
-        this.bind_TextureProxy(type, texture.texture)
+        if (!this.bind_TextureProxy(type, texture.texture)) {
+            this.gl.bindTexture(type, texture.texture);
+        }
         const gl = this.gl;
         if (constant) {
             gl.texStorage2D(type, levels, internal_format, width, height);
@@ -712,7 +716,9 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public update_Texture2D(texture: WebGL2RenderStateTexture, level: number, format: RenderStateTextureDataFormat, data: ArrayBufferView, width: number, height: number, offset_x: number = 0, offset_y: number = 0, src_offset?: number) {
         const { data_type, type } = texture;
         this.active_TextureSlotProxy(this.gl.TEXTURE0);
-        this.bind_TextureProxy(type, texture.texture)
+        if (!this.bind_TextureProxy(type, texture.texture)) {
+            this.gl.bindTexture(type, texture.texture);
+        }
         if (type === this.gl.TEXTURE_2D) {
             if (src_offset !== undefined) {
                 this.gl.texSubImage2D(type, level, offset_x, offset_y, width, height, this.get_TextureDataFormatType(format), data_type, data, src_offset);
@@ -733,7 +739,9 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         const gl = this.gl;
         if (type !== gl.TEXTURE_3D && type !== gl.TEXTURE_2D_ARRAY) return;
         this.active_TextureSlotProxy(this.gl.TEXTURE0);
-        this.bind_TextureProxy(type, texture.texture)
+        if (!this.bind_TextureProxy(type, texture.texture)) {
+            this.gl.bindTexture(type, texture.texture);
+        }
         if (constant) {
             gl.texStorage3D(type, levels, internal_format, width, height, depth);
             if (data !== undefined) {
@@ -752,7 +760,9 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public update_Texture3D(texture: WebGL2RenderStateTexture, level: number, format: RenderStateTextureDataFormat, data: ArrayBufferView, width: number, height: number, depth: number, offset_x: number = 0, offset_y: number = 0, offset_z: number = 0, src_offset?: number) {
         const { data_type, type } = texture;
         this.active_TextureSlotProxy(this.gl.TEXTURE0);
-        this.bind_TextureProxy(type, texture.texture)
+        if (!this.bind_TextureProxy(type, texture.texture)) {
+            this.gl.bindTexture(type, texture.texture);
+        }
         const gl = this.gl;
         if (type === gl.TEXTURE_3D || type === gl.TEXTURE_2D_ARRAY) {
             if (src_offset !== undefined) {
@@ -770,9 +780,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
 
     public generate_Mipmap(texture: WebGL2RenderStateTexture) {
         this.active_TextureSlotProxy(this.gl.TEXTURE0);
-        if (!this.bind_TextureProxy(texture.type, texture.texture)) {
-            this.gl.bindTexture(texture.type, texture.texture);
-        }
+        this.bind_TextureProxy(texture.type, texture.texture);
         this.gl.generateMipmap(texture.type);
     }
 
@@ -1103,6 +1111,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     }
 
     public draw_Arrays(program: WebGL2RenderStateProgram, vertex_array: WebGL2RenderStateVertexArray | WebGL2RenderStateVertexArrayView, instance_count: number): void {
+        if (instance_count <= 0) return;
         this.use_ProgramProxy(program.program);
         this.bind_VertexArrayProxy(vertex_array.vertex_array);
         if (instance_count <= 1) {
@@ -1114,6 +1123,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     }
 
     public draw_Elements(program: WebGL2RenderStateProgram, vertex_array: WebGL2RenderStateVertexArray | WebGL2RenderStateVertexArrayView, index_data_type: RenderStateDataType, instance_count: number): void {
+        if (instance_count <= 0) return;
         this.use_ProgramProxy(program.program);
         this.bind_VertexArrayProxy(vertex_array.vertex_array);
         if (instance_count <= 1) {

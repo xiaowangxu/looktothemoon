@@ -4,6 +4,7 @@ import { ShortCutActionMap } from "./inputs/InputActionMap";
 import { Singletion } from "./singletions/Singletion";
 import { Node, Viewport } from "./nodes/Node";
 import type { World3D } from "./worlds/world3ds/World3D";
+import { RenderServer3D } from "./render_server/RenderServer";
 
 const arr = new Array(10000);
 
@@ -25,6 +26,7 @@ export class SceneTree {
     private readonly singletions: Map<string, Singletion> = new Map();
 
     private readonly tweens: Set<TweenBase> = new Set();
+    public get tween_processing_count() { return this.tweens.size; }
 
     private readonly viewports: Set<Viewport> = new Set();
 
@@ -54,6 +56,9 @@ export class SceneTree {
             viewport.before_InternalBeforeRender();
         }
         this.root.propagate_InternalBeforeRender(this.delta);
+        // render server resize
+        RenderServer3D.set_PixelRatio(window.devicePixelRatio);
+        RenderServer3D.set_Size(window.innerWidth, window.innerHeight);
         const worlds = new Set<World3D>();
         for (const viewport of this.viewports) {
             const world = viewport.get_World3D();

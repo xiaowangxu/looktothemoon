@@ -139,7 +139,10 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         return this;
     }
 
-    public static from_BasisPosition(basis: Matrix3 = Matrix3.make_Identity(), position: Vector3 = Vector3.make_Zero()): Matrix4 {
+    static #matrix3_identity = Matrix3.make_Identity();
+    static #vector3_zero = Vector3.make_Zero();
+
+    public static from_BasisPosition(basis: Matrix3 = Matrix4.#matrix3_identity, position: Vector3 = Matrix4.#vector3_zero): Matrix4 {
         return new Matrix4(
             basis.n11, basis.n12, basis.n13, position.x,
             basis.n21, basis.n22, basis.n23, position.y,
@@ -148,7 +151,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         );
     }
 
-    public set_BasisPosition(basis: Matrix3 = Matrix3.make_Identity(), position: Vector3 = Vector3.make_Zero()) {
+    public set_BasisPosition(basis: Matrix3 = Matrix4.#matrix3_identity, position: Vector3 = Matrix4.#vector3_zero) {
         this.n11 = basis.n11; this.n12 = basis.n12; this.n13 = basis.n13; this.n14 = position.x;
         this.n21 = basis.n21; this.n22 = basis.n22; this.n23 = basis.n23; this.n24 = position.y;
         this.n31 = basis.n31; this.n32 = basis.n32; this.n33 = basis.n33; this.n34 = position.z;

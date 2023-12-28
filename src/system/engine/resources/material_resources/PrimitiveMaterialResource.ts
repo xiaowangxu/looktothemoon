@@ -1,7 +1,7 @@
 import { RenderStateShaderType, RenderStateUniformType } from "@/system/sliverofstraw/RenderState";
 import type { RenderServerMaterialUniforms } from "../../render_server/RenderServerMaterial";
 import { MaterialResource, type MaterialReadOnlyUniforms } from "./MaterialResource";
-import { RenderServer, RenderServerDevice, RenderServerPlainColorTexture } from "../../render_server/RenderServer";
+import { RenderServer3D, RenderServerDevice, RenderServerPlainColorTexture } from "../../render_server/RenderServer";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import type { UniformInitSet } from "../../render_server/RenderServerShader";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
@@ -85,7 +85,7 @@ export class PlainColorMaterialResource extends MaterialResource {
     }`;
     static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
         u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
-        u_texture: { type: RenderStateUniformType.Tex2D, default: { texture: RenderServer.get_PlainColorTexture(RenderServerPlainColorTexture.White) } },
+        u_texture: { type: RenderStateUniformType.Tex2D, default: { texture: RenderServer3D.get_PlainColorTexture(RenderServerPlainColorTexture.White) } },
     };
     static #fragment_oit_shader = `#version 300 es
     precision highp float;
@@ -110,7 +110,7 @@ export class PlainColorMaterialResource extends MaterialResource {
     }`;
     static #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
         u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
-        u_texture: { type: RenderStateUniformType.Tex2D, default: { texture: RenderServer.get_PlainColorTexture(RenderServerPlainColorTexture.White) } },
+        u_texture: { type: RenderStateUniformType.Tex2D, default: { texture: RenderServer3D.get_PlainColorTexture(RenderServerPlainColorTexture.White) } },
     };
 
     public get uniforms() { return PlainColorMaterialResource.#uniforms; }
@@ -131,11 +131,11 @@ export class PlainColorMaterialResource extends MaterialResource {
     }
 
     public update_Material() {
-        const shader = RenderServer.create_Shader();
-        const vertex_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Vertex, PlainColorMaterialResource.#vertex_shader).expect();
-        const fragment_prez_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_prez_shader).expect();
-        const fragment_shade_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_shade_shader).expect();
-        const fragment_oit_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_oit_shader).expect();
+        const shader = RenderServer3D.create_Shader();
+        const vertex_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Vertex, PlainColorMaterialResource.#vertex_shader).expect();
+        const fragment_prez_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_prez_shader).expect();
+        const fragment_shade_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_shade_shader).expect();
+        const fragment_oit_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_oit_shader).expect();
         shader.set_Shaders(
             vertex_shader,
             PlainColorMaterialResource.#vertex_uniforms,
@@ -249,10 +249,10 @@ export class NormalMaterialResource extends MaterialResource {
     }
 
     public update_Material() {
-        const shader = RenderServer.create_Shader();
-        const vertex_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Vertex, NormalMaterialResource.#vertex_shader).expect();
-        const fragment_prez_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, NormalMaterialResource.#fragment_prez_shader).expect();
-        const fragment_shade_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, NormalMaterialResource.#fragment_shade_shader).expect();
+        const shader = RenderServer3D.create_Shader();
+        const vertex_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Vertex, NormalMaterialResource.#vertex_shader).expect();
+        const fragment_prez_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, NormalMaterialResource.#fragment_prez_shader).expect();
+        const fragment_shade_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, NormalMaterialResource.#fragment_shade_shader).expect();
         shader.set_Shaders(
             vertex_shader,
             NormalMaterialResource.#vertex_uniforms,
@@ -350,10 +350,10 @@ export class UVMaterialResource extends MaterialResource {
     }
 
     public update_Material() {
-        const shader = RenderServer.create_Shader();
-        const vertex_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Vertex, UVMaterialResource.#vertex_shader).expect();
-        const fragment_prez_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, UVMaterialResource.#fragment_prez_shader).expect();
-        const fragment_shade_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, UVMaterialResource.#fragment_shade_shader).expect();
+        const shader = RenderServer3D.create_Shader();
+        const vertex_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Vertex, UVMaterialResource.#vertex_shader).expect();
+        const fragment_prez_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, UVMaterialResource.#fragment_prez_shader).expect();
+        const fragment_shade_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, UVMaterialResource.#fragment_shade_shader).expect();
         shader.set_Shaders(
             vertex_shader,
             UVMaterialResource.#vertex_uniforms,

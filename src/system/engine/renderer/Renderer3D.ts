@@ -1,7 +1,7 @@
 import type { Viewport } from "../nodes/Node";
 import type { Camera3D } from "../nodes/camera3ds/Camera3D";
 import { World3D } from "../worlds/world3ds/World3D";
-import { RenderServer, RenderServerDevice } from "../render_server/RenderServer";
+import { RenderServer3D, RenderServerDevice } from "../render_server/RenderServer";
 import { RenderStateBufferUsage, RenderStateDataType, RenderStateFrameBufferPart, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType } from "../../sliverofstraw/RenderState";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer } from "../../sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { Vector2, vec2 } from "../../fivepebble/linear_algebra/Vector2";
@@ -16,17 +16,19 @@ import { RenderServerMaterialCullFace, type RenderServerMaterial } from "../rend
 import { RenderServerShaderPass } from "../render_server/RenderServerShader";
 import type { WebGL2RenderStateVertexArray, WebGL2RenderStateVertexArrayView } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateVertexArray";
 
+const debug_text = document.getElementById('render-server-debug')!;
+
 // #region quad surface
 
-const quad_position = new RenderDeviceVector2AttributeBuffer(RenderServer, RenderStateBufferUsage.StaticDraw, [
+const quad_position = new RenderDeviceVector2AttributeBuffer(RenderServer3D, RenderStateBufferUsage.StaticDraw, [
 	/* 0 */vec2(-1, 1),			//   1  0 ------ 2
 	/* 1 */vec2(-1, -1),		//   |  |        |
 	/* 2 */vec2(1, 1),			//   |  |        |
 	/* 3 */vec2(1, -1),			//  -1  1 ------ 3
 	/*                        *///     -1 ------ 1
 ]);
-const quad_index = new RenderDeviceIndexAttributeBuffer(RenderServer, RenderStateBufferUsage.StaticDraw, [0, 1, 2, 3]);
-const quad_surface = RenderServer.create_Geometry();
+const quad_index = new RenderDeviceIndexAttributeBuffer(RenderServer3D, RenderStateBufferUsage.StaticDraw, [0, 1, 2, 3]);
+const quad_surface = RenderServer3D.create_Geometry();
 quad_surface.set_Geometry(RenderStatePrimitiveType.TriangleStrip, { position: quad_position }, quad_index);
 
 // #endregion
@@ -44,7 +46,7 @@ void main() {
 	gl_Position = vec4(a_position, 1.0, 1.0);
 	v_uv = (a_position + 1.0) / 2.0;
 }`;
-const quad_vert_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Vertex, quad_vert_shader_code).expect();
+const quad_vert_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Vertex, quad_vert_shader_code).expect();
 
 // #endregion
 
@@ -73,14 +75,14 @@ void main() {
 		o_color.b = b <= 0.0031308 ? (12.92 * b) : (1.055 * pow(b, 1.0 / 2.4) - 0.055);
 	}
 }`;
-const onscreen_frag_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, onscreen_frag_shader_code).expect();
-const onscreen_program = RenderServer.render_state.create_Program(quad_vert_shader, onscreen_frag_shader).expect();
+const onscreen_frag_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, onscreen_frag_shader_code).expect();
+const onscreen_program = RenderServer3D.render_state.create_Program(quad_vert_shader, onscreen_frag_shader).expect();
 
-const uniform_screen_location = RenderServer.render_state.get_ProgramUniformLocation(onscreen_program, 'u_screen');
-const uniform_screen_slot = new WebGL2RenderStateIntUniformSlot(RenderServer.render_state, onscreen_program, uniform_screen_location!, 0);
+const uniform_screen_location = RenderServer3D.render_state.get_ProgramUniformLocation(onscreen_program, 'u_screen');
+const uniform_screen_slot = new WebGL2RenderStateIntUniformSlot(RenderServer3D.render_state, onscreen_program, uniform_screen_location!, 0);
 uniform_screen_slot.commit();
-const uniform_colormap_location = RenderServer.render_state.get_ProgramUniformLocation(onscreen_program, 'u_colormap');
-const uniform_colormap_slot = new WebGL2RenderStateUintUniformSlot(RenderServer.render_state, onscreen_program, uniform_colormap_location!, 0);
+const uniform_colormap_location = RenderServer3D.render_state.get_ProgramUniformLocation(onscreen_program, 'u_colormap');
+const uniform_colormap_slot = new WebGL2RenderStateUintUniformSlot(RenderServer3D.render_state, onscreen_program, uniform_colormap_location!, 0);
 uniform_colormap_slot.commit();
 
 // #endregion
@@ -90,27 +92,43 @@ uniform_colormap_slot.commit();
 const oit_frag_shader_code = `#version 300 es
 precision highp float;
 
+${RenderServerDevice.WorldUniformsCode}
+
 uniform sampler2D u_color;
 uniform sampler2D u_accum;
+uniform bool u_colormap;
+
+in vec2 v_uv;
 
 layout(location = 0) out vec4 o_color;
 
 void main() {
-	ivec2 uv = ivec2(gl_FragCoord.xy);
+	ivec2 uv = ivec2(v_uv * screen_size);
 	vec4 color = texelFetch(u_color, uv, 0);
 	float color_a = 1.0 - color.a;
 	float a = texelFetch(u_accum, uv, 0).r;
 	o_color = vec4(color_a * color.rgb / max(a, 0.00001), color_a);
+	if (u_colormap) {
+		float r = o_color.r;
+		o_color.r = r <= 0.0031308 ? (12.92 * r) : (1.055 * pow(r, 1.0 / 2.4) - 0.055);
+		float g = o_color.g;
+		o_color.g = g <= 0.0031308 ? (12.92 * g) : (1.055 * pow(g, 1.0 / 2.4) - 0.055);
+		float b = o_color.b;
+		o_color.b = b <= 0.0031308 ? (12.92 * b) : (1.055 * pow(b, 1.0 / 2.4) - 0.055);
+	}
 }`;
-const oit_frag_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, oit_frag_shader_code).expect();
-const oit_program = RenderServer.render_state.create_Program(quad_vert_shader, oit_frag_shader).expect();
+const oit_frag_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, oit_frag_shader_code).expect();
+const oit_program = RenderServer3D.render_state.create_Program(quad_vert_shader, oit_frag_shader).expect();
 
-const uniform_oit_color_location = RenderServer.render_state.get_ProgramUniformLocation(oit_program, 'u_color');
-const uniform_oit_color_slot = new WebGL2RenderStateIntUniformSlot(RenderServer.render_state, oit_program, uniform_oit_color_location!, 0);
+const uniform_oit_color_location = RenderServer3D.render_state.get_ProgramUniformLocation(oit_program, 'u_color');
+const uniform_oit_color_slot = new WebGL2RenderStateIntUniformSlot(RenderServer3D.render_state, oit_program, uniform_oit_color_location!, 0);
 uniform_oit_color_slot.commit();
-const uniform_oit_accum_location = RenderServer.render_state.get_ProgramUniformLocation(oit_program, 'u_accum');
-const uniform_oit_accum_slot = new WebGL2RenderStateIntUniformSlot(RenderServer.render_state, oit_program, uniform_oit_accum_location!, 1);
+const uniform_oit_accum_location = RenderServer3D.render_state.get_ProgramUniformLocation(oit_program, 'u_accum');
+const uniform_oit_accum_slot = new WebGL2RenderStateIntUniformSlot(RenderServer3D.render_state, oit_program, uniform_oit_accum_location!, 1);
 uniform_oit_accum_slot.commit();
+const uniform_oit_colormap_location = RenderServer3D.render_state.get_ProgramUniformLocation(oit_program, 'u_colormap');
+const uniform_oit_colormap_slot = new WebGL2RenderStateUintUniformSlot(RenderServer3D.render_state, oit_program, uniform_oit_colormap_location!, 0);
+uniform_oit_colormap_slot.commit();
 
 // #endregion
 
@@ -141,11 +159,11 @@ void main() {
 	o_color = texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
 }
 `;
-const skydome_frag_shader = RenderServer.render_state.create_Shader(RenderStateShaderType.Fragment, skydome_frag_shader_code).expect();
-const skydome_program = RenderServer.render_state.create_Program(quad_vert_shader, skydome_frag_shader).expect();
+const skydome_frag_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, skydome_frag_shader_code).expect();
+const skydome_program = RenderServer3D.render_state.create_Program(quad_vert_shader, skydome_frag_shader).expect();
 
-const uniform_sky_location = RenderServer.render_state.get_ProgramUniformLocation(skydome_program, 'sky');
-const uniform_sky_slot = new WebGL2RenderStateIntUniformSlot(RenderServer.render_state, skydome_program, uniform_sky_location!, RenderServerDevice.SkyTextureUnit);
+const uniform_sky_location = RenderServer3D.render_state.get_ProgramUniformLocation(skydome_program, 'sky');
+const uniform_sky_slot = new WebGL2RenderStateIntUniformSlot(RenderServer3D.render_state, skydome_program, uniform_sky_location!, RenderServerDevice.SkyTextureUnit);
 uniform_sky_slot.commit();
 
 // #endregion
@@ -267,8 +285,7 @@ export class Renderer3DQueue {
 }
 
 export class Renderer3D {
-	public readonly canvas: HTMLCanvasElement;
-	private readonly ctx: CanvasRenderingContext2D;
+	public readonly canvas: HTMLElement;
 
 	private readonly render_queue_0 = new Renderer3DQueue();
 	private readonly render_queue_1 = new Renderer3DQueue();
@@ -276,8 +293,8 @@ export class Renderer3D {
 	private readonly frame_solid_buffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
 	private readonly frame_solid_buffer_depth: Ref<WebGL2RenderStateRenderBuffer> = new Ref();
 	private readonly frame_solid_buffer_color: Ref<WebGL2RenderStateRenderBuffer> = new Ref();
-	private readonly frame_solid_buffer_copy: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
-	private readonly frame_solid_buffer_texture: Ref<WebGL2RenderStateTexture> = new Ref();
+	private readonly frame_solid_buffer_copy_color_depth: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
+	private readonly frame_solid_buffer_color_texture: Ref<WebGL2RenderStateTexture> = new Ref();
 	private readonly frame_solid_buffer_depth_texture: Ref<WebGL2RenderStateTexture> = new Ref();
 
 	private readonly frame_transparent_buffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
@@ -286,142 +303,129 @@ export class Renderer3D {
 	private readonly frame_transparent_buffer_color_texture: Ref<WebGL2RenderStateTexture> = new Ref();
 	private readonly frame_transparent_buffer_accum_texture: Ref<WebGL2RenderStateTexture> = new Ref();
 
-	private base_size: Vector2 = new Vector2(1, 1);
-	private readonly size: Vector2 = new Vector2(1, 1);
-	private pixel_ratio: number = 1;
+	private readonly base_position: Vector2 = new Vector2(0, 0);
+	private readonly base_size: Vector2 = new Vector2(1, 1);
 
 	private size_changed: boolean = true;
 
-	constructor(canvas: HTMLCanvasElement) {
+	constructor(canvas: HTMLElement) {
 		this.canvas = canvas;
-		this.canvas.style.width = '100%';
-		this.canvas.style.height = '100%';
-		const ctx = this.canvas.getContext('2d');
-		if (ctx === null) throw new Error('<Renderer3D> constructor: can not create canvas 2d context');
-		this.ctx = ctx;
 
 		const msaa = 4;
 
 		// solid
 
-		const frame_solid_buffer = RenderServer.render_state.create_FrameBuffer().expect();
+		const frame_solid_buffer = RenderServer3D.render_state.create_FrameBuffer().expect();
 
-		const frame_solid_buffer_depth_tex = RenderServer.render_state.create_RenderBuffer(RenderStateTextureFormat.D32F, msaa).expect();
-		RenderServer.render_state.alloc_RenderBuffer(frame_solid_buffer_depth_tex, 1, 1);
-		const frame_solid_buffer_color_tex = RenderServer.render_state.create_RenderBuffer(RenderStateTextureFormat.RGBA32F, msaa).expect();
-		RenderServer.render_state.alloc_RenderBuffer(frame_solid_buffer_color_tex, 1, 1);
+		const frame_solid_buffer_depth_tex = RenderServer3D.render_state.create_RenderBuffer(RenderStateTextureFormat.D32F, msaa).expect();
+		RenderServer3D.render_state.alloc_RenderBuffer(frame_solid_buffer_depth_tex, 1, 1);
+		const frame_solid_buffer_color_tex = RenderServer3D.render_state.create_RenderBuffer(RenderStateTextureFormat.RGBA32F, msaa).expect();
+		RenderServer3D.render_state.alloc_RenderBuffer(frame_solid_buffer_color_tex, 1, 1);
 
-		RenderServer.render_state.set_FrameBufferAttachment(frame_solid_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, frame_solid_buffer_color_tex);
-		RenderServer.render_state.set_FrameBufferAttachment(frame_solid_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_solid_buffer_depth_tex);
-		RenderServer.render_state.enable_FrameBuffer(frame_solid_buffer);
+		RenderServer3D.render_state.set_FrameBufferAttachment(frame_solid_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, frame_solid_buffer_color_tex);
+		RenderServer3D.render_state.set_FrameBufferAttachment(frame_solid_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_solid_buffer_depth_tex);
+		RenderServer3D.render_state.enable_FrameBuffer(frame_solid_buffer);
 
 		this.frame_solid_buffer_depth.value = frame_solid_buffer_depth_tex;
 		this.frame_solid_buffer_color.value = frame_solid_buffer_color_tex;
 		this.frame_solid_buffer.value = frame_solid_buffer;
 
-		const frame_solid_buffer_copy = RenderServer.render_state.create_FrameBuffer().expect();
+		const frame_solid_buffer_copy_color_depth = RenderServer3D.render_state.create_FrameBuffer().expect();
 
-		const frame_solid_buffer_texture = RenderServer.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-		RenderServer.render_state.alloc_Texture2D(frame_solid_buffer_texture, 1, 1, 0, RenderStateTextureDataFormat.RGBA, undefined);
-		const frame_solid_buffer_depth_texture = RenderServer.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.D32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-		RenderServer.render_state.alloc_Texture2D(frame_solid_buffer_depth_texture, 1, 1, 0, RenderStateTextureDataFormat.Depth, undefined);
-		RenderServer.render_state.gl.texParameteri(
-			RenderServer.render_state.gl.TEXTURE_2D,
-			RenderServer.render_state.gl.TEXTURE_COMPARE_MODE,
-			RenderServer.render_state.gl.COMPARE_REF_TO_TEXTURE,
+		const frame_solid_buffer_color_texture = RenderServer3D.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+		RenderServer3D.render_state.alloc_Texture2D(frame_solid_buffer_color_texture, 1, 1, 0, RenderStateTextureDataFormat.RGBA, undefined);
+		const frame_solid_buffer_depth_texture = RenderServer3D.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.D32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+		RenderServer3D.render_state.alloc_Texture2D(frame_solid_buffer_depth_texture, 1, 1, 0, RenderStateTextureDataFormat.Depth, undefined);
+		RenderServer3D.render_state.gl.texParameteri(
+			RenderServer3D.render_state.gl.TEXTURE_2D,
+			RenderServer3D.render_state.gl.TEXTURE_COMPARE_MODE,
+			RenderServer3D.render_state.gl.COMPARE_REF_TO_TEXTURE,
 		);
-		RenderServer.render_state.set_FrameBufferAttachment(frame_solid_buffer_copy, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, frame_solid_buffer_texture);
-		RenderServer.render_state.set_FrameBufferAttachment(frame_solid_buffer_copy, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_solid_buffer_depth_texture);
-		RenderServer.render_state.enable_FrameBuffer(frame_solid_buffer_copy);
+		RenderServer3D.render_state.set_FrameBufferAttachment(frame_solid_buffer_copy_color_depth, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, frame_solid_buffer_color_texture);
+		RenderServer3D.render_state.set_FrameBufferAttachment(frame_solid_buffer_copy_color_depth, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_solid_buffer_depth_texture);
+		RenderServer3D.render_state.enable_FrameBuffer(frame_solid_buffer_copy_color_depth);
 
-		this.frame_solid_buffer_texture.value = frame_solid_buffer_texture;
+		this.frame_solid_buffer_color_texture.value = frame_solid_buffer_color_texture;
 		this.frame_solid_buffer_depth_texture.value = frame_solid_buffer_depth_texture;
-		this.frame_solid_buffer_copy.value = frame_solid_buffer_copy;
+		this.frame_solid_buffer_copy_color_depth.value = frame_solid_buffer_copy_color_depth;
 
 		// transparent
 
-		const frame_transparent_buffer = RenderServer.render_state.create_FrameBuffer().expect();
+		const frame_transparent_buffer = RenderServer3D.render_state.create_FrameBuffer().expect();
 
+		const frame_transparent_buffer_color_texture = RenderServer3D.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+		RenderServer3D.render_state.alloc_Texture2D(frame_transparent_buffer_color_texture, 1, 1, 0, RenderStateTextureDataFormat.RGBA, undefined);
+		const frame_transparent_buffer_accum_texture = RenderServer3D.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.R32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+		RenderServer3D.render_state.alloc_Texture2D(frame_transparent_buffer_accum_texture, 1, 1, 0, RenderStateTextureDataFormat.Red, undefined);
 
-		const frame_transparent_buffer_color_texture = RenderServer.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-		RenderServer.render_state.alloc_Texture2D(frame_transparent_buffer_color_texture, 1, 1, 0, RenderStateTextureDataFormat.RGBA, undefined);
-		const frame_transparent_buffer_accum_texture = RenderServer.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.R32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-		RenderServer.render_state.alloc_Texture2D(frame_transparent_buffer_accum_texture, 1, 1, 0, RenderStateTextureDataFormat.Red, undefined);
-
-		RenderServer.render_state.set_FrameBufferAttachment(frame_transparent_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, frame_transparent_buffer_color_texture);
-		RenderServer.render_state.set_FrameBufferAttachment(frame_transparent_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Color1, frame_transparent_buffer_accum_texture);
-		RenderServer.render_state.set_FrameBufferAttachment(frame_transparent_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_solid_buffer_depth_texture);
-		RenderServer.render_state.enable_FrameBuffer(frame_transparent_buffer);
+		RenderServer3D.render_state.set_FrameBufferAttachment(frame_transparent_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, frame_transparent_buffer_color_texture);
+		RenderServer3D.render_state.set_FrameBufferAttachment(frame_transparent_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Color1, frame_transparent_buffer_accum_texture);
+		RenderServer3D.render_state.set_FrameBufferAttachment(frame_transparent_buffer, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_solid_buffer_depth_texture);
+		RenderServer3D.render_state.enable_FrameBuffer(frame_transparent_buffer);
 
 		this.frame_transparent_buffer_color_texture.value = frame_transparent_buffer_color_texture;
 		this.frame_transparent_buffer_accum_texture.value = frame_transparent_buffer_accum_texture;
 		this.frame_transparent_buffer.value = frame_transparent_buffer;
 
-		const frame_transparent_buffer_copy = RenderServer.render_state.create_FrameBuffer().expect();
+		const frame_transparent_buffer_copy = RenderServer3D.render_state.create_FrameBuffer().expect();
 
-		const frame_transparent_buffer_depth_texture = RenderServer.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.D32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-		RenderServer.render_state.alloc_Texture2D(frame_transparent_buffer_depth_texture, 1, 1, 0, RenderStateTextureDataFormat.Depth, undefined);
-		RenderServer.render_state.gl.texParameteri(
-			RenderServer.render_state.gl.TEXTURE_2D,
-			RenderServer.render_state.gl.TEXTURE_COMPARE_MODE,
-			RenderServer.render_state.gl.COMPARE_REF_TO_TEXTURE,
+		const frame_transparent_buffer_depth_texture = RenderServer3D.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.D32F, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+		RenderServer3D.render_state.alloc_Texture2D(frame_transparent_buffer_depth_texture, 1, 1, 0, RenderStateTextureDataFormat.Depth, undefined);
+		RenderServer3D.render_state.gl.texParameteri(
+			RenderServer3D.render_state.gl.TEXTURE_2D,
+			RenderServer3D.render_state.gl.TEXTURE_COMPARE_MODE,
+			RenderServer3D.render_state.gl.COMPARE_REF_TO_TEXTURE,
 		);
-		
-		RenderServer.render_state.set_FrameBufferAttachment(frame_transparent_buffer_copy, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_transparent_buffer_depth_texture);
-		RenderServer.render_state.enable_FrameBuffer(frame_transparent_buffer_copy);
+
+		RenderServer3D.render_state.set_FrameBufferAttachment(frame_transparent_buffer_copy, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, frame_transparent_buffer_depth_texture);
+		RenderServer3D.render_state.enable_FrameBuffer(frame_transparent_buffer_copy);
 
 		this.frame_transparent_buffer_depth_texture.value = frame_transparent_buffer_depth_texture;
 		this.frame_transparent_buffer_copy.value = frame_transparent_buffer_copy;
-
-		this.fps_array.fill(0);
 	}
 
-	public resize(width: number, height: number) {
-		const size = vec2(width, height);
+	public set_Size(size: Vector2) {
 		if (!this.base_size.equal(size)) {
-			this.base_size = size;
-			this.size.mults_Number(this.base_size, this.pixel_ratio);
+			this.base_size.copy(size);
 			this.size_changed = true;
 		}
 	}
 
-	public set_PixelRatio(pixel_ratio: number) {
-		if (this.pixel_ratio !== pixel_ratio) {
-			this.pixel_ratio = pixel_ratio;
-			this.size.mults_Number(this.base_size, this.pixel_ratio);
-			this.size_changed = true;
+	public set_Position(position: Vector2) {
+		if (!this.base_position.equal(position)) {
+			this.base_position.copy(position);
 		}
 	}
 
 	private set_RenderCapabilities(depth_test?: boolean, depth_write?: boolean, depth_func?: number, blend?: boolean) {
 		if (depth_test !== undefined) {
-			RenderServer.render_state.set_CapabilityProxy(RenderServer.render_state.gl.DEPTH_TEST, depth_test);
+			RenderServer3D.render_state.set_CapabilityProxy(RenderServer3D.render_state.gl.DEPTH_TEST, depth_test);
 		}
 		if (depth_write !== undefined) {
-			RenderServer.render_state.set_DepthMaskProxy(depth_write);
+			RenderServer3D.render_state.set_DepthMaskProxy(depth_write);
 		}
 		if (depth_func !== undefined) {
-			RenderServer.render_state.set_DepthFuncProxy(depth_func);
+			RenderServer3D.render_state.set_DepthFuncProxy(depth_func);
 		}
 		if (blend !== undefined) {
-			RenderServer.render_state.set_CapabilityProxy(RenderServer.render_state.gl.BLEND, blend);
+			RenderServer3D.render_state.set_CapabilityProxy(RenderServer3D.render_state.gl.BLEND, blend);
 		}
 	}
 
 	private set_CullFace(face: RenderServerMaterialCullFace) {
 		switch (face) {
 			case RenderServerMaterialCullFace.Back: {
-				RenderServer.render_state.set_FaceWindingProxy(RenderServer.render_state.gl.CCW);
-				RenderServer.render_state.set_CapabilityProxy(RenderServer.render_state.gl.CULL_FACE, true);
+				RenderServer3D.render_state.set_FaceWindingProxy(RenderServer3D.render_state.gl.CCW);
+				RenderServer3D.render_state.set_CapabilityProxy(RenderServer3D.render_state.gl.CULL_FACE, true);
 				return;
 			}
 			case RenderServerMaterialCullFace.Front: {
-				RenderServer.render_state.set_FaceWindingProxy(RenderServer.render_state.gl.CW);
-				RenderServer.render_state.set_CapabilityProxy(RenderServer.render_state.gl.CULL_FACE, true);
+				RenderServer3D.render_state.set_FaceWindingProxy(RenderServer3D.render_state.gl.CW);
+				RenderServer3D.render_state.set_CapabilityProxy(RenderServer3D.render_state.gl.CULL_FACE, true);
 				return;
 			}
 			case RenderServerMaterialCullFace.None: {
-				RenderServer.render_state.set_CapabilityProxy(RenderServer.render_state.gl.CULL_FACE, false);
+				RenderServer3D.render_state.set_CapabilityProxy(RenderServer3D.render_state.gl.CULL_FACE, false);
 				return;
 			}
 			default: {
@@ -431,17 +435,17 @@ export class Renderer3D {
 		}
 	}
 
-	private render_SolidQueue(render_queue: Renderer3DQueue, width: number, height: number, sky: boolean = true, blit_depth : boolean) {
-		this.set_RenderCapabilities(true, true, RenderServer.render_state.gl.LEQUAL, false);
-		RenderServer.render_state.set_ViewportProxy(0, 0, width, height);
-		RenderServer.render_state.set_ScissorProxy(0, 0, width, height);
-		RenderServer.render_state.set_CapabilityProxy(RenderServer.render_state.gl.CULL_FACE, true);
+	private render_SolidQueue(render_queue: Renderer3DQueue, width: number, height: number, sky: boolean = true, blit_depth: boolean) {
+		this.set_RenderCapabilities(true, true, RenderServer3D.render_state.gl.LEQUAL, false);
+		RenderServer3D.render_state.set_ViewportProxy(0, 0, width, height);
+		RenderServer3D.render_state.set_ScissorProxy(0, 0, width, height);
+		RenderServer3D.render_state.set_CapabilityProxy(RenderServer3D.render_state.gl.CULL_FACE, true);
 		if (!sky) {
-			RenderServer.render_state.set_ClearColorProxy(0, 0, 0, 0);
-			RenderServer.render_state.clear_FrameBuffer(this.frame_solid_buffer.expect, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth);
+			RenderServer3D.render_state.set_ClearColorProxy(0, 0, 0, 0);
+			RenderServer3D.render_state.clear_FrameBuffer(this.frame_solid_buffer.expect, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth);
 		}
 		else {
-			RenderServer.render_state.clear_FrameBuffer(this.frame_solid_buffer.expect, RenderStateFrameBufferPart.Depth);
+			RenderServer3D.render_state.clear_FrameBuffer(this.frame_solid_buffer.expect, RenderStateFrameBufferPart.Depth);
 		}
 
 		// render queue solid
@@ -461,35 +465,35 @@ export class Renderer3D {
 				material.commit_AllUniformOverride(RenderServerShaderPass.Shade);
 				this.draw_calls++;
 				if (indexed) {
-					RenderServer.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
+					RenderServer3D.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
 				}
 				else {
-					RenderServer.render_state.draw_Arrays(program, geometry, instance_count);
+					RenderServer3D.render_state.draw_Arrays(program, geometry, instance_count);
 				}
 			}
 		}
 
 		// draw sky
 		if (sky) {
-			RenderServer.render_state.set_DepthFuncProxy(RenderServer.render_state.gl.LEQUAL);
-			RenderServer.render_state.draw_Elements(skydome_program, quad_surface.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+			RenderServer3D.render_state.set_DepthFuncProxy(RenderServer3D.render_state.gl.LEQUAL);
+			RenderServer3D.render_state.draw_Elements(skydome_program, quad_surface.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
 		}
 
 		// blit
-		RenderServer.render_state.blit_FrameBuffer(this.frame_solid_buffer.expect, this.frame_solid_buffer_copy.expect, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth, RenderStateTextureMagFilter.Nearest, 0, 0, width, height);
+		RenderServer3D.render_state.blit_FrameBuffer(this.frame_solid_buffer.expect, this.frame_solid_buffer_copy_color_depth.expect, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth, RenderStateTextureMagFilter.Nearest, 0, 0, width, height);
 		if (blit_depth) {
-			RenderServer.render_state.blit_FrameBuffer(this.frame_solid_buffer.expect, this.frame_transparent_buffer_copy.expect, RenderStateFrameBufferPart.Depth, RenderStateTextureMagFilter.Nearest, 0, 0, width, height);
+			RenderServer3D.render_state.blit_FrameBuffer(this.frame_solid_buffer.expect, this.frame_transparent_buffer_copy.expect, RenderStateFrameBufferPart.Depth, RenderStateTextureMagFilter.Nearest, 0, 0, width, height);
 		}
 	}
 
 	private render_TransparentQueue(render_queue: Renderer3DQueue, width: number, height: number) {
-		this.set_RenderCapabilities(true, false, RenderServer.render_state.gl.LEQUAL, true);
-		RenderServer.render_state.gl.blendFuncSeparate(RenderServer.render_state.gl.ONE, RenderServer.render_state.gl.ONE, RenderServer.render_state.gl.ZERO, RenderServer.render_state.gl.ONE_MINUS_SRC_ALPHA);
-		RenderServer.render_state.set_ViewportProxy(0, 0, width, height);
-		RenderServer.render_state.set_ScissorProxy(0, 0, width, height);
-		RenderServer.render_state.set_CapabilityProxy(RenderServer.render_state.gl.CULL_FACE, true);
-		RenderServer.render_state.set_ClearColorProxy(0, 0, 0, 1);
-		RenderServer.render_state.clear_FrameBuffer(this.frame_transparent_buffer.expect, RenderStateFrameBufferPart.Color);
+		this.set_RenderCapabilities(true, false, RenderServer3D.render_state.gl.LEQUAL, true);
+		RenderServer3D.render_state.gl.blendFuncSeparate(RenderServer3D.render_state.gl.ONE, RenderServer3D.render_state.gl.ONE, RenderServer3D.render_state.gl.ZERO, RenderServer3D.render_state.gl.ONE_MINUS_SRC_ALPHA);
+		RenderServer3D.render_state.set_ViewportProxy(0, 0, width, height);
+		RenderServer3D.render_state.set_ScissorProxy(0, 0, width, height);
+		RenderServer3D.render_state.set_CapabilityProxy(RenderServer3D.render_state.gl.CULL_FACE, true);
+		RenderServer3D.render_state.set_ClearColorProxy(0, 0, 0, 1);
+		RenderServer3D.render_state.clear_FrameBuffer(this.frame_transparent_buffer.expect, RenderStateFrameBufferPart.Color);
 
 		// draw scene
 		// render queue transparent
@@ -509,77 +513,86 @@ export class Renderer3D {
 				material.commit_AllUniformOverride(RenderServerShaderPass.OiT);
 				this.draw_calls++;
 				if (indexed) {
-					RenderServer.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
+					RenderServer3D.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
 				}
 				else {
-					RenderServer.render_state.draw_Arrays(program, geometry, instance_count);
+					RenderServer3D.render_state.draw_Arrays(program, geometry, instance_count);
 				}
 			}
 		}
 	}
 
-	private render_OnScreen(texture: WebGL2RenderStateTexture | undefined, color_map: boolean, width: number, height: number, blend: boolean, oit: boolean) {
-		this.set_RenderCapabilities(false, false, RenderServer.render_state.gl.ALWAYS, blend);
+	private render_OnScreen(texture: WebGL2RenderStateTexture | undefined, color_map: boolean, x: number, y: number, width: number, height: number, blend: boolean, oit: boolean) {
+		RenderServer3D.render_state.use_FrameBuffer(undefined);
+		this.set_RenderCapabilities(false, false, RenderServer3D.render_state.gl.ALWAYS, blend);
 		this.set_CullFace(RenderServerMaterialCullFace.None);
-		RenderServer.render_state.set_ViewportProxy(0, 0, width, height);
-		RenderServer.render_state.set_ScissorProxy(0, 0, width, height);
+		const _x = x;
+		const _y = RenderServer3D.canvas.height - height - y;
+		RenderServer3D.render_state.set_ViewportProxy(_x, _y, width, height);
+		RenderServer3D.render_state.set_ScissorProxy(_x, _y, width, height);
 		if (blend) {
-			RenderServer.render_state.gl.blendFunc(RenderServer.render_state.gl.SRC_ALPHA, RenderServer.render_state.gl.ONE_MINUS_SRC_ALPHA);
+			RenderServer3D.render_state.gl.blendFunc(RenderServer3D.render_state.gl.ONE, RenderServer3D.render_state.gl.ONE_MINUS_SRC_ALPHA);
 		}
-		RenderServer.render_state.use_FrameBuffer(undefined);
-		if (!oit && texture !== undefined) {
-			RenderServer.render_state.active_Texture(texture, 0);
-			uniform_colormap_slot.value = color_map ? 1 : 0;
-			uniform_colormap_slot.commit();
-			RenderServer.render_state.draw_Elements(onscreen_program, quad_surface.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+		if (!oit) {
+			if (texture !== undefined) {
+				RenderServer3D.render_state.active_Texture(texture, 0);
+				uniform_colormap_slot.value = color_map ? 1 : 0;
+				uniform_colormap_slot.commit();
+				RenderServer3D.render_state.draw_Elements(onscreen_program, quad_surface.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+			}
 		}
 		else {
-			RenderServer.render_state.active_Texture(this.frame_transparent_buffer_color_texture.expect, 0);
-			RenderServer.render_state.active_Texture(this.frame_transparent_buffer_accum_texture.expect, 1);
-			RenderServer.render_state.draw_Elements(oit_program, quad_surface.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+			RenderServer3D.render_state.active_Texture(this.frame_transparent_buffer_color_texture.expect, 0);
+			RenderServer3D.render_state.active_Texture(this.frame_transparent_buffer_accum_texture.expect, 1);
+			uniform_oit_colormap_slot.value = color_map ? 1 : 0;
+			uniform_oit_colormap_slot.commit();
+			RenderServer3D.render_state.draw_Elements(oit_program, quad_surface.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
 		}
 	}
 
 	private resize_FrameBuffers(width: number, height: number) {
-		this.canvas.width = width; this.canvas.height = height;
+		console.log("resize");
 		// solid
-		RenderServer.render_state.alloc_RenderBuffer(this.frame_solid_buffer_depth.expect, width, height);
-		RenderServer.render_state.alloc_RenderBuffer(this.frame_solid_buffer_color.expect, width, height);
-		RenderServer.render_state.alloc_Texture2D(this.frame_solid_buffer_texture.expect, width, height, 0, RenderStateTextureDataFormat.RGBA, undefined);
-		RenderServer.render_state.alloc_Texture2D(this.frame_solid_buffer_depth_texture.expect, width, height, 0, RenderStateTextureDataFormat.Depth, undefined);
+		RenderServer3D.render_state.alloc_RenderBuffer(this.frame_solid_buffer_depth.expect, width, height);
+		RenderServer3D.render_state.alloc_RenderBuffer(this.frame_solid_buffer_color.expect, width, height);
+		RenderServer3D.render_state.alloc_Texture2D(this.frame_solid_buffer_color_texture.expect, width, height, 0, RenderStateTextureDataFormat.RGBA, undefined);
+		RenderServer3D.render_state.alloc_Texture2D(this.frame_solid_buffer_depth_texture.expect, width, height, 0, RenderStateTextureDataFormat.Depth, undefined);
 		// transparent
-		RenderServer.render_state.alloc_Texture2D(this.frame_transparent_buffer_depth_texture.expect, width, height, 0, RenderStateTextureDataFormat.Depth, undefined);
-		RenderServer.render_state.alloc_Texture2D(this.frame_transparent_buffer_color_texture.expect, width, height, 0, RenderStateTextureDataFormat.RGBA, undefined);
-		RenderServer.render_state.alloc_Texture2D(this.frame_transparent_buffer_accum_texture.expect, width, height, 0, RenderStateTextureDataFormat.Red, undefined);
-		// render server
-		RenderServer.resize(width, height);
+		RenderServer3D.render_state.alloc_Texture2D(this.frame_transparent_buffer_depth_texture.expect, width, height, 0, RenderStateTextureDataFormat.Depth, undefined);
+		RenderServer3D.render_state.alloc_Texture2D(this.frame_transparent_buffer_color_texture.expect, width, height, 0, RenderStateTextureDataFormat.RGBA, undefined);
+		RenderServer3D.render_state.alloc_Texture2D(this.frame_transparent_buffer_accum_texture.expect, width, height, 0, RenderStateTextureDataFormat.Red, undefined);
 	}
 
-	private fps_array: number[] = new Array(512);
-	private fps_pointer: number = 0;
 	private draw_calls: number = 0;
-	public render(world: World3D, viewport: Viewport, camera: Camera3D, once: boolean): void {
+
+	public render(world: World3D, viewport: Viewport, once: boolean): void {
+
 		this.draw_calls = 0;
 
 		const is_transparent = viewport.transparent;
 
 		const time = viewport.get_SceneTree()!.time;
-		const cam = camera.get_Camera();
+		const cam = viewport.get_Camera3D()!.get_Camera();
 		const cam_world = cam.global_transform;
 		const cam_projection = cam.projection;
 		const cam_is_orthogonal = cam.is_orthogonal;
 		const cam_frustum = cam.get_Frustum();
 		const cam_mask = cam.mask;
-		let { x: width, y: height } = this.size;
-		width = Math.max(Math.round(width), 1);
-		height = Math.max(Math.round(height), 1);
+		const pixel_ratio = RenderServer3D.pixel_ratio;
+		let { x: width, y: height } = this.base_size;
+		width = Math.max(Math.floor(width * pixel_ratio), 1);
+		height = Math.max(Math.floor(height * pixel_ratio), 1);
+		let { x, y } = this.base_position;
+		x = Math.max(Math.floor(x * pixel_ratio), 0);
+		y = Math.max(Math.floor(y * pixel_ratio), 0);
 
-		RenderServer.set_WorldUniforms(cam_world, cam_projection, cam_is_orthogonal, width, height, time);
+		RenderServer3D.set_WorldUniforms(cam_world, cam_projection, cam_is_orthogonal, width, height, time);
+		RenderServer3D.set_EnvironmentUniforms();
 
 		const world_3d = world.get_VisualWorld();
 		// RenderServer.use_LightsData(lights_data);
 		const sky_texture = world_3d.sky_texture.expect;
-		RenderServer.use_SkyTexture(sky_texture);
+		RenderServer3D.use_SkyTexture(sky_texture);
 
 		// resize
 		if (this.size_changed) {
@@ -601,16 +614,21 @@ export class Renderer3D {
 		//#region RenderQueue0
 
 		// draw scene queue 0
+
 		this.render_SolidQueue(this.render_queue_0, width, height, !is_transparent, true);
 
 		// on screen
-		this.render_OnScreen(this.frame_solid_buffer_texture.expect, viewport.color_map, width, height, false, false);
+		this.render_OnScreen(this.frame_solid_buffer_color_texture.expect, viewport.color_map, x, y, width, height, false, false);
 
 		if (this.render_queue_0.transparent_pointer >= 0) {
+
+			RenderServer3D.render_state.active_Texture(this.frame_transparent_buffer_depth_texture.expect, 0);
+			RenderServer3D.render_state.active_Texture(this.frame_solid_buffer_color_texture.expect, 1);
+
 			this.render_TransparentQueue(this.render_queue_0, width, height);
 
 			// on screen
-			this.render_OnScreen(undefined, true, width, height, true, true);
+			this.render_OnScreen(undefined, true, x, y, width, height, true, true);
 		}
 
 		//#endregion
@@ -619,31 +637,30 @@ export class Renderer3D {
 
 		// setup depth texture
 
-		RenderServer.render_state.active_Texture(this.frame_solid_buffer_depth_texture.expect, 0);
-
 		if (this.render_queue_1.solid_pointer >= 0 || this.render_queue_1.transparent_pointer >= 0) {
+
+			RenderServer3D.render_state.active_Texture(this.frame_solid_buffer_depth_texture.expect, 0);
+			RenderServer3D.render_state.active_Texture(this.frame_solid_buffer_color_texture.expect, 1);
+
 			// draw scene queue 1
 			this.render_SolidQueue(this.render_queue_1, width, height, false, false);
+
 			// on screen
-			this.render_OnScreen(this.frame_solid_buffer_texture.expect, false, width, height, true, false);
+			this.render_OnScreen(this.frame_solid_buffer_color_texture.expect, false, x, y, width, height, true, false);
 
 			if (this.render_queue_1.transparent_pointer >= 0) {
 
-				RenderServer.render_state.active_Texture(this.frame_transparent_buffer_depth_texture.expect, 0);
+				RenderServer3D.render_state.active_Texture(this.frame_transparent_buffer_depth_texture.expect, 0);
+				RenderServer3D.render_state.active_Texture(this.frame_solid_buffer_color_texture.expect, 1);
 
 				this.render_TransparentQueue(this.render_queue_1, width, height);
 
 				// on screen
-				this.render_OnScreen(undefined, false, width, height, true, true);
+				this.render_OnScreen(undefined, false, x, y, width, height, true, true);
 			}
 		}
 
 		//#endregion
-
-		if (is_transparent) {
-			this.ctx.clearRect(0, 0, width, height);
-		}
-		this.ctx.drawImage(RenderServer.canvas, 0, RenderServer.canvas.height - height, width, height, 0, 0, width, height);
 
 		if (once) {
 			this.render_queue_0.clear();
@@ -652,45 +669,24 @@ export class Renderer3D {
 
 		// debug
 		if (viewport.debug) {
-			const fps = 1 / viewport.get_SceneTree()!.delta;
-			this.fps_array[this.fps_pointer++] = fps;
-			this.fps_pointer %= this.fps_array.length;
-			const scale = 1;
-			this.ctx.beginPath();
-			this.ctx.moveTo(0, height);
-			let _fps = this.fps_array[this.fps_pointer];
-			this.ctx.lineTo(0, height - _fps * scale);
-			for (let i = 0; i < this.fps_array.length; i++) {
-				const id = (this.fps_pointer + i) % this.fps_array.length;
-				_fps = this.fps_array[id];
-				const _x = width * i / (this.fps_array.length - 1);
-				this.ctx.lineTo(_x, height - _fps * scale);
-			}
-			this.ctx.lineTo(width, height);
-			this.ctx.closePath();
-			this.ctx.fillStyle = 'rgba(255, 200, 0, 0.5)';
-			this.ctx.fill();
-
-			this.ctx.beginPath();
-			this.ctx.moveTo(0, height - 60 * scale);
-			this.ctx.lineTo(width, height - 60 * scale);
-			this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
-			this.ctx.lineWidth = 1;
-			this.ctx.stroke();
-
-			this.ctx.font = '20px consolas';
-			this.ctx.fillStyle = 'rgb(255 0 255)';
-			this.ctx.textBaseline = 'bottom';
-			this.ctx.fillText(`FrameDelta: ${viewport.get_SceneTree()!.delta.toFixed(4)} ms`, 10, height - 8);
-			this.ctx.fillText(`RenderObjs: ${rendered_objects_count} / ${total_objects_count}`, 10, height - 30);
-			this.ctx.fillText(`Solid Objs: ${this.render_queue_0.solid_pointer + 1 + this.render_queue_1.solid_pointer + 1}`, 10, height - 68);
-			this.ctx.fillText(`Trans Objs: ${this.render_queue_0.transparent_pointer + 1 + this.render_queue_1.transparent_pointer + 1}`, 10, height - 90);
-			this.ctx.fillText(`Draw Calls: ${this.draw_calls}`, 10, height - 112);
+			const delta = viewport.get_SceneTree()!.delta;
+			debug_text.innerHTML = `FPS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ${(1 / delta).toFixed(3)}<br>FrameDelta: ${delta.toFixed(4)} ms<br>RenderObjs: ${rendered_objects_count} / ${total_objects_count}<br>Solid Objs: ${this.render_queue_0.solid_pointer + 1 + this.render_queue_1.solid_pointer + 1}<br>Trans Objs: ${this.render_queue_0.transparent_pointer + 1 + this.render_queue_1.transparent_pointer + 1}<br>Draw Calls: ${this.draw_calls}<br>Tweens : ${viewport.get_SceneTree()!.tween_processing_count}`;
 		}
 	}
 
 	public dispose() {
 		this.render_queue_0.dispose();
 		this.render_queue_1.dispose();
+		this.frame_solid_buffer.clear();
+		this.frame_solid_buffer_depth.clear();
+		this.frame_solid_buffer_color.clear();
+		this.frame_solid_buffer_copy_color_depth.clear();
+		this.frame_solid_buffer_color_texture.clear();
+		this.frame_solid_buffer_depth_texture.clear();
+		this.frame_transparent_buffer.clear();
+		this.frame_transparent_buffer_copy.clear();
+		this.frame_transparent_buffer_depth_texture.clear();
+		this.frame_transparent_buffer_color_texture.clear();
+		this.frame_transparent_buffer_accum_texture.clear();
 	}
 }

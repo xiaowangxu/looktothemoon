@@ -1,7 +1,7 @@
 .__editor_viewports_container__ {
     --EditorViewportGap: 3px;
     position: fixed;
-    inset: var(--EditorViewportGap);
+    inset: 0;
 }
 
 .__editor_canvas_panel__ {
@@ -10,8 +10,8 @@
     /* outline: 2px solid red;
     outline-offset: -2px; */
     /* --CanvasBG: rgb(60, 60, 60); */
-    --CanvasBG: rgb(240, 240, 240);
-    background: var(--CanvasBG);
-    border-radius: 10px;
-    margin: var(--EditorViewportGap);
+    /* --CanvasBG: rgb(240, 240, 240); */
+    /* background: var(--CanvasBG); */
+    /* border-radius: 10px; */
+    /* margin: var(--EditorViewportGap); */
 }

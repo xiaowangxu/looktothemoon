@@ -9,11 +9,18 @@
 </head>
 
 <body>
-  <div class="__editor_viewports_container__">
-    <div id="viewport" class="__editor_canvas_panel__" style="left: 0%; top: 0%; right: 0%; bottom: 0%;">
+  <div style="position: fixed; inset: 0;">
+    <canvas id="render-server-canvas" style="width: 100%; height: 100%;"></canvas>
+    <div id="render-server-debug"
+      style="position: absolute; left: 10px; bottom: 10px; font-size: 10px; color: rgba(255, 255, 255, 0.295); pointer-events: none; font-family: consolas;">
     </div>
-    <!-- <div id="viewport0" class="__editor_canvas_panel__" style="left: 50%; top: 0%; right: 0%; bottom: 50%; resize: both;">
-    </div> -->
+  </div>
+  <div class="__editor_viewports_container__">
+    <div id="viewport-0" class="__editor_canvas_panel__" style="left: 0%; top: 0%; right: 50%; bottom: 0%;">
+    </div>
+    <div id="viewport-1" class="__editor_canvas_panel__" style="left: 50%; top: 0%; right: 0%; bottom: 0%; ">
+      <!-- resize: both; -->
+    </div>
     <!-- <div id="viewport1" class="__editor_canvas_panel__" style="left: 0; top: 50%; right: 50%; bottom: 0;">
     </div>
     <div id="viewport2" class="__editor_canvas_panel__" style="left: 50%; top: 50%; right: 0; bottom: 0;">

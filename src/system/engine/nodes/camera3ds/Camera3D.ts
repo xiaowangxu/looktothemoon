@@ -55,7 +55,7 @@ export class Camera3D extends Node3D {
         super._notification(what);
     }
 
-    public update_ViewportSize(size: Vector2) {
+    public update_ViewportSize(size: Readonly<Vector2>) {
         throw new Error('abstract method');
     }
 }

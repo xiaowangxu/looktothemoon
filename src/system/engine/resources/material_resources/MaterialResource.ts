@@ -1,7 +1,7 @@
 import { Ref } from "@/system/utils/RefCounted";
 import { Resource } from "../Resource";
-import { RenderServer } from "../../render_server/RenderServer";
-import type { RenderServerMaterial, RenderServerMaterialUniforms } from "../../render_server/RenderServerMaterial";
+import { RenderServer3D } from "../../render_server/RenderServer";
+import type { RenderServerMaterial, RenderServerMaterialCullFace, RenderServerMaterialUniforms } from "../../render_server/RenderServerMaterial";
 import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
 import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
@@ -20,9 +20,11 @@ export abstract class MaterialResource extends Resource {
 
 	public get uniforms(): MaterialReadOnlyUniforms { return MaterialResource.empty_uniforms; }
 
+	public set cull_face(face: RenderServerMaterialCullFace) { this.material.cull_face = face; }
+
 	constructor() {
 		super();
-		this.material_ref.value = RenderServer.create_Material();
+		this.material_ref.value = RenderServer3D.create_Material();
 	}
 
 	public set_UniformOverride(uniform: string, value: WebGL2RenderStateTexture | number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined): void {
