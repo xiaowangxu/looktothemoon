@@ -387,7 +387,7 @@ export class RenderDeviceMatrix4AttributeBuffer<T extends RenderState<T>, Buffer
         if (!is_count) {
             for (let j = 0; j < mat4_count; j++) {
                 const mat4 = data[j];
-                float32array.set(mat4.typed_transposed_array_f32, j * 16);
+                float32array.set(mat4.transposed_array, j * 16);
             }
         }
         this._data = float32array;
@@ -405,12 +405,12 @@ export class RenderDeviceMatrix4AttributeBuffer<T extends RenderState<T>, Buffer
         if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceMatrix4AttributeBuffer> update_Data: data overflow');
         const float32array = new Float32Array(this._data.buffer, offset_bytes, element_count);
         if (single) {
-            float32array.set(data.typed_transposed_array_f32, 0);
+            float32array.set(data.transposed_array, 0);
         }
         else {
             for (let j = 0; j < mat4_count; j++) {
                 const mat4 = data[j];
-                float32array.set(mat4.typed_transposed_array_f32, j * 16);
+                float32array.set(mat4.transposed_array, j * 16);
             }
         }
         if (commit)

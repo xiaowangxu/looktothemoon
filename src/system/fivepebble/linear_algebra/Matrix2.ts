@@ -20,13 +20,9 @@ export class Matrix2 implements MatrixLike<Matrix2> {
     get array(): number[] {
         return [this.n11, this.n12, this.n21, this.n22];
     }
-    get typed_array_f64(): Float64Array { return new Float64Array(this.array); }
-    get typed_array_f32(): Float32Array { return new Float32Array(this.array); }
     get transposed_array(): number[] {
         return [this.n11, this.n21, this.n12, this.n22];
     }
-    get typed_transposed_array_f64(): Float64Array { return new Float64Array(this.transposed_array); }
-    get typed_transposed_array_f32(): Float32Array { return new Float32Array(this.transposed_array); }
 
     constructor(n11: number, n12: number, n21: number, n22: number) {
         this.n11 = n11; this.n12 = n12;

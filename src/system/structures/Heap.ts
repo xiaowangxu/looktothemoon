@@ -3,7 +3,7 @@ export class Heap<T> implements Iterable<T> {
     private readonly comparator: (a: T, b: T) => number;
 
     public get length(): number { return this.heap_arr.length; };
-    public get empty(): boolean { return this.length === 0; }
+    public get is_empty(): boolean { return this.length === 0; }
 
     *[Symbol.iterator](): Iterator<T> {
         while (this.length) {

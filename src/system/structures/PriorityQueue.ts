@@ -4,10 +4,10 @@ export class PriorityQueue<T> {
     private readonly heap: Heap<T>;
 
     public get length() { return this.heap.length; }
-    public get empty() { return this.heap.empty; }
+    public get is_empty() { return this.heap.is_empty; }
 
     *[Symbol.iterator]() {
-        for(const item of this.heap) {
+        for (const item of this.heap) {
             yield item;
         }
     }

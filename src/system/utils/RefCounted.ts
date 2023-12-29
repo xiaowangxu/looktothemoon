@@ -1,22 +1,7 @@
 export interface RefCounted {
-    ref_count(): number;
+    get ref_count(): number;
     ref(): void;
     unref(): void;
-}
-
-export abstract class RefCountedBase implements RefCounted {
-    private _ref_count: number = 0;
-    public ref_count() { return this._ref_count; }
-    public ref() { this._ref_count++; }
-    public unref() {
-        if (this._ref_count === 0) return;
-        this._ref_count--;
-        if (this._ref_count === 0) {
-            this.dispose();
-        }
-    }
-
-    public abstract dispose(): void;
 }
 
 export type ToRefed<T> = T extends RefCounted ? Ref<T> : T;
@@ -68,11 +53,12 @@ export class RefArray<T extends RefCounted> {
     }
 
     public get length() { return this.refs.length; }
+    public get is_empty() { return this.length <= 0; }
 
     public get(index: number, as_ref: true): Ref<T> | undefined
     public get(index: number, as_ref: false): T | undefined
     public get(index: number, as_ref: true | false = true): Ref<T> | T | undefined {
-        const ref : Ref<T> | undefined = this.refs[index];
+        const ref: Ref<T> | undefined = this.refs[index];
         if (as_ref) return ref;
         if (ref === undefined) return undefined;
         else {
@@ -150,7 +136,7 @@ export class WeakRef<T extends RefCounted> {
 
     public get value() {
         if (this.ref !== undefined) {
-            if (this.ref.ref_count() <= 0) {
+            if (this.ref.ref_count <= 0) {
                 this.ref = undefined;
             }
         }
@@ -159,7 +145,7 @@ export class WeakRef<T extends RefCounted> {
     public set value(item: T | undefined) {
         this.ref = item;
         if (this.ref !== undefined) {
-            if (this.ref.ref_count() <= 0) {
+            if (this.ref.ref_count <= 0) {
                 this.ref = undefined;
             }
         }

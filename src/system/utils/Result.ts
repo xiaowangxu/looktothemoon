@@ -6,8 +6,6 @@ export class Result<T, Err> {
 
     public get succeed() { return this.ok; }
     public get failed() { return !this.ok; }
-    public get value() { return this.item!; }
-    public get error() { return this.err!; }
 
     constructor(ok: boolean, item: T | undefined, err: Err | undefined) {
         this.ok = ok;
@@ -24,20 +22,22 @@ export class Result<T, Err> {
     }
 
     public unwrap() {
-        if (this.ok) return this.value;
-        else {
-            console.error(this.error);
-            throw new Error(`failed to unwrap from Result.Error\nbecause ${this.error.toString()}`);
-        }
+        if (this.ok) return this.item!;
+        else return undefined;
     }
 
     public unwrap_Error() {
-        if (!this.ok) return this.error;
-        else throw new Error('failed to unwrap error from Result.Ok');
+        if (!this.ok) return this.err!;
+        else return undefined;
     }
 
     public expect() {
         if (this.ok) return this.item!;
-        throw this.error!;
+        throw this.err!;
+    }
+
+    public expect_Error() {
+        if (!this.ok) return this.err!;
+        throw new Error('<Result> expect_Error: fail to unwrap error');
     }
 }

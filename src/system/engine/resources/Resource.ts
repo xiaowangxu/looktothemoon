@@ -7,7 +7,7 @@ export abstract class ResourceBase extends ClassBase implements RefCounted {
     public static readonly class_name: string = "ResourceBase";
 
     private _ref_count: number = 0;
-    public ref_count(): number { return this._ref_count; }
+    public get ref_count(): number { return this._ref_count; }
     public ref(): void { this._ref_count++; }
     public unref(): void {
         this._ref_count--;

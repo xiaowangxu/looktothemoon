@@ -17,8 +17,6 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
 
     get dimension(): number { return 4; }
     get array(): number[] { return [this.x, this.y, this.z, this.w]; }
-    get typed_array_f64(): Float64Array { return new Float64Array(this.array); }
-    get typed_array_f32(): Float32Array { return new Float32Array(this.array); }
     get length(): number { return Math.sqrt(this.squared_length); }
     get squared_length(): number { return this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w; }
     get sum(): number { return this.x + this.y + this.z + this.w; }

@@ -10,8 +10,6 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
 
     get dimension(): number { return 3; }
     get array(): number[] { return [this.x, this.y, this.z]; }
-    get typed_array_f64(): Float64Array { return new Float64Array(this.array); }
-    get typed_array_f32(): Float32Array { return new Float32Array(this.array); }
     get length(): number { return Math.sqrt(this.squared_length); }
     get squared_length(): number { return this.x * this.x + this.y * this.y + this.z * this.z; }
     get sum(): number { return this.x + this.y + this.z; }

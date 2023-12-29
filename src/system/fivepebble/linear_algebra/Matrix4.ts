@@ -44,8 +44,6 @@ export class Matrix4 implements MatrixLike<Matrix4> {
     get array(): number[] {
         return [this.n11, this.n12, this.n13, this.n14, this.n21, this.n22, this.n23, this.n24, this.n31, this.n32, this.n33, this.n34, this.n41, this.n42, this.n43, this.n44,];
     }
-    get typed_array_f64(): Float64Array { return new Float64Array(this.array); }
-    get typed_array_f32(): Float32Array { return new Float32Array(this.array); }
     get transposed_array(): number[] {
         const arr = new Array(16);
         arr[0] = this.n11;
@@ -66,8 +64,6 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         arr[15] = this.n44;
         return arr;
     }
-    get typed_transposed_array_f64(): Float64Array { return new Float64Array(this.transposed_array); }
-    get typed_transposed_array_f32(): Float32Array { return new Float32Array(this.transposed_array); }
 
     public get basis() {
         return new Matrix3(

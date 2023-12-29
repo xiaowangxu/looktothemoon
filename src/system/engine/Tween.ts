@@ -221,18 +221,18 @@ export class TweenLoop extends TweenBase {
 
 // interpolate tweens
 
-export enum TransitionType {
+export enum TweenTransitionType {
     Linear, Sine, Quad, Cubic, Quart, Quint, Expo, Back, Elastic, Circle, Bounce
 }
 
-export enum EasingType {
+export enum TweenEasingType {
     In, Out, InOut
 }
 
 export class InterpolateTween extends TweenBase {
     private readonly duration: number;
-    private readonly transition: TransitionType;
-    private readonly easing: EasingType;
+    private readonly transition: TweenTransitionType;
+    private readonly easing: TweenEasingType;
     public reversed: boolean = false;
 
     private _current: number = 0;
@@ -240,7 +240,7 @@ export class InterpolateTween extends TweenBase {
     private _value: number = 0;
     public get value() { return this.reversed ? (1 - this._value) : this._value; }
 
-    constructor(duration: number, transition: TransitionType, easing: EasingType, reversed: boolean = false) {
+    constructor(duration: number, transition: TweenTransitionType, easing: TweenEasingType, reversed: boolean = false) {
         super();
         this.duration = Math.max(0, duration);
         this.transition = transition;
@@ -277,52 +277,52 @@ export class InterpolateTween extends TweenBase {
         }
     }
 
-    static calculate_TransitionEasing(value: number, transition: TransitionType, easing: EasingType): number {
+    static calculate_TransitionEasing(value: number, transition: TweenTransitionType, easing: TweenEasingType): number {
         const x = clamp(value, 0, 1);
         switch (transition) {
-            case TransitionType.Linear: {
+            case TweenTransitionType.Linear: {
                 return x;
             }
-            case TransitionType.Sine: {
+            case TweenTransitionType.Sine: {
                 switch (easing) {
-                    case EasingType.In: return 1 - Math.cos((x * Math.PI) / 2);
-                    case EasingType.Out: return Math.sin((x * Math.PI) / 2);
-                    case EasingType.InOut: return -(Math.cos(Math.PI * x) - 1) / 2;
+                    case TweenEasingType.In: return 1 - Math.cos((x * Math.PI) / 2);
+                    case TweenEasingType.Out: return Math.sin((x * Math.PI) / 2);
+                    case TweenEasingType.InOut: return -(Math.cos(Math.PI * x) - 1) / 2;
                 }
             }
-            case TransitionType.Quad: {
+            case TweenTransitionType.Quad: {
                 switch (easing) {
-                    case EasingType.In: return x * x
-                    case EasingType.Out: return 1 - (1 - x) * (1 - x);
-                    case EasingType.InOut: return (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+                    case TweenEasingType.In: return x * x
+                    case TweenEasingType.Out: return 1 - (1 - x) * (1 - x);
+                    case TweenEasingType.InOut: return (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
                 }
             }
-            case TransitionType.Cubic: {
+            case TweenTransitionType.Cubic: {
                 switch (easing) {
-                    case EasingType.In: return x * x * x;
-                    case EasingType.Out: return 1 - Math.pow(1 - x, 3);
-                    case EasingType.InOut: return (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+                    case TweenEasingType.In: return x * x * x;
+                    case TweenEasingType.Out: return 1 - Math.pow(1 - x, 3);
+                    case TweenEasingType.InOut: return (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
                 }
             }
-            case TransitionType.Quart: {
+            case TweenTransitionType.Quart: {
                 switch (easing) {
-                    case EasingType.In: return x * x * x * x;
-                    case EasingType.Out: return 1 - Math.pow(1 - x, 4);
-                    case EasingType.InOut: return (x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2);
+                    case TweenEasingType.In: return x * x * x * x;
+                    case TweenEasingType.Out: return 1 - Math.pow(1 - x, 4);
+                    case TweenEasingType.InOut: return (x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2);
                 }
             }
-            case TransitionType.Quint: {
+            case TweenTransitionType.Quint: {
                 switch (easing) {
-                    case EasingType.In: return x * x * x * x * x;
-                    case EasingType.Out: return 1 - Math.pow(1 - x, 5);
-                    case EasingType.InOut: return (x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2);
+                    case TweenEasingType.In: return x * x * x * x * x;
+                    case TweenEasingType.Out: return 1 - Math.pow(1 - x, 5);
+                    case TweenEasingType.InOut: return (x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2);
                 }
             }
-            case TransitionType.Expo: {
+            case TweenTransitionType.Expo: {
                 switch (easing) {
-                    case EasingType.In: return (x === 0 ? 0 : Math.pow(2, 10 * x - 10));
-                    case EasingType.Out: return (x === 1 ? 1 : 1 - Math.pow(2, -10 * x));
-                    case EasingType.InOut: return (x === 0
+                    case TweenEasingType.In: return (x === 0 ? 0 : Math.pow(2, 10 * x - 10));
+                    case TweenEasingType.Out: return (x === 1 ? 1 : 1 - Math.pow(2, -10 * x));
+                    case TweenEasingType.InOut: return (x === 0
                         ? 0
                         : x === 1
                             ? 1
@@ -330,42 +330,42 @@ export class InterpolateTween extends TweenBase {
                                 : (2 - Math.pow(2, -20 * x + 10)) / 2);
                 }
             }
-            case TransitionType.Circle: {
+            case TweenTransitionType.Circle: {
                 switch (easing) {
-                    case EasingType.In: return 1 - Math.sqrt(1 - Math.pow(x, 2));
-                    case EasingType.Out: return Math.sqrt(1 - Math.pow(x - 1, 2));
-                    case EasingType.InOut: return (x < 0.5
+                    case TweenEasingType.In: return 1 - Math.sqrt(1 - Math.pow(x, 2));
+                    case TweenEasingType.Out: return Math.sqrt(1 - Math.pow(x - 1, 2));
+                    case TweenEasingType.InOut: return (x < 0.5
                         ? (1 - Math.sqrt(1 - Math.pow(2 * x, 2))) / 2
                         : (Math.sqrt(1 - Math.pow(-2 * x + 2, 2)) + 1) / 2);
                 }
             }
-            case TransitionType.Back: {
+            case TweenTransitionType.Back: {
                 const c1 = 1.70158;
                 const c2 = c1 * 1.525;
                 const c3 = c1 + 1;
                 switch (easing) {
-                    case EasingType.In: return c3 * x * x * x - c1 * x * x;
-                    case EasingType.Out: return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
-                    case EasingType.InOut: return (x < 0.5
+                    case TweenEasingType.In: return c3 * x * x * x - c1 * x * x;
+                    case TweenEasingType.Out: return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+                    case TweenEasingType.InOut: return (x < 0.5
                         ? (Math.pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2)) / 2
                         : (Math.pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2);
                 }
             }
-            case TransitionType.Elastic: {
+            case TweenTransitionType.Elastic: {
                 const c4 = (2 * Math.PI) / 3;
                 const c5 = (2 * Math.PI) / 4.5;
                 switch (easing) {
-                    case EasingType.In: return (x === 0
+                    case TweenEasingType.In: return (x === 0
                         ? 0
                         : x === 1
                             ? 1
                             : -Math.pow(2, 10 * x - 10) * Math.sin((x * 10 - 10.75) * c4));
-                    case EasingType.Out: return (x === 0
+                    case TweenEasingType.Out: return (x === 0
                         ? 0
                         : x === 1
                             ? 1
                             : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1);
-                    case EasingType.InOut: return (x === 0
+                    case TweenEasingType.InOut: return (x === 0
                         ? 0
                         : x === 1
                             ? 1
@@ -374,10 +374,10 @@ export class InterpolateTween extends TweenBase {
                                 : (Math.pow(2, -20 * x + 10) * Math.sin((20 * x - 11.125) * c5)) / 2 + 1);
                 }
             }
-            case TransitionType.Bounce: {
+            case TweenTransitionType.Bounce: {
                 switch (easing) {
-                    case EasingType.In: return 1 - InterpolateTween.calculate_TransitionEasing(x, TransitionType.Bounce, EasingType.Out);
-                    case EasingType.Out: {
+                    case TweenEasingType.In: return 1 - InterpolateTween.calculate_TransitionEasing(x, TweenTransitionType.Bounce, TweenEasingType.Out);
+                    case TweenEasingType.Out: {
                         const n1 = 7.5625;
                         const d1 = 2.75;
                         let _x = x;
@@ -391,9 +391,9 @@ export class InterpolateTween extends TweenBase {
                             return n1 * (_x -= 2.625 / d1) * _x + 0.984375;
                         }
                     }
-                    case EasingType.InOut: return (x < 0.5
-                        ? (1 - InterpolateTween.calculate_TransitionEasing(1 - 2 * x, TransitionType.Bounce, EasingType.Out)) / 2
-                        : (1 + InterpolateTween.calculate_TransitionEasing(2 * x - 1, TransitionType.Bounce, EasingType.Out)) / 2);
+                    case TweenEasingType.InOut: return (x < 0.5
+                        ? (1 - InterpolateTween.calculate_TransitionEasing(1 - 2 * x, TweenTransitionType.Bounce, TweenEasingType.Out)) / 2
+                        : (1 + InterpolateTween.calculate_TransitionEasing(2 * x - 1, TweenTransitionType.Bounce, TweenEasingType.Out)) / 2);
                 }
             }
         }
@@ -403,7 +403,7 @@ export class InterpolateTween extends TweenBase {
 export class MethodTween extends InterpolateTween {
     private readonly method: (value: number) => void;
 
-    constructor(method: (value: number) => void, duration: number, transition: TransitionType, easing: EasingType, reversed: boolean = false) {
+    constructor(method: (value: number) => void, duration: number, transition: TweenTransitionType, easing: TweenEasingType, reversed: boolean = false) {
         super(duration, transition, easing, reversed);
         this.method = method;
     }
@@ -430,7 +430,7 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
     public readonly target: Val;
     private readonly lerp: (a: any, b: any, v: number) => any;
 
-    constructor(object: Obj, key: Key, target: Val, duration: number, transition: TransitionType, easing: EasingType, reversed: boolean = false, lerp: ((a: Val, b: Val, v: number) => Val) | undefined = undefined) {
+    constructor(object: Obj, key: Key, target: Val, duration: number, transition: TweenTransitionType, easing: TweenEasingType, reversed: boolean = false, lerp: ((a: Val, b: Val, v: number) => Val) | undefined = undefined) {
         super(duration, transition, easing, reversed);
         this.object = object;
         this.key = key;
@@ -502,15 +502,15 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
 export class PropertyMethodTween<T> extends TweenBase {
     private _property_tween: PropertyTween<PropertyMethodTween<T>, 'tween_value', T>;
     private _initial_value: T;
-    
+
     public get tween_value(): T { return this._initial_value; };
     public set tween_value(value: T) {
-        this.method(value);    
+        this.method(value);
     }
 
     private readonly method: (value: T) => void;
 
-    constructor(method: (value: T) => void, start: T, end: T, duration: number, transition: TransitionType, easing: EasingType, reversed: boolean = false, lerp: ((a: T, b: T, v: number) => T) | undefined = undefined) {
+    constructor(method: (value: T) => void, start: T, end: T, duration: number, transition: TweenTransitionType, easing: TweenEasingType, reversed: boolean = false, lerp: ((a: T, b: T, v: number) => T) | undefined = undefined) {
         super();
         this.method = method;
         this._initial_value = start;

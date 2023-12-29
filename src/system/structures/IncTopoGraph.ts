@@ -123,10 +123,10 @@ export class IncTopoGraph<T> {
             if (changed_forward.failed) {
                 prec.children.delete(succ);
                 succ.parents.delete(prec);
-                return changed_forward.error;
+                return changed_forward.expect_Error();
             }
             else {
-                const nodes = changed_forward.value;
+                const nodes = changed_forward.expect();
                 const backward_nodes = this.dfs_Backward(prec, lower_bound, visited);
                 IncTopoGraph.reorder(nodes, backward_nodes);
             }

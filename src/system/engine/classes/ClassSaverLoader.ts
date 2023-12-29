@@ -261,7 +261,7 @@ export class ClassSaver {
 
     public save(obj: ClassBase, option?: ClassSaverDumpOption, space?: string | number): Result<string, Error> {
         const error = this.dump(obj, option);
-        if (error.failed) return Result.Error(error.error);
+        if (error.failed) return Result.Error(error.expect_Error());
         return this.get_JsonString(space);
     }
 
@@ -327,8 +327,8 @@ export class ClassLoader {
         const refid_object = this.parse_Value<ClassRef>(refid);
         const external_path = this.parse_Value<ClassExternalPath>(external);
         const result = new ClassLoader(this.resource_instance_cache, this.class_db, this.value_db).fetch(external_path.path);
-        if (result.failed) throw result.error;
-        this.instance_map.set(refid_object.refid, { external: true, instance: result.value, property: {} });
+        if (result.failed) throw result.expect_Error();
+        this.instance_map.set(refid_object.refid, { external: true, instance: result.expect(), property: {} });
         return refid_object;
     }
 
@@ -413,8 +413,8 @@ export class ClassLoader {
         const cache = this.resource_instance_cache.get<Resource>(path);
         if (cache !== undefined) return Result.Ok((cache as unknown) as T);
         const file = load_ResFile_from_Path(path);
-        if (file.failed) return Result.Error(file.error);
-        return this.parse_Json<T>(file.value, path);
+        if (file.failed) return Result.Error(file.expect_Error());
+        return this.parse_Json<T>(file.expect(), path);
     }
 
     public load<T extends ClassBase>(json: string | LTTMClassDescriptor) {

@@ -1,5 +1,7 @@
+const NowClass = typeof performance === 'undefined' ? Date : performance;
+
 function now() {
-    return (typeof performance === 'undefined' ? Date : performance).now(); // see #10732
+    return NowClass.now();
 }
 
 export class Clock {

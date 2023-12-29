@@ -3,8 +3,6 @@ import type { MatrixLike } from "./MatrixLike";
 export interface VectorLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
     get dimension(): number;
     get array(): number[];
-    get typed_array_f64(): Float64Array;
-    get typed_array_f32(): Float32Array;
 
     get length(): number;
     get squared_length(): number;
@@ -50,7 +48,7 @@ export interface VectorLike<Vec extends VectorLike<Vec, Mat>, Mat extends Matrix
 
     normalize(): Vec;
     normalizes(a: Vec): Vec;
-    
+
     negate(): Vec;
     negates(a: Vec): Vec;
 

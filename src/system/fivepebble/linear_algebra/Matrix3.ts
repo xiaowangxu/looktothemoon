@@ -31,13 +31,9 @@ export class Matrix3 implements MatrixLike<Matrix3> {
     get array(): number[] {
         return [this.n11, this.n12, this.n13, this.n21, this.n22, this.n23, this.n31, this.n32, this.n33];
     }
-    get typed_array_f64(): Float64Array { return new Float64Array(this.array); }
-    get typed_array_f32(): Float32Array { return new Float32Array(this.array); }
     get transposed_array(): number[] {
         return [this.n11, this.n21, this.n31, this.n12, this.n22, this.n32, this.n13, this.n23, this.n33];
     }
-    get typed_transposed_array_f64(): Float64Array { return new Float64Array(this.transposed_array); }
-    get typed_transposed_array_f32(): Float32Array { return new Float32Array(this.transposed_array); }
 
     public get basis() {
         return new Matrix2(

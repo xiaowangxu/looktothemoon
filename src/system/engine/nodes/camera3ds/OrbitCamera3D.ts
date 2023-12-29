@@ -6,7 +6,7 @@ import { MouseButtonInputEvent, MouseButton } from "../../inputs/events/mouse_ev
 import { MouseMotionInputEvent } from "../../inputs/events/mouse_events/MouseMotionInputEvent";
 import { MouseEnterLeaveInputEvent } from "../../inputs/events/mouse_events/MouseEnterLeaveInputEvent";
 import { type InputEvent } from "../../inputs/InputEvent";
-import { EasingType, MethodTween, PropertyTween, TransitionType, TweenBase, TweenParallel } from '@/system/engine/Tween';
+import { TweenEasingType, MethodTween, PropertyTween, TweenTransitionType, TweenBase, TweenParallel } from '@/system/engine/Tween';
 import { Vector3, vec3 } from '@/system/fivepebble/linear_algebra/Vector3';
 import { Vector2, vec2 } from '@/system/fivepebble/linear_algebra/Vector2';
 import { euler } from '@/system/fivepebble/linear_algebra/Euler';
@@ -225,8 +225,8 @@ export class OrbitCamera3D extends Node3D {
                     }
                 }
                 this.camera.zoom = zoom;
-            }, this.zoom_duration, TransitionType.Quad, EasingType.Out) :
-            new PropertyTween(this.camera, 'zoom', new_target, this.zoom_duration, TransitionType.Quad, EasingType.Out);
+            }, this.zoom_duration, TweenTransitionType.Quad, TweenEasingType.Out) :
+            new PropertyTween(this.camera, 'zoom', new_target, this.zoom_duration, TweenTransitionType.Quad, TweenEasingType.Out);
 
         this.zoom_tween = zoom_tween;
         this.get_SceneTree()?.start_Tween(this.zoom_tween);
@@ -241,7 +241,7 @@ export class OrbitCamera3D extends Node3D {
 
         this.target_zoom = zoom;
         if (animate) {
-            const zoom_tween = new PropertyTween(this.camera, 'zoom', this.target_zoom, this.zoom_duration, TransitionType.Quad, EasingType.Out);
+            const zoom_tween = new PropertyTween(this.camera, 'zoom', this.target_zoom, this.zoom_duration, TweenTransitionType.Quad, TweenEasingType.Out);
             this.zoom_tween = zoom_tween;
             this.get_SceneTree()?.start_Tween(this.zoom_tween);
         }
@@ -294,8 +294,8 @@ export class OrbitCamera3D extends Node3D {
                 this.get_SceneTree()?.stop_Tween(this.rotate_tween);
             }
             this.rotate_tween = new TweenParallel([
-                new PropertyTween(this, 'direction', direction, this.transform_duration, TransitionType.Quad, EasingType.Out),
-                new PropertyTween(this, 'yaw', yaw, this.transform_duration, TransitionType.Quad, EasingType.Out),
+                new PropertyTween(this, 'direction', direction, this.transform_duration, TweenTransitionType.Quad, TweenEasingType.Out),
+                new PropertyTween(this, 'yaw', yaw, this.transform_duration, TweenTransitionType.Quad, TweenEasingType.Out),
             ]);
             this.get_SceneTree()?.start_Tween(this.rotate_tween);
         }
@@ -313,7 +313,7 @@ export class OrbitCamera3D extends Node3D {
             if (this.fov_tween !== undefined) {
                 this.get_SceneTree()?.stop_Tween(this.fov_tween);
             }
-            this.fov_tween = new PropertyTween(this.camera, 'fov', fov, this.transform_duration, TransitionType.Quad, EasingType.Out);
+            this.fov_tween = new PropertyTween(this.camera, 'fov', fov, this.transform_duration, TweenTransitionType.Quad, TweenEasingType.Out);
             this.get_SceneTree()?.start_Tween(this.fov_tween);
         }
     }
@@ -330,7 +330,7 @@ export class OrbitCamera3D extends Node3D {
             if (this.position_tween !== undefined) {
                 this.get_SceneTree()?.stop_Tween(this.position_tween);
             }
-            this.position_tween = new PropertyTween(this, 'local_position', pos, this.transform_duration, TransitionType.Quad, EasingType.Out);
+            this.position_tween = new PropertyTween(this, 'local_position', pos, this.transform_duration, TweenTransitionType.Quad, TweenEasingType.Out);
             this.get_SceneTree()?.start_Tween(this.position_tween);
         }
     }
