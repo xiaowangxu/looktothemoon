@@ -1,17 +1,18 @@
 import { InputEvent } from "../InputEvent";
 
-
 export class ActionInputEvent extends InputEvent {
     public static readonly class_name: string = "ActionInputEvent";
 
-    public readonly action: string;
-    public readonly pressed: boolean;
-    public readonly echo: boolean;
+    static #empty_action = '';
 
-    constructor(action: string, pressed: boolean, echo: boolean) {
-        super();
+    public action: string = ActionInputEvent.#empty_action;
+    public pressed: boolean = false;
+    public echo: boolean = false;
+
+    public set_Action(action: string, pressed: boolean, echo: boolean) {
         this.action = action;
         this.pressed = pressed;
         this.echo = echo;
+        return this;
     }
 }

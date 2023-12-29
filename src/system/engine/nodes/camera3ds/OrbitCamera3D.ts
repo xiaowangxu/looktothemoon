@@ -2,7 +2,7 @@ import { Node3D } from "../node3ds/Node3D";
 import { InterpolateCamera3D } from '@/system/engine/nodes/camera3ds/InterpolateCamera3D';
 import { Tau, clamp } from '@/system/fivepebble/Scalar';
 import { ActionInputEvent } from "../../inputs/events/ActionInputEvent";
-import { MouseButtonInputEvent, MouseButton } from "../../inputs/events/mouse_events/MouseButton";
+import { MouseButtonInputEvent, MouseButton } from "../../inputs/events/mouse_events/MouseButtonInputEvent";
 import { MouseMotionInputEvent } from "../../inputs/events/mouse_events/MouseMotionInputEvent";
 import { MouseEnterLeaveInputEvent } from "../../inputs/events/mouse_events/MouseEnterLeaveInputEvent";
 import { type InputEvent } from "../../inputs/InputEvent";
@@ -11,12 +11,13 @@ import { Vector3, vec3 } from '@/system/fivepebble/linear_algebra/Vector3';
 import { Vector2, vec2 } from '@/system/fivepebble/linear_algebra/Vector2';
 import { euler } from '@/system/fivepebble/linear_algebra/Euler';
 import { Plane3 } from '@/system/fivepebble/geometries/Plane3';
+import type { Config } from "../../ConfiguredObject";
 
 export class OrbitCamera3D extends Node3D {
     public static readonly class_name: string = "OrbitCamera3D";
 
-    private readonly camera_arm: Node3D = new Node3D();
-    private readonly camera: InterpolateCamera3D = new InterpolateCamera3D();
+    private readonly camera_arm: Node3D = new Node3D(this.config);
+    private readonly camera: InterpolateCamera3D = new InterpolateCamera3D(this.config);
 
     private _focus_distance: number = 1;
     public get focus_distance() { return this._focus_distance; }
@@ -68,8 +69,8 @@ export class OrbitCamera3D extends Node3D {
     public get visual_mask() { return this.camera.visual_mask; }
     public set visual_mask(mask: number) { this.camera.visual_mask = mask; }
 
-    constructor() {
-        super();
+    constructor(config: Config) {
+        super(config);
         this.add_Child(this.camera_arm);
         this.camera_arm.add_Child(this.camera);
         this.camera.fov = this.perspective_fov;

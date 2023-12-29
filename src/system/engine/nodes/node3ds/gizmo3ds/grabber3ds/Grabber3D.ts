@@ -2,16 +2,16 @@ import { SignalEmitter } from "@/system/utils/SignalEmitter";
 import type { Viewport, CursorStyle } from "../../../Node";
 import { FixSizeNode3D } from "../FixSizeNode3D";
 import { MaterialResource, type MaterialReadOnlyUniforms } from "@/system/engine/resources/material_resources/MaterialResource";
-import { RenderServerDevice, RenderServer3D, RenderServerPlainColorTexture } from "@/system/engine/render_server/RenderServer";
+import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
 import { RenderServerGeometry } from "@/system/engine/render_server/RenderServerGeometry";
 import type { UniformInitSet } from "@/system/engine/render_server/RenderServerShader";
-import { PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { Epsilon } from "@/system/fivepebble/Scalar";
 import { RenderStateUniformType, RenderStateShaderType } from "@/system/sliverofstraw/RenderState";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { vec4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { Color } from "@/system/fivepebble/graphics/Color";
+import type { Config } from "@/system/engine/ConfiguredObject";
 
 export class GrabberElement<T> extends FixSizeNode3D {
     // signals
@@ -172,17 +172,18 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
         }
     }
 
-    constructor() {
-        super();
+    constructor(config: Config) {
+        super(config);
         this.update_Material();
     }
 
     public update_Material() {
-        const shader = RenderServer3D.create_Shader();
-        const vertex_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Vertex, GrabberPlainColorMaterialResource.#vertex_shader).expect();
-        const fragment_prez_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_prez_shader).expect();
-        const fragment_shade_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_shade_shader).expect();
-        const fragment_oit_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_oit_shader).expect();
+        const render_server_3d = this.config.render_server_3d;
+        const shader = render_server_3d.create_Shader();
+        const vertex_shader = render_server_3d.render_state.create_Shader(RenderStateShaderType.Vertex, GrabberPlainColorMaterialResource.#vertex_shader).expect();
+        const fragment_prez_shader = render_server_3d.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_prez_shader).expect();
+        const fragment_shade_shader = render_server_3d.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_shade_shader).expect();
+        const fragment_oit_shader = render_server_3d.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_oit_shader).expect();
         shader.set_Shaders(
             vertex_shader,
             GrabberPlainColorMaterialResource.#vertex_uniforms,

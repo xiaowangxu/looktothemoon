@@ -1,5 +1,3 @@
-import type { Viewport } from "../../../nodes/Node";
-import { Vector2 } from "../../../../fivepebble/linear_algebra/Vector2";
 import { InputEvent } from "../../InputEvent";
 import { MouseInputEvent } from "./MouseInputEvent";
 
@@ -10,21 +8,17 @@ export enum MouseButton {
 export class MouseButtonInputEvent extends MouseInputEvent {
     public static readonly class_name: string = "MouseButtonInputEvent";
 
-    public readonly button: MouseButton;
-    public readonly pressed: boolean;
-    public readonly click: boolean;
-    public readonly double_click: boolean;
+    public button: MouseButton = MouseButton.None;
+    public pressed: boolean = false;
+    public click: boolean = false;
+    public double_click: boolean = false;
 
-    constructor(
-        button: MouseButton, pressed: boolean, click: boolean, double_click: boolean,
-        viewport: Viewport | undefined, position: Vector2, normalized_position: Vector2,
-        ctrl: boolean, shift: boolean, alt: boolean, meta: boolean
-    ) {
-        super(viewport, position, normalized_position, ctrl, shift, alt, meta);
+    public set_Button(button: MouseButton, pressed: boolean, click: boolean, double_click: boolean) {
         this.button = button;
         this.pressed = pressed;
         this.click = click;
         this.double_click = double_click;
+        return this;
     }
 
     public match(event: InputEvent, with_pressed: boolean): boolean {

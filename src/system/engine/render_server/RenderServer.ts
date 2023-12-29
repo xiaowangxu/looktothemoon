@@ -457,7 +457,3 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         this.plain_color_textures.transparent.clear();
     }
 }
-
-export const RenderServer3D = new RenderServerDevice(document.getElementById('render-server-canvas') as HTMLCanvasElement);
-
-RenderServer3D.set_Size(0, 0);

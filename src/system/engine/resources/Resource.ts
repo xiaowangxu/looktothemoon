@@ -1,9 +1,10 @@
 import type { RefCounted } from '../../utils/RefCounted';
 import { SignalEmitter } from '../../utils/SignalEmitter';
+import { ConfiguredObject, type Config } from '../ConfiguredObject';
 import { ClassBase } from '../classes/ClassBase';
 
-export abstract class Resource extends ClassBase implements RefCounted {
-    public static readonly class_name: string = "Resource";
+export abstract class ResourceBase extends ClassBase implements RefCounted {
+    public static readonly class_name: string = "ResourceBase";
 
     private _ref_count: number = 0;
     public ref_count(): number { return this._ref_count; }
@@ -23,22 +24,26 @@ export abstract class Resource extends ClassBase implements RefCounted {
     public path: string | undefined = undefined;
     public get is_external() { return this.path !== undefined; }
 
+    protected abstract dispose(): void;
+}
+
+export abstract class Resource extends ResourceBase {
+    public static readonly class_name: string = "Resource";
+
     public signal_changed: SignalEmitter<() => void> = new SignalEmitter();
 
     protected trigger_Changed() {
         this.signal_changed.trigger();
     }
-
-    protected abstract dispose(): void;
 }
 
-export class ResourceInstanceCache {
+export class ResourceInstanceCache extends ConfiguredObject {
     private readonly instance_map: Map<string, Resource> = new Map();
 
     public get paths() { return [...this.instance_map.keys()]; }
 
-    constructor() {
-
+    constructor(config: Config) {
+        super(config);
     }
 
     public add(path: string, instance: Resource) {
@@ -53,5 +58,3 @@ export class ResourceInstanceCache {
         this.instance_map.clear();
     }
 }
-
-export const DefaultResourceInstanceCache = new ResourceInstanceCache();

@@ -1,5 +1,4 @@
 import { GeometryResource } from "./GeometryResource";
-import { RenderServer3D } from "../../render_server/RenderServer";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceVector3AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
 import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
@@ -42,15 +41,11 @@ export class BoxGeometryResource extends PrimitiveGeometryResource {
 		}
 	}
 
-	constructor() {
-		super();
-	}
-
 	public build() {
 		const half_w = this.width / 2;
 		const half_h = this.height / 2;
 		const half_d = this.depth / 2;
-		const position_buffer = new RenderDeviceVector3AttributeBuffer(RenderServer3D, RenderStateBufferUsage.StaticDraw,
+		const position_buffer = new RenderDeviceVector3AttributeBuffer(this.render_server_3d, RenderStateBufferUsage.StaticDraw,
 			[
 				// top
 				vec3(half_w, half_h, half_d),
@@ -83,7 +78,7 @@ export class BoxGeometryResource extends PrimitiveGeometryResource {
 				vec3(-half_w, -half_h, half_d),
 				vec3(-half_w, half_h, half_d),
 			]);
-		const normal_buffer = new RenderDeviceVector3AttributeBuffer(RenderServer3D, RenderStateBufferUsage.StaticDraw,
+		const normal_buffer = new RenderDeviceVector3AttributeBuffer(this.render_server_3d, RenderStateBufferUsage.StaticDraw,
 			[
 				// top
 				vec3(0, 1, 0),
@@ -116,7 +111,7 @@ export class BoxGeometryResource extends PrimitiveGeometryResource {
 				vec3(-1, 0, 0),
 				vec3(-1, 0, 0),
 			]);
-		const uv_buffer = new RenderDeviceVector2AttributeBuffer(RenderServer3D, RenderStateBufferUsage.StaticDraw,
+		const uv_buffer = new RenderDeviceVector2AttributeBuffer(this.render_server_3d, RenderStateBufferUsage.StaticDraw,
 			[
 				// top
 				vec2(1, 0),
@@ -149,7 +144,7 @@ export class BoxGeometryResource extends PrimitiveGeometryResource {
 				vec2(1, 0),
 				vec2(1, 1),
 			]);
-		const index_buffer = new RenderDeviceIndexAttributeBuffer(RenderServer3D, RenderStateBufferUsage.StaticDraw,
+		const index_buffer = new RenderDeviceIndexAttributeBuffer(this.render_server_3d, RenderStateBufferUsage.StaticDraw,
 			[
 				// top
 				0, 1, 2, 2, 1, 3,
@@ -235,10 +230,6 @@ export class TorusGeometryResource extends PrimitiveGeometryResource {
 		}
 	}
 
-	constructor() {
-		super();
-	}
-
 	public build() {
 		const radius = this.radius;
 		const tube_radius = this.tube_radius;
@@ -248,9 +239,9 @@ export class TorusGeometryResource extends PrimitiveGeometryResource {
 
 		const vertex_count = (segments + 1) * (tube_segments + 1);
 
-		const position_buffer = new RenderDeviceVector3AttributeBuffer(RenderServer3D, RenderStateBufferUsage.StaticDraw, vertex_count);
-		const normal_buffer = new RenderDeviceVector3AttributeBuffer(RenderServer3D, RenderStateBufferUsage.StaticDraw, vertex_count);
-		const uv_buffer = new RenderDeviceVector2AttributeBuffer(RenderServer3D, RenderStateBufferUsage.StaticDraw, vertex_count);
+		const position_buffer = new RenderDeviceVector3AttributeBuffer(this.render_server_3d, RenderStateBufferUsage.StaticDraw, vertex_count);
+		const normal_buffer = new RenderDeviceVector3AttributeBuffer(this.render_server_3d, RenderStateBufferUsage.StaticDraw, vertex_count);
+		const uv_buffer = new RenderDeviceVector2AttributeBuffer(this.render_server_3d, RenderStateBufferUsage.StaticDraw, vertex_count);
 
 		for (let j = 0; j <= segments; j++) {
 			for (let i = 0; i <= tube_segments; i++) {
@@ -280,7 +271,7 @@ export class TorusGeometryResource extends PrimitiveGeometryResource {
 
 		const index_count = segments * tube_segments * 6;
 
-		const index_buffer = new RenderDeviceIndexAttributeBuffer(RenderServer3D, RenderStateBufferUsage.StaticDraw, index_count);
+		const index_buffer = new RenderDeviceIndexAttributeBuffer(this.render_server_3d, RenderStateBufferUsage.StaticDraw, index_count);
 
 		// generate indices
 		for (let j = 1; j <= segments; j++) {
@@ -365,10 +356,6 @@ export class CylinderGeometryResource extends PrimitiveGeometryResource {
 		}
 	}
 
-	constructor() {
-		super();
-	}
-
 	public build() {
 		const segments = this.segments;
 		const top_radius = this.top_radius;
@@ -386,9 +373,9 @@ export class CylinderGeometryResource extends PrimitiveGeometryResource {
 
 		const vertex_count = top_side_count + bottom_side_count + top_cap_count + bottom_cap_count + top_pole_count + bottom_pole_count;
 
-		const position_buffer = new RenderDeviceVector3AttributeBuffer(RenderServer3D, RenderStateBufferUsage.StaticDraw, vertex_count);
-		const normal_buffer = new RenderDeviceVector3AttributeBuffer(RenderServer3D, RenderStateBufferUsage.StaticDraw, vertex_count);
-		const uv_buffer = new RenderDeviceVector2AttributeBuffer(RenderServer3D, RenderStateBufferUsage.StaticDraw, vertex_count);
+		const position_buffer = new RenderDeviceVector3AttributeBuffer(this.render_server_3d, RenderStateBufferUsage.StaticDraw, vertex_count);
+		const normal_buffer = new RenderDeviceVector3AttributeBuffer(this.render_server_3d, RenderStateBufferUsage.StaticDraw, vertex_count);
+		const uv_buffer = new RenderDeviceVector2AttributeBuffer(this.render_server_3d, RenderStateBufferUsage.StaticDraw, vertex_count);
 
 		// position / normal
 
@@ -503,7 +490,7 @@ export class CylinderGeometryResource extends PrimitiveGeometryResource {
 		const bottom_cap_indx_count = segments * 3;
 		const index_count = side_index_count + top_cap_indx_count + bottom_cap_indx_count;
 
-		const index_buffer = new RenderDeviceIndexAttributeBuffer(RenderServer3D, RenderStateBufferUsage.StaticDraw, index_count);
+		const index_buffer = new RenderDeviceIndexAttributeBuffer(this.render_server_3d, RenderStateBufferUsage.StaticDraw, index_count);
 
 		const index_side_buffer = new Uint32Array(index_buffer.data.buffer, 0, side_index_count);
 		const index_top_cap_buffer = new Uint32Array(index_buffer.data.buffer, side_index_count * Uint32Array.BYTES_PER_ELEMENT, top_cap_indx_count);

@@ -17,10 +17,6 @@ export class OrthographicCamera3D extends Camera3D {
         }
     }
 
-    constructor() {
-        super();
-    }
-
     protected on_VisualMaskChanged(): void {
         this.camera_orth.mask = this.visual_mask;
     }

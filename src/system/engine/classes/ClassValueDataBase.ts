@@ -5,7 +5,7 @@ import { Node3D } from "../nodes/node3ds/Node3D";
 import { ClassBase } from "./ClassBase";
 import { ActionInputEvent } from "../inputs/events/ActionInputEvent";
 import { KeyInputEvent } from "../inputs/events/KeyInputEvent";
-import { MouseButtonInputEvent } from "../inputs/events/mouse_events/MouseButton";
+import { MouseButtonInputEvent } from "../inputs/events/mouse_events/MouseButtonInputEvent";
 import { MouseMotionInputEvent } from "../inputs/events/mouse_events/MouseMotionInputEvent";
 import { MouseEnterLeaveInputEvent } from "../inputs/events/mouse_events/MouseEnterLeaveInputEvent";
 import { MouseInputEvent } from "../inputs/events/mouse_events/MouseInputEvent";
@@ -27,6 +27,7 @@ import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { OrthographicCamera3D } from "../nodes/camera3ds/OrthographicCamera3D";
+import type { Config } from "../ConfiguredObject";
 
 export class ClassDataBase {
     private readonly db: Map<string, typeof ClassBase> = new Map();
@@ -35,17 +36,14 @@ export class ClassDataBase {
         return this.db.has(name);
     }
 
-    public register_Class(cls: new (...args: any[]) => ClassBase) {
+    public register_Class(cls: new (config: Config) => ClassBase) {
         this.db.set((cls as typeof ClassBase).class_name, cls as typeof ClassBase);
     }
 
-    public instantiate<T extends ClassBase>(class_name: string, data: Object | undefined = undefined): T {
+    public instantiate<T extends ClassBase>(config: Config, class_name: string): T {
         if (!this.has_Class(class_name)) throw new Error(`class ${class_name} does not exist`);
         const cons = this.db.get(class_name)!;
-        if (cons.use_custom_instantiater) {
-            return cons.instantiate(data ?? {}) as T;
-        }
-        return (new cons()) as T;
+        return (new cons(config)) as T;
     }
 }
 
@@ -60,19 +58,19 @@ ClassDB.register_Class(Viewport);
 ClassDB.register_Class(MeshInstance3D);
 ClassDB.register_Class(OrthographicCamera3D);
 
-ClassDB.register_Class(PackedSceneResource);
+// ClassDB.register_Class(PackedSceneResource);
 
-ClassDB.register_Class(InputEvent);
-ClassDB.register_Class(InputEventFromViewport);
-ClassDB.register_Class(ComposeInputEvent);
-ClassDB.register_Class(MouseButtonInputEvent);
-ClassDB.register_Class(MouseInputEvent);
-ClassDB.register_Class(MouseEnterLeaveInputEvent);
-ClassDB.register_Class(MouseMotionInputEvent);
-ClassDB.register_Class(KeyInputEvent);
-ClassDB.register_Class(ActionInputEvent);
-ClassDB.register_Class(ShortCut);
-ClassDB.register_Class(ShortCutActionMap);
+// ClassDB.register_Class(InputEvent);
+// ClassDB.register_Class(InputEventFromViewport);
+// ClassDB.register_Class(ComposeInputEvent);
+// ClassDB.register_Class(MouseButtonInputEvent);
+// ClassDB.register_Class(MouseInputEvent);
+// ClassDB.register_Class(MouseEnterLeaveInputEvent);
+// ClassDB.register_Class(MouseMotionInputEvent);
+// ClassDB.register_Class(KeyInputEvent);
+// ClassDB.register_Class(ActionInputEvent);
+// ClassDB.register_Class(ShortCut);
+// ClassDB.register_Class(ShortCutActionMap);
 
 // GeometryResource
 

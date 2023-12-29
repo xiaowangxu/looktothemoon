@@ -1,6 +1,7 @@
 import { NodeNotification, Node, ViewportUpdateMode } from "./Node";
 import { Viewport } from "./Node";
 import { Vector2 } from "../../fivepebble/linear_algebra/Vector2";
+import type { Config } from "../ConfiguredObject";
 
 export class ViewportDomContainer extends Node {
     public static readonly class_name: string = "ViewportDomContainer";
@@ -52,8 +53,8 @@ export class ViewportDomContainer extends Node {
         }
     }
 
-    constructor() {
-        super();
+    constructor(config: Config) {
+        super(config);
         this.signal_child_added.connect(this.on_ChildAdded.bind(this));
         this.signal_child_removing.connect(this.on_ChildRemoving.bind(this));
     }

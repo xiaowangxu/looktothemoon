@@ -15,7 +15,7 @@ import { ViewportMouseInputEventManager } from "../inputs/managers/ViewportMouse
 import { ViewportActionInputEventManager } from "../inputs/managers/ViewportActionInputEventManager";
 import { ViewportInputManager } from "../inputs/managers/ViewportInputManager";
 import { ClassBase } from "../classes/ClassBase";
-import { RenderServer3D } from "../render_server/RenderServer";
+import type { Config } from "../ConfiguredObject";
 
 export enum NodeNotification {
     ExitingTree,
@@ -72,8 +72,8 @@ export class Node extends ClassBase {
     public readonly signal_process: SignalEmitter<(delta: number) => void> = new SignalEmitter();
     public readonly signal_physics_process: SignalEmitter<(delta: number) => void> = new SignalEmitter();
 
-    constructor() {
-        super();
+    constructor(config: Config) {
+        super(config);
     };
 
     // scene tree
@@ -435,11 +435,11 @@ export class Viewport extends Node {
     private set physics_picking_area(area: PickingArea3D | undefined) {
         if (this._physics_picking_area !== area) {
             if (this._physics_picking_area !== undefined) {
-                this._physics_picking_area.on_MouseExited(new MouseInputEvent(this, this.input_manager.mouse_position, this.input_manager.mouse_position_normalized, false, false, false, false));
+                this._physics_picking_area.on_MouseExited(new MouseInputEvent(this.config).set_Viewport(this).set_Compose(false, false, false, false).set_Position(this.input_manager.mouse_position, this.input_manager.mouse_position_normalized));
             }
             this._physics_picking_area = area;
             if (this._physics_picking_area !== undefined) {
-                this._physics_picking_area.on_MouseEntered(new MouseInputEvent(this, this.input_manager.mouse_position, this.input_manager.mouse_position_normalized, false, false, false, false));
+                this._physics_picking_area.on_MouseEntered(new MouseInputEvent(this.config).set_Viewport(this).set_Compose(false, false, false, false).set_Position(this.input_manager.mouse_position, this.input_manager.mouse_position_normalized));
             }
         }
     }
@@ -458,9 +458,9 @@ export class Viewport extends Node {
     public readonly signal_after_render: SignalEmitter<() => void> = new SignalEmitter();
     public readonly signal_resized: SignalEmitter<(size: Vector2) => void> = new SignalEmitter();
 
-    constructor() {
-        super();
-        this.renderer_3d = new Renderer3D(document.createElement('div'));
+    constructor(config: Config) {
+        super(config);
+        this.renderer_3d = new Renderer3D(config, document.createElement('div'));
         this.canvas.style.width = '100%';
         this.canvas.style.height = '100%';
         this.renderer_3d.set_Size(this._size);
@@ -468,15 +468,12 @@ export class Viewport extends Node {
         this.mouse_event_manager = new ViewportMouseInputEventManager(this);
         this.key_event_manager = new ViewportKeyInputEventManager(this);
         this.action_event_manager = new ViewportActionInputEventManager(this);
-        this.mouse_event_manager.signal_mouse_event.connect(this._on_InputEvent);
-        this.key_event_manager.signal_key_event.connect(this._on_InputEvent);
         this.input_manager = new ViewportInputManager(this);
     }
 
     private mouse_event_canceled: boolean = false;
 
-    private _on_InputEvent = this.on_InputEvent.bind(this);
-    private on_InputEvent(event: InputEvent) {
+    public on_InputEvent(event: InputEvent) {
         const action_input_event = this.action_event_manager.parse_ActionInputEvent(event);
         if (action_input_event !== undefined) {
             if (this.redirect_input_event) {
@@ -651,7 +648,7 @@ export class Viewport extends Node {
         this.is_position_changed = false;
         if (this.update_mode === ViewportUpdateMode.Never) return;
         if (this.update_mode === ViewportUpdateMode.OnceNever) {
-            if (!RenderServer3D.flushed && !resized && !moved) return;
+            if (!this.config.render_server_3d.flushed && !resized && !moved) return;
             else this.update_mode = ViewportUpdateMode.Once;
         }
         const once = this.update_mode === ViewportUpdateMode.Once;

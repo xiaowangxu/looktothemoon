@@ -4,6 +4,9 @@ import { KeyInputEvent } from "../events/KeyInputEvent";
 
 export class ViewportKeyInputEventManager {
     private readonly viewport: Viewport;
+
+    private get config() { return this.viewport.config; }
+
     private get is_viewport_active() { return this.viewport.get_Input().is_mouse_inside; }
 
     private key_map: Map<string, boolean> = new Map();
@@ -25,6 +28,11 @@ export class ViewportKeyInputEventManager {
         window.addEventListener('keyup', this._on_KeyUp);
     }
 
+    private trigger_KeyEvent(event: KeyInputEvent) {
+        this.viewport.on_InputEvent(event);
+        this.signal_key_event.trigger(event);
+    }
+
     private update_Key(event: KeyboardEvent, pressed: boolean) {
         event.preventDefault();
         const key = event.key;
@@ -41,11 +49,11 @@ export class ViewportKeyInputEventManager {
     private on_KeyDown(event: KeyboardEvent) {
         if (this.is_viewport_active) {
             this.update_Key(event, true);
-            this.signal_key_event.trigger(
-                new KeyInputEvent(
-                    event.key, event.code, true, event.repeat,
-                    this.viewport, event.ctrlKey, event.shiftKey, event.altKey, event.metaKey
-                )
+            this.trigger_KeyEvent(
+                new KeyInputEvent(this.config)
+                    .set_Viewport(this.viewport)
+                    .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
+                    .set_Key(event.key, event.code, true, event.repeat)
             );
         }
     }
@@ -54,11 +62,11 @@ export class ViewportKeyInputEventManager {
     private on_KeyUp(event: KeyboardEvent) {
         if (this.is_viewport_active) {
             this.update_Key(event, false);
-            this.signal_key_event.trigger(
-                new KeyInputEvent(
-                    event.key, event.code, false, event.repeat,
-                    this.viewport, event.ctrlKey, event.shiftKey, event.altKey, event.metaKey
-                )
+            this.trigger_KeyEvent(
+                new KeyInputEvent(this.config)
+                    .set_Viewport(this.viewport)
+                    .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
+                    .set_Key(event.key, event.code, false, event.repeat)
             );
         }
     }

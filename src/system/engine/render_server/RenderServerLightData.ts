@@ -15,37 +15,37 @@ export enum RenderServerLightType {
 }
 
 export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState> {
-    private static LightParamCount = 19;
-
     private readonly lights_texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
-
+    
     public get lights_texture() { return this.lights_texture_ref.expect; }
-
+    
     public readonly texture_width;
     public readonly texture_height;
     public readonly max_light_count;
-
+    
     // lights data
-    private readonly/*              */lights_data: Uint32Array;
-    private readonly/*           */ light_type_id: Uint32Array;
-    private readonly/*             */ light_pos_x: Float32Array;
-    private readonly/*             */ light_pos_y: Float32Array;
-    private readonly/*             */ light_pos_z: Float32Array;
-    private readonly/*             */ light_dir_x: Float32Array;
-    private readonly/*             */ light_dir_y: Float32Array;
-    private readonly/*             */ light_dir_z: Float32Array;
-    private readonly/*           */ light_color_r: Float32Array;
-    private readonly/*           */ light_color_g: Float32Array;
-    private readonly/*           */ light_color_b: Float32Array;
-    private readonly/*       */ light_attenuation: Float32Array;
-    private readonly/*              */ light_mask: Uint32Array;
-    private readonly/*           */ light_param_0: Float32Array;
-    private readonly/*           */ light_param_1: Float32Array;
-    private readonly/*           */ light_param_2: Float32Array;
-    private readonly/*           */ light_param_3: Float32Array;
-    private readonly/*       */ light_shadow_bias: Float32Array;
-    private readonly/**/ light_shadow_normal_bias: Float32Array;
-    private readonly/*    */ light_shadow_opacity: Float32Array;
+    private static LightParamCount = 20;
+    private readonly /*             */ lights_data: Uint32Array;
+    private readonly /*           */ light_type_id: Uint32Array;
+    private readonly /*             */ light_pos_x: Float32Array;
+    private readonly /*             */ light_pos_y: Float32Array;
+    private readonly /*             */ light_pos_z: Float32Array;
+    private readonly /*             */ light_dir_x: Float32Array;
+    private readonly /*             */ light_dir_y: Float32Array;
+    private readonly /*             */ light_dir_z: Float32Array;
+    private readonly /*           */ light_color_r: Float32Array;
+    private readonly /*           */ light_color_g: Float32Array;
+    private readonly /*           */ light_color_b: Float32Array;
+    private readonly /*       */ light_attenuation: Float32Array;
+    private readonly /*              */ light_mask: Uint32Array;
+    private readonly /*           */ light_param_0: Float32Array;
+    private readonly /*           */ light_param_1: Float32Array;
+    private readonly /*           */ light_param_2: Float32Array;
+    private readonly /*           */ light_param_3: Float32Array;
+    private readonly /*       */ light_shadow_bias: Float32Array;
+    private readonly /**/ light_shadow_normal_bias: Float32Array;
+    private readonly /*    */ light_shadow_opacity: Float32Array;
+    private readonly /*       */ light_data_stride: Uint32Array;
 
     constructor(render_server: RenderServerDevice, width: number, height: number) {
         super(render_server);
@@ -78,12 +78,13 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
         /*       */this.light_shadow_bias = new Float32Array(this.lights_data.buffer, light_layer_bytes * 16, max_light_count);
         /**/this.light_shadow_normal_bias = new Float32Array(this.lights_data.buffer, light_layer_bytes * 17, max_light_count);
         /*    */this.light_shadow_opacity = new Float32Array(this.lights_data.buffer, light_layer_bytes * 18, max_light_count);
+        /*       */this.light_data_stride = new Uint32Array(this.lights_data.buffer, light_layer_bytes * 19, max_light_count);
         this.light_attenuation.fill(2);
         this.light_mask.fill(0xffffffff);
     }
 
     static #index_array: [number, number] = [0, 0];
-    
+
     private get_Index(id: number): [number, number] {
         RenderServerLightsData.#index_array[0] = id % this.texture_width;
         RenderServerLightsData.#index_array[1] = Math.floor(id / this.texture_width);
@@ -95,7 +96,8 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
         position?: Vector3, direction?: Vector3, color?: Color, attenuation?: number,
         mask?: number,
         param_0?: number, param_1?: number, param_2?: number, param_3?: number,
-        shadow_bias?: number, shadow_normal_bias?: number, shadow_opacity?: number
+        shadow_bias?: number, shadow_normal_bias?: number, shadow_opacity?: number,
+        data_stride?: number,
     ) {
         if (id < 0 || id >= this.max_light_count) return;
         if (type !== undefined || lid !== undefined) {
@@ -119,15 +121,16 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
             this.light_color_g[id] = color.y;
             this.light_color_b[id] = color.z;
         }
-        if (attenuation !== undefined)/*           */this.light_attenuation[id] = attenuation;
-        if (mask !== undefined)/*                  */this.light_mask[id] = mask & 0xffffffff;
-        if (param_0 !== undefined)/*               */this.light_param_0[id] = param_0;
-        if (param_1 !== undefined)/*               */this.light_param_1[id] = param_1;
-        if (param_2 !== undefined)/*               */this.light_param_2[id] = param_2;
-        if (param_3 !== undefined)/*               */this.light_param_3[id] = param_3;
-        if (shadow_bias !== undefined)/*           */this.light_shadow_bias[id] = shadow_bias;
-        if (shadow_normal_bias !== undefined)/*    */this.light_shadow_normal_bias[id] = shadow_normal_bias;
-        if (shadow_opacity !== undefined)/*        */this.light_shadow_opacity[id] = shadow_opacity;
+        if (attenuation !== undefined)/*          */ this.light_attenuation[id] = attenuation;
+        if (mask !== undefined)/*                 */ this.light_mask[id] = mask & 0xffffffff;
+        if (param_0 !== undefined)/*              */ this.light_param_0[id] = param_0;
+        if (param_1 !== undefined)/*              */ this.light_param_1[id] = param_1;
+        if (param_2 !== undefined)/*              */ this.light_param_2[id] = param_2;
+        if (param_3 !== undefined)/*              */ this.light_param_3[id] = param_3;
+        if (shadow_bias !== undefined)/*          */ this.light_shadow_bias[id] = shadow_bias;
+        if (shadow_normal_bias !== undefined)/*   */ this.light_shadow_normal_bias[id] = shadow_normal_bias;
+        if (shadow_opacity !== undefined)/*       */ this.light_shadow_opacity[id] = shadow_opacity;
+        if (data_stride !== undefined)/*       */ this.light_data_stride[id] = Math.max(0, Math.floor(data_stride));
     }
 
     public commit_AllLightsData() {

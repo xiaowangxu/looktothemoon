@@ -8,7 +8,7 @@ import { CylinderGeometryResource } from "@/system/engine/resources/geometry_res
 import { MaterialOverrideResource } from "@/system/engine/resources/material_resources/MaterialResource";
 import { Ref } from "@/system/utils/RefCounted";
 import type { InputEvent } from "@/system/engine/inputs/InputEvent";
-import { MouseButton, MouseButtonInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseButton";
+import { MouseButton, MouseButtonInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseButtonInputEvent";
 import { MouseEnterLeaveInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseEnterLeaveInputEvent";
 import { MouseMotionInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseMotionInputEvent";
 import type { MouseInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseInputEvent";
@@ -17,9 +17,10 @@ import { PickingArea3D } from "../../physics3ds/PickingArea3D";
 import { PickingShape3D } from "../../physics3ds/PickingShape3D";
 import { PickingCylinderResource } from "@/system/engine/resources/picking_shape_resources/PickingShapeResource";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
+import type { Config } from "@/system/engine/ConfiguredObject";
 
-const ArrowTailGeometry = new Cacher(() => {
-    const geometry = new CylinderGeometryResource();
+const ArrowTailGeometry = new Cacher((config: Config) => {
+    const geometry = new CylinderGeometryResource(config);
     geometry.top_radius = geometry.bottom_radius = 0.0175;
     geometry.height = 1;
     geometry.segments = 16;
@@ -27,8 +28,8 @@ const ArrowTailGeometry = new Cacher(() => {
     return new Ref(geometry);
 });
 
-const ArrowHeadGeometry = new Cacher(() => {
-    const geometry = new CylinderGeometryResource();
+const ArrowHeadGeometry = new Cacher((config: Config) => {
+    const geometry = new CylinderGeometryResource(config);
     geometry.top_radius = 0;
     geometry.bottom_radius = 0.075;
     geometry.height = 0.25;
@@ -37,20 +38,20 @@ const ArrowHeadGeometry = new Cacher(() => {
     return new Ref(geometry);
 });
 
-const LineGrabberMaterial = new Cacher(() => new Ref(new GrabberPlainColorMaterialResource()));
+const LineGrabberMaterial = new Cacher((config: Config) => new Ref(new GrabberPlainColorMaterialResource(config)));
 
-const LineGrabberPickingShape = new Cacher(() => {
-    const picking_shape = new PickingCylinderResource();
+const LineGrabberPickingShape = new Cacher((config: Config) => {
+    const picking_shape = new PickingCylinderResource(config);
     picking_shape.radius = 0.1;
     return new Ref(picking_shape);
 });
 
 export class LineGrabber3D extends GrabberElement<Vector3> {
-    private readonly arrow_tail: MeshInstance3D = new MeshInstance3D();
-    private readonly arrow_head: MeshInstance3D = new MeshInstance3D();
-    private readonly arrow_material: Ref<MaterialOverrideResource> = new Ref(new MaterialOverrideResource());
-    private readonly area: PickingArea3D = new PickingArea3D();
-    private readonly shape: PickingShape3D = new PickingShape3D();
+    private readonly arrow_tail: MeshInstance3D = new MeshInstance3D(this.config);
+    private readonly arrow_head: MeshInstance3D = new MeshInstance3D(this.config);
+    private readonly arrow_material: Ref<MaterialOverrideResource> = new Ref(new MaterialOverrideResource(this.config));
+    private readonly area: PickingArea3D = new PickingArea3D(this.config);
+    private readonly shape: PickingShape3D = new PickingShape3D(this.config);
 
     // private readonly guide_line: MeshInstance3D = new MeshInstance3D();
     // private readonly guide_line2: MeshInstance3D = new MeshInstance3D();
@@ -185,8 +186,9 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
         }
     }
 
-    constructor() {
-        super();
+    constructor(config: Config) {
+        super(config);
+
         this.top_level = true;
         this.unit_pixel_count = 75;
 
@@ -197,12 +199,12 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
         // this.guide_line.layer = 1;
         // this.guide_line2.layer = 1;
 
-        this.arrow_tail.geometry = ArrowTailGeometry.value.expect;
-        this.arrow_material.expect.set_OverrideMaterial(LineGrabberMaterial.value.expect);
-        this.arrow_head.geometry = ArrowHeadGeometry.value.expect;
+        this.arrow_tail.geometry = ArrowTailGeometry.get(this.config).expect;
+        this.arrow_material.expect.set_OverrideMaterial(LineGrabberMaterial.get(this.config).expect);
+        this.arrow_head.geometry = ArrowHeadGeometry.get(this.config).expect;
         this.arrow_tail.material = this.arrow_head.material = this.arrow_material.expect;
 
-        this.shape.shape = LineGrabberPickingShape.value.expect;
+        this.shape.shape = LineGrabberPickingShape.get(this.config).expect;
         this.shape.local_position = vec3(0, 0.5, 0);
 
         // // const test_shape = new MeshInstance3D();

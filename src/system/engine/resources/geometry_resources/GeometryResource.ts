@@ -1,22 +1,24 @@
 import { Ref } from "@/system/utils/RefCounted";
 import type { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
 import { Resource } from "../Resource";
-import { RenderServer3D } from "../../render_server/RenderServer";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import { RenderDeviceMatrix4AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import type { WebGL2RenderStateBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { RenderStateBufferUsage } from "@/system/sliverofstraw/RenderState";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
+import type { Config } from "../../ConfiguredObject";
 
 export abstract class GeometryResource extends Resource {
     private readonly geometry_ref: Ref<RenderServerGeometry> = new Ref();
 
     public get geometry() { return this.geometry_ref.expect; }
 
-    constructor() {
-        super();
-        this.geometry_ref.value = RenderServer3D.create_Geometry();
+    public get render_server_3d() { return this.config.render_server_3d; }
+
+    constructor(config: Config) {
+        super(config);
+        this.geometry_ref.value = this.render_server_3d.create_Geometry();
     }
 
     protected dispose(): void {
@@ -30,10 +32,10 @@ export class MultiGeometryResource extends GeometryResource {
 
     private readonly instance_transform_attribute_buffer_ref: Ref<RenderDeviceMatrix4AttributeBuffer<WebGL2RenderState, WebGL2RenderStateBuffer>> = new Ref();
 
-    constructor() {
-        super();
+    constructor(config: Config) {
+        super(config);
         this.geometry.instance_count = 0;
-        this.instance_transform_attribute_buffer_ref.value = new RenderDeviceMatrix4AttributeBuffer(RenderServer3D, RenderStateBufferUsage.DynamicDraw, undefined, 1);
+        this.instance_transform_attribute_buffer_ref.value = new RenderDeviceMatrix4AttributeBuffer(this.render_server_3d, RenderStateBufferUsage.DynamicDraw, undefined, 1);
     }
 
     public set_OverrideGeometry(geometry: GeometryResource) {

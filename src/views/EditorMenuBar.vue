@@ -53,9 +53,9 @@
                         视图
                     </template>
                     <template #items="{ open, close, triggerSubItemHide }">
-                        <SItem label="前视图" />
-                        <SItem label="左视图" />
-                        <SItem label="顶视图" />
+                        <SItem label="前视图" description="Num 1"/>
+                        <SItem label="左视图" description="Num 2"/>
+                        <SItem label="顶视图" description="Num 3"/>
                         <SItem label="更多...">
                             <template #subitems>
                                 <SItem label="后视图" />

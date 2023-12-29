@@ -1,15 +1,11 @@
-import { Resource } from "../resources/Resource";
+import { ResourceBase } from "../resources/Resource";
 
-export class InputEvent extends Resource {
+export class InputEvent extends ResourceBase {
     public static readonly class_name: string = "InputEvent";
 
     private _canceled: boolean = false;
     public get canceled() {
         return this._canceled;
-    }
-
-    constructor() {
-        super();
     }
 
     public mark_Canceled() {

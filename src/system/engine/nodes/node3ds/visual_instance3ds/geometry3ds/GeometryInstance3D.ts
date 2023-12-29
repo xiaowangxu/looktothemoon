@@ -22,10 +22,6 @@ export abstract class GeometryInstance3D extends VisualInstance3D {
         }
     }
 
-    constructor() {
-        super();
-    }
-
     protected on_CastShadowChanged() {
         throw new Error('abstract method');
     }

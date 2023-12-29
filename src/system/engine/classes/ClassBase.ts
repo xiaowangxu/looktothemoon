@@ -1,9 +1,9 @@
 import type { ClassReader, ClassWriter } from "./ClassWriterReader";
 import { Rid, type RID } from "../Rid";
+import { ConfiguredObject } from "../ConfiguredObject";
 
-export class ClassBase {
+export class ClassBase extends ConfiguredObject {
     public static readonly class_name: string = "ClassBase";
-    public static readonly use_custom_instantiater: boolean = false;
 
     public readonly rid: RID = Rid();
 
@@ -12,10 +12,6 @@ export class ClassBase {
     }
 
     public load(reader: ClassReader): void {
-        throw new Error("abstract method");
-    }
-
-    public static instantiate(data: any | ClassWriter): ClassBase {
         throw new Error("abstract method");
     }
 }

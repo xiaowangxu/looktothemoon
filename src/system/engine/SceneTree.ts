@@ -4,12 +4,12 @@ import { ShortCutActionMap } from "./inputs/InputActionMap";
 import { Singletion } from "./singletions/Singletion";
 import { Node, Viewport } from "./nodes/Node";
 import type { World3D } from "./worlds/world3ds/World3D";
-import { RenderServer3D } from "./render_server/RenderServer";
+import { ConfiguredObject, type Config } from "./ConfiguredObject";
 
 const arr = new Array(10000);
 
-export class SceneTree {
-    private readonly input_action_map: ShortCutActionMap = new ShortCutActionMap();
+export class SceneTree extends ConfiguredObject {
+    private readonly input_action_map: ShortCutActionMap = new ShortCutActionMap(this.config);
     private readonly root: Node;
     private readonly clock: Clock = new Clock();
     private readonly physics_fps: number;
@@ -30,13 +30,16 @@ export class SceneTree {
 
     private readonly viewports: Set<Viewport> = new Set();
 
+    private readonly linked_trees: Set<SceneTree> = new Set();
+
     private readonly node_queued_free: Set<Node> = new Set();
 
-    constructor(root: Node, physics_fps: number = 60) {
-        if (root.get_Parent() !== undefined || root.ready) throw new Error('root is invalid');
+    constructor(config: Config, root: Node) {
+        super(config);
+        if (root.get_Parent() !== undefined || root.ready) throw new Error('<SceneTree> constructor: root is invalid');
         this.root = root;
         this.root.set_SceneTree(this);
-        this.physics_fps = physics_fps;
+        this.physics_fps = this.config.physics_fps;
     }
 
     public notify_TreeChange() {
@@ -45,9 +48,15 @@ export class SceneTree {
     private _loop_func = this.loop.bind(this);
     private loop() {
         this.clock.tick();
-        this.time = this.clock.duration;
-        this.delta = this.clock.delta;
-        this.frame_id++;
+        this.process_Loop(this.clock.duration, this.clock.delta, this.frame_id + 1);
+        // next frame
+        this.animation_requested = requestAnimationFrame(this._loop_func);
+    }
+
+    private process_Loop(time: number, delta: number, frame_id: number) {
+        this.time = time;
+        this.delta = delta;
+        this.frame_id = frame_id;
         // internal process process
         this.root.propagate_Process(this.delta);
         this.process_Tween(this.delta);
@@ -57,8 +66,13 @@ export class SceneTree {
         }
         this.root.propagate_InternalBeforeRender(this.delta);
         // render server resize
-        RenderServer3D.set_PixelRatio(window.devicePixelRatio);
-        RenderServer3D.set_Size(window.innerWidth, window.innerHeight);
+        this.config.render_server_3d.set_PixelRatio(this.config.render_server_pixel_ratio ?? window.devicePixelRatio);
+        if (this.config.render_server_size) {
+            this.config.render_server_3d.set_Size(this.config.render_server_size.x, this.config.render_server_size.y);
+        }
+        else {
+            this.config.render_server_3d.set_Size(window.innerWidth, window.innerHeight);
+        }
         const worlds = new Set<World3D>();
         for (const viewport of this.viewports) {
             const world = viewport.get_World3D();
@@ -79,8 +93,10 @@ export class SceneTree {
             }
         }
         this.node_queued_free.clear();
-        // next frame
-        this.animation_requested = requestAnimationFrame(this._loop_func);
+        // loop linked trees
+        for (const tree of this.linked_trees) {
+            tree.process_Loop(time, delta, frame_id);
+        }
     }
 
     private process_Tween(delta: number) {
@@ -95,19 +111,27 @@ export class SceneTree {
     private _physics_loop_func = this.physics_loop.bind(this);
     private physics_loop() {
         this.physics_clock.tick();
-        this.physics_time = this.physics_clock.duration;
-        this.physics_delta = this.physics_clock.delta;
+        this.process_PhysicsLoop(this.physics_clock.duration, this.physics_clock.delta);
+    }
+
+    private process_PhysicsLoop(time: number, delta: number) {
+        this.physics_time = time;
+        this.physics_delta = delta;
         // internal physics process process
         this.root.propagate_PhysicsProcess(this.physics_delta);
         this.root.propagate_InternalAfterPhysicsProcess(this.physics_delta);
+        // loop linked trees
+        for (const tree of this.linked_trees) {
+            tree.process_PhysicsLoop(time, delta);
+        }
     }
 
     // apis
 
-    public register_Singleton(singletion: typeof Singletion) {
-        const name = singletion.singleton_name;
-        if (this.singletions.has(name)) throw new Error(`singleton ${name} already existed`);
-        this.singletions.set(name, new singletion());
+    public register_Singleton(singletion: new (config: Config, scene_tree: SceneTree) => Singletion) {
+        const name = (singletion as typeof Singletion).singleton_name;
+        if (this.singletions.has(name)) return;
+        this.singletions.set(name, new singletion(this.config, this));
     }
 
     public unregister_Singleton(singletion: typeof Singletion) {
@@ -119,8 +143,16 @@ export class SceneTree {
         return this.singletions.get(singletion.singleton_name) as InstanceType<T> | undefined;
     }
 
+    public add_LinkedTree(tree: SceneTree) {
+        this.linked_trees.add(tree);
+    }
+
+    public remove_LinkedTree(tree: SceneTree) {
+        this.linked_trees.delete(tree);
+    }
+
     public queue_Free(node: Node) {
-        if (!node.is_inside_tree) throw new Error('can not queue free node which is not inside scene tree');
+        if (!node.is_inside_tree) throw new Error('<SceneTree> queue_Free: can not queue free node which is not inside scene tree');
         this.node_queued_free.add(node);
     }
 
@@ -148,7 +180,9 @@ export class SceneTree {
         if (this.looping) return;
         this.clock.start();
         this.physics_clock.start();
-        this.physics_requested = setInterval(this._physics_loop_func, 1000 / this.physics_fps);
+        if (this.physics_fps > 0) {
+            this.physics_requested = setInterval(this._physics_loop_func, 1000 / this.physics_fps);
+        }
         requestAnimationFrame(this._loop_func);
     }
 

@@ -5,24 +5,26 @@ import type { Viewport } from "../../nodes/Node";
 import type { Camera3D } from "../../nodes/camera3ds/Camera3D";
 import type { PickingArea3D } from "../../nodes/node3ds/physics3ds/PickingArea3D";
 import { type RaycastResult } from "./PhysicsWorld3D";
+import { ConfiguredObject, type Config } from "../../ConfiguredObject";
 
 export interface PickingShape3D {
     preserve_global_transform: boolean;
     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: PickingSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult | undefined;
 }
 
-class PickingArea {
+class PickingArea extends ConfiguredObject {
     public readonly area: PickingArea3D;
     public layer: number = 4294967295;
     public priority: number = 0;
     public enabled: boolean = true;
 
-    constructor(area: PickingArea3D) {
+    constructor(config: Config, area: PickingArea3D) {
+        super(config);
         this.area = area;
     }
 }
 
-class PickingShapeInstance {
+class PickingShapeInstance extends ConfiguredObject {
     public shape: PickingShape3D | undefined;
     public area: PickingArea | undefined;
     public distance_offset: number = 0;
@@ -76,7 +78,7 @@ export class RayPickingResult {
     }
 }
 
-export class PickingWorld3D {
+export class PickingWorld3D extends ConfiguredObject {
     private readonly shape_map: Map<RID, PickingShapeInstance> = new Map();
     private readonly area_map: Map<RID, PickingArea> = new Map();
 
@@ -133,7 +135,7 @@ export class PickingWorld3D {
 
     public create_PickingArea(area: PickingArea3D): RID {
         const rid = Rid();
-        const _area = new PickingArea(area);
+        const _area = new PickingArea(this.config, area);
         this.area_map.set(rid, _area);
         return rid;
     }
@@ -164,7 +166,7 @@ export class PickingWorld3D {
 
     public create_PickingShapeInstance(): RID {
         const rid = Rid();
-        const shape = new PickingShapeInstance();
+        const shape = new PickingShapeInstance(this.config);
         this.shape_map.set(rid, shape);
         return rid;
     }

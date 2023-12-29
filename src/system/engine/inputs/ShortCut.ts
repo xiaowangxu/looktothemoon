@@ -4,11 +4,12 @@ import { InputEvent } from "./InputEvent";
 export class ShortCut extends Resource {
     public static readonly class_name: string = "ShortCut";
 
-    public readonly events: InputEvent[];
+    static #empty_events = [];
+    public events: InputEvent[] = ShortCut.#empty_events;
 
-    constructor(events: InputEvent[]) {
-        super();
+    public set(events: InputEvent[]) {
         this.events = events;
+        return this;
     }
 
     public match(event: InputEvent, with_pressed: boolean): boolean {

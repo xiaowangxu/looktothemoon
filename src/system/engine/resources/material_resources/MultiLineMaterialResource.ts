@@ -1,13 +1,14 @@
 import { Epsilon } from "@/system/fivepebble/Scalar";
 import { RenderStateUniformType, RenderStateShaderType } from "@/system/sliverofstraw/RenderState";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
-import { RenderServerDevice, RenderServer3D, RenderServerPlainColorTexture } from "../../render_server/RenderServer";
+import { RenderServerDevice } from "../../render_server/RenderServer";
 import { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
 import type { UniformInitSet } from "../../render_server/RenderServerShader";
 import { MaterialResource, type MaterialReadOnlyUniforms } from "./MaterialResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { Vector4, vec4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { Color } from "@/system/fivepebble/graphics/Color";
+import type { Config } from "../../ConfiguredObject";
 
 export class MultiLineMaterialResource extends MaterialResource {
 
@@ -232,17 +233,17 @@ export class MultiLineMaterialResource extends MaterialResource {
         }
     }
 
-    constructor() {
-        super();
+    constructor(config: Config) {
+        super(config);
         this.update_Material();
     }
 
     public update_Material() {
-        const shader = RenderServer3D.create_Shader();
-        const vertex_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Vertex, MultiLineMaterialResource.#vertex_shader).expect();
-        const fragment_prez_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, MultiLineMaterialResource.#fragment_prez_shader).expect();
-        const fragment_shade_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, MultiLineMaterialResource.#fragment_shade_shader).expect();
-        const fragment_oit_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, MultiLineMaterialResource.#fragment_oit_shader).expect();
+        const shader = this.render_server_3d.create_Shader();
+        const vertex_shader = this.render_server_3d.render_state.create_Shader(RenderStateShaderType.Vertex, MultiLineMaterialResource.#vertex_shader).expect();
+        const fragment_prez_shader = this.render_server_3d.render_state.create_Shader(RenderStateShaderType.Fragment, MultiLineMaterialResource.#fragment_prez_shader).expect();
+        const fragment_shade_shader = this.render_server_3d.render_state.create_Shader(RenderStateShaderType.Fragment, MultiLineMaterialResource.#fragment_shade_shader).expect();
+        const fragment_oit_shader = this.render_server_3d.render_state.create_Shader(RenderStateShaderType.Fragment, MultiLineMaterialResource.#fragment_oit_shader).expect();
         shader.set_Shaders(
             vertex_shader,
             MultiLineMaterialResource.#vertex_uniforms,

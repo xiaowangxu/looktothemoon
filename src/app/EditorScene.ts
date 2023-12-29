@@ -4,14 +4,13 @@ import { SceneTree } from "@/system/engine/SceneTree";
 import { Node3D } from "@/system/engine/nodes/node3ds/Node3D";
 import { ViewportDomContainer } from "@/system/engine/nodes/ViewportDomContainer";
 import { KeyInputEvent } from "@/system/engine/inputs/events/KeyInputEvent";
-import { MouseButton, MouseButtonInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseButton";
+import { MouseButton, MouseButtonInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseButtonInputEvent";
 import { ShortCut } from "@/system/engine/inputs/ShortCut";
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { DependencyGraph } from "./singletons/DependencyGraph";
 import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
-import { BoxGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
+import { BoxGeometryResource, CylinderGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
 import { NormalMaterialResource, PlainColorMaterialResource, UVMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { color, color8 } from "@/system/fivepebble/graphics/Color";
 import { OrthographicCamera3D } from "@/system/engine/nodes/camera3ds/OrthographicCamera3D";
@@ -23,66 +22,76 @@ import { SignalEmitter } from "@/system/utils/SignalEmitter";
 import { ActionInputEvent } from "@/system/engine/inputs/events/ActionInputEvent";
 import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineGeometryResource";
 import { MultiLineMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
+import type { Config } from "@/system/engine/ConfiguredObject";
+import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
+import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import { StandardMaterialResource } from "../system/engine/resources/material_resources/PrimitiveMaterialResource";
+import { RenderServerMaterialCullFace } from "@/system/engine/render_server/RenderServerMaterial";
+import { ClassSaver } from "@/system/engine/classes/ClassSaverLoader";
+
+const DefaultConfig: Config = {
+	render_server_3d: new RenderServerDevice(document.getElementById('render-server-canvas') as HTMLCanvasElement),
+	render_server_size: undefined,
+	render_server_pixel_ratio: undefined,
+	physics_fps: 45,
+}
 
 // viewport container
-const EditorViewportContainer = new ViewportDomContainer();
+const EditorViewportContainer = new ViewportDomContainer(DefaultConfig);
 EditorViewportContainer.dom = (document.querySelector('#viewport-0') ?? undefined) as HTMLElement;
 
 // viewport
-export const EditorViewport = new Viewport();
-EditorViewport.debug = true;
-EditorViewport.world_3d = new World3D();
+export const EditorViewport = new Viewport(DefaultConfig);
+// EditorViewport.debug = true;
+EditorViewport.world_3d = new World3D(DefaultConfig);
 EditorViewport.transparent = false;
 EditorViewportContainer.add_Child(EditorViewport);
 // camera
-const EditorCamera = new EditorOrbitCamera3D();
+const EditorCamera = new EditorOrbitCamera3D(DefaultConfig);
 EditorViewport.add_Child(EditorCamera);
 EditorCamera.set_Zoom(0.3);
 
 // World 
-const World = new Node3D();
+const World = new Node3D(DefaultConfig);
 World.local_scale = vec3(0.01, 0.01, 0.01);
 // World.block_input = true;
 // World.block_process = true;
 // World.block_physics_process = true;
 
-const EditorWorld = new Node3D();
+const EditorWorld = new Node3D(DefaultConfig);
 
-export const EditorSceneTree = new SceneTree(EditorViewportContainer);
+export const EditorSceneTree = new SceneTree(DefaultConfig, EditorViewportContainer);
 EditorSceneTree.register_Singleton(DependencyGraph);
 EditorViewport.add_Child(World);
 EditorViewport.add_Child(EditorWorld);
 
-EditorSceneTree.get_InputActionMap().add_Action('switch_FrontView', new ShortCut([new KeyInputEvent('1', '1', true, false, undefined, false, false, false, false)]));
-EditorSceneTree.get_InputActionMap().add_Action('switch_LeftView', new ShortCut([new KeyInputEvent('2', '2', true, false, undefined, false, false, false, false)]));
-EditorSceneTree.get_InputActionMap().add_Action('switch_TopView', new ShortCut([new KeyInputEvent('3', '3', true, false, undefined, false, false, false, false)]));
-EditorSceneTree.get_InputActionMap().add_Action('switch_CameraType', new ShortCut([
-	new KeyInputEvent('`', 'Backquote', true, false, undefined, false, false, false, false),
-	new KeyInputEvent('`', 'Backquote', true, false, undefined, true, false, false, false),
+EditorSceneTree.get_InputActionMap().add_Action('switch_FrontView', new ShortCut(DefaultConfig).set([new KeyInputEvent(DefaultConfig).set_Key('1', '1', true, false)]));
+EditorSceneTree.get_InputActionMap().add_Action('switch_LeftView', new ShortCut(DefaultConfig).set([new KeyInputEvent(DefaultConfig).set_Key('2', '2', true, false)]));
+EditorSceneTree.get_InputActionMap().add_Action('switch_TopView', new ShortCut(DefaultConfig).set([new KeyInputEvent(DefaultConfig).set_Key('3', '3', true, false)]));
+EditorSceneTree.get_InputActionMap().add_Action('switch_CameraType', new ShortCut(DefaultConfig).set([new KeyInputEvent(DefaultConfig).set_Key('`', 'Backquote', true, false)]));
+EditorSceneTree.get_InputActionMap().add_Action('zoomIn', new ShortCut(DefaultConfig).set([
+	new MouseButtonInputEvent(DefaultConfig).set_Button(MouseButton.WheelUp, true, false, false).set_Compose(true),
+	new MouseButtonInputEvent(DefaultConfig).set_Button(MouseButton.WheelUp, true, false, false),
 ]));
-EditorSceneTree.get_InputActionMap().add_Action('zoomIn', new ShortCut([
-	new MouseButtonInputEvent(MouseButton.WheelUp, true, false, false, undefined, vec2(0, 0), vec2(0, 0), false, false, false, false),
-	new MouseButtonInputEvent(MouseButton.WheelUp, true, false, false, undefined, vec2(0, 0), vec2(0, 0), true, false, false, false),
-]));
-EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut([
-	new MouseButtonInputEvent(MouseButton.WheelDown, true, false, false, undefined, vec2(0, 0), vec2(0, 0), false, false, false, false),
-	new MouseButtonInputEvent(MouseButton.WheelDown, true, false, false, undefined, vec2(0, 0), vec2(0, 0), true, false, false, false),
+EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut(DefaultConfig).set([
+	new MouseButtonInputEvent(DefaultConfig).set_Button(MouseButton.WheelDown, true, false, false).set_Compose(true),
+	new MouseButtonInputEvent(DefaultConfig).set_Button(MouseButton.WheelDown, true, false, false),
 ]));
 
 // viewport 0
-const EditorViewportContainer0 = new ViewportDomContainer();
+const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
 EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-const EditorViewport0 = new Viewport();
+const EditorViewport0 = new Viewport(DefaultConfig);
 EditorViewportContainer0.add_Child(EditorViewport0);
-const EditorCamera0 = new EditorOrbitCamera3D();
+const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
 EditorCamera0.zoom_to_cursor = false;
 EditorViewport0.add_Child(EditorCamera0);
 EditorViewport.add_Child(EditorViewportContainer0);
 
-const geometry = new BoxGeometryResource();
+const geometry = new CylinderGeometryResource(DefaultConfig);
 geometry.build();
 
-const multi_geometry = new MultiGeometryResource();
+const multi_geometry = new MultiGeometryResource(DefaultConfig);
 multi_geometry.set_OverrideGeometry(geometry);
 
 const count = 2;
@@ -97,36 +106,37 @@ for (let i = 0; i < count; i++) {
 
 multi_geometry.commit_InstanceTransforms();
 
-const geometry2 = new BoxGeometryResource();
-geometry2.width = 0.05;
-geometry2.height = geometry2.depth = 2;
+const geometry2 = new BoxGeometryResource(DefaultConfig);
 geometry2.build();
 
-const material1 = new NormalMaterialResource();
+const material1 = new NormalMaterialResource(DefaultConfig);
 
-const material2 = new PlainColorMaterialResource();
-material2.color = color(0.75, 0.75, 0.75, 1);
+const material2 = new StandardMaterialResource(DefaultConfig);
+material2.color = color(1, 1, 1, 1);
+material2.cull_face = RenderServerMaterialCullFace.None;
 
-const material3 = new UVMaterialResource();
-const material4 = new NormalMaterialResource();
+const material3 = new PlainColorMaterialResource(DefaultConfig);
+material3.set_UniformOverride('u_texture', DefaultConfig.render_server_3d.empty_texture);
 
-const Mesh1 = new MeshInstance3D();
+const material4 = new NormalMaterialResource(DefaultConfig);
+
+const Mesh1 = new MeshInstance3D(DefaultConfig);
 Mesh1.geometry = multi_geometry;
 Mesh1.material = material2;
 Mesh1.local_scale = vec3(100, 100, 100);
-Mesh1.local_position = vec3(-25, 0, 0);
+Mesh1.local_position = vec3(0, 0, 0);
 Mesh1.local_visible = true;
 
-Mesh1.set_SurfaceMaterial(2, material3);
-Mesh1.set_SurfaceMaterial(3, material3);
-Mesh1.set_SurfaceMaterial(4, material4);
-Mesh1.set_SurfaceMaterial(5, material4);
+// Mesh1.set_SurfaceMaterial(2, material3);
+// Mesh1.set_SurfaceMaterial(3, material3);
+// Mesh1.set_SurfaceMaterial(4, material4);
+// Mesh1.set_SurfaceMaterial(5, material4);
 
 World.add_Child(Mesh1);
 
-const LineGrabber1 = new LineGrabber3D();
-const LineGrabber2 = new LineGrabber3D();
-const LineGrabber3 = new LineGrabber3D();
+const LineGrabber1 = new LineGrabber3D(DefaultConfig);
+const LineGrabber2 = new LineGrabber3D(DefaultConfig);
+const LineGrabber3 = new LineGrabber3D(DefaultConfig);
 LineGrabber1.color = color8(0x04, 0xa9, 0x73);
 LineGrabber2.local_rotation = euler(0, 0, -Math.PI / 2);
 LineGrabber3.color = color8(0x46, 0x6f, 0xd6);
@@ -160,7 +170,7 @@ World.add_Child(LineGrabber3);
 
 EditorViewport.signal_input.connect((evt, pro) => {
 	if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
-		EditorViewportContainer0.queue_Free();
+		// EditorViewportContainer0.queue_Free();
 		// EditorSceneTree.start_Tween(
 		// 	new PropertyMethodTween<Color>(
 		// 		(color) => {
@@ -174,35 +184,85 @@ EditorViewport.signal_input.connect((evt, pro) => {
 	}
 });
 
+export const signal = new SignalEmitter<(...args: any[]) => void>();
+
+signal.connect((action) => {
+	if (action === 'orth') {
+		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_CameraTypeOrth', true, false));
+	}
+	else if (action === 'persp') {
+		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_CameraTypePersp', true, false));
+	}
+	else if (action === '顶视图') {
+		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_TopView', true, false));
+	}
+	else if (action === '底视图') {
+		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_BottomView', true, false));
+	}
+	else if (action === '左视图') {
+		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_LeftView', true, false));
+	}
+	else if (action === '右视图') {
+		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_RightView', true, false));
+	}
+	else if (action === '前视图') {
+		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_FrontView', true, false));
+	}
+	else if (action === '后视图') {
+		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_BackView', true, false));
+	}
+});
+
+const multi_line_geometry = new MultiLineGeometryResource(DefaultConfig);
+const multi_line_material = new MultiLineMaterialResource(DefaultConfig);
+multi_line_material.color = color8(0xf8, 0x2d, 0x4e);
+multi_line_material.line_width = 4;
+const MeshLine = new MeshInstance3D(DefaultConfig);
+MeshLine.geometry = multi_line_geometry;
+MeshLine.material = multi_line_material;
+MeshLine.local_scale = vec3(100, 100, 100);
+MeshLine.local_position = vec3(0, 0, -100);
+MeshLine.render_queue = 1;
+World.add_Child(MeshLine);
+
 function create_CompassScene() {
+	const CompassConfig: Config = {
+		render_server_3d: new RenderServerDevice(document.getElementById('compass-canvas')! as HTMLCanvasElement),
+		render_server_size: vec2(50, 50),
+		render_server_pixel_ratio: undefined,
+		render_queue_max_solid_count: 6,
+		render_queue_max_transparent_count: 0,
+		physics_fps: 0
+	}
+
 	const red = color8(0xf8, 0x2d, 0x4e);
 	const green = color8(0x04, 0xa9, 0x73);
 	const blue = color8(0x46, 0x6f, 0xd6);
-	const neg_color = color8(0, 0, 0, 92);
+	const neg_color = color8(128, 128, 128, 255);
 	const sphere_radius = 0.4;
 	const distance = 0.8;
 	const camera_zoom = 0.55;
 
-	const viewport_container = new ViewportDomContainer();
-	const viewport = new Viewport();
+	const viewport = new Viewport(CompassConfig);
 	viewport.transparent = true;
-	viewport.world_3d = new World3D();
-	viewport.update_mode = ViewportUpdateMode.Once;
+	viewport.world_3d = new World3D(CompassConfig);
+	viewport.update_mode = ViewportUpdateMode.Always;
 	viewport.color_map = false;
-	viewport_container.add_Child(viewport);
+	viewport.position = vec2(0, 0);
+	viewport.size = vec2(50, 50);
 
-	const red_mat = new PlainColorMaterialResource();
+	const red_mat = new PlainColorMaterialResource(CompassConfig);
 	red_mat.color = red;
-	const green_mat = new PlainColorMaterialResource();
+	const green_mat = new PlainColorMaterialResource(CompassConfig);
 	green_mat.color = green;
-	const blue_mat = new PlainColorMaterialResource();
+	const blue_mat = new PlainColorMaterialResource(CompassConfig);
 	blue_mat.color = blue;
-	const neg_mat = new PlainColorMaterialResource();
+	const neg_mat = new PlainColorMaterialResource(CompassConfig);
 	neg_mat.color = neg_color;
 
-	const box = new BoxGeometryResource();
+	const box = new BoxGeometryResource(CompassConfig);
 	box.build();
-	const box_mesh = new MeshInstance3D();
+	const box_mesh = new MeshInstance3D(CompassConfig);
 	box_mesh.geometry = box;
 	box_mesh.set_SurfaceMaterial(0, green_mat);
 	box_mesh.set_SurfaceMaterial(1, neg_mat);
@@ -212,18 +272,24 @@ function create_CompassScene() {
 	box_mesh.set_SurfaceMaterial(5, neg_mat);
 	viewport.add_Child(box_mesh);
 
-	const camera = new OrthographicCamera3D();
+	const camera = new OrthographicCamera3D(CompassConfig);
 	camera.zoom = camera_zoom;
 	camera.local_position = vec3(0, 0, 5);
 	viewport.add_Child(camera);
 
 	const last_lookat = vec3(0, 0, 0);
 
+	const CompassSceneTree = new SceneTree(CompassConfig, viewport);
+
+	EditorSceneTree.add_LinkedTree(CompassSceneTree);
+
+	console.log(CompassSceneTree);
+
 	viewport.signal_resized.connect((size) => {
 		viewport.update_mode = ViewportUpdateMode.Once;
 	});
 
-	viewport_container.signal_notification.connect((what: NodeNotification) => {
+	viewport.signal_notification.connect((what: NodeNotification) => {
 		if (what === NodeNotification.InternalAfterProcess) {
 			const active_camera = EditorViewport.get_Camera3D();
 			if (active_camera === undefined) return;
@@ -236,55 +302,13 @@ function create_CompassScene() {
 			viewport.update_mode = ViewportUpdateMode.Once;
 		}
 	});
-
-	return viewport_container;
 }
-
-// const EditorCompass = create_CompassScene();
-// EditorViewport.add_Child(EditorCompass);
 
 export function createEditorViewport() {
 	EditorSceneTree.start_Loop();
-	// EditorCompass.dom = document.getElementById('compass')!;
+	create_CompassScene();
 }
 
-export const signal = new SignalEmitter<(...args: any[]) => void>();
-
-signal.connect((action) => {
-	if (action === 'orth') {
-		EditorViewport.push_InputEvent(new ActionInputEvent('switch_CameraTypeOrth', true, false));
-	}
-	else if (action === 'persp') {
-		EditorViewport.push_InputEvent(new ActionInputEvent('switch_CameraTypePersp', true, false));
-	}
-	else if (action === '顶视图') {
-		EditorViewport.push_InputEvent(new ActionInputEvent('switch_TopView', true, false));
-	}
-	else if (action === '底视图') {
-		EditorViewport.push_InputEvent(new ActionInputEvent('switch_BottomView', true, false));
-	}
-	else if (action === '左视图') {
-		EditorViewport.push_InputEvent(new ActionInputEvent('switch_LeftView', true, false));
-	}
-	else if (action === '右视图') {
-		EditorViewport.push_InputEvent(new ActionInputEvent('switch_RightView', true, false));
-	}
-	else if (action === '前视图') {
-		EditorViewport.push_InputEvent(new ActionInputEvent('switch_FrontView', true, false));
-	}
-	else if (action === '后视图') {
-		EditorViewport.push_InputEvent(new ActionInputEvent('switch_BackView', true, false));
-	}
-});
-
-const multi_line_geometry = new MultiLineGeometryResource();
-const multi_line_material = new MultiLineMaterialResource();
-multi_line_material.color = color8(0xf8, 0x2d, 0x4e);
-multi_line_material.line_width = 4;
-const MeshLine = new MeshInstance3D();
-MeshLine.geometry = multi_line_geometry;
-MeshLine.material = multi_line_material;
-MeshLine.local_scale = vec3(100, 100, 100);
-MeshLine.local_position = vec3(0, 0, -100);
-MeshLine.render_queue = 1;
-World.add_Child(MeshLine);
+const saver = new ClassSaver();
+saver.dump(geometry);
+console.log(saver.get_Data().expect());

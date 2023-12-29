@@ -1,40 +1,42 @@
 import { SignalEmitter } from "../../../utils/SignalEmitter";
-import { RenderServer3D, RenderServerDevice } from "../../render_server/RenderServer";
 import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
 import type { WebGL2RenderStateFrameBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
-import { RenderStateTextureType, RenderStateTextureFormat, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureDataFormat, RenderStateDataType, RenderStateShaderType, RenderStateBufferUsage, RenderStatePrimitiveType, RenderStateUniformType } from "@/system/sliverofstraw/RenderState";
+import { RenderStateTextureType, RenderStateTextureFormat, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureDataFormat, RenderStateDataType, RenderStateShaderType, RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
 import { WebGL2RenderStateFrameBufferAttachmentPoint } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { WebGL2RenderStateFloatUniformSlot } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
-import { RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer, RenderDeviceVector3AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
+import { RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import type { SceneTree } from "../../SceneTree";
 import { Ref, RefArray } from "@/system/utils/RefCounted";
 import type { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
 import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
-import { Vector3, vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import { Vector4, vec4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
-import { Box3, box3 } from "@/system/fivepebble/geometries/Box3";
+import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import type { RenderServerMaterial } from "../../render_server/RenderServerMaterial";
 import { WorldObject } from "../WorldObject";
 import { Rid, type RID } from "../../Rid";
 import { GeometryResource } from "../../resources/geometry_resources/GeometryResource";
 import type { MaterialResource } from "../../resources/material_resources/MaterialResource";
-import { BoxGeometryResource } from "../../resources/geometry_resources/PrimitiveGeometryResource";
 import type { Renderer3DQueue } from "../../renderer/Renderer3D";
 import type { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
+import { ConfiguredObject, type Config } from "../../ConfiguredObject";
+import { Cacher } from "@/system/utils/Cacher";
+import type { WebGL2RenderStateProgram } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateProgram";
 
 // #region sky
 
-const quad_position = new RenderDeviceVector2AttributeBuffer(RenderServer3D, RenderStateBufferUsage.StaticDraw, [
-	/* 0 */vec2(-1, 1),			//   1  0 ------ 2
-	/* 1 */vec2(-1, -1),		//   |  |        |
-	/* 2 */vec2(1, 1),			//   |  |        |
-	/* 3 */vec2(1, -1),			//  -1  1 ------ 3
-	/*                        *///     -1 ------ 1
-]);
-const quad_index = new RenderDeviceIndexAttributeBuffer(RenderServer3D, RenderStateBufferUsage.StaticDraw, [0, 1, 2, 3]);
-const quad_surface = RenderServer3D.create_Geometry();
-quad_surface.set_Geometry(RenderStatePrimitiveType.TriangleStrip, { position: quad_position }, quad_index);
+const SkyQuadGeometry = new Cacher((config: Config) => {
+	const quad_position = new RenderDeviceVector2AttributeBuffer(config.render_server_3d, RenderStateBufferUsage.StaticDraw, [
+		/* 0 */vec2(-1, 1),			//   1  0 ------ 2
+		/* 1 */vec2(-1, -1),		//   |  |        |
+		/* 2 */vec2(1, 1),			//   |  |        |
+		/* 3 */vec2(1, -1),			//  -1  1 ------ 3
+		/*                        *///     -1 ------ 1
+	]);
+	const quad_index = new RenderDeviceIndexAttributeBuffer(config.render_server_3d, RenderStateBufferUsage.StaticDraw, [0, 1, 2, 3]);
+	const quad_surface = config.render_server_3d.create_Geometry();
+	quad_surface.set_Geometry(RenderStatePrimitiveType.TriangleStrip, { position: quad_position }, quad_index);
+	return quad_surface;
+});
 
 const quad_vert_shader_code = `#version 300 es
 precision highp float;
@@ -48,7 +50,6 @@ void main() {
 	v_uv = (a_position + 1.0) / 2.0;
 }
 `;
-const quad_vert_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Vertex, quad_vert_shader_code).expect();
 const sky_frag_shader_code = `#version 300 es
 precision highp float;
 
@@ -141,11 +142,14 @@ void main() {
 }
 `;
 
-const quad_frag_shader = RenderServer3D.render_state.create_Shader(RenderStateShaderType.Fragment, sky_frag_shader_code).expect();
-const sky_program = RenderServer3D.render_state.create_Program(quad_vert_shader, quad_frag_shader).expect();
-
-const uniform_time_location = RenderServer3D.render_state.get_ProgramUniformLocation(sky_program, 'time');
-const uniform_time_slot = new WebGL2RenderStateFloatUniformSlot(RenderServer3D.render_state, sky_program, uniform_time_location!, 0);
+const SkyProgramUniform = new Cacher((config: Config) => {
+	const quad_vert_shader = config.render_server_3d.render_state.create_Shader(RenderStateShaderType.Vertex, quad_vert_shader_code).expect();
+	const quad_frag_shader = config.render_server_3d.render_state.create_Shader(RenderStateShaderType.Fragment, sky_frag_shader_code).expect();
+	const sky_program = config.render_server_3d.render_state.create_Program(quad_vert_shader, quad_frag_shader).expect();
+	const uniform_time_location = config.render_server_3d.render_state.get_ProgramUniformLocation(sky_program, 'time');
+	const uniform_time_slot = new WebGL2RenderStateFloatUniformSlot(config.render_server_3d.render_state, sky_program, uniform_time_location!, 0);
+	return { sky_program, uniform_time_slot };
+});
 
 // #endregion
 
@@ -173,8 +177,8 @@ export class VisualWorld3DMesh extends WorldObject {
 	private is_bbox_empty: boolean = true;
 	private _bbox: Box3 = new Box3();
 
-	constructor(rid: RID) {
-		super(rid);
+	constructor(config: Config, rid: RID) {
+		super(config, rid);
 	}
 
 	private on_geometry_bbox_changed = (bbox: Box3) => {
@@ -288,8 +292,10 @@ export class VisualWorld3DMesh extends WorldObject {
 	}
 }
 
-export class VisualWorld3D {
+export class VisualWorld3D extends ConfiguredObject {
 	protected readonly meshes_map: Map<RID, VisualWorld3DMesh> = new Map();
+
+	public get render_server_3d() { return this.config.render_server_3d; }
 
 	public get meshes() { return this.meshes_map.values(); }
 
@@ -298,13 +304,21 @@ export class VisualWorld3D {
 
 	public readonly sky_texture: Ref<WebGL2RenderStateTexture> = new Ref();
 	public readonly sky_frame_buffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
+	private readonly sky_quad_geometry: RenderServerGeometry;
+	private readonly sky_program: WebGL2RenderStateProgram;
+	private readonly sky_uniform_time_slot: WebGL2RenderStateFloatUniformSlot;
 
-	constructor() {
-		this.sky_texture.value = RenderServer3D.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0, undefined, undefined, undefined, RenderStateTextureMinFilter.Linear, RenderStateTextureMagFilter.Linear).expect();
-		RenderServer3D.render_state.alloc_Texture2D(this.sky_texture.expect, 2048, 1024, 0, RenderStateTextureDataFormat.RGBA);
-		this.sky_frame_buffer.value = RenderServer3D.render_state.create_FrameBuffer().expect();
-		RenderServer3D.render_state.set_FrameBufferAttachment(this.sky_frame_buffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.sky_texture.expect);
-		RenderServer3D.render_state.enable_FrameBuffer(this.sky_frame_buffer.expect);
+	constructor(config: Config) {
+		super(config);
+		this.sky_texture.value = this.render_server_3d.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0, undefined, undefined, undefined, RenderStateTextureMinFilter.Linear, RenderStateTextureMagFilter.Linear).expect();
+		this.render_server_3d.render_state.alloc_Texture2D(this.sky_texture.expect, 2048, 1024, 0, RenderStateTextureDataFormat.RGBA);
+		this.sky_frame_buffer.value = this.render_server_3d.render_state.create_FrameBuffer().expect();
+		this.render_server_3d.render_state.set_FrameBufferAttachment(this.sky_frame_buffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.sky_texture.expect);
+		this.render_server_3d.render_state.enable_FrameBuffer(this.sky_frame_buffer.expect);
+		this.sky_quad_geometry = SkyQuadGeometry.get(this.config);
+		const {sky_program, uniform_time_slot} = SkyProgramUniform.get(this.config);
+		this.sky_program = sky_program;
+		this.sky_uniform_time_slot = uniform_time_slot;
 	}
 
 	public trigger_BeforeRender(scene_tree: SceneTree) {
@@ -318,14 +332,14 @@ export class VisualWorld3D {
 
 	private update_Sky(scene_tree: SceneTree) {
 		if (this.sky_changed) {
-			// this.sky_changed = false;
-			RenderServer3D.set_RenderCapabilities(false, false, RenderServer3D.render_state.gl.ALWAYS, false);
-			RenderServer3D.render_state.set_ViewportProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
-			RenderServer3D.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
-			RenderServer3D.render_state.use_FrameBuffer(this.sky_frame_buffer.expect);
-			uniform_time_slot.value = scene_tree.time;
-			uniform_time_slot.commit();
-			RenderServer3D.render_state.draw_Elements(sky_program, quad_surface.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+			this.sky_changed = false;
+			this.render_server_3d.set_RenderCapabilities(false, false, this.render_server_3d.render_state.gl.ALWAYS, false);
+			this.render_server_3d.render_state.set_ViewportProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
+			this.render_server_3d.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
+			this.render_server_3d.render_state.use_FrameBuffer(this.sky_frame_buffer.expect);
+			this.sky_uniform_time_slot.value = scene_tree.time;
+			this.sky_uniform_time_slot.commit();
+			this.render_server_3d.render_state.draw_Elements(this.sky_program, this.sky_quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
 		}
 	}
 
@@ -333,7 +347,7 @@ export class VisualWorld3D {
 
 	public create_Mesh(): RID {
 		const rid = Rid();
-		const mesh = new VisualWorld3DMesh(rid);
+		const mesh = new VisualWorld3DMesh(this.config, rid);
 		this.meshes_map.set(rid, mesh);
 		return rid;
 	}

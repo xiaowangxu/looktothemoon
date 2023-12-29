@@ -1,17 +1,22 @@
 import type { Viewport } from "../../nodes/Node";
 import { SignalEmitter } from "../../../utils/SignalEmitter";
-import { MouseButton, MouseButtonInputEvent } from "../events/mouse_events/MouseButton";
+import { MouseButton, MouseButtonInputEvent } from "../events/mouse_events/MouseButtonInputEvent";
 import { MouseMotionInputEvent } from "../events/mouse_events/MouseMotionInputEvent";
 import { MouseEnterLeaveInputEvent } from "../events/mouse_events/MouseEnterLeaveInputEvent";
 import { InputEventFromViewport } from "../events/InputEventFromViewport";
 import { Vector2, vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import type { MouseInputEvent } from "../events/mouse_events/MouseInputEvent";
 
 export class ViewportMouseInputEventManager {
     private readonly viewport: Viewport;
+
+    private get config() { return this.viewport.config; }
+
     private get canvas() { return this.viewport.canvas; }
     private get canvas_size() {
         return this.viewport.size;
     }
+
     private _is_mouse_inside: boolean = false;
     private set is_mouse_inside(inside: boolean) {
         if (this._is_mouse_inside !== inside) {
@@ -25,6 +30,7 @@ export class ViewportMouseInputEventManager {
         }
     }
     public get is_mouse_inside() { return this._is_mouse_inside; }
+
     private _mouse_position: Vector2 = vec2(0, 0);
     private _mouse_position_normalized: Vector2 = vec2(0, 0);
     public get mouse_position() { return this._mouse_position; }
@@ -61,12 +67,9 @@ export class ViewportMouseInputEventManager {
         this.canvas.addEventListener('wheel', this._on_Wheel);
     }
 
-    private get_MouseInputEventBaseParamaters(event: MouseEvent): [viewport: Viewport, position: Vector2, position_normalized: Vector2, ctrl: boolean, shift: boolean, alt: boolean, meta: boolean] {
-        return [
-            this.viewport,
-            this.mouse_position, this.mouse_position_normalized,
-            event.ctrlKey, event.shiftKey, event.altKey, event.metaKey
-        ];
+    private trigger_MouseEvent(event: InputEventFromViewport) {
+        this.viewport.on_InputEvent(event);
+        this.signal_mouse_event.trigger(event);
     }
 
     private get_MouseButton(event: MouseEvent): MouseButton {
@@ -91,7 +94,6 @@ export class ViewportMouseInputEventManager {
     }
 
     private update_MouseKey(event: MouseEvent, down: boolean) {
-        // event.preventDefault();
         this.mouse_button_map.set(this.get_MouseButton(event), down);
     }
 
@@ -99,16 +101,16 @@ export class ViewportMouseInputEventManager {
     private on_MouseEntered(event: MouseEvent) {
         this.is_mouse_inside = true;
         this.update_MousePosition(event);
-        this.signal_mouse_event.trigger(
-            new MouseEnterLeaveInputEvent(true, this.viewport)
+        this.trigger_MouseEvent(
+            new MouseEnterLeaveInputEvent(this.config).set_Viewport(this.viewport).set_Inside(true)
         );
     }
 
     private _on_MouseLeaved = this.on_MouseLeaved.bind(this);
     private on_MouseLeaved(event: MouseEvent) {
         this.is_mouse_inside = false;
-        this.signal_mouse_event.trigger(
-            new MouseEnterLeaveInputEvent(false, this.viewport)
+        this.trigger_MouseEvent(
+            new MouseEnterLeaveInputEvent(this.config).set_Viewport(this.viewport).set_Inside(false)
         );
     }
 
@@ -121,64 +123,70 @@ export class ViewportMouseInputEventManager {
         const new_mouse_position_normalized = this.mouse_position_normalized;
         const relative = new_mouse_position.sub(last_mouse_position);
         const relative_normalized = new_mouse_position_normalized.sub(last_mouse_position_normalized);
-        this.signal_mouse_event.trigger(
-            new MouseMotionInputEvent(
-                relative, relative_normalized,
-                ...this.get_MouseInputEventBaseParamaters(event)
-            )
+        this.trigger_MouseEvent(
+            new MouseMotionInputEvent(this.config)
+                .set_Viewport(this.viewport)
+                .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
+                .set_Position(this.mouse_position, this.mouse_position_normalized)
+                .set_Motion(relative, relative_normalized)
         );
     }
 
     private _on_MouseDown = this.on_MouseDown.bind(this);
     private on_MouseDown(event: MouseEvent) {
         this.update_MouseKey(event, true);
-        this.signal_mouse_event.trigger(
-            new MouseButtonInputEvent(
-                this.get_MouseButton(event), true, false, false,
-                ...this.get_MouseInputEventBaseParamaters(event)
-            )
+        this.trigger_MouseEvent(
+            new MouseButtonInputEvent(this.config)
+                .set_Viewport(this.viewport)
+                .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
+                .set_Position(this.mouse_position, this.mouse_position_normalized)
+                .set_Button(this.get_MouseButton(event), true, false, false)
         );
     }
 
     private _on_MouseUp = this.on_MouseUp.bind(this);
     private on_MouseUp(event: MouseEvent) {
         this.update_MouseKey(event, false);
-        this.signal_mouse_event.trigger(
-            new MouseButtonInputEvent(
-                this.get_MouseButton(event), false, false, false,
-                ...this.get_MouseInputEventBaseParamaters(event)
-            )
+        this.trigger_MouseEvent(
+            new MouseButtonInputEvent(this.config)
+                .set_Viewport(this.viewport)
+                .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
+                .set_Position(this.mouse_position, this.mouse_position_normalized)
+                .set_Button(this.get_MouseButton(event), false, false, false)
         );
     }
 
     private _on_Click = this.on_Click.bind(this);
     private on_Click(event: MouseEvent) {
-        this.signal_mouse_event.trigger(
-            new MouseButtonInputEvent(
-                MouseButton.Left, false, true, false,
-                ...this.get_MouseInputEventBaseParamaters(event)
-            )
+        this.trigger_MouseEvent(
+            new MouseButtonInputEvent(this.config)
+                .set_Viewport(this.viewport)
+                .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
+                .set_Position(this.mouse_position, this.mouse_position_normalized)
+                .set_Button(MouseButton.Left, false, true, false)
         );
     }
 
     private _on_DoubleClick = this.on_DoubleClick.bind(this);
     private on_DoubleClick(event: MouseEvent) {
-        this.signal_mouse_event.trigger(
-            new MouseButtonInputEvent(
-                MouseButton.Left, false, false, true,
-                ...this.get_MouseInputEventBaseParamaters(event)
-            )
+        this.trigger_MouseEvent(
+            new MouseButtonInputEvent(this.config)
+                .set_Viewport(this.viewport)
+                .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
+                .set_Position(this.mouse_position, this.mouse_position_normalized)
+                .set_Button(MouseButton.Left, false, false, true)
         );
     }
 
     private _on_RightClick = this.on_RightClick.bind(this);
     private on_RightClick(event: MouseEvent) {
         event.preventDefault();
-        this.signal_mouse_event.trigger(
-            new MouseButtonInputEvent(
-                MouseButton.Right, false, true, false,
-                ...this.get_MouseInputEventBaseParamaters(event)
-            )
+        this.trigger_MouseEvent(
+            new MouseButtonInputEvent(this.config)
+                .set_Viewport(this.viewport)
+                .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
+                .set_Position(this.mouse_position, this.mouse_position_normalized)
+                .set_Button(MouseButton.Right, false, true, false)
         );
     }
 
@@ -186,11 +194,12 @@ export class ViewportMouseInputEventManager {
     private on_Wheel(event: WheelEvent) {
         event.preventDefault();
         const button = event.deltaY < 0 ? MouseButton.WheelUp : MouseButton.WheelDown;
-        this.signal_mouse_event.trigger(
-            new MouseButtonInputEvent(
-                button, true, false, false,
-                ...this.get_MouseInputEventBaseParamaters(event)
-            )
+        this.trigger_MouseEvent(
+            new MouseButtonInputEvent(this.config)
+                .set_Viewport(this.viewport)
+                .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
+                .set_Position(this.mouse_position, this.mouse_position_normalized)
+                .set_Button(button, true, false, false)
         );
     }
 
