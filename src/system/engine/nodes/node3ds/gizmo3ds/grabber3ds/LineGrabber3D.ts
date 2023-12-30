@@ -156,8 +156,9 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
     }
 
     private update_Opacity() {
-        const camera = this.get_SceneTree()?.get_ActiveViewports()[0]?.get_Camera3D();
-        if (camera === undefined || this.is_grabbing) {
+        const viewport = this.get_SceneTree()?.get_ActiveViewports()[0];
+        const camera = viewport?.get_Camera3D();
+        if (viewport === undefined || camera === undefined || this.is_grabbing) {
             this.visual_opacity = 1;
             this.visual_color.set(this.visual_color.r, this.visual_color.g, this.visual_color.b, this.visual_opacity);
             this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);
@@ -168,10 +169,11 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
         }
         else {
             const cam = camera.get_Camera();
-            const a = cam.project_Point(this.arrow_head.global_position); // new Vector3().fromArray(this.arrow_head.global_position.array).project(cam);
-            const b = cam.project_Point(this.global_position); //new Vector3().fromArray(this.global_position.array).project(cam);
-            const distance = a.distance_to(b);
-            const opactiy = (clamp(distance * 8, 0.1, 0.35) - 0.1) * 4;
+            const size = viewport.size;
+            const a = cam.project_Point(this.arrow_head.global_position).mult(size); // new Vector3().fromArray(this.arrow_head.global_position.array).project(cam);
+            const b = cam.project_Point(this.global_position).mult(size); //new Vector3().fromArray(this.global_position.array).project(cam);
+            const distance = a.distance_to(b) / 150;
+            const opactiy = (clamp(distance, 0.1, 0.35) - 0.1) * 4;
             this.visual_opacity = opactiy;
             this.visual_color.set(this.visual_color.r, this.visual_color.g, this.visual_color.b, this.visual_opacity);
             this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);
@@ -328,10 +330,15 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
     public _notification(what: NodeNotification): void {
         switch (what) {
             case NodeNotification.InternalBeforeRender: {
+                // call FixSizeNode3D first
+                super._notification(what);
                 this.update_Opacity();
                 break;
             }
+            default: {
+                super._notification(what);
+                break;
+            }
         }
-        super._notification(what);
     }
 }

@@ -1,5 +1,5 @@
 import type { Camera3D } from "./camera3ds/Camera3D";
-import type { ClassReader, ClassWriter } from "../classes/ClassWriterReader";
+import type { ClassReader, ClassWriter } from "../classes/saver_loader/ClassWriterReader";
 import type { PickingArea3D } from "./node3ds/physics3ds/PickingArea3D";
 import { SceneTree } from "../SceneTree";
 import { Vector2, vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
@@ -14,7 +14,7 @@ import { ViewportKeyInputEventManager } from "../inputs/managers/ViewportKeyInpu
 import { ViewportMouseInputEventManager } from "../inputs/managers/ViewportMouseInputEventManager";
 import { ViewportActionInputEventManager } from "../inputs/managers/ViewportActionInputEventManager";
 import { ViewportInputManager } from "../inputs/managers/ViewportInputManager";
-import { ClassBase } from "../classes/ClassBase";
+import { ClassBase } from "../classes/databases/ClassBase";
 import type { Config } from "../ConfiguredObject";
 
 export enum NodeNotification {
@@ -346,11 +346,15 @@ export class Node extends ClassBase {
     public dump(writer: ClassWriter): void {
         writer.property('name', this.name);
         writer.property('block_input', this.block_input);
+        writer.property('block_process', this.block_process);
+        writer.property('block_physics_process', this.block_physics_process);
     }
 
     public load(reader: ClassReader): void {
         this.name = reader.get<string>('name');
         this.block_input = reader.get<boolean>('block_input') ?? false;
+        this.block_process = reader.get<boolean>('block_process') ?? false;
+        this.block_physics_process = reader.get<boolean>('block_physics_process') ?? false;
     }
 }
 
@@ -420,10 +424,10 @@ export class Viewport extends Node {
 
     public physics_picking_when_mouse_event_not_canceled: boolean = true;
     public physics_picking: boolean = true;
-    private _physics_picking_mask: number = 4294967295;
+    private _physics_picking_mask: number = 0xffffffff;
     public get physics_picking_mask() { return this._physics_picking_mask; }
     public set physics_picking_mask(mask: number) {
-        mask = mask & 4294967295;
+        mask = mask & 0xffffffff;
         if (this._physics_picking_mask !== mask) {
             this._physics_picking_mask = mask;
             if (this._physics_picking_area !== undefined && (this._physics_picking_area.layer & this.physics_picking_mask) === 0) {

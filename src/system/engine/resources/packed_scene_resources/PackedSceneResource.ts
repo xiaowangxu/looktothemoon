@@ -1,7 +1,8 @@
 import { Resource } from "../Resource";
 import type { Node } from "../../nodes/Node";
-import { ClassReader, ClassRef, ClassWriter } from "../../classes/ClassWriterReader";
+import { ClassReader, ClassRef, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
 import { ValueObject } from "../../classes/ValueObject";
+import type { Config } from "../../ConfiguredObject";
 
 export class PackedSceneResource extends Resource {
     public static readonly class_name: string = 'PackedSceneResource';
@@ -12,7 +13,7 @@ export class PackedSceneResource extends Resource {
     private readonly for_save: boolean;
 
     private _root: Node | undefined;
-    
+
     public get_Root<T extends Node = Node>(): T {
         if (this.for_save) throw new Error('can not get the root from a PackedSceneResource for saving');
         return this._root! as T;
@@ -20,12 +21,12 @@ export class PackedSceneResource extends Resource {
 
     private parent_list: [parent: ClassRef, child: ClassRef][] = [];
 
-    constructor(root: Node | undefined) {
-        super();
+    constructor(config: Config, root: Node | undefined) {
+        super(config);
         this._root = root;
         this.for_save = this._root !== undefined;
     }
-    
+
     protected dispose(): void { }
 
     // save / load

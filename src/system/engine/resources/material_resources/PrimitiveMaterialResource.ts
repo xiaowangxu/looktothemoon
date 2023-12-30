@@ -9,6 +9,7 @@ import { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
 import type { Color } from "@/system/fivepebble/graphics/Color";
 import { Epsilon } from "@/system/fivepebble/Scalar";
 import type { Config } from "../../ConfiguredObject";
+import type { ClassWriter, ClassReader } from "../../classes/saver_loader/ClassWriterReader";
 
 export class PlainColorMaterialResource extends MaterialResource {
 
@@ -160,6 +161,7 @@ export class PlainColorMaterialResource extends MaterialResource {
 }
 
 export class NormalMaterialResource extends MaterialResource {
+    public static class_name: string = 'NormalMaterialResource';
 
     static #uniforms: MaterialReadOnlyUniforms = {
         model_world: RenderStateUniformType.Mat4,
@@ -269,6 +271,16 @@ export class NormalMaterialResource extends MaterialResource {
         );
         this.material.set_Material(shader, NormalMaterialResource.#uniforms);
         this.material.is_transparent = false;
+    }
+
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        writer.property('remap', this.remap);
+    }
+
+    public load(reader: ClassReader): void {
+        this.remap = reader.get<boolean>('remap') ?? true;
     }
 }
 

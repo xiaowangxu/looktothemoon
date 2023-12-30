@@ -5,7 +5,7 @@ import type { Camera3D } from "../../nodes/camera3ds/Camera3D";
 import { type RaycastResult } from "../../worlds/world3ds/PhysicsWorld3D";
 import { PickingSide, type PickingShape3D } from "../../worlds/world3ds/PickingWorld3D";
 import { Epsilon } from '../../../fivepebble/Scalar';
-import type { ClassReader, ClassWriter } from "../../classes/ClassWriterReader";
+import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";

@@ -1,6 +1,6 @@
 import type { RID } from "../../../../Rid";
 import { NodeNotification } from "@/system/engine/nodes/Node";
-import type { ClassReader, ClassWriter } from "../../../../classes/ClassWriterReader";
+import type { ClassReader, ClassWriter } from "../../../../classes/saver_loader/ClassWriterReader";
 import type { GeometryResource } from "../../../../resources/geometry_resources/GeometryResource";
 import { MaterialResource } from "../../../../resources/material_resources/MaterialResource";
 import { GeometryInstance3D } from "./GeometryInstance3D";
@@ -168,10 +168,12 @@ export class MeshInstance3D extends GeometryInstance3D {
     public dump(writer: ClassWriter): void {
         super.dump(writer);
         writer.property('geometry', this.geometry);
+        writer.property('material', this.material);
     }
 
     public load(reader: ClassReader): void {
         super.load(reader);
         this.geometry = reader.get<GeometryResource>('geometry');
+        this.material = reader.get<MaterialResource>('material');
     }
 }

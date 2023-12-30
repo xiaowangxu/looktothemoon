@@ -27,7 +27,10 @@ import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
 import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { StandardMaterialResource } from "../system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { RenderServerMaterialCullFace } from "@/system/engine/render_server/RenderServerMaterial";
-import { ClassSaver } from "@/system/engine/classes/ClassSaverLoader";
+import { ClassLoader, ClassSaver } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
+import { ClassJsonDecoder, ClassJsonEncoder } from "@/system/engine/classes/saver_loader/encoder_decoders/ClassJsonEncoderDecoder";
+import { ClassDecoder } from "@/system/engine/classes/saver_loader/encoder_decoders/ClassEncoderDecoder";
+import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
 
 const DefaultConfig: Config = {
 	render_server_3d: new RenderServerDevice(document.getElementById('render-server-canvas') as HTMLCanvasElement),
@@ -35,6 +38,7 @@ const DefaultConfig: Config = {
 	render_server_pixel_ratio: undefined,
 	physics_fps: 45,
 }
+const DefaultInstanceCache = new ResourceInstanceCache(DefaultConfig);
 
 // viewport container
 const EditorViewportContainer = new ViewportDomContainer(DefaultConfig);
@@ -42,7 +46,7 @@ EditorViewportContainer.dom = (document.querySelector('#viewport-0') ?? undefine
 
 // viewport
 export const EditorViewport = new Viewport(DefaultConfig);
-// EditorViewport.debug = true;
+EditorViewport.debug = true;
 EditorViewport.world_3d = new World3D(DefaultConfig);
 EditorViewport.transparent = false;
 EditorViewportContainer.add_Child(EditorViewport);
@@ -79,14 +83,14 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut(DefaultC
 ]));
 
 // viewport 0
-const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
-EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-const EditorViewport0 = new Viewport(DefaultConfig);
-EditorViewportContainer0.add_Child(EditorViewport0);
-const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
-EditorCamera0.zoom_to_cursor = false;
-EditorViewport0.add_Child(EditorCamera0);
-EditorViewport.add_Child(EditorViewportContainer0);
+// const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
+// EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+// const EditorViewport0 = new Viewport(DefaultConfig);
+// EditorViewportContainer0.add_Child(EditorViewport0);
+// const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
+// EditorCamera0.zoom_to_cursor = false;
+// EditorViewport0.add_Child(EditorCamera0);
+// EditorViewport.add_Child(EditorViewportContainer0);
 
 const geometry = new CylinderGeometryResource(DefaultConfig);
 geometry.build();
@@ -141,7 +145,6 @@ LineGrabber1.color = color8(0x04, 0xa9, 0x73);
 LineGrabber2.local_rotation = euler(0, 0, -Math.PI / 2);
 LineGrabber3.color = color8(0x46, 0x6f, 0xd6);
 LineGrabber3.local_rotation = euler(Math.PI / 2);
-// LineGrabber3.unit_pixel_count = LineGrabber2.unit_pixel_count = LineGrabber1.unit_pixel_count = 200;
 World.add_Child(LineGrabber1);
 World.add_Child(LineGrabber2);
 World.add_Child(LineGrabber3);
@@ -283,8 +286,6 @@ function create_CompassScene() {
 
 	EditorSceneTree.add_LinkedTree(CompassSceneTree);
 
-	console.log(CompassSceneTree);
-
 	viewport.signal_resized.connect((size) => {
 		viewport.update_mode = ViewportUpdateMode.Once;
 	});
@@ -309,6 +310,64 @@ export function createEditorViewport() {
 	create_CompassScene();
 }
 
-const saver = new ClassSaver();
-saver.dump(geometry);
-console.log(saver.get_Data().expect());
+const Mesh2 = new MeshInstance3D(DefaultConfig);
+Mesh2.geometry = geometry;
+Mesh2.local_scale = vec3(100, 100, 100);
+Mesh2.local_position = vec3(100, 100, 100);
+Mesh2.material = material4;
+const saver = new ClassSaver().save(Mesh2, ClassJsonEncoder, undefined, { spaces: '  ' }).expect();
+console.log(saver);
+
+const lttm = `{
+	"type": "LTTMClassDescriptor",
+	"meta": {
+	  "version": "0.0.1",
+	  "date": "2023-12-30T10:04:41.495Z",
+	  "author": "LookToTheMoon ClassSaver v0.0.1"
+	},
+	"root": 0,
+	"instances": [
+	  {
+		"type": "MeshInstance3D",
+		"refid": 0,
+		"property": {
+		  "block_input": "boolean(false)",
+		  "block_process": "boolean(false)",
+		  "block_physics_process": "boolean(false)",
+		  "top_level": "boolean(false)",
+		  "local_transform": "matrix4(100,0,0,100,0,100,0,100,0,0,100,100,0,0,0,1)",
+		  "local_visible": "boolean(true)",
+		  "visual_layer": "number(4294967295)",
+		  "cast_shadow": "boolean(false)",
+		  "receive_shadow": "boolean(false)",
+		  "geometry": "classref(1)",
+		  "material": "classref(2)"
+		}
+	  },
+	  {
+		"type": "CylinderGeometryResource",
+		"refid": 1,
+		"unique": false,
+		"property": {
+		  "top_radius": "number(0.5)",
+		  "bottom_radius": "number(0.5)",
+		  "height": "number(1)",
+		  "segments": "number(32)"
+		}
+	  },
+	  {
+		"type": "NormalMaterialResource",
+		"refid": 2,
+		"unique": false,
+		"external": "res://test/material.lttm"
+	  }
+	]
+  }`;
+const loader0 = new ClassLoader(DefaultInstanceCache).load(lttm, ClassJsonDecoder, {},).expect() as MeshInstance3D;
+const loader1 = new ClassLoader(DefaultInstanceCache).load(lttm, ClassJsonDecoder, {},).expect() as MeshInstance3D;
+
+loader1.local_position = vec3(-100, 100, 100);
+(loader0.material as NormalMaterialResource).remap = false;
+
+World.add_Child(loader0);
+World.add_Child(loader1);

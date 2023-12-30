@@ -19,10 +19,10 @@ export class Camera3D extends Node3D {
         }
     }
 
-    private _visual_mask: number = 4294967295;
+    private _visual_mask: number = 0xffffffff;
     public get visual_mask() { return this._visual_mask; }
     public set visual_mask(mask: number) {
-        mask = mask & 4294967295;
+        mask = mask & 0xffffffff;
         if (this._visual_mask !== mask) {
             this._visual_mask = mask;
             this.on_VisualMaskChanged();

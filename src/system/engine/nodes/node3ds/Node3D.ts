@@ -1,4 +1,4 @@
-import type { ClassReader, ClassWriter } from "../../classes/ClassWriterReader";
+import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
 import { Vector3, vec3 } from "../../../fivepebble/linear_algebra/Vector3";
 import { Euler, euler } from "../../../fivepebble/linear_algebra/Euler";
 import { Matrix4 } from "../../../fivepebble/linear_algebra/Matrix4";
@@ -50,11 +50,11 @@ export class Node3D extends Node {
     private readonly _local_transform: Matrix4 = Matrix4.make_Identity();
     private is_local_transform_dirty: boolean = false;
 
-    static #basis : Matrix3 = Matrix3.make_Identity();
-    static #vector3 : Vector3 = Vector3.make_Zero();
-    static #matrix4 : Matrix4 = Matrix4.make_Identity();
-    static #basis_rotation : Matrix3 = Matrix3.make_Identity();
-    static #euler : Euler = new Euler();
+    static #basis: Matrix3 = Matrix3.make_Identity();
+    static #vector3: Vector3 = Vector3.make_Zero();
+    static #matrix4: Matrix4 = Matrix4.make_Identity();
+    static #basis_rotation: Matrix3 = Matrix3.make_Identity();
+    static #euler: Euler = new Euler();
 
     public get local_transform(): Matrix4 {
         if (this.is_local_transform_dirty) {

@@ -1,4 +1,4 @@
-import type { ValueDataBase } from "./ClassValueDataBase";
+import type { ValueDatabase } from "./databases/ValueDatabase";
 
 export class ValueObject<T = any> {
     public readonly value: T;
@@ -7,7 +7,7 @@ export class ValueObject<T = any> {
         this.value = value;
     }
 
-    private static stringify(obj: any, value_db: ValueDataBase): string | undefined {
+    private static stringify(obj: any, value_db: ValueDatabase): string | undefined {
         if (obj === undefined) return undefined;
         if (obj === null) return 'null';
         if (value_db.has_ValueSaver(obj)) return JSON.stringify(value_db.save_Value(obj));
@@ -34,20 +34,20 @@ export class ValueObject<T = any> {
         throw new Error(`can not stringify object`);
     }
 
-    private static parse(value: string | any[] | Object, value_db: ValueDataBase): any {
+    private static parse(value: string | any[] | Object, value_db: ValueDatabase): any {
         if (value instanceof Array || value instanceof Object) {
             return value;
         }
         return value_db.load_Value(value as string);
     }
 
-    public static save<V = any>(v: ValueObject<V>, value_db: ValueDataBase) {
+    public static save<V = any>(v: ValueObject<V>, value_db: ValueDatabase) {
         const str = ValueObject.stringify(v.value, value_db);
         if (str === undefined) throw new Error(`can not stringify object`);
         return str;
     }
 
-    public static load<V = any>(v: string, value_db: ValueDataBase): ValueObject<V> {
+    public static load<V = any>(v: string, value_db: ValueDatabase): ValueObject<V> {
         return new ValueObject<V>(JSON.parse(v, (key, value) => ValueObject.parse(value, value_db)));
     }
 }

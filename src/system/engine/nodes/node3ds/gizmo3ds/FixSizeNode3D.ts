@@ -1,6 +1,6 @@
 import { NodeNotification } from "../../Node";
 import { Node3D } from "../Node3D";
-import type { ClassReader, ClassWriter } from "../../../classes/ClassWriterReader";
+import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
 import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { Plane3 } from "@/system/fivepebble/geometries/Plane3";
@@ -10,6 +10,7 @@ export class FixSizeNode3D extends Node3D {
 
     public unit_pixel_count: number = 50;
     public use_active_viewport: boolean = true;
+    public consider_pixel_ratio: boolean = false;
 
     static #plane: Plane3 = new Plane3(vec3(0, 0, 0), 0);
 
@@ -17,8 +18,9 @@ export class FixSizeNode3D extends Node3D {
         const viewport = this.use_active_viewport ? this.get_SceneTree()?.get_ActiveViewports()[0] : this.get_Viewport();
         const camera = viewport?.get_Camera3D()?.get_Camera();
         if (camera === undefined) return;
-        const { y: height } = viewport!.size;
+        let { y: height } = viewport!.size;
         if (height === 0) return;
+        if (this.consider_pixel_ratio) height *= this.config.render_server_3d.pixel_ratio;
         const center_ray = camera.project_Ray(vec2(0, 0), 0);
         const top_ray = camera.project_Ray(vec2(0, 1));
         const center = center_ray.get_Point(1);

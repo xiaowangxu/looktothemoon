@@ -1,4 +1,4 @@
-import type { ClassReader, ClassWriter } from "../../../../classes/ClassWriterReader";
+import type { ClassReader, ClassWriter } from "../../../../classes/saver_loader/ClassWriterReader";
 import { VisualInstance3D } from "../VisualInstance3D";
 
 export abstract class GeometryInstance3D extends VisualInstance3D {

@@ -3,7 +3,7 @@ import { PhysicsInstance3D } from "./PhysicsInstance3D";
 import { type RID } from "../../../Rid";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
 import type { MouseInputEvent } from "../../../inputs/events/mouse_events/MouseInputEvent";
-import type { ClassReader, ClassWriter } from "../../../classes/ClassWriterReader";
+import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
 
 export class PickingArea3D extends PhysicsInstance3D {
     public static readonly class_name: string = "PickingArea3D";
@@ -27,7 +27,7 @@ export class PickingArea3D extends PhysicsInstance3D {
         }
     }
 
-    protected on_PriorityChanged():void {
+    protected on_PriorityChanged(): void {
         if (this.area_rid !== undefined) {
             const picking_world = this.get_Viewport()?.get_World3D()?.get_PickingWorld();
             if (picking_world !== undefined) {
@@ -55,7 +55,7 @@ export class PickingArea3D extends PhysicsInstance3D {
     }
 
     public on_DetectLayerChanged(): void {
-        
+
     }
 
     public _notification(what: NodeNotification): void {
@@ -81,7 +81,7 @@ export class PickingArea3D extends PhysicsInstance3D {
                 }
                 break;
             }
-            case NodeNotification.Dispose:{
+            case NodeNotification.Dispose: {
                 this.signal_mouse_entered.clear();
                 this.signal_mouse_exited.clear();
                 break;
@@ -99,7 +99,7 @@ export class PickingArea3D extends PhysicsInstance3D {
         this._is_mouse_hover = false;
         this.signal_mouse_exited.trigger(event);
     }
-    
+
     // save / load
 
     public dump(writer: ClassWriter): void {

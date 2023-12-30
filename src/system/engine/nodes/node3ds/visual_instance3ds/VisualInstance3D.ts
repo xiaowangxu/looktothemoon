@@ -1,6 +1,6 @@
 import { NodeNotification } from "../../Node";
 import { Node3D } from "../../node3ds/Node3D";
-import type { ClassReader, ClassWriter } from "../../../classes/ClassWriterReader";
+import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
 
 export abstract class VisualInstance3D extends Node3D {
     public static readonly class_name: string = "VisualInstance3D";
@@ -42,7 +42,7 @@ export abstract class VisualInstance3D extends Node3D {
             this.on_RenderQueueChanged();
         }
     }
-    
+
     protected on_RenderQueueChanged() {
         throw new Error('abstract method');
     }

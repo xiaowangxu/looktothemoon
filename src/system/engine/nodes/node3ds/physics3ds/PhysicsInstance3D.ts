@@ -1,5 +1,5 @@
 import { Node3D } from "../Node3D";
-import type { ClassReader, ClassWriter } from "../../../classes/ClassWriterReader";
+import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
 
 export class PhysicsInstance3D extends Node3D {
     public static readonly class_name: string = "PhysicsInstance3D";
@@ -44,7 +44,7 @@ export class PhysicsInstance3D extends Node3D {
     protected on_DetectLayerChanged() {
         throw new Error('abstract method');
     }
-    
+
     // save / load
 
     public dump(writer: ClassWriter): void {

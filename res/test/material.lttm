@@ -1,0 +1,19 @@
+{
+  "type": "LTTMClassDescriptor",
+  "meta": {
+    "version": "0.0.1",
+    "date": "2023-12-30T09:59:25.023Z",
+    "author": "LookToTheMoon ClassSaver v0.0.1"
+  },
+  "root": 0,
+  "instances": [
+    {
+      "type": "NormalMaterialResource",
+      "refid": 0,
+      "unique": false,
+      "property": {
+        "remap": "boolean(true)"
+      }
+    }
+  ]
+}

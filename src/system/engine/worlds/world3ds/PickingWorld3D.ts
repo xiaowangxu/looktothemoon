@@ -14,7 +14,7 @@ export interface PickingShape3D {
 
 class PickingArea extends ConfiguredObject {
     public readonly area: PickingArea3D;
-    public layer: number = 4294967295;
+    public layer: number = 0xffffffff;
     public priority: number = 0;
     public enabled: boolean = true;
 
@@ -52,7 +52,7 @@ export class RayPickingOption {
     constructor(from: Vector3, to: Vector3, mask: number, camera: Camera3D | undefined, viewport: Viewport | undefined, order: PickingOrder = PickingOrder.Ordered, side: PickingSide = PickingSide.Front) {
         this.from = from.clone();
         this.to = to.clone();
-        this.mask = mask & 4294967295;
+        this.mask = mask & 0xffffffff;
         this.camera = camera;
         this.viewport = viewport;
         this.order = order;

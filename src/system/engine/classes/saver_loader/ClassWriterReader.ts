@@ -1,4 +1,4 @@
-import { ClassBase } from "./ClassBase";
+import { ClassBase } from "../databases/ClassBase";
 import type { ClassLoader, ClassSaverScope, RefId } from "./ClassSaverLoader";
 
 export class ClassRef {
@@ -6,14 +6,6 @@ export class ClassRef {
 
     constructor(refid: RefId) {
         this.refid = refid;
-    }
-}
-
-export class ClassExternalPath {
-    public readonly path: string;
-
-    constructor(path: string) {
-        this.path = path;
     }
 }
 
@@ -35,18 +27,6 @@ export class ClassWriter {
         }
     }
 
-    public initialization(key: string, value: any) {
-        if (value === undefined) return this;
-        if (value instanceof ClassBase) {
-            const refid = this.scope.create_Ref(this.base, value);
-            this.scope.add_Initialization(this.base, key, refid);
-        }
-        else {
-            this.scope.add_Initialization(this.base, key, value);
-        }
-        return this;
-    }
-
     public property(key: string, value: any) {
         if (value === undefined) return this;
         if (value instanceof ClassBase) {
@@ -62,16 +42,16 @@ export class ClassWriter {
 
 export class ClassReader {
     private readonly loader: ClassLoader;
-    private readonly property: { [key: string]: any };
+    private readonly property: Map<string, any>;
 
-    constructor(loader: ClassLoader, property: { [key: string]: any }) {
+    constructor(loader: ClassLoader, property: Map<string, any>) {
         this.loader = loader;
         this.property = property;
     }
 
     public get<T>(key: string | ClassRef): T | undefined {
         if (key instanceof ClassRef) return this.loader.get_Instance(key.refid) as T;
-        const data = this.property[key];
+        const data = this.property.get(key);
         if (data === undefined) return undefined;
         if (data instanceof ClassRef) return this.loader.get_Instance(data.refid) as T;
         return data as T;

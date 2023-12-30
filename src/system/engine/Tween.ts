@@ -463,7 +463,7 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
                 this.lerp = PropertyTween.LerpFuncs.Vector4;
             }
             else {
-                throw new Error(`property '${String(this.key)}' is not lerpable`);
+                throw new Error(`<PropertyTween> constructor: property '${String(this.key)}' is not lerpable`);
             }
         }
     }

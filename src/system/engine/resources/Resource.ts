@@ -1,7 +1,7 @@
-import type { RefCounted } from '../../utils/RefCounted';
+import { Ref, type RefCounted } from '../../utils/RefCounted';
 import { SignalEmitter } from '../../utils/SignalEmitter';
 import { ConfiguredObject, type Config } from '../ConfiguredObject';
-import { ClassBase } from '../classes/ClassBase';
+import { ClassBase } from "../classes/databases/ClassBase";
 
 export abstract class ResourceBase extends ClassBase implements RefCounted {
     public static readonly class_name: string = "ResourceBase";
@@ -38,23 +38,29 @@ export abstract class Resource extends ResourceBase {
 }
 
 export class ResourceInstanceCache extends ConfiguredObject {
-    private readonly instance_map: Map<string, Resource> = new Map();
-
-    public get paths() { return [...this.instance_map.keys()]; }
+    private readonly instance_map: Map<string, Ref<ResourceBase>> = new Map();
 
     constructor(config: Config) {
         super(config);
     }
 
-    public add(path: string, instance: Resource) {
-        this.instance_map.set(path, instance);
+    public add(path: string, resource: ResourceBase) {
+        if (this.instance_map.has(path)) {
+            this.instance_map.get(path)!.value = resource;
+        }
+        else {
+            this.instance_map.set(path, new Ref(resource));
+        }
     }
 
-    public get<T extends Resource>(path: string) {
-        return this.instance_map.get(path);
+    public get<T extends ResourceBase>(path: string): T | undefined {
+        return this.instance_map.get(path)?.expect as T | undefined;
     }
 
     public clear() {
+        for (const ref of this.instance_map.values()) {
+            ref.clear();
+        }
         this.instance_map.clear();
     }
 }

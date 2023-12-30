@@ -5,7 +5,7 @@ import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { box3 } from "@/system/fivepebble/geometries/Box3";
 import { Tau } from '@/system/fivepebble/Scalar';
-import type { ClassReader, ClassWriter } from "../../classes/ClassWriterReader";
+import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
 
 export abstract class PrimitiveGeometryResource extends GeometryResource {
 	public abstract build(): void;
@@ -437,7 +437,7 @@ export class CylinderGeometryResource extends PrimitiveGeometryResource {
 
 		const slope = height === 0 ? 0 : ((bottom_radius - top_radius) / height);
 		const normal_length = 1 + slope * slope;
-		
+
 		for (let i = 0; i <= segments; i++) {
 			const t = i / segments * Tau;
 			const x = Math.cos(t);
