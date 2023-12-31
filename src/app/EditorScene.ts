@@ -31,11 +31,13 @@ import { ClassLoader, ClassSaver } from "@/system/engine/classes/saver_loader/Cl
 import { ClassJsonDecoder, ClassJsonEncoder } from "@/system/engine/classes/saver_loader/encoder_decoders/ClassJsonEncoderDecoder";
 import { ClassDecoder } from "@/system/engine/classes/saver_loader/encoder_decoders/ClassEncoderDecoder";
 import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
+import { Renderer3DPipeline } from "@/system/engine/renderer/renderer_3d/Renderer3DPipeline";
 
 const DefaultConfig: Config = {
-	render_server_3d: new RenderServerDevice(document.getElementById('render-server-canvas') as HTMLCanvasElement),
+	render_server: new RenderServerDevice(document.getElementById('render-server-canvas') as HTMLCanvasElement),
 	render_server_size: undefined,
 	render_server_pixel_ratio: undefined,
+	render_3d_pipeline: Renderer3DPipeline,
 	physics_fps: 45,
 }
 const DefaultInstanceCache = new ResourceInstanceCache(DefaultConfig);
@@ -83,14 +85,14 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut(DefaultC
 ]));
 
 // viewport 0
-// const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
-// EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-// const EditorViewport0 = new Viewport(DefaultConfig);
-// EditorViewportContainer0.add_Child(EditorViewport0);
-// const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
-// EditorCamera0.zoom_to_cursor = false;
-// EditorViewport0.add_Child(EditorCamera0);
-// EditorViewport.add_Child(EditorViewportContainer0);
+const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
+EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+const EditorViewport0 = new Viewport(DefaultConfig);
+EditorViewportContainer0.add_Child(EditorViewport0);
+const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
+EditorCamera0.zoom_to_cursor = false;
+EditorViewport0.add_Child(EditorCamera0);
+EditorViewport.add_Child(EditorViewportContainer0);
 
 const geometry = new CylinderGeometryResource(DefaultConfig);
 geometry.build();
@@ -120,7 +122,7 @@ material2.color = color(1, 1, 1, 1);
 material2.cull_face = RenderServerMaterialCullFace.None;
 
 const material3 = new PlainColorMaterialResource(DefaultConfig);
-material3.set_UniformOverride('u_texture', DefaultConfig.render_server_3d.empty_texture);
+material3.set_UniformOverride('u_texture', DefaultConfig.render_server.empty_texture);
 
 const material4 = new NormalMaterialResource(DefaultConfig);
 
@@ -230,11 +232,13 @@ World.add_Child(MeshLine);
 
 function create_CompassScene() {
 	const CompassConfig: Config = {
-		render_server_3d: new RenderServerDevice(document.getElementById('compass-canvas')! as HTMLCanvasElement),
+		render_server: new RenderServerDevice(document.getElementById('compass-canvas')! as HTMLCanvasElement),
 		render_server_size: vec2(50, 50),
 		render_server_pixel_ratio: undefined,
+		render_3d_pipeline: Renderer3DPipeline,
 		render_queue_max_solid_count: 6,
 		render_queue_max_transparent_count: 0,
+		disabled_render_queue1: true,
 		physics_fps: 0
 	}
 
@@ -307,7 +311,7 @@ function create_CompassScene() {
 
 export function createEditorViewport() {
 	EditorSceneTree.start_Loop();
-	create_CompassScene();
+	// create_CompassScene();
 }
 
 const Mesh2 = new MeshInstance3D(DefaultConfig);

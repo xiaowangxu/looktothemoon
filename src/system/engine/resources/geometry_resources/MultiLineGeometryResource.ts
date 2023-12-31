@@ -11,7 +11,7 @@ import { box3 } from "@/system/fivepebble/geometries/Box3";
 import type { Config } from "../../ConfiguredObject";
 
 const PositionAttributeBuffer = new Cacher((config: Config) => {
-    return new RenderDeviceVector3AttributeBuffer(config.render_server_3d, RenderStateBufferUsage.StaticDraw, [
+    return new RenderDeviceVector3AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
         vec3(- 1, 2, 0),
         vec3(1, 2, 0),
         vec3(- 1, 1, 0),
@@ -24,7 +24,7 @@ const PositionAttributeBuffer = new Cacher((config: Config) => {
 });
 
 const UVAttributeBuffer = new Cacher((config: Config) => {
-    return new RenderDeviceVector2AttributeBuffer(config.render_server_3d, RenderStateBufferUsage.StaticDraw, [
+    return new RenderDeviceVector2AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
         vec2(- 1, 2),
         vec2(1, 2),
         vec2(- 1, 1),
@@ -37,7 +37,7 @@ const UVAttributeBuffer = new Cacher((config: Config) => {
 });
 
 const IndexAttributeBuffer = new Cacher((config: Config) => {
-    return new RenderDeviceIndexAttributeBuffer(config.render_server_3d, RenderStateBufferUsage.StaticDraw, [0, 2, 1, 2, 3, 1, 2, 4, 3, 4, 5, 3, 4, 6, 5, 6, 7, 5]);
+    return new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 2, 1, 2, 3, 1, 2, 4, 3, 4, 5, 3, 4, 6, 5, 6, 7, 5]);
 });
 
 export class MultiLineGeometryResource extends GeometryResource {
@@ -47,8 +47,8 @@ export class MultiLineGeometryResource extends GeometryResource {
 
     constructor(config: Config) {
         super(config);
-        this.start_attribute_buffer_ref.value = new RenderDeviceVector3AttributeBuffer(this.render_server_3d, RenderStateBufferUsage.DynamicDraw, [vec3(0, 0, 0), vec3(1, 1, 1)], 1);
-        this.end_attribute_buffer_ref.value = new RenderDeviceVector3AttributeBuffer(this.render_server_3d, RenderStateBufferUsage.DynamicDraw, [vec3(1, 1, 1), vec3(3, 0, 3)], 1);
+        this.start_attribute_buffer_ref.value = new RenderDeviceVector3AttributeBuffer(this.render_server, RenderStateBufferUsage.DynamicDraw, [vec3(0, 0, 0), vec3(1, 1, 1)], 1);
+        this.end_attribute_buffer_ref.value = new RenderDeviceVector3AttributeBuffer(this.render_server, RenderStateBufferUsage.DynamicDraw, [vec3(1, 1, 1), vec3(3, 0, 3)], 1);
         this.geometry.set_Geometry(
             RenderStatePrimitiveType.Triangles,
             {

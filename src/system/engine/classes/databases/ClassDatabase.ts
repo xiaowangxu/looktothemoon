@@ -14,8 +14,8 @@ export class ClassDatabase {
         return this.db.has(name);
     }
 
-    public register_Class(cls: new (config: Config) => ClassBase) {
-        this.db.set((cls as typeof ClassBase).class_name, cls as typeof ClassBase);
+    public register_Class(cls: typeof ClassBase) {
+        this.db.set(cls.class_name, cls);
     }
 
     public instantiate<T extends ClassBase>(config: Config, class_name: string): Result<T, Error> {

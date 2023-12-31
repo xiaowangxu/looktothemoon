@@ -178,12 +178,12 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     }
 
     public update_Material() {
-        const render_server_3d = this.config.render_server_3d;
-        const shader = render_server_3d.create_Shader();
-        const vertex_shader = render_server_3d.render_state.create_Shader(RenderStateShaderType.Vertex, GrabberPlainColorMaterialResource.#vertex_shader).expect();
-        const fragment_prez_shader = render_server_3d.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_prez_shader).expect();
-        const fragment_shade_shader = render_server_3d.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_shade_shader).expect();
-        const fragment_oit_shader = render_server_3d.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_oit_shader).expect();
+        const render_server = this.config.render_server;
+        const shader = render_server.create_Shader();
+        const vertex_shader = render_server.render_state.create_Shader(RenderStateShaderType.Vertex, GrabberPlainColorMaterialResource.#vertex_shader).expect();
+        const fragment_prez_shader = render_server.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_prez_shader).expect();
+        const fragment_shade_shader = render_server.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_shade_shader).expect();
+        const fragment_oit_shader = render_server.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_oit_shader).expect();
         shader.set_Shaders(
             vertex_shader,
             GrabberPlainColorMaterialResource.#vertex_uniforms,

@@ -4,7 +4,7 @@ import type { PickingArea3D } from "./node3ds/physics3ds/PickingArea3D";
 import { SceneTree } from "../SceneTree";
 import { Vector2, vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { SignalEmitter } from "../../utils/SignalEmitter";
-import { Renderer3D } from "../renderer/Renderer3D";
+import { Renderer3D } from "../renderer/renderer_3d/Renderer3D";
 import { World3D } from "../worlds/world3ds/World3D";
 import { PickingOrder, PickingSide, RayPickingOption } from "../worlds/world3ds/PickingWorld3D";
 import { MouseEnterLeaveInputEvent } from "../inputs/events/mouse_events/MouseEnterLeaveInputEvent";
@@ -652,7 +652,7 @@ export class Viewport extends Node {
         this.is_position_changed = false;
         if (this.update_mode === ViewportUpdateMode.Never) return;
         if (this.update_mode === ViewportUpdateMode.OnceNever) {
-            if (!this.config.render_server_3d.flushed && !resized && !moved) return;
+            if (!this.config.render_server.flushed && !resized && !moved) return;
             else this.update_mode = ViewportUpdateMode.Once;
         }
         const once = this.update_mode === ViewportUpdateMode.Once;

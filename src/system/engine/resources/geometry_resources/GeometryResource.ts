@@ -14,11 +14,11 @@ export abstract class GeometryResource extends Resource {
 
     public get geometry() { return this.geometry_ref.expect; }
 
-    public get render_server_3d() { return this.config.render_server_3d; }
+    public get render_server() { return this.config.render_server; }
 
     constructor(config: Config) {
         super(config);
-        this.geometry_ref.value = this.render_server_3d.create_Geometry();
+        this.geometry_ref.value = this.render_server.create_Geometry();
     }
 
     protected dispose(): void {
@@ -35,7 +35,7 @@ export class MultiGeometryResource extends GeometryResource {
     constructor(config: Config) {
         super(config);
         this.geometry.instance_count = 0;
-        this.instance_transform_attribute_buffer_ref.value = new RenderDeviceMatrix4AttributeBuffer(this.render_server_3d, RenderStateBufferUsage.DynamicDraw, undefined, 1);
+        this.instance_transform_attribute_buffer_ref.value = new RenderDeviceMatrix4AttributeBuffer(this.render_server, RenderStateBufferUsage.DynamicDraw, undefined, 1);
     }
 
     public set_OverrideGeometry(geometry: GeometryResource) {

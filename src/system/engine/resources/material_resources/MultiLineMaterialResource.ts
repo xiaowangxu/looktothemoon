@@ -48,7 +48,7 @@ export class MultiLineMaterialResource extends MaterialResource {
     }
     
     void main() {
-        vec2 screen = screen_size * pixel_ratio;
+        vec2 screen = screen_size;
         float aspect = screen.x / screen.y;
     
         mat4 _model_world = model_world;
@@ -108,7 +108,7 @@ export class MultiLineMaterialResource extends MaterialResource {
         }
     
         // adjust for linewidth
-        offset *= u_linewidth;
+        offset *= u_linewidth * pixel_ratio;
     
         // adjust for clip-space to screen-space conversion // maybe resolution should be based on viewport ...
         offset /= screen.y;
@@ -239,11 +239,11 @@ export class MultiLineMaterialResource extends MaterialResource {
     }
 
     public update_Material() {
-        const shader = this.render_server_3d.create_Shader();
-        const vertex_shader = this.render_server_3d.render_state.create_Shader(RenderStateShaderType.Vertex, MultiLineMaterialResource.#vertex_shader).expect();
-        const fragment_prez_shader = this.render_server_3d.render_state.create_Shader(RenderStateShaderType.Fragment, MultiLineMaterialResource.#fragment_prez_shader).expect();
-        const fragment_shade_shader = this.render_server_3d.render_state.create_Shader(RenderStateShaderType.Fragment, MultiLineMaterialResource.#fragment_shade_shader).expect();
-        const fragment_oit_shader = this.render_server_3d.render_state.create_Shader(RenderStateShaderType.Fragment, MultiLineMaterialResource.#fragment_oit_shader).expect();
+        const shader = this.render_server.create_Shader();
+        const vertex_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, MultiLineMaterialResource.#vertex_shader).expect();
+        const fragment_prez_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, MultiLineMaterialResource.#fragment_prez_shader).expect();
+        const fragment_shade_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, MultiLineMaterialResource.#fragment_shade_shader).expect();
+        const fragment_oit_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, MultiLineMaterialResource.#fragment_oit_shader).expect();
         shader.set_Shaders(
             vertex_shader,
             MultiLineMaterialResource.#vertex_uniforms,

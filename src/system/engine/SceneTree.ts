@@ -66,12 +66,12 @@ export class SceneTree extends ConfiguredObject {
         }
         this.root.propagate_InternalBeforeRender(this.delta);
         // render server resize
-        this.config.render_server_3d.set_PixelRatio(this.config.render_server_pixel_ratio ?? window.devicePixelRatio);
+        this.config.render_server.set_PixelRatio(this.config.render_server_pixel_ratio ?? window.devicePixelRatio);
         if (this.config.render_server_size) {
-            this.config.render_server_3d.set_Size(this.config.render_server_size.x, this.config.render_server_size.y);
+            this.config.render_server.set_Size(this.config.render_server_size.x, this.config.render_server_size.y);
         }
         else {
-            this.config.render_server_3d.set_Size(window.innerWidth, window.innerHeight);
+            this.config.render_server.set_Size(window.innerWidth, window.innerHeight);
         }
         const worlds = new Set<World3D>();
         for (const viewport of this.viewports) {

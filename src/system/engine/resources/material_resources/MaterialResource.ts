@@ -16,7 +16,7 @@ export abstract class MaterialResource extends Resource {
 
 	public get material() { return this.material_ref.expect; }
 
-    public get render_server_3d() { return this.config.render_server_3d; }
+	public get render_server() { return this.config.render_server; }
 
 	static empty_uniforms = {}
 
@@ -26,7 +26,7 @@ export abstract class MaterialResource extends Resource {
 
 	constructor(config: Config) {
 		super(config);
-		this.material_ref.value = this.render_server_3d.create_Material();
+		this.material_ref.value = this.render_server.create_Material();
 	}
 
 	public set_UniformOverride(uniform: string, value: WebGL2RenderStateTexture | number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined): void {

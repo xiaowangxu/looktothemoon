@@ -20,7 +20,7 @@ export class FixSizeNode3D extends Node3D {
         if (camera === undefined) return;
         let { y: height } = viewport!.size;
         if (height === 0) return;
-        if (this.consider_pixel_ratio) height *= this.config.render_server_3d.pixel_ratio;
+        if (this.consider_pixel_ratio) height *= this.config.render_server.pixel_ratio;
         const center_ray = camera.project_Ray(vec2(0, 0), 0);
         const top_ray = camera.project_Ray(vec2(0, 1));
         const center = center_ray.get_Point(1);
