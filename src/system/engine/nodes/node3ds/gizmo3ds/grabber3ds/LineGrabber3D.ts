@@ -57,7 +57,7 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
     // private readonly guide_line2: MeshInstance3D = new MeshInstance3D();
     // private readonly guide_material: LineMaterialResource = new LineMaterialResource();
 
-    private _length: number = 0.75;
+    private _length: number = 0.7;
     public get length() { return this._length; }
     public set length(length: number) {
         if (this._length !== length) {
@@ -66,7 +66,7 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
         }
     }
 
-    private _offset_length: number = 0;
+    private _offset_length: number = 0.25;
     public get offset_length() { return this._offset_length; }
     public set offset_length(offset_length: number) {
         if (this._offset_length !== offset_length) {

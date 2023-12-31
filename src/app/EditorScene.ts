@@ -10,7 +10,7 @@ import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { DependencyGraph } from "./singletons/DependencyGraph";
 import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
-import { BoxGeometryResource, CylinderGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
+import { BoxGeometryResource, CylinderGeometryResource, SphereGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
 import { NormalMaterialResource, PlainColorMaterialResource, UVMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { color, color8 } from "@/system/fivepebble/graphics/Color";
 import { OrthographicCamera3D } from "@/system/engine/nodes/camera3ds/OrthographicCamera3D";
@@ -32,6 +32,8 @@ import { ClassJsonDecoder, ClassJsonEncoder } from "@/system/engine/classes/save
 import { ClassDecoder } from "@/system/engine/classes/saver_loader/encoder_decoders/ClassEncoderDecoder";
 import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
 import { Renderer3DPipeline } from "@/system/engine/renderer/renderer_3d/Renderer3DPipeline";
+import { Pi } from "@/system/fivepebble/Scalar";
+import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 
 const DefaultConfig: Config = {
 	render_server: new RenderServerDevice(document.getElementById('render-server-canvas') as HTMLCanvasElement),
@@ -85,16 +87,17 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut(DefaultC
 ]));
 
 // viewport 0
-const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
-EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-const EditorViewport0 = new Viewport(DefaultConfig);
-EditorViewportContainer0.add_Child(EditorViewport0);
-const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
-EditorCamera0.zoom_to_cursor = false;
-EditorViewport0.add_Child(EditorCamera0);
-EditorViewport.add_Child(EditorViewportContainer0);
+// const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
+// EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+// const EditorViewport0 = new Viewport(DefaultConfig);
+// EditorViewportContainer0.add_Child(EditorViewport0);
+// const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
+// EditorCamera0.zoom_to_cursor = false;
+// EditorViewport0.add_Child(EditorCamera0);
+// EditorViewport.add_Child(EditorViewportContainer0);
 
-const geometry = new CylinderGeometryResource(DefaultConfig);
+const geometry = new SphereGeometryResource(DefaultConfig);
+// geometry.theta = Pi / 2;
 geometry.build();
 
 const multi_geometry = new MultiGeometryResource(DefaultConfig);
@@ -106,7 +109,7 @@ multi_geometry.set_InstanceCount(count * count, false, false);
 
 for (let i = 0; i < count; i++) {
 	for (let j = 0; j < count; j++) {
-		multi_geometry.set_InstanceTransform(i * count + j, Matrix4.from_BasisPosition(undefined, vec3(i * 2, j * 2, 0)), false);
+		multi_geometry.set_InstanceTransform(i * count + j, Matrix4.from_BasisPosition(Matrix3.make_Scale(j + 1, j + 1, j + 1), vec3(i * 2, j * 2, 0)), false);
 	}
 }
 
@@ -116,10 +119,10 @@ const geometry2 = new BoxGeometryResource(DefaultConfig);
 geometry2.build();
 
 const material1 = new NormalMaterialResource(DefaultConfig);
+material1.remap = false;
 
 const material2 = new StandardMaterialResource(DefaultConfig);
 material2.color = color(1, 1, 1, 1);
-material2.cull_face = RenderServerMaterialCullFace.None;
 
 const material3 = new PlainColorMaterialResource(DefaultConfig);
 material3.set_UniformOverride('u_texture', DefaultConfig.render_server.empty_texture);
@@ -130,7 +133,7 @@ const Mesh1 = new MeshInstance3D(DefaultConfig);
 Mesh1.geometry = multi_geometry;
 Mesh1.material = material2;
 Mesh1.local_scale = vec3(100, 100, 100);
-Mesh1.local_position = vec3(0, 0, 0);
+Mesh1.local_position = vec3(0, 0, -100);
 Mesh1.local_visible = true;
 
 // Mesh1.set_SurfaceMaterial(2, material3);
@@ -145,6 +148,7 @@ const LineGrabber2 = new LineGrabber3D(DefaultConfig);
 const LineGrabber3 = new LineGrabber3D(DefaultConfig);
 LineGrabber1.color = color8(0x04, 0xa9, 0x73);
 LineGrabber2.local_rotation = euler(0, 0, -Math.PI / 2);
+LineGrabber2.color = color8(0xd8, 0x2d, 0x4e);
 LineGrabber3.color = color8(0x46, 0x6f, 0xd6);
 LineGrabber3.local_rotation = euler(Math.PI / 2);
 World.add_Child(LineGrabber1);
@@ -220,7 +224,7 @@ signal.connect((action) => {
 
 const multi_line_geometry = new MultiLineGeometryResource(DefaultConfig);
 const multi_line_material = new MultiLineMaterialResource(DefaultConfig);
-multi_line_material.color = color8(0xf8, 0x2d, 0x4e);
+multi_line_material.color = color8(0xd8, 0x2d, 0x4e);
 multi_line_material.line_width = 4;
 const MeshLine = new MeshInstance3D(DefaultConfig);
 MeshLine.geometry = multi_line_geometry;
@@ -242,7 +246,7 @@ function create_CompassScene() {
 		physics_fps: 0
 	}
 
-	const red = color8(0xf8, 0x2d, 0x4e);
+	const red = color8(0xd8, 0x2d, 0x4e);
 	const green = color8(0x04, 0xa9, 0x73);
 	const blue = color8(0x46, 0x6f, 0xd6);
 	const neg_color = color8(128, 128, 128, 255);
@@ -311,16 +315,8 @@ function create_CompassScene() {
 
 export function createEditorViewport() {
 	EditorSceneTree.start_Loop();
-	// create_CompassScene();
+	create_CompassScene();
 }
-
-const Mesh2 = new MeshInstance3D(DefaultConfig);
-Mesh2.geometry = geometry;
-Mesh2.local_scale = vec3(100, 100, 100);
-Mesh2.local_position = vec3(100, 100, 100);
-Mesh2.material = material4;
-const saver = new ClassSaver().save(Mesh2, ClassJsonEncoder, undefined, { spaces: '  ' }).expect();
-console.log(saver);
 
 const lttm = `{
 	"type": "LTTMClassDescriptor",
@@ -368,10 +364,7 @@ const lttm = `{
 	]
   }`;
 const loader0 = new ClassLoader(DefaultInstanceCache).load(lttm, ClassJsonDecoder, {},).expect() as MeshInstance3D;
-const loader1 = new ClassLoader(DefaultInstanceCache).load(lttm, ClassJsonDecoder, {},).expect() as MeshInstance3D;
 
-loader1.local_position = vec3(-100, 100, 100);
-(loader0.material as NormalMaterialResource).remap = false;
+loader0.local_position = vec3(-200, 0, 0);
 
 World.add_Child(loader0);
-World.add_Child(loader1);

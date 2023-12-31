@@ -1,10 +1,10 @@
 import { GeometryResource } from "./GeometryResource";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceVector3AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
-import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import { Vector3, vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { Vector2, vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { box3 } from "@/system/fivepebble/geometries/Box3";
-import { Tau } from '@/system/fivepebble/Scalar';
+import { Pi, Tau, clamp } from '@/system/fivepebble/Scalar';
 import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
 
 export abstract class PrimitiveGeometryResource extends GeometryResource {
@@ -195,15 +195,19 @@ export class BoxGeometryResource extends PrimitiveGeometryResource {
 }
 
 export class TorusGeometryResource extends PrimitiveGeometryResource {
-	protected _radius: number = 1;
-	protected _tube_radius: number = 0.25;
+	public static class_name: string = 'TorusGeometryResource';
+
+	protected _radius: number = 0.5;
+	protected _tube_radius: number = 0.125;
 	protected _segments: number = 32;
 	protected _tube_segments: number = 32;
+	protected _theta: number = Tau;
 
 	public get radius() { return this._radius; }
 	public get tube_radius() { return this._tube_radius; }
 	public get segments() { return this._segments; }
 	public get tube_segments() { return this._tube_segments; }
+	public get theta() { return this._theta; }
 
 	public set radius(radius: number) {
 		radius = Math.max(radius, 0);
@@ -229,13 +233,19 @@ export class TorusGeometryResource extends PrimitiveGeometryResource {
 			this._tube_segments = tube_segments;
 		}
 	}
+	public set theta(theta: number) {
+		theta = clamp(theta, 0, Tau);
+		if (this._theta !== theta) {
+			this._theta = theta;
+		}
+	}
 
 	public build() {
 		const radius = this.radius;
 		const tube_radius = this.tube_radius;
 		const segments = this.segments;
 		const tube_segments = this.tube_segments;
-		const arc = Tau;
+		const theta = this.theta;
 
 		const vertex_count = (segments + 1) * (tube_segments + 1);
 
@@ -246,8 +256,8 @@ export class TorusGeometryResource extends PrimitiveGeometryResource {
 		for (let j = 0; j <= segments; j++) {
 			for (let i = 0; i <= tube_segments; i++) {
 				const idx = j * (tube_segments + 1) + i;
-				const u = i / tube_segments * arc;
-				const v = j / segments * Math.PI * 2;
+				const u = i / tube_segments * theta;
+				const v = j / segments * Pi * 2;
 				// vertex
 				const vertex = vec3(
 					(radius + tube_radius * Math.cos(v)) * Math.cos(u),
@@ -315,6 +325,25 @@ export class TorusGeometryResource extends PrimitiveGeometryResource {
 				vec3(outer_radius, outer_radius, tube_radius),
 			)
 		);
+	}
+
+	// save / load
+
+	public dump(writer: ClassWriter): void {
+		writer.property('radius', this.radius);
+		writer.property('tube_radius', this.tube_radius);
+		writer.property('segments', this.segments);
+		writer.property('tube_segments', this.tube_segments);
+		writer.property('theta', this.theta);
+	}
+
+	public load(reader: ClassReader): void {
+		this.radius = reader.get<number>('radius') ?? 0.5;
+		this.tube_radius = reader.get<number>('tube_radius') ?? 0.125;
+		this.segments = reader.get<number>('segments') ?? 32;
+		this.tube_segments = reader.get<number>('tube_segments') ?? 32;
+		this.theta = reader.get<number>('theta') ?? Tau;
+		this.build();
 	}
 }
 
@@ -553,6 +582,154 @@ export class CylinderGeometryResource extends PrimitiveGeometryResource {
 		this.bottom_radius = reader.get<number>('bottom_radius') ?? 0.5;
 		this.height = reader.get<number>('height') ?? 1;
 		this.segments = reader.get<number>('segments') ?? 32;
+		this.build();
+	}
+}
+
+export class SphereGeometryResource extends PrimitiveGeometryResource {
+	public static class_name: string = 'SphereGeometryResource';
+
+	protected _radius: number = 0.5;
+	protected _theta: number = Tau;
+	protected _theta_segments: number = 32;
+	protected _phi: number = Pi;
+	protected _phi_segments: number = 16;
+
+	public get radius() { return this._radius; }
+	public get theta() { return this._theta; }
+	public get theta_segments() { return this._theta_segments; }
+	public get phi() { return this._phi; }
+	public get phi_segments() { return this._phi_segments; }
+
+	public set radius(radius: number) {
+		radius = Math.max(radius, 0);
+		if (this._radius !== radius) {
+			this._radius = radius;
+		}
+	}
+	public set theta(theta: number) {
+		theta = clamp(theta, 0, Tau);
+		if (this._theta !== theta) {
+			this._theta = theta;
+		}
+	}
+	public set theta_segments(theta_segments: number) {
+		theta_segments = Math.max(Math.floor(theta_segments), 3);
+		if (this._theta_segments !== theta_segments) {
+			this._theta_segments = theta_segments;
+		}
+	}
+	public set phi(phi: number) {
+		phi = clamp(phi, 0, Pi);
+		if (this._phi !== phi) {
+			this._phi = phi;
+		}
+	}
+	public set phi_segments(phi_segments: number) {
+		phi_segments = Math.max(Math.floor(phi_segments), 2);
+		if (this._phi_segments !== phi_segments) {
+			this._phi_segments = phi_segments;
+		}
+	}
+
+	public build(): void {
+		const radius = this.radius;
+		const theta = this.theta;
+		const theta_segments = this.theta_segments;
+		const phi = this.phi;
+		const phi_segments = this.phi_segments;
+
+		const vertex_count = (theta_segments + 1) * (phi_segments + 1);
+
+		const position_buffer = new RenderDeviceVector3AttributeBuffer(this.render_server, RenderStateBufferUsage.StaticDraw, vertex_count);
+		const normal_buffer = new RenderDeviceVector3AttributeBuffer(this.render_server, RenderStateBufferUsage.StaticDraw, vertex_count);
+		const uv_buffer = new RenderDeviceVector2AttributeBuffer(this.render_server, RenderStateBufferUsage.StaticDraw, vertex_count);
+
+		for (let iy = 0; iy <= phi_segments; iy++) {
+			const v = iy / phi_segments;
+			for (let ix = 0; ix <= theta_segments; ix++) {
+				const u = ix / theta_segments;
+				const idx = iy * (theta_segments + 1) + ix;
+				const vec3_idx = idx * 3;
+				const vec2_idx = idx * 2;
+				// vertex
+				const x = Math.cos(u * theta) * Math.sin(v * phi);
+				const y = Math.cos(v * phi);
+				const z = Math.sin(u * theta) * Math.sin(v * phi);
+				position_buffer.data[vec3_idx + 0] = x * -radius;
+				position_buffer.data[vec3_idx + 1] = y * radius;
+				position_buffer.data[vec3_idx + 2] = z * radius;
+				// normal
+				normal_buffer.data[vec3_idx + 0] = -x;
+				normal_buffer.data[vec3_idx + 1] = y;
+				normal_buffer.data[vec3_idx + 2] = z;
+				// uv
+				uv_buffer.data[vec2_idx + 0] = u;
+				uv_buffer.data[vec2_idx + 1] = 1 - v;
+			}
+		}
+
+		position_buffer.commit_Data();
+		normal_buffer.commit_Data();
+		uv_buffer.commit_Data();
+
+		const index_buffer = new RenderDeviceIndexAttributeBuffer(this.render_server, RenderStateBufferUsage.StaticDraw, (theta_segments * phi_segments - 1) * 6);
+
+		let i = 0;
+		for (let iy = 0; iy < phi_segments; iy++) {
+			for (let ix = 0; ix < theta_segments; ix++) {
+				const idx = ix + 1 + iy * (theta_segments + 1);
+				const a = idx;
+				const b = idx - 1;
+				const c = a + theta_segments;
+				const d = c + 1;
+				if (iy !== 0) {
+					index_buffer.data[i++] = a;
+					index_buffer.data[i++] = b;
+					index_buffer.data[i++] = d;
+				}
+				if (iy !== phi_segments - 1) {
+					index_buffer.data[i++] = d;
+					index_buffer.data[i++] = b;
+					index_buffer.data[i++] = c;
+				}
+			}
+		}
+
+		index_buffer.commit_Data();
+
+		this.geometry.set_Geometry(
+			RenderStatePrimitiveType.Triangles,
+			{
+				position: position_buffer,
+				normal: normal_buffer,
+				uv: uv_buffer,
+			},
+			index_buffer,
+			index_buffer.item_count,
+			box3(
+				vec3(-radius, -radius, -radius),
+				vec3(radius, radius, radius),
+			)
+		);
+	}
+
+	// save / load
+
+	public dump(writer: ClassWriter): void {
+		writer.property('radius', this.radius);
+		writer.property('theta', this.theta);
+		writer.property('theta_segments', this.theta_segments);
+		writer.property('phi', this.phi);
+		writer.property('phi_segments', this.phi_segments);
+	}
+
+	public load(reader: ClassReader): void {
+		this.radius = reader.get<number>('radius') ?? 0.5;
+		this.theta = reader.get<number>('theta') ?? Tau;
+		this.theta_segments = reader.get<number>('theta_segments') ?? 32;
+		this.phi = reader.get<number>('phi') ?? Pi;
+		this.phi_segments = reader.get<number>('phi_segments') ?? 16;
 		this.build();
 	}
 }

@@ -1,4 +1,5 @@
 export const Epsilon = 1e-10;
+export const Pi = Math.PI;
 export const Tau = Math.PI * 2;
 export const Deg2Rad = Math.PI / 180;
 export const Rad2Ded = 180 / Math.PI;
