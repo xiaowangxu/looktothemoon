@@ -18,23 +18,18 @@ export class ClassWriter {
         this.base = base;
     }
 
-    public ref(obj: ClassBase, deps: boolean = true) {
-        if (deps) {
-            return this.scope.create_Ref(this.base, obj);
-        }
-        else {
-            return this.scope.add_Ref(obj);
-        }
+    public ref(obj: ClassBase) {
+        return this.scope.add_InstanceRef(obj);
     }
 
     public property(key: string, value: any) {
         if (value === undefined) return this;
         if (value instanceof ClassBase) {
-            const refid = this.scope.add_Ref(value);
-            this.scope.add_Property(this.base, key, refid);
+            const refid = this.scope.add_InstanceRef(value);
+            this.scope.add_InstanceProperty(this.base, key, refid);
         }
         else {
-            this.scope.add_Property(this.base, key, value);
+            this.scope.add_InstanceProperty(this.base, key, value);
         }
         return this;
     }

@@ -10,16 +10,12 @@ import type { Color } from "@/system/fivepebble/graphics/Color";
 import { Epsilon } from "@/system/fivepebble/Scalar";
 import type { Config } from "../../ConfiguredObject";
 import type { ClassWriter, ClassReader } from "../../classes/saver_loader/ClassWriterReader";
+import { Cacher } from "@/system/utils/Cacher";
+import type { TextureResource } from "../texture_resources/TextureResource";
+import { Ref } from "@/system/utils/RefCounted";
 
-export class PlainColorMaterialResource extends MaterialResource {
-
-    static #uniforms: MaterialReadOnlyUniforms = {
-        model_world: RenderStateUniformType.Mat4,
-        u_color: RenderStateUniformType.Vec4,
-        u_texture: RenderStateUniformType.Tex2D,
-    };
-
-    static #vertex_shader = `#version 300 es
+const PrimitiveVertexShader = new Cacher((config: Config) => {
+    const code = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -44,9 +40,21 @@ export class PlainColorMaterialResource extends MaterialResource {
         v_uv = a_uv;
         v_world = world.xyz;
     }`;
-    static #vertex_uniforms: UniformInitSet<WebGL2RenderState> = {
-        model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.make_Identity() },
+    return config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect();
+});
+
+const PrimitiveVertexShaderUniforms: UniformInitSet<WebGL2RenderState> = {
+    model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.make_Identity() },
+};
+
+export class PlainColorMaterialResource extends MaterialResource {
+
+    static #uniforms: MaterialReadOnlyUniforms = {
+        model_world: RenderStateUniformType.Mat4,
+        u_color: RenderStateUniformType.Vec4,
+        u_texture: RenderStateUniformType.Tex2D,
     };
+
     static #fragment_prez_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
@@ -126,20 +134,30 @@ export class PlainColorMaterialResource extends MaterialResource {
         }
     }
 
+    private _texture: Ref<TextureResource> = new Ref();
+    public get texture() { return this._texture.value; }
+    public set texture(texture: TextureResource | undefined) {
+        if (this._texture.value !== texture) {
+            this._texture.value = texture;
+            this.set_UniformOverride('u_texture', this._texture.value?.texture);
+        }
+    }
+
     constructor(config: Config) {
         super(config);
+        this.material_ref.value = this.render_server.create_Material();
         this.update_Material();
     }
 
     public update_Material() {
         const shader = this.render_server.create_Shader();
-        const vertex_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, PlainColorMaterialResource.#vertex_shader).expect();
+        const vertex_shader = PrimitiveVertexShader.get(this.config);
         const fragment_prez_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_prez_shader).expect();
         const fragment_shade_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_shade_shader).expect();
         const fragment_oit_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_oit_shader).expect();
         shader.set_Shaders(
             vertex_shader,
-            PlainColorMaterialResource.#vertex_uniforms,
+            PrimitiveVertexShaderUniforms,
             {
                 prez: {
                     shader: fragment_prez_shader,
@@ -158,6 +176,11 @@ export class PlainColorMaterialResource extends MaterialResource {
         this.material.set_Material(shader, PlainColorMaterialResource.#uniforms);
         this.material.is_transparent = false;
     }
+
+    protected dispose(): void {
+        this._texture.clear();
+        super.dispose();
+    }
 }
 
 export class NormalMaterialResource extends MaterialResource {
@@ -168,32 +191,6 @@ export class NormalMaterialResource extends MaterialResource {
         u_remap: RenderStateUniformType.Int,
     };
 
-    static #vertex_shader = `#version 300 es
-    precision highp float;
-    precision highp usampler2DArray;
-    precision highp sampler3D;
-    
-    ${RenderServerDevice.ConstantsCode}
-    
-    ${RenderServerDevice.WorldUniformsCode}
-    
-    ${RenderServerGeometry.GeometryAttributesCode}
-    
-    uniform mat4 model_world;
-    
-    out vec3 v_world;
-    out vec3 v_normal;
-    
-    void main() {
-        mat4 _model_world = model_world * a_instance_transform;
-        vec4 world = _model_world * vec4(a_position, 1.0);
-        gl_Position = camera_projection * inverse(camera_world) * world;
-        v_normal = normalize(mat3(transpose(inverse(_model_world))) * a_normal);
-        v_world = world.xyz;
-    }`;
-    static #vertex_uniforms: UniformInitSet<WebGL2RenderState> = {
-        model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.make_Identity() },
-    };
     static #fragment_prez_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
@@ -247,17 +244,18 @@ export class NormalMaterialResource extends MaterialResource {
 
     constructor(config: Config) {
         super(config);
+        this.material_ref.value = this.render_server.create_Material();
         this.update_Material();
     }
 
     public update_Material() {
         const shader = this.render_server.create_Shader();
-        const vertex_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, NormalMaterialResource.#vertex_shader).expect();
+        const vertex_shader = PrimitiveVertexShader.get(this.config);
         const fragment_prez_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, NormalMaterialResource.#fragment_prez_shader).expect();
         const fragment_shade_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, NormalMaterialResource.#fragment_shade_shader).expect();
         shader.set_Shaders(
             vertex_shader,
-            NormalMaterialResource.#vertex_uniforms,
+            PrimitiveVertexShaderUniforms,
             {
                 prez: {
                     shader: fragment_prez_shader,
@@ -290,34 +288,6 @@ export class UVMaterialResource extends MaterialResource {
         model_world: RenderStateUniformType.Mat4,
     };
 
-    static #vertex_shader = `#version 300 es
-    precision highp float;
-    precision highp usampler2DArray;
-    precision highp sampler3D;
-    
-    ${RenderServerDevice.ConstantsCode}
-
-    ${RenderServerDevice.WorldUniformsCode}
-    
-    ${RenderServerGeometry.GeometryAttributesCode}
-    
-    uniform mat4 model_world;
-    
-    out vec3 v_world;
-    out vec3 v_normal;
-    out vec2 v_uv;
-    
-    void main() {
-        mat4 _model_world = model_world * a_instance_transform;
-        vec4 world = _model_world * vec4(a_position, 1.0);
-        gl_Position = camera_projection * inverse(camera_world) * world;
-        v_normal = normalize(mat3(transpose(inverse(_model_world))) * a_normal);
-        v_uv = a_uv;
-        v_world = world.xyz;
-    }`;
-    static #vertex_uniforms: UniformInitSet<WebGL2RenderState> = {
-        model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.make_Identity() },
-    };
     static #fragment_prez_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
@@ -358,17 +328,18 @@ export class UVMaterialResource extends MaterialResource {
 
     constructor(config: Config) {
         super(config);
+        this.material_ref.value = this.render_server.create_Material();
         this.update_Material();
     }
 
     public update_Material() {
         const shader = this.render_server.create_Shader();
-        const vertex_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, UVMaterialResource.#vertex_shader).expect();
+        const vertex_shader = PrimitiveVertexShader.get(this.config);
         const fragment_prez_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, UVMaterialResource.#fragment_prez_shader).expect();
         const fragment_shade_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, UVMaterialResource.#fragment_shade_shader).expect();
         shader.set_Shaders(
             vertex_shader,
-            UVMaterialResource.#vertex_uniforms,
+            PrimitiveVertexShaderUniforms,
             {
                 prez: {
                     shader: fragment_prez_shader,
@@ -393,34 +364,6 @@ export class StandardMaterialResource extends MaterialResource {
         u_color: RenderStateUniformType.Vec4,
     };
 
-    static #vertex_shader = `#version 300 es
-    precision highp float;
-    precision highp usampler2DArray;
-    precision highp sampler3D;
-    
-    ${RenderServerDevice.ConstantsCode}
-    
-    ${RenderServerDevice.WorldUniformsCode}
-    
-    ${RenderServerGeometry.GeometryAttributesCode}
-    
-    uniform mat4 model_world;
-    
-    out vec3 v_world;
-    out vec3 v_normal;
-    out vec2 v_uv;
-    
-    void main() {
-        mat4 _model_world = model_world * a_instance_transform;
-        vec4 world = _model_world * vec4(a_position, 1.0);
-        gl_Position = camera_projection * camera_view * world;
-        v_normal = normalize(mat3(transpose(inverse(_model_world))) * a_normal);
-        v_uv = a_uv;
-        v_world = world.xyz;
-    }`;
-    static #vertex_uniforms: UniformInitSet<WebGL2RenderState> = {
-        model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.make_Identity() },
-    };
     static #fragment_prez_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
@@ -734,18 +677,19 @@ export class StandardMaterialResource extends MaterialResource {
 
     constructor(config: Config) {
         super(config);
+        this.material_ref.value = this.render_server.create_Material();
         this.update_Material();
     }
 
     public update_Material() {
         const shader = this.render_server.create_Shader();
-        const vertex_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, StandardMaterialResource.#vertex_shader).expect();
+        const vertex_shader = PrimitiveVertexShader.get(this.config);
         const fragment_prez_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, StandardMaterialResource.#fragment_prez_shader).expect();
         const fragment_shade_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, StandardMaterialResource.#fragment_shade_shader).expect();
         const fragment_oit_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, StandardMaterialResource.#fragment_oit_shader).expect();
         shader.set_Shaders(
             vertex_shader,
-            StandardMaterialResource.#vertex_uniforms,
+            PrimitiveVertexShaderUniforms,
             {
                 prez: {
                     shader: fragment_prez_shader,

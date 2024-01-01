@@ -174,6 +174,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
 
     constructor(config: Config) {
         super(config);
+        this.material_ref.value = this.render_server.create_Material();
         this.update_Material();
     }
 

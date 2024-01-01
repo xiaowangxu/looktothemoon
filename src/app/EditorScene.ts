@@ -10,7 +10,7 @@ import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { DependencyGraph } from "./singletons/DependencyGraph";
 import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
-import { BoxGeometryResource, CylinderGeometryResource, SphereGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
+import { BoxGeometryResource, CylinderGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
 import { NormalMaterialResource, PlainColorMaterialResource, UVMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { color, color8 } from "@/system/fivepebble/graphics/Color";
 import { OrthographicCamera3D } from "@/system/engine/nodes/camera3ds/OrthographicCamera3D";
@@ -34,6 +34,8 @@ import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
 import { Renderer3DPipeline } from "@/system/engine/renderer/renderer_3d/Renderer3DPipeline";
 import { Pi } from "@/system/fivepebble/Scalar";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import { ImageTextureResource, PlaceholderTextureResource } from "@/system/engine/resources/texture_resources/TextureResource";
+import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
 
 const DefaultConfig: Config = {
 	render_server: new RenderServerDevice(document.getElementById('render-server-canvas') as HTMLCanvasElement),
@@ -96,7 +98,7 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut(DefaultC
 // EditorViewport0.add_Child(EditorCamera0);
 // EditorViewport.add_Child(EditorViewportContainer0);
 
-const geometry = new SphereGeometryResource(DefaultConfig);
+const geometry = new BoxGeometryResource(DefaultConfig);
 // geometry.theta = Pi / 2;
 geometry.build();
 
@@ -125,13 +127,20 @@ const material2 = new StandardMaterialResource(DefaultConfig);
 material2.color = color(1, 1, 1, 1);
 
 const material3 = new PlainColorMaterialResource(DefaultConfig);
-material3.set_UniformOverride('u_texture', DefaultConfig.render_server.empty_texture);
+material3.texture = new ImageTextureResource(DefaultConfig);
+
+import url from 'res://image.png';
+{
+	new ImageLoader().parse(url).then(res => {
+		(material3.texture as ImageTextureResource).set_Image(res.expect());
+	});
+}
 
 const material4 = new NormalMaterialResource(DefaultConfig);
 
 const Mesh1 = new MeshInstance3D(DefaultConfig);
 Mesh1.geometry = multi_geometry;
-Mesh1.material = material2;
+Mesh1.material = material3;
 Mesh1.local_scale = vec3(100, 100, 100);
 Mesh1.local_position = vec3(0, 0, -100);
 Mesh1.local_visible = true;
@@ -179,6 +188,7 @@ World.add_Child(LineGrabber3);
 
 EditorViewport.signal_input.connect((evt, pro) => {
 	if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
+		Mesh1.queue_Free();
 		// EditorViewportContainer0.queue_Free();
 		// EditorSceneTree.start_Tween(
 		// 	new PropertyMethodTween<Color>(
@@ -318,6 +328,14 @@ export function createEditorViewport() {
 	create_CompassScene();
 }
 
+const Mesh2 = new MeshInstance3D(DefaultConfig);
+Mesh2.geometry = geometry;
+Mesh2.local_scale = vec3(100, 100, 100);
+Mesh2.local_position = vec3(100, 100, 100);
+Mesh2.material = material4;
+const saver = new ClassSaver().save(Mesh2, ClassJsonEncoder, undefined, { spaces: '  ' }).expect();
+console.log(saver);
+
 const lttm = `{
 	"type": "LTTMClassDescriptor",
 	"meta": {
@@ -327,6 +345,23 @@ const lttm = `{
 	},
 	"root": 0,
 	"instances": [
+	  {
+		"type": "NormalMaterialResource",
+		"refid": 2,
+		"unique": false,
+		"external": "res://test/material.lttm"
+	  },
+	  {
+		"type": "CylinderGeometryResource",
+		"refid": 1,
+		"unique": false,
+		"property": {
+		  "top_radius": "number(0.5)",
+		  "bottom_radius": "number(0.5)",
+		  "height": "number(1)",
+		  "segments": "number(32)"
+		}
+	  },
 	  {
 		"type": "MeshInstance3D",
 		"refid": 0,
@@ -343,23 +378,6 @@ const lttm = `{
 		  "geometry": "classref(1)",
 		  "material": "classref(2)"
 		}
-	  },
-	  {
-		"type": "CylinderGeometryResource",
-		"refid": 1,
-		"unique": false,
-		"property": {
-		  "top_radius": "number(0.5)",
-		  "bottom_radius": "number(0.5)",
-		  "height": "number(1)",
-		  "segments": "number(32)"
-		}
-	  },
-	  {
-		"type": "NormalMaterialResource",
-		"refid": 2,
-		"unique": false,
-		"external": "res://test/material.lttm"
 	  }
 	]
   }`;

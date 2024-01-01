@@ -10,7 +10,7 @@ import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Config } from "../../ConfiguredObject";
 
 export abstract class GeometryResource extends Resource {
-    private readonly geometry_ref: Ref<RenderServerGeometry> = new Ref();
+    protected readonly geometry_ref: Ref<RenderServerGeometry> = new Ref();
 
     public get geometry() { return this.geometry_ref.expect; }
 
@@ -18,22 +18,22 @@ export abstract class GeometryResource extends Resource {
 
     constructor(config: Config) {
         super(config);
-        this.geometry_ref.value = this.render_server.create_Geometry();
     }
 
     protected dispose(): void {
+        console.log(">>> dispose <GeometryResource>", this.rid);
         this.geometry_ref.clear();
     }
 }
 
 export class MultiGeometryResource extends GeometryResource {
-
     private readonly _bbox: Box3 = new Box3();
 
     private readonly instance_transform_attribute_buffer_ref: Ref<RenderDeviceMatrix4AttributeBuffer<WebGL2RenderState, WebGL2RenderStateBuffer>> = new Ref();
 
     constructor(config: Config) {
         super(config);
+        this.geometry_ref.value = this.render_server.create_Geometry();
         this.geometry.instance_count = 0;
         this.instance_transform_attribute_buffer_ref.value = new RenderDeviceMatrix4AttributeBuffer(this.render_server, RenderStateBufferUsage.DynamicDraw, undefined, 1);
     }
@@ -83,6 +83,7 @@ export class MultiGeometryResource extends GeometryResource {
     }
 
     protected dispose(): void {
+        console.log(">>> dispose <MultiGeometryResource>", this.rid);
         this.instance_transform_attribute_buffer_ref.clear();
         super.dispose();
     }

@@ -1,5 +1,4 @@
 import { Result } from "@/system/utils/Result";
-import { ImageResource } from "../resources/resources/ImageResource";
 
 export class ImageLoader {
     private readonly canvas: HTMLCanvasElement = document.createElement('canvas');
@@ -21,7 +20,7 @@ export class ImageLoader {
         return this.ctx.getImageData(0, 0, w, h);
     }
 
-    public async parse(url: string): Promise<Result<ImageResource, Error>> {
+    public async parse(url: string): Promise<Result<ImageData, Error>> {
         try {
             const image = await new Promise((resolve: (img: HTMLImageElement) => void, reject) => {
                 const img = new Image();
@@ -30,9 +29,10 @@ export class ImageLoader {
                 img.onerror = () => reject();
             });
             const image_data = this.get_ImageData(image);
-            return Result.Ok(new ImageResource(image_data));
+            return Result.Ok(image_data);
         }
         catch (err) {
+            console.log(err);
             return Result.Error(new Error('fail to load image'));
         }
     }

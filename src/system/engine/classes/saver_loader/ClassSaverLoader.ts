@@ -29,7 +29,6 @@ export type ClassInstanceData = {
 
 export type ClassExchangeData = { root: RefId, instances: ClassInstanceData[] };
 
-
 // #region Saver
 
 export interface ClassSaverOption {
@@ -42,7 +41,6 @@ export class ClassSaverScope {
     private _refid: number = 0;
     private get refid() { return this._refid++; }
 
-    private readonly graph: IncTopoGraph<RID> = new IncTopoGraph();
     private readonly rid_instance_data_map: Map<RID, ClassInstanceData> = new Map();
 
     private _root_refid: RefId | undefined
@@ -55,47 +53,24 @@ export class ClassSaverScope {
         this.class_db = class_db;
     }
 
-    private can_SaveExternal(obj: ClassBase, is_root: boolean) {
-        return !this.static_mode && !is_root && obj instanceof ResourceBase && obj.is_external;
-    }
+    // data api
 
-    private create_Instance(obj: ClassBase, is_root: boolean = false): Result<RefId, Error> {
-        const class_name = (obj.constructor as typeof ClassBase).class_name;
-        if (!this.class_db.has_Class(class_name)) return Result.Error(new Error(`<ClassSaverScope> create_Instance: instance class ${class_name} is not registered`));
-        const rid = obj.rid;
+    public create_Data(rid: RefId, type: string, unique: boolean | undefined = undefined, external: string | undefined = undefined): Result<RefId, Error> {
         if (this.rid_instance_data_map.has(rid)) return Result.Ok(this.rid_instance_data_map.get(rid)!.refid);
         else {
             const refid = this.refid;
             this.rid_instance_data_map.set(rid, {
                 refid,
-                type: class_name,
-                unique: obj instanceof ResourceBase ? obj.unique : undefined,
-                external: this.can_SaveExternal(obj, is_root) ? (obj as ResourceBase).path : undefined,
+                type,
+                unique,
+                external,
                 property: new Map(),
             });
-            this.graph.add(rid);
             return Result.Ok(refid);
         }
     }
 
-    private make_Ref(base: ClassBase, obj: ClassBase): boolean {
-        const base_rid = base.rid;
-        const obj_rid = obj.rid;
-        if (this.graph.has(base_rid) && this.graph.has(obj_rid)) {
-            const result = this.graph.ref(base_rid, obj_rid);
-            if (result === IncTopoGraphResult.Ok) {
-                return true;
-            }
-            else if (result === IncTopoGraphResult.Existed) {
-                return true;
-            }
-            return false;
-        }
-        return true;
-    }
-
-    public add_Property(base: ClassBase, key: string, value: any) {
-        const rid = base.rid;
+    public add_Property(rid: RefId, key: string, value: any) {
         if (this.rid_instance_data_map.has(rid)) {
             const data = this.rid_instance_data_map.get(rid)!;
             if (data.property === undefined) data.property = new Map<string, any>();
@@ -106,7 +81,33 @@ export class ClassSaverScope {
         }
     }
 
-    public add_Ref(obj: ClassBase): ClassRef {
+    public get_Data() {
+        return [...this.rid_instance_data_map.values()];
+    }
+
+    // instance api
+
+    private can_SaveExternal(obj: ClassBase, is_root: boolean) {
+        return !this.static_mode && !is_root && obj instanceof ResourceBase && obj.is_external;
+    }
+
+    private create_Instance(obj: ClassBase, is_root: boolean = false): Result<RefId, Error> {
+        const class_name = (obj.constructor as typeof ClassBase).class_name;
+        if (!this.class_db.has_Class(class_name)) return Result.Error(new Error(`<ClassSaverScope> create_Instance: instance class ${class_name} is not registered`));
+        const rid = obj.rid;
+        return this.create_Data(
+            rid,
+            class_name,
+            obj instanceof ResourceBase ? obj.unique : undefined,
+            this.can_SaveExternal(obj, is_root) ? (obj as ResourceBase).path : undefined,
+        );
+    }
+
+    public add_InstanceProperty(base: ClassBase, key: string, value: any) {
+        this.add_Property(base.rid, key, value);
+    }
+
+    public add_InstanceRef(obj: ClassBase): ClassRef {
         const obj_rid = obj.rid;
         if (!this.rid_instance_data_map.has(obj_rid)) {
             const refid_res = this.create_Instance(obj);
@@ -119,24 +120,6 @@ export class ClassSaverScope {
         }
     }
 
-    public create_Ref(base: ClassBase, obj: ClassBase): ClassRef {
-        const base_rid = base.rid;
-        const obj_rid = obj.rid;
-        if (!this.rid_instance_data_map.has(base_rid)) throw new Error('<ClassSaverScope> create_Ref: can not make reference because base instance does not exist');
-        let refid: RefId;
-        if (!this.rid_instance_data_map.has(obj_rid)) {
-            const refid_res = this.create_Instance(obj);
-            if (refid_res.failed) throw refid_res.expect_Error();
-            refid = refid_res.expect();
-            this.dump_Instance(obj);
-        }
-        else {
-            refid = this.rid_instance_data_map.get(obj_rid)!.refid;
-        }
-        if (!this.make_Ref(base, obj)) throw new Error(`<ClassSaverScope> create_Ref: cyclic reference detected when referencing ${(base.constructor as typeof ClassBase).class_name}(${base.rid}) to ${(obj.constructor as typeof ClassBase).class_name}(${obj.rid})`);
-        return new ClassRef(refid);
-    }
-
     private dump_Instance(obj: ClassBase, is_root: boolean = false) {
         if (this.can_SaveExternal(obj, is_root)) return;
         obj.dump(new ClassWriter(this, obj));
@@ -145,17 +128,12 @@ export class ClassSaverScope {
     public dump(obj: ClassBase, option?: ClassSaverOption): Result<undefined, Error> {
         this.static_mode = option?.static ?? false;
         this._refid = 0;
-        this.graph.clear();
         this.rid_instance_data_map.clear();
         const refid_res = this.create_Instance(obj, true);
         if (refid_res.failed) return Result.Error(refid_res.expect_Error());
         this._root_refid = refid_res.expect();
         this.dump_Instance(obj, true);
         return Result.Ok(undefined);
-    }
-
-    public get_SortedInstanceData() {
-        return this.graph.sorted.map(rid => this.rid_instance_data_map.get(rid.item)!);
     }
 }
 
@@ -184,7 +162,7 @@ export class ClassSaver {
         if (root_refid === undefined) return Result.Error(new Error('<ClassSaver> get_Data: no root instance to be saved'));
         return Result.Ok({
             root: root_refid,
-            instances: this.scope.get_SortedInstanceData(),
+            instances: this.scope.get_Data(),
         });
     }
 

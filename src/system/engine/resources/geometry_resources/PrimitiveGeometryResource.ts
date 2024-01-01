@@ -6,8 +6,14 @@ import { Vector2, vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { box3 } from "@/system/fivepebble/geometries/Box3";
 import { Pi, Tau, clamp } from '@/system/fivepebble/Scalar';
 import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
+import type { Config } from "../../ConfiguredObject";
 
 export abstract class PrimitiveGeometryResource extends GeometryResource {
+	constructor(config: Config) {
+		super(config);
+		this.geometry_ref.value = this.render_server.create_Geometry();
+	}
+
 	public abstract build(): void;
 }
 

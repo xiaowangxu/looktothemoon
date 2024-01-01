@@ -12,7 +12,7 @@ import type { Config } from "../../ConfiguredObject";
 export type MaterialReadOnlyUniforms = Readonly<RenderServerMaterialUniforms>;
 
 export abstract class MaterialResource extends Resource {
-	private readonly material_ref: Ref<RenderServerMaterial> = new Ref();
+	protected readonly material_ref: Ref<RenderServerMaterial> = new Ref();
 
 	public get material() { return this.material_ref.expect; }
 
@@ -26,7 +26,6 @@ export abstract class MaterialResource extends Resource {
 
 	constructor(config: Config) {
 		super(config);
-		this.material_ref.value = this.render_server.create_Material();
 	}
 
 	public set_UniformOverride(uniform: string, value: WebGL2RenderStateTexture | number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined): void {
@@ -40,10 +39,14 @@ export abstract class MaterialResource extends Resource {
 }
 
 export class MaterialOverrideResource extends MaterialResource {
-
 	private _uniforms: RenderServerMaterialUniforms | undefined;
 
 	public get uniforms(): MaterialReadOnlyUniforms { return this._uniforms ?? MaterialResource.empty_uniforms; }
+
+	constructor(config: Config) {
+		super(config);
+		this.material_ref.value = this.render_server.create_Material();
+	}
 
 	public set_OverrideMaterial(material: MaterialResource) {
 		if (!material.material.has_shader) throw new Error('<MaterialOverrideResource> set_OverrideMaterial: base material does not have a shader, maybe it is not properly initialized');
