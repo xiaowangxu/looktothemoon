@@ -356,15 +356,15 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.alloc_Transparent();
     }
 
-    private quad_geometry: Ref<RenderServerGeometry> = new Ref(QuadGeometry.get(this.config));
+    private quad_geometry = QuadGeometry.get(this.config);
 
-    private screen_quad_solid_program: Ref<WebGL2RenderStateProgram> = new Ref(OnscreenProgramUniform.get(this.config).onscreen_program);
-    private screen_quad_solid_colormap_uniform_slot: Ref<WebGL2RenderStateUintUniformSlot> = new Ref(OnscreenProgramUniform.get(this.config).uniform_colormap_slot);
+    private screen_quad_solid_program = OnscreenProgramUniform.get(this.config).onscreen_program;
+    private screen_quad_solid_colormap_uniform_slot = OnscreenProgramUniform.get(this.config).uniform_colormap_slot;
 
-    private oit_screen_quad_solid_program: Ref<WebGL2RenderStateProgram> = new Ref(OiTPorgramUniform.get(this.config).oit_program);
-    private oit_screen_quad_solid_colormap_uniform_slot: Ref<WebGL2RenderStateUintUniformSlot> = new Ref(OiTPorgramUniform.get(this.config).uniform_oit_colormap_slot);
+    private oit_screen_quad_solid_program = OiTPorgramUniform.get(this.config).oit_program;
+    private oit_screen_quad_solid_colormap_uniform_slot = OiTPorgramUniform.get(this.config).uniform_oit_colormap_slot;
 
-    private sky_quad_solid_program: Ref<WebGL2RenderStateProgram> = new Ref(SkyDomeProgram.get(this.config));
+    private sky_quad_solid_program = SkyDomeProgram.get(this.config);
 
     protected resize_Internal(): void {
         this.resize_Result();
@@ -439,7 +439,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         // draw sky
         if (!transparent_bg) {
             this.render_server.render_state.set_DepthFuncProxy(this.render_server.render_state.gl.LEQUAL);
-            this.render_server.render_state.draw_Elements(this.sky_quad_solid_program.expect, this.quad_geometry.expect.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+            this.render_server.render_state.draw_Elements(this.sky_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
         }
 
         // blit
@@ -451,9 +451,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false);
         this.set_CullFace(RenderServerMaterialCullFace.None);
         this.render_server.render_state.active_Texture(this.solid_color_texture.expect, 0);
-        this.screen_quad_solid_colormap_uniform_slot.expect.value = color_map ? 1 : 0;
-        this.screen_quad_solid_colormap_uniform_slot.expect.commit();
-        this.render_server.render_state.draw_Elements(this.screen_quad_solid_program.expect, this.quad_geometry.expect.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+        this.screen_quad_solid_colormap_uniform_slot.value = color_map ? 1 : 0;
+        this.screen_quad_solid_colormap_uniform_slot.commit();
+        this.render_server.render_state.draw_Elements(this.screen_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
     private render_RenderQueue0Transparent() {
@@ -537,9 +537,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.ONE, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
         this.render_server.render_state.active_Texture(this.transparent_color_texture.expect, 0);
         this.render_server.render_state.active_Texture(this.transparent_accum_texture.expect, 1);
-        this.oit_screen_quad_solid_colormap_uniform_slot.expect.value = color_map ? 1 : 0;
-        this.oit_screen_quad_solid_colormap_uniform_slot.expect.commit();
-        this.render_server.render_state.draw_Elements(this.oit_screen_quad_solid_program.expect, this.quad_geometry.expect.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+        this.oit_screen_quad_solid_colormap_uniform_slot.value = color_map ? 1 : 0;
+        this.oit_screen_quad_solid_colormap_uniform_slot.commit();
+        this.render_server.render_state.draw_Elements(this.oit_screen_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
     private render_RenderQueue1Solid() {
@@ -591,9 +591,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.ONE, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
         this.set_CullFace(RenderServerMaterialCullFace.None);
         this.render_server.render_state.active_Texture(this.solid_color_texture.expect, 0);
-        this.screen_quad_solid_colormap_uniform_slot.expect.value = 0;
-        this.screen_quad_solid_colormap_uniform_slot.expect.commit();
-        this.render_server.render_state.draw_Elements(this.screen_quad_solid_program.expect, this.quad_geometry.expect.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+        this.screen_quad_solid_colormap_uniform_slot.value = 0;
+        this.screen_quad_solid_colormap_uniform_slot.commit();
+        this.render_server.render_state.draw_Elements(this.screen_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
     private render_RenderQueue1Transparent() {
@@ -647,9 +647,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.ONE, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
         this.render_server.render_state.active_Texture(this.transparent_color_texture.expect, 0);
         this.render_server.render_state.active_Texture(this.transparent_accum_texture.expect, 1);
-        this.oit_screen_quad_solid_colormap_uniform_slot.expect.value = 0;
-        this.oit_screen_quad_solid_colormap_uniform_slot.expect.commit();
-        this.render_server.render_state.draw_Elements(this.oit_screen_quad_solid_program.expect, this.quad_geometry.expect.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+        this.oit_screen_quad_solid_colormap_uniform_slot.value = 0;
+        this.oit_screen_quad_solid_colormap_uniform_slot.commit();
+        this.render_server.render_state.draw_Elements(this.oit_screen_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
     protected render_Internal(world: World3D, viewport: Viewport, once: boolean): void {
@@ -657,19 +657,22 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         // render queue 0
         this.render_RenderQueue0Solid(transparent_bg);
         this.compose_RenderQueue0Solid(color_map);
-        this.render_RenderQueue0Transparent();
-        this.compose_RenderQueue0Transparent(color_map);
+        if (this.renderer.render_queue_0.transparent_pointer >= 0) {
+            this.render_RenderQueue0Transparent();
+            this.compose_RenderQueue0Transparent(color_map);
+        }
         // render queue 1
-        this.render_RenderQueue1Solid();
-        this.compose_RenderQueue1Solid();
-        this.render_RenderQueue1Transparent();
-        this.compose_RenderQueue1Transparent();
+        if (this.renderer.render_queue_1 !== undefined) {
+            this.render_RenderQueue1Solid();
+            this.compose_RenderQueue1Solid();
+            if (this.renderer.render_queue_1.transparent_pointer >= 0) {
+                this.render_RenderQueue1Transparent();
+                this.compose_RenderQueue1Transparent();
+            }
+        }
     }
 
     public dispose(): void {
-        this.quad_geometry.clear();
-        this.screen_quad_solid_program.clear();
-        this.screen_quad_solid_colormap_uniform_slot.clear();
         // solid
         this.solid_framebuffer.clear();
         this.solid_color_depth_copy_framebuffer.clear();

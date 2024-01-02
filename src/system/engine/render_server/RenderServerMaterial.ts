@@ -23,7 +23,7 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
     private readonly shader_ref: Ref<RenderServerShader> = new Ref();
     private uniforms_override: Map<string, { type: RenderStateUniformType, value: UniformOverrideType }> = new Map();
 
-    public is_transparent: boolean = false;
+    public transparent: boolean = false;
     public cull_face: RenderServerMaterialCullFace = RenderServerMaterialCullFace.Back;
 
     public get shader() { return this.shader_ref.expect; }

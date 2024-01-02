@@ -42,7 +42,7 @@ const DefaultConfig: Config = {
 	render_server_size: undefined,
 	render_server_pixel_ratio: undefined,
 	render_3d_pipeline: EditorRenderer3DPipeline,
-	physics_fps: 45,
+	physics_fps: 60,
 }
 const DefaultInstanceCache = new ResourceInstanceCache(DefaultConfig);
 
@@ -134,6 +134,7 @@ import url from 'res://image.png';
 import { RenderStateTextureFormat } from "@/system/sliverofstraw/RenderState";
 import { PointGrabber } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/PointGrabber3D";
 import { EditorRenderer3DPipeline } from "@/system/engine/renderer/renderer_3d/EditorRenderer3DPipeline";
+import { MaterialOverrideResource } from "@/system/engine/resources/material_resources/MaterialResource";
 {
 	new ImageLoader().parse(url).then(res => {
 		(material3.texture as ImageTextureResource).set_Image(res.expect(), RenderStateTextureFormat.SRGBA8, 4);
@@ -170,13 +171,15 @@ World.add_Child(LineGrabber3);
 const PointGrabber1 = new PointGrabber(DefaultConfig);
 World.add_Child(PointGrabber1);
 
-// for (let i = 0; i <= 100; i++) {
-// 	const Mesh2 = new MeshInstance3D();
+// const mat = new PlainColorMaterialResource(DefaultConfig);
+// for (let i = 0; i <= 1000; i++) {
+// 	const Mesh2 = new MeshInstance3D(DefaultConfig);
 // 	Mesh2.geometry = geometry2;
-// 	const mat = new PlainColorMaterialResource();
-// 	mat.color = color(Math.random(), Math.random(), Math.random(), 0.5);
-// 	Mesh2.material = mat;
-// 	Mesh2.local_scale = vec3(100, 100, 100);
+// 	const m = new MaterialOverrideResource(DefaultConfig);
+// 	m.set_OverrideMaterial(mat);
+// 	m.set_UniformOverride('u_color', color(Math.random(), Math.random(), Math.random(), 1));
+// 	Mesh2.material = m;
+// 	Mesh2.local_scale = vec3(1, 100, 100);
 // 	Mesh2.local_position = vec3(i * 50, 0, 0);
 // 	World.add_Child(Mesh2);
 // }

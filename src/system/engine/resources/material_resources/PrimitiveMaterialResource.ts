@@ -130,7 +130,7 @@ export class PlainColorMaterialResource extends MaterialResource {
         if (!this._color.equal(color)) {
             this._color = color;
             this.material.set_UniformOverride('u_color', this._color);
-            this.material.is_transparent = this._color.a < (1.0 - Epsilon);
+            this.material.transparent = this._color.a < (1.0 - Epsilon);
         }
     }
 
@@ -174,7 +174,7 @@ export class PlainColorMaterialResource extends MaterialResource {
             }
         );
         this.material.set_Material(shader, PlainColorMaterialResource.#uniforms);
-        this.material.is_transparent = false;
+        this.material.transparent = false;
     }
 
     protected dispose(): void {
@@ -268,7 +268,7 @@ export class NormalMaterialResource extends MaterialResource {
             }
         );
         this.material.set_Material(shader, NormalMaterialResource.#uniforms);
-        this.material.is_transparent = false;
+        this.material.transparent = false;
     }
 
     // save / load
@@ -352,7 +352,7 @@ export class UVMaterialResource extends MaterialResource {
             }
         );
         this.material.set_Material(shader, UVMaterialResource.#uniforms);
-        this.material.is_transparent = false;
+        this.material.transparent = false;
     }
 }
 
@@ -671,7 +671,7 @@ export class StandardMaterialResource extends MaterialResource {
         if (!this._color.equal(color)) {
             this._color = color;
             this.material.set_UniformOverride('u_color', this._color);
-            this.material.is_transparent = this._color.a < (1.0 - Epsilon);
+            this.material.transparent = this._color.a < (1.0 - Epsilon);
         }
     }
 
@@ -706,6 +706,6 @@ export class StandardMaterialResource extends MaterialResource {
             }
         );
         this.material.set_Material(shader, StandardMaterialResource.#uniforms);
-        this.material.is_transparent = false;
+        this.material.transparent = false;
     }
 }

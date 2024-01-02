@@ -22,7 +22,7 @@ import { PlainColorMaterialResource } from "@/system/engine/resources/material_r
 
 const ArrowTailGeometry = new Cacher((config: Config) => {
     const geometry = new CylinderGeometryResource(config);
-    geometry.top_radius = geometry.bottom_radius = 0.0175;
+    geometry.top_radius = geometry.bottom_radius = 0.02;
     geometry.height = 1;
     geometry.segments = 16;
     geometry.build();
@@ -32,7 +32,7 @@ const ArrowTailGeometry = new Cacher((config: Config) => {
 const ArrowHeadGeometry = new Cacher((config: Config) => {
     const geometry = new CylinderGeometryResource(config);
     geometry.top_radius = 0;
-    geometry.bottom_radius = 0.075;
+    geometry.bottom_radius = 0.08;
     geometry.height = 0.25;
     geometry.segments = 16;
     geometry.build();
@@ -159,7 +159,7 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
             this.visual_opacity = 1;
             this.visual_color.set(this.visual_color.r, this.visual_color.g, this.visual_color.b, this.visual_opacity);
             this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);
-            this.arrow_material.expect.material.is_transparent = false;
+            this.arrow_material.expect.material.transparent = false;
             this.arrow_head.local_visible = true;
             this.visual_enabled = true;
             return;
@@ -174,7 +174,7 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
             this.visual_opacity = opactiy;
             this.visual_color.set(this.visual_color.r, this.visual_color.g, this.visual_color.b, this.visual_opacity);
             this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);
-            this.arrow_material.expect.material.is_transparent = !is_ApproxEqual(this.visual_opacity, 1);
+            this.arrow_material.expect.material.transparent = !is_ApproxEqual(this.visual_opacity, 1);
             if (opactiy < 0.4) {
                 this.visual_enabled = false;
             }

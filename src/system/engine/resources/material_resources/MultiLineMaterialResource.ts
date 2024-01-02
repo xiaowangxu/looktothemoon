@@ -219,7 +219,7 @@ export class MultiLineMaterialResource extends MaterialResource {
         if (!this._color.equal(color)) {
             this._color = color;
             this.material.set_UniformOverride('u_color', this._color);
-            this.material.is_transparent = this._color.a < (1.0 - Epsilon);
+            this.material.transparent = this._color.a < (1.0 - Epsilon);
         }
     }
 
@@ -264,6 +264,6 @@ export class MultiLineMaterialResource extends MaterialResource {
             }
         );
         this.material.set_Material(shader, MultiLineMaterialResource.#uniforms);
-        this.material.is_transparent = false;
+        this.material.transparent = false;
     }
 }
