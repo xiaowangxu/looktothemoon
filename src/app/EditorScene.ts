@@ -94,7 +94,7 @@ EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefin
 const EditorViewport0 = new Viewport(DefaultConfig);
 EditorViewportContainer0.add_Child(EditorViewport0);
 const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
-EditorCamera0.zoom_to_cursor = false;
+// EditorCamera0.zoom_to_cursor = false;
 EditorViewport0.add_Child(EditorCamera0);
 EditorViewport.add_Child(EditorViewportContainer0);
 
@@ -121,12 +121,13 @@ const geometry2 = new BoxGeometryResource(DefaultConfig);
 geometry2.build();
 
 const material1 = new NormalMaterialResource(DefaultConfig);
-material1.remap = false;
+material1.remap = true;
 
 const material2 = new StandardMaterialResource(DefaultConfig);
 material2.color = color(1, 1, 1, 1);
 
 const material3 = new PlainColorMaterialResource(DefaultConfig);
+// material3.color = color(1, 0, 1, 1);
 material3.texture = new ImageTextureResource(DefaultConfig);
 
 import url from 'res://image.png';
@@ -357,14 +358,11 @@ const lttm = `{
 		"external": "res://test/material.lttm"
 	  },
 	  {
-		"type": "CylinderGeometryResource",
+		"type": "BoxGeometryResource",
 		"refid": 1,
 		"unique": false,
 		"property": {
-		  "top_radius": "number(0.5)",
-		  "bottom_radius": "number(0.5)",
-		  "height": "number(1)",
-		  "segments": "number(32)"
+		  
 		}
 	  },
 	  {
@@ -387,11 +385,26 @@ const lttm = `{
 	]
   }`;
 const loader0 = new ClassLoader(DefaultInstanceCache).load(lttm, ClassJsonDecoder, {},).expect() as MeshInstance3D;
+const loader1 = new ClassLoader(DefaultInstanceCache).load(lttm, ClassJsonDecoder, {},).expect() as MeshInstance3D;
 
 loader0.local_position = vec3(-200, 0, 0);
+loader1.local_position = vec3(-400, 0, 0);
 
-// const m = new PlainColorMaterialResource(DefaultConfig);
-// m.color = color(1, 0, 0, 0.5);
-// loader0.material = m;
+const m = new PlainColorMaterialResource(DefaultConfig);
+m.color = color(0, 1, 0, 0.25);
+m.cull_face = RenderServerMaterialCullFace.None;
+const m1 = new PlainColorMaterialResource(DefaultConfig);
+m1.color = color(1, 0, 0, 1);
+m1.cull_face = RenderServerMaterialCullFace.None;
+loader0.material = m;
+loader0.set_SurfaceMaterial(2, m1);
+
+const m2 = new PlainColorMaterialResource(DefaultConfig);
+m2.color = color(1, 1, 1, 0.005);
+m2.cull_face = RenderServerMaterialCullFace.None;
+loader1.material = undefined;
+loader1.set_SurfaceMaterial(4, m2);
+loader1.set_SurfaceMaterial(5, m2);
 
 World.add_Child(loader0);
+World.add_Child(loader1);

@@ -197,7 +197,7 @@ const SkyDomeProgram = new Cacher((config: Config) => {
 export class EditorRenderer3DPipeline extends Renderer3DPipeline {
     private get render_server() { return this.config.render_server; }
 
-    static readonly Msaa = 4;
+    static readonly Msaa = 1;
 
     //#region Solid
 
@@ -222,6 +222,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
     //#region Frame Buffer
     private readonly transparent_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
+    private readonly transparent_depth_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
     private readonly transparent_color_copy_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
     private readonly transparent_accum_src_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
     private readonly transparent_accum_copy_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
@@ -289,6 +290,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
     private alloc_Transparent() {
         // frame buffer
         this.transparent_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
+        this.transparent_depth_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
         this.transparent_color_copy_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
         this.transparent_accum_src_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
         this.transparent_accum_copy_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
@@ -308,6 +310,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.set_FrameBufferAttachment(this.transparent_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color1, this.transparent_accum_renderbuffer.expect);
         this.render_server.render_state.set_FrameBufferAttachment(this.transparent_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, this.solid_depth_renderbuffer.expect);
         this.render_server.render_state.enable_FrameBuffer(this.transparent_framebuffer.expect);
+
+        this.render_server.render_state.set_FrameBufferAttachment(this.transparent_depth_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, this.solid_depth_renderbuffer.expect);
+        this.render_server.render_state.enable_FrameBuffer(this.transparent_depth_framebuffer.expect);
 
         this.render_server.render_state.set_FrameBufferAttachment(this.transparent_color_copy_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.transparent_color_texture.expect);
         this.render_server.render_state.enable_FrameBuffer(this.transparent_color_copy_framebuffer.expect);
@@ -491,6 +496,38 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         // blit
         this.render_server.render_state.blit_FrameBuffer(this.transparent_framebuffer.expect, this.transparent_color_copy_framebuffer.expect, RenderStateFrameBufferPart.Color, RenderStateTextureMagFilter.Nearest, 0, 0, width, height);
         this.render_server.render_state.blit_FrameBuffer(this.transparent_accum_src_framebuffer.expect, this.transparent_accum_copy_framebuffer.expect, RenderStateFrameBufferPart.Color, RenderStateTextureMagFilter.Nearest, 0, 0, width, height);
+
+        // depth
+
+        this.render_server.set_RenderCapabilities(true, true, this.render_server.render_state.gl.LEQUAL, false);
+        this.render_server.render_state.set_CapabilityProxy(this.render_server.render_state.gl.CULL_FACE, true);
+        this.render_server.render_state.use_FrameBuffer(this.transparent_depth_framebuffer.expect);
+
+        for (let i = 0; i <= render_queue.transparent_pointer; i++) {
+            const geometry = render_queue.transparent_geometry_queue[i];
+            const indexed = render_queue.transparent_indexed_queue[i];
+            const instance_count = render_queue.transparent_instance_count_queue[i];
+            const material = render_queue.transparent_material_queue[i];
+            const transform = render_queue.transparent_transform_queue[i];
+            const layer = render_queue.transparent_layer_queue[i];
+            if (material === undefined) continue;
+            const program = material.get_Program(RenderServerShaderPass.PreZ);
+            if (geometry !== undefined && program !== undefined) {
+                this.set_CullFace(material.cull_face);
+                material.set_UniformOverride('model_world', transform);
+                material.set_UniformOverride('layer', layer);
+                material.commit_AllUniformOverride(RenderServerShaderPass.PreZ);
+                if (indexed) {
+                    this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
+                }
+                else {
+                    this.render_server.render_state.draw_Arrays(program, geometry, instance_count);
+                }
+            }
+        }
+
+        // blit
+        this.render_server.render_state.blit_FrameBuffer(this.solid_framebuffer.expect, this.solid_color_depth_copy_framebuffer.expect, RenderStateFrameBufferPart.Depth, RenderStateTextureMagFilter.Nearest, 0, 0, width, height);
     }
 
     private compose_RenderQueue0Transparent(color_map: boolean) {
@@ -640,6 +677,16 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.solid_depth_renderbuffer.clear();
         this.solid_color_texture.clear();
         this.solid_depth_texture.clear();
+        // transparent
+        this.transparent_framebuffer.clear();
+        this.transparent_depth_framebuffer.clear();
+        this.transparent_color_copy_framebuffer.clear();
+        this.transparent_accum_src_framebuffer.clear();
+        this.transparent_accum_copy_framebuffer.clear();
+        this.transparent_color_renderbuffer.clear();
+        this.transparent_accum_renderbuffer.clear();
+        this.transparent_color_texture.clear();
+        this.transparent_accum_texture.clear();
         // reuslt
         this.result_framebuffer.clear();
         this.result_color_texture.clear();
