@@ -41,7 +41,7 @@ const DefaultConfig: Config = {
 	render_server: new RenderServerDevice(document.getElementById('render-server-canvas') as HTMLCanvasElement),
 	render_server_size: undefined,
 	render_server_pixel_ratio: undefined,
-	render_3d_pipeline: Renderer3DPipeline,
+	render_3d_pipeline: EditorRenderer3DPipeline,
 	physics_fps: 45,
 }
 const DefaultInstanceCache = new ResourceInstanceCache(DefaultConfig);
@@ -89,14 +89,14 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut(DefaultC
 ]));
 
 // viewport 0
-// const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
-// EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-// const EditorViewport0 = new Viewport(DefaultConfig);
-// EditorViewportContainer0.add_Child(EditorViewport0);
-// const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
-// EditorCamera0.zoom_to_cursor = false;
-// EditorViewport0.add_Child(EditorCamera0);
-// EditorViewport.add_Child(EditorViewportContainer0);
+const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
+EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+const EditorViewport0 = new Viewport(DefaultConfig);
+EditorViewportContainer0.add_Child(EditorViewport0);
+const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
+EditorCamera0.zoom_to_cursor = false;
+EditorViewport0.add_Child(EditorCamera0);
+EditorViewport.add_Child(EditorViewportContainer0);
 
 const geometry = new BoxGeometryResource(DefaultConfig);
 // geometry.theta = Pi / 2;
@@ -130,9 +130,12 @@ const material3 = new PlainColorMaterialResource(DefaultConfig);
 material3.texture = new ImageTextureResource(DefaultConfig);
 
 import url from 'res://image.png';
+import { RenderStateTextureFormat } from "@/system/sliverofstraw/RenderState";
+import { PointGrabber } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/PointGrabber3D";
+import { EditorRenderer3DPipeline } from "@/system/engine/renderer/renderer_3d/EditorRenderer3DPipeline";
 {
 	new ImageLoader().parse(url).then(res => {
-		(material3.texture as ImageTextureResource).set_Image(res.expect());
+		(material3.texture as ImageTextureResource).set_Image(res.expect(), RenderStateTextureFormat.SRGBA8, 4);
 	});
 }
 
@@ -163,6 +166,8 @@ LineGrabber3.local_rotation = euler(Math.PI / 2);
 World.add_Child(LineGrabber1);
 World.add_Child(LineGrabber2);
 World.add_Child(LineGrabber3);
+const PointGrabber1 = new PointGrabber(DefaultConfig);
+World.add_Child(PointGrabber1);
 
 // for (let i = 0; i <= 100; i++) {
 // 	const Mesh2 = new MeshInstance3D();
@@ -384,5 +389,9 @@ const lttm = `{
 const loader0 = new ClassLoader(DefaultInstanceCache).load(lttm, ClassJsonDecoder, {},).expect() as MeshInstance3D;
 
 loader0.local_position = vec3(-200, 0, 0);
+
+// const m = new PlainColorMaterialResource(DefaultConfig);
+// m.color = color(1, 0, 0, 0.5);
+// loader0.material = m;
 
 World.add_Child(loader0);

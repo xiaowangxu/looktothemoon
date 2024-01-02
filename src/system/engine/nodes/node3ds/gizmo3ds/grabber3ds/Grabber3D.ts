@@ -12,6 +12,7 @@ import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { vec4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { Color } from "@/system/fivepebble/graphics/Color";
 import type { Config } from "@/system/engine/ConfiguredObject";
+import { Node3D } from "../../Node3D";
 
 export class GrabberElement<T> extends FixSizeNode3D {
     // signals
@@ -47,6 +48,49 @@ export class GrabberElement<T> extends FixSizeNode3D {
 
     protected on_VisibleChanged() {
         throw new Error('abstract method');
+    }
+    
+    constructor(config: Config) {
+        super(config);
+        this.top_level = true;
+        this.unit_pixel_count = 75;
+    }
+}
+
+export class Grabbers<T> extends Node3D {
+    public readonly signal_grab_start: SignalEmitter<(value: T) => void> = new SignalEmitter();
+    public readonly signal_grabbing: SignalEmitter<(value: T) => void> = new SignalEmitter();
+    public readonly signal_grab_end: SignalEmitter<(value: T) => void> = new SignalEmitter();
+
+    private _enabled: boolean = true;
+    public get enabled() { return this._enabled; }
+    public set enabled(enabled: boolean) {
+        if (this._enabled !== enabled) {
+            this._enabled = enabled;
+            this.on_EnabledChanged();
+        }
+    }
+
+    private _visible: boolean = true;
+    public get visible() { return this._visible; }
+    public set visible(visible: boolean) {
+        if (this._visible !== visible) {
+            this._visible = visible;
+            this.on_VisibleChanged();
+        }
+    }
+
+    protected on_EnabledChanged() {
+        throw new Error('abstract method');
+    }
+
+    protected on_VisibleChanged() {
+        throw new Error('abstract method');
+    }
+
+    constructor(config: Config) {
+        super(config);
+        this.top_level = true;
     }
 }
 

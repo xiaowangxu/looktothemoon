@@ -460,6 +460,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             case RenderStateTextureFormat.SRGB8: return [this.gl.SRGB8, this.gl.UNSIGNED_BYTE];
             case RenderStateTextureFormat.RGB8: return [this.gl.RGB8, this.gl.UNSIGNED_BYTE];
             case RenderStateTextureFormat.RGBA8: return [this.gl.RGBA8, this.gl.UNSIGNED_BYTE];
+            case RenderStateTextureFormat.RGB32F: return [this.gl.RGB32F, this.gl.FLOAT];
             case RenderStateTextureFormat.RGBA32F: return [this.gl.RGBA32F, this.gl.FLOAT];
             case RenderStateTextureFormat.R32UI: return [this.gl.R32UI, this.gl.UNSIGNED_INT];
             case RenderStateTextureFormat.R32F: return [this.gl.R32F, this.gl.FLOAT];
@@ -709,6 +710,18 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         console.log("delete texture", texture.id);
     }
 
+    public set_TextureFormat(texture: WebGL2RenderStateTexture, format: RenderStateTextureFormat) {
+        if (texture.constant) return;
+        const [internal_format, data_type] = this.get_TextureFormatType(format);
+        texture.format = internal_format;
+        texture.data_type = data_type;
+    }
+
+    public set_TextureLevels(texture: WebGL2RenderStateTexture, levels: number) {
+        if (texture.constant) return;
+        texture.levels = levels;
+    }
+
     public set_TextureParameters(texture: WebGL2RenderStateTexture, wrap_s?: RenderStateTextureWrap | undefined, wrap_t?: RenderStateTextureWrap | undefined, wrap_r?: RenderStateTextureWrap | undefined, min_filter?: RenderStateTextureMinFilter | undefined, mag_filter?: RenderStateTextureMagFilter | undefined): void {
         const gl = this.gl;
         const { type, texture: tex } = texture;
@@ -734,6 +747,18 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             texture.mag_filter = this.get_TextureFilter(mag_filter);
             gl.texParameteri(type, gl.TEXTURE_MAG_FILTER, texture.mag_filter);
         }
+    }
+
+    public set_TextureDepthParameter(texture: WebGL2RenderStateTexture) {
+        this.active_TextureSlotProxy(this.gl.TEXTURE0);
+        if (!this.bind_TextureProxy(texture.type, texture.texture)) {
+            this.gl.bindTexture(texture.type, texture.texture);
+        }
+        this.gl.texParameteri(
+            this.gl.TEXTURE_2D,
+            this.gl.TEXTURE_COMPARE_MODE,
+            this.gl.COMPARE_REF_TO_TEXTURE,
+        );
     }
 
     // 2D

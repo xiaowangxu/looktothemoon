@@ -18,6 +18,7 @@ import { PickingShape3D } from "../../physics3ds/PickingShape3D";
 import { PickingCylinderResource } from "@/system/engine/resources/picking_shape_resources/PickingShapeResource";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import type { Config } from "@/system/engine/ConfiguredObject";
+import { PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 
 const ArrowTailGeometry = new Cacher((config: Config) => {
     const geometry = new CylinderGeometryResource(config);
@@ -53,10 +54,6 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
     private readonly area: PickingArea3D = new PickingArea3D(this.config);
     private readonly shape: PickingShape3D = new PickingShape3D(this.config);
 
-    // private readonly guide_line: MeshInstance3D = new MeshInstance3D();
-    // private readonly guide_line2: MeshInstance3D = new MeshInstance3D();
-    // private readonly guide_material: LineMaterialResource = new LineMaterialResource();
-
     private _length: number = 0.7;
     public get length() { return this._length; }
     public set length(length: number) {
@@ -66,7 +63,7 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
         }
     }
 
-    private _offset_length: number = 0.25;
+    private _offset_length: number = 0.2;
     public get offset_length() { return this._offset_length; }
     public set offset_length(offset_length: number) {
         if (this._offset_length !== offset_length) {
@@ -75,14 +72,13 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
         }
     }
 
-    private update_Transform() {
-        this.arrow_tail.local_scale = vec3(1, this.length, 1);
-        this.arrow_tail.local_position = vec3(0, this.length / 2 + this.offset_length, 0);
-        this.arrow_head.local_position = vec3(0, this.length + this.offset_length + 0.1, 0);
-        // this.guide_line.local_position = vec3(0, this.length + this.offset_length + 0.2, 0);
-        // this.guide_line2.local_position = vec3(0, this.offset_length, 0);
-        this.area.local_position = vec3(0, this.offset_length * 2, 0);
-        this.area.local_scale = vec3(1, this.length + 0.2 - this.offset_length, 1);
+    private _area_offset_length: number = 0.1;
+    public get area_offset_length() { return this._area_offset_length; }
+    public set area_offset_length(area_offset_length: number) {
+        if (this._area_offset_length !== area_offset_length) {
+            this._area_offset_length = area_offset_length;
+            this.update_Transform();
+        }
     }
 
     private _is_grabbing: boolean = false;
@@ -130,6 +126,14 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
         }
     }
 
+    private update_Transform() {
+        this.arrow_tail.local_scale = vec3(1, this.length, 1);
+        this.arrow_tail.local_position = vec3(0, this.length / 2 + this.offset_length, 0);
+        this.arrow_head.local_position = vec3(0, this.length + this.offset_length + 0.1, 0);
+        this.area.local_position = vec3(0, this.offset_length + this.area_offset_length, 0);
+        this.area.local_scale = vec3(1, this.length + 0.2 - this.area_offset_length, 1);
+    }
+    
     private readonly visual_color: Color = color8(0xf8, 0x2d, 0x4e);
     private visual_opacity: number = 1.0;
 
@@ -137,22 +141,15 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
         if (this.is_hovering) {
             this.visual_color.set(0xff / 255, 0xbb / 255, 0x00 / 255, this.visual_opacity);
             this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);
-            // this.guide_line.local_visible = false;
-            // this.guide_line2.local_visible = false;
         }
         else if (this.is_grabbing) {
             this.visual_color.set(0xff / 255, 0xbb / 255, 0x00 / 255, this.visual_opacity);
             this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);
-            // this.guide_line.local_visible = this.visible && true;
-            // this.guide_line2.local_visible = this.visible && true;
         }
         else {
-            this.visual_color.set(this.color.r, this.color.g, this.color.b, this.visual_opacity);
+            this.visual_color.set(this.color.r, this.color.g, this.color.b, this.color.a * this.visual_opacity);
             this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);
-            // this.guide_line.local_visible = false;
-            // this.guide_line2.local_visible = false;
         }
-        // this.guide_material.color = this.color;
     }
 
     private update_Opacity() {
@@ -191,15 +188,10 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
     constructor(config: Config) {
         super(config);
 
-        this.top_level = true;
-        this.unit_pixel_count = 75;
-
         this.arrow_tail.render_queue = 1;
         this.arrow_head.render_queue = 1;
         this.arrow_tail.layer = 1;
         this.arrow_head.layer = 1;
-        // this.guide_line.layer = 1;
-        // this.guide_line2.layer = 1;
 
         this.arrow_tail.geometry = ArrowTailGeometry.get(this.config).expect;
         this.arrow_material.expect.set_OverrideMaterial(LineGrabberMaterial.get(this.config).expect);
@@ -208,27 +200,6 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
 
         this.shape.shape = LineGrabberPickingShape.get(this.config).expect;
         this.shape.local_position = vec3(0, 0.5, 0);
-
-        // // const test_shape = new MeshInstance3D();
-        // // test_shape.geometry = new ThreeGeometryResource(new CylinderGeometry(0.1, 0.1, 1));
-        // // test_shape.material = new ThreeMaterialResource(new MeshMatcapMaterial({ color: 0xff00ff, transparent: true, opacity: 0.3, depthTest: false, depthWrite: false }));
-        // // this.shape.add_Child(test_shape);
-        // const guide_line_geometry = new PolyLineGeometryResource();
-        // guide_line_geometry.points = [new Vector3(0, 0, 0), new Vector3(0, 1, 0)];
-        // guide_line_geometry.compute_LineDistances();
-        // this.guide_material.transparent = true;
-        // this.guide_material.opacity = 0.5;
-        // this.guide_material.color = this.color;
-        // this.guide_material.width = 1.5;
-        // this.guide_material.get_Material().depthTest = false;
-        // this.guide_material.get_Material().depthWrite = false;
-
-        // this.guide_line.geometry = guide_line_geometry;
-        // this.guide_line.material = this.guide_material;
-        // this.guide_line2.geometry = guide_line_geometry;
-        // this.guide_line2.material = this.guide_material;
-        // this.guide_line.local_visible = false;
-        // this.guide_line2.local_visible = false;
 
         this.area.signal_mouse_entered.connect(() => {
             this.is_hovering = true;
@@ -251,12 +222,6 @@ export class LineGrabber3D extends GrabberElement<Vector3> {
         this.add_Child(this.arrow_head);
         this.add_Child(this.area);
         this.area.add_Child(this.shape);
-
-        // this.add_Child(this.guide_line);
-        // this.add_Child(this.guide_line2);
-        // this.guide_line.local_scale = vec3(1, 10000, 1);
-        // this.guide_line2.local_scale = vec3(1, 10000, 1);
-        // this.guide_line2.local_rotation = euler(Math.PI, 0, 0);
 
         this.update_Transform();
         this.update_Visual();

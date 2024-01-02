@@ -8,7 +8,7 @@ export class WebGL2RenderStateTexture extends RenderStateTexture<WebGL2RenderSta
 
     public active_slot: number | undefined = undefined;
 
-    public readonly data_type: number;
+    public data_type: number;
 
     constructor(render_state: WebGL2RenderState, texture: WebGLTexture, type: number, constant: boolean, format: number, levels: number, data_type: number, wrap_s: number, wrap_t: number, wrap_r: number, min_filter: number, mag_filter: number) {
         super(render_state, type, constant, format, levels, wrap_s, wrap_t, wrap_r, min_filter, mag_filter);

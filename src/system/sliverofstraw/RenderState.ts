@@ -88,7 +88,7 @@ export enum RenderStateTextureType {
 
 export enum RenderStateTextureFormat {
     SRGBA8, SRGB8,
-    RGB8, RGBA8, RGBA32F,
+    RGB8, RGBA8, RGB32F, RGBA32F,
     R32F, R32UI, 
     D24,
     D32F, D32FS8,

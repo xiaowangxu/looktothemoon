@@ -634,15 +634,15 @@ export class Renderer3D extends ConfiguredObject {
 	}
 
 	private resize_FrameBuffers(width: number, height: number) {
-		// solid
-		this.render_server.render_state.alloc_RenderBuffer(this.frame_solid_buffer_depth.expect, width, height);
-		this.render_server.render_state.alloc_RenderBuffer(this.frame_solid_buffer_color.expect, width, height);
-		this.render_server.render_state.alloc_Texture2D(this.frame_solid_buffer_color_texture.expect, width, height, 0, RenderStateTextureDataFormat.RGBA, undefined);
-		this.render_server.render_state.alloc_Texture2D(this.frame_solid_buffer_depth_texture.expect, width, height, 0, RenderStateTextureDataFormat.Depth, undefined);
-		// transparent
-		this.render_server.render_state.alloc_Texture2D(this.frame_transparent_buffer_depth_texture.expect, width, height, 0, RenderStateTextureDataFormat.Depth, undefined);
-		this.render_server.render_state.alloc_Texture2D(this.frame_transparent_buffer_color_texture.expect, width, height, 0, RenderStateTextureDataFormat.RGBA, undefined);
-		this.render_server.render_state.alloc_Texture2D(this.frame_transparent_buffer_accum_texture.expect, width, height, 0, RenderStateTextureDataFormat.Red, undefined);
+		// // solid
+		// this.render_server.render_state.alloc_RenderBuffer(this.frame_solid_buffer_depth.expect, width, height);
+		// this.render_server.render_state.alloc_RenderBuffer(this.frame_solid_buffer_color.expect, width, height);
+		// this.render_server.render_state.alloc_Texture2D(this.frame_solid_buffer_color_texture.expect, width, height, 0, RenderStateTextureDataFormat.RGBA, undefined);
+		// this.render_server.render_state.alloc_Texture2D(this.frame_solid_buffer_depth_texture.expect, width, height, 0, RenderStateTextureDataFormat.Depth, undefined);
+		// // transparent
+		// this.render_server.render_state.alloc_Texture2D(this.frame_transparent_buffer_depth_texture.expect, width, height, 0, RenderStateTextureDataFormat.Depth, undefined);
+		// this.render_server.render_state.alloc_Texture2D(this.frame_transparent_buffer_color_texture.expect, width, height, 0, RenderStateTextureDataFormat.RGBA, undefined);
+		// this.render_server.render_state.alloc_Texture2D(this.frame_transparent_buffer_accum_texture.expect, width, height, 0, RenderStateTextureDataFormat.Red, undefined);
 	}
 
 	private draw_calls: number = 0;
@@ -652,6 +652,7 @@ export class Renderer3D extends ConfiguredObject {
 		this.draw_calls = 0;
 
 		const is_transparent = viewport.transparent;
+		const color_map = viewport.color_map;
 
 		const time = viewport.get_SceneTree()!.time;
 		const cam = viewport.get_Camera3D()!.get_Camera();
@@ -690,7 +691,6 @@ export class Renderer3D extends ConfiguredObject {
 			if (queue !== undefined) if (mesh.fill_RenderQueue(queue, cam_mask, cam_frustum)) rendered_objects_count++;
 		}
 
-
 		// resize
 		if (this.size_changed) {
 			this.size_changed = false;
@@ -699,58 +699,60 @@ export class Renderer3D extends ConfiguredObject {
 
 		this.render_pipeline.set_Size(size);
 
-		this.render_pipeline.render();
+		this.render_pipeline.render(world, viewport, once);
+		
+		this.render_OnScreen(this.render_pipeline.texture, false, x, y, width, height, false, false);
 
-		//#region RenderQueue0
+		// //#region RenderQueue0
 
-		// draw scene queue 0
+		// // draw scene queue 0
 
-		this.render_SolidQueue(this.render_queue_0, width, height, !is_transparent, true);
+		// this.render_SolidQueue(this.render_queue_0, width, height, !is_transparent, true);
 
-		// on screen
-		this.render_OnScreen(this.frame_solid_buffer_color_texture.expect, viewport.color_map, x, y, width, height, false, false);
+		// // on screen
+		// this.render_OnScreen(this.frame_solid_buffer_color_texture.expect, viewport.color_map, x, y, width, height, false, false);
 
-		if (this.render_queue_0.transparent_pointer >= 0) {
+		// if (this.render_queue_0.transparent_pointer >= 0) {
 
-			this.render_server.render_state.active_Texture(this.frame_transparent_buffer_depth_texture.expect, 0);
-			this.render_server.render_state.active_Texture(this.frame_solid_buffer_color_texture.expect, 1);
+		// 	this.render_server.render_state.active_Texture(this.frame_transparent_buffer_depth_texture.expect, 0);
+		// 	this.render_server.render_state.active_Texture(this.frame_solid_buffer_color_texture.expect, 1);
 
-			this.render_TransparentQueue(this.render_queue_0, width, height);
+		// 	this.render_TransparentQueue(this.render_queue_0, width, height);
 
-			// on screen
-			this.render_OnScreen(undefined, true, x, y, width, height, true, true);
-		}
+		// 	// on screen
+		// 	this.render_OnScreen(undefined, true, x, y, width, height, true, true);
+		// }
 
-		//#endregion
+		// //#endregion
 
-		//#region RenderQueue1
+		// //#region RenderQueue1
 
-		// setup depth texture
+		// // setup depth texture
 
-		if (this.render_queue_1 !== undefined && (this.render_queue_1.solid_pointer >= 0 || this.render_queue_1.transparent_pointer >= 0)) {
+		// if (this.render_queue_1 !== undefined && (this.render_queue_1.solid_pointer >= 0 || this.render_queue_1.transparent_pointer >= 0)) {
 
-			this.render_server.render_state.active_Texture(this.frame_solid_buffer_depth_texture.expect, 0);
-			this.render_server.render_state.active_Texture(this.frame_solid_buffer_color_texture.expect, 1);
+		// 	this.render_server.render_state.active_Texture(this.frame_solid_buffer_depth_texture.expect, 0);
+		// 	this.render_server.render_state.active_Texture(this.frame_solid_buffer_color_texture.expect, 1);
 
-			// draw scene queue 1
-			this.render_SolidQueue(this.render_queue_1, width, height, false, false);
+		// 	// draw scene queue 1
+		// 	this.render_SolidQueue(this.render_queue_1, width, height, false, false);
 
-			// on screen
-			this.render_OnScreen(this.frame_solid_buffer_color_texture.expect, false, x, y, width, height, true, false);
+		// 	// on screen
+		// 	this.render_OnScreen(this.frame_solid_buffer_color_texture.expect, false, x, y, width, height, true, false);
 
-			if (this.render_queue_1.transparent_pointer >= 0) {
+		// 	if (this.render_queue_1.transparent_pointer >= 0) {
 
-				this.render_server.render_state.active_Texture(this.frame_transparent_buffer_depth_texture.expect, 0);
-				this.render_server.render_state.active_Texture(this.frame_solid_buffer_color_texture.expect, 1);
+		// 		this.render_server.render_state.active_Texture(this.frame_transparent_buffer_depth_texture.expect, 0);
+		// 		this.render_server.render_state.active_Texture(this.frame_solid_buffer_color_texture.expect, 1);
 
-				this.render_TransparentQueue(this.render_queue_1, width, height);
+		// 		this.render_TransparentQueue(this.render_queue_1, width, height);
 
-				// on screen
-				this.render_OnScreen(undefined, false, x, y, width, height, true, true);
-			}
-		}
+		// 		// on screen
+		// 		this.render_OnScreen(undefined, false, x, y, width, height, true, true);
+		// 	}
+		// }
 
-		//#endregion
+		// //#endregion
 
 		if (once) {
 			this.render_queue_0.clear();

@@ -8,8 +8,8 @@ export abstract class RenderStateTexture<T extends RenderState<T>> extends Rende
 
     public readonly type: number;
     public readonly constant: boolean;
-    public readonly format: number;
-    public readonly levels: number;
+    public levels: number;
+    public format: number;
 
     public wrap_s: number;
     public wrap_t: number;

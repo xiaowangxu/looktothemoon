@@ -12,7 +12,7 @@ import { RenderDeviceMatrix4AttributeBuffer } from "@/system/sliverofstraw/rende
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 
-export enum RenderServerPlainColorTexture { White, Black, Transparent, Grey }
+export enum RenderServerPlainColorTexture { Empty, White, Black, Transparent, Grey }
 
 export enum RenderServerColorspace { LinearSRGB, SRGB }
 
@@ -53,14 +53,13 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     //   |-------|-------|-------|-------|-------|-------|-------|-------|
     //   |   0   |   1   |   2   |   3   |   4   |   5   |   6   |   7   |
     //   |-------|-------|-------|-------|-------|-------|-------|-------|
-    //   |       |       |       | empty |  lit  | l_cls | l_shd |  sky  |
+    //   |       |       |       |lights | l_cls | l_shd |  sky  |       |
     //   |-------|-------|-------|-------|-------|-------|-------|-------|
     //   |   8   |   9   |   10  |   11  |   12  |   13  |   14  |   15  |
     //   |-------|-------|-------|-------|-------|-------|-------|-------|
     //   |  pres |  pres |  pres |  pres |  pres |  pres |  pres |  pres |
     //   |-------|-------|-------|-------|-------|-------|-------|-------|
 
-    public static readonly EmptyTextureUnit: number = 2;
     public static readonly LightsTextureUnit: number = 3;
     public static readonly LightsClusterTextureUnit: number = 4;
     public static readonly SkyTextureUnit: number = 5;
@@ -188,10 +187,8 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     public readonly identity_transform_attribute_buffer_ref: Ref<RenderDeviceMatrix4AttributeBuffer<WebGL2RenderState>> = new Ref();
     public get identity_transform_attribute_buffer() { return this.identity_transform_attribute_buffer_ref.expect; }
 
-    public readonly empty_texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
-    public get empty_texture() { return this.empty_texture_ref.expect; }
-
     public readonly plain_color_textures = {
+        empty: new Ref<WebGL2RenderStateTexture>(),
         white: new Ref<WebGL2RenderStateTexture>(),
         black: new Ref<WebGL2RenderStateTexture>(),
         transparent: new Ref<WebGL2RenderStateTexture>(),
@@ -210,7 +207,6 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         this.setup_IdentityTransformAttributeBuffer();
         this.setup_WorldUniformsBuffer();
         this.setup_EnvironmentUniformsBuffer();
-        this.setup_EmptyTexture();
         this.setup_PlainColorTextures();
     }
 
@@ -232,19 +228,15 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         this.render_state.bind_UniformBuffer(this.environment_uniforms_buffer_ref.expect, RenderServerDevice.EnvironmentUniformsUnit);
     }
 
-    private setup_EmptyTexture() {
-        const texture = this.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-        this.empty_texture_ref.value = texture;
-        this.render_state.alloc_Texture2D(texture, 2, 2, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([
+    private setup_PlainColorTextures() {
+         const plain_color_empty = this.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+        this.render_state.alloc_Texture2D(plain_color_empty, 2, 2, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([
             255, 0, 255, 255,
             0, 255, 255, 255,
             0, 255, 255, 255,
             255, 0, 255, 255,
         ]));
-        this.render_state.active_Texture(texture, RenderServerDevice.EmptyTextureUnit);
-    }
-
-    private setup_PlainColorTextures() {
+        this.plain_color_textures.empty.value = plain_color_empty;
         const plain_color_white = this.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1).expect();
         this.render_state.alloc_Texture2D(plain_color_white, 1, 1, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([255, 255, 255, 255]));
         this.plain_color_textures.white.value = plain_color_white;
@@ -263,6 +255,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
 
     public get_PlainColorTexture(color: RenderServerPlainColorTexture): WebGL2RenderStateTexture {
         switch (color) {
+            case RenderServerPlainColorTexture.Empty: return this.plain_color_textures.empty.expect;
             case RenderServerPlainColorTexture.White: return this.plain_color_textures.white.expect;
             case RenderServerPlainColorTexture.Black: return this.plain_color_textures.black.expect;
             case RenderServerPlainColorTexture.Transparent: return this.plain_color_textures.transparent.expect;
@@ -452,8 +445,8 @@ export class RenderServerDevice extends WebGL2RenderDevice {
 
     public dispose(): void {
         this.world_uniforms_buffer_ref.clear();
-        this.empty_texture_ref.clear();
         this.lights_data_ref.clear();
+        this.plain_color_textures.empty.clear();
         this.plain_color_textures.white.clear();
         this.plain_color_textures.black.clear();
         this.plain_color_textures.transparent.clear();
