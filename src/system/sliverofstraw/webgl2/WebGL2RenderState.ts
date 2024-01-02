@@ -253,6 +253,56 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         return false;
     }
 
+    private pixel_store_pack_alignment: number = 4;
+    public set_PixelStorePackAlignment(value: 1 | 2 | 4 | 8) {
+        if (this.pixel_store_pack_alignment !== value) {
+            this.pixel_store_pack_alignment = value;
+            this.gl.pixelStorei(this.gl.PACK_ALIGNMENT, value);
+            return true;
+        }
+        return false;
+    }
+
+    private pixel_store_unpack_alignment: number = 4;
+    public set_PixelStoreUnpackAlignment(value: 1 | 2 | 4 | 8) {
+        if (this.pixel_store_unpack_alignment !== value) {
+            this.pixel_store_unpack_alignment = value;
+            this.gl.pixelStorei(this.gl.UNPACK_ALIGNMENT, value);
+            return true;
+        }
+        return false;
+    }
+
+    private pixel_store_y_flip: boolean = false;
+    public set_PixelStoreYFlip(value: boolean) {
+        if (this.pixel_store_y_flip !== value) {
+            this.pixel_store_y_flip = value;
+            this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, value);
+            return true;
+        }
+        return false;
+    }
+
+    private pixel_store_premult_alpha: boolean = false;
+    public set_PixelStorePremultAlpha(value: boolean) {
+        if (this.pixel_store_premult_alpha !== value) {
+            this.pixel_store_premult_alpha = value;
+            this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, value);
+            return true;
+        }
+        return false;
+    }
+
+    private pixel_store_colorspace_conversion: boolean = true;
+    public set_PixelStoreColorspaceConversion(value: boolean) {
+        if (this.pixel_store_colorspace_conversion !== value) {
+            this.pixel_store_colorspace_conversion = value;
+            this.gl.pixelStorei(this.gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, value ? this.gl.BROWSER_DEFAULT_WEBGL : this.gl.NONE);
+            return true;
+        }
+        return false;
+    }
+
     // #endregion
 
     constructor(render_device: RenderDevice<WebGL2RenderState>, option: WebGL2RenderStateInitOption) {

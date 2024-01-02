@@ -14,6 +14,8 @@ import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 
 export enum RenderServerPlainColorTexture { White, Black, Transparent, Grey }
 
+export enum RenderServerColorspace { LinearSRGB, SRGB }
+
 export class RenderServerDevice extends WebGL2RenderDevice {
 
     // Codes
