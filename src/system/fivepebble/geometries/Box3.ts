@@ -7,7 +7,21 @@ export class Box3 implements BoxLike<Vector3, Matrix3> {
     public readonly min: Vector3;
     public readonly max: Vector3;
 
-    public get size() { return this.max.sub(this.min); }
+    get size() { return this.max.sub(this.min); }
+    gets_Size(target: Vector3): Vector3 {
+        target.x = this.max.x - this.min.x;
+        target.y = this.max.y - this.min.y;
+        target.z = this.max.z - this.min.z;
+        return target;
+    }
+    get center(): Vector3 { return new Vector3((this.min.x + this.max.x) / 2, (this.min.y + this.max.y) / 2, (this.min.z + this.max.z) / 2); }
+    gets_Center(target: Vector3): Vector3 {
+        target.x = (this.min.x + this.max.x) / 2;
+        target.y = (this.min.y + this.max.y) / 2;
+        target.z = (this.min.z + this.max.z) / 2;
+        return target;
+    }
+
     public get is_empty() { return this.min.x >= this.max.x || this.min.y >= this.max.y || this.min.z >= this.max.z; }
 
     constructor(min: Vector3 = new Vector3(), max: Vector3 = new Vector3()) {
@@ -32,6 +46,29 @@ export class Box3 implements BoxLike<Vector3, Matrix3> {
 
     enlarge(amount: number): BoxLike<Vector3, Matrix3> {
         return new Box3(this.min.sub_Number(amount), this.max.add_Number(amount));
+    }
+    enlarges(a: BoxLike<Vector3, Matrix3>, amount: number): BoxLike<Vector3, Matrix3> {
+        this.min.subs_Number(a.min, amount);
+        this.max.subs_Number(a.max, amount);
+        return this;
+    }
+
+    merge(b: BoxLike<Vector3, Matrix3>): BoxLike<Vector3, Matrix3> {
+        return new Box3(this.min.min(b.min), this.max.max(b.max));
+    }
+    merges(a: BoxLike<Vector3, Matrix3>, b: BoxLike<Vector3, Matrix3>): BoxLike<Vector3, Matrix3> {
+        this.min.mins(a.min, b.min);
+        this.max.maxs(a.max, b.max);
+        return this;
+    }
+
+    grow(b: Vector3): Box3 {
+        return new Box3(this.min.min(b), this.max.max(b));
+    }
+    grows(a: Box3, b: Vector3): Box3 {
+        this.min.mins(a.min, b);
+        this.max.maxs(a.max, b);
+        return this;
     }
 
     static #points: [Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3] = [new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
@@ -87,16 +124,15 @@ export class Box3 implements BoxLike<Vector3, Matrix3> {
         return this;
     }
 
-    public set(min_x: number,min_y: number,min_z: number, max_x: number,max_y: number,max_z: number) {
-        this.min.x = min_x;
-        this.min.y = min_y;
-        this.min.z = min_z;
-        this.max.x = max_x;
-        this.max.y = max_y;
-        this.max.z = max_z;
+    set(min: Vector3, max: Vector3) {
+        this.min.x = min.x;
+        this.min.y = min.y;
+        this.min.z = min.z;
+        this.max.x = max.x;
+        this.max.y = max.y;
+        this.max.z = max.z;
         return this;
     }
-
     copy(b: Box3): Box3 {
         this.min.x = b.min.x;
         this.min.y = b.min.y;
@@ -105,6 +141,9 @@ export class Box3 implements BoxLike<Vector3, Matrix3> {
         this.max.y = b.max.y;
         this.max.z = b.max.z;
         return this;
+    }
+    clone(): BoxLike<Vector3, Matrix3> {
+        return new Box3(this.min.clone(), this.max.clone());
     }
 }
 

@@ -419,9 +419,26 @@ export class StandardMaterialResource extends MaterialResource {
         float shadow_opacity;
     };
     
+    // light function
+    float beckmannDistribution(float x, float roughness) {
+        float NdotH = max(x, 0.0001);
+        float cos2Alpha = NdotH * NdotH;
+        float tan2Alpha = (cos2Alpha - 1.0) / cos2Alpha;
+        float roughness2 = roughness * roughness;
+        float denom = 3.141592653589793 * roughness2 * cos2Alpha * cos2Alpha;
+        return exp(tan2Alpha / roughness2) / denom;
+    }
+    
     void calc_light(const in uint light_type, const in vec3 light_direction, const in vec3 view_direction, const in vec3 normal, const in vec3 light_color, const in float light_attenuation, inout vec3 diffuse, inout vec3 specular) {
-        float light_strength = max(0.0, dot(normal, light_direction));
-        diffuse += light_strength * light_color * light_attenuation;
+        float light_strength = dot(normal, light_direction);
+        if (light_strength > 0.0) {
+            diffuse += light_strength * light_color * light_attenuation;
+            // if (light_type != uint(1)) {
+            //     vec3 half_direction = normalize(light_direction + view_direction);  
+            //     float beckmann = beckmannDistribution(dot(normal, half_direction), 0.1);
+            //     specular += beckmann * light_color * light_attenuation;
+            // }
+        }
     }
     
     LightData get_light(const in ivec3 lights_size, const in int i) {
@@ -471,7 +488,7 @@ export class StandardMaterialResource extends MaterialResource {
         ivec3 lights_size = textureSize(lights, 0);
         int max_lights_count = lights_size.x * lights_size.y;
     
-        for(int i = 0; i < 32; i++) {
+        for(int i = 0; i < 64; i++) {
             LightData light = get_light(lights_size, i);
         
             i += light.stride;
@@ -558,10 +575,27 @@ export class StandardMaterialResource extends MaterialResource {
         float shadow_normal_bias;
         float shadow_opacity;
     };
+
+    // light function
+    float beckmannDistribution(float x, float roughness) {
+        float NdotH = max(x, 0.0001);
+        float cos2Alpha = NdotH * NdotH;
+        float tan2Alpha = (cos2Alpha - 1.0) / cos2Alpha;
+        float roughness2 = roughness * roughness;
+        float denom = 3.141592653589793 * roughness2 * cos2Alpha * cos2Alpha;
+        return exp(tan2Alpha / roughness2) / denom;
+    }
     
     void calc_light(const in uint light_type, const in vec3 light_direction, const in vec3 view_direction, const in vec3 normal, const in vec3 light_color, const in float light_attenuation, inout vec3 diffuse, inout vec3 specular) {
-        float light_strength = max(0.0, dot(normal, light_direction));
-        diffuse += light_strength * light_color * light_attenuation;
+        float light_strength = dot(normal, light_direction);
+        if (light_strength > 0.0) {
+            diffuse += light_strength * light_color * light_attenuation;
+            if (light_type != uint(2)) {
+                vec3 half_direction = normalize(light_direction + view_direction);  
+                float beckmann = beckmannDistribution(dot(normal, half_direction), 0.001);
+                specular += beckmann * light_color * light_attenuation;
+            }
+        }
     }
     
     LightData get_light(const in ivec3 lights_size, const in int i) {
@@ -603,7 +637,7 @@ export class StandardMaterialResource extends MaterialResource {
         // vec3 lookat_dir = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0, 0.0, 1.0)) : normalize(camera_world[3].xyz - v_world);
         // vec3 reflected = reflect(-lookat_dir, normal);
         // vec4 albedo = skybox(sky, reflected);
-        vec4 albedo = u_color;
+        vec4 albedo = vec4(0.0, 0.0, 0.0, 1.0);
 
         vec3 diffuse = vec3(0.0);
         vec3 specular = vec3(0.0);

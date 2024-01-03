@@ -1,5 +1,5 @@
 import { Vector3, vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import { GrabberElement, GrabberPlainColorMaterialResource } from "./Grabber3D";
+import { GrabberElement3D, GrabberPlainColorMaterialResource } from "./Grabber3D";
 import { MeshInstance3D } from "../../visual_instance3ds/geometry3ds/MeshInstance3D";
 import { color8, type Color } from "@/system/fivepebble/graphics/Color";
 import { Epsilon, clamp, is_ApproxEqual } from "@/system/fivepebble/Scalar";
@@ -47,7 +47,7 @@ const LineGrabberPickingShape = new Cacher((config: Config) => {
     return new Ref(picking_shape);
 });
 
-export class LineGrabber3D extends GrabberElement<Vector3> {
+export class LineGrabber3D extends GrabberElement3D<Vector3> {
     private readonly arrow_tail: MeshInstance3D = new MeshInstance3D(this.config);
     private readonly arrow_head: MeshInstance3D = new MeshInstance3D(this.config);
     private readonly arrow_material: Ref<MaterialOverrideResource> = new Ref(new MaterialOverrideResource(this.config));

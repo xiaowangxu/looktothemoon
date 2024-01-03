@@ -840,6 +840,9 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         }
         const gl = this.gl;
         if (type === gl.TEXTURE_3D || type === gl.TEXTURE_2D_ARRAY) {
+            // disable FLIP_Y and PREMULTIPLY_ALPHA
+            this.set_PixelStorePremultAlpha(false);
+            this.set_PixelStoreYFlip(false);
             if (src_offset !== undefined) {
                 this.gl.texSubImage3D(type, level, offset_x, offset_y, offset_z, width, height, depth, this.get_TextureDataFormatType(format), data_type, data, src_offset);
             }
@@ -864,6 +867,15 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         this.active_TextureSlotProxy(this.gl.TEXTURE0 + target_point);
         if (!this.bind_TextureProxy(texture.type, texture.texture)) {
             this.gl.bindTexture(texture.type, texture.texture);
+        }
+    }
+
+    public deactive_Texture(type: RenderStateTextureType, slot: number) {
+        const target_point = slot;
+        const _type = this.get_TextureType(type);
+        this.active_TextureSlotProxy(this.gl.TEXTURE0 + target_point);
+        if (!this.bind_TextureProxy(_type, null)) {
+            this.gl.bindTexture(_type, null);
         }
     }
 

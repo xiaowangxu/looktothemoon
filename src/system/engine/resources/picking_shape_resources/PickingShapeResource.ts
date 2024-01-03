@@ -1,7 +1,7 @@
 
 import { Resource } from "../Resource";
 import type { Viewport } from "../../nodes/Node";
-import type { Camera3D } from "../../nodes/camera3ds/Camera3D";
+import type { Camera3D } from "../../nodes/node3ds/camera3ds/Camera3D";
 import { type RaycastResult } from "../../worlds/world3ds/PhysicsWorld3D";
 import { PickingSide, type PickingShape3D } from "../../worlds/world3ds/PickingWorld3D";
 import { Epsilon } from '../../../fivepebble/Scalar';

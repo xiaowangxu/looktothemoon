@@ -2,7 +2,7 @@ import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Rid, type RID } from "../../Rid";
 import type { Viewport } from "../../nodes/Node";
-import type { Camera3D } from "../../nodes/camera3ds/Camera3D";
+import type { Camera3D } from "../../nodes/node3ds/camera3ds/Camera3D";
 import type { PickingArea3D } from "../../nodes/node3ds/physics3ds/PickingArea3D";
 import { type RaycastResult } from "./PhysicsWorld3D";
 import { ConfiguredObject, type Config } from "../../ConfiguredObject";

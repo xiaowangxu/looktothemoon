@@ -6,8 +6,6 @@ import { Node, Viewport } from "./nodes/Node";
 import type { World3D } from "./worlds/world3ds/World3D";
 import { ConfiguredObject, type Config } from "./ConfiguredObject";
 
-const arr = new Array(10000);
-
 export class SceneTree extends ConfiguredObject {
     private readonly input_action_map: ShortCutActionMap = new ShortCutActionMap(this.config);
     private readonly root: Node;
@@ -66,7 +64,7 @@ export class SceneTree extends ConfiguredObject {
         }
         this.root.propagate_InternalBeforeRender(this.delta);
         // render server resize
-        this.config.render_server.set_PixelRatio(this.config.render_server_pixel_ratio ?? window.devicePixelRatio);
+        this.config.render_server.set_PixelRatio(this.config.render_server_pixel_ratio ?? window.devicePixelRatio * (this.config.render_server_scale ?? 1));
         if (this.config.render_server_size) {
             this.config.render_server.set_Size(this.config.render_server_size.x, this.config.render_server_size.y);
         }
@@ -75,7 +73,7 @@ export class SceneTree extends ConfiguredObject {
         }
         const worlds = new Set<World3D>();
         for (const viewport of this.viewports) {
-            const world = viewport.get_World3D();
+            const world = viewport.world_3d;
             if (world !== undefined) worlds.add(world);
         }
         for (const world of worlds) {

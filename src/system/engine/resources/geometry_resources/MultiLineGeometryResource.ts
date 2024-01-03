@@ -48,8 +48,8 @@ export class MultiLineGeometryResource extends GeometryResource {
     constructor(config: Config) {
         super(config);
         this.geometry_ref.value = this.render_server.create_Geometry();
-        this.start_attribute_buffer_ref.value = new RenderDeviceVector3AttributeBuffer(this.render_server, RenderStateBufferUsage.DynamicDraw, [vec3(0, 0, 0), vec3(1, 1, 1)], 1);
-        this.end_attribute_buffer_ref.value = new RenderDeviceVector3AttributeBuffer(this.render_server, RenderStateBufferUsage.DynamicDraw, [vec3(1, 1, 1), vec3(3, 0, 3)], 1);
+        this.start_attribute_buffer_ref.value = new RenderDeviceVector3AttributeBuffer(this.render_server, RenderStateBufferUsage.DynamicDraw, [vec3(0, 0, 0), vec3(1, 0, 1)], 1);
+        this.end_attribute_buffer_ref.value = new RenderDeviceVector3AttributeBuffer(this.render_server, RenderStateBufferUsage.DynamicDraw, [vec3(1, 0, 1), vec3(3, 0, 3)], 1);
         this.geometry.set_Geometry(
             RenderStatePrimitiveType.Triangles,
             {

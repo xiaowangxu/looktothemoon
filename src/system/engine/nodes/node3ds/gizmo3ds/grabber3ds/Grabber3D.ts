@@ -14,11 +14,11 @@ import type { Color } from "@/system/fivepebble/graphics/Color";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { Node3D } from "../../Node3D";
 
-export class GrabberElement<T> extends FixSizeNode3D {
+export class GrabberElement3D<T> extends FixSizeNode3D {
     // signals
-    public readonly signal_grab_start: SignalEmitter<(value: T, target: GrabberElement<T>) => void> = new SignalEmitter();
-    public readonly signal_grabbing: SignalEmitter<(value: T, target: GrabberElement<T>) => void> = new SignalEmitter();
-    public readonly signal_grab_end: SignalEmitter<(value: T, target: GrabberElement<T>) => void> = new SignalEmitter();
+    public readonly signal_grab_start: SignalEmitter<(value: T, target: GrabberElement3D<T>) => void> = new SignalEmitter();
+    public readonly signal_grabbing: SignalEmitter<(value: T, target: GrabberElement3D<T>) => void> = new SignalEmitter();
+    public readonly signal_grab_end: SignalEmitter<(value: T, target: GrabberElement3D<T>) => void> = new SignalEmitter();
 
     private _enabled: boolean = true;
     public get enabled() { return this._enabled; }
@@ -57,7 +57,7 @@ export class GrabberElement<T> extends FixSizeNode3D {
     }
 }
 
-export class Grabbers<T> extends Node3D {
+export class Grabber3D<T> extends Node3D {
     public readonly signal_grab_start: SignalEmitter<(value: T) => void> = new SignalEmitter();
     public readonly signal_grabbing: SignalEmitter<(value: T) => void> = new SignalEmitter();
     public readonly signal_grab_end: SignalEmitter<(value: T) => void> = new SignalEmitter();

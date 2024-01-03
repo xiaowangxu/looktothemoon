@@ -192,8 +192,20 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
     min(b: Vector3): Vector3 {
         return new Vector3(Math.min(this.x, b.x), Math.min(this.y, b.y), Math.min(this.z, b.z));
     }
+    mins(a: Vector3, b: Vector3): Vector3 {
+        this.x = Math.min(a.x, b.x);
+        this.y = Math.min(a.y, b.y);
+        this.z = Math.min(a.z, b.z);
+        return this;
+    }
     max(b: Vector3): Vector3 {
         return new Vector3(Math.max(this.x, b.x), Math.max(this.y, b.y), Math.max(this.z, b.z));
+    }
+    maxs(a: Vector3, b: Vector3): Vector3 {
+        this.x = Math.max(a.x, b.x);
+        this.y = Math.max(a.y, b.y);
+        this.z = Math.max(a.z, b.z);
+        return this;
     }
     abs(): Vector3 {
         return new Vector3(Math.abs(this.x), Math.abs(this.y), Math.abs(this.z));

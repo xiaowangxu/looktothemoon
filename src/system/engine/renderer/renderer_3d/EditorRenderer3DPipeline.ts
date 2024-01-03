@@ -1,6 +1,6 @@
 import { Ref } from "@/system/utils/RefCounted";
 import type { Config } from "../../ConfiguredObject";
-import type { Renderer3D } from "./Renderer3D";
+import type { EditorRenderer3D } from "./EditorRenderer3D";
 import { Renderer3DPipeline } from "./Renderer3DPipeline";
 import type { WebGL2RenderStateFrameBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
 import type { WebGL2RenderStateRenderBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateRenderBuffer";
@@ -10,10 +10,8 @@ import { WebGL2RenderStateFrameBufferAttachmentPoint } from "@/system/sliverofst
 import { Cacher } from "@/system/utils/Cacher";
 import { RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { WebGL2RenderStateIntUniformSlot, WebGL2RenderStateUintUniformSlot } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
-import { RenderServerDevice, RenderServerPlainColorTexture } from "../../render_server/RenderServer";
+import { RenderServerDevice } from "../../render_server/RenderServer";
 import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
-import type { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
-import type { WebGL2RenderStateProgram } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateProgram";
 import { RenderServerShaderPass } from "../../render_server/RenderServerShader";
 import { RenderServerMaterialCullFace } from "../../render_server/RenderServerMaterial";
 import type { Viewport } from "../../nodes/Node";
@@ -197,7 +195,17 @@ const SkyDomeProgram = new Cacher((config: Config) => {
 export class EditorRenderer3DPipeline extends Renderer3DPipeline {
     private get render_server() { return this.config.render_server; }
 
-    static readonly Msaa = 1;
+    private _msaa: 1 | 2 | 4 | 8 = 1;
+    public get msaa() { return this._msaa; }
+    public set msaa(msaa: 1 | 2 | 4 | 8) {
+        if (this._msaa !== msaa) {
+            this._msaa = msaa;
+            this.dispose();
+            this.alloc_Solid();
+            this.alloc_Transparent();
+            this.alloc_Result();
+        }
+    }
 
     //#region Solid
 
@@ -260,8 +268,8 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.solid_color_depth_copy_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
 
         // render buffer
-        this.solid_color_renderbuffer.value = this.render_server.render_state.create_RenderBuffer(RenderStateTextureFormat.RGBA32F, EditorRenderer3DPipeline.Msaa).expect();
-        this.solid_depth_renderbuffer.value = this.render_server.render_state.create_RenderBuffer(RenderStateTextureFormat.D32F, EditorRenderer3DPipeline.Msaa).expect();
+        this.solid_color_renderbuffer.value = this.render_server.render_state.create_RenderBuffer(RenderStateTextureFormat.RGBA32F, this.msaa).expect();
+        this.solid_depth_renderbuffer.value = this.render_server.render_state.create_RenderBuffer(RenderStateTextureFormat.D32F, this.msaa).expect();
 
         // texture
         this.solid_color_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0).expect();
@@ -296,8 +304,8 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.transparent_accum_copy_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
 
         // render buffer
-        this.transparent_color_renderbuffer.value = this.render_server.render_state.create_RenderBuffer(RenderStateTextureFormat.RGBA32F, EditorRenderer3DPipeline.Msaa).expect();
-        this.transparent_accum_renderbuffer.value = this.render_server.render_state.create_RenderBuffer(RenderStateTextureFormat.R32F, EditorRenderer3DPipeline.Msaa).expect();
+        this.transparent_color_renderbuffer.value = this.render_server.render_state.create_RenderBuffer(RenderStateTextureFormat.RGBA32F, this.msaa).expect();
+        this.transparent_accum_renderbuffer.value = this.render_server.render_state.create_RenderBuffer(RenderStateTextureFormat.R32F, this.msaa).expect();
 
         // texture
         this.transparent_color_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0).expect();
@@ -349,8 +357,8 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.alloc_Texture2D(this.result_color_texture.expect, this.size.x, this.size.y, 0, RenderStateTextureDataFormat.RGBA);
     }
 
-    constructor(config: Config, renderer: Renderer3D) {
-        super(config, renderer);
+    constructor(config: Config) {
+        super(config);
         this.alloc_Result();
         this.alloc_Solid();
         this.alloc_Transparent();
@@ -397,7 +405,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         }
     }
 
-    private render_RenderQueue0Solid(transparent_bg: boolean) {
+    private render_RenderQueue0Solid(renderer: EditorRenderer3D, transparent_bg: boolean) {
         const { x: width, y: height } = this.size;
         this.render_server.set_RenderCapabilities(true, true, this.render_server.render_state.gl.LEQUAL, false);
         this.render_server.render_state.set_ViewportProxy(0, 0, width, height);
@@ -412,7 +420,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         }
 
         // render queue solid
-        const render_queue = this.renderer.render_queue_0;
+        const render_queue = renderer.render_queue_0;
         for (let i = 0; i <= render_queue.solid_pointer; i++) {
             const geometry = render_queue.solid_geometry_queue[i];
             const indexed = render_queue.solid_indexed_queue[i];
@@ -446,7 +454,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.blit_FrameBuffer(this.solid_framebuffer.expect, this.solid_color_depth_copy_framebuffer.expect, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth, RenderStateTextureMagFilter.Nearest, 0, 0, width, height);
     }
 
-    private compose_RenderQueue0Solid(color_map: boolean) {
+    private compose_RenderQueue0Solid(renderer: EditorRenderer3D, color_map: boolean) {
         this.render_server.render_state.use_FrameBuffer(this.result_framebuffer.expect);
         this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false);
         this.set_CullFace(RenderServerMaterialCullFace.None);
@@ -456,7 +464,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.draw_Elements(this.screen_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
-    private render_RenderQueue0Transparent() {
+    private render_RenderQueue0Transparent(renderer: EditorRenderer3D) {
         const { x: width, y: height } = this.size;
         this.render_server.set_RenderCapabilities(true, false, this.render_server.render_state.gl.LEQUAL, true);
         this.render_server.render_state.gl.blendFuncSeparate(this.render_server.render_state.gl.ONE, this.render_server.render_state.gl.ONE, this.render_server.render_state.gl.ZERO, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
@@ -469,7 +477,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
         // draw scene
         // render queue transparent
-        const render_queue = this.renderer.render_queue_0;
+        const render_queue = renderer.render_queue_0;
         for (let i = 0; i <= render_queue.transparent_pointer; i++) {
             const geometry = render_queue.transparent_geometry_queue[i];
             const indexed = render_queue.transparent_indexed_queue[i];
@@ -530,7 +538,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.blit_FrameBuffer(this.solid_framebuffer.expect, this.solid_color_depth_copy_framebuffer.expect, RenderStateFrameBufferPart.Depth, RenderStateTextureMagFilter.Nearest, 0, 0, width, height);
     }
 
-    private compose_RenderQueue0Transparent(color_map: boolean) {
+    private compose_RenderQueue0Transparent(renderer: EditorRenderer3D, color_map: boolean) {
         this.render_server.render_state.use_FrameBuffer(this.result_framebuffer.expect);
         this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true);
         this.set_CullFace(RenderServerMaterialCullFace.None);
@@ -542,9 +550,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.draw_Elements(this.oit_screen_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
-    private render_RenderQueue1Solid() {
-        if (this.renderer.render_queue_1 === undefined) return;
-
+    private render_RenderQueue1Solid(renderer: EditorRenderer3D) {
         const { x: width, y: height } = this.size;
         this.render_server.set_RenderCapabilities(true, true, this.render_server.render_state.gl.LEQUAL, false);
         this.render_server.render_state.set_ViewportProxy(0, 0, width, height);
@@ -557,7 +563,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.active_Texture(this.solid_color_texture.expect, 1);
 
         // render queue solid
-        const render_queue = this.renderer.render_queue_1;
+        const render_queue = renderer.render_queue_1;
         for (let i = 0; i <= render_queue.solid_pointer; i++) {
             const geometry = render_queue.solid_geometry_queue[i];
             const indexed = render_queue.solid_indexed_queue[i];
@@ -582,10 +588,10 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         }
 
         // blit
-        this.render_server.render_state.blit_FrameBuffer(this.solid_framebuffer.expect, this.solid_color_depth_copy_framebuffer.expect, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth, RenderStateTextureMagFilter.Nearest, 0, 0, width, height);
+        this.render_server.render_state.blit_FrameBuffer(this.solid_framebuffer.expect, this.solid_color_depth_copy_framebuffer.expect, RenderStateFrameBufferPart.Color, RenderStateTextureMagFilter.Nearest, 0, 0, width, height);
     }
 
-    private compose_RenderQueue1Solid() {
+    private compose_RenderQueue1Solid(renderer: EditorRenderer3D) {
         this.render_server.render_state.use_FrameBuffer(this.result_framebuffer.expect);
         this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true);
         this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.ONE, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
@@ -596,9 +602,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.draw_Elements(this.screen_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
-    private render_RenderQueue1Transparent() {
-        if (this.renderer.render_queue_1 === undefined) return;
-
+    private render_RenderQueue1Transparent(renderer: EditorRenderer3D) {
         const { x: width, y: height } = this.size;
         this.render_server.set_RenderCapabilities(true, false, this.render_server.render_state.gl.LEQUAL, true);
         this.render_server.render_state.gl.blendFuncSeparate(this.render_server.render_state.gl.ONE, this.render_server.render_state.gl.ONE, this.render_server.render_state.gl.ZERO, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
@@ -611,7 +615,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
         // draw scene
         // render queue transparent
-        const render_queue = this.renderer.render_queue_1;
+        const render_queue = renderer.render_queue_1;
         for (let i = 0; i <= render_queue.transparent_pointer; i++) {
             const geometry = render_queue.transparent_geometry_queue[i];
             const indexed = render_queue.transparent_indexed_queue[i];
@@ -640,7 +644,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.blit_FrameBuffer(this.transparent_accum_src_framebuffer.expect, this.transparent_accum_copy_framebuffer.expect, RenderStateFrameBufferPart.Color, RenderStateTextureMagFilter.Nearest, 0, 0, width, height);
     }
 
-    private compose_RenderQueue1Transparent() {
+    private compose_RenderQueue1Transparent(renderer: EditorRenderer3D) {
         this.render_server.render_state.use_FrameBuffer(this.result_framebuffer.expect);
         this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true);
         this.set_CullFace(RenderServerMaterialCullFace.None);
@@ -652,22 +656,22 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.draw_Elements(this.oit_screen_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
-    protected render_Internal(world: World3D, viewport: Viewport, once: boolean): void {
+    protected render_Internal(renderer: EditorRenderer3D, world: World3D, viewport: Viewport, once: boolean): void {
         const { transparent: transparent_bg, color_map } = viewport;
         // render queue 0
-        this.render_RenderQueue0Solid(transparent_bg);
-        this.compose_RenderQueue0Solid(color_map);
-        if (this.renderer.render_queue_0.transparent_pointer >= 0) {
-            this.render_RenderQueue0Transparent();
-            this.compose_RenderQueue0Transparent(color_map);
+        this.render_RenderQueue0Solid(renderer, transparent_bg);
+        this.compose_RenderQueue0Solid(renderer, color_map);
+        if (renderer.render_queue_0.transparent_pointer >= 0) {
+            this.render_RenderQueue0Transparent(renderer);
+            this.compose_RenderQueue0Transparent(renderer, color_map);
         }
         // render queue 1
-        if (this.renderer.render_queue_1 !== undefined) {
-            this.render_RenderQueue1Solid();
-            this.compose_RenderQueue1Solid();
-            if (this.renderer.render_queue_1.transparent_pointer >= 0) {
-                this.render_RenderQueue1Transparent();
-                this.compose_RenderQueue1Transparent();
+        if (renderer.render_queue_1 !== undefined) {
+            this.render_RenderQueue1Solid(renderer);
+            this.compose_RenderQueue1Solid(renderer);
+            if (renderer.render_queue_1.transparent_pointer >= 0) {
+                this.render_RenderQueue1Transparent(renderer);
+                this.compose_RenderQueue1Transparent(renderer);
             }
         }
     }

@@ -1,6 +1,6 @@
 import { Node } from "../../nodes/Node";
 import { Node3D } from "../../nodes/node3ds/Node3D";
-import { BoxGeometryResource, CylinderGeometryResource, TorusGeometryResource } from "../../resources/geometry_resources/PrimitiveGeometryResource";
+import { BoxGeometryResource, CylinderGeometryResource, SphereGeometryResource, TorusGeometryResource } from "../../resources/geometry_resources/PrimitiveGeometryResource";
 import { type Config } from "../../ConfiguredObject";
 import { ClassBase } from "./ClassBase";
 import { MeshInstance3D } from "../../nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
@@ -34,5 +34,6 @@ ClassDB.register_Class(MeshInstance3D);
 ClassDB.register_Class(BoxGeometryResource);
 ClassDB.register_Class(TorusGeometryResource);
 ClassDB.register_Class(CylinderGeometryResource);
+ClassDB.register_Class(SphereGeometryResource);
 
 ClassDB.register_Class(NormalMaterialResource);

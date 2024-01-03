@@ -6,8 +6,11 @@ import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { Color } from "@/system/fivepebble/graphics/Color";
 import { RenderDeviceObject } from "@/system/sliverofstraw/RenderDeviceObject";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
+import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 
 export enum RenderServerLightType {
+    None = 0,
     AmbientLight = 1,
     DirectionalLight = 2,
     PointLight = 3,
@@ -16,13 +19,13 @@ export enum RenderServerLightType {
 
 export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState> {
     private readonly lights_texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
-    
+
     public get lights_texture() { return this.lights_texture_ref.expect; }
-    
+
     public readonly texture_width;
     public readonly texture_height;
     public readonly max_light_count;
-    
+
     // lights data
     private static LightParamCount = 20;
     private readonly /*             */ lights_data: Uint32Array;
@@ -91,6 +94,10 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
         return RenderServerLightsData.#index_array;
     }
 
+    public clear_Lights() {
+        this.light_type_id.fill(0);
+    }
+
     public set_Light(id: number,
         type?: RenderServerLightType, lid?: number,
         position?: Vector3, direction?: Vector3, color?: Color, attenuation?: number,
@@ -131,6 +138,30 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
         if (shadow_normal_bias !== undefined)/*   */ this.light_shadow_normal_bias[id] = shadow_normal_bias;
         if (shadow_opacity !== undefined)/*       */ this.light_shadow_opacity[id] = shadow_opacity;
         if (data_stride !== undefined)/*       */ this.light_data_stride[id] = Math.max(0, Math.floor(data_stride));
+    }
+
+    public set_LightProjectionMatrixRegion(id: number, proj: Matrix4, min: Vector2, max: Vector2) {
+        if (id < 0 || id >= this.max_light_count) return;
+        this.light_type_id[id] = proj.n11;
+        this.light_pos_x[id] = proj.n12;
+        this.light_pos_y[id] = proj.n13;
+        this.light_pos_z[id] = proj.n14;
+        this.light_dir_x[id] = proj.n21;
+        this.light_dir_y[id] = proj.n22;
+        this.light_dir_z[id] = proj.n23;
+        this.light_color_r[id] = proj.n24;
+        this.light_color_g[id] = proj.n31;
+        this.light_color_b[id] = proj.n32;
+        this.light_attenuation[id] = proj.n33;
+        this.light_mask[id] = proj.n34;
+        this.light_param_0[id] = proj.n41;
+        this.light_param_1[id] = proj.n42;
+        this.light_param_2[id] = proj.n43;
+        this.light_param_3[id] = proj.n44;
+        this.light_shadow_bias[id] = min.x;
+        this.light_shadow_normal_bias[id] = min.y;
+        this.light_shadow_opacity[id] = max.x;
+        this.light_data_stride[id] = max.y;
     }
 
     public commit_AllLightsData() {

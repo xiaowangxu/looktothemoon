@@ -16,11 +16,16 @@ import { WorldObject } from "../WorldObject";
 import { Rid, type RID } from "../../Rid";
 import { GeometryResource } from "../../resources/geometry_resources/GeometryResource";
 import type { MaterialResource } from "../../resources/material_resources/MaterialResource";
-import type { Renderer3DQueue } from "../../renderer/renderer_3d/Renderer3D";
+import type { Renderer3DQueue } from "../../renderer/renderer_3d/EditorRenderer3D";
 import type { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
 import { ConfiguredObject, type Config } from "../../ConfiguredObject";
 import { Cacher } from "@/system/utils/Cacher";
 import type { WebGL2RenderStateProgram } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateProgram";
+import { RenderServerLightType, RenderServerLightsData } from "../../render_server/RenderServerLightData";
+import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import type { Color } from "@/system/fivepebble/graphics/Color";
+import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import { Deg2Rad } from "@/system/fivepebble/Scalar";
 
 // #region sky
 
@@ -185,9 +190,11 @@ export class VisualWorld3DMesh extends WorldObject {
 		this.update_BBox();
 	}
 
+	static #zero_vec3: Vector3 = new Vector3(0, 0, 0);
+
 	private update_BBox() {
 		if (!this.has_geometry) {
-			this._bbox.set(0, 0, 0, 0, 0, 0);
+			this._bbox.set(VisualWorld3DMesh.#zero_vec3, VisualWorld3DMesh.#zero_vec3);
 		}
 		else {
 			this._bbox.applys_Matrix4(this.geometry_ref.expect.bbox, this.global_transform);
@@ -292,12 +299,46 @@ export class VisualWorld3DMesh extends WorldObject {
 	}
 }
 
+export class VisualWorld3DLight extends WorldObject {
+	public type: RenderServerLightType = RenderServerLightType.SpotLight;
+	public readonly position: Vector3 = new Vector3();
+	public readonly direction: Vector3 = new Vector3(0, 0, -1);
+	public readonly color: Vector3 = new Vector3(1, 1, 1);
+	public intensity: number = 1.0;
+
+	constructor(config: Config, rid: RID) {
+		super(config, rid);
+	}
+
+	public set_GlobalPosition(position: Vector3) {
+		this.position.copy(position);
+	}
+
+	// fill light data
+
+	static #color: Color = new Vector4();
+
+	public fill_LightData(lights_data: RenderServerLightsData, idx: number, lid: number): number {
+		if (idx >= lights_data.max_light_count) return idx;
+		const color = VisualWorld3DLight.#color;
+		color.r = this.color.x * this.intensity;
+		color.g = this.color.y * this.intensity;
+		color.b = this.color.z * this.intensity;
+		lights_data.set_Light(idx, this.type, lid, this.position, this.direction, color, 0.0, 0xffffffff, 12 * Deg2Rad, 0 * Deg2Rad, 10, 11)
+		return idx;
+	}
+
+	public dispose(): void { }
+}
+
 export class VisualWorld3D extends ConfiguredObject {
 	protected readonly meshes_map: Map<RID, VisualWorld3DMesh> = new Map();
+	protected readonly lights_map: Map<RID, VisualWorld3DLight> = new Map();
 
 	public get render_server() { return this.config.render_server; }
 
 	public get meshes() { return this.meshes_map.values(); }
+	public get lights() { return this.lights_map.values(); }
 
 	// signal
 	public signal_before_render: SignalEmitter<() => void> = new SignalEmitter();
@@ -319,6 +360,8 @@ export class VisualWorld3D extends ConfiguredObject {
 		const { sky_program, uniform_time_slot } = SkyProgramUniform.get(this.config);
 		this.sky_program = sky_program;
 		this.sky_uniform_time_slot = uniform_time_slot;
+
+		const rid = this.create_Light();
 	}
 
 	public trigger_BeforeRender(scene_tree: SceneTree) {
@@ -427,10 +470,41 @@ export class VisualWorld3D extends ConfiguredObject {
 		}
 	}
 
+	// Light
+
+	public create_Light(): RID {
+		const rid = Rid();
+		const mesh = new VisualWorld3DLight(this.config, rid);
+		this.lights_map.set(rid, mesh);
+		return rid;
+	}
+
+	protected get_Light(rid: RID): VisualWorld3DLight | undefined {
+		return this.lights_map.get(rid);
+	}
+
+	public free_Light(rid: RID) {
+		const instance = this.get_Light(rid);
+		if (instance === undefined) return;
+		instance.dispose();
+		this.lights_map.delete(rid);
+	}
+
+	public set_LightGlobalPosition(rid: RID, position: Vector3) {
+		const instance = this.get_Light(rid);
+		if (instance) {
+			instance.set_GlobalPosition(position);
+		}
+	}
+
 	public dispose() {
 		for (const mesh of this.meshes) {
 			mesh.dispose();
 		}
+		for (const light of this.lights) {
+			light.dispose();
+		}
 		this.meshes_map.clear();
+		this.lights_map.clear();
 	}
 }

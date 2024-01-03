@@ -14,6 +14,10 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
     public get g() { return this.y; }
     public get b() { return this.z; }
     public get a() { return this.w; }
+    public set r(val: number) { this.x = val; }
+    public set g(val: number) { this.y = val; }
+    public set b(val: number) { this.z = val; }
+    public set a(val: number) { this.w = val; }
 
     get dimension(): number { return 4; }
     get array(): number[] { return [this.x, this.y, this.z, this.w]; }
@@ -214,8 +218,22 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
     min(b: Vector4): Vector4 {
         return new Vector4(Math.min(this.x, b.x), Math.min(this.y, b.y), Math.min(this.z, b.z), Math.min(this.w, b.w));
     }
+    mins(a: Vector4, b: Vector4): Vector4 {
+        this.x = Math.min(a.x, b.x);
+        this.y = Math.min(a.y, b.y);
+        this.z = Math.min(a.z, b.z);
+        this.w = Math.min(a.w, b.w);
+        return this;
+    }
     max(b: Vector4): Vector4 {
         return new Vector4(Math.max(this.x, b.x), Math.max(this.y, b.y), Math.max(this.z, b.z), Math.max(this.w, b.w));
+    }
+    maxs(a: Vector4, b: Vector4): Vector4 {
+        this.x = Math.max(a.x, b.x);
+        this.y = Math.max(a.y, b.y);
+        this.z = Math.max(a.z, b.z);
+        this.w = Math.max(a.w, b.w);
+        return this;
     }
     abs(): Vector4 {
         return new Vector4(Math.abs(this.x), Math.abs(this.y), Math.abs(this.z), Math.abs(this.w));

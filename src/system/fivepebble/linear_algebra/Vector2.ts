@@ -173,8 +173,18 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
     min(b: Vector2): Vector2 {
         return new Vector2(Math.min(this.x, b.x), Math.min(this.y, b.y));
     }
+    mins(a: Vector2, b: Vector2): Vector2 {
+        this.x = Math.min(a.x, b.x);
+        this.y = Math.min(a.y, b.y);
+        return this;
+    }
     max(b: Vector2): Vector2 {
         return new Vector2(Math.max(this.x, b.x), Math.max(this.y, b.y));
+    }
+    maxs(a: Vector2, b: Vector2): Vector2 {
+        this.x = Math.max(a.x, b.x);
+        this.y = Math.max(a.y, b.y);
+        return this;
     }
     abs(): Vector2 {
         return new Vector2(Math.abs(this.x), Math.abs(this.y));

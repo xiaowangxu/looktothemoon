@@ -13,7 +13,7 @@ import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds
 import { BoxGeometryResource, CylinderGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
 import { NormalMaterialResource, PlainColorMaterialResource, UVMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { color, color8 } from "@/system/fivepebble/graphics/Color";
-import { OrthographicCamera3D } from "@/system/engine/nodes/camera3ds/OrthographicCamera3D";
+import { OrthographicCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/OrthographicCamera3D";
 import { euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/LineGrabber3D";
 import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
@@ -41,7 +41,7 @@ const DefaultConfig: Config = {
 	render_server: new RenderServerDevice(document.getElementById('render-server-canvas') as HTMLCanvasElement),
 	render_server_size: undefined,
 	render_server_pixel_ratio: undefined,
-	render_3d_pipeline: EditorRenderer3DPipeline,
+	render_server_scale: 1,
 	physics_fps: 60,
 }
 const DefaultInstanceCache = new ResourceInstanceCache(DefaultConfig);
@@ -54,6 +54,10 @@ EditorViewportContainer.dom = (document.querySelector('#viewport-0') ?? undefine
 export const EditorViewport = new Viewport(DefaultConfig);
 EditorViewport.debug = true;
 EditorViewport.world_3d = new World3D(DefaultConfig);
+const renderer = new EditorRenderer3D(DefaultConfig);
+const pipeline = new EditorRenderer3DPipeline(DefaultConfig);
+renderer.render_pipeline = pipeline;
+EditorViewport.renderer_3d = renderer;
 EditorViewport.transparent = false;
 EditorViewportContainer.add_Child(EditorViewport);
 // camera
@@ -64,9 +68,6 @@ EditorCamera.set_Zoom(0.3);
 // World 
 const World = new Node3D(DefaultConfig);
 World.local_scale = vec3(0.01, 0.01, 0.01);
-// World.block_input = true;
-// World.block_process = true;
-// World.block_physics_process = true;
 
 const EditorWorld = new Node3D(DefaultConfig);
 
@@ -89,16 +90,16 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut(DefaultC
 ]));
 
 // viewport 0
-const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
-EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-const EditorViewport0 = new Viewport(DefaultConfig);
-EditorViewportContainer0.add_Child(EditorViewport0);
-const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
-// EditorCamera0.zoom_to_cursor = false;
-EditorViewport0.add_Child(EditorCamera0);
-EditorViewport.add_Child(EditorViewportContainer0);
+// const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
+// EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+// const EditorViewport0 = new Viewport(DefaultConfig);
+// EditorViewportContainer0.add_Child(EditorViewport0);
+// const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
+// // EditorCamera0.zoom_to_cursor = false;
+// EditorViewport0.add_Child(EditorCamera0);
+// EditorViewport.add_Child(EditorViewportContainer0);
 
-const geometry = new BoxGeometryResource(DefaultConfig);
+const geometry = new SphereGeometryResource(DefaultConfig);
 // geometry.theta = Pi / 2;
 geometry.build();
 
@@ -111,7 +112,7 @@ multi_geometry.set_InstanceCount(count * count, false, false);
 
 for (let i = 0; i < count; i++) {
 	for (let j = 0; j < count; j++) {
-		multi_geometry.set_InstanceTransform(i * count + j, Matrix4.from_BasisPosition(Matrix3.make_Scale(j + 1, j + 1, j + 1), vec3(i * 2, j * 2, 0)), false);
+		multi_geometry.set_InstanceTransform(i * count + j, Matrix4.from_BasisPosition(undefined, vec3(i * 2, j * 2, 0)), false);
 	}
 }
 
@@ -124,7 +125,7 @@ const material1 = new NormalMaterialResource(DefaultConfig);
 material1.remap = true;
 
 const material2 = new StandardMaterialResource(DefaultConfig);
-material2.color = color(1, 1, 1, 1);
+material2.color = color(0.2, 0.5, 0.75, 1);
 
 const material3 = new PlainColorMaterialResource(DefaultConfig);
 // material3.color = color(1, 0, 1, 1);
@@ -132,9 +133,11 @@ material3.texture = new ImageTextureResource(DefaultConfig);
 
 import url from 'res://image.png';
 import { RenderStateTextureFormat } from "@/system/sliverofstraw/RenderState";
-import { PointGrabber } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/PointGrabber3D";
+import { PointGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/PointGrabber3D";
 import { EditorRenderer3DPipeline } from "@/system/engine/renderer/renderer_3d/EditorRenderer3DPipeline";
 import { MaterialOverrideResource } from "@/system/engine/resources/material_resources/MaterialResource";
+import { EditorRenderer3D } from "@/system/engine/renderer/renderer_3d/EditorRenderer3D";
+import { TranslateGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/TranslateGrabber3D";
 {
 	new ImageLoader().parse(url).then(res => {
 		(material3.texture as ImageTextureResource).set_Image(res.expect(), RenderStateTextureFormat.SRGBA8, 4);
@@ -145,7 +148,7 @@ const material4 = new NormalMaterialResource(DefaultConfig);
 
 const Mesh1 = new MeshInstance3D(DefaultConfig);
 Mesh1.geometry = multi_geometry;
-Mesh1.material = material3;
+Mesh1.material = material2;
 Mesh1.local_scale = vec3(100, 100, 100);
 Mesh1.local_position = vec3(0, 0, -100);
 Mesh1.local_visible = true;
@@ -157,19 +160,13 @@ Mesh1.local_visible = true;
 
 World.add_Child(Mesh1);
 
-const LineGrabber1 = new LineGrabber3D(DefaultConfig);
-const LineGrabber2 = new LineGrabber3D(DefaultConfig);
-const LineGrabber3 = new LineGrabber3D(DefaultConfig);
-LineGrabber1.color = color8(0x04, 0xa9, 0x73);
-LineGrabber2.local_rotation = euler(0, 0, -Math.PI / 2);
-LineGrabber2.color = color8(0xd8, 0x2d, 0x4e);
-LineGrabber3.color = color8(0x46, 0x6f, 0xd6);
-LineGrabber3.local_rotation = euler(Math.PI / 2);
-World.add_Child(LineGrabber1);
-World.add_Child(LineGrabber2);
-World.add_Child(LineGrabber3);
-const PointGrabber1 = new PointGrabber(DefaultConfig);
-World.add_Child(PointGrabber1);
+const TranslateGrabber = new TranslateGrabber3D(DefaultConfig);
+World.add_Child(TranslateGrabber);
+
+TranslateGrabber.signal_grabbing.connect(pos => {
+	EditorViewport.world_3d?.visual_world.set_LightGlobalPosition(3, pos);
+	// Mesh1.local_position = World.to_Local(pos);
+});
 
 // const mat = new PlainColorMaterialResource(DefaultConfig);
 // for (let i = 0; i <= 1000; i++) {
@@ -177,7 +174,8 @@ World.add_Child(PointGrabber1);
 // 	Mesh2.geometry = geometry2;
 // 	const m = new MaterialOverrideResource(DefaultConfig);
 // 	m.set_OverrideMaterial(mat);
-// 	m.set_UniformOverride('u_color', color(Math.random(), Math.random(), Math.random(), 1));
+// 	m.set_UniformOverride('u_color', color(0, 0, 0, 0.25));
+// 	m.material.transparent = true;
 // 	Mesh2.material = m;
 // 	Mesh2.local_scale = vec3(1, 100, 100);
 // 	Mesh2.local_position = vec3(i * 50, 0, 0);
@@ -214,11 +212,24 @@ EditorViewport.signal_input.connect((evt, pro) => {
 
 export const signal = new SignalEmitter<(...args: any[]) => void>();
 
+const multi_line_geometry = new MultiLineGeometryResource(DefaultConfig);
+const multi_line_material = new MultiLineMaterialResource(DefaultConfig);
+multi_line_material.color = color8(0xd8, 0x2d, 0x4e);
+const MeshLine = new MeshInstance3D(DefaultConfig);
+MeshLine.geometry = multi_line_geometry;
+MeshLine.material = multi_line_material;
+MeshLine.local_scale = vec3(100, 100, 100);
+MeshLine.local_position = vec3(0, 0, -100);
+MeshLine.render_queue = 1;
+World.add_Child(MeshLine);
+
 signal.connect((action) => {
 	if (action === 'orth') {
+		pipeline.msaa = 4;
 		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_CameraTypeOrth', true, false));
 	}
 	else if (action === 'persp') {
+		pipeline.msaa = 1;
 		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_CameraTypePersp', true, false));
 	}
 	else if (action === '顶视图') {
@@ -241,100 +252,88 @@ signal.connect((action) => {
 	}
 });
 
-const multi_line_geometry = new MultiLineGeometryResource(DefaultConfig);
-const multi_line_material = new MultiLineMaterialResource(DefaultConfig);
-multi_line_material.color = color8(0xd8, 0x2d, 0x4e);
-multi_line_material.line_width = 4;
-const MeshLine = new MeshInstance3D(DefaultConfig);
-MeshLine.geometry = multi_line_geometry;
-MeshLine.material = multi_line_material;
-MeshLine.local_scale = vec3(100, 100, 100);
-MeshLine.local_position = vec3(0, 0, -100);
-MeshLine.render_queue = 1;
-World.add_Child(MeshLine);
+// function create_CompassScene() {
+// 	const CompassConfig: Config = {
+// 		render_server: new RenderServerDevice(document.getElementById('compass-canvas')! as HTMLCanvasElement),
+// 		render_server_size: vec2(50, 50),
+// 		render_server_pixel_ratio: undefined,
+// 		render_3d_pipeline: Renderer3DPipeline,
+// 		render_queue_max_solid_count: 6,
+// 		render_queue_max_transparent_count: 0,
+// 		disabled_render_queue1: true,
+// 		physics_fps: 0
+// 	}
 
-function create_CompassScene() {
-	const CompassConfig: Config = {
-		render_server: new RenderServerDevice(document.getElementById('compass-canvas')! as HTMLCanvasElement),
-		render_server_size: vec2(50, 50),
-		render_server_pixel_ratio: undefined,
-		render_3d_pipeline: Renderer3DPipeline,
-		render_queue_max_solid_count: 6,
-		render_queue_max_transparent_count: 0,
-		disabled_render_queue1: true,
-		physics_fps: 0
-	}
+// 	const red = color8(0xd8, 0x2d, 0x4e);
+// 	const green = color8(0x04, 0xa9, 0x73);
+// 	const blue = color8(0x46, 0x6f, 0xd6);
+// 	const neg_color = color8(128, 128, 128, 255);
+// 	const sphere_radius = 0.4;
+// 	const distance = 0.8;
+// 	const camera_zoom = 0.55;
 
-	const red = color8(0xd8, 0x2d, 0x4e);
-	const green = color8(0x04, 0xa9, 0x73);
-	const blue = color8(0x46, 0x6f, 0xd6);
-	const neg_color = color8(128, 128, 128, 255);
-	const sphere_radius = 0.4;
-	const distance = 0.8;
-	const camera_zoom = 0.55;
+// 	const viewport = new Viewport(CompassConfig);
+// 	viewport.transparent = true;
+// 	viewport.world_3d = new World3D(CompassConfig);
+// 	viewport.update_mode = ViewportUpdateMode.Always;
+// 	viewport.color_map = false;
+// 	viewport.position = vec2(0, 0);
+// 	viewport.size = vec2(50, 50);
 
-	const viewport = new Viewport(CompassConfig);
-	viewport.transparent = true;
-	viewport.world_3d = new World3D(CompassConfig);
-	viewport.update_mode = ViewportUpdateMode.Always;
-	viewport.color_map = false;
-	viewport.position = vec2(0, 0);
-	viewport.size = vec2(50, 50);
+// 	const red_mat = new PlainColorMaterialResource(CompassConfig);
+// 	red_mat.color = red;
+// 	const green_mat = new PlainColorMaterialResource(CompassConfig);
+// 	green_mat.color = green;
+// 	const blue_mat = new PlainColorMaterialResource(CompassConfig);
+// 	blue_mat.color = blue;
+// 	const neg_mat = new PlainColorMaterialResource(CompassConfig);
+// 	neg_mat.color = neg_color;
 
-	const red_mat = new PlainColorMaterialResource(CompassConfig);
-	red_mat.color = red;
-	const green_mat = new PlainColorMaterialResource(CompassConfig);
-	green_mat.color = green;
-	const blue_mat = new PlainColorMaterialResource(CompassConfig);
-	blue_mat.color = blue;
-	const neg_mat = new PlainColorMaterialResource(CompassConfig);
-	neg_mat.color = neg_color;
+// 	const box = new BoxGeometryResource(CompassConfig);
+// 	box.build();
+// 	const box_mesh = new MeshInstance3D(CompassConfig);
+// 	box_mesh.geometry = box;
+// 	box_mesh.set_SurfaceMaterial(0, green_mat);
+// 	box_mesh.set_SurfaceMaterial(1, neg_mat);
+// 	box_mesh.set_SurfaceMaterial(2, blue_mat);
+// 	box_mesh.set_SurfaceMaterial(3, neg_mat);
+// 	box_mesh.set_SurfaceMaterial(4, red_mat);
+// 	box_mesh.set_SurfaceMaterial(5, neg_mat);
+// 	viewport.add_Child(box_mesh);
 
-	const box = new BoxGeometryResource(CompassConfig);
-	box.build();
-	const box_mesh = new MeshInstance3D(CompassConfig);
-	box_mesh.geometry = box;
-	box_mesh.set_SurfaceMaterial(0, green_mat);
-	box_mesh.set_SurfaceMaterial(1, neg_mat);
-	box_mesh.set_SurfaceMaterial(2, blue_mat);
-	box_mesh.set_SurfaceMaterial(3, neg_mat);
-	box_mesh.set_SurfaceMaterial(4, red_mat);
-	box_mesh.set_SurfaceMaterial(5, neg_mat);
-	viewport.add_Child(box_mesh);
+// 	const camera = new OrthographicCamera3D(CompassConfig);
+// 	camera.zoom = camera_zoom;
+// 	camera.local_position = vec3(0, 0, 5);
+// 	viewport.add_Child(camera);
 
-	const camera = new OrthographicCamera3D(CompassConfig);
-	camera.zoom = camera_zoom;
-	camera.local_position = vec3(0, 0, 5);
-	viewport.add_Child(camera);
+// 	const last_lookat = vec3(0, 0, 0);
 
-	const last_lookat = vec3(0, 0, 0);
+// 	const CompassSceneTree = new SceneTree(CompassConfig, viewport);
 
-	const CompassSceneTree = new SceneTree(CompassConfig, viewport);
+// 	EditorSceneTree.add_LinkedTree(CompassSceneTree);
 
-	EditorSceneTree.add_LinkedTree(CompassSceneTree);
+// 	viewport.signal_resized.connect((size) => {
+// 		viewport.update_mode = ViewportUpdateMode.Once;
+// 	});
 
-	viewport.signal_resized.connect((size) => {
-		viewport.update_mode = ViewportUpdateMode.Once;
-	});
-
-	viewport.signal_notification.connect((what: NodeNotification) => {
-		if (what === NodeNotification.InternalAfterProcess) {
-			const active_camera = EditorViewport.get_Camera3D();
-			if (active_camera === undefined) return;
-			const lookat_global_position = active_camera.to_Global(vec3(0, 0, 1));
-			const lookat = lookat_global_position.sub(active_camera.global_position).normalize();
-			if (lookat.equal(last_lookat)) return;
-			last_lookat.copy(lookat);
-			camera.local_position = lookat.mult_Number(5);
-			camera.local_rotation = active_camera.global_rotation;
-			viewport.update_mode = ViewportUpdateMode.Once;
-		}
-	});
-}
+// 	viewport.signal_notification.connect((what: NodeNotification) => {
+// 		if (what === NodeNotification.InternalAfterProcess) {
+// 			const active_camera = EditorViewport.get_Camera3D();
+// 			if (active_camera === undefined) return;
+// 			const lookat_global_position = active_camera.to_Global(vec3(0, 0, 1));
+// 			const lookat = lookat_global_position.sub(active_camera.global_position).normalize();
+// 			if (lookat.equal(last_lookat)) return;
+// 			last_lookat.copy(lookat);
+// 			camera.local_position = lookat.mult_Number(5);
+// 			camera.local_rotation = active_camera.global_rotation;
+// 			viewport.update_mode = ViewportUpdateMode.Once;
+// 		}
+// 	});
+// }
 
 export function createEditorViewport() {
 	EditorSceneTree.start_Loop();
-	create_CompassScene();
+	// create_CompassScene();
 }
 
 const Mesh2 = new MeshInstance3D(DefaultConfig);
@@ -409,5 +408,5 @@ loader1.material = undefined;
 loader1.set_SurfaceMaterial(4, m2);
 loader1.set_SurfaceMaterial(5, m2);
 
-World.add_Child(loader0);
-World.add_Child(loader1);
+// World.add_Child(loader0);
+// World.add_Child(loader1);

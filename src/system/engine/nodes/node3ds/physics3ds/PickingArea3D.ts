@@ -29,7 +29,7 @@ export class PickingArea3D extends PhysicsInstance3D {
 
     protected on_PriorityChanged(): void {
         if (this.area_rid !== undefined) {
-            const picking_world = this.get_Viewport()?.get_World3D()?.get_PickingWorld();
+            const picking_world = this.get_Viewport()?.world_3d?.picking_world;
             if (picking_world !== undefined) {
                 picking_world.set_PickingAreaPriority(this.area_rid, this.priority);
             }
@@ -38,7 +38,7 @@ export class PickingArea3D extends PhysicsInstance3D {
 
     public on_LayerChanged(): void {
         if (this.area_rid !== undefined) {
-            const picking_world = this.get_Viewport()?.get_World3D()?.get_PickingWorld();
+            const picking_world = this.get_Viewport()?.world_3d?.picking_world;
             if (picking_world !== undefined) {
                 picking_world.set_PickingAreaLayer(this.area_rid, this.layer);
             }
@@ -47,7 +47,7 @@ export class PickingArea3D extends PhysicsInstance3D {
 
     public on_EnabledChanged(): void {
         if (this.area_rid !== undefined) {
-            const picking_world = this.get_Viewport()?.get_World3D()?.get_PickingWorld();
+            const picking_world = this.get_Viewport()?.world_3d?.picking_world;
             if (picking_world !== undefined) {
                 picking_world.set_PickingAreaEnabled(this.area_rid, this.enabled);
             }
@@ -62,7 +62,7 @@ export class PickingArea3D extends PhysicsInstance3D {
         switch (what) {
             case NodeNotification.EnteredTree: {
                 if (this.area_rid === undefined) {
-                    const picking_world = this.get_Viewport()?.get_World3D()?.get_PickingWorld();
+                    const picking_world = this.get_Viewport()?.world_3d?.picking_world;
                     if (picking_world !== undefined) {
                         this.area_rid = picking_world.create_PickingArea(this);
                         picking_world.set_PickingAreaLayer(this.area_rid, this.layer);
@@ -74,7 +74,7 @@ export class PickingArea3D extends PhysicsInstance3D {
             }
             case NodeNotification.ExitingTree: {
                 if (this.area_rid !== undefined) {
-                    const picking_world = this.get_Viewport()?.get_World3D()?.get_PickingWorld();
+                    const picking_world = this.get_Viewport()?.world_3d?.picking_world;
                     if (picking_world === undefined) throw new Error('cannot find picking world, fail to free area instance');
                     picking_world.free_PickingArea(this.area_rid);
                     this.area_rid = undefined;

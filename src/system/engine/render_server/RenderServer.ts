@@ -113,11 +113,11 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     //   | screen_size |             |     time    | orthogonal  |                    |  16 Bytes
     //   |     256     |             |     264     |     268     |                    |
     //   |-------------|-------------|-------------|-------------| ---- 272 Bytes ----+
-    //   | pixel_ratio |             |             |             |                    |  16 Bytes
-    //   |     272     |             |             |             |                    |
+    //   | pixel_ratio |    scale    |             |             |                    |  16 Bytes
+    //   |     272     |     276     |             |             |                    |
     //   |-------------|-------------|-------------|-------------| ---- 276 Bytes ----+
     //   
-    //   total 276 Bytes => 69 * 4 float32s
+    //   total 280 Bytes => 70 * 4 float32s
 
     private world_uniforms_buffer_ref: Ref<WebGL2RenderStateBuffer> = new Ref();
 
@@ -202,7 +202,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     public readonly sky_texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
 
     constructor(canvas: RenderDeviceCanvas) {
-        super(canvas, { preserve_texture_count: 8, texture_slot_base: 3, default_texture_slot: 3, canvas_antialias: true, canvas_preserve_drawing_buffer: true });
+        super(canvas, { preserve_texture_count: 8, texture_slot_base: 3, default_texture_slot: 3, canvas_antialias: false, canvas_preserve_drawing_buffer: true });
         if (this.render_state.user_texture_slot_count < 8) throw new Error('<RenderServerDevice> constructor: not enough user texture slot');
         this.setup_IdentityTransformAttributeBuffer();
         this.setup_WorldUniformsBuffer();
@@ -229,7 +229,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     }
 
     private setup_PlainColorTextures() {
-         const plain_color_empty = this.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+        const plain_color_empty = this.render_state.create_Texture(RenderStateTextureType.Tex2D, true, RenderStateTextureFormat.RGBA8, 1, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
         this.render_state.alloc_Texture2D(plain_color_empty, 2, 2, 0, RenderStateTextureDataFormat.RGBA, new Uint8ClampedArray([
             255, 0, 255, 255,
             0, 255, 255, 255,
@@ -363,7 +363,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         }
         // pixel ratio
         {
-            this.world_uniforms_pixel_ratio[0] = window.devicePixelRatio / this._pixel_ratio;
+            this.world_uniforms_pixel_ratio[0] = this._pixel_ratio;
         }
         this.render_state.update_Buffer(this.world_uniforms_buffer_ref.expect, this.world_uniforms_buffer_data);
     }
@@ -416,11 +416,17 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         return new RenderServerLightsData(this, width, height);
     }
 
-    public use_LightsData(lights_data: RenderServerLightsData) {
+    public use_LightsData(lights_data: RenderServerLightsData | undefined) {
         if (this.lights_data_ref.value !== lights_data) {
-            const texture = lights_data.lights_texture;
-            this.lights_data_ref.value = lights_data;
-            this.render_state.active_Texture(texture, RenderServerDevice.LightsTextureUnit);
+            if (lights_data === undefined) {
+                this.lights_data_ref.value = lights_data;
+                this.render_state.deactive_Texture(RenderStateTextureType.Tex2DArray, RenderServerDevice.LightsTextureUnit);
+            }
+            else {
+                const texture = lights_data.lights_texture;
+                this.lights_data_ref.value = lights_data;
+                this.render_state.active_Texture(texture, RenderServerDevice.LightsTextureUnit);
+            }
         }
     }
 

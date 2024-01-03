@@ -1,6 +1,6 @@
-import { type Camera3 } from "../../../fivepebble/graphics/Camera3";
-import { NodeNotification } from "../Node";
-import { Node3D } from "../node3ds/Node3D";
+import { type Camera3 } from "../../../../fivepebble/graphics/Camera3";
+import { NodeNotification } from "../../Node";
+import { Node3D } from "../Node3D";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
 export class Camera3D extends Node3D {

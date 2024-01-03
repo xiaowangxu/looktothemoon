@@ -16,6 +16,7 @@ export class MultiLineMaterialResource extends MaterialResource {
         model_world: RenderStateUniformType.Mat4,
         u_color: RenderStateUniformType.Vec4,
         u_linewidth: RenderStateUniformType.Float,
+        u_consider_pixel_ratio: RenderStateUniformType.Int,
     };
 
     static #vertex_shader = `#version 300 es
@@ -34,6 +35,7 @@ export class MultiLineMaterialResource extends MaterialResource {
     uniform mat4 model_world;
 
     uniform float u_linewidth;
+    uniform int u_consider_pixel_ratio;
     
     out vec2 v_uv;
     
@@ -108,7 +110,7 @@ export class MultiLineMaterialResource extends MaterialResource {
         }
     
         // adjust for linewidth
-        offset *= u_linewidth * pixel_ratio;
+        offset *= u_linewidth * (bool(u_consider_pixel_ratio) ? pixel_ratio : 1.0);
     
         // adjust for clip-space to screen-space conversion // maybe resolution should be based on viewport ...
         offset /= screen.y;
@@ -127,7 +129,8 @@ export class MultiLineMaterialResource extends MaterialResource {
     }`;
     static #vertex_uniforms: UniformInitSet<WebGL2RenderState> = {
         model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.make_Identity() },
-        u_linewidth: { type: RenderStateUniformType.Float, default: 5 },
+        u_linewidth: { type: RenderStateUniformType.Float, default: 2 },
+        u_consider_pixel_ratio: { type: RenderStateUniformType.Int, default: 1 },
     };
     static #fragment_prez_shader = `#version 300 es
     precision highp float;
@@ -152,7 +155,6 @@ export class MultiLineMaterialResource extends MaterialResource {
     ${RenderServerDevice.WorldUniformsCode}
 
     uniform vec4 u_color;
-    uniform highp sampler2DShadow u_scene_depth;
     
     in vec2 v_uv;
 
@@ -166,16 +168,11 @@ export class MultiLineMaterialResource extends MaterialResource {
             if(len2 > 1.0f)
                 discard;
         }
+        o_color = u_color;
         o_normal = vec3(0.0, 0.0, 1.0);
-        // color
-        float depth = texture(u_scene_depth, vec3(gl_FragCoord.xy / screen_size, gl_FragCoord.z));
-        vec4 hidden_color = mix(u_color, vec4(0.5, 0.5, 0.5, 1.0), 0.75);
-        bool not_hidden = depth >= gl_FragCoord.z;
-        o_color = not_hidden ? u_color : hidden_color;
     }`;
     static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
         u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
-        u_scene_depth: { type: RenderStateUniformType.Int, default: 0 },
     };
     static #fragment_oit_shader = `#version 300 es
     precision highp float;
@@ -183,10 +180,8 @@ export class MultiLineMaterialResource extends MaterialResource {
     precision highp sampler3D;
 
     ${RenderServerDevice.WorldUniformsCode}
-
     
     uniform vec4 u_color;
-    uniform highp sampler2DShadow u_scene_depth;
     
     in vec2 v_uv;
     
@@ -200,11 +195,8 @@ export class MultiLineMaterialResource extends MaterialResource {
             if(len2 > 1.0f)
                 discard;
         }
-        // color
-        float depth = texture(u_scene_depth, vec3(gl_FragCoord.xy / screen_size, gl_FragCoord.z));
-        vec4 hidden_color = mix(u_color, vec4(0.5, 0.5, 0.5, 1.0), 0.75);
-        bool not_hidden = depth >= gl_FragCoord.z;
-        vec4 color = not_hidden ? u_color : hidden_color;
+        vec4 color = u_color;
+        
         ${RenderServerDevice.OitOutputCode}
     }`;
     static #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
@@ -223,13 +215,22 @@ export class MultiLineMaterialResource extends MaterialResource {
         }
     }
 
-    private _line_width: number = 5;
+    private _line_width: number = 2;
     public get line_width() { return this._line_width; }
     public set line_width(line_width: number) {
         line_width = Math.max(0, line_width);
         if (this._line_width !== line_width) {
             this._line_width = line_width;
             this.material.set_UniformOverride('u_linewidth', this._line_width);
+        }
+    }
+
+    private _consider_pixel_ratio: boolean = true;
+    public get consider_pixel_ratio() { return this._consider_pixel_ratio; }
+    public set consider_pixel_ratio(consider_pixel_ratio: boolean) {
+        if (this._consider_pixel_ratio !== consider_pixel_ratio) {
+            this._consider_pixel_ratio = consider_pixel_ratio;
+            this.material.set_UniformOverride('u_consider_pixel_ratio', this._consider_pixel_ratio ? 1 : 0);
         }
     }
 

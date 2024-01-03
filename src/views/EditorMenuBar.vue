@@ -38,7 +38,7 @@
                         <SItem label="粘贴" description="Ctrl+V" />
                     </template>
                 </SPopupMenuButton>
-                <SPopupMenuButton ref="smenu_select_ref" @mouseenter="on_MenuButtonMouseEntered('select')"
+                <!-- <SPopupMenuButton ref="smenu_select_ref" @mouseenter="on_MenuButtonMouseEntered('select')"
                     @opened="on_MenuOpened('select')" @closed="on_MenuClosed('select')">
                     <template #button>
                         选择
@@ -46,7 +46,7 @@
                     <template #items>
                         <SItem label="取消选择" disabled />
                     </template>
-                </SPopupMenuButton>
+                </SPopupMenuButton> -->
                 <SPopupMenuButton ref="smenu_view_ref" @mouseenter="on_MenuButtonMouseEntered('view')"
                     @opened="on_MenuOpened('view')" @closed="on_MenuClosed('view')" @click="on_ViewMenuClicked">
                     <template #button>
@@ -102,12 +102,19 @@
                 </SPopupMenuButton>
             </SFlow>
         </SPanel>
+        <SPanel style="pointer-events: all;">
+            <SFlow>
+                <SButton icon-only flat icon-size="small"><Undo2/></SButton>
+                <SButton icon-only flat icon-size="small"><Redo2/></SButton>
+            </SFlow>
+        </SPanel>
     </SFlow>
 </template>
 
 <script setup lang="ts">
 
 import SFlow from '@/components/SFlow.vue';
+import SButton from '@/components/SButton.vue';
 import SPanel from '@/components/SPanel.vue';
 import SItem from '@/components/SItem.vue';
 import SPopupMenuButton from '@/components/SPopupMenuButton';

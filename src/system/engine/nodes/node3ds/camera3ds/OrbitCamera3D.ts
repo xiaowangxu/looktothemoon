@@ -1,17 +1,17 @@
-import { Node3D } from "../node3ds/Node3D";
-import { InterpolateCamera3D } from '@/system/engine/nodes/camera3ds/InterpolateCamera3D';
+import { Node3D } from "../Node3D";
+import { InterpolateCamera3D } from '@/system/engine/nodes/node3ds/camera3ds/InterpolateCamera3D';
 import { Tau, clamp } from '@/system/fivepebble/Scalar';
-import { ActionInputEvent } from "../../inputs/events/ActionInputEvent";
-import { MouseButtonInputEvent, MouseButton } from "../../inputs/events/mouse_events/MouseButtonInputEvent";
-import { MouseMotionInputEvent } from "../../inputs/events/mouse_events/MouseMotionInputEvent";
-import { MouseEnterLeaveInputEvent } from "../../inputs/events/mouse_events/MouseEnterLeaveInputEvent";
-import { type InputEvent } from "../../inputs/InputEvent";
+import { ActionInputEvent } from "../../../inputs/events/ActionInputEvent";
+import { MouseButtonInputEvent, MouseButton } from "../../../inputs/events/mouse_events/MouseButtonInputEvent";
+import { MouseMotionInputEvent } from "../../../inputs/events/mouse_events/MouseMotionInputEvent";
+import { MouseEnterLeaveInputEvent } from "../../../inputs/events/mouse_events/MouseEnterLeaveInputEvent";
+import { type InputEvent } from "../../../inputs/InputEvent";
 import { TweenEasingType, MethodTween, PropertyTween, TweenTransitionType, TweenBase, TweenParallel } from '@/system/engine/Tween';
 import { Vector3, vec3 } from '@/system/fivepebble/linear_algebra/Vector3';
 import { Vector2, vec2 } from '@/system/fivepebble/linear_algebra/Vector2';
 import { euler } from '@/system/fivepebble/linear_algebra/Euler';
 import { Plane3 } from '@/system/fivepebble/geometries/Plane3';
-import type { Config } from "../../ConfiguredObject";
+import type { Config } from "../../../ConfiguredObject";
 
 export class OrbitCamera3D extends Node3D {
     public static readonly class_name: string = "OrbitCamera3D";
@@ -109,7 +109,7 @@ export class OrbitCamera3D extends Node3D {
                     this.pan(event.relative_normalized);
                 }
                 else {
-                    this.rotate(event.relative);
+                    this.rotate(event.relative.mult_Number(this.config.render_server.pixel_ratio));
                 }
                 event.mark_Canceled();
             }

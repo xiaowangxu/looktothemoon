@@ -204,8 +204,8 @@ function resized2(borderBoxSize: BoxSize, contentBoxSize: BoxSize, target: Eleme
 #top-panel {
     position: absolute;
     top: 0px;
-    left: 200px;
-    right: 200px;
+    left: 300px;
+    right: 300px;
 }
 
 #top-right-panel {

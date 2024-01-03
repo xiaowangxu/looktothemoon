@@ -1,10 +1,10 @@
-import type { Camera3D } from "./camera3ds/Camera3D";
+import type { Camera3D } from "./node3ds/camera3ds/Camera3D";
 import type { ClassReader, ClassWriter } from "../classes/saver_loader/ClassWriterReader";
 import type { PickingArea3D } from "./node3ds/physics3ds/PickingArea3D";
 import { SceneTree } from "../SceneTree";
 import { Vector2, vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { SignalEmitter } from "../../utils/SignalEmitter";
-import { Renderer3D } from "../renderer/renderer_3d/Renderer3D";
+import { EditorRenderer3D } from "../renderer/renderer_3d/EditorRenderer3D";
 import { World3D } from "../worlds/world3ds/World3D";
 import { PickingOrder, PickingSide, RayPickingOption } from "../worlds/world3ds/PickingWorld3D";
 import { MouseEnterLeaveInputEvent } from "../inputs/events/mouse_events/MouseEnterLeaveInputEvent";
@@ -16,6 +16,8 @@ import { ViewportActionInputEventManager } from "../inputs/managers/ViewportActi
 import { ViewportInputManager } from "../inputs/managers/ViewportInputManager";
 import { ClassBase } from "../classes/databases/ClassBase";
 import type { Config } from "../ConfiguredObject";
+import { Ref } from "@/system/utils/RefCounted";
+import type { Renderer3D } from "../renderer/renderer_3d/Renderer3D";
 
 export enum NodeNotification {
     ExitingTree,
@@ -375,16 +377,34 @@ export class Viewport extends Node {
     public readonly mouse_event_manager: ViewportMouseInputEventManager;
     public readonly key_event_manager: ViewportKeyInputEventManager;
     public readonly action_event_manager: ViewportActionInputEventManager;
-
     private readonly input_manager: ViewportInputManager;
 
+    // canvas
+    public readonly canvas: HTMLElement;
+
+    // render
     public render_priority: number = 0;
 
-    public world_3d: World3D | undefined = undefined;
-    private readonly renderer_3d: Renderer3D;
+    private _world_3d: Ref<World3D> = new Ref();
+    public get world_3d() { return this._world_3d.value; }
+    public set world_3d(world_3d: World3D | undefined) {
+        if (this._world_3d.value !== world_3d) {
+            this._world_3d.value = world_3d;
+        }
+    }
+
     private camera_3d: Camera3D | undefined;
-    public get canvas(): HTMLElement {
-        return this.renderer_3d.canvas;
+
+    private readonly _renderer_3d: Ref<Renderer3D> = new Ref();
+    public get renderer_3d() { return this._renderer_3d.value; }
+    public set renderer_3d(renderer: Renderer3D | undefined) {
+        if (this._renderer_3d.value !== renderer) {
+            this._renderer_3d.value = renderer;
+            if (renderer !== undefined) {
+                renderer.set_Position(this.position);
+                renderer.set_Size(this.size);
+            }
+        }
     }
 
     private readonly _size: Vector2 = vec2(0, 0);
@@ -395,7 +415,7 @@ export class Viewport extends Node {
     public set size(size: Vector2) {
         if (!this._size.equal(size)) {
             this._size.copy(size);
-            this.renderer_3d.set_Size(this._size);
+            if (!this._renderer_3d.is_empty) this._renderer_3d.expect.set_Size(this._size);
             this.signal_resized.trigger(this.size);
             this.is_size_dirty = true;
         }
@@ -409,21 +429,26 @@ export class Viewport extends Node {
     public set position(position: Vector2) {
         if (!this._position.equal(position)) {
             this._position.copy(position);
-            this.renderer_3d.set_Position(this._position);
+            if (!this._renderer_3d.is_empty) this._renderer_3d.expect.set_Position(this._position);
             this.is_position_changed = true;
         }
     }
 
     public transparent: boolean = false;
+    
     public color_map: boolean = true;
+    
     public debug: boolean = false;
 
     public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
 
+    // input and physics picking
     public redirect_input_event: boolean = true;
 
     public physics_picking_when_mouse_event_not_canceled: boolean = true;
+    
     public physics_picking: boolean = true;
+    
     private _physics_picking_mask: number = 0xffffffff;
     public get physics_picking_mask() { return this._physics_picking_mask; }
     public set physics_picking_mask(mask: number) {
@@ -435,6 +460,7 @@ export class Viewport extends Node {
             }
         }
     }
+
     private _physics_picking_area: PickingArea3D | undefined = undefined;
     private set physics_picking_area(area: PickingArea3D | undefined) {
         if (this._physics_picking_area !== area) {
@@ -464,11 +490,9 @@ export class Viewport extends Node {
 
     constructor(config: Config) {
         super(config);
-        this.renderer_3d = new Renderer3D(config, document.createElement('div'));
+        this.canvas = document.createElement('div');
         this.canvas.style.width = '100%';
         this.canvas.style.height = '100%';
-        this.renderer_3d.set_Size(this._size);
-        this.renderer_3d.set_Position(this._position);
         this.mouse_event_manager = new ViewportMouseInputEventManager(this);
         this.key_event_manager = new ViewportKeyInputEventManager(this);
         this.action_event_manager = new ViewportActionInputEventManager(this);
@@ -571,42 +595,8 @@ export class Viewport extends Node {
         }
     }
 
-    public _notification(what: NodeNotification): void {
-        switch (what) {
-            case NodeNotification.EnteredTree: {
-                const scenetree = this.get_SceneTree();
-                if (scenetree !== undefined) {
-                    scenetree.add_Viewport(this);
-                }
-                return;
-            }
-            case NodeNotification.ExitingTree: {
-                const scenetree = this.get_SceneTree();
-                if (scenetree !== undefined) {
-                    scenetree.remove_Viewport(this);
-                }
-                return;
-            }
-            case NodeNotification.Dispose: {
-                this.renderer_3d.dispose();
-                this.world_3d?.dispose();
-                this.mouse_event_manager.dispose();
-                this.key_event_manager.dispose();
-                return;
-            }
-            case NodeNotification.InternalAfterPhysicsProcess: {
-                this.process_PhysicsPicking();
-                break;
-            }
-        }
-    }
-
     public get_Input() {
         return this.input_manager;
-    }
-
-    public get_World3D(): World3D | undefined {
-        return this.world_3d;
     }
 
     public get_Camera3D(): Camera3D | undefined {
@@ -646,6 +636,7 @@ export class Viewport extends Node {
     }
 
     public render(): void {
+        if (this._renderer_3d.is_empty) return;
         const resized = this.is_size_changed;
         const moved = this.is_position_changed;
         this.is_size_changed = false;
@@ -663,14 +654,14 @@ export class Viewport extends Node {
         const world_3d = this.get_RenderableWorld3D();
         const camera_3d = this.get_Camera3D();
         if (camera_3d !== undefined && world_3d !== undefined) {
-            this.renderer_3d.render(world_3d, this, once);
+            this._renderer_3d.expect.render(world_3d, this, once);
         }
         this.signal_after_render.trigger();
     }
 
     public process_PhysicsPicking(): void {
         if (this.physics_picking && this.input_manager.is_mouse_inside) {
-            const picking_world = this.get_RenderableWorld3D()?.get_PickingWorld();
+            const picking_world = this.get_RenderableWorld3D()?.picking_world;
             const camera_3d = this.get_Camera3D();
             if (picking_world === undefined ||
                 camera_3d === undefined ||
@@ -699,6 +690,36 @@ export class Viewport extends Node {
         }
         else {
             this.physics_picking_area = undefined;
+        }
+    }
+
+    public _notification(what: NodeNotification): void {
+        switch (what) {
+            case NodeNotification.EnteredTree: {
+                const scenetree = this.get_SceneTree();
+                if (scenetree !== undefined) {
+                    scenetree.add_Viewport(this);
+                }
+                return;
+            }
+            case NodeNotification.ExitingTree: {
+                const scenetree = this.get_SceneTree();
+                if (scenetree !== undefined) {
+                    scenetree.remove_Viewport(this);
+                }
+                return;
+            }
+            case NodeNotification.Dispose: {
+                this._renderer_3d.clear();
+                this._world_3d.clear();
+                this.mouse_event_manager.dispose();
+                this.key_event_manager.dispose();
+                return;
+            }
+            case NodeNotification.InternalAfterPhysicsProcess: {
+                this.process_PhysicsPicking();
+                break;
+            }
         }
     }
 }

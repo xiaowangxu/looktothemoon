@@ -53,8 +53,13 @@ export interface VectorLike<Vec extends VectorLike<Vec, Mat>, Mat extends Matrix
     negates(a: Vec): Vec;
 
     dot(b: Vec): number;
+
     min(b: Vec): Vec;
+    mins(a: Vec, b: Vec): Vec;
+
     max(b: Vec): Vec;
+    maxs(a: Vec, b: Vec): Vec;
+
     abs(): Vec;
     distance_to(b: Vec): number;
     squared_distance_to(b: Vec): number;

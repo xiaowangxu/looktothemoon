@@ -16,7 +16,7 @@ export class PickingShape3D extends Node3D {
         if (this._shape !== shape) {
             this._shape = shape;
             if (this.shape_rid !== undefined) {
-                const picking_world = this.get_Viewport()?.get_World3D()?.get_PickingWorld();
+                const picking_world = this.get_Viewport()?.world_3d?.picking_world;
                 if (picking_world !== undefined) {
                     if (this._shape === undefined) {
                         picking_world.clear_PickingShapeInstanceShape(this.shape_rid);
@@ -35,7 +35,7 @@ export class PickingShape3D extends Node3D {
         if (this._distance_offset !== distance_offset) {
             this._distance_offset = distance_offset;
             if (this.shape_rid !== undefined) {
-                const picking_world = this.get_Viewport()?.get_World3D()?.get_PickingWorld();
+                const picking_world = this.get_Viewport()?.world_3d?.picking_world;
                 if (picking_world !== undefined) {
                     picking_world.set_PickingShapeInstanceDistanceOffset(this.shape_rid, this._distance_offset);
                 }
@@ -47,7 +47,7 @@ export class PickingShape3D extends Node3D {
         switch (what) {
             case NodeNotification.EnteredTree: {
                 if (this.shape_rid === undefined) {
-                    const picking_world = this.get_Viewport()?.get_World3D()?.get_PickingWorld();
+                    const picking_world = this.get_Viewport()?.world_3d?.picking_world;
                     if (picking_world !== undefined) {
                         this.shape_rid = picking_world.create_PickingShapeInstance();
                         picking_world.set_PickingShapeInstanceDistanceOffset(this.shape_rid, this.distance_offset);
@@ -64,7 +64,7 @@ export class PickingShape3D extends Node3D {
             }
             case NodeNotification.ExitingTree: {
                 if (this.shape_rid !== undefined) {
-                    const picking_world = this.get_Viewport()?.get_World3D()?.get_PickingWorld();
+                    const picking_world = this.get_Viewport()?.world_3d?.picking_world;
                     if (picking_world === undefined) throw new Error('cannot find picking world, fail to free shape instance');
                     const parent = this.get_Parent();
                     if (parent !== undefined && parent instanceof PickingArea3D && parent.picking_area_rid) {
@@ -77,7 +77,7 @@ export class PickingShape3D extends Node3D {
             }
             case NodeNotification.InternalAfterPhysicsProcess: {
                 if (this.shape_rid !== undefined) {
-                    const picking_world = this.get_Viewport()?.get_World3D()?.get_PickingWorld();
+                    const picking_world = this.get_Viewport()?.world_3d?.picking_world;
                     if (picking_world === undefined) throw new Error('cannot find picking world, fail to update shape instance');
                     if (this.is_global_transform_changed) {
                         picking_world.set_PickingShapeInstanceGlobalTransform(this.shape_rid, this.global_transform);

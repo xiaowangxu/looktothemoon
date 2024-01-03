@@ -3,11 +3,10 @@ import { MouseEnterLeaveInputEvent } from "@/system/engine/inputs/events/mouse_e
 import type { MouseInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseInputEvent";
 import { MouseMotionInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseMotionInputEvent";
 import { PickingSphereResource } from "@/system/engine/resources/picking_shape_resources/PickingShapeResource";
-import { Plane } from "lucide-vue-next";
 import { PickingArea3D } from "../../physics3ds/PickingArea3D";
 import { PickingShape3D } from "../../physics3ds/PickingShape3D";
 import { MeshInstance3D } from "../../visual_instance3ds/geometry3ds/MeshInstance3D";
-import { GrabberElement, GrabberPlainColorMaterialResource } from "./Grabber3D";
+import { GrabberElement3D, GrabberPlainColorMaterialResource } from "./Grabber3D";
 import { Vector3, vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { MaterialOverrideResource } from "@/system/engine/resources/material_resources/MaterialResource";
 import { Ref } from "@/system/utils/RefCounted";
@@ -18,25 +17,23 @@ import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { SphereGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
 import type { InputEvent } from "@/system/engine/inputs/InputEvent";
 import { Plane3 } from "@/system/fivepebble/geometries/Plane3";
-import { line3 } from "@/system/fivepebble/geometries/Line3";
-import { PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 
-const PointGrabberGeometry = new Cacher((config: Config) => {
+const PointGeometry = new Cacher((config: Config) => {
     const geometry = new SphereGeometryResource(config);
     geometry.radius = 1.0;
     geometry.build();
     return new Ref(geometry);
 });
 
-const PointGrabberMaterial = new Cacher((config: Config) => new Ref(new GrabberPlainColorMaterialResource(config)));
+const PointMaterial = new Cacher((config: Config) => new Ref(new GrabberPlainColorMaterialResource(config)));
 
-const PointGrabberPickingShape = new Cacher((config: Config) => {
+const PointPickingShape = new Cacher((config: Config) => {
     const picking_shape = new PickingSphereResource(config);
     picking_shape.radius = 1.5;
     return new Ref(picking_shape);
 });
 
-export class PointGrabber extends GrabberElement<Vector3> {
+export class PointGrabber3D extends GrabberElement3D<Vector3> {
     private readonly point: MeshInstance3D = new MeshInstance3D(this.config);
     private readonly area: PickingArea3D = new PickingArea3D(this.config);
     private readonly shape: PickingShape3D = new PickingShape3D(this.config);
@@ -122,11 +119,11 @@ export class PointGrabber extends GrabberElement<Vector3> {
         this.point.render_queue = 1;
         this.point.layer = 1;
 
-        this.point.geometry = PointGrabberGeometry.get(this.config).expect;
-        this.material.expect.set_OverrideMaterial(PointGrabberMaterial.get(this.config).expect);
+        this.point.geometry = PointGeometry.get(this.config).expect;
+        this.material.expect.set_OverrideMaterial(PointMaterial.get(this.config).expect);
         this.point.material = this.material.expect;
 
-        this.shape.shape = PointGrabberPickingShape.get(this.config).expect;
+        this.shape.shape = PointPickingShape.get(this.config).expect;
 
         // const test_shape = new MeshInstance3D(this.config);
         // const test_geometry = new SphereGeometryResource(this.config);
