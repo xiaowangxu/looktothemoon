@@ -168,6 +168,7 @@ import { AmbientLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds
 import { DirectionalLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/DirectionalLight3D";
 import { SpotLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/SpotLight3D";
 import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
+import { ClassBinaryEncoder } from "@/system/engine/classes/saver_loader/encoder_decoders/ClassBinaryEncoderDecoder";
 {
 	new ImageLoader().parse(url).then(res => {
 		(material3.texture as ImageTextureResource).set_Image(res.expect(), RenderStateTextureFormat.SRGBA8, 4);
@@ -376,3 +377,20 @@ export function createEditorViewport() {
 	EditorSceneTree.start_Loop();
 	// create_CompassScene();
 }
+
+const cylinder = new CylinderGeometryResource(DefaultConfig);
+cylinder.top_radius = 0.25;
+const mat1 = new NormalMaterialResource(DefaultConfig);
+const mat2 = new NormalMaterialResource(DefaultConfig);
+mat2.remap = false;
+const mesh = new MeshInstance3D(DefaultConfig);
+// mesh.geometry = cylinder;
+// mesh.material = material;
+mesh.set_SurfaceMaterial(0, mat1);
+mesh.set_SurfaceMaterial(2, mat2);
+mesh.set_SurfaceMaterial(4, mat1);
+mesh.name = '测试';
+console.time("bin");
+const data0 = new ClassSaver().save(mesh, ClassBinaryEncoder).unwrap();
+console.timeEnd("bin");
+console.log(data0, data0?.byteLength);

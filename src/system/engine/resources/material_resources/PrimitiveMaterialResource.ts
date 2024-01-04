@@ -13,6 +13,7 @@ import type { ClassWriter, ClassReader } from "../../classes/saver_loader/ClassW
 import { Cacher } from "@/system/utils/Cacher";
 import type { TextureResource } from "../texture_resources/TextureResource";
 import { Ref } from "@/system/utils/RefCounted";
+import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 
 const PrimitiveVertexShader = new Cacher((config: Config) => {
     const code = `#version 300 es

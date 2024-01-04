@@ -1,6 +1,6 @@
 import type { Rid } from "../../../../Rid";
 import { NodeNotification } from "@/system/engine/nodes/Node";
-import type { ClassReader, ClassWriter } from "../../../../classes/saver_loader/ClassWriterReader";
+import type { ClassReader, ClassRef, ClassWriter } from "../../../../classes/saver_loader/ClassWriterReader";
 import type { GeometryResource } from "../../../../resources/geometry_resources/GeometryResource";
 import { MaterialResource } from "../../../../resources/material_resources/MaterialResource";
 import { GeometryInstance3D } from "./GeometryInstance3D";
@@ -160,6 +160,14 @@ export class MeshInstance3D extends GeometryInstance3D {
         super.dump(writer);
         writer.property('geometry', this.geometry);
         writer.property('material', this.material);
+        if (this._surface_materials_map.size !== 0) {
+            const surface_materials_map = new Map<number, ClassRef>();
+            for (const [id, material] of this._surface_materials_map) {
+                const refid = writer.ref(material.expect);
+                surface_materials_map.set(id, refid);
+            }
+            writer.property('surface_materials', surface_materials_map);
+        }
     }
 
     public load(reader: ClassReader): void {
