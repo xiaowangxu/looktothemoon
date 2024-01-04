@@ -13,7 +13,7 @@ import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import type { RenderServerMaterial } from "../../render_server/RenderServerMaterial";
 import { WorldObject } from "../WorldObject";
-import { Rid, type RID } from "../../Rid";
+import { RID, type Rid } from "../../Rid";
 import { GeometryResource } from "../../resources/geometry_resources/GeometryResource";
 import type { MaterialResource } from "../../resources/material_resources/MaterialResource";
 import type { Renderer3DQueue } from "../../renderer/renderer_3d/EditorRenderer3D";
@@ -168,6 +168,7 @@ export class VisualWorld3DMesh extends WorldObject {
 	public readonly global_transform: Matrix4 = Matrix4.make_Identity();
 	public _visible: boolean = true;
 	public layer: number = 0xffffffff;
+	public cast_shadow: boolean = false;
 	public render_queue: number = 0;
 
 	public get visible() {
@@ -182,7 +183,7 @@ export class VisualWorld3DMesh extends WorldObject {
 	private is_bbox_empty: boolean = true;
 	private _bbox: Box3 = new Box3();
 
-	constructor(config: Config, rid: RID) {
+	constructor(config: Config, rid: Rid) {
 		super(config, rid);
 	}
 
@@ -255,11 +256,15 @@ export class VisualWorld3DMesh extends WorldObject {
 	}
 
 	public set_Layer(layer: number) {
-		this.layer = layer;
+		this.layer = layer & 0xffffffff;
 	}
 
 	public set_RenderQueue(render_queue: number) {
 		this.render_queue = render_queue;
+	}
+
+	public set_CastShadow(cast: boolean) {
+		this.cast_shadow = cast;
 	}
 
 	public clear_Materials() {
@@ -305,26 +310,90 @@ export class VisualWorld3DLight extends WorldObject {
 	public readonly direction: Vector3 = new Vector3(0, 0, -1);
 	public readonly color: Vector3 = new Vector3(1, 1, 1);
 	public intensity: number = 1.0;
+	public attenuation: number = 2.0;
+	public layer: number = 0xffffffff;
+	public visible: boolean = true;
+	public param_0: number = 0;
+	public param_1: number = 0;
+	public param_2: number = 0;
+	public param_3: number = 0;
+	public shadow_bias: number = 0;
+	public shadow_normal_bias: number = 0;
+	public shadow_opacity: number = 0;
 
-	constructor(config: Config, rid: RID) {
+	constructor(config: Config, rid: Rid) {
 		super(config, rid);
+	}
+
+	public set_Type(type: RenderServerLightType) {
+		this.type = type;
 	}
 
 	public set_GlobalPosition(position: Vector3) {
 		this.position.copy(position);
 	}
 
+	public set_GlobalDirection(direction: Vector3) {
+		this.direction.copy(direction);
+	}
+
+	public set_Color(color: Vector3) {
+		this.color.copy(color);
+	}
+
+	public set_Intensity(intensity: number) {
+		this.intensity = intensity;
+	}
+
+	public set_Attenuation(attenuation: number) {
+		this.attenuation = attenuation;
+	}
+
+	public set_Layer(layer: number) {
+		this.layer = layer & 0xffffffff;
+	}
+
+	public set_Visible(visible: boolean) {
+		this.visible = visible;
+	}
+
+	public set_Parameter0(val: number) {
+		this.param_0 = val;
+	}
+
+	public set_Parameter1(val: number) {
+		this.param_1 = val;
+	}
+
+	public set_Parameter2(val: number) {
+		this.param_2 = val;
+	}
+
+	public set_Parameter3(val: number) {
+		this.param_3 = val;
+	}
+
+	public set_ShadowBias(bias: number) {
+		this.shadow_bias = bias;
+	}
+
+	public set_ShadowNormalBias(bias: number) {
+		this.shadow_normal_bias = bias;
+	}
+
+	public set_ShadowOpacity(opacity: number) {
+		this.shadow_opacity = opacity;
+	}
+
 	// fill light data
 
-	static #color: Color = new Vector4();
+	static #color: Vector3 = new Vector3();
 
 	public fill_LightData(lights_data: RenderServerLightsData, idx: number, lid: number): number {
 		if (idx >= lights_data.max_light_count) return idx;
 		const color = VisualWorld3DLight.#color;
-		color.r = this.color.x * this.intensity;
-		color.g = this.color.y * this.intensity;
-		color.b = this.color.z * this.intensity;
-		lights_data.set_Light(idx, this.type, lid, this.position, this.direction, color, 0.0, 0xffffffff, 12 * Deg2Rad, 0 * Deg2Rad, 10, 11)
+		color.mults_Number(this.color, this.intensity);
+		lights_data.set_Light(idx, this.type, lid, this.position, this.direction, color, this.attenuation, this.layer, this.param_0, this.param_1, this.param_2, this.param_3, this.shadow_bias, this.shadow_normal_bias, this.shadow_opacity, undefined);
 		return idx;
 	}
 
@@ -332,8 +401,8 @@ export class VisualWorld3DLight extends WorldObject {
 }
 
 export class VisualWorld3D extends ConfiguredObject {
-	protected readonly meshes_map: Map<RID, VisualWorld3DMesh> = new Map();
-	protected readonly lights_map: Map<RID, VisualWorld3DLight> = new Map();
+	protected readonly meshes_map: Map<Rid, VisualWorld3DMesh> = new Map();
+	protected readonly lights_map: Map<Rid, VisualWorld3DLight> = new Map();
 
 	public get render_server() { return this.config.render_server; }
 
@@ -360,8 +429,6 @@ export class VisualWorld3D extends ConfiguredObject {
 		const { sky_program, uniform_time_slot } = SkyProgramUniform.get(this.config);
 		this.sky_program = sky_program;
 		this.sky_uniform_time_slot = uniform_time_slot;
-
-		const rid = this.create_Light();
 	}
 
 	public trigger_BeforeRender(scene_tree: SceneTree) {
@@ -388,25 +455,25 @@ export class VisualWorld3D extends ConfiguredObject {
 
 	// Mesh
 
-	public create_Mesh(): RID {
-		const rid = Rid();
+	public create_Mesh(): Rid {
+		const rid = RID();
 		const mesh = new VisualWorld3DMesh(this.config, rid);
 		this.meshes_map.set(rid, mesh);
 		return rid;
 	}
 
-	protected get_Mesh(rid: RID): VisualWorld3DMesh | undefined {
+	protected get_Mesh(rid: Rid): VisualWorld3DMesh | undefined {
 		return this.meshes_map.get(rid);
 	}
 
-	public free_Mesh(rid: RID) {
+	public free_Mesh(rid: Rid) {
 		const instance = this.get_Mesh(rid);
 		if (instance === undefined) return;
 		instance.dispose();
 		this.meshes_map.delete(rid);
 	}
 
-	public set_MeshGeometry(rid: RID, geometry: GeometryResource | undefined) {
+	public set_MeshGeometry(rid: Rid, geometry: GeometryResource | undefined) {
 		const instance = this.get_Mesh(rid);
 		if (instance) {
 			if (geometry === undefined) {
@@ -418,7 +485,7 @@ export class VisualWorld3D extends ConfiguredObject {
 		}
 	}
 
-	public set_MeshSurfaceMaterial(rid: RID, surface_idx: number, material: MaterialResource | undefined) {
+	public set_MeshSurfaceMaterial(rid: Rid, surface_idx: number, material: MaterialResource | undefined) {
 		const instance = this.get_Mesh(rid);
 		if (instance) {
 			if (material === undefined) {
@@ -430,7 +497,7 @@ export class VisualWorld3D extends ConfiguredObject {
 		}
 	}
 
-	public set_MeshMaterialOverride(rid: RID, material: MaterialResource | undefined) {
+	public set_MeshMaterialOverride(rid: Rid, material: MaterialResource | undefined) {
 		const instance = this.get_Mesh(rid);
 		if (instance) {
 			if (material === undefined) {
@@ -442,58 +509,173 @@ export class VisualWorld3D extends ConfiguredObject {
 		}
 	}
 
-	public set_MeshGlobalTransform(rid: RID, transform: Matrix4) {
+	public set_MeshGlobalTransform(rid: Rid, transform: Matrix4) {
 		const instance = this.get_Mesh(rid);
 		if (instance) {
 			instance.set_GlobalTransform(transform);
 		}
 	}
 
-	public set_MeshVisibility(rid: RID, visible: boolean) {
+	public set_MeshVisibility(rid: Rid, visible: boolean) {
 		const instance = this.get_Mesh(rid);
 		if (instance) {
 			instance.set_Visible(visible);
 		}
 	}
 
-	public set_MeshLayer(rid: RID, layer: number) {
+	public set_MeshLayer(rid: Rid, layer: number) {
 		const instance = this.get_Mesh(rid);
 		if (instance) {
 			instance.set_Layer(layer);
 		}
 	}
 
-	public set_MeshRenderQueue(rid: RID, render_queue: number) {
+	public set_MeshRenderQueue(rid: Rid, render_queue: number) {
 		const instance = this.get_Mesh(rid);
 		if (instance) {
 			instance.set_RenderQueue(render_queue);
 		}
 	}
 
+	public set_MeshCastShadow(rid: Rid, cast: boolean) {
+		const instance = this.get_Mesh(rid);
+		if (instance) {
+			instance.set_CastShadow(cast);
+		}
+	}
+
 	// Light
 
-	public create_Light(): RID {
-		const rid = Rid();
+	public create_Light(): Rid {
+		const rid = RID();
 		const mesh = new VisualWorld3DLight(this.config, rid);
 		this.lights_map.set(rid, mesh);
 		return rid;
 	}
 
-	protected get_Light(rid: RID): VisualWorld3DLight | undefined {
+	protected get_Light(rid: Rid): VisualWorld3DLight | undefined {
 		return this.lights_map.get(rid);
 	}
 
-	public free_Light(rid: RID) {
+	public free_Light(rid: Rid) {
 		const instance = this.get_Light(rid);
 		if (instance === undefined) return;
 		instance.dispose();
 		this.lights_map.delete(rid);
 	}
 
-	public set_LightGlobalPosition(rid: RID, position: Vector3) {
+	public set_LightType(rid: Rid, type: RenderServerLightType) {
+		const instance = this.get_Light(rid);
+		if (instance) {
+			instance.set_Type(type);
+		}
+	}
+
+	public set_LightGlobalPosition(rid: Rid, position: Vector3) {
 		const instance = this.get_Light(rid);
 		if (instance) {
 			instance.set_GlobalPosition(position);
+		}
+	}
+
+	public set_LightGlobalDirection(rid: Rid, direction: Vector3) {
+		const instance = this.get_Light(rid);
+		if (instance) {
+			instance.set_GlobalDirection(direction);
+		}
+	}
+
+	public set_LightColor(rid: Rid, color: Vector3) {
+		const instance = this.get_Light(rid);
+		if (instance) {
+			instance.set_Color(color);
+		}
+	}
+
+	public set_LightIntensity(rid: Rid, intensity: number) {
+		const instance = this.get_Light(rid);
+		if (instance) {
+			instance.set_Intensity(intensity);
+		}
+	}
+
+	public set_LightAttenuation(rid: Rid, attenuation: number) {
+		const instance = this.get_Light(rid);
+		if (instance) {
+			instance.set_Attenuation(attenuation);
+		}
+	}
+
+	public set_LightLayer(rid: Rid, layer: number) {
+		const instance = this.get_Light(rid);
+		if (instance) {
+			instance.set_Layer(layer);
+		}
+	}
+
+	public set_LightVisibility(rid: Rid, visible: boolean) {
+		const instance = this.get_Light(rid);
+		if (instance) {
+			instance.set_Visible(visible);
+		}
+	}
+
+	public set_LightParameters(rid: Rid, val0?: number, val1?: number, val2?: number, val3?: number) {
+		const instance = this.get_Light(rid);
+		if (instance) {
+			if (val0 !== undefined) instance.set_Parameter0(val0);
+			if (val1 !== undefined) instance.set_Parameter1(val1);
+			if (val2 !== undefined) instance.set_Parameter2(val2);
+			if (val3 !== undefined) instance.set_Parameter3(val3);
+		}
+	}
+
+	public set_LightParameter0(rid: Rid, val: number) {
+		const instance = this.get_Light(rid);
+		if (instance) {
+			instance.set_Parameter0(val);
+		}
+	}
+
+	public set_LightParameter1(rid: Rid, val: number) {
+		const instance = this.get_Light(rid);
+		if (instance) {
+			instance.set_Parameter1(val);
+		}
+	}
+
+	public set_LightParameter2(rid: Rid, val: number) {
+		const instance = this.get_Light(rid);
+		if (instance) {
+			instance.set_Parameter2(val);
+		}
+	}
+
+	public set_LightParameter3(rid: Rid, val: number) {
+		const instance = this.get_Light(rid);
+		if (instance) {
+			instance.set_Parameter3(val);
+		}
+	}
+	
+	public set_LightShadowBias(rid: Rid, bias: number) {
+		const instance = this.get_Light(rid);
+		if (instance) {
+			instance.set_ShadowBias(bias);
+		}
+	}
+
+	public set_LightShadowNormalBias(rid: Rid, bias: number) {
+		const instance = this.get_Light(rid);
+		if (instance) {
+			instance.set_ShadowNormalBias(bias);
+		}
+	}
+
+	public set_LightShadowOpacity(rid: Rid, opacity: number) {
+		const instance = this.get_Light(rid);
+		if (instance) {
+			instance.set_ShadowOpacity(opacity);
 		}
 	}
 

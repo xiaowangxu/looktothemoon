@@ -435,9 +435,9 @@ export class Viewport extends Node {
     }
 
     public transparent: boolean = false;
-    
+
     public color_map: boolean = true;
-    
+
     public debug: boolean = false;
 
     public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
@@ -446,9 +446,9 @@ export class Viewport extends Node {
     public redirect_input_event: boolean = true;
 
     public physics_picking_when_mouse_event_not_canceled: boolean = true;
-    
+
     public physics_picking: boolean = true;
-    
+
     private _physics_picking_mask: number = 0xffffffff;
     public get physics_picking_mask() { return this._physics_picking_mask; }
     public set physics_picking_mask(mask: number) {

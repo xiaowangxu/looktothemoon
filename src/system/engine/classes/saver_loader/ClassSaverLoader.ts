@@ -1,4 +1,4 @@
-import type { RID } from '../../Rid';
+import type { Rid } from '../../Rid';
 import { IncTopoGraph, IncTopoGraphResult } from '../../../structures/IncTopoGraph';
 import { Result } from '../../../utils/Result';
 import { ClassBase } from "../databases/ClassBase";
@@ -41,7 +41,7 @@ export class ClassSaverScope {
     private _refid: number = 0;
     private get refid() { return this._refid++; }
 
-    private readonly rid_instance_data_map: Map<RID, ClassInstanceData> = new Map();
+    private readonly rid_instance_data_map: Map<Rid, ClassInstanceData> = new Map();
 
     private _root_refid: RefId | undefined
     public get root_refid() { return this._root_refid; }

@@ -34,7 +34,7 @@ export abstract class WebGL2RenderStateValueUniformSlot<
     }
 }
 
-// Uint, Float, Vec2, Vec3, Vec4, Mat3, Mat4
+// Uint, Int, Float, Vec2, Vec3, Vec4, Mat3, Mat4
 
 export class WebGL2RenderStateUintUniformSlot extends WebGL2RenderStateValueUniformSlot<RenderStateUniformType.Uint, number, Uint32Array> {
     public get value() { return this._value; }

@@ -19,7 +19,7 @@ export class Euler {
         this.order = order;
     }
 
-    public static from_Quaternion(quat: Quaternion, order: EulerOrder) {
+    public static from_Quaternion(quat: Quaternion, order: EulerOrder = EulerOrder.XYZ) {
         return Euler.from_RotateMatrix(Matrix3.from_Quaternion(quat), order);
     }
 

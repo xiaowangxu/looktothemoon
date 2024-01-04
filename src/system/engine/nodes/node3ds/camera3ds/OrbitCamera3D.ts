@@ -117,11 +117,11 @@ export class OrbitCamera3D extends Node3D {
         if (!propagate && event instanceof ActionInputEvent && event.pressed) {
             // zoom
             if (event.action === 'zoomIn') {
-                this.zoom(true);
+                this.zoom(true, this.get_Viewport()?.get_Input().is_KeyPressed('Control') ?? false);
                 event.mark_Canceled();
             }
             else if (event.action === 'zoomOut') {
-                this.zoom(false);
+                this.zoom(false, this.get_Viewport()?.get_Input().is_KeyPressed('Control') ?? false);
                 event.mark_Canceled();
             }
             else if (event.action === 'switch_TopView') {
@@ -189,7 +189,7 @@ export class OrbitCamera3D extends Node3D {
 
     private target_zoom: number = 1;
 
-    private zoom(zoom_in: boolean) {
+    private zoom(zoom_in: boolean, zoom_to_cursor: boolean) {
         if (!this.zoom_enable) return;
 
         if (this.zoom_tween !== undefined) {
@@ -203,7 +203,7 @@ export class OrbitCamera3D extends Node3D {
 
         const current_zoom = this.camera.zoom;
 
-        const zoom_tween = this.zoom_to_cursor ?
+        const zoom_tween = zoom_to_cursor && this.zoom_to_cursor ?
             new MethodTween(v => {
                 const zoom = current_zoom + (new_target - current_zoom) * v;
                 const mouse_inside = this.get_Viewport()?.get_Input().is_mouse_inside ?? false;

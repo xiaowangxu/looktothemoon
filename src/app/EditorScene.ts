@@ -14,7 +14,7 @@ import { BoxGeometryResource, CylinderGeometryResource, SphereGeometryResource, 
 import { NormalMaterialResource, PlainColorMaterialResource, UVMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { color, color8 } from "@/system/fivepebble/graphics/Color";
 import { OrthographicCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/OrthographicCamera3D";
-import { euler } from "@/system/fivepebble/linear_algebra/Euler";
+import { Euler, euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/LineGrabber3D";
 import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
@@ -65,16 +65,39 @@ const EditorCamera = new EditorOrbitCamera3D(DefaultConfig);
 EditorViewport.add_Child(EditorCamera);
 EditorCamera.set_Zoom(0.3);
 
+// // viewport 0
+// const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
+// EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+// const EditorViewport0 = new Viewport(DefaultConfig);
+// const renderer0 = new EditorRenderer3D(DefaultConfig);
+// const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
+// renderer0.render_pipeline = pipeline0;
+// EditorViewport0.renderer_3d = renderer0;
+// EditorViewportContainer0.add_Child(EditorViewport0);
+// const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
+// EditorViewport0.add_Child(EditorCamera0);
+// EditorViewport.add_Child(EditorViewportContainer0);
+
 // World 
 const World = new Node3D(DefaultConfig);
 World.local_scale = vec3(0.01, 0.01, 0.01);
-
-const EditorWorld = new Node3D(DefaultConfig);
+const ambient_light = new AmbientLight3D(DefaultConfig);
+ambient_light.intensity = 0.05;
+World.add_Child(ambient_light);
+const directional_light0 = new DirectionalLight3D(DefaultConfig);
+directional_light0.color = vec3(0.9, 0.9, 1);
+directional_light0.intensity = 0.2;
+directional_light0.local_rotation = Euler.from_Quaternion(Quaternion.make_Rotate(vec3(0, 0, -1), vec3(-1, -1, 1).normalize()));
+World.add_Child(directional_light0);
+const directional_light1 = new DirectionalLight3D(DefaultConfig);
+directional_light1.color = vec3(1, 0.9, 0.8);
+directional_light1.intensity = 0.1;
+directional_light1.local_rotation = Euler.from_Quaternion(Quaternion.make_Rotate(vec3(0, 0, -1), vec3(1, 1, -1).normalize()));
+World.add_Child(directional_light1);
 
 export const EditorSceneTree = new SceneTree(DefaultConfig, EditorViewportContainer);
 EditorSceneTree.register_Singleton(DependencyGraph);
 EditorViewport.add_Child(World);
-EditorViewport.add_Child(EditorWorld);
 
 EditorSceneTree.get_InputActionMap().add_Action('switch_FrontView', new ShortCut(DefaultConfig).set([new KeyInputEvent(DefaultConfig).set_Key('1', '1', true, false)]));
 EditorSceneTree.get_InputActionMap().add_Action('switch_LeftView', new ShortCut(DefaultConfig).set([new KeyInputEvent(DefaultConfig).set_Key('2', '2', true, false)]));
@@ -99,8 +122,9 @@ EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut(DefaultC
 // EditorViewport0.add_Child(EditorCamera0);
 // EditorViewport.add_Child(EditorViewportContainer0);
 
-const geometry = new SphereGeometryResource(DefaultConfig);
-// geometry.theta = Pi / 2;
+const geometry = new TorusGeometryResource(DefaultConfig);
+// geometry.phi_segments = 32;
+// geometry.theta_segments = 64;
 geometry.build();
 
 const multi_geometry = new MultiGeometryResource(DefaultConfig);
@@ -125,7 +149,7 @@ const material1 = new NormalMaterialResource(DefaultConfig);
 material1.remap = true;
 
 const material2 = new StandardMaterialResource(DefaultConfig);
-material2.color = color(0.2, 0.5, 0.75, 1);
+material2.color = color(1, 1, 1, 1);
 
 const material3 = new PlainColorMaterialResource(DefaultConfig);
 // material3.color = color(1, 0, 1, 1);
@@ -138,6 +162,12 @@ import { EditorRenderer3DPipeline } from "@/system/engine/renderer/renderer_3d/E
 import { MaterialOverrideResource } from "@/system/engine/resources/material_resources/MaterialResource";
 import { EditorRenderer3D } from "@/system/engine/renderer/renderer_3d/EditorRenderer3D";
 import { TranslateGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/TranslateGrabber3D";
+import { PointLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/PointLight3D";
+import { PropertyTween, TweenEasingType, TweenTransitionType, tween_parallel } from "@/system/engine/Tween";
+import { AmbientLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/AmbientLight3D";
+import { DirectionalLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/DirectionalLight3D";
+import { SpotLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/SpotLight3D";
+import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 {
 	new ImageLoader().parse(url).then(res => {
 		(material3.texture as ImageTextureResource).set_Image(res.expect(), RenderStateTextureFormat.SRGBA8, 4);
@@ -163,9 +193,28 @@ World.add_Child(Mesh1);
 const TranslateGrabber = new TranslateGrabber3D(DefaultConfig);
 World.add_Child(TranslateGrabber);
 
+const point_light = new PointLight3D(DefaultConfig);
+point_light.radius = 100.0;
+World.add_Child(point_light);
+
 TranslateGrabber.signal_grabbing.connect(pos => {
-	EditorViewport.world_3d?.visual_world.set_LightGlobalPosition(3, pos);
-	// Mesh1.local_position = World.to_Local(pos);
+	// EditorViewport.world_3d?.visual_world.set_LightGlobalPosition(3, pos);
+	// debugger
+	point_light.global_position = pos;
+});
+
+const TranslateGrabber2 = new TranslateGrabber3D(DefaultConfig);
+World.add_Child(TranslateGrabber2);
+
+const spot_light = new SpotLight3D(DefaultConfig);
+spot_light.color = vec3(1, 0, 0);
+spot_light.intensity = 0.5;
+World.add_Child(spot_light);
+
+TranslateGrabber2.signal_grabbing.connect(pos => {
+	// EditorViewport.world_3d?.visual_world.set_LightGlobalPosition(3, pos);
+	// debugger
+	spot_light.global_position = pos;
 });
 
 // const mat = new PlainColorMaterialResource(DefaultConfig);
@@ -195,18 +244,12 @@ TranslateGrabber.signal_grabbing.connect(pos => {
 
 EditorViewport.signal_input.connect((evt, pro) => {
 	if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
-		Mesh1.queue_Free();
-		// EditorViewportContainer0.queue_Free();
-		// EditorSceneTree.start_Tween(
-		// 	new PropertyMethodTween<Color>(
-		// 		(color) => {
-		// 			material3.set_UniformOverride('u_color', color);
-		// 		},
-		// 		color(1, 1, 1, 1),
-		// 		color(Math.random(), Math.random(), Math.random(), 1),
-		// 		2, TransitionType.Cubic, EasingType.Out
-		// 	)
-		// );
+		EditorSceneTree.start_Tween(
+			tween_parallel(
+				new PropertyTween(point_light, 'radius', Math.random() * 10, 0.4, TweenTransitionType.Linear, TweenEasingType.Out),
+				new PropertyTween(point_light, 'color', vec3(Math.random(), Math.random(), Math.random()), 0.4, TweenTransitionType.Linear, TweenEasingType.Out)
+			)
+		);
 	}
 });
 
@@ -225,11 +268,9 @@ World.add_Child(MeshLine);
 
 signal.connect((action) => {
 	if (action === 'orth') {
-		pipeline.msaa = 4;
 		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_CameraTypeOrth', true, false));
 	}
 	else if (action === 'persp') {
-		pipeline.msaa = 1;
 		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_CameraTypePersp', true, false));
 	}
 	else if (action === '顶视图') {
@@ -335,78 +376,3 @@ export function createEditorViewport() {
 	EditorSceneTree.start_Loop();
 	// create_CompassScene();
 }
-
-const Mesh2 = new MeshInstance3D(DefaultConfig);
-Mesh2.geometry = geometry;
-Mesh2.local_scale = vec3(100, 100, 100);
-Mesh2.local_position = vec3(100, 100, 100);
-Mesh2.material = material4;
-const saver = new ClassSaver().save(Mesh2, ClassJsonEncoder, undefined, { spaces: '  ' }).expect();
-console.log(saver);
-
-const lttm = `{
-	"type": "LTTMClassDescriptor",
-	"meta": {
-	  "version": "0.0.1",
-	  "date": "2023-12-30T10:04:41.495Z",
-	  "author": "LookToTheMoon ClassSaver v0.0.1"
-	},
-	"root": 0,
-	"instances": [
-	  {
-		"type": "NormalMaterialResource",
-		"refid": 2,
-		"unique": false,
-		"external": "res://test/material.lttm"
-	  },
-	  {
-		"type": "BoxGeometryResource",
-		"refid": 1,
-		"unique": false,
-		"property": {
-		  
-		}
-	  },
-	  {
-		"type": "MeshInstance3D",
-		"refid": 0,
-		"property": {
-		  "block_input": "boolean(false)",
-		  "block_process": "boolean(false)",
-		  "block_physics_process": "boolean(false)",
-		  "top_level": "boolean(false)",
-		  "local_transform": "matrix4(100,0,0,100,0,100,0,100,0,0,100,100,0,0,0,1)",
-		  "local_visible": "boolean(true)",
-		  "visual_layer": "number(4294967295)",
-		  "cast_shadow": "boolean(false)",
-		  "receive_shadow": "boolean(false)",
-		  "geometry": "classref(1)",
-		  "material": "classref(2)"
-		}
-	  }
-	]
-  }`;
-const loader0 = new ClassLoader(DefaultInstanceCache).load(lttm, ClassJsonDecoder, {},).expect() as MeshInstance3D;
-const loader1 = new ClassLoader(DefaultInstanceCache).load(lttm, ClassJsonDecoder, {},).expect() as MeshInstance3D;
-
-loader0.local_position = vec3(-200, 0, 0);
-loader1.local_position = vec3(-400, 0, 0);
-
-const m = new PlainColorMaterialResource(DefaultConfig);
-m.color = color(0, 1, 0, 0.25);
-m.cull_face = RenderServerMaterialCullFace.None;
-const m1 = new PlainColorMaterialResource(DefaultConfig);
-m1.color = color(1, 0, 0, 1);
-m1.cull_face = RenderServerMaterialCullFace.None;
-loader0.material = m;
-loader0.set_SurfaceMaterial(2, m1);
-
-const m2 = new PlainColorMaterialResource(DefaultConfig);
-m2.color = color(1, 1, 1, 0.005);
-m2.cull_face = RenderServerMaterialCullFace.None;
-loader1.material = undefined;
-loader1.set_SurfaceMaterial(4, m2);
-loader1.set_SurfaceMaterial(5, m2);
-
-// World.add_Child(loader0);
-// World.add_Child(loader1);

@@ -219,6 +219,18 @@ export class TweenLoop extends TweenBase {
     }
 }
 
+export function tween_sequence(...tweens: TweenBase[]) {
+    return new TweenSequence(tweens);
+}
+
+export function tween_parallel(...tweens: TweenBase[]) {
+    return new TweenParallel(tweens);
+}
+
+export function tween_loop(tween: TweenBase, loop_times: number = Infinity) {
+    return new TweenLoop(tween, loop_times);
+}
+
 // interpolate tweens
 
 export enum TweenTransitionType {

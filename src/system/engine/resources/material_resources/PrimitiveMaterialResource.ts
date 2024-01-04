@@ -431,13 +431,13 @@ export class StandardMaterialResource extends MaterialResource {
     
     void calc_light(const in uint light_type, const in vec3 light_direction, const in vec3 view_direction, const in vec3 normal, const in vec3 light_color, const in float light_attenuation, inout vec3 diffuse, inout vec3 specular) {
         float light_strength = dot(normal, light_direction);
-        if (light_strength > 0.0) {
+        if (light_strength > EPSILON) {
             diffuse += light_strength * light_color * light_attenuation;
-            // if (light_type != uint(1)) {
-            //     vec3 half_direction = normalize(light_direction + view_direction);  
-            //     float beckmann = beckmannDistribution(dot(normal, half_direction), 0.1);
-            //     specular += beckmann * light_color * light_attenuation;
-            // }
+            if (light_type != 1u) {
+                vec3 half_direction = normalize(light_direction + view_direction);  
+                float beckmann = beckmannDistribution(dot(normal, half_direction), 0.01);
+                specular += beckmann * light_color * light_attenuation;
+            }
         }
     }
     
@@ -466,7 +466,7 @@ export class StandardMaterialResource extends MaterialResource {
         uint _l_shadow_opacity = texelFetch(lights, ivec3(x, y, 18), 0).r;
         uint _l_data_stride = texelFetch(lights, ivec3(x, y, 19), 0).r;
     
-        uint l_type = l_type_id & uint(0xffff);
+        uint l_type = l_type_id & 0xffffu;
         uint l_id = l_type_id >> 16;
         vec3 l_position = vec3(uintBitsToFloat(l_pos_x), uintBitsToFloat(l_pos_y), uintBitsToFloat(l_pos_z));
         vec3 l_direction = vec3(uintBitsToFloat(l_dir_x), uintBitsToFloat(l_dir_y), uintBitsToFloat(l_dir_z));
@@ -477,9 +477,6 @@ export class StandardMaterialResource extends MaterialResource {
 
     void main() {
         vec3 normal = normalize(v_normal);
-        // vec3 lookat_dir = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0, 0.0, 1.0)) : normalize(camera_world[3].xyz - v_world);
-        // vec3 reflected = reflect(-lookat_dir, normal);
-        // vec4 albedo = skybox(sky, reflected);
         vec4 albedo = u_color;
 
         vec3 diffuse = vec3(0.0);
@@ -520,7 +517,7 @@ export class StandardMaterialResource extends MaterialResource {
                 vec3 l_dir = normalize(light.position - v_world);
                 float l_dot_dir = dot(l_dir, -normalize(light.direction));
                 float l_distance = distance(light.position, v_world);
-                float angle_strength = smoothstep(cos(light.param_0), cos(light.param_1), l_dot_dir);
+                float angle_strength = smoothstep(cos(light.param_1), cos(light.param_0), l_dot_dir);
                 float near_distance = light.param_2;
                 float far_distance = light.param_3;
                 float distance_w = (l_distance - near_distance) / (far_distance - near_distance);
@@ -590,7 +587,7 @@ export class StandardMaterialResource extends MaterialResource {
         float light_strength = dot(normal, light_direction);
         if (light_strength > 0.0) {
             diffuse += light_strength * light_color * light_attenuation;
-            if (light_type != uint(2)) {
+            if (light_type != 1u) {
                 vec3 half_direction = normalize(light_direction + view_direction);  
                 float beckmann = beckmannDistribution(dot(normal, half_direction), 0.001);
                 specular += beckmann * light_color * light_attenuation;
@@ -623,7 +620,7 @@ export class StandardMaterialResource extends MaterialResource {
         uint _l_shadow_opacity = texelFetch(lights, ivec3(x, y, 18), 0).r;
         uint _l_data_stride = texelFetch(lights, ivec3(x, y, 19), 0).r;
     
-        uint l_type = l_type_id & uint(0xffff);
+        uint l_type = l_type_id & 0xffffu;
         uint l_id = l_type_id >> 16;
         vec3 l_position = vec3(uintBitsToFloat(l_pos_x), uintBitsToFloat(l_pos_y), uintBitsToFloat(l_pos_z));
         vec3 l_direction = vec3(uintBitsToFloat(l_dir_x), uintBitsToFloat(l_dir_y), uintBitsToFloat(l_dir_z));
@@ -634,10 +631,7 @@ export class StandardMaterialResource extends MaterialResource {
 
     void main() {
         vec3 normal = normalize(v_normal);
-        // vec3 lookat_dir = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0, 0.0, 1.0)) : normalize(camera_world[3].xyz - v_world);
-        // vec3 reflected = reflect(-lookat_dir, normal);
-        // vec4 albedo = skybox(sky, reflected);
-        vec4 albedo = vec4(0.0, 0.0, 0.0, 1.0);
+        vec4 albedo = u_color;
 
         vec3 diffuse = vec3(0.0);
         vec3 specular = vec3(0.0);

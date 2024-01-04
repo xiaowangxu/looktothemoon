@@ -73,7 +73,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         );
     }
 
-    public get_Basis(target: Matrix3): Matrix3 {
+    public gets_Basis(target: Matrix3): Matrix3 {
         target.n11 = this.n11; target.n12 = this.n12; target.n13 = this.n13;
         target.n21 = this.n21; target.n22 = this.n22; target.n23 = this.n23;
         target.n31 = this.n31; target.n32 = this.n32; target.n33 = this.n33;
@@ -88,7 +88,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         );
     }
 
-    public get_Position(target: Vector3): Vector3 {
+    public gets_Position(target: Vector3): Vector3 {
         target.x = this.n14;
         target.y = this.n24;
         target.z = this.n34;

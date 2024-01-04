@@ -5,7 +5,7 @@ import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/Cla
 export abstract class VisualInstance3D extends Node3D {
     public static readonly class_name: string = "VisualInstance3D";
 
-    private _local_visible: boolean = true;
+    protected _local_visible: boolean = true;
     public get local_visible() { return this._local_visible; }
     public set local_visible(visible: boolean) {
         if (this._local_visible !== visible) {
@@ -34,7 +34,7 @@ export abstract class VisualInstance3D extends Node3D {
         return this._global_visible;
     }
 
-    private _render_queue: number = 0;
+    protected _render_queue: number = 0;
     public get render_queue() { return this._render_queue; }
     public set render_queue(render_queue: number) {
         if (this._render_queue !== render_queue) {
@@ -47,7 +47,7 @@ export abstract class VisualInstance3D extends Node3D {
         throw new Error('abstract method');
     }
 
-    private _layer: number = 0xffffffff;
+    protected _layer: number = 0xffffffff;
     public get layer() { return this._layer; }
     public set layer(layer: number) {
         layer = layer & 0xffffffff;

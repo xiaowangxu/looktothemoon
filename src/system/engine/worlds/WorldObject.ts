@@ -1,10 +1,10 @@
 import { ConfiguredObject, type Config } from "../ConfiguredObject";
-import type { RID } from "../Rid";
+import type { Rid } from "../Rid";
 
 export abstract class WorldObject extends ConfiguredObject {
-    public readonly rid: RID;
+    public readonly rid: Rid;
 
-    constructor(config: Config, rid: RID) {
+    constructor(config: Config, rid: Rid) {
         super(config);
         this.rid = rid;
     }

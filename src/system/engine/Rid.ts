@@ -1,7 +1,7 @@
-export type RID = number;
+export type Rid = number;
 
 let rid_counter = 0;
 
-export function Rid(): RID {
+export function RID(): Rid {
     return rid_counter++;
 }

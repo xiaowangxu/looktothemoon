@@ -222,8 +222,12 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         const z = this.z - b.z;
         return x * x + y * y + z * z;
     }
+    
     direction_to(b: Vector3) {
         return b.sub(this).normalize();
+    }
+    gets_DirectionTo(a: Vector3, b: Vector3) {
+        return this.subs(b, a).normalizes(this);
     }
 
     equal(b: Vector3): boolean {

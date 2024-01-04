@@ -1,4 +1,4 @@
-import type { RID } from "../../../Rid";
+import type { Rid } from "../../../Rid";
 import { NodeNotification } from "../../Node";
 import { Node3D } from "../Node3D";
 import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
@@ -8,7 +8,7 @@ import { PickingArea3D } from "./PickingArea3D";
 export class PickingShape3D extends Node3D {
     public static readonly class_name: string = "PickingShape3D";
 
-    private shape_rid: RID | undefined = undefined;
+    private shape_rid: Rid | undefined = undefined;
 
     private _shape: PickingShape3DResource | undefined = undefined;
     public get shape() { return this._shape; }

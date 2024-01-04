@@ -100,7 +100,7 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
 
     public set_Light(id: number,
         type?: RenderServerLightType, lid?: number,
-        position?: Vector3, direction?: Vector3, color?: Color, attenuation?: number,
+        position?: Vector3, direction?: Vector3, color?: Vector3, attenuation?: number,
         mask?: number,
         param_0?: number, param_1?: number, param_2?: number, param_3?: number,
         shadow_bias?: number, shadow_normal_bias?: number, shadow_opacity?: number,

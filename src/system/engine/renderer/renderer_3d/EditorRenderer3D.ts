@@ -218,36 +218,6 @@ export class EditorRenderer3D extends Renderer3D {
 
 	private readonly lights_data: Ref<RenderServerLightsData> = new Ref(this.config.render_server.create_LightsData(64, 64));
 
-	private update_Lights() {
-		const lights_data = this.lights_data.expect;
-
-		// for (let i = 0; i < lights_data.max_light_count; i++) {
-		// 	const radius = Math.random() * 4.0;
-		// 	lights_data.set_Light(
-		// 		i,
-		// 		RenderServerLightType.PointLight,
-		// 		undefined,
-		// 		vec3((Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8, (Math.random() - 0.75) * 2),
-		// 		vec3(0, 0, 0),
-		// 		color(Math.random() * 0.2, Math.random() * 0.2, Math.random() * 0.2),
-		// 		2.0,
-		// 		undefined,
-		// 		radius,
-		// 		radius + Math.random(),
-		// 	);
-		// }
-
-		lights_data.set_Light(0, RenderServerLightType.AmbientLight, undefined, undefined, undefined, color(0.1, 0.1, 0.1), 1);
-
-		lights_data.set_Light(1, RenderServerLightType.DirectionalLight, undefined, vec3(-1, 1, -1), undefined, color(0.2, 0.2, 0.2), 1, 4294967231);
-		lights_data.set_Light(2, RenderServerLightType.DirectionalLight, undefined, vec3(1, 1, 1), undefined, color(0.25, 0.32, 0.4), 1, 4294967231);
-		lights_data.set_Light(3, RenderServerLightType.DirectionalLight, undefined, vec3(1, 1, -1), undefined, color(0.1, 0.1, 0.1), 1, 4294967231);
-
-		lights_data.set_Light(5, RenderServerLightType.SpotLight, undefined, vec3(0.3, 0.2, 2.0), vec3(0, 0, -1), color(100, 0, 0), 2.0, 0xffffffff, 12 * Deg2Rad, 4 * Deg2Rad, 10, 11);
-		lights_data.set_Light(6, RenderServerLightType.SpotLight, undefined, vec3(-0.3, 0.2, 2.0), vec3(0, 0, -1), color(0, 100, 0), 2.0, 0xffffffff, 12 * Deg2Rad, 4 * Deg2Rad, 10, 11);
-		lights_data.set_Light(7, RenderServerLightType.SpotLight, undefined, vec3(0.0, -0.25, 2.0), vec3(0, 0, -1), color(0, 0, 100), 2.0, 0xffffffff, 12 * Deg2Rad, 4 * Deg2Rad, 10, 11);
-	}
-
 	// cache items
 	private readonly quad_geometry = QuadGeometry.get(this.config);
 	private readonly on_screen_program = OnscreenProgramUniform.get(this.config).onscreen_program;
@@ -321,6 +291,7 @@ export class EditorRenderer3D extends Renderer3D {
 		let light_idx = 0;
 		for (const light of world_3d.lights) {
 			if (light_idx >= lights_data.max_light_count) break;
+			if (!light.visible) continue;
 			light_idx = light.fill_LightData(lights_data, light_idx, 0);
 			light_idx++;
 		}

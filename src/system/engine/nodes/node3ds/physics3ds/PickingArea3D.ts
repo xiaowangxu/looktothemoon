@@ -1,6 +1,6 @@
 import { NodeNotification } from "../../Node";
 import { PhysicsInstance3D } from "./PhysicsInstance3D";
-import { type RID } from "../../../Rid";
+import { type Rid } from "../../../Rid";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
 import type { MouseInputEvent } from "../../../inputs/events/mouse_events/MouseInputEvent";
 import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
@@ -12,7 +12,7 @@ export class PickingArea3D extends PhysicsInstance3D {
     public readonly signal_mouse_entered: SignalEmitter<(event: MouseInputEvent) => void> = new SignalEmitter();
     public readonly signal_mouse_exited: SignalEmitter<(event: MouseInputEvent) => void> = new SignalEmitter();
 
-    private area_rid: RID | undefined = undefined;
+    private area_rid: Rid | undefined = undefined;
     public get picking_area_rid() { return this.area_rid; }
 
     private _is_mouse_hover: boolean = false;
