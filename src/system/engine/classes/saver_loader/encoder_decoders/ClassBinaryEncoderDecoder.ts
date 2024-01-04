@@ -271,9 +271,9 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, undefined> {
             return Result.Error(err as Error);
         }
         const data = this.get_Data();
-        // console.group('decode');
-        // decode_test(data);
-        // console.groupEnd();
+        console.group('decode');
+        decode_test(data);
+        console.groupEnd();
         return Result.Ok(data);
     }
 }

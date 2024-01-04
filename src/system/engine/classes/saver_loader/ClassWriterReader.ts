@@ -1,5 +1,5 @@
 import { ClassBase } from "../databases/ClassBase";
-import type { ClassLoader, ClassSaverScope, RefId } from "./ClassSaverLoader";
+import type { ClassLoader, ClassSaver, RefId } from "./ClassSaverLoader";
 
 export class ClassRef {
     public readonly refid: RefId;
@@ -10,22 +10,21 @@ export class ClassRef {
 }
 
 export class ClassWriter {
-    private readonly scope: ClassSaverScope;
+    private readonly scope: ClassSaver;
     private readonly base: ClassBase;
 
-    constructor(scope: ClassSaverScope, base: ClassBase) {
+    constructor(scope: ClassSaver, base: ClassBase) {
         this.scope = scope;
         this.base = base;
     }
 
     public ref(obj: ClassBase) {
-        return this.scope.add_InstanceRef(obj);
+        return this.scope.create_InstanceRef(obj);
     }
 
     public property(key: string, value: any) {
-        if (value === undefined) return this;
         if (value instanceof ClassBase) {
-            const refid = this.scope.add_InstanceRef(value);
+            const refid = this.scope.create_InstanceRef(value);
             this.scope.add_InstanceProperty(this.base, key, refid);
         }
         else {

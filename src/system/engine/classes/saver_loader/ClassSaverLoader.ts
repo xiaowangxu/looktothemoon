@@ -8,7 +8,8 @@ import { ClassReader, ClassRef, ClassWriter } from './ClassWriterReader';
 import { load_ResFile_from_Path } from 'res://ResFiles';
 import { ResourceBase, ResourceInstanceCache } from '../../resources/Resource';
 import { ClassDecoder, type ClassEncoder } from './encoder_decoders/ClassEncoderDecoder';
-import { ClassJsonDecoder } from './encoder_decoders/ClassJsonEncoderDecoder';
+import { ClassJsonDecoder, ClassJsonEncoder } from './encoder_decoders/ClassJsonEncoderDecoder';
+import { ClassBinaryEncoder } from './encoder_decoders/ClassBinaryEncoderDecoder';
 
 export type RefId = number;
 
@@ -35,28 +36,30 @@ export interface ClassSaverOption {
     static?: boolean,
 }
 
-export class ClassSaverScope {
+export class ClassSaver {
     private readonly class_db: ClassDatabase;
+    private readonly value_db: ValueDatabase;
 
     private _refid: number = 0;
     private get refid() { return this._refid++; }
 
     private readonly rid_instance_data_map: Map<Rid, ClassInstanceData> = new Map();
 
-    private _root_refid: RefId | undefined
-    public get root_refid() { return this._root_refid; }
+    private root_refid: RefId | undefined
 
-    // option
+    // options
+
     private static_mode: boolean = false;
 
-    constructor(class_db: ClassDatabase) {
+    constructor(class_db: ClassDatabase = ClassDB, value_db: ValueDatabase = ValueDB) {
         this.class_db = class_db;
+        this.value_db = value_db;
     }
 
     // data api
 
-    public create_Data(rid: RefId, type: string, unique: boolean | undefined = undefined, external: string | undefined = undefined): Result<RefId, Error> {
-        if (this.rid_instance_data_map.has(rid)) return Result.Ok(this.rid_instance_data_map.get(rid)!.refid);
+    public create_Data(rid: Rid, type: string, unique: boolean | undefined = undefined, external: string | undefined = undefined): RefId {
+        if (this.rid_instance_data_map.has(rid)) return this.rid_instance_data_map.get(rid)!.refid;
         else {
             const refid = this.refid;
             this.rid_instance_data_map.set(rid, {
@@ -66,11 +69,21 @@ export class ClassSaverScope {
                 external,
                 property: new Map(),
             });
-            return Result.Ok(refid);
+            return refid;
         }
     }
 
-    public add_Property(rid: RefId, key: string, value: any) {
+    public create_Ref(rid: Rid) {
+        if (this.rid_instance_data_map.has(rid)) return new ClassRef(this.rid_instance_data_map.get(rid)!.refid);
+        return undefined;
+    }
+
+    public set_Root(refid: RefId) {
+        this.root_refid = refid;
+    }
+
+    public add_Property(rid: Rid, key: string, value: any) {
+        if (value === undefined || value === null) return;
         if (this.rid_instance_data_map.has(rid)) {
             const data = this.rid_instance_data_map.get(rid)!;
             if (data.property === undefined) data.property = new Map<string, any>();
@@ -81,8 +94,13 @@ export class ClassSaverScope {
         }
     }
 
-    public get_Data() {
-        return [...this.rid_instance_data_map.values()];
+    private get_Data(): Result<ClassExchangeData, Error> {
+        const root_refid = this.root_refid;
+        if (root_refid === undefined) return Result.Error(new Error('<ClassSaver> get_Data: no root instance to be saved'));
+        return Result.Ok({
+            root: root_refid,
+            instances: [...this.rid_instance_data_map.values()],
+        });
     }
 
     // instance api
@@ -95,19 +113,19 @@ export class ClassSaverScope {
         const class_name = (obj.constructor as typeof ClassBase).class_name;
         if (!this.class_db.has_Class(class_name)) return Result.Error(new Error(`<ClassSaverScope> create_Instance: instance class ${class_name} is not registered`));
         const rid = obj.rid;
-        return this.create_Data(
+        return Result.Ok(this.create_Data(
             rid,
             class_name,
             obj instanceof ResourceBase ? obj.unique : undefined,
             this.can_SaveExternal(obj, is_root) ? (obj as ResourceBase).path : undefined,
-        );
+        ));
     }
 
     public add_InstanceProperty(base: ClassBase, key: string, value: any) {
         this.add_Property(base.rid, key, value);
     }
 
-    public add_InstanceRef(obj: ClassBase): ClassRef {
+    public create_InstanceRef(obj: ClassBase): ClassRef {
         const obj_rid = obj.rid;
         if (!this.rid_instance_data_map.has(obj_rid)) {
             const refid_res = this.create_Instance(obj);
@@ -125,45 +143,28 @@ export class ClassSaverScope {
         obj.dump(new ClassWriter(this, obj));
     }
 
-    public dump(obj: ClassBase, option?: ClassSaverOption): Result<undefined, Error> {
-        this.static_mode = option?.static ?? false;
+    // main apis
+
+    public init(option?: ClassSaverOption) {
         this._refid = 0;
         this.rid_instance_data_map.clear();
-        const refid_res = this.create_Instance(obj, true);
-        if (refid_res.failed) return Result.Error(refid_res.expect_Error());
-        this._root_refid = refid_res.expect();
-        this.dump_Instance(obj, true);
-        return Result.Ok(undefined);
-    }
-}
-
-export class ClassSaver {
-    private readonly scope: ClassSaverScope;
-    private readonly value_db: ValueDatabase;
-
-    constructor(class_db: ClassDatabase = ClassDB, value_db: ValueDatabase = ValueDB) {
-        this.scope = new ClassSaverScope(class_db);
-        this.value_db = value_db;
+        this.root_refid = undefined;
+        // set options
+        this.static_mode = option?.static ?? false;
     }
 
     public dump(obj: ClassBase, option?: ClassSaverOption): Result<undefined, Error> {
+        this.init(option);
         try {
-            const res = this.scope.dump(obj, option);
-            if (res.failed) return res;
-            else return Result.Ok(undefined);
+            const refid_res = this.create_Instance(obj, true);
+            if (refid_res.failed) return Result.Error(refid_res.expect_Error());
+            this.set_Root(refid_res.expect());
+            this.dump_Instance(obj, true);
+            return Result.Ok(undefined);
         }
         catch (err) {
             return Result.Error(err as Error);
         }
-    }
-
-    private get_Data(): Result<ClassExchangeData, Error> {
-        const root_refid = this.scope.root_refid;
-        if (root_refid === undefined) return Result.Error(new Error('<ClassSaver> get_Data: no root instance to be saved'));
-        return Result.Ok({
-            root: root_refid,
-            instances: this.scope.get_Data(),
-        });
     }
 
     public enocde<T, Option>(encoder: typeof ClassEncoder<T, Option>, option?: Option): Result<T, Error> {
@@ -192,14 +193,17 @@ export interface ClassLoaderOption {
 export class ClassLoader {
     private readonly class_db: ClassDatabase;
     private readonly value_db: ValueDatabase;
+
     private readonly resource_instance_cache: ResourceInstanceCache;
+
+    // options
 
     private disable_use_cache: boolean = false;
     private disable_store_cache: boolean = false;
 
     private get config() { return this.resource_instance_cache.config; }
 
-    private readonly instance_map: Map<RefId, { external: boolean, instance: ClassBase, property?: PropertyMap }> = new Map();
+    private readonly refid_instance_map: Map<RefId, { external: boolean, instance: ClassBase, property?: PropertyMap }> = new Map();
 
     constructor(resource_instance_cache: ResourceInstanceCache, class_db: ClassDatabase = ClassDB, value_db: ValueDatabase = ValueDB) {
         this.class_db = class_db;
@@ -207,8 +211,10 @@ export class ClassLoader {
         this.resource_instance_cache = resource_instance_cache;
     }
 
+    // parse methods
+
     public get_Instance(refid: RefId) {
-        return this.instance_map.get(refid)?.instance;
+        return this.refid_instance_map.get(refid)?.instance;
     }
 
     private parse_Instance(instance: ClassInstanceData): Result<RefId, Error> {
@@ -216,7 +222,7 @@ export class ClassLoader {
         const prop = property;
         const class_instance = this.class_db.instantiate(this.config, type);
         if (class_instance.failed) return Result.Error(class_instance.expect_Error())
-        this.instance_map.set(refid, { external: false, instance: class_instance.expect(), property: prop });
+        this.refid_instance_map.set(refid, { external: false, instance: class_instance.expect(), property: prop });
         return Result.Ok(refid);
     }
 
@@ -225,7 +231,7 @@ export class ClassLoader {
         if (external === undefined) return Result.Error(new Error('<ClassLoader> parse_ExternalInstance: external resource dose not has external path'));
         const result = new ClassLoader(this.resource_instance_cache, this.class_db, this.value_db).fetch(external);
         if (result.failed) throw result.expect_Error();
-        this.instance_map.set(refid, { external: true, instance: result.expect() });
+        this.refid_instance_map.set(refid, { external: true, instance: result.expect() });
         return Result.Ok(refid);
     }
 
@@ -237,12 +243,15 @@ export class ClassLoader {
         return `${path}/${instance.type}(${instance.refid})`;
     }
 
-    private parse<T extends ClassBase>(data: ClassExchangeData, path?: string, option?: ClassLoaderOption): Result<T, Error> {
-        this.instance_map.clear();
-        // set option
+    private init(option?: ClassLoaderOption) {
+        this.refid_instance_map.clear();
+        // set options
         this.disable_use_cache = option?.disable_use_cache ?? false;
         this.disable_store_cache = option?.disable_store_cache ?? false;
+    }
 
+    private parse<T extends ClassBase>(data: ClassExchangeData, path?: string, option?: ClassLoaderOption): Result<T, Error> {
+        this.init(option);
         // parse
         const { root, instances } = data;
         const root_refid = new ClassRef(root);
@@ -262,7 +271,7 @@ export class ClassLoader {
                     const cache_path = this.get_InstanceInternalPath(path, instance);
                     const cached = this.resource_instance_cache.get(cache_path);
                     if (cached !== undefined) {
-                        this.instance_map.set(instance_refid.refid, { external: true, instance: cached });
+                        this.refid_instance_map.set(instance_refid.refid, { external: true, instance: cached });
                         continue;
                     }
                 }
@@ -294,7 +303,7 @@ export class ClassLoader {
             if (res.failed) return Result.Error(res.expect_Error());
         }
         // load instance properties
-        for (const { external, instance, property } of this.instance_map.values()) {
+        for (const { external, instance, property } of this.refid_instance_map.values()) {
             if (external || property === undefined) continue;
             this.load_InstanceProperty(instance, property);
         }
@@ -308,6 +317,8 @@ export class ClassLoader {
         const _decoder = new (decoder)(this.value_db, data, option);
         return _decoder.decode();
     }
+
+    // main apis
 
     public fetch<T extends ClassBase, D, Option>(path: string, decoder?: typeof ClassDecoder<D, Option>, load_option?: ClassLoaderOption, decode_option?: Option): Result<T, Error> {
         const cache = this.resource_instance_cache.get<ResourceBase>(path);
