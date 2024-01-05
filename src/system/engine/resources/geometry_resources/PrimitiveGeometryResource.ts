@@ -2,7 +2,6 @@ import { GeometryResource } from "./GeometryResource";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceVector3AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
 import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { box3 } from "@/system/fivepebble/geometries/Box3";
 import { Pi, Tau, clamp } from '@/system/fivepebble/Scalar';
 import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
@@ -52,106 +51,106 @@ export class BoxGeometryResource extends PrimitiveGeometryResource {
 		const half_h = this.height / 2;
 		const half_d = this.depth / 2;
 		const position_buffer = new RenderDeviceVector3AttributeBuffer(this.render_server, RenderStateBufferUsage.StaticDraw,
-			[
+			new Float32Array([
 				// top
-				vec3(half_w, half_h, half_d),
-				vec3(half_w, half_h, -half_d),
-				vec3(-half_w, half_h, half_d),
-				vec3(-half_w, half_h, -half_d),
+				half_w, half_h, half_d,
+				half_w, half_h, -half_d,
+				-half_w, half_h, half_d,
+				-half_w, half_h, -half_d,
 				// bottom
-				vec3(half_w, -half_h, half_d),
-				vec3(half_w, -half_h, -half_d),
-				vec3(-half_w, -half_h, half_d),
-				vec3(-half_w, -half_h, -half_d),
+				half_w, -half_h, half_d,
+				half_w, -half_h, -half_d,
+				-half_w, -half_h, half_d,
+				-half_w, -half_h, -half_d,
 				// front
-				vec3(half_w, -half_h, half_d),
-				vec3(half_w, half_h, half_d),
-				vec3(-half_w, -half_h, half_d),
-				vec3(-half_w, half_h, half_d),
+				half_w, -half_h, half_d,
+				half_w, half_h, half_d,
+				-half_w, -half_h, half_d,
+				-half_w, half_h, half_d,
 				// back
-				vec3(half_w, -half_h, -half_d),
-				vec3(half_w, half_h, -half_d),
-				vec3(-half_w, -half_h, -half_d),
-				vec3(-half_w, half_h, -half_d),
+				half_w, -half_h, -half_d,
+				half_w, half_h, -half_d,
+				-half_w, -half_h, -half_d,
+				-half_w, half_h, -half_d,
 				// right
-				vec3(half_w, -half_h, -half_d),
-				vec3(half_w, half_h, -half_d),
-				vec3(half_w, -half_h, half_d),
-				vec3(half_w, half_h, half_d),
+				half_w, -half_h, -half_d,
+				half_w, half_h, -half_d,
+				half_w, -half_h, half_d,
+				half_w, half_h, half_d,
 				// left
-				vec3(-half_w, -half_h, -half_d),
-				vec3(-half_w, half_h, -half_d),
-				vec3(-half_w, -half_h, half_d),
-				vec3(-half_w, half_h, half_d),
-			]);
+				-half_w, -half_h, -half_d,
+				-half_w, half_h, -half_d,
+				-half_w, -half_h, half_d,
+				-half_w, half_h, half_d,
+			]));
 		const normal_buffer = new RenderDeviceVector3AttributeBuffer(this.render_server, RenderStateBufferUsage.StaticDraw,
-			[
+			new Float32Array([
 				// top
-				vec3(0, 1, 0),
-				vec3(0, 1, 0),
-				vec3(0, 1, 0),
-				vec3(0, 1, 0),
+				0, 1, 0,
+				0, 1, 0,
+				0, 1, 0,
+				0, 1, 0,
 				// bottom
-				vec3(0, -1, 0),
-				vec3(0, -1, 0),
-				vec3(0, -1, 0),
-				vec3(0, -1, 0),
+				0, -1, 0,
+				0, -1, 0,
+				0, -1, 0,
+				0, -1, 0,
 				// front
-				vec3(0, 0, 1),
-				vec3(0, 0, 1),
-				vec3(0, 0, 1),
-				vec3(0, 0, 1),
+				0, 0, 1,
+				0, 0, 1,
+				0, 0, 1,
+				0, 0, 1,
 				// back
-				vec3(0, 0, -1),
-				vec3(0, 0, -1),
-				vec3(0, 0, -1),
-				vec3(0, 0, -1),
+				0, 0, -1,
+				0, 0, -1,
+				0, 0, -1,
+				0, 0, -1,
 				// right
-				vec3(1, 0, 0),
-				vec3(1, 0, 0),
-				vec3(1, 0, 0),
-				vec3(1, 0, 0),
+				1, 0, 0,
+				1, 0, 0,
+				1, 0, 0,
+				1, 0, 0,
 				// left
-				vec3(-1, 0, 0),
-				vec3(-1, 0, 0),
-				vec3(-1, 0, 0),
-				vec3(-1, 0, 0),
-			]);
+				-1, 0, 0,
+				-1, 0, 0,
+				-1, 0, 0,
+				-1, 0, 0,
+			]));
 		const uv_buffer = new RenderDeviceVector2AttributeBuffer(this.render_server, RenderStateBufferUsage.StaticDraw,
-			[
+			new Float32Array([
 				// top
-				vec2(1, 0),
-				vec2(1, 1),
-				vec2(0, 0),
-				vec2(0, 1),
+				1, 0,
+				1, 1,
+				0, 0,
+				0, 1,
 				// bottom
-				vec2(1, 1),
-				vec2(1, 0),
-				vec2(0, 1),
-				vec2(0, 0),
+				1, 1,
+				1, 0,
+				0, 1,
+				0, 0,
 				// front
-				vec2(1, 0),
-				vec2(1, 1),
-				vec2(0, 0),
-				vec2(0, 1),
+				1, 0,
+				1, 1,
+				0, 0,
+				0, 1,
 				// back
-				vec2(1, 1),
-				vec2(1, 0),
-				vec2(0, 1),
-				vec2(0, 0),
+				1, 1,
+				1, 0,
+				0, 1,
+				0, 0,
 				// right
-				vec2(1, 0),
-				vec2(1, 1),
-				vec2(0, 0),
-				vec2(0, 1),
+				1, 0,
+				1, 1,
+				0, 0,
+				0, 1,
 				// left
-				vec2(0, 0),
-				vec2(0, 1),
-				vec2(1, 0),
-				vec2(1, 1),
-			]);
+				0, 0,
+				0, 1,
+				1, 0,
+				1, 1,
+			]));
 		const index_buffer = new RenderDeviceIndexAttributeBuffer(this.render_server, RenderStateBufferUsage.StaticDraw,
-			[
+			new Uint32Array([
 				// top
 				0, 1, 2, 2, 1, 3,
 				// bottom
@@ -164,7 +163,7 @@ export class BoxGeometryResource extends PrimitiveGeometryResource {
 				16, 17, 18, 18, 17, 19,
 				// left
 				20, 22, 21, 21, 22, 23,
-			]);
+			]));
 		this.geometry.set_Geometry(
 			RenderStatePrimitiveType.Triangles,
 			{
