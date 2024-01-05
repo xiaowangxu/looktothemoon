@@ -1,19 +1,13 @@
 import type { Rid } from '../../Rid';
-import { IncTopoGraph, IncTopoGraphResult } from '../../../structures/IncTopoGraph';
 import { Result } from '../../../utils/Result';
 import { ClassBase } from "../databases/ClassBase";
 import { ClassDB, type ClassDatabase } from '../databases/ClassDatabase';
-import { ValueDB, type ValueDatabase } from "../databases/ValueDatabase";
 import { ClassReader, ClassRef, ClassWriter } from './ClassWriterReader';
 import { load_ResFile_from_Path } from 'res://ResFiles';
 import { ResourceBase, ResourceInstanceCache } from '../../resources/Resource';
 import { ClassDecoder, type ClassEncoder } from './encoder_decoders/ClassEncoderDecoder';
-import { ClassJsonDecoder, ClassJsonEncoder } from './encoder_decoders/ClassJsonEncoderDecoder';
-import { ClassBinaryEncoder } from './encoder_decoders/ClassBinaryEncoderDecoder';
 
 export type RefId = number;
-
-ValueDB.register_Value('classref', ClassRef, v => v.refid, v => new ClassRef(parseInt(v)));
 
 type PropertyMap = Map<string, any>;
 
@@ -21,8 +15,8 @@ export type ClassInstanceData = {
     type: string,
     refid: RefId,
     // only for resources
-    // mark whether local resource is unique , for external resource the uniqueness is maked inside the external resource file itself so this is ignored
-    // for resource default unique is false, but some resource type may override it to true, the loader will first check this then the resource's default unique
+    // mark whether local resource is unique, for external resource the uniqueness is maked inside the external resource file itself so this is ignored
+    // for resource default unique is false, but some resource type may override it to true, the loader will first check this then the resource's default unique, namely !unique && !Resource.unique will cause a cache operation
     unique: boolean | undefined,
     external: string | undefined,
     property: PropertyMap | undefined,
@@ -38,7 +32,6 @@ export interface ClassSaverOption {
 
 export class ClassSaver {
     private readonly class_db: ClassDatabase;
-    private readonly value_db: ValueDatabase;
 
     private _refid: number = 0;
     private get refid() { return this._refid++; }
@@ -51,9 +44,8 @@ export class ClassSaver {
 
     private static_mode: boolean = false;
 
-    constructor(class_db: ClassDatabase = ClassDB, value_db: ValueDatabase = ValueDB) {
+    constructor(class_db: ClassDatabase = ClassDB) {
         this.class_db = class_db;
-        this.value_db = value_db;
     }
 
     // data api
@@ -170,7 +162,7 @@ export class ClassSaver {
     public enocde<T, Option>(encoder: typeof ClassEncoder<T, Option>, option?: Option): Result<T, Error> {
         const data = this.get_Data();
         if (data.failed) return Result.Error(data.expect_Error());
-        const _encoder = new (encoder)(this.value_db, data.expect(), option);
+        const _encoder = new (encoder)(data.expect(), option);
         return _encoder.encode();
     }
 
@@ -192,7 +184,6 @@ export interface ClassLoaderOption {
 
 export class ClassLoader {
     private readonly class_db: ClassDatabase;
-    private readonly value_db: ValueDatabase;
 
     private readonly resource_instance_cache: ResourceInstanceCache;
 
@@ -205,9 +196,8 @@ export class ClassLoader {
 
     private readonly refid_instance_map: Map<RefId, { external: boolean, instance: ClassBase, property?: PropertyMap }> = new Map();
 
-    constructor(resource_instance_cache: ResourceInstanceCache, class_db: ClassDatabase = ClassDB, value_db: ValueDatabase = ValueDB) {
+    constructor(resource_instance_cache: ResourceInstanceCache, class_db: ClassDatabase = ClassDB) {
         this.class_db = class_db;
-        this.value_db = value_db;
         this.resource_instance_cache = resource_instance_cache;
     }
 
@@ -229,7 +219,7 @@ export class ClassLoader {
     private parse_ExternalInstance(instance: ClassInstanceData): Result<RefId, Error> {
         const { refid, external } = instance;
         if (external === undefined) return Result.Error(new Error('<ClassLoader> parse_ExternalInstance: external resource dose not has external path'));
-        const result = new ClassLoader(this.resource_instance_cache, this.class_db, this.value_db).fetch(external);
+        const result = new ClassLoader(this.resource_instance_cache, this.class_db).fetch(external);
         if (result.failed) throw result.expect_Error();
         this.refid_instance_map.set(refid, { external: true, instance: result.expect() });
         return Result.Ok(refid);
@@ -314,7 +304,7 @@ export class ClassLoader {
     }
 
     private decode<T, Option>(data: T, decoder: typeof ClassDecoder<T, Option>, option?: Option): Result<ClassExchangeData, Error> {
-        const _decoder = new (decoder)(this.value_db, data, option);
+        const _decoder = new (decoder)(data, option);
         return _decoder.decode();
     }
 
@@ -325,13 +315,10 @@ export class ClassLoader {
         if (cache !== undefined) return Result.Ok((cache as unknown) as T);
         const file = load_ResFile_from_Path(path);
         if (file.failed) return Result.Error(file.expect_Error());
-        if (decoder === undefined) {
-            decode_option = undefined;
-            decoder = ClassJsonDecoder as typeof ClassDecoder;
-        }
-        const decoded = this.decode(file.expect() as any, decoder, decode_option);
-        if (decoded.failed) return Result.Error(decoded.expect_Error());
-        return this.parse<T>(decoded.expect(), path, load_option);
+        throw new Error("fetch not impl");
+        // const decoded = this.decode(file.expect() as any, decoder, decode_option);
+        // if (decoded.failed) return Result.Error(decoded.expect_Error());
+        // return this.parse<T>(decoded.expect(), path, load_option);
     }
 
     public load<T extends ClassBase, D, Option>(data: D, decoder: typeof ClassDecoder<D, Option>, load_option?: ClassLoaderOption, decode_option?: Option): Result<T, Error> {

@@ -1,5 +1,5 @@
 import { World3D } from "@/system/engine/worlds/world3ds/World3D";
-import { NodeNotification, Viewport, ViewportUpdateMode } from "@/system/engine/nodes/Node";
+import { Viewport } from "@/system/engine/nodes/Node";
 import { SceneTree } from "@/system/engine/SceneTree";
 import { Node3D } from "@/system/engine/nodes/node3ds/Node3D";
 import { ViewportDomContainer } from "@/system/engine/nodes/ViewportDomContainer";
@@ -10,12 +10,10 @@ import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { DependencyGraph } from "./singletons/DependencyGraph";
 import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
-import { BoxGeometryResource, CylinderGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
+import { BoxGeometryResource, CylinderGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
 import { NormalMaterialResource, PlainColorMaterialResource, UVMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { color, color8 } from "@/system/fivepebble/graphics/Color";
-import { OrthographicCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/OrthographicCamera3D";
-import { Euler, euler } from "@/system/fivepebble/linear_algebra/Euler";
-import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/LineGrabber3D";
+import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
@@ -24,17 +22,10 @@ import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_re
 import { MultiLineMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
-import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { StandardMaterialResource } from "../system/engine/resources/material_resources/PrimitiveMaterialResource";
-import { RenderServerMaterialCullFace } from "@/system/engine/render_server/RenderServerMaterial";
 import { ClassLoader, ClassSaver } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
-import { ClassJsonDecoder, ClassJsonEncoder } from "@/system/engine/classes/saver_loader/encoder_decoders/ClassJsonEncoderDecoder";
-import { ClassDecoder } from "@/system/engine/classes/saver_loader/encoder_decoders/ClassEncoderDecoder";
 import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
-import { Renderer3DPipeline } from "@/system/engine/renderer/renderer_3d/Renderer3DPipeline";
-import { Pi } from "@/system/fivepebble/Scalar";
-import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
-import { ImageTextureResource, PlaceholderTextureResource } from "@/system/engine/resources/texture_resources/TextureResource";
+import { ImageTextureResource } from "@/system/engine/resources/texture_resources/TextureResource";
 import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
 
 const DefaultConfig: Config = {
@@ -157,9 +148,7 @@ material3.texture = new ImageTextureResource(DefaultConfig);
 
 import url from 'res://image.png';
 import { RenderStateTextureFormat } from "@/system/sliverofstraw/RenderState";
-import { PointGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/PointGrabber3D";
 import { EditorRenderer3DPipeline } from "@/system/engine/renderer/renderer_3d/EditorRenderer3DPipeline";
-import { MaterialOverrideResource } from "@/system/engine/resources/material_resources/MaterialResource";
 import { EditorRenderer3D } from "@/system/engine/renderer/renderer_3d/EditorRenderer3D";
 import { TranslateGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/TranslateGrabber3D";
 import { PointLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/PointLight3D";
@@ -168,7 +157,7 @@ import { AmbientLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds
 import { DirectionalLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/DirectionalLight3D";
 import { SpotLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/SpotLight3D";
 import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
-import { ClassBinaryEncoder } from "@/system/engine/classes/saver_loader/encoder_decoders/ClassBinaryEncoderDecoder";
+import { ClassBinaryDecoder, ClassBinaryEncoder, type ClassBinaryDecoderOption } from "@/system/engine/classes/saver_loader/encoder_decoders/ClassBinaryEncoderDecoder";
 {
 	new ImageLoader().parse(url).then(res => {
 		(material3.texture as ImageTextureResource).set_Image(res.expect(), RenderStateTextureFormat.SRGBA8, 4);
@@ -378,19 +367,26 @@ export function createEditorViewport() {
 	// create_CompassScene();
 }
 
-const cylinder = new CylinderGeometryResource(DefaultConfig);
-cylinder.top_radius = 0.25;
+const cylinder = new BoxGeometryResource(DefaultConfig);
 const mat1 = new NormalMaterialResource(DefaultConfig);
 const mat2 = new NormalMaterialResource(DefaultConfig);
+const mat3 = new UVMaterialResource(DefaultConfig);
 mat2.remap = false;
 const mesh = new MeshInstance3D(DefaultConfig);
-// mesh.geometry = cylinder;
-// mesh.material = material;
+mesh.geometry = cylinder;
+mesh.material = mat3;
 mesh.set_SurfaceMaterial(0, mat1);
 mesh.set_SurfaceMaterial(2, mat2);
 mesh.set_SurfaceMaterial(4, mat1);
 mesh.name = '测试';
-console.time("bin");
-const data0 = new ClassSaver().save(mesh, ClassBinaryEncoder).unwrap();
-console.timeEnd("bin");
-console.log(data0, data0?.byteLength);
+
+console.time("save");
+const data0 = new ClassSaver().save(mesh, ClassBinaryEncoder, undefined, { little_endian: true }).expect();
+console.timeEnd("save");
+
+console.time('load');
+const load = new ClassLoader(DefaultInstanceCache).load<MeshInstance3D, ArrayBuffer, ClassBinaryDecoderOption>(data0, ClassBinaryDecoder, undefined, { validate: true }).expect();
+console.timeEnd('load');
+
+load.local_scale = vec3(100, 100, 100);
+World.add_Child(load);

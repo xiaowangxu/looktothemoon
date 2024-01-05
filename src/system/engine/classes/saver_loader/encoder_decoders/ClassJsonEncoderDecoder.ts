@@ -1,6 +1,7 @@
 import { Result } from "@/system/utils/Result";
 import { ClassDecoder, ClassEncoder } from "./ClassEncoderDecoder";
 import type { ClassExchangeData, ClassInstanceData, RefId } from "../ClassSaverLoader";
+import type { ValueDatabase } from "../../databases/ValueDatabase";
 
 type LTTMClassDescriptorInstance = {
     type: string,
@@ -24,7 +25,23 @@ type LTTMClassDescriptor = {
 const ClassSaverLoaderTypeName = 'LTTMClassDescriptor';
 const ClassSaverLoaderVersion = '0.0.1';
 
-export class ClassJsonEncoder extends ClassEncoder<string, { spaces?: string }> {
+type ClassJsonEncoderOption = { spaces?: string };
+
+/**
+ * @deprecated
+ */
+export class ClassJsonEncoder extends ClassEncoder<string, ClassJsonEncoderOption> {
+
+    // options
+
+    private spaces: string | undefined = undefined;
+    
+    constructor(value_db: ValueDatabase, data: ClassExchangeData, option?: ClassJsonEncoderOption) {
+        super(value_db, data);
+        // options
+        this.spaces = option?.spaces;
+    }
+
     public encode(): Result<string, Error> {
         const root_refid = this.data.root;// this.scope.root_refid;
         if (root_refid === undefined) return Result.Error(new Error('<ClassSaver> get_JsonString: no root instance to be saved'));
@@ -66,11 +83,14 @@ export class ClassJsonEncoder extends ClassEncoder<string, { spaces?: string }> 
             root: root_refid,
             instances
         };
-        return Result.Ok(JSON.stringify(json, undefined, this.option?.spaces));
+        return Result.Ok(JSON.stringify(json, undefined, this.spaces));
     }
 }
 
-export class ClassJsonDecoder extends ClassDecoder<string, { test: number }> {
+/**
+ * @deprecated
+ */
+export class ClassJsonDecoder extends ClassDecoder<string, undefined> {
     public decode(): Result<ClassExchangeData, Error> {
         const json: LTTMClassDescriptor = JSON.parse(this.data);
         const instances: ClassInstanceData[] = [];

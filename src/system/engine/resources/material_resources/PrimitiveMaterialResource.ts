@@ -284,6 +284,7 @@ export class NormalMaterialResource extends MaterialResource {
 }
 
 export class UVMaterialResource extends MaterialResource {
+    public static class_name: string = 'UVMaterialResource';
 
     static #uniforms: MaterialReadOnlyUniforms = {
         model_world: RenderStateUniformType.Mat4,
@@ -355,6 +356,12 @@ export class UVMaterialResource extends MaterialResource {
         this.material.set_Material(shader, UVMaterialResource.#uniforms);
         this.material.transparent = false;
     }
+
+    // save / load
+
+    public dump(writer: ClassWriter): void { }
+
+    public load(reader: ClassReader): void { }
 }
 
 export class StandardMaterialResource extends MaterialResource {

@@ -1,5 +1,5 @@
 import { Result } from "@/system/utils/Result";
-import { ClassEncoder } from "./ClassEncoderDecoder";
+import { ClassDecoder, ClassEncoder } from "./ClassEncoderDecoder";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { ClassRef } from "../ClassWriterReader";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
@@ -8,147 +8,153 @@ import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
+import { ArrayBuffer as MD5 } from 'spark-md5';
+import type { ClassExchangeData, ClassInstanceData } from "../ClassSaverLoader";
+import type { ValueDatabase } from "../../databases/ValueDatabase";
 
 // Lttm Bin format
-//   |-------|-------|-------|-------|-------|-------|-------|-------|
-//   |  I32  |  I32  |  I32  |  I32  |  I32  |  I32  |  I32  |  I32  |
-//   |-------|-------|-------|-------|-------|-------|-------|-------| ----  0 Bytes -----+
-//   |'LTTM' |'BIN ' | Flags | Ver 0 | Ver 1 | Ver 2 |       |       |                    |  32 Bytes
-//   |-------|-------|-------|-------|-------|-------|-------|-------| ---- 32 Bytes -----+
-//   | root  | count | inst  |       |       |       |       |       |                    |  32 Bytes
-//   |-------|-------|-------|-------|-------|-------|-------|-------| ---- 64 Bytes -----+
+// |-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|
+// |  I32  |  I32  |   I8  |  I32  |  I32  |  I32  |  I32  |  I32  |  I32  |  I32  |  I32  |  I32  |  I32  |  I32  |
+// |-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------| --------------+
+// |  'LTTM BIN'   | Flags | Ver 0 | Ver 1 | Ver 2 |        128bit md5 hash        |      date     | root  | count |               |------ header region
+// |-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------| --------------+
+// |                                                ...instances                                                   |               |------ body region
+// |-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------| --------------+
 
-const LittleEndian = false;
-const Version0 = 1;
-const Version1 = 2;
-const Version2 = 3;
+const MaxFileSizeInMB = 1;
+const Version0 = 0;
+const Version1 = 0;
+const Version2 = 1;
 
-enum BinaryDataType {
-    Byte, Uint16, Uint32, Uint64, Int8, Int16, Int32, Int64, Float32, Float64, Block,
-}
-
-const BinaryDataByteLength = new Uint8Array([
-    1, 2, 4, 8, 1, 2, 4, 8, 4, 8
-]);
+const MD5HashOffset = 21;
+const BodyOffset = MD5HashOffset + 16 + 16;
 
 enum ValueDataType {
     None = 0,
     ClassRef = 1,
+    // base
     Map = 8,
     Number = 16, Boolean, String,
+    // typed array
+    Uint8Array, Uint16Array, Uint32Array, Int8Array, Int16Array, Int32Array, Float32Array, Float64Array,
+    // packed array
+    // PackedVector2Array, PackedVector3Array, PackedVector4Array, PackedMatrix3Array, PackedMatrix4Array,
+    // math
     Vector2 = 32, Vector3, Vector4, Matrix3, Matrix4, Euler, Quaternion,
+    // MAX = 127
 }
 
-export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, undefined> {
-    private datas: { type: BinaryDataType, value: any, length: number }[] = [];
-    private byte_length: number = 0;
+type TypedArrayBufferView = Uint8Array | Uint16Array | Uint32Array | Int8Array | Int16Array | Int32Array | Float32Array | Float64Array;
+type TypedArrayBufferViewConstructor = typeof Uint8Array | typeof Uint16Array | typeof Uint32Array | typeof Int8Array | typeof Int16Array | typeof Int32Array | typeof Float32Array | typeof Float64Array;
 
-    private clear() {
-        this.datas = [];
-        this.byte_length = 0;
+export type ClassBinaryEncoderOption = { little_endian?: boolean, max_byte_size?: number };
+
+export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEncoderOption> {
+
+    static #ascii_ragex: RegExp = /^[\x00-\x7F]*$/;
+
+    static #header_title = new Uint8Array([76, 84, 84, 77, 32, 66, 73, 78]);
+    static #md5_array_buffer = new Uint8Array(16);
+    static #md5_hex_byte_map: Record<string, number> = {
+        '00': 0, '01': 1, '02': 2, '03': 3, '04': 4, '05': 5, '06': 6, '07': 7, '08': 8, '09': 9, '0a': 10, '0b': 11, '0c': 12, '0d': 13, '0e': 14, '0f': 15, '10': 16, '11': 17, '12': 18, '13': 19, '14': 20, '15': 21, '16': 22, '17': 23, '18': 24, '19': 25, '1a': 26, '1b': 27, '1c': 28, '1d': 29, '1e': 30, '1f': 31, '20': 32, '21': 33, '22': 34, '23': 35, '24': 36, '25': 37, '26': 38, '27': 39, '28': 40, '29': 41, '2a': 42, '2b': 43, '2c': 44, '2d': 45, '2e': 46, '2f': 47, '30': 48, '31': 49, '32': 50, '33': 51, '34': 52, '35': 53, '36': 54, '37': 55, '38': 56, '39': 57, '3a': 58, '3b': 59, '3c': 60, '3d': 61, '3e': 62, '3f': 63, '40': 64, '41': 65, '42': 66, '43': 67, '44': 68, '45': 69, '46': 70, '47': 71, '48': 72, '49': 73, '4a': 74, '4b': 75, '4c': 76, '4d': 77, '4e': 78, '4f': 79, '50': 80, '51': 81, '52': 82, '53': 83, '54': 84, '55': 85, '56': 86, '57': 87, '58': 88, '59': 89, '5a': 90, '5b': 91, '5c': 92, '5d': 93, '5e': 94, '5f': 95, '60': 96, '61': 97, '62': 98, '63': 99, '64': 100, '65': 101, '66': 102, '67': 103, '68': 104, '69': 105, '6a': 106, '6b': 107, '6c': 108, '6d': 109, '6e': 110, '6f': 111, '70': 112, '71': 113, '72': 114, '73': 115, '74': 116, '75': 117, '76': 118, '77': 119, '78': 120, '79': 121, '7a': 122, '7b': 123, '7c': 124, '7d': 125, '7e': 126, '7f': 127, '80': 128, '81': 129, '82': 130, '83': 131, '84': 132, '85': 133, '86': 134, '87': 135, '88': 136, '89': 137, '8a': 138, '8b': 139, '8c': 140, '8d': 141, '8e': 142, '8f': 143, '90': 144, '91': 145, '92': 146, '93': 147, '94': 148, '95': 149, '96': 150, '97': 151, '98': 152, '99': 153, '9a': 154, '9b': 155, '9c': 156, '9d': 157, '9e': 158, '9f': 159, 'a0': 160, 'a1': 161, 'a2': 162, 'a3': 163, 'a4': 164, 'a5': 165, 'a6': 166, 'a7': 167, 'a8': 168, 'a9': 169, 'aa': 170, 'ab': 171, 'ac': 172, 'ad': 173, 'ae': 174, 'af': 175, 'b0': 176, 'b1': 177, 'b2': 178, 'b3': 179, 'b4': 180, 'b5': 181, 'b6': 182, 'b7': 183, 'b8': 184, 'b9': 185, 'ba': 186, 'bb': 187, 'bc': 188, 'bd': 189, 'be': 190, 'bf': 191, 'c0': 192, 'c1': 193, 'c2': 194, 'c3': 195, 'c4': 196, 'c5': 197, 'c6': 198, 'c7': 199, 'c8': 200, 'c9': 201, 'ca': 202, 'cb': 203, 'cc': 204, 'cd': 205, 'ce': 206, 'cf': 207, 'd0': 208, 'd1': 209, 'd2': 210, 'd3': 211, 'd4': 212, 'd5': 213, 'd6': 214, 'd7': 215, 'd8': 216, 'd9': 217, 'da': 218, 'db': 219, 'dc': 220, 'dd': 221, 'de': 222, 'df': 223, 'e0': 224, 'e1': 225, 'e2': 226, 'e3': 227, 'e4': 228, 'e5': 229, 'e6': 230, 'e7': 231, 'e8': 232, 'e9': 233, 'ea': 234, 'eb': 235, 'ec': 236, 'ed': 237, 'ee': 238, 'ef': 239, 'f0': 240, 'f1': 241, 'f2': 242, 'f3': 243, 'f4': 244, 'f5': 245, 'f6': 246, 'f7': 247, 'f8': 248, 'f9': 249, 'fa': 250, 'fb': 251, 'fc': 252, 'fd': 253, 'fe': 254, 'ff': 255
+    }
+
+    private static is_Ascii(str: string) { return ClassBinaryEncoder.#ascii_ragex.test(str); }
+
+    private static get_MD5ArrayBuffer(md5: string) {
+        for (let i = 0; i < 16; i++) {
+            const number = ClassBinaryEncoder.#md5_hex_byte_map[md5.slice(i * 2, (i + 1) * 2)];
+            ClassBinaryEncoder.#md5_array_buffer[i] = number;
+        }
+        return ClassBinaryEncoder.#md5_array_buffer;
+    }
+
+    private readonly array_buffer;
+    private readonly data_view;
+    private readonly uint8array;
+
+    private byte_pointer: number = 0;
+
+    // options
+
+    private little_endian: boolean = false;
+
+    constructor(data: ClassExchangeData, option?: ClassBinaryEncoderOption) {
+        super(data);
+        this.array_buffer = new ArrayBuffer(option?.max_byte_size ?? (MaxFileSizeInMB * 1024 * 1024));
+        this.data_view = new DataView(this.array_buffer);
+        this.uint8array = new Uint8Array(this.array_buffer);
+        // options
+        this.little_endian = option?.little_endian ?? false;
+    }
+
+    private init() {
+        this.byte_pointer = 0;
     }
 
     private get_Data() {
-        const data = new ArrayBuffer(this.byte_length);
-        const v = new DataView(data);
-        const u = new Uint8Array(data);
-        let i = 0;
-        for (const { type, value, length } of this.datas) {
-            switch (type) {
-                case BinaryDataType.Byte: v.setUint8(i, value); break;
-                case BinaryDataType.Uint16: v.setUint16(i, value, LittleEndian); break;
-                case BinaryDataType.Uint32: v.setUint32(i, value, LittleEndian); break;
-                case BinaryDataType.Uint64: v.setBigUint64(i, value, LittleEndian); break;
-                case BinaryDataType.Int8: v.setInt8(i, value); break;
-                case BinaryDataType.Int16: v.setInt16(i, value, LittleEndian); break;
-                case BinaryDataType.Int32: v.setInt32(i, value, LittleEndian); break;
-                case BinaryDataType.Int64: v.setBigInt64(i, value, LittleEndian); break;
-                case BinaryDataType.Float32: v.setFloat32(i, value, LittleEndian); break;
-                case BinaryDataType.Float64: v.setFloat64(i, value, LittleEndian); break;
-                case BinaryDataType.Block: {
-                    v.setUint32(i, length - 4);
-                    u.set((value as Uint8Array), i + 4);
-                    break;
-                }
-                default: {
-                    const n: never = type;
-                }
-            }
-            i += length;
-        }
-        return data;
+        return this.uint8array.buffer.slice(0, this.byte_pointer);
     }
 
     // #region Base Api
 
-    private append(type: BinaryDataType, value: any) {
-        if (type === BinaryDataType.Block) {
-            if (value instanceof Uint8Array) {
-                const len = value.byteLength + 4;
-                this.datas.push({ type, value, length: len });
-                this.byte_length += len;
-            }
-            else {
-                throw new Error('<ClassBinaryEncoder> append: block data\'s value is not Uint8Array');
-            }
-        }
-        else {
-            const len = BinaryDataByteLength[type];
-            this.datas.push({ type, value, length: len });
-            this.byte_length += len;
-        }
-        return this;
+    private skip_Bytes(count: number) {
+        this.byte_pointer += count;
+    }
+
+    private append_RawArrayBuffer(value: Uint8Array) {
+        this.uint8array.set(value, this.byte_pointer);
+        this.byte_pointer += value.byteLength;
+    }
+
+    private append_SizedArrayBuffer(value: Uint8Array) {
+        this.append_Uint32(value.byteLength);
+        this.uint8array.set(value, this.byte_pointer);
+        this.byte_pointer += value.byteLength;
+    }
+
+    private append_TypedArray(value: TypedArrayBufferView, type: TypedArrayBufferViewConstructor) {
+        this.append_Uint32(value.byteLength);
+        const buffer = new (type)(this.array_buffer, this.byte_pointer, value.length);
+        buffer.set(value);
+        this.byte_pointer += value.byteLength;
     }
 
     private append_Byte(value: number) {
-        return this.append(BinaryDataType.Byte, value);
-    }
-
-    private append_Char(value: string) {
-        return this.append(BinaryDataType.Byte, value.codePointAt(0));
-    }
-
-    private append_Int8(value: number) {
-        return this.append(BinaryDataType.Int8, value);
-    }
-
-    private append_Uint16(value: number) {
-        return this.append(BinaryDataType.Uint16, value);
-    }
-
-    private append_Int16(value: number) {
-        return this.append(BinaryDataType.Int16, value);
+        this.data_view.setUint8(this.byte_pointer, value);
+        this.byte_pointer += 1;
     }
 
     private append_Uint32(value: number) {
-        return this.append(BinaryDataType.Uint32, value);
-    }
-
-    private append_Int32(value: number) {
-        return this.append(BinaryDataType.Int32, value);
+        this.data_view.setUint32(this.byte_pointer, value, this.little_endian);
+        this.byte_pointer += 4;
     }
 
     private append_Uint64(value: bigint) {
-        return this.append(BinaryDataType.Uint64, value);
-    }
-
-    private append_Int64(value: bigint) {
-        return this.append(BinaryDataType.Int64, value);
-    }
-
-    private append_Float32(value: number) {
-        return this.append(BinaryDataType.Float32, value);
+        this.data_view.setBigUint64(this.byte_pointer, value, this.little_endian);
+        this.byte_pointer += 8;
     }
 
     private append_Float64(value: number) {
-        return this.append(BinaryDataType.Float64, value);
+        this.data_view.setFloat64(this.byte_pointer, value, this.little_endian);
+        this.byte_pointer += 8;
     }
 
     // #endregion
 
     private append_String(value: string) {
-        const array = new TextEncoder().encode(value);
-        return this.append(BinaryDataType.Block, array);
+        const uint8array = new TextEncoder().encode(value);
+        this.append_Uint32(uint8array.byteLength);
+        this.uint8array.set(uint8array, this.byte_pointer);
+        this.byte_pointer += uint8array.byteLength;
+    }
+
+    private append_AsciiString(value: string) {
+        if (!ClassBinaryEncoder.is_Ascii(value)) throw new Error(`<ClassBinaryEncoder> append_AsciiString: string "${value}" is not valid ascii string`);
+        const ascii = `${value}\0`;
+        const uint8array = new TextEncoder().encode(ascii);
+        this.uint8array.set(uint8array, this.byte_pointer);
+        this.byte_pointer += uint8array.byteLength;
     }
 
     private append_Map(value: Map<any, any>) {
@@ -186,6 +192,15 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, undefined> {
             }
             case ValueDataType.Euler: { this.append_Float64(value.x); this.append_Float64(value.y); this.append_Float64(value.z); this.append_Float64(value.order); return; }
             case ValueDataType.Quaternion: { this.append_Float64(value.x); this.append_Float64(value.y); this.append_Float64(value.z); this.append_Float64(value.w); return; }
+            // typed array
+            case ValueDataType.Uint8Array: { this.append_TypedArray(value, Uint8Array); return; }
+            case ValueDataType.Uint16Array: { this.append_TypedArray(value, Uint16Array); return; }
+            case ValueDataType.Uint32Array: { this.append_TypedArray(value, Uint32Array); return; }
+            case ValueDataType.Int8Array: { this.append_TypedArray(value, Int8Array); return; }
+            case ValueDataType.Int16Array: { this.append_TypedArray(value, Int16Array); return; }
+            case ValueDataType.Int32Array: { this.append_TypedArray(value, Int32Array); return; }
+            case ValueDataType.Float32Array: { this.append_TypedArray(value, Float32Array); return; }
+            case ValueDataType.Float64Array: { this.append_TypedArray(value, Float64Array); return; }
             default: {
                 const n: never = type;
                 throw new Error('<ClassBinaryEncoder> append_ValueInternal: unkown value type');
@@ -197,29 +212,42 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, undefined> {
         const is_array = value instanceof Array;
         if (!is_array) {
             const type = this.get_ValueType(value);
-            this.append_Uint16(type);
+            this.append_Byte(type);
             this.append_ValueInternal(value, type);
         }
         else if (value.length === 0) {
-            this.append_Uint16(0b1000000000000000); // empty array 
+            this.append_Byte(0b10000000); // empty array 
         }
         else {
             const type = this.get_ValueType(value[0]);
-            this.append_Uint16(0b1000000000000000 | type);
+            this.append_Byte(0b10000000 | type);
             this.append_Uint32(value.length);
             // array instance
             for (let i = 0; i < value.length; i++) {
+                const t = this.get_ValueType(value[i]);
+                if (t !== type) throw new Error(`<ClassBinaryEncoder> append_Value@array: array items have different types, can not append type ${ValueDataType[t]} into ${ValueDataType[type]}[] array`);
                 this.append_ValueInternal(value[i], type);
             }
         }
     }
 
     private get_ValueType(value: any): ValueDataType {
+        // base
         if (typeof value === 'number') return ValueDataType.Number;
         if (typeof value === 'boolean') return ValueDataType.Boolean;
         if (typeof value === 'string') return ValueDataType.String;
         if (value instanceof ClassRef) return ValueDataType.ClassRef;
         if (value instanceof Map) return ValueDataType.Map;
+        // typed array
+        if (value instanceof Uint8Array) return ValueDataType.Uint8Array;
+        if (value instanceof Uint16Array) return ValueDataType.Uint16Array;
+        if (value instanceof Uint32Array) return ValueDataType.Uint32Array;
+        if (value instanceof Int8Array) return ValueDataType.Int8Array;
+        if (value instanceof Int16Array) return ValueDataType.Int16Array;
+        if (value instanceof Int32Array) return ValueDataType.Int32Array;
+        if (value instanceof Float32Array) return ValueDataType.Float32Array;
+        if (value instanceof Float64Array) return ValueDataType.Float64Array;
+        // math
         if (value instanceof Vector2) return ValueDataType.Vector2;
         if (value instanceof Vector3) return ValueDataType.Vector3;
         if (value instanceof Vector4) return ValueDataType.Vector4;
@@ -231,22 +259,23 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, undefined> {
     }
 
     public encode(): Result<ArrayBuffer, Error> {
-        this.clear();
+        this.init();
         // header
-        this.append_Char('L').append_Char('T').append_Char('T').append_Char('M');
-        this.append_Char(' ').append_Char('B').append_Char('I').append_Char('N'); // LTTM BIN
-        this.append_Byte(0).append_Byte(0).append_Byte(0).append_Byte(LittleEndian ? 1 : 0); // flags 0000|0000|0001 --- for little_endian
-        this.append_Uint32(Version0).append_Uint32(Version1).append_Uint32(Version2); // verions xxx.xxx.xxx --- 3 * uint32 eg: 0.0.1
-        const date = Date.now();
-        this.append_Uint64(BigInt(date)); // date
+        this.append_RawArrayBuffer(ClassBinaryEncoder.#header_title); // LTTM BIN [8B]
+        this.append_Byte(this.little_endian ? 1 : 0); // flags 0001 --- for little_endian [1B]
+        this.append_Uint32(Version0);
+        this.append_Uint32(Version1);
+        this.append_Uint32(Version2); // verions xxx.xxx.xxx --- 3 * uint32 eg: 0.0.1 [12B]
+        this.skip_Bytes(16); // [16B]
+        this.append_Uint64(BigInt(Date.now())); // date [8B]
         // root
-        this.append_Uint32(this.data.root); // root refid
+        this.append_Uint32(this.data.root); // root refid [4B]
         // count
-        this.append_Uint32(this.data.instances.length); // instances' count
+        this.append_Uint32(this.data.instances.length); // instances' count [4B]
         // instances may throw Error
         try {
             for (const instance of this.data.instances) {
-                this.append_String(instance.type); // type
+                this.append_AsciiString(instance.type); // type
                 this.append_Uint32(instance.refid); // refid
                 this.append_Byte((instance.unique ?? false) ? 1 : 0); //unique
                 this.append_Byte(instance.external !== undefined ? 1 : 0); // external
@@ -261,7 +290,7 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, undefined> {
                 this.append_Uint32(property.length);
                 for (const [key, value] of property) {
                     // key
-                    this.append_String(key);
+                    this.append_AsciiString(key);
                     // type - value
                     this.append_Value(value);
                 }
@@ -270,321 +299,367 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, undefined> {
         catch (err) {
             return Result.Error(err as Error);
         }
+
         const data = this.get_Data();
-        console.group('decode');
-        decode_test(data);
-        console.groupEnd();
+
+        // set md5
+        const md5_array_buffer = ClassBinaryEncoder.get_MD5ArrayBuffer(MD5.hash(data, false));
+        new Uint8Array(data).set(md5_array_buffer, MD5HashOffset);
+
         return Result.Ok(data);
     }
 }
 
-// Decoder
+export type ClassBinaryDecoderOption = { validate?: boolean };
 
-function decode_Block(buffer: DataView, i: number, little_endian: boolean = false) {
-    const count = buffer.getUint32(i, little_endian);
-    return { block: buffer.buffer.slice(i + 4, i + 4 + count), count: count + 4 };
-}
+export class ClassBinaryDecoder extends ClassDecoder<ArrayBuffer, ClassBinaryDecoderOption> {
+    static #md5_byte_hex_map = [
+        '00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '0a', '0b', '0c', '0d', '0e', '0f', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '1a', '1b', '1c', '1d', '1e', '1f', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '2a', '2b', '2c', '2d', '2e', '2f', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '3a', '3b', '3c', '3d', '3e', '3f', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '4a', '4b', '4c', '4d', '4e', '4f', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59', '5a', '5b', '5c', '5d', '5e', '5f', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '6a', '6b', '6c', '6d', '6e', '6f', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '7a', '7b', '7c', '7d', '7e', '7f', '80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '8a', '8b', '8c', '8d', '8e', '8f', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99', '9a', '9b', '9c', '9d', '9e', '9f', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'aa', 'ab', 'ac', 'ad', 'ae', 'af', 'b0', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'ba', 'bb', 'bc', 'bd', 'be', 'bf', 'c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'ca', 'cb', 'cc', 'cd', 'ce', 'cf', 'd0', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8', 'd9', 'da', 'db', 'dc', 'dd', 'de', 'df', 'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8', 'e9', 'ea', 'eb', 'ec', 'ed', 'ee', 'ef', 'f0', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'fa', 'fb', 'fc', 'fd', 'fe', 'ff'
+    ];
 
-function decode_string(buffer: DataView, i: number, little_endian: boolean = false) {
-    const { block, count } = decode_Block(buffer, i, little_endian);
-    const str = new TextDecoder().decode(block);
-    return { string: str, count };
-}
+    private readonly data_view: DataView;
+    private readonly uint8array: Uint8Array;
 
-function decode_Map(buffer: DataView, i: number, little_endian: boolean = false) {
-    let count = 0;
-    const value: Map<any, any> = new Map();
-    const map_size = buffer.getUint32(i, little_endian); i += 4; count += 4;
-    for (let j = 0; j < map_size; j++) {
-        const { value: _key, count: _c } = decode_Value(buffer, i, little_endian);
-        i += _c; count += _c;
-        const { value: _val, count: __c } = decode_Value(buffer, i, little_endian);
-        i += __c; count += __c;
-        value.set(_key, _val);
+    private byte_pointer: number = 0;
+
+    // options
+
+    private validate: boolean = true;
+
+    private little_endian: boolean = false;
+    private version_0: number = 0;
+    private version_1: number = 0;
+    private version_2: number = 0;
+
+    constructor(data: ArrayBuffer, option?: ClassBinaryDecoderOption) {
+        super(data);
+        this.data_view = new DataView(this.data);
+        this.uint8array = new Uint8Array(this.data);
+        // options
+        this.validate = option?.validate ?? true;
     }
-    return { value, count };
-}
 
-function decode_ValueInternal(buffer: DataView, i: number, little_endian: boolean = false, type: ValueDataType) {
-    let count = 0;
-    let value;
-    switch (type) {
-        case ValueDataType.None: {
-            break;
+    private init() {
+        this.byte_pointer = 0;
+    }
+
+    // #region Base Apis
+
+    private skip_Bytes(count: number) {
+        this.byte_pointer += count;
+    }
+
+    private get_SizedBlock() {
+        const count = this.get_Uint32();
+        const buffer = this.data.slice(this.byte_pointer, this.byte_pointer + count);
+        this.skip_Bytes(count);
+        return buffer;
+    }
+
+    private get_Byte() {
+        const value = this.data_view.getUint8(this.byte_pointer);
+        this.byte_pointer += 1;
+        return value;
+    }
+
+    private get_Uint32() {
+        const value = this.data_view.getUint32(this.byte_pointer, this.little_endian);
+        this.byte_pointer += 4;
+        return value;
+    }
+
+    private get_Uint64() {
+        const value = this.data_view.getBigUint64(this.byte_pointer, this.little_endian);
+        this.byte_pointer += 8;
+        return value;
+    }
+
+    private get_Float64() {
+        const value = this.data_view.getFloat64(this.byte_pointer, this.little_endian);
+        this.byte_pointer += 8;
+        return value;
+    }
+
+    // #endregion
+
+    private get_String() {
+        const buffer = this.get_SizedBlock();
+        const str = new TextDecoder().decode(new Uint8Array(buffer));
+        return str;
+    }
+
+    private get_AsciiString() {
+        let count = 0;
+        let char = this.data_view.getUint8(this.byte_pointer + count);
+        while (char !== 0) {
+            count++;
+            char = this.data_view.getUint8(this.byte_pointer + count);
         }
-        case ValueDataType.ClassRef: {
-            value = new ClassRef(buffer.getUint32(i, little_endian));
-            i += 4;
-            count += 4;
-            break;
+        const uint8array = new Uint8Array(this.data, this.byte_pointer, count);
+        const str = new TextDecoder().decode(uint8array);
+        this.skip_Bytes(count + 1);
+        return str;
+    }
+
+    private get_Map() {
+        const map: Map<any, any> = new Map();
+        const map_size = this.get_Uint32();
+        for (let j = 0; j < map_size; j++) {
+            const key = this.get_Value();
+            const val = this.get_Value();
+            map.set(key, val);
         }
-        case ValueDataType.Map: {
-            const { value: _v, count: _c } = decode_Map(buffer, i, little_endian);
-            i += _c;
-            count += _c;
-            value = _v;
-            break;
-        }
-        case ValueDataType.Number: {
-            value = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            break;
-        }
-        case ValueDataType.Boolean: {
-            value = buffer.getUint8(i) !== 0;
-            i += 1;
-            count += 1;
-            break;
-        }
-        case ValueDataType.String: {
-            const { string: key, count: _c } = decode_string(buffer, i, little_endian);
-            value = key;
-            i += _c;
-            count += _c;
-            break;
-        }
-        case ValueDataType.Vector2: {
-            const x = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            const y = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            value = new Vector2(x, y);
-            break;
-        }
-        case ValueDataType.Vector3: {
-            const x = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            const y = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            const z = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            value = new Vector3(x, y, z);
-            break;
-        }
-        case ValueDataType.Vector4: {
-            const x = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            const y = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            const z = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            const w = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            value = new Vector4(x, y, z, w);
-            break;
-        }
-        case ValueDataType.Matrix3: {
-            const n11 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n12 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n13 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n21 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n22 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n23 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n31 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n32 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n33 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            value = new Matrix3(
-                n11, n12, n13,
-                n21, n22, n23,
-                n31, n32, n33
-            );
-            break;
-        }
-        case ValueDataType.Matrix4: {
-            const n11 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n12 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n13 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n14 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n21 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n22 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n23 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n24 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n31 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n32 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n33 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n34 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n41 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n42 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n43 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            const n44 = buffer.getFloat64(i, little_endian); i += 8; count += 8;
-            value = new Matrix4(
-                n11, n12, n13, n14,
-                n21, n22, n23, n24,
-                n31, n32, n33, n34,
-                n41, n42, n43, n44
-            );
-            break;
-        }
-        case ValueDataType.Euler: {
-            const x = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            const y = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            const z = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            const w = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            value = new Euler(x, y, z, w);
-            break;
-        }
-        case ValueDataType.Quaternion: {
-            const x = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            const y = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            const z = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            const w = buffer.getFloat64(i, little_endian);
-            i += 8;
-            count += 8;
-            value = new Quaternion(x, y, z, w);
-            break;
+        return map;
+    }
+
+    private get_ValueInternal(type: ValueDataType) {
+        switch (type) {
+            case ValueDataType.None: {
+                return undefined;
+            }
+            case ValueDataType.ClassRef: {
+                return new ClassRef(this.get_Uint32());
+            }
+            case ValueDataType.Map: {
+                return this.get_Map();
+            }
+            case ValueDataType.Number: {
+                return this.get_Float64();
+            }
+            case ValueDataType.Boolean: {
+                return this.get_Byte() !== 0;
+            }
+            case ValueDataType.String: {
+                return this.get_String();
+            }
+            case ValueDataType.Vector2: {
+                const x = this.get_Float64();
+                const y = this.get_Float64();
+                return new Vector2(x, y);
+            }
+            case ValueDataType.Vector3: {
+                const x = this.get_Float64();
+                const y = this.get_Float64();
+                const z = this.get_Float64();
+                return new Vector3(x, y, z);
+            }
+            case ValueDataType.Vector4: {
+                const x = this.get_Float64();
+                const y = this.get_Float64();
+                const z = this.get_Float64();
+                const w = this.get_Float64();
+                return new Vector4(x, y, z, w);
+            }
+            case ValueDataType.Matrix3: {
+                const n11 = this.get_Float64();
+                const n12 = this.get_Float64();
+                const n13 = this.get_Float64();
+                const n21 = this.get_Float64();
+                const n22 = this.get_Float64();
+                const n23 = this.get_Float64();
+                const n31 = this.get_Float64();
+                const n32 = this.get_Float64();
+                const n33 = this.get_Float64();
+                return new Matrix3(
+                    n11, n12, n13,
+                    n21, n22, n23,
+                    n31, n32, n33
+                );
+            }
+            case ValueDataType.Matrix4: {
+                const n11 = this.get_Float64();
+                const n12 = this.get_Float64();
+                const n13 = this.get_Float64();
+                const n14 = this.get_Float64();
+                const n21 = this.get_Float64();
+                const n22 = this.get_Float64();
+                const n23 = this.get_Float64();
+                const n24 = this.get_Float64();
+                const n31 = this.get_Float64();
+                const n32 = this.get_Float64();
+                const n33 = this.get_Float64();
+                const n34 = this.get_Float64();
+                const n41 = this.get_Float64();
+                const n42 = this.get_Float64();
+                const n43 = this.get_Float64();
+                const n44 = this.get_Float64();
+                return new Matrix4(
+                    n11, n12, n13, n14,
+                    n21, n22, n23, n24,
+                    n31, n32, n33, n34,
+                    n41, n42, n43, n44
+                );
+            }
+            case ValueDataType.Euler: {
+                const x = this.get_Float64();
+                const y = this.get_Float64();
+                const z = this.get_Float64();
+                const w = this.get_Float64();
+                return new Euler(x, y, z, w);
+            }
+            case ValueDataType.Quaternion: {
+                const x = this.get_Float64();
+                const y = this.get_Float64();
+                const z = this.get_Float64();
+                const w = this.get_Float64();
+                return new Quaternion(x, y, z, w);
+            }
+            // typed array
+            case ValueDataType.Uint8Array: { return new Uint8Array(this.get_SizedBlock()); }
+            case ValueDataType.Uint16Array: { return new Uint16Array(this.get_SizedBlock()); }
+            case ValueDataType.Uint32Array: { return new Uint32Array(this.get_SizedBlock()); }
+            case ValueDataType.Int8Array: { return new Int8Array(this.get_SizedBlock()); }
+            case ValueDataType.Int16Array: { return new Int16Array(this.get_SizedBlock()); }
+            case ValueDataType.Int32Array: { return new Int32Array(this.get_SizedBlock()); }
+            case ValueDataType.Float32Array: { return new Float32Array(this.get_SizedBlock()); }
+            case ValueDataType.Float64Array: { return new Float64Array(this.get_SizedBlock()); }
+            default: {
+                const n: never = type;
+                throw new Error('<ClassBinaryDecoder> append_ValueInternal: unkown value type');
+            }
         }
     }
-    return { value, count };
-}
 
-function decode_Value(buffer: DataView, i: number, little_endian: boolean = false) {
-    let count = 0;
-    let t;
-    let value;
-    // type
-    const type = buffer.getUint16(i, little_endian); i += 2; count += 2;
-    const _type = (type & 0b0111111111111111);
-    const is_array = (type & 0b1000000000000000) !== 0;
-    if (is_array) {
-        if (_type === 0) {
-            t = `[]`; // empty array
-            value = [];
+    private get_Value() {
+        // type
+        const arr_and_type = this.get_Byte();
+        const type = arr_and_type & 0b01111111;
+        const is_array = (type & 0b10000000) !== 0;
+        // value
+        if (is_array) {
+            if (type === 0) {
+                return [];
+            }
+            else {
+                const length = this.get_Uint32();
+                const array = new Array(length);
+                for (let i = 0; i < length; i++) {
+                    const value = this.get_ValueInternal(type);
+                    array[i] = value;
+                }
+                return array;
+            }
         }
         else {
-            const length = buffer.getUint32(i, little_endian); i += 4; count += 4;
-            t = `${ValueDataType[_type]}[${length}]`; // typed array
-            const array = [];
-            for (let j = 0; j < length; j++) {
-                const { value, count: _c } = decode_ValueInternal(buffer, i, little_endian, _type);
-                array.push(value);
-                i += _c;
-                count += _c;
+            return this.get_ValueInternal(type);
+        }
+    }
+
+    private decode_Instance(): ClassInstanceData {
+        // type
+        const type = this.get_AsciiString();
+        // refid
+        const refid = this.get_Uint32();
+        // unique
+        const unique = this.get_Byte() !== 0;
+        // external
+        const external_flag = this.get_Byte();
+        let external: string | undefined = undefined;
+        if (external_flag !== 0) {
+            external = this.get_String();
+        }
+        const instance: ClassInstanceData = {
+            type,
+            refid,
+            unique,
+            external,
+            property: undefined
+        }
+        // property
+        const property_count = this.get_Uint32();
+        if (property_count > 0) {
+            instance.property = new Map();
+            for (let i = 0; i < property_count; i++) {
+                // key
+                const key = this.get_AsciiString();
+                // value
+                const value = this.get_Value();
+                instance.property.set(key, value);
             }
-            value = array;
         }
+        return instance;
     }
-    else {
-        t = `${ValueDataType[_type]}`;
-        const { value: _v, count: _c } = decode_ValueInternal(buffer, i, little_endian, _type);
-        value = _v;
-        i += _c;
-        count += _c;
-    }
-    return { type: t, value, count };
-}
 
-function decode_Property(buffer: DataView, i: number, little_endian: boolean = false) {
-    let count = 0;
-    // key
-    const { string: key, count: _c } = decode_string(buffer, i, little_endian); i += _c; count += _c;
-    console.log("key\t\t\t", `"${key}"`);
-    // value
-    const { type, value, count: __c } = decode_Value(buffer, i, little_endian);
-    console.log("type\t\t", type);
-    console.log("value\t\t", value);
-    i += __c;
-    count += __c;
-    return count;
-}
+    private validate_MD5(): Result<undefined, Error> {
+        const md50 = this.get_Byte();
+        const md51 = this.get_Byte();
+        const md52 = this.get_Byte();
+        const md53 = this.get_Byte();
+        const md54 = this.get_Byte();
+        const md55 = this.get_Byte();
+        const md56 = this.get_Byte();
+        const md57 = this.get_Byte();
+        const md58 = this.get_Byte();
+        const md59 = this.get_Byte();
+        const md510 = this.get_Byte();
+        const md511 = this.get_Byte();
+        const md512 = this.get_Byte();
+        const md513 = this.get_Byte();
+        const md514 = this.get_Byte();
+        const md515 = this.get_Byte();
+        const m = ClassBinaryDecoder.#md5_byte_hex_map;
+        const data_md5 = `${m[md50]}${m[md51]}${m[md52]}${m[md53]}${m[md54]}${m[md55]}${m[md56]}${m[md57]}${m[md58]}${m[md59]}${m[md510]}${m[md511]}${m[md512]}${m[md513]}${m[md514]}${m[md515]}`;
+        this.uint8array.fill(0, MD5HashOffset, MD5HashOffset + 16);
+        const calc_md5 = MD5.hash(this.data);
+        this.uint8array.set([md50, md51, md52, md53, md54, md55, md56, md57, md58, md59, md510, md511, md512, md513, md514, md515], MD5HashOffset);
+        if (data_md5 !== calc_md5) return Result.Error(new Error('<ClassBinaryDecoder> validate_MD5: data is incomplete'));
+        return Result.Ok(undefined);
+    }
 
-function decode_Instance(buffer: DataView, i: number, little_endian: boolean = false) {
-    let count = 0;
-    // type
-    const { string: type, count: _c } = decode_string(buffer, i, little_endian); i += _c; count += _c;
-    console.log("type\t\t\t", `"${type}"`);
-    // refid
-    const refid = buffer.getUint32(i, little_endian); i += 4; count += 4;
-    console.log("refid\t\t\t", refid);
-    // unique
-    const unique = buffer.getUint8(i++); count++;
-    console.log("unique\t\t\t", unique !== 0);
-    // external
-    const external_flag = buffer.getUint8(i++); count++;
-    if (external_flag !== 0) {
-        const { string: external, count: _c } = decode_string(buffer, i, little_endian); i += _c; count += _c;
-        console.log("external\t\t", `"${external}"`);
+    private decode_Header(): Result<undefined, Error> {
+        if (this.data.byteLength < BodyOffset) return Result.Error(new Error('<ClassBinaryDecoder> decode_Header: header invalid'));
+        // header
+        const header0 = this.get_Byte();
+        const header1 = this.get_Byte();
+        const header2 = this.get_Byte();
+        const header3 = this.get_Byte();
+        const header4 = this.get_Byte();
+        const header5 = this.get_Byte();
+        const header6 = this.get_Byte();
+        const header7 = this.get_Byte();
+        if (header0 !== 76 || header1 !== 84 || header2 !== 84 || header3 !== 77 ||
+            header4 !== 32 || header5 !== 66 || header6 !== 73 || header7 !== 78) return Result.Error(new Error('<ClassBinaryDecoder> decode_Header: header invalid'));
+        const flags = this.get_Byte();
+        // set little_endian
+        this.little_endian = (flags & 0x1) > 0;
+        this.version_0 = this.get_Uint32();
+        this.version_1 = this.get_Uint32();
+        this.version_2 = this.get_Uint32();
+        return Result.Ok(undefined);
     }
-    else {
-        console.log("external\t\t", false);
-    }
-    // property
-    const property_count = buffer.getUint32(i, little_endian); i += 4; count += 4;
-    if (property_count > 0) {
-        console.group("properties");
-        for (let j = 0; j < property_count; j++) {
-            console.group("property", j);
-            const c = decode_Property(buffer, i, little_endian);
-            i += c;
-            count += c;
-            console.groupEnd();
+
+    public decode(): Result<ClassExchangeData, Error> {
+        this.init();
+        // header
+        const header = this.decode_Header()
+        if (header.failed) return Result.Error(header.expect_Error());
+        // hash
+        if (this.validate) {
+            const md5_validate = this.validate_MD5();
+            if (md5_validate.failed) return Result.Error(md5_validate.expect_Error());
         }
-        console.groupEnd();
-    }
-    return count;
-}
+        else this.skip_Bytes(16);
+        // date
+        const date = this.get_Uint64();
+        // root
+        const root = this.get_Uint32();
+        // count
+        const count = this.get_Uint32();
+        const exchange_data: ClassExchangeData = {
+            root,
+            instances: new Array<ClassInstanceData>(count),
+        };
+        // instances
+        try {
+            for (let i = 0; i < count; i++) {
+                const instance = this.decode_Instance();
+                exchange_data.instances[i] = instance;
+            }
+        }
+        catch (err) {
+            return Result.Error(err as Error);
+        }
 
-function decode_test(buffer: ArrayBuffer) {
-    const v = new DataView(buffer);
-    let i = 0;
-    // header
-    const header0 = String.fromCodePoint(v.getUint8(i++));
-    const header1 = String.fromCodePoint(v.getUint8(i++));
-    const header2 = String.fromCodePoint(v.getUint8(i++));
-    const header3 = String.fromCodePoint(v.getUint8(i++));
-    const header4 = String.fromCodePoint(v.getUint8(i++));
-    const header5 = String.fromCodePoint(v.getUint8(i++));
-    const header6 = String.fromCodePoint(v.getUint8(i++));
-    const header7 = String.fromCodePoint(v.getUint8(i++));
-    console.log("header\t\t\t", header0, header1, header2, header3, header4, header5, header6, header7);
-    const flags0 = v.getUint8(i++);
-    const flags1 = v.getUint8(i++);
-    const flags2 = v.getUint8(i++);
-    const flags3 = v.getUint8(i++);
-    console.log("flags\t\t\t", flags0, flags1, flags2, flags3);
-    const little_endian = (flags3 & 0x1) > 0;
-    console.log("little_endian\t", little_endian);
-    const version0 = v.getUint32(i, little_endian); i += 4;
-    const version1 = v.getUint32(i, little_endian); i += 4;
-    const version2 = v.getUint32(i, little_endian); i += 4;
-    console.log("version\t\t\t", `${version0}.${version1}.${version2}`);
-    const date = v.getBigUint64(i, little_endian); i += 8;
-    const d = new Date(Number(date));
-    console.log("date\t\t\t", d.toLocaleDateString(), d.toLocaleTimeString());
-    // root
-    const root = v.getUint32(i, little_endian); i += 4;
-    console.log("root\t\t\t", root);
-    // count
-    const count = v.getUint32(i, little_endian); i += 4;
-    // instances
-    for (let j = 0; j < count; j++) {
-        console.group("instance", j);
-        const c = decode_Instance(v, i, little_endian);
-        console.groupEnd();
-        i += c;
+        return Result.Ok(exchange_data);
     }
-    // end
 }

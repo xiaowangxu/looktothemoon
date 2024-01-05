@@ -1,8 +1,8 @@
 import { GeometryResource } from "./GeometryResource";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceVector3AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
-import { Vector3, vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import { Vector2, vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { box3 } from "@/system/fivepebble/geometries/Box3";
 import { Pi, Tau, clamp } from '@/system/fivepebble/Scalar';
 import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";

@@ -174,5 +174,11 @@ export class MeshInstance3D extends GeometryInstance3D {
         super.load(reader);
         this.geometry = reader.get<GeometryResource>('geometry');
         this.material = reader.get<MaterialResource>('material');
+        const surface_materials = reader.get<Map<number, ClassRef>>('surface_materials');
+        if (surface_materials !== undefined) {
+            for (const [id, material_ref] of surface_materials) {
+                this.set_SurfaceMaterial(id, reader.get<MaterialResource>(material_ref));
+            }
+        }
     }
 }

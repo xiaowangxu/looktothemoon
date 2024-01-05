@@ -89,7 +89,7 @@ export enum RenderStateTextureType {
 export enum RenderStateTextureFormat {
     SRGBA8, SRGB8,
     RGB8, RGBA8, RGB32F, RGBA32F,
-    R32F, R32UI, 
+    R32F, R32UI,
     D24,
     D32F, D32FS8,
 }
@@ -108,7 +108,7 @@ export enum RenderStateTextureMagFilter { Linear, Nearest }
 
 export enum RenderStateTextureMinFilter { Linear, Nearest, NearestMipmapNearest, LinearMipmapNearest, NearestMipmapLinear, LinearMipmapLinear }
 
-export type RenderStateUniformVectorType = Uint16Array | Uint32Array | Int16Array | Uint8Array | Int8Array | Uint32Array | Int32Array | Float32Array | Float64Array;
+export type RenderStateUniformVectorType = Uint8Array | Uint16Array | Uint32Array | Int8Array | Int16Array | Int32Array | Float32Array | Float64Array;
 
 export abstract class RenderState<T extends RenderState<T>> {
     public readonly render_device: RenderDevice<T>;

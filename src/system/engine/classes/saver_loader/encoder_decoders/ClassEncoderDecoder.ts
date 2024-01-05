@@ -3,14 +3,10 @@ import type { ClassExchangeData } from "../ClassSaverLoader";
 import type { ValueDatabase } from "../../databases/ValueDatabase";
 
 export class ClassEncoder<T, O> {
-    protected readonly value_db: ValueDatabase;
     protected readonly data: ClassExchangeData;
-    protected readonly option: O | undefined;
 
-    constructor(value_db: ValueDatabase, data: ClassExchangeData, option?: O) {
-        this.value_db = value_db;
+    constructor(data: ClassExchangeData, option?: O) {
         this.data = data;
-        this.option = option;
     }
 
     public encode(): Result<T, Error> {
@@ -19,14 +15,10 @@ export class ClassEncoder<T, O> {
 }
 
 export class ClassDecoder<T, O> {
-    protected readonly value_db: ValueDatabase;
     protected readonly data: T;
-    protected readonly option: O | undefined;
 
-    constructor(value_db: ValueDatabase, data: T, option?: O) {
-        this.value_db = value_db;
+    constructor(data: T, option?: O) {
         this.data = data;
-        this.option = option;
     }
 
     public decode(): Result<ClassExchangeData, Error> {
