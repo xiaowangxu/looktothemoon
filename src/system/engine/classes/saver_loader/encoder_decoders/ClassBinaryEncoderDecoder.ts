@@ -10,7 +10,6 @@ import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { ArrayBuffer as MD5 } from 'spark-md5';
 import type { ClassExchangeData, ClassInstanceData } from "../ClassSaverLoader";
-import type { ValueDatabase } from "../../databases/ValueDatabase";
 
 // Lttm Bin format
 // |-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|
