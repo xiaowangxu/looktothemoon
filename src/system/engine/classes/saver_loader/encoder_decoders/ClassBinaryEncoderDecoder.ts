@@ -10,6 +10,7 @@ import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { ArrayBuffer as MD5 } from 'spark-md5';
 import type { ClassExchangeData, ClassInstanceData } from "../ClassSaverLoader";
+import { ValueDataType } from "../../ValueDataType";
 
 // Lttm Bin format
 // |-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|
@@ -27,21 +28,6 @@ const Version2 = 1;
 
 const MD5HashOffset = 21;
 const BodyOffset = MD5HashOffset + 16 + 16;
-
-enum ValueDataType {
-    None = 0,
-    ClassRef = 1,
-    // base
-    Map = 8,
-    Number = 16, Boolean, String,
-    // typed array
-    Uint8Array, Uint16Array, Uint32Array, Int8Array, Int16Array, Int32Array, Float32Array, Float64Array,
-    // packed array
-    // PackedVector2Array, PackedVector3Array, PackedVector4Array, PackedMatrix3Array, PackedMatrix4Array,
-    // math
-    Vector2 = 32, Vector3, Vector4, Matrix3, Matrix4, Euler, Quaternion,
-    // MAX = 127
-}
 
 type TypedArrayBufferView = Uint8Array | Uint16Array | Uint32Array | Int8Array | Int16Array | Int32Array | Float32Array | Float64Array;
 type TypedArrayBufferViewConstructor = typeof Uint8Array | typeof Uint16Array | typeof Uint32Array | typeof Int8Array | typeof Int16Array | typeof Int32Array | typeof Float32Array | typeof Float64Array;

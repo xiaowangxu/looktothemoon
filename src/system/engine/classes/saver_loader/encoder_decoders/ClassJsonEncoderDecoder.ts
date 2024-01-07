@@ -35,7 +35,7 @@ export class ClassJsonEncoder extends ClassEncoder<string, ClassJsonEncoderOptio
     // options
 
     private spaces: string | undefined = undefined;
-    
+
     constructor(value_db: ValueDatabase, data: ClassExchangeData, option?: ClassJsonEncoderOption) {
         super(value_db, data);
         // options

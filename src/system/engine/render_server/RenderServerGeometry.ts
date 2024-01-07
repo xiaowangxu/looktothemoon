@@ -9,6 +9,7 @@ import { type RenderDeviceIndexAttributeBuffer, RenderDeviceAttributeBuffer, Ren
 import { RenderStatePrimitiveType, type RenderState } from "@/system/sliverofstraw/RenderState";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
+import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 
 export const RenderServerGeometryAttributeLoctions = {
     position: 0,
@@ -125,9 +126,11 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
         this.vertex_array_index_ref.clear();
     }
 
+    static #zero_vec3: Vector3 = new Vector3(0, 0, 0);
+
     public clear_Geometry() {
         this.clear_GeometryInternal();
-        this._bbox.set(0, 0, 0, 0, 0, 0);
+        this._bbox.set(RenderServerGeometry.#zero_vec3, RenderServerGeometry.#zero_vec3);
         this.singal_bbox_changed.trigger(this._bbox);
     }
 
@@ -136,7 +139,7 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
     }
 
     public set_Geometry(primitive_type: RenderStatePrimitiveType, array: RenderServerGeometryArray<WebGL2RenderState>, index?: IndexAttributeBuffer, vertex_count?: number, bbox?: Box3, default_instance_transform_attribute: boolean = true) {
-        const count = index?.element_count ?? vertex_count;
+        const count = vertex_count ?? index?.element_count;
         if (count === undefined) throw new Error('<RenderServerGeometry> set_Geometry: vertex count is known');
         const vertex_array = this.render_state.create_VertexArray(primitive_type, 0, count).expect();
         this._primitive_type = primitive_type;
@@ -175,7 +178,7 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
             this.set_BBox(bbox);
         }
         else {
-            this._bbox.set(0, 0, 0, 0, 0, 0);
+            this._bbox.set(RenderServerGeometry.#zero_vec3, RenderServerGeometry.#zero_vec3);
             this.singal_bbox_changed.trigger(this._bbox);
         }
         this.vertex_array_attributes_map = vertex_array_attributes_map;

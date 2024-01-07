@@ -1,7 +1,7 @@
 import { Ref, type RefCounted } from '../../utils/RefCounted';
 import { SignalEmitter } from '../../utils/SignalEmitter';
 import { ConfiguredObject, type Config } from '../ConfiguredObject';
-import { ClassBase } from "../classes/databases/ClassBase";
+import { ClassBase } from "../classes/class_database/ClassBase";
 
 export abstract class ResourceBase extends ClassBase implements RefCounted {
     public static readonly class_name: string = "ResourceBase";

@@ -14,7 +14,7 @@ import { ViewportKeyInputEventManager } from "../inputs/managers/ViewportKeyInpu
 import { ViewportMouseInputEventManager } from "../inputs/managers/ViewportMouseInputEventManager";
 import { ViewportActionInputEventManager } from "../inputs/managers/ViewportActionInputEventManager";
 import { ViewportInputManager } from "../inputs/managers/ViewportInputManager";
-import { ClassBase } from "../classes/databases/ClassBase";
+import { ClassBase } from "../classes/class_database/ClassBase";
 import type { Config } from "../ConfiguredObject";
 import { Ref } from "@/system/utils/RefCounted";
 import type { Renderer3D } from "../renderer/renderer_3d/Renderer3D";

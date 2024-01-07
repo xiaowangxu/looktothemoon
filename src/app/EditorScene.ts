@@ -184,6 +184,7 @@ const TranslateGrabber = new TranslateGrabber3D(DefaultConfig);
 World.add_Child(TranslateGrabber);
 
 const point_light = new PointLight3D(DefaultConfig);
+point_light.color = vec3(0, 1, 0);
 point_light.radius = 100.0;
 World.add_Child(point_light);
 
@@ -198,7 +199,6 @@ World.add_Child(TranslateGrabber2);
 
 const spot_light = new SpotLight3D(DefaultConfig);
 spot_light.color = vec3(1, 0, 0);
-spot_light.intensity = 0.5;
 World.add_Child(spot_light);
 
 TranslateGrabber2.signal_grabbing.connect(pos => {
@@ -389,4 +389,5 @@ const load = new ClassLoader(DefaultInstanceCache).load<MeshInstance3D, ArrayBuf
 console.timeEnd('load');
 
 load.local_scale = vec3(100, 100, 100);
+load.local_position = vec3(-200, 0, -100);
 World.add_Child(load);

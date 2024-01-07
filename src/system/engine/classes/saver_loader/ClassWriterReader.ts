@@ -1,4 +1,4 @@
-import { ClassBase } from "../databases/ClassBase";
+import { ClassBase } from "../class_database/ClassBase";
 import type { ClassLoader, ClassSaver, RefId } from "./ClassSaverLoader";
 
 export class ClassRef {

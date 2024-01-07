@@ -1,7 +1,7 @@
 import type { Rid } from '../../Rid';
 import { Result } from '../../../utils/Result';
-import { ClassBase } from "../databases/ClassBase";
-import { ClassDB, type ClassDatabase } from '../databases/ClassDatabase';
+import { ClassBase } from "../class_database/ClassBase";
+import { ClassDB, type ClassDatabase } from '../class_database/ClassDatabase';
 import { ClassReader, ClassRef, ClassWriter } from './ClassWriterReader';
 import { load_ResFile_from_Path } from 'res://ResFiles';
 import { ResourceBase, ResourceInstanceCache } from '../../resources/Resource';

@@ -134,6 +134,7 @@ export class RenderDeviceVector2AttributeBuffer<T extends RenderState<T>, Buffer
         const is_count = typeof data === 'number';
         if (data instanceof Float32Array) {
             if (data.length % 2 !== 0) throw new Error('<RenderDeviceVector2AttributeBuffer> alloc_Data@Float32Array: data is not valid Vector2 array');
+            this._element_count = data.length / 2;
             this._data = data;
         }
         else {
@@ -215,6 +216,7 @@ export class RenderDeviceVector3AttributeBuffer<T extends RenderState<T>, Buffer
         const is_count = typeof data === 'number';
         if (data instanceof Float32Array) {
             if (data.length % 3 !== 0) throw new Error('<RenderDeviceVector2AttributeBuffer> alloc_Data@Float32Array: data is not valid Vector3 array');
+            this._element_count = data.length / 3;
             this._data = data;
         }
         else {
@@ -299,6 +301,7 @@ export class RenderDeviceVector4AttributeBuffer<T extends RenderState<T>, Buffer
         const is_count = typeof data === 'number';
         if (data instanceof Float32Array) {
             if (data.length % 4 !== 0) throw new Error('<RenderDeviceVector2AttributeBuffer> alloc_Data@Float32Array: data is not valid Vector4 array');
+            this._element_count = data.length / 4;
             this._data = data;
         }
         else {
@@ -385,6 +388,7 @@ export class RenderDeviceIndexAttributeBuffer<T extends RenderState<T>, Buffer e
     public alloc_Data(data: number[] | Uint32Array | number): void {
         const is_count = typeof data === 'number';
         if (data instanceof Uint32Array) {
+            this._element_count = data.length;
             this._data = data;
         }
         else {
@@ -465,6 +469,7 @@ export class RenderDeviceMatrix4AttributeBuffer<T extends RenderState<T>, Buffer
         const is_count = typeof data === 'number';
         if (data instanceof Float32Array) {
             if (data.length % 16 !== 0) throw new Error('<RenderDeviceVector2AttributeBuffer> alloc_Data@Float32Array: data is not valid Matrix4 array');
+            this._element_count = data.length / 16;
             this._data = data;
         }
         else {
