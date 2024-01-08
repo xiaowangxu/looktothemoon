@@ -173,8 +173,8 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     }`;
     static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
         u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
+        u_hidden: { type: RenderStateUniformType.Int, default: 1 },
         u_scene_depth: { type: RenderStateUniformType.Int, default: 0 },
-        u_hidden: { type: RenderStateUniformType.Int, default: 0 },
     };
     static #fragment_oit_shader = `#version 300 es
     precision highp float;
@@ -203,7 +203,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     }`;
     static #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
         u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
-        u_hidden: { type: RenderStateUniformType.Int, default: 0 },
+        u_hidden: { type: RenderStateUniformType.Int, default: 1 },
         u_scene_depth: { type: RenderStateUniformType.Int, default: 0 },
     };
 

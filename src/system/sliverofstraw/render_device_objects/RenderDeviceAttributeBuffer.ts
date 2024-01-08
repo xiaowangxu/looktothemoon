@@ -8,6 +8,8 @@ import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { RenderStateVertexArray } from "../render_state_objects/RenderStateVertexArray";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
+import { PackedVector2Array, type PackedArray, PackedVector3Array, PackedVector4Array, PackedMatrix4Array, PackedIndexArray, PackedMatrix3Array } from "@/system/engine/classes/value_wrappers/PackedArray";
+import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 
 export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
     extends RenderDeviceObject<T>
@@ -52,6 +54,8 @@ export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buff
             this.render_state.update_Buffer(this.buffer_ref.expect, this.data, offset, offset, lenght);
         }
     }
+
+    public abstract get_PackedArray(): PackedArray;
 
     public bound_VertexArray(vertex_array: RenderStateVertexArray<T>, attribute_location: number) {
         this.render_state.set_VertexArrayAttributeBuffer(vertex_array, attribute_location, this.buffer);
@@ -101,6 +105,10 @@ export class RenderDeviceAttributeBufferView<T extends RenderState<T>, Buffer ex
     public update_Data(data: ArrayBufferView, offset: number, commit?: boolean): void;
     public update_Data(data: any[], offset: number, commit?: boolean): void;
     public update_Data(data: any[] | ArrayBufferView | any, offset: number, commit: boolean = true): void { }
+
+    public get_PackedArray(): PackedArray {
+        throw new Error('<RenderDeviceAttributeBufferView> get_PackedArray: can not get packed array from a attribute buffer view');
+    }
 
     public dispose(): void {
         this.attribute_buffer_ref.clear();
@@ -188,6 +196,10 @@ export class RenderDeviceVector2AttributeBuffer<T extends RenderState<T>, Buffer
         }
         if (commit) this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
     }
+
+    public get_PackedArray(): PackedArray {
+        return new PackedVector2Array(this.data);
+    }
 }
 
 export class RenderDeviceVector3AttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
@@ -272,6 +284,10 @@ export class RenderDeviceVector3AttributeBuffer<T extends RenderState<T>, Buffer
             }
         }
         if (commit) this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
+    }
+
+    public get_PackedArray(): PackedArray {
+        return new PackedVector3Array(this.data);
     }
 }
 
@@ -361,6 +377,10 @@ export class RenderDeviceVector4AttributeBuffer<T extends RenderState<T>, Buffer
         }
         if (commit) this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
     }
+
+    public get_PackedArray(): PackedArray {
+        return new PackedVector4Array(this.data);
+    }
 }
 
 export class RenderDeviceIndexAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
@@ -428,6 +448,123 @@ export class RenderDeviceIndexAttributeBuffer<T extends RenderState<T>, Buffer e
             }
         }
         if (commit) this.render_state.update_Buffer(this.buffer_ref.expect, uint32array, offset_bytes);
+    }
+
+    public get_PackedArray(): PackedArray {
+        return new PackedIndexArray(this.data);
+    }
+}
+
+export class RenderDeviceMatrix3AttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
+    extends RenderDeviceAttributeBuffer<T, Buffer>
+{
+    private readonly buffer_slice_row_0: Ref<RenderStateBufferView<T>> = new Ref();
+    private readonly buffer_slice_row_1: Ref<RenderStateBufferView<T>> = new Ref();
+    private readonly buffer_slice_row_2: Ref<RenderStateBufferView<T>> = new Ref();
+
+    public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
+    public get per_item_element_count(): number { return 9; }
+
+    public get data_type(): RenderStateDataType { return RenderStateDataType.Float; }
+    private _element_count: number = 0;
+    public get element_count(): number { return this._element_count; }
+
+    private _data: Float32Array = new Float32Array(0);
+    public get data() { return this._data; }
+
+    constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Matrix3[] | Float32Array | number, per_instance_count: number = 0) {
+        super(render_device, per_instance_count);
+        const buffer = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 9, RenderStateDataType.Float, false, this.per_instance_count).expect() as Buffer;
+        this.buffer_ref.value = buffer;
+        const byte_per_row = 3 * this.per_element_byte_count;
+        const byte_per_matrix = 3 * byte_per_row;
+        this.buffer_slice_row_0.value = this.render_state.create_BufferView(buffer, 3, byte_per_matrix, 0 * byte_per_row, this.per_instance_count).expect();
+        this.buffer_slice_row_1.value = this.render_state.create_BufferView(buffer, 3, byte_per_matrix, 1 * byte_per_row, this.per_instance_count).expect();
+        this.buffer_slice_row_2.value = this.render_state.create_BufferView(buffer, 3, byte_per_matrix, 2 * byte_per_row, this.per_instance_count).expect();
+        if (data !== undefined) this.alloc_Data(data as any);
+    }
+
+    public alloc_Data(data: Matrix3[]): void;
+    public alloc_Data(data: Float32Array): void;
+    public alloc_Data(count: number): void;
+    public alloc_Data(data: Matrix3[] | Float32Array | number): void {
+        const is_count = typeof data === 'number';
+        if (data instanceof Float32Array) {
+            if (data.length % 9 !== 0) throw new Error('<RenderDeviceVector2AttributeBuffer> alloc_Data@Float32Array: data is not valid Matrix3 array');
+            this._element_count = data.length / 9;
+            this._data = data;
+        }
+        else {
+            const mat3_count = is_count ? data : data.length;
+            const element_count = mat3_count * 9;
+            this._element_count = element_count;
+            const float32array = new Float32Array(element_count);
+            if (!is_count) {
+                for (let j = 0; j < mat3_count; j++) {
+                    const mat3 = data[j];
+                    float32array.set(mat3.transposed_array, j * 9);
+                }
+            }
+            this._data = float32array;
+        }
+        this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, is_count ? undefined : this._data);
+    }
+
+    public update_Data(data: Matrix3[], offset: number, commit?: boolean): void;
+    public update_Data(data: Float32Array, offset: number, commit?: boolean): void;
+    public update_Data(data: Matrix3, offset: number, commit?: boolean): void;
+    public update_Data(data: Matrix3[] | Float32Array | Matrix3, offset: number, commit: boolean = true): void {
+        let float32array: Float32Array;
+        let offset_bytes: number;
+        if (data instanceof Float32Array) {
+            offset_bytes = offset * this.per_element_byte_count;
+            const element_bytes = data.byteLength;
+            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceMatrix3AttributeBuffer> update_Data: data overflow');
+            float32array = new Float32Array(this._data.buffer, offset_bytes, data.length);
+            float32array.set(data);
+        }
+        else {
+            const single = !(data instanceof Array);
+            offset_bytes = offset * 9 * this.per_element_byte_count;
+            const mat3_count = single ? 1 : data.length;
+            const element_count = mat3_count * 9;
+            const element_bytes = element_count * this.per_element_byte_count;
+            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceMatrix3AttributeBuffer> update_Data: data overflow');
+            float32array = new Float32Array(this._data.buffer, offset_bytes, element_count);
+            if (single) {
+                float32array.set(data.transposed_array, 0);
+            }
+            else {
+                for (let j = 0; j < mat3_count; j++) {
+                    const mat3 = data[j];
+                    float32array.set(mat3.transposed_array, j * 9);
+                }
+            }
+        }
+        if (commit) this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
+    }
+
+    public bound_VertexArray(vertex_array: RenderStateVertexArray<T>, attribute_location: number): void {
+        this.render_state.set_VertexArrayAttributeBuffer(vertex_array, attribute_location + 0, this.buffer_slice_row_0.expect);
+        this.render_state.set_VertexArrayAttributeBuffer(vertex_array, attribute_location + 1, this.buffer_slice_row_1.expect);
+        this.render_state.set_VertexArrayAttributeBuffer(vertex_array, attribute_location + 2, this.buffer_slice_row_2.expect);
+    }
+
+    public toggle_VertexArray(vertex_array: RenderStateVertexArray<T>, attribute_location: number, enable: boolean): void {
+        this.render_state.toggle_VertexArrayAttribute(vertex_array, attribute_location + 0, enable);
+        this.render_state.toggle_VertexArrayAttribute(vertex_array, attribute_location + 1, enable);
+        this.render_state.toggle_VertexArrayAttribute(vertex_array, attribute_location + 2, enable);
+    }
+
+    public get_PackedArray(): PackedArray {
+        return new PackedMatrix3Array(this.data);
+    }
+
+    public dispose(): void {
+        this.buffer_slice_row_0.clear();
+        this.buffer_slice_row_1.clear();
+        this.buffer_slice_row_2.clear();
+        super.dispose();
     }
 }
 
@@ -534,6 +671,10 @@ export class RenderDeviceMatrix4AttributeBuffer<T extends RenderState<T>, Buffer
         this.render_state.toggle_VertexArrayAttribute(vertex_array, attribute_location + 1, enable);
         this.render_state.toggle_VertexArrayAttribute(vertex_array, attribute_location + 2, enable);
         this.render_state.toggle_VertexArrayAttribute(vertex_array, attribute_location + 3, enable);
+    }
+
+    public get_PackedArray(): PackedArray {
+        return new PackedMatrix4Array(this.data);
     }
 
     public dispose(): void {

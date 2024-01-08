@@ -25,7 +25,7 @@ export const RenderServerGeometryAttributeLoctions = {
     Max: 10,
 };
 
-type RenderServerGeometryArray<RS extends RenderState<RS>, Buffer extends RenderStateBuffer<RS> = RenderStateBuffer<RS>> = {
+export type RenderServerGeometryArray<RS extends RenderState<RS>, Buffer extends RenderStateBuffer<RS> = RenderStateBuffer<RS>> = {
     [key in string]:
     RenderDeviceAttributeBuffer<RS, Buffer> |
     {
@@ -80,6 +80,8 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
         if (!this.has_geometry) return {};
         const ans: RenderServerGeometryArray<WebGL2RenderState> = {};
         for (const [name, attr] of this.vertex_array_attributes_map.entries()) {
+            // ignore default matrix
+            if (attr.attribute.expect === (this.render_device as RenderServerDevice).identity_transform_attribute_buffer) continue;
             if ((RenderServerGeometryAttributeLoctions as Record<string, number>)[name] !== undefined) {
                 ans[name] = attr.attribute.expect;
             }

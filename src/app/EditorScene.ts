@@ -21,7 +21,7 @@ import { ActionInputEvent } from "@/system/engine/inputs/events/ActionInputEvent
 import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineGeometryResource";
 import { MultiLineMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
 import type { Config } from "@/system/engine/ConfiguredObject";
-import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
+import { RenderServerDevice, RenderServerPlainColorTexture } from "@/system/engine/render_server/RenderServer";
 import { StandardMaterialResource } from "../system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { ClassLoader, ClassSaver } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
 import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
@@ -147,7 +147,7 @@ const material3 = new PlainColorMaterialResource(DefaultConfig);
 material3.texture = new ImageTextureResource(DefaultConfig);
 
 import url from 'res://image.png';
-import { RenderStateTextureFormat } from "@/system/sliverofstraw/RenderState";
+import { RenderStatePrimitiveType, RenderStateTextureFormat } from "@/system/sliverofstraw/RenderState";
 import { EditorRenderer3DPipeline } from "@/system/engine/renderer/renderer_3d/EditorRenderer3DPipeline";
 import { EditorRenderer3D } from "@/system/engine/renderer/renderer_3d/EditorRenderer3D";
 import { TranslateGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/TranslateGrabber3D";
@@ -158,6 +158,9 @@ import { DirectionalLight3D } from "@/system/engine/nodes/node3ds/visual_instanc
 import { SpotLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/SpotLight3D";
 import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { ClassBinaryDecoder, ClassBinaryEncoder, type ClassBinaryDecoderOption } from "@/system/engine/classes/saver_loader/encoder_decoders/ClassBinaryEncoderDecoder";
+import { ArrayGeometryResource } from "@/system/engine/resources/geometry_resources/ArrayGeometryResource";
+import { PackedIndexArray, PackedVector2Array, PackedVector3Array } from "@/system/engine/classes/value_wrappers/PackedArray";
+import { box3 } from "@/system/fivepebble/geometries/Box3";
 {
 	new ImageLoader().parse(url).then(res => {
 		(material3.texture as ImageTextureResource).set_Image(res.expect(), RenderStateTextureFormat.SRGBA8, 4);
@@ -367,27 +370,21 @@ export function createEditorViewport() {
 	// create_CompassScene();
 }
 
-const cylinder = new BoxGeometryResource(DefaultConfig);
-const mat1 = new NormalMaterialResource(DefaultConfig);
-const mat2 = new NormalMaterialResource(DefaultConfig);
-const mat3 = new UVMaterialResource(DefaultConfig);
-mat2.remap = false;
-const mesh = new MeshInstance3D(DefaultConfig);
-mesh.geometry = cylinder;
-mesh.material = mat3;
-mesh.set_SurfaceMaterial(0, mat1);
-mesh.set_SurfaceMaterial(2, mat2);
-mesh.set_SurfaceMaterial(4, mat1);
-mesh.name = '测试';
+import obj from 'res://Monkey.obj?raw';
+import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
 
-console.time("save");
-const data0 = new ClassSaver().save(mesh, ClassBinaryEncoder, undefined, { little_endian: true }).expect();
-console.timeEnd("save");
+const obj_loader = new ObjLoader()
+const data0 = obj_loader.parse(obj).expect().enocde(ClassBinaryEncoder).expect();
 
 console.time('load');
-const load = new ClassLoader(DefaultInstanceCache).load<MeshInstance3D, ArrayBuffer, ClassBinaryDecoderOption>(data0, ClassBinaryDecoder, undefined, { validate: true }).expect();
+const load = new ClassLoader(DefaultInstanceCache).load<ArrayGeometryResource, ArrayBuffer, ClassBinaryDecoderOption>(data0, ClassBinaryDecoder, undefined, { validate: false }).expect();
 console.timeEnd('load');
 
-load.local_scale = vec3(100, 100, 100);
-load.local_position = vec3(-200, 0, -100);
-World.add_Child(load);
+const m = new MeshInstance3D(DefaultConfig);
+m.geometry = load;
+m.material = material2;
+// m.material = new PlainColorMaterialResource(DefaultConfig);
+// (m.material as PlainColorMaterialResource).set_UniformOverride('u_texture', DefaultConfig.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.Empty));
+m.local_scale = vec3(100, 100, 100);
+m.local_position = vec3(-250, 0, -100);
+World.add_Child(m);

@@ -443,7 +443,7 @@ export class StandardMaterialResource extends MaterialResource {
             diffuse += light_strength * light_color * light_attenuation;
             if (light_type != 1u) {
                 vec3 half_direction = normalize(light_direction + view_direction);  
-                float beckmann = beckmannDistribution(dot(normal, half_direction), 0.01);
+                float beckmann = beckmannDistribution(dot(normal, half_direction), clamp((sin(time) + 1.0) / 2.0, 0.001, 1.0));
                 specular += beckmann * light_color * light_attenuation;
             }
         }

@@ -6,6 +6,7 @@ import { ClassBase } from "./ClassBase";
 import { MeshInstance3D } from "../../nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
 import { Result } from "@/system/utils/Result";
 import { NormalMaterialResource, UVMaterialResource } from "../../resources/material_resources/PrimitiveMaterialResource";
+import { ArrayGeometryResource } from "../../resources/geometry_resources/ArrayGeometryResource";
 
 export class ClassDatabase {
     private readonly db: Map<string, typeof ClassBase> = new Map();
@@ -31,6 +32,7 @@ ClassDB.register_Class(Node);
 ClassDB.register_Class(Node3D);
 ClassDB.register_Class(MeshInstance3D);
 
+ClassDB.register_Class(ArrayGeometryResource);
 ClassDB.register_Class(BoxGeometryResource);
 ClassDB.register_Class(TorusGeometryResource);
 ClassDB.register_Class(CylinderGeometryResource);

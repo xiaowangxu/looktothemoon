@@ -33,6 +33,7 @@ export enum RenderStateFrameBufferPart {
 export enum RenderStateBufferUsage {
     StaticCopy, StaticDraw, StaticRead,
     DynamicCopy, DynamicDraw, DynamicRead,
+    StreamCopy, StreamDraw, StreamRead,
 }
 
 export enum RenderStatePrimitiveType {

@@ -22,7 +22,7 @@ export class Box3 implements BoxLike<Vector3, Matrix3> {
         return target;
     }
 
-    public get is_empty() { return this.min.x >= this.max.x || this.min.y >= this.max.y || this.min.z >= this.max.z; }
+    public get is_empty() { return this.min.x >= this.max.x && this.min.y >= this.max.y && this.min.z >= this.max.z; }
 
     constructor(min: Vector3 = new Vector3(), max: Vector3 = new Vector3()) {
         this.min = min;
@@ -74,7 +74,7 @@ export class Box3 implements BoxLike<Vector3, Matrix3> {
     static #points: [Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3] = [new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 
     public apply_Matrix4(mat: Matrix4): Box3 {
-        if (this.min.x >= this.max.x || this.min.y >= this.max.y || this.min.z >= this.max.z) return new Box3();
+        if (this.min.x >= this.max.x && this.min.y >= this.max.y && this.min.z >= this.max.z) return new Box3();
         const p0 = Box3.#points[0];
         const p1 = Box3.#points[1];
         const p2 = Box3.#points[2];
@@ -94,7 +94,7 @@ export class Box3 implements BoxLike<Vector3, Matrix3> {
         return Box3.from_Points(Box3.#points);
     }
     public applys_Matrix4(a: Box3, mat: Matrix4): Box3 {
-        if (a.min.x >= a.max.x || a.min.y >= a.max.y || a.min.z >= a.max.z) {
+        if (a.min.x >= a.max.x && a.min.y >= a.max.y && a.min.z >= a.max.z) {
             this.min.set(0, 0, 0);
             this.max.set(0, 0, 0);
             return this;

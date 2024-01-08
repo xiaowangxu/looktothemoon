@@ -394,6 +394,9 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             case RenderStateBufferUsage.DynamicCopy: return this.gl.DYNAMIC_COPY;
             case RenderStateBufferUsage.DynamicDraw: return this.gl.DYNAMIC_DRAW;
             case RenderStateBufferUsage.DynamicRead: return this.gl.DYNAMIC_READ;
+            case RenderStateBufferUsage.StreamCopy: return this.gl.STREAM_COPY;
+            case RenderStateBufferUsage.StreamDraw: return this.gl.STREAM_DRAW;
+            case RenderStateBufferUsage.StreamRead: return this.gl.STREAM_READ;
             default: {
                 const n: never = usage;
                 return n;
