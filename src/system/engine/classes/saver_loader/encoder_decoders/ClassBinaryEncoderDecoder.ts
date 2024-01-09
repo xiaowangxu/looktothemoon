@@ -11,7 +11,7 @@ import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { ArrayBuffer as MD5 } from 'spark-md5';
 import type { ClassExchangeData, ClassInstanceData } from "../ClassSaverLoader";
 import { ValueDataType } from "../../ValueDataType";
-import { PackedArray, PackedIndexArray, PackedMatrix3Array, PackedMatrix4Array, PackedVector2Array, PackedVector3Array, PackedVector4Array } from "../../value_wrappers/PackedArray";
+import { PackedIndexArray, PackedMatrix3Array, PackedMatrix4Array, PackedVector2Array, PackedVector3Array, PackedVector4Array } from "../../value_wrappers/PackedArray";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 
 // Lttm Bin format
@@ -23,7 +23,7 @@ import { Box3 } from "@/system/fivepebble/geometries/Box3";
 // |                                                ...instances                                                   |               |------ body region
 // |-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------| --------------+
 
-const MaxFileSizeInMB = 1;
+const MaxFileSizeInMB = 10;
 const Version0 = 0;
 const Version1 = 0;
 const Version2 = 1;
@@ -245,7 +245,7 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEnc
         if (value instanceof ClassRef) return ValueDataType.ClassRef;
         if (value instanceof Map) return ValueDataType.Map;
         // typed array
-        if (value instanceof Uint8Array) return ValueDataType.Uint8Array;
+        if (value instanceof Uint8Array || value instanceof Uint8ClampedArray) return ValueDataType.Uint8Array;
         if (value instanceof Uint16Array) return ValueDataType.Uint16Array;
         if (value instanceof Uint32Array) return ValueDataType.Uint32Array;
         if (value instanceof Int8Array) return ValueDataType.Int8Array;
@@ -571,7 +571,7 @@ export class ClassBinaryDecoder extends ClassDecoder<ArrayBuffer, ClassBinaryDec
         // type
         const arr_and_type = this.get_Byte();
         const type = arr_and_type & 0b01111111;
-        const is_array = (type & 0b10000000) !== 0;
+        const is_array = (arr_and_type & 0b10000000) !== 0;
         // value
         if (is_array) {
             if (type === 0) {

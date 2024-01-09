@@ -22,6 +22,8 @@ export type ArrayGeometryResourceArray<RS extends RenderState<RS>> = {
 export class ArrayGeometryResource extends GeometryResource {
     public static class_name: string = 'ArrayGeometryResource';
 
+    private usage: RenderStateBufferUsage = RenderStateBufferUsage.StaticDraw;
+
     constructor(config: Config) {
         super(config);
         this.geometry_ref.value = this.render_server.create_Geometry();
@@ -35,8 +37,8 @@ export class ArrayGeometryResource extends GeometryResource {
         this.geometry.clear_Surface(index);
     }
 
-    public set_Geometry(primitive_type: RenderStatePrimitiveType, array: ArrayGeometryResourceArray<WebGL2RenderState>, index?: PackedIndexArray, vertex_count?: number, bbox?: Box3, default_instance_transform_attribute: boolean = true) {
-        const rs_usage = RenderStateBufferUsage.StaticDraw;
+    public set_Geometry(primitive_type: RenderStatePrimitiveType, array: ArrayGeometryResourceArray<WebGL2RenderState>, index?: PackedIndexArray, vertex_count?: number, usage?: RenderStateBufferUsage, bbox?: Box3, default_instance_transform_attribute: boolean = true) {
+        const rs_usage = usage ?? RenderStateBufferUsage.StaticDraw;
         const rs_array: RenderServerGeometryArray<WebGL2RenderState> = {};
         for (const [key, val] of Object.entries(array)) {
             if (val === undefined) continue;
@@ -64,35 +66,38 @@ export class ArrayGeometryResource extends GeometryResource {
     // save / load
 
     public dump(writer: ClassWriter): void {
-        if (this.geometry.has_geometry) {
-            writer.property('primitive_type', this.geometry.primitive_type);
-            const attr_buf: Map<string, PackedArray> = new Map();
-            const attr_loc: Map<string, number> = new Map();
-            for (const [key, val] of Object.entries(this.geometry.get_AttributeBuffers())) {
-                if (val instanceof RenderDeviceAttributeBuffer) {
-                    attr_buf.set(key, val.get_PackedArray());
-                }
-                else {
-                    attr_buf.set(key, val.attribute.get_PackedArray());
-                    attr_loc.set(key, val.location);
-                }
-            }
-            writer.property('array', attr_buf);
-            writer.property('locations', attr_loc);
-            writer.property('index', this.geometry.get_IndexAttributeBuffer()?.get_PackedArray());
-            writer.property('vertex_count', this.geometry.vertex_count);
-            const surfaces: number[] = [];
-            for (const { offset, length } of Object.values(this.geometry.get_Surfaces())) {
-                surfaces.push(offset, length);
-            }
-            writer.property('surfaces', surfaces);
-            writer.property('bbox', this.geometry.bbox);
-        }
+        throw new Error('<ArrayGeometryResource> dump: better not use ArrayGeometry\'s dump method for data generation, use ArrayGeometryResource.dump_Data instead');
+        // if (this.geometry.has_geometry) {
+        //     writer.property('primitive_type', this.geometry.primitive_type);
+        //     const attr_buf: Map<string, PackedArray> = new Map();
+        //     const attr_loc: Map<string, number> = new Map();
+        //     for (const [key, val] of Object.entries(this.geometry.get_AttributeBuffers())) {
+        //         if (val instanceof RenderDeviceAttributeBuffer) {
+        //             attr_buf.set(key, val.get_PackedArray());
+        //         }
+        //         else {
+        //             attr_buf.set(key, val.attribute.get_PackedArray());
+        //             attr_loc.set(key, val.location);
+        //         }
+        //     }
+        //     writer.property('array', attr_buf);
+        //     writer.property('locations', attr_loc);
+        //     writer.property('index', this.geometry.get_IndexAttributeBuffer()?.get_PackedArray());
+        //     writer.property('vertex_count', this.geometry.vertex_count);
+        //     writer.property('usage', this.usage === RenderStateBufferUsage.StaticDraw ? undefined : this.usage);
+        //     const surfaces: number[] = [];
+        //     for (const { offset, length } of Object.values(this.geometry.get_Surfaces())) {
+        //         surfaces.push(offset, length);
+        //     }
+        //     writer.property('surfaces', surfaces);
+        //     writer.property('bbox', this.geometry.bbox);
+        // }
     }
 
     public load(reader: ClassReader): void {
         const primitive_type = reader.get<RenderStatePrimitiveType>('primitive_type');
         const vertex_count = reader.get<number>('vertex_count');
+        const usage = reader.get<RenderStateBufferUsage>('usage');
         const bbox = reader.get<Box3>('bbox');
         const attr_buf: Map<string, PackedArray> | undefined = reader.get('array');
         const attr_loc: Map<string, number> | undefined = reader.get('locations');
@@ -105,7 +110,7 @@ export class ArrayGeometryResource extends GeometryResource {
                 } : val;
             }
             const index = reader.get<PackedIndexArray>('index');
-            this.set_Geometry(primitive_type, array, index, vertex_count, bbox);
+            this.set_Geometry(primitive_type, array, index, vertex_count, usage, bbox);
         }
     }
 
@@ -116,13 +121,16 @@ export class ArrayGeometryResource extends GeometryResource {
         array: ArrayGeometryResourceArray<WebGL2RenderState>,
         index: PackedIndexArray | undefined,
         vertex_count: number | undefined,
+        usage: RenderStateBufferUsage,
         bbox: Box3,
         surfaces: number[] | undefined,
         unique?: boolean,
         external?: string
     ) {
         const refid = class_saver.create_Data(rid, ArrayGeometryResource.class_name, unique, external);
+       
         class_saver.add_Property(refid, 'primitive_type', primitive_type);
+        
         const attr_buf: Map<string, PackedArray> = new Map();
         const attr_loc: Map<string, number> = new Map();
         for (const [key, val] of Object.entries(array)) {
@@ -137,10 +145,13 @@ export class ArrayGeometryResource extends GeometryResource {
         }
         class_saver.add_Property(refid, 'array', attr_buf);
         class_saver.add_Property(refid, 'locations', attr_loc);
+        
         class_saver.add_Property(refid, 'index', index);
         class_saver.add_Property(refid, 'vertex_count', vertex_count);
+        class_saver.add_Property(refid, 'usage', usage === RenderStateBufferUsage.StaticDraw ? undefined : usage);
         class_saver.add_Property(refid, 'surfaces', surfaces);
         class_saver.add_Property(refid, 'bbox', bbox);
+
         return refid;
     }
 }

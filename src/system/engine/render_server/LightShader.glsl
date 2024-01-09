@@ -115,6 +115,7 @@ void main() {
 
     ivec3 lights_size = textureSize(lights, 0);
     int max_lights_count = lights_size.x * lights_size.y;
+    vec3 c_dir = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0f, 0.0f, 1.0f)) : normalize(camera_world[3].xyz - v_world);
 
     for(int i = 0; i < 32; i++) {
         LightData light = get_light(lights_size, i);
@@ -123,8 +124,6 @@ void main() {
 
         if(light.type == 0u || (light.mask & layer) == 0u)
             continue;
-
-        vec3 c_dir = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0f, 0.0f, 1.0f)) : normalize(camera_world[3].xyz - v_world);
 
         if(light.type == 1u) {
 	    	    // ambient light

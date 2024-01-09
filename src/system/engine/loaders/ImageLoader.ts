@@ -1,4 +1,7 @@
 import { Result } from "@/system/utils/Result";
+import { ClassSaver } from "../classes/saver_loader/ClassSaverLoader";
+import { ImageTextureResource } from "../resources/texture_resources/ImageTextureResource";
+import { RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureWrap } from "@/system/sliverofstraw/RenderState";
 
 export class ImageLoader {
     private readonly canvas: HTMLCanvasElement = document.createElement('canvas');
@@ -20,7 +23,7 @@ export class ImageLoader {
         return this.ctx.getImageData(0, 0, w, h);
     }
 
-    public async parse(url: string): Promise<Result<ImageData, Error>> {
+    public async parse(url: string): Promise<Result<ClassSaver, Error>> {
         try {
             const image = await new Promise((resolve: (img: HTMLImageElement) => void, reject) => {
                 const img = new Image();
@@ -28,8 +31,18 @@ export class ImageLoader {
                 img.onload = () => resolve(img);
                 img.onerror = () => reject();
             });
-            const image_data = this.get_ImageData(image);
-            return Result.Ok(image_data);
+            const { width, height, data } = this.get_ImageData(image);
+            const class_saver = new ClassSaver();
+            const refid = ImageTextureResource.dump_Data(
+                class_saver, 0,
+                1,
+                [{ level: 0, width, height, data, y_flip: true }], false,
+                RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp,
+                RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Linear, RenderStateTextureMagFilter.Linear,
+                8, true
+            );
+            class_saver.set_Root(refid);
+            return Result.Ok(class_saver);
         }
         catch (err) {
             console.log(err);

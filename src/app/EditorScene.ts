@@ -10,7 +10,7 @@ import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { DependencyGraph } from "./singletons/DependencyGraph";
 import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
-import { BoxGeometryResource, CylinderGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
+import { BoxGeometryResource, CylinderGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
 import { NormalMaterialResource, PlainColorMaterialResource, UVMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { color, color8 } from "@/system/fivepebble/graphics/Color";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
@@ -25,7 +25,7 @@ import { RenderServerDevice, RenderServerPlainColorTexture } from "@/system/engi
 import { StandardMaterialResource } from "../system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { ClassLoader, ClassSaver } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
 import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
-import { ImageTextureResource } from "@/system/engine/resources/texture_resources/TextureResource";
+import { ImageTextureResource } from "@/system/engine/resources/texture_resources/ImageTextureResource";
 import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
 
 const DefaultConfig: Config = {
@@ -146,8 +146,6 @@ const material3 = new PlainColorMaterialResource(DefaultConfig);
 // material3.color = color(1, 0, 1, 1);
 material3.texture = new ImageTextureResource(DefaultConfig);
 
-import url from 'res://image.png';
-import { RenderStatePrimitiveType, RenderStateTextureFormat } from "@/system/sliverofstraw/RenderState";
 import { EditorRenderer3DPipeline } from "@/system/engine/renderer/renderer_3d/EditorRenderer3DPipeline";
 import { EditorRenderer3D } from "@/system/engine/renderer/renderer_3d/EditorRenderer3D";
 import { TranslateGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/TranslateGrabber3D";
@@ -159,15 +157,6 @@ import { SpotLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/li
 import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { ClassBinaryDecoder, ClassBinaryEncoder, type ClassBinaryDecoderOption } from "@/system/engine/classes/saver_loader/encoder_decoders/ClassBinaryEncoderDecoder";
 import { ArrayGeometryResource } from "@/system/engine/resources/geometry_resources/ArrayGeometryResource";
-import { PackedIndexArray, PackedVector2Array, PackedVector3Array } from "@/system/engine/classes/value_wrappers/PackedArray";
-import { box3 } from "@/system/fivepebble/geometries/Box3";
-{
-	new ImageLoader().parse(url).then(res => {
-		(material3.texture as ImageTextureResource).set_Image(res.expect(), RenderStateTextureFormat.SRGBA8, 4);
-	});
-}
-
-const material4 = new NormalMaterialResource(DefaultConfig);
 
 const Mesh1 = new MeshInstance3D(DefaultConfig);
 Mesh1.geometry = multi_geometry;
@@ -175,11 +164,6 @@ Mesh1.material = material2;
 Mesh1.local_scale = vec3(100, 100, 100);
 Mesh1.local_position = vec3(0, 0, -100);
 Mesh1.local_visible = true;
-
-// Mesh1.set_SurfaceMaterial(2, material3);
-// Mesh1.set_SurfaceMaterial(3, material3);
-// Mesh1.set_SurfaceMaterial(4, material4);
-// Mesh1.set_SurfaceMaterial(5, material4);
 
 World.add_Child(Mesh1);
 
@@ -379,6 +363,15 @@ const data0 = obj_loader.parse(obj).expect().enocde(ClassBinaryEncoder).expect()
 console.time('load');
 const load = new ClassLoader(DefaultInstanceCache).load<ArrayGeometryResource, ArrayBuffer, ClassBinaryDecoderOption>(data0, ClassBinaryDecoder, undefined, { validate: false }).expect();
 console.timeEnd('load');
+
+const mat = new PlainColorMaterialResource(DefaultConfig);
+import image_url from 'res://f-texture.png';
+new ImageLoader().parse(image_url).then(res => {
+	const class_saver = res.expect();
+	const image = class_saver.enocde(ClassBinaryEncoder).expect();
+	const tex = new ClassLoader(DefaultInstanceCache).load(image, ClassBinaryDecoder).expect() as ImageTextureResource;
+	mat.texture = tex;
+});
 
 const m = new MeshInstance3D(DefaultConfig);
 m.geometry = load;

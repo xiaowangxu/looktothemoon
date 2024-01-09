@@ -1,6 +1,5 @@
 import { Result } from "@/system/utils/Result";
 import type { ClassExchangeData } from "../ClassSaverLoader";
-import type { ValueDatabase } from "../../databases/ValueDatabase";
 
 export class ClassEncoder<T, O> {
     protected readonly data: ClassExchangeData;

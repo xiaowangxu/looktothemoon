@@ -3,25 +3,10 @@ import { Vector3 } from '@/system/fivepebble/linear_algebra/Vector3';
 import { Result } from '@/system/utils/Result';
 import { ClassSaver } from '../classes/saver_loader/ClassSaverLoader';
 import { ArrayGeometryResource } from '../resources/geometry_resources/ArrayGeometryResource';
-import { RenderStatePrimitiveType } from '@/system/sliverofstraw/RenderState';
+import { RenderStateBufferUsage, RenderStatePrimitiveType } from '@/system/sliverofstraw/RenderState';
 import { PackedIndexArray, PackedVector2Array, PackedVector3Array } from '../classes/value_wrappers/PackedArray';
 
-const VERTEX_RE = /^v\s/;
-const NORMAL_RE = /^vn\s/;
-const TEXTURE_RE = /^vt\s/;
-const FACE_RE = /^f\s/;
 const WHITESPACE_RE = /\s+/;
-const USE_MATERIAL_RE = /^usemtl/;
-
-type UnpackedAttrs = {
-    verts: number[];
-    norms: number[];
-    textures: number[];
-    hashindices: { [k: string]: number };
-    indices: number[][];
-    materialIndices: number[];
-    index: number;
-};
 
 export class ObjLoader {
     public positions: number[] = [];
@@ -189,6 +174,7 @@ export class ObjLoader {
             },
             this.indices.length > 0 ? new PackedIndexArray(new Uint32Array(this.indices)) : undefined,
             this.indices.length,
+            RenderStateBufferUsage.StaticDraw,
             this.bbox,
             undefined, undefined, undefined
         );

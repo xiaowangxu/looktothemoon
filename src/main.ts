@@ -6,3 +6,5 @@ import './app/EditorSceneStyle.css';
 createApp(App).mount('#app');
 
 createEditorViewport();
+
+import '@/system/filesystem/VirtualFileSystem';

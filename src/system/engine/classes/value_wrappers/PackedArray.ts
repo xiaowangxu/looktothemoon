@@ -8,6 +8,26 @@ export abstract class PackedArray {
     public abstract get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceAttributeBuffer<T>;
 }
 
+export class PackedByteArray extends PackedArray {
+    public readonly data: Uint8Array | Uint8ClampedArray;
+
+    constructor(length: number)
+    constructor(array: Uint8Array | Uint8ClampedArray)
+    constructor(data: Uint8Array | Uint8ClampedArray | number) {
+        super();
+        if (data instanceof Uint8Array || data instanceof Uint8ClampedArray) {
+            this.data = data;
+        }
+        else {
+            this.data = new Uint8Array(data);
+        }
+    }
+
+    public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceIndexAttributeBuffer<T> {
+        throw new Error('<PackedByteArray> get_RenderDeviceAttributeBuffer: cannot get attribute buffer from PackedByteArray')
+    }
+}
+
 export class PackedIndexArray extends PackedArray {
     public readonly data: Uint32Array;
 

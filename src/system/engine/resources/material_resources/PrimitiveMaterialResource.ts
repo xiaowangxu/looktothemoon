@@ -426,6 +426,12 @@ export class StandardMaterialResource extends MaterialResource {
         float shadow_normal_bias;
         float shadow_opacity;
     };
+
+    vec4 sample_Sky(sampler2D sky, vec3 normal) {
+        float theta = atan(normal.z, normal.x);
+        float gamma = acos(normal.y);
+        return texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
+    }
     
     // light function
     float beckmannDistribution(float x, float roughness) {
@@ -443,7 +449,7 @@ export class StandardMaterialResource extends MaterialResource {
             diffuse += light_strength * light_color * light_attenuation;
             if (light_type != 1u) {
                 vec3 half_direction = normalize(light_direction + view_direction);  
-                float beckmann = beckmannDistribution(dot(normal, half_direction), clamp((sin(time) + 1.0) / 2.0, 0.001, 1.0));
+                float beckmann = beckmannDistribution(dot(normal, half_direction), 0.1);
                 specular += beckmann * light_color * light_attenuation;
             }
         }
@@ -485,14 +491,15 @@ export class StandardMaterialResource extends MaterialResource {
 
     void main() {
         vec3 normal = normalize(v_normal);
-        vec4 albedo = u_color;
+        vec4 albedo = u_color * sample_Sky(sky, normal).rgba;
 
         vec3 diffuse = vec3(0.0);
         vec3 specular = vec3(0.0);
 
         ivec3 lights_size = textureSize(lights, 0);
         int max_lights_count = lights_size.x * lights_size.y;
-    
+        vec3 c_dir = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0f, 0.0f, 1.0f)) : normalize(camera_world[3].xyz - v_world);
+
         for(int i = 0; i < 64; i++) {
             LightData light = get_light(lights_size, i);
         
@@ -500,8 +507,6 @@ export class StandardMaterialResource extends MaterialResource {
         
             if(light.type == 0u || (light.mask & layer) == 0u)
                 continue;
-        
-            vec3 c_dir = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0f, 0.0f, 1.0f)) : normalize(camera_world[3].xyz - v_world);
         
             if(light.type == 1u) {
 	    	    // ambient light
@@ -541,6 +546,7 @@ export class StandardMaterialResource extends MaterialResource {
     static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
         layer: { type: RenderStateUniformType.Uint, default: 0xffffffff },
         lights: { type: RenderStateUniformType.Int, default: RenderServerDevice.LightsTextureUnit },
+        sky: { type: RenderStateUniformType.Int, default: RenderServerDevice.SkyTextureUnit },
         u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
     };
     static #fragment_oit_shader = `#version 300 es

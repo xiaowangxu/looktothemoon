@@ -53,16 +53,17 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     //   |-------|-------|-------|-------|-------|-------|-------|-------|
     //   |   0   |   1   |   2   |   3   |   4   |   5   |   6   |   7   |
     //   |-------|-------|-------|-------|-------|-------|-------|-------|
-    //   |       |       |       |lights | l_cls | l_shd |  sky  |       |
+    //   |       |       | light | l_cls | l_shd |  sky  | envgi |       |
     //   |-------|-------|-------|-------|-------|-------|-------|-------|
     //   |   8   |   9   |   10  |   11  |   12  |   13  |   14  |   15  |
     //   |-------|-------|-------|-------|-------|-------|-------|-------|
     //   |  pres |  pres |  pres |  pres |  pres |  pres |  pres |  pres |
     //   |-------|-------|-------|-------|-------|-------|-------|-------|
 
-    public static readonly LightsTextureUnit: number = 3;
-    public static readonly LightsClusterTextureUnit: number = 4;
+    public static readonly LightsTextureUnit: number = 2;
+    public static readonly LightsClusterTextureUnit: number = 3;
     public static readonly SkyTextureUnit: number = 5;
+    public static readonly EnvironmentGITextureUnit: number = 6;
 
     public static readonly WorldUniformsName: string = 'WorldUniforms';
     public static readonly WorldUniformsUnit: number = 0;
