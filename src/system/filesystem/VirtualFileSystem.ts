@@ -1,14 +1,16 @@
 import { Result } from "../utils/Result";
+import { fspath, FileSystemPath } from "./FileSystemPath";
+
+// #region Const
 
 type VfsId = number;
-type UserId = number;
-const SuperUser: UserId = 0;
-const RootVfsId: VfsId = 0;
 
 export enum VfsMode {
     None = 0,
-    Read = 1,
-    Write = 1 << 1,
+    Hidden = 1 << 0,
+    Read = 1 << 1,
+    Write = 1 << 2,
+    Execute = 1 << 3,
 }
 
 export enum VfsOperationResult {
@@ -18,9 +20,15 @@ export enum VfsOperationResult {
     InputsInvalid,
     InUsageInvalid,
     AuthInvalid,
+    EmptyInvalid,
+    NotFound,
 }
 
+// #endregion
+
 export class VirtualFileSystem {
+    public static RootVfsId: VfsId = 0;
+
     private readonly nodes: Map<VfsId, VfsNode> = new Map();
     private readonly orphan_nodes: Set<VfsId> = new Set();
     private readonly blocks: Map<VfsId, VfsBlock> = new Map();
@@ -30,26 +38,26 @@ export class VirtualFileSystem {
     private get vfs_id() { return this._vfs_id++; }
 
     constructor() {
-        const dir = new VfsDirectoryNode(RootVfsId, this);
-        this.add_Node(RootVfsId, dir);
+        const dir = new VfsDirectoryNode(VirtualFileSystem.RootVfsId, this);
+        this.add_Node(VirtualFileSystem.RootVfsId, dir);
     }
 
     // #region Node Handler Block
 
     private is_OrphanNode(id: VfsId) {
-        return id !== RootVfsId && this.orphan_nodes.has(id);
+        return id !== VirtualFileSystem.RootVfsId && this.orphan_nodes.has(id);
     }
 
     // #region add / remove / get Node Handler Block
 
     private add_Node(id: VfsId, node: VfsNode) {
         this.nodes.set(id, node);
-        if (id !== RootVfsId) this.orphan_nodes.add(id);
+        if (id !== VirtualFileSystem.RootVfsId) this.orphan_nodes.add(id);
     }
 
     private remove_Node(id: VfsId) {
         this.nodes.delete(id);
-        if (id !== RootVfsId) this.orphan_nodes.delete(id);
+        if (id !== VirtualFileSystem.RootVfsId) this.orphan_nodes.delete(id);
     }
 
     private get_Node(id: VfsId) {
@@ -82,7 +90,7 @@ export class VirtualFileSystem {
 
     // #endregion
 
-    public attach_NodeInternal(node: VfsId) {
+    private attach_NodeInternal(node: VfsId) {
         const _node = this.get_Node(node);
         if (_node === undefined) return;
         if (_node instanceof VfsDirectoryNode) {
@@ -93,7 +101,7 @@ export class VirtualFileSystem {
         this.orphan_nodes.delete(_node.id);
     }
 
-    public attach_Node(node: VfsId, parent: VfsId = RootVfsId) {
+    private attach_Node(node: VfsId, parent: VfsId = VirtualFileSystem.RootVfsId) {
         const _node = this.get_Node(node);
         if (_node === undefined) return VfsOperationResult.SrcInvalid;
         if (!this.is_OrphanNode(_node.id)) return VfsOperationResult.SrcInvalid;
@@ -106,7 +114,7 @@ export class VirtualFileSystem {
         return VfsOperationResult.Ok;
     }
 
-    public detach_NodeInternal(node: VfsId) {
+    private detach_NodeInternal(node: VfsId) {
         const _node = this.get_Node(node);
         if (_node === undefined) return;
         if (_node instanceof VfsDirectoryNode) {
@@ -117,7 +125,7 @@ export class VirtualFileSystem {
         this.orphan_nodes.add(_node.id);
     }
 
-    public detach_Node(node: VfsId) {
+    private detach_Node(node: VfsId) {
         const _node = this.get_Node(node);
         if (_node === undefined) return VfsOperationResult.SrcInvalid;
         if (this.is_OrphanNode(_node.id)) return VfsOperationResult.SrcInvalid;
@@ -145,7 +153,7 @@ export class VirtualFileSystem {
         this.remove_Node(_node.id);
     }
 
-    public delete_Node(node: VfsId) {
+    private delete_Node(node: VfsId) {
         const _node = this.get_Node(node);
         if (_node === undefined) return VfsOperationResult.SrcInvalid;
         if (!this.is_OrphanNode(_node.id)) return VfsOperationResult.SrcInvalid;
@@ -153,24 +161,55 @@ export class VirtualFileSystem {
         return VfsOperationResult.Ok;
     }
 
-    public set_NodeName(node: VfsId, name: string) {
+    private find_Node(parent: VfsId, name: string): Result<VfsId, VfsOperationResult> {
+        const _parent = this.get_Node(parent);
+        if (_parent === undefined || !(_parent instanceof VfsDirectoryNode)) return Result.Error(VfsOperationResult.SrcInvalid);
+        if (this.is_OrphanNode(_parent.id)) return Result.Error(VfsOperationResult.SrcInvalid);
+        for (const i of _parent.subs) {
+            const _node = this.get_Node(i);
+            if (_node !== undefined && _node.name === name) return Result.Ok(_node.id);
+        }
+        return Result.Error(VfsOperationResult.NotFound);
+    }
+
+    private set_NodeName(node: VfsId, name: string) {
         const _node = this.get_Node(node);
         if (_node === undefined) return VfsOperationResult.SrcInvalid;
-        if (this.is_OrphanNode(_node.id)) return VfsOperationResult.SrcInvalid;
         _node.name = name;
         return VfsOperationResult.Ok;
     }
 
-    public create_Handler(block: VfsId): Result<VfsId, VfsOperationResult> {
+    private set_NodeMode(node: VfsId, mode: VfsMode) {
+        const _node = this.get_Node(node);
+        if (_node === undefined) return VfsOperationResult.SrcInvalid;
+        _node.mode = mode;
+        return VfsOperationResult.Ok;
+    }
+
+    private create_Handler(block: VfsId, mode?: VfsMode): Result<VfsId, VfsOperationResult> {
         const _block = this.get_Block(block);
         if (_block === undefined) return Result.Error(VfsOperationResult.SrcInvalid);
-        const handler = new VfsHandler(this.vfs_id, this, _block.id);
+        const handler = new VfsHandler(this.vfs_id, this, _block.id, mode);
         _block.handlers.add(handler.id);
         this.add_Handler(handler.id, handler);
         return Result.Ok(handler.id);
     }
 
-    public close_Handler(handler: VfsId): VfsOperationResult {
+    private redirect_Handler(handler: VfsId, block: VfsId) {
+        const _handler = this.get_Handler(handler);
+        if (_handler === undefined) return VfsOperationResult.InputsInvalid;
+        const _old_block = this.get_Block(_handler.block);
+        if (_old_block === undefined) return VfsOperationResult.SrcInvalid;
+        const _block = this.get_Block(block);
+        if (_block === undefined) return VfsOperationResult.SrcInvalid;
+        _old_block.handlers.delete(_handler.id);
+        _block.handlers.add(_handler.id);
+        this.delete_Block(_old_block.id);
+        _handler.block = _block.id;
+        return VfsOperationResult.Ok;
+    }
+
+    private close_Handler(handler: VfsId): VfsOperationResult {
         const _handler = this.get_Handler(handler);
         if (_handler === undefined) return VfsOperationResult.InputsInvalid;
         const _block = this.get_Block(_handler.block);
@@ -181,13 +220,29 @@ export class VirtualFileSystem {
         return VfsOperationResult.Ok;
     }
 
-    public create_Block() {
+    private get_HandlerBuffer(handler: VfsId): Result<ArrayBuffer | undefined, VfsOperationResult> {
+        const _handler = this.get_Handler(handler);
+        if (_handler === undefined) return Result.Error(VfsOperationResult.InputsInvalid);
+        if (_handler.write_buffer !== undefined) return Result.Ok(_handler.write_buffer)
+        const _block = this.get_Block(_handler.block);
+        if (_block === undefined) return Result.Error(VfsOperationResult.SrcInvalid);
+        return Result.Ok(_block.buffer);
+    }
+
+    private create_Block() {
         const block = new VfsBlock(this.vfs_id, this);
         this.add_Block(block.id, block);
         return block.id;
     }
 
-    public delete_Block(block: VfsId) {
+    private set_BlockBuffer(block: VfsId, buffer: ArrayBuffer | undefined) {
+        const _block = this.get_Block(block);
+        if (_block === undefined) return VfsOperationResult.InputsInvalid;
+        _block.buffer = buffer === undefined ? undefined : buffer.slice(0);
+        return VfsOperationResult.Ok;
+    }
+
+    private delete_Block(block: VfsId) {
         const _block = this.get_Block(block);
         if (_block === undefined) return VfsOperationResult.InputsInvalid;
         if (_block.handlers.size > 0) return VfsOperationResult.InUsageInvalid;
@@ -199,9 +254,11 @@ export class VirtualFileSystem {
 
     // #region Directory
 
-    public create_Directory() {
+    private create_Directory(name?: string, mode?: VfsMode) {
         const dir = new VfsDirectoryNode(this.vfs_id, this);
         this.add_Node(dir.id, dir);
+        if (name !== undefined) this.set_NodeName(dir.id, name);
+        if (mode !== undefined) this.set_NodeMode(dir.id, mode);
         return dir.id;
     }
 
@@ -209,13 +266,15 @@ export class VirtualFileSystem {
 
     // #region File
 
-    public create_File() {
+    private create_File(name?: string, mode?: VfsMode) {
         const file = new VfsFileNode(this.vfs_id, this);
         this.add_Node(file.id, file);
+        if (name !== undefined) this.set_NodeName(file.id, name);
+        if (mode !== undefined) this.set_NodeMode(file.id, mode);
         return file.id;
     }
 
-    public link_Block(file: VfsId, block: VfsId) {
+    private link_Block(file: VfsId, block: VfsId) {
         const _file = this.get_Node(file);
         if (_file === undefined || !(_file instanceof VfsFileNode) || _file.handler !== undefined || this.is_OrphanNode(_file.id)) return VfsOperationResult.SrcInvalid;
         const _block = this.get_Block(block);
@@ -226,41 +285,341 @@ export class VirtualFileSystem {
         return VfsOperationResult.Ok;
     }
 
-    public unlink_Block(file: VfsId) {
+    private unlink_Block(file: VfsId) {
         const _file = this.get_Node(file);
-        if (_file === undefined || !(_file instanceof VfsFileNode) || this.is_OrphanNode(_file.id) || _file.handler === undefined) return VfsOperationResult.SrcInvalid;
+        if (_file === undefined || !(_file instanceof VfsFileNode) || this.is_OrphanNode(_file.id)) return VfsOperationResult.SrcInvalid;
+        if (_file.handler === undefined) return VfsOperationResult.Ok;
         const hnd = _file.handler;
         _file.handler = undefined;
         return this.close_Handler(hnd);
     }
 
-    public open_File(node: VfsId): Result<VfsId, VfsOperationResult> {
+    private open_File(node: VfsId, mode?: VfsMode, create_block: boolean = false): Result<VfsId, VfsOperationResult> {
         const _node = this.get_Node(node);
-        if (_node === undefined || !(_node instanceof VfsFileNode) || this.is_OrphanNode(_node.id) || _node.handler === undefined) return Result.Error(VfsOperationResult.SrcInvalid);
+        if (_node === undefined || !(_node instanceof VfsFileNode) || this.is_OrphanNode(_node.id)) return Result.Error(VfsOperationResult.SrcInvalid);
+        if (_node.handler === undefined && !create_block) return Result.Error(VfsOperationResult.SrcInvalid);
+        if (_node.handler === undefined) {
+            const __block = this.create_Block();
+            if (this.link_Block(_node.id, __block) !== VfsOperationResult.Ok) return Result.Error(VfsOperationResult.SrcInvalid);
+        }
+        if (_node.handler === undefined) return Result.Error(VfsOperationResult.SrcInvalid);
         const _handler = this.get_Handler(_node.handler);
         if (_handler === undefined) return Result.Error(VfsOperationResult.SrcInvalid);
         const _block = this.get_Block(_handler.block);
+        const _mode = mode !== undefined ? _node.mode & mode : _node.mode;
         if (_block === undefined) return Result.Error(VfsOperationResult.SrcInvalid);
-        return this.create_Handler(_block.id);
+        return this.create_Handler(_block.id, _mode);
     }
 
     // #endregion
 
-    public print(node: VfsId = RootVfsId) {
+    // api
+
+    public lookup(path: FileSystemPath): Result<VfsId, VfsOperationResult> {
+        if (!path.is_valid || !path.is_absolute) return Result.Error(VfsOperationResult.InputsInvalid);
+        let root = VirtualFileSystem.RootVfsId;
+        for (const { item, is_file } of path.get_IgnoredRootIter()) {
+            if (is_file) {
+                const file = this.find_Node(root, item);
+                if (file.failed) return file;
+                root = file.expect();
+            }
+            else {
+                const folder = this.find_Node(root, item);
+                if (folder.failed) return folder;
+                root = folder.expect();
+            }
+        }
+        return Result.Ok(root);
+    }
+
+    public touch(path: FileSystemPath, mode?: VfsMode): Result<VfsId, VfsOperationResult> {
+        if (!path.is_valid || !path.is_absolute) return Result.Error(VfsOperationResult.SrcInvalid);
+        let root = VirtualFileSystem.RootVfsId;
+        for (const { item, is_file } of path.get_IgnoredRootIter()) {
+            if (is_file) {
+                const file = this.find_Node(root, item);
+                if (file.failed) {
+                    const _file = this.create_File(item, mode);
+                    this.attach_Node(_file, root);
+                    root = _file;
+                }
+                else {
+                    root = file.expect();
+                }
+            }
+            else {
+                const folder = this.find_Node(root, item);
+                if (folder.failed) {
+                    const _folder = this.create_Directory(item, mode);
+                    this.attach_Node(_folder, root);
+                    root = _folder;
+                }
+                else {
+                    root = folder.expect();
+                }
+            }
+        }
+        return Result.Ok(root);
+    }
+
+    public remove(path: FileSystemPath): VfsOperationResult {
+        const node = this.lookup(path);
+        if (node.failed) return node.expect_Error();
+        const _node = node.expect();
+        let err;
+        if ((err = this.detach_Node(_node)) !== VfsOperationResult.Ok) return err;
+        if ((err = this.delete_Node(_node)) !== VfsOperationResult.Ok) return err;
+        return VfsOperationResult.Ok;
+    }
+
+    public open(path: FileSystemPath, mode: VfsMode, create_file: boolean = true) {
+        const node = create_file ? this.touch(path, mode) : this.lookup(path);
+        if (node.failed) return node;
+        const _node = node.expect();
+        return this.open_File(_node, mode, true);
+    }
+
+    public close(handler: VfsId) {
+        return this.close_Handler(handler);
+    }
+
+    public rename(path: FileSystemPath, name: string, unique: boolean = true) {
+        const node = this.lookup(path);
+        if (node.failed) return node.expect_Error();
+        const _node = node.expect();
+        if (unique) {
+            // check name's exist
+            const __node = this.get_Node(_node);
+            if (__node === undefined || __node.parent === undefined) return VfsOperationResult.SrcInvalid;
+            const res = this.find_Node(__node.parent, name);
+            if (res.failed) {
+                if (res.expect_Error() !== VfsOperationResult.NotFound) return res.expect_Error();
+            }
+            else {
+                return VfsOperationResult.InputsInvalid;
+            }
+        }
+        // rename
+        return this.set_NodeName(_node, name);
+    }
+
+    public flush(path: FileSystemPath, handler: VfsId, create_file: boolean = false, create_mode?: VfsMode) {
+        const _handler = this.get_Handler(handler);
+        if (_handler === undefined) return VfsOperationResult.InputsInvalid;
+        if (_handler.write_buffer === undefined) return VfsOperationResult.Ok;
+        const node = create_file ? this.touch(path, create_mode) : this.lookup(path);
+        if (node.failed) return node.expect_Error();
+        const _node = node.expect();
+        const _block = this.create_Block();
+        if (this.set_BlockBuffer(_block, _handler.write_buffer) !== VfsOperationResult.Ok) return VfsOperationResult.InputsInvalid;
+        if (this.unlink_Block(_node) !== VfsOperationResult.Ok) return VfsOperationResult.SrcInvalid;
+        if (this.link_Block(_node, _block) !== VfsOperationResult.Ok) return VfsOperationResult.SrcInvalid;
+        if (this.redirect_Handler(_handler.id, _block) !== VfsOperationResult.Ok) return VfsOperationResult.InputsInvalid;
+        return VfsOperationResult.Ok;
+    }
+
+    // public seek(handler: VfsId, offset: number, back: boolean = false): Result<number, VfsOperationResult> {
+    //     const _handler = this.get_Handler(handler);
+    //     if (_handler === undefined) return Result.Error(VfsOperationResult.InputsInvalid);
+    //     const buffer = this.get_HandlerBuffer(handler);
+    //     if (buffer.failed) return Result.Error(buffer.expect_Error());
+    //     const _buffer = buffer.expect();
+    //     if (_buffer === undefined) {
+    //         _handler.buffer_pointer = 0;
+    //         return Result.Error(VfsOperationResult.EmptyInvalid);
+    //     }
+    //     else {
+    //         const byte_length = _buffer.byteLength;
+    //         const _offset = Math.min(byte_length - 1, Math.max(0, !back ? offset : (byte_length - 1 - offset)));
+    //         _handler.buffer_pointer = _offset;
+    //         return Result.Ok(_offset);
+    //     }
+    // }
+
+    public read(handler: VfsId): Result<ArrayBuffer | undefined, VfsOperationResult> {
+        const buffer = this.get_HandlerBuffer(handler);
+        if (buffer.failed) return Result.Error(buffer.expect_Error());
+        const _buffer = buffer.expect();
+        return Result.Ok(_buffer === undefined ? undefined : _buffer.slice(0));
+    }
+
+    public write(handler: VfsId, buffer: ArrayBuffer) {
+        const _handler = this.get_Handler(handler);
+        if (_handler === undefined) return VfsOperationResult.InputsInvalid;
+        _handler.write_buffer = buffer.slice(0);
+        return VfsOperationResult.Ok;
+    }
+
+    // system
+
+    public dump() {
+        let length = 0;
+        const nodes: Map<VfsNode, number> = new Map();
+        const nodes_arr: VfsNode[] = [];
+        let node_idx = 0;
+        length += 4; // nodes count
+        const blocks: Map<VfsBlock, number> = new Map();
+        const blocks_arr: VfsBlock[] = [];
+        let block_idx = 0;
+        length += 4; // block count
+        for (const [id, node] of this.nodes) {
+            if (this.is_OrphanNode(id)) continue;
+            nodes.set(node, node_idx++);
+            nodes_arr.push(node);
+            length += 1; // type
+            length += 4; // name length
+            if (node.name !== undefined) {
+                length += (new TextEncoder().encode(node.name)).byteLength;
+            }
+            if (node instanceof VfsDirectoryNode) {
+                length += 4; // subs count
+                length += node.subs.size * 4; // subs idxs
+            }
+            else if (node instanceof VfsFileNode) {
+                length += 1; // has block
+                if (node.handler !== undefined) {
+                    length += 4; // block id
+                    const _handler = this.get_Handler(node.handler)!;
+                    const block = this.get_Block(_handler.block)!;
+                    blocks.set(block, block_idx++);
+                    blocks_arr.push(block);
+                    length += 4; // block length
+                    if (block.buffer !== undefined) {
+                        length += block.buffer.byteLength;
+                    }
+                }
+            }
+        }
+
+        const little_endian = false;
+
+        const array_buffer = new ArrayBuffer(length);
+        const uint8array = new Uint8Array(array_buffer);
+        const data_view = new DataView(array_buffer);
+
+        let i = 0;
+
+        data_view.setUint32(i, nodes.size, little_endian); i += 4;
+        for (const node of nodes_arr) {
+            data_view.setUint8(i, node instanceof VfsDirectoryNode ? 0 : 1); i += 1; // type
+            if (node.name === undefined) {
+                data_view.setUint32(i, 0, little_endian); i += 4; // name empty
+            }
+            else {
+                const buf = (new TextEncoder().encode(node.name));
+                data_view.setUint32(i, buf.byteLength, little_endian); i += 4; // name length
+                uint8array.set(buf, i); i += buf.byteLength; // name
+            }
+            if (node instanceof VfsDirectoryNode) {
+                data_view.setUint32(i, node.subs.size, little_endian); i += 4; // dir subs count
+                for (const sub of node.subs) {
+                    const _node = this.get_Node(sub)!;
+                    const idx = nodes.get(_node)!;
+                    data_view.setUint32(i, idx, little_endian); i += 4; // subs ids
+                }
+            }
+            else if (node instanceof VfsFileNode) {
+                data_view.setUint8(i, node.handler === undefined ? 0 : 1); i += 1; // has block
+                if (node.handler !== undefined) {
+                    const _handler = this.get_Handler(node.handler)!;
+                    const block = this.get_Block(_handler.block)!;
+                    const block_idx = blocks.get(block)!;
+                    data_view.setUint32(i, block_idx, little_endian); i += 4; // block id
+                }
+            }
+        }
+        data_view.setUint32(i, blocks.size, little_endian); i += 4; // blocks count
+        for (const block of blocks_arr) {
+            data_view.setUint32(i, block.buffer === undefined ? 0 : block.buffer.byteLength, little_endian); i += 4; // block data length
+            if (block.buffer !== undefined) {
+                uint8array.set(new Uint8Array(block.buffer), i); i += block.buffer.byteLength; // block data
+            }
+        }
+
+        return array_buffer;
+    }
+
+    public load(buffer: ArrayBuffer) {
+        const array_buffer = buffer;
+        const uint8array = new Uint8Array(array_buffer);
+        const data_view = new DataView(array_buffer);
+
+        const little_endian = false;
+        let i = 0;
+
+        const node_count = data_view.getUint32(i, little_endian); i += 4;
+        const nodes_arr: [VfsId | undefined, number[] | number][] = [];
+        for (let k = 0; k < node_count; k++) {
+            const type = data_view.getUint8(i); i += 1;
+            const name_length = data_view.getUint32(i, little_endian); i += 4;
+            let name: string | undefined = undefined;
+            if (name_length > 0) {
+                name = (new TextDecoder().decode(new Uint8Array(array_buffer, i, name_length))); i += name_length;
+            }
+            let subs: number[] | number = [];
+            if (type === 0) {
+                const subs_count = data_view.getUint32(i, little_endian); i += 4;
+                for (let j = 0; j < subs_count; j++) {
+                    const subs_idx = data_view.getUint32(i, little_endian); i += 4;
+                    subs.push(subs_idx);
+                }
+            }
+            else {
+                const has_block = data_view.getUint8(i); i += 1;
+                if (has_block) {
+                    const block_idx = data_view.getUint32(i, little_endian); i += 4;
+                    subs = block_idx;
+                }
+            }
+            const _node = k === 0 ? undefined : (type === 0 ? this.create_Directory(name) : this.create_File(name));
+            nodes_arr.push([_node, subs]);
+        }
+
+        const block_count = data_view.getUint32(i, little_endian); i += 4;
+        const blocks_arr: VfsId[] = [];
+        for (let k = 0; k < block_count; k++) {
+            const _block = this.create_Block();
+            blocks_arr.push(_block);
+            const block_length = data_view.getUint32(i, little_endian); i += 4;
+            if (block_length > 0) {
+                const buffer = array_buffer.slice(i, i + block_length); i += block_length;
+                this.set_BlockBuffer(_block, buffer);
+            }
+        }
+
+        for (const [id, subs] of nodes_arr) {
+            if (subs instanceof Array) {
+                for (const sub of subs) {
+                    this.attach_Node(nodes_arr[sub][0]!, id ?? VirtualFileSystem.RootVfsId);
+                }
+            }
+        }
+
+        for (const [id, subs] of nodes_arr) {
+            if (!(subs instanceof Array)) {
+                this.link_Block(id!, blocks_arr[subs]);
+            }
+        }
+    }
+
+    // debug
+
+    public print(node: VfsId = VirtualFileSystem.RootVfsId, line: string = '') {
         const _node = this.get_Node(node);
         if (_node === undefined) return;
         if (_node instanceof VfsFileNode) {
-            console.log(`file(${_node.id})[${_node.name ?? '/'}]`, _node.handler ? ` -> blockhnd(${_node.handler})` : 'empty');
+            console.log(`${line}[${_node.name ?? '/'}]`, _node.handler ? `-> blockhnd(${_node.handler})` : 'empty');
             return;
         }
         else if (_node instanceof VfsDirectoryNode) {
-            console.group(`dir(${_node.id})[${_node.name ?? '/'}]`);
+            console.log(`${line}+ ${_node.name ?? '/'}`);
             for (const i of _node.subs) {
-                this.print(i);
+                this.print(i, `  ${line}`);
             }
-            console.groupEnd();
         }
-        if (node === RootVfsId) {
+        if (node === VirtualFileSystem.RootVfsId) {
+            console.groupCollapsed('');
             console.group('orphan *', this.orphan_nodes.size);
             for (const i of this.orphan_nodes) {
                 this.print(i);
@@ -276,9 +635,12 @@ export class VirtualFileSystem {
                 console.log('block', block.id, [...block.handlers]);
             }
             console.groupEnd();
+            console.groupEnd();
         }
     }
 }
+
+// #region VfsNode 
 
 abstract class VfsNode {
     public id: VfsId;
@@ -287,7 +649,6 @@ abstract class VfsNode {
 
     public parent: VfsId | undefined;
 
-    public user: UserId = SuperUser;
     public mode: VfsMode = VfsMode.None;
 
     constructor(id: VfsId, fs: VirtualFileSystem) {
@@ -310,6 +671,8 @@ class VfsBlock {
 
     public readonly handlers: Set<VfsId> = new Set();
 
+    public buffer: ArrayBuffer | undefined = undefined;
+
     constructor(id: VfsId, fs: VirtualFileSystem) {
         this.id = id;
         this.fs = fs;
@@ -320,60 +683,20 @@ class VfsHandler {
     public id: VfsId;
     public readonly fs: VirtualFileSystem;
 
-    public readonly block: VfsId;
-    
-    public mode: VfsMode = VfsMode.None;
+    public block: VfsId;
 
-    constructor(id: VfsId, fs: VirtualFileSystem, node: VfsId) {
+    public readonly mode: VfsMode;
+
+    public write_buffer: ArrayBuffer | undefined = undefined;
+
+    constructor(id: VfsId, fs: VirtualFileSystem, node: VfsId, mode?: VfsMode) {
         this.id = id;
         this.fs = fs;
         this.block = node;
+        this.mode = mode ?? VfsMode.None;
     }
 }
 
-// const vfs = new VirtualFileSystem();
-// const dir0 = vfs.create_Directory();
-// const dir1 = vfs.create_Directory();
-// vfs.attach_Node(dir0);
-// vfs.attach_Node(dir1, dir0);
+// #endregion
 
-// const file0 = vfs.create_File();
-// vfs.attach_Node(file0, dir1);
-// const file1 = vfs.create_File();
-// vfs.attach_Node(file1, dir0);
-
-// // const handler0 = vfs.open_Node(file0).expect();
-// // const handler1 = vfs.open_Node(file1).expect();
-// // const handler2 = vfs.open_Node(dir0).expect();
-
-// vfs.detach_Node(file1);
-// vfs.detach_Node(dir0);
-// vfs.attach_Node(dir0);
-// vfs.attach_Node(file1, dir0);
-
-// // const handler3 = vfs.open_Node(file1).expect();
-
-// vfs.set_NodeName(dir0, '文件夹1');
-// vfs.set_NodeName(dir1, '文件夹2');
-// vfs.set_NodeName(file0, 'test.lttm');
-// vfs.set_NodeName(file1, 'hello_world');
-
-// const block0 = vfs.create_Block();
-// const block1 = vfs.create_Block();
-
-// vfs.link_Block(file0, block0);
-// vfs.link_Block(file1, block1);
-
-// const handler0 = vfs.open_File(file1).expect();
-
-// vfs.detach_Node(file1);
-// vfs.delete_Node(file1);
-
-// vfs.close_Handler(handler0);
-
-// // exec(vfs.close_Node(handler2));
-
-// // exec(vfs.detach_Node(dir0));
-// // exec(vfs.delete_Node(dir0));
-
-// vfs.print();
+export const VFS = new VirtualFileSystem();

@@ -27,6 +27,8 @@ import { ClassLoader, ClassSaver } from "@/system/engine/classes/saver_loader/Cl
 import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
 import { ImageTextureResource } from "@/system/engine/resources/texture_resources/ImageTextureResource";
 import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
+import { VFS, VfsMode } from "@/system/filesystem/VirtualFileSystem";
+import { fspath } from "@/system/filesystem/FileSystemPath";
 
 const DefaultConfig: Config = {
 	render_server: new RenderServerDevice(document.getElementById('render-server-canvas') as HTMLCanvasElement),
@@ -354,30 +356,32 @@ export function createEditorViewport() {
 	// create_CompassScene();
 }
 
-import obj from 'res://Monkey.obj?raw';
-import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
+import vfs_data from 'res://test.vfs0?url';
+fetch(vfs_data).then(res => {
+	return res.arrayBuffer();
+}).then(array_buffer => {
+	VFS.load(array_buffer);
 
-const obj_loader = new ObjLoader()
-const data0 = obj_loader.parse(obj).expect().enocde(ClassBinaryEncoder).expect();
+	console.time('load');
+	const path = fspath('res://geometries/monkey.lttmbin');
+	const fd1 = VFS.open(path, VfsMode.Read).expect();
+	const data1 = VFS.read(fd1).expect();
+	const load = new ClassLoader(DefaultInstanceCache).load<ArrayGeometryResource, ArrayBuffer, ClassBinaryDecoderOption>(data1!, ClassBinaryDecoder, undefined, { validate: false }).expect();
+	console.timeEnd('load');
 
-console.time('load');
-const load = new ClassLoader(DefaultInstanceCache).load<ArrayGeometryResource, ArrayBuffer, ClassBinaryDecoderOption>(data0, ClassBinaryDecoder, undefined, { validate: false }).expect();
-console.timeEnd('load');
+	// const link = document.createElement('a');
+	// link.style.display = 'none';
+	// document.body.appendChild(link);
+	// const blob = new Blob([data1!], { type: 'application/octet-binary' });
+	// const objectURL = URL.createObjectURL(blob);
+	// link.href = objectURL;
+	// link.download = 'monkey.lttmbin';
+	// link.click();
 
-const mat = new PlainColorMaterialResource(DefaultConfig);
-import image_url from 'res://f-texture.png';
-new ImageLoader().parse(image_url).then(res => {
-	const class_saver = res.expect();
-	const image = class_saver.enocde(ClassBinaryEncoder).expect();
-	const tex = new ClassLoader(DefaultInstanceCache).load(image, ClassBinaryDecoder).expect() as ImageTextureResource;
-	mat.texture = tex;
+	const m = new MeshInstance3D(DefaultConfig);
+	m.geometry = load;
+	m.material = material2;
+	m.local_scale = vec3(100, 100, 100);
+	m.local_position = vec3(-250, 0, -100);
+	World.add_Child(m);
 });
-
-const m = new MeshInstance3D(DefaultConfig);
-m.geometry = load;
-m.material = material2;
-// m.material = new PlainColorMaterialResource(DefaultConfig);
-// (m.material as PlainColorMaterialResource).set_UniformOverride('u_texture', DefaultConfig.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.Empty));
-m.local_scale = vec3(100, 100, 100);
-m.local_position = vec3(-250, 0, -100);
-World.add_Child(m);

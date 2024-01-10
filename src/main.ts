@@ -8,3 +8,4 @@ createApp(App).mount('#app');
 createEditorViewport();
 
 import '@/system/filesystem/VirtualFileSystem';
+import '@/system/filesystem/FileSystemPath';

@@ -32,8 +32,8 @@ export class Result<T, Err> {
     }
 
     public expect() {
-        if (this.ok) return this.item!;
-        throw this.err!;
+        if (this.ok) return this.item! as T;
+        throw this.err! as Err;
     }
 
     public expect_Error() {
