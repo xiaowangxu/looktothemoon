@@ -5,7 +5,7 @@ import { type Config } from "../../ConfiguredObject";
 import { ClassBase } from "./ClassBase";
 import { MeshInstance3D } from "../../nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
 import { Result } from "@/system/utils/Result";
-import { NormalMaterialResource, UVMaterialResource } from "../../resources/material_resources/PrimitiveMaterialResource";
+import { NormalMaterialResource, StandardMaterialResource, UVMaterialResource } from "../../resources/material_resources/PrimitiveMaterialResource";
 import { ArrayGeometryResource } from "../../resources/geometry_resources/ArrayGeometryResource";
 import { ImageTextureResource } from "../../resources/texture_resources/ImageTextureResource";
 
@@ -41,5 +41,6 @@ ClassDB.register_Class(SphereGeometryResource);
 
 ClassDB.register_Class(NormalMaterialResource);
 ClassDB.register_Class(UVMaterialResource);
+ClassDB.register_Class(StandardMaterialResource);
 
 ClassDB.register_Class(ImageTextureResource);

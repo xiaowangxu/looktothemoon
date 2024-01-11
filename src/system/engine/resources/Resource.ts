@@ -57,6 +57,10 @@ export class ResourceInstanceCache extends ConfiguredObject {
         return this.instance_map.get(path)?.expect as T | undefined;
     }
 
+    public has(path: string): boolean {
+        return this.get(path) !== undefined;
+    }
+
     public clear() {
         for (const ref of this.instance_map.values()) {
             ref.clear();

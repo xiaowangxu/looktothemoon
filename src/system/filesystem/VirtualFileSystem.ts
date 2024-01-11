@@ -1,9 +1,10 @@
 import { Result } from "../utils/Result";
-import { fspath, FileSystemPath } from "./FileSystemPath";
+import { type FileSystemPath } from "./FileSystemPath";
+import { save_FileSystem, type FileSystemDataInstance, load_FileSystem } from './fs_saver_loader/FileSystemSaverLoader.mjs';
 
 // #region Const
 
-type VfsId = number;
+export type VfsId = number;
 
 export enum VfsMode {
     None = 0,
@@ -453,153 +454,41 @@ export class VirtualFileSystem {
 
     // system
 
-    public dump() {
-        let length = 0;
-        const nodes: Map<VfsNode, number> = new Map();
-        const nodes_arr: VfsNode[] = [];
-        let node_idx = 0;
-        length += 4; // nodes count
-        const blocks: Map<VfsBlock, number> = new Map();
-        const blocks_arr: VfsBlock[] = [];
-        let block_idx = 0;
-        length += 4; // block count
-        for (const [id, node] of this.nodes) {
-            if (this.is_OrphanNode(id)) continue;
-            nodes.set(node, node_idx++);
-            nodes_arr.push(node);
-            length += 1; // type
-            length += 4; // name length
-            if (node.name !== undefined) {
-                length += (new TextEncoder().encode(node.name)).byteLength;
-            }
-            if (node instanceof VfsDirectoryNode) {
-                length += 4; // subs count
-                length += node.subs.size * 4; // subs idxs
-            }
-            else if (node instanceof VfsFileNode) {
-                length += 1; // has block
-                if (node.handler !== undefined) {
-                    length += 4; // block id
-                    const _handler = this.get_Handler(node.handler)!;
-                    const block = this.get_Block(_handler.block)!;
-                    blocks.set(block, block_idx++);
-                    blocks_arr.push(block);
-                    length += 4; // block length
-                    if (block.buffer !== undefined) {
-                        length += block.buffer.byteLength;
-                    }
-                }
+    public load(data: ArrayBuffer, root_path: FileSystemPath) {
+        const root = this.lookup(root_path);
+        if (root.failed) throw new Error('<VirtualFileSystem> load: root path invalid');
+        const _root = root.expect();
+
+        const nodes_data = load_FileSystem(data);
+        if (nodes_data === undefined) throw new Error('<VirtualFileSystem> load: data invalid');
+        const nodes = [];
+        const file_block_map: Map<VfsId, VfsId> = new Map();
+        for (const { name, is_file, buffer } of nodes_data) {
+            const node = is_file ? this.create_File(name) : this.create_Directory(name);
+            nodes.push(node);
+            if (is_file && buffer !== undefined) {
+                const block = this.create_Block();
+                this.set_BlockBuffer(block, buffer);
+                file_block_map.set(node, block);
             }
         }
-
-        const little_endian = false;
-
-        const array_buffer = new ArrayBuffer(length);
-        const uint8array = new Uint8Array(array_buffer);
-        const data_view = new DataView(array_buffer);
-
+        // build structural
         let i = 0;
-
-        data_view.setUint32(i, nodes.size, little_endian); i += 4;
-        for (const node of nodes_arr) {
-            data_view.setUint8(i, node instanceof VfsDirectoryNode ? 0 : 1); i += 1; // type
-            if (node.name === undefined) {
-                data_view.setUint32(i, 0, little_endian); i += 4; // name empty
+        for (const { is_file, is_root, subs, name } of nodes_data) {
+            const node = nodes[i];
+            if (is_root) {
+                this.attach_Node(node, _root);
             }
-            else {
-                const buf = (new TextEncoder().encode(node.name));
-                data_view.setUint32(i, buf.byteLength, little_endian); i += 4; // name length
-                uint8array.set(buf, i); i += buf.byteLength; // name
-            }
-            if (node instanceof VfsDirectoryNode) {
-                data_view.setUint32(i, node.subs.size, little_endian); i += 4; // dir subs count
-                for (const sub of node.subs) {
-                    const _node = this.get_Node(sub)!;
-                    const idx = nodes.get(_node)!;
-                    data_view.setUint32(i, idx, little_endian); i += 4; // subs ids
-                }
-            }
-            else if (node instanceof VfsFileNode) {
-                data_view.setUint8(i, node.handler === undefined ? 0 : 1); i += 1; // has block
-                if (node.handler !== undefined) {
-                    const _handler = this.get_Handler(node.handler)!;
-                    const block = this.get_Block(_handler.block)!;
-                    const block_idx = blocks.get(block)!;
-                    data_view.setUint32(i, block_idx, little_endian); i += 4; // block id
-                }
-            }
-        }
-        data_view.setUint32(i, blocks.size, little_endian); i += 4; // blocks count
-        for (const block of blocks_arr) {
-            data_view.setUint32(i, block.buffer === undefined ? 0 : block.buffer.byteLength, little_endian); i += 4; // block data length
-            if (block.buffer !== undefined) {
-                uint8array.set(new Uint8Array(block.buffer), i); i += block.buffer.byteLength; // block data
-            }
-        }
-
-        return array_buffer;
-    }
-
-    public load(buffer: ArrayBuffer) {
-        const array_buffer = buffer;
-        const uint8array = new Uint8Array(array_buffer);
-        const data_view = new DataView(array_buffer);
-
-        const little_endian = false;
-        let i = 0;
-
-        const node_count = data_view.getUint32(i, little_endian); i += 4;
-        const nodes_arr: [VfsId | undefined, number[] | number][] = [];
-        for (let k = 0; k < node_count; k++) {
-            const type = data_view.getUint8(i); i += 1;
-            const name_length = data_view.getUint32(i, little_endian); i += 4;
-            let name: string | undefined = undefined;
-            if (name_length > 0) {
-                name = (new TextDecoder().decode(new Uint8Array(array_buffer, i, name_length))); i += name_length;
-            }
-            let subs: number[] | number = [];
-            if (type === 0) {
-                const subs_count = data_view.getUint32(i, little_endian); i += 4;
-                for (let j = 0; j < subs_count; j++) {
-                    const subs_idx = data_view.getUint32(i, little_endian); i += 4;
-                    subs.push(subs_idx);
-                }
-            }
-            else {
-                const has_block = data_view.getUint8(i); i += 1;
-                if (has_block) {
-                    const block_idx = data_view.getUint32(i, little_endian); i += 4;
-                    subs = block_idx;
-                }
-            }
-            const _node = k === 0 ? undefined : (type === 0 ? this.create_Directory(name) : this.create_File(name));
-            nodes_arr.push([_node, subs]);
-        }
-
-        const block_count = data_view.getUint32(i, little_endian); i += 4;
-        const blocks_arr: VfsId[] = [];
-        for (let k = 0; k < block_count; k++) {
-            const _block = this.create_Block();
-            blocks_arr.push(_block);
-            const block_length = data_view.getUint32(i, little_endian); i += 4;
-            if (block_length > 0) {
-                const buffer = array_buffer.slice(i, i + block_length); i += block_length;
-                this.set_BlockBuffer(_block, buffer);
-            }
-        }
-
-        for (const [id, subs] of nodes_arr) {
-            if (subs instanceof Array) {
+            if (!is_file && subs !== undefined) {
                 for (const sub of subs) {
-                    this.attach_Node(nodes_arr[sub][0]!, id ?? VirtualFileSystem.RootVfsId);
+                    this.attach_Node(nodes[sub], node);
                 }
             }
+            i++;
         }
-
-        for (const [id, subs] of nodes_arr) {
-            if (!(subs instanceof Array)) {
-                this.link_Block(id!, blocks_arr[subs]);
-            }
+        // load data
+        for (const [file, block] of file_block_map) {
+            this.link_Block(file, block);
         }
     }
 

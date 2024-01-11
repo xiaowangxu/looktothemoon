@@ -3,9 +3,11 @@ import { Result } from '../../../utils/Result';
 import { ClassBase } from "../class_database/ClassBase";
 import { ClassDB, type ClassDatabase } from '../class_database/ClassDatabase';
 import { ClassReader, ClassRef, ClassWriter } from './ClassWriterReader';
-import { load_ResFile_from_Path } from 'res://ResFiles';
 import { ResourceBase, ResourceInstanceCache } from '../../resources/Resource';
 import { ClassDecoder, type ClassEncoder } from './encoder_decoders/ClassEncoderDecoder';
+import { fspath } from '@/system/filesystem/FileSystemPath';
+import { VFS, VfsMode, VfsOperationResult } from '@/system/filesystem/VirtualFileSystem';
+import { ClassBinaryDecoder, ClassBinaryEncoder } from './encoder_decoders/ClassBinaryEncoderDecoder';
 
 export type RefId = number;
 
@@ -28,6 +30,38 @@ export type ClassExchangeData = { root: RefId, instances: ClassInstanceData[] };
 
 export interface ClassSaverOption {
     static?: boolean,
+}
+
+function save_File(path: string, data: ArrayBuffer): Result<undefined, Error> {
+    const p = fspath(path);
+    if (!p.is_valid) {
+        return Result.Error(new Error(`<save_File> : path is invalid`));
+    }
+    const _hnd = VFS.open(p, VfsMode.Write, true);
+    if (_hnd.failed) {
+        return Result.Error(new Error(`<save_File> : fail to open file ${p.path}`));
+    }
+    const hnd = _hnd.expect();
+    if (VFS.write(hnd, data) !== VfsOperationResult.Ok) {
+        VFS.close(hnd);
+        return Result.Error(new Error(`<save_File> : fail to write file ${p.path}`));
+    }
+    if (VFS.flush(p, hnd, false) !== VfsOperationResult.Ok) {
+        VFS.close(hnd);
+        return Result.Error(new Error(`<save_File> : fail to write file ${p.path}`));
+    }
+    VFS.close(hnd);
+    return Result.Ok(undefined);
+}
+
+function download_File(name: string, data: ArrayBuffer) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(
+        [data],
+        { type: 'application/octet-stream' }
+    ));
+    a.download = name;
+    a.click();
 }
 
 export class ClassSaver {
@@ -145,31 +179,41 @@ export class ClassSaver {
         this.static_mode = option?.static ?? false;
     }
 
-    public dump(obj: ClassBase, option?: ClassSaverOption): Result<undefined, Error> {
+    public enocde<T, Option>(data: ClassExchangeData, encoder: typeof ClassEncoder<T, Option>, option?: Option): Result<T, Error> {
+        const _encoder = new (encoder)(data, option);
+        return _encoder.encode();
+    }
+
+    public save(obj: ClassBase, path: string, save_option?: ClassSaverOption): Result<undefined, Error> {
+        const res = this.dump(obj, ClassBinaryEncoder, save_option);
+        if (res.failed) return Result.Error(res.expect_Error());
+        const data = res.expect();
+        const p = fspath(path);
+        if (!p.is_valid || !p.is_absolute || !p.is_file) return Result.Error(new Error(`<ClassSaver> save: path ${path} is not valid`));
+        if (p.routers[1] !== undefined && p.routers[1] === 'download') {
+            if (p.routers.length > 3 || p.routers[2] === undefined) return Result.Error(new Error(`<ClassSaver> save: path ${path} is not valid`));
+            download_File(p.routers[2], data);
+            return Result.Ok(undefined);
+        }
+        const save = save_File(path, data);
+        if (save.failed) return save;
+        return Result.Ok(undefined);
+    }
+
+    private dump<T, Option>(obj: ClassBase, encoder: typeof ClassEncoder<T, Option>, option?: ClassSaverOption, encode_option?: Option): Result<T, Error> {
         this.init(option);
         try {
             const refid_res = this.create_Instance(obj, true);
             if (refid_res.failed) return Result.Error(refid_res.expect_Error());
             this.set_Root(refid_res.expect());
             this.dump_Instance(obj, true);
-            return Result.Ok(undefined);
+            const data = this.get_Data();
+            if (data.failed) return Result.Error(data.expect_Error());
+            return this.enocde(data.expect(), encoder, encode_option);
         }
         catch (err) {
             return Result.Error(err as Error);
         }
-    }
-
-    public enocde<T, Option>(encoder: typeof ClassEncoder<T, Option>, option?: Option): Result<T, Error> {
-        const data = this.get_Data();
-        if (data.failed) return Result.Error(data.expect_Error());
-        const _encoder = new (encoder)(data.expect(), option);
-        return _encoder.encode();
-    }
-
-    public save<T, Option>(obj: ClassBase, encoder: typeof ClassEncoder<T, Option>, save_option?: ClassSaverOption, encode_option?: Option): Result<T, Error> {
-        const error = this.dump(obj, save_option);
-        if (error.failed) return Result.Error(error.expect_Error());
-        return this.enocde(encoder, encode_option);
     }
 }
 
@@ -180,6 +224,31 @@ export class ClassSaver {
 export interface ClassLoaderOption {
     disable_use_cache?: boolean,
     disable_store_cache?: boolean,
+}
+
+function load_File(path: string): Result<ArrayBuffer, Error> {
+    const p = fspath(path);
+    if (!p.is_valid) {
+        return Result.Error(new Error(`<load_File> : path is invalid`));
+    }
+    const _hnd = VFS.open(p, VfsMode.Read, false);
+    if (_hnd.failed) {
+        return Result.Error(new Error(`<load_File> : fail to open file ${p.path}`));
+    }
+    const hnd = _hnd.expect();
+    const data = VFS.read(hnd);
+    if (data.failed) {
+        VFS.close(hnd);
+        return Result.Error(new Error(`<load_File> : fail to read file ${p.path}`));
+    }
+    const d = data.expect();
+    if (d === undefined) {
+        VFS.close(hnd);
+        return Result.Error(new Error(`<load_File> : file ${p.path} is empty`));
+    }
+
+    VFS.close(hnd);
+    return Result.Ok(d);
 }
 
 export class ClassLoader {
@@ -230,7 +299,7 @@ export class ClassLoader {
     }
 
     private get_InstanceInternalPath(path: string, instance: ClassInstanceData) {
-        return `${path}/${instance.type}(${instance.refid})`;
+        return `${path}:${instance.type}(${instance.refid})`;
     }
 
     private init(option?: ClassLoaderOption) {
@@ -287,18 +356,23 @@ export class ClassLoader {
                 the_instance.unique ||= unique;
             }
         }
+        // return root instance
+        const root_instance = this.get_Instance(root_refid.refid);
         // load external resources
         for (const external of externals) {
-            const res = this.parse_ExternalInstance(external);
-            if (res.failed) return Result.Error(res.expect_Error());
+            if (external.external !== undefined && path !== undefined && external.external === path) {
+                return Result.Error(new Error('<ClassLoader> parse@external: sub external file instance is its owner, this is not possible'));
+            }
+            else {
+                const res = this.parse_ExternalInstance(external);
+                if (res.failed) return Result.Error(res.expect_Error());
+            }
         }
         // load instance properties
         for (const { external, instance, property } of this.refid_instance_map.values()) {
             if (external || property === undefined) continue;
             this.load_InstanceProperty(instance, property);
         }
-        // return root instance
-        const root_instance = this.get_Instance(root_refid.refid);
         if (root_instance === undefined) return Result.Error(new Error('<ClassLoader> parse: fail to load root instance'));
         return Result.Ok(root_instance as T);
     }
@@ -310,15 +384,14 @@ export class ClassLoader {
 
     // main apis
 
-    public fetch<T extends ClassBase, D, Option>(path: string, decoder?: typeof ClassDecoder<D, Option>, load_option?: ClassLoaderOption, decode_option?: Option): Result<T, Error> {
+    public fetch<T extends ClassBase>(path: string, load_option?: ClassLoaderOption): Result<T, Error> {
         const cache = this.resource_instance_cache.get<ResourceBase>(path);
         if (cache !== undefined) return Result.Ok((cache as unknown) as T);
-        const file = load_ResFile_from_Path(path);
+        const file = load_File(path);
         if (file.failed) return Result.Error(file.expect_Error());
-        throw new Error("fetch not impl");
-        // const decoded = this.decode(file.expect() as any, decoder, decode_option);
-        // if (decoded.failed) return Result.Error(decoded.expect_Error());
-        // return this.parse<T>(decoded.expect(), path, load_option);
+        const decoded = this.decode(file.expect(), ClassBinaryDecoder, { validate: false });
+        if (decoded.failed) return Result.Error(decoded.expect_Error());
+        return this.parse<T>(decoded.expect(), path, load_option);
     }
 
     public load<T extends ClassBase, D, Option>(data: D, decoder: typeof ClassDecoder<D, Option>, load_option?: ClassLoaderOption, decode_option?: Option): Result<T, Error> {

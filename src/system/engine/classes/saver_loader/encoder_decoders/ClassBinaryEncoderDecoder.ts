@@ -23,7 +23,7 @@ import { Box3 } from "@/system/fivepebble/geometries/Box3";
 // |                                                ...instances                                                   |               |------ body region
 // |-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------| --------------+
 
-const MaxFileSizeInMB = 10;
+const InitialFileByteLength = 512;
 const Version0 = 0;
 const Version1 = 0;
 const Version2 = 1;
@@ -34,7 +34,7 @@ const BodyOffset = MD5HashOffset + 16 + 16;
 type TypedArrayBufferView = Uint8Array | Uint16Array | Uint32Array | Int8Array | Int16Array | Int32Array | Float32Array | Float64Array;
 type TypedArrayBufferViewConstructor = typeof Uint8Array | typeof Uint16Array | typeof Uint32Array | typeof Int8Array | typeof Int16Array | typeof Int32Array | typeof Float32Array | typeof Float64Array;
 
-export type ClassBinaryEncoderOption = { little_endian?: boolean, max_byte_size?: number };
+export type ClassBinaryEncoderOption = { little_endian?: boolean };
 
 export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEncoderOption> {
 
@@ -56,9 +56,9 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEnc
         return ClassBinaryEncoder.#md5_array_buffer;
     }
 
-    private readonly array_buffer;
-    private readonly data_view;
-    private readonly uint8array;
+    private array_buffer;
+    private data_view;
+    private uint8array;
 
     private byte_pointer: number = 0;
 
@@ -68,7 +68,7 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEnc
 
     constructor(data: ClassExchangeData, option?: ClassBinaryEncoderOption) {
         super(data);
-        this.array_buffer = new ArrayBuffer(option?.max_byte_size ?? (MaxFileSizeInMB * 1024 * 1024));
+        this.array_buffer = new ArrayBuffer(InitialFileByteLength);
         this.data_view = new DataView(this.array_buffer);
         this.uint8array = new Uint8Array(this.array_buffer);
         // options
@@ -85,17 +85,33 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEnc
 
     // #region Base Api
 
+    private ensure_AppendSize(size: number) {
+        const byte_length = this.array_buffer.byteLength;
+        if (this.byte_pointer + size > byte_length) {
+            const appened_size = this.byte_pointer + size;
+            const new_size = appened_size < 1024 ? 1024 : (appened_size * 2);
+            const uint_array = this.uint8array;
+            this.array_buffer = new ArrayBuffer(new_size);
+            this.data_view = new DataView(this.array_buffer);
+            this.uint8array = new Uint8Array(this.array_buffer);
+            this.uint8array.set(uint_array, 0);
+        }
+    }
+
     private skip_Bytes(count: number) {
+        this.ensure_AppendSize(count);
         this.byte_pointer += count;
     }
 
     private append_RawArrayBuffer(value: Uint8Array) {
+        this.ensure_AppendSize(value.byteLength);
         this.uint8array.set(value, this.byte_pointer);
         this.byte_pointer += value.byteLength;
     }
 
     private append_SizedArrayBuffer(value: Uint8Array) {
         this.append_Uint32(value.byteLength);
+        this.ensure_AppendSize(value.byteLength);
         this.uint8array.set(value, this.byte_pointer);
         this.byte_pointer += value.byteLength;
     }
@@ -103,26 +119,31 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEnc
     private append_TypedArray(value: TypedArrayBufferView) {
         this.append_Uint32(value.byteLength);
         const uint8array = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+        this.ensure_AppendSize(value.byteLength);
         this.uint8array.set(uint8array, this.byte_pointer);
         this.byte_pointer += value.byteLength;
     }
 
     private append_Byte(value: number) {
+        this.ensure_AppendSize(1);
         this.data_view.setUint8(this.byte_pointer, value);
         this.byte_pointer += 1;
     }
 
     private append_Uint32(value: number) {
+        this.ensure_AppendSize(4);
         this.data_view.setUint32(this.byte_pointer, value, this.little_endian);
         this.byte_pointer += 4;
     }
 
     private append_Uint64(value: bigint) {
+        this.ensure_AppendSize(8);
         this.data_view.setBigUint64(this.byte_pointer, value, this.little_endian);
         this.byte_pointer += 8;
     }
 
     private append_Float64(value: number) {
+        this.ensure_AppendSize(8);
         this.data_view.setFloat64(this.byte_pointer, value, this.little_endian);
         this.byte_pointer += 8;
     }
@@ -132,6 +153,7 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEnc
     private append_String(value: string) {
         const uint8array = new TextEncoder().encode(value);
         this.append_Uint32(uint8array.byteLength);
+        this.ensure_AppendSize(uint8array.byteLength);
         this.uint8array.set(uint8array, this.byte_pointer);
         this.byte_pointer += uint8array.byteLength;
     }
@@ -140,6 +162,7 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEnc
         if (!ClassBinaryEncoder.is_Ascii(value)) throw new Error(`<ClassBinaryEncoder> append_AsciiString: string "${value}" is not valid ascii string`);
         const ascii = `${value}\0`;
         const uint8array = new TextEncoder().encode(ascii);
+        this.ensure_AppendSize(uint8array.byteLength);
         this.uint8array.set(uint8array, this.byte_pointer);
         this.byte_pointer += uint8array.byteLength;
     }

@@ -159,6 +159,7 @@ import { SpotLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/li
 import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { ClassBinaryDecoder, ClassBinaryEncoder, type ClassBinaryDecoderOption } from "@/system/engine/classes/saver_loader/encoder_decoders/ClassBinaryEncoderDecoder";
 import { ArrayGeometryResource } from "@/system/engine/resources/geometry_resources/ArrayGeometryResource";
+import { FileAccess } from "@/system/filesystem/FileAccess";
 
 const Mesh1 = new MeshInstance3D(DefaultConfig);
 Mesh1.geometry = multi_geometry;
@@ -354,34 +355,9 @@ signal.connect((action) => {
 export function createEditorViewport() {
 	EditorSceneTree.start_Loop();
 	// create_CompassScene();
+	const mesh0 = new ClassLoader(DefaultInstanceCache).fetch<MeshInstance3D>('sys://MonkeyMesh.lttmbin').expect();
+	mesh0.local_position = vec3(-250, 0, -100);
+	World.add_Child(mesh0);
+
+	// new ClassSaver().save(monkey_mesh2, "download://test.lttmbin").expect();
 }
-
-import vfs_data from 'res://test.vfs0?url';
-fetch(vfs_data).then(res => {
-	return res.arrayBuffer();
-}).then(array_buffer => {
-	VFS.load(array_buffer);
-
-	console.time('load');
-	const path = fspath('res://geometries/monkey.lttmbin');
-	const fd1 = VFS.open(path, VfsMode.Read).expect();
-	const data1 = VFS.read(fd1).expect();
-	const load = new ClassLoader(DefaultInstanceCache).load<ArrayGeometryResource, ArrayBuffer, ClassBinaryDecoderOption>(data1!, ClassBinaryDecoder, undefined, { validate: false }).expect();
-	console.timeEnd('load');
-
-	// const link = document.createElement('a');
-	// link.style.display = 'none';
-	// document.body.appendChild(link);
-	// const blob = new Blob([data1!], { type: 'application/octet-binary' });
-	// const objectURL = URL.createObjectURL(blob);
-	// link.href = objectURL;
-	// link.download = 'monkey.lttmbin';
-	// link.click();
-
-	const m = new MeshInstance3D(DefaultConfig);
-	m.geometry = load;
-	m.material = material2;
-	m.local_scale = vec3(100, 100, 100);
-	m.local_position = vec3(-250, 0, -100);
-	World.add_Child(m);
-});
