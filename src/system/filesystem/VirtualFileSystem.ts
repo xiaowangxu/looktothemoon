@@ -1,5 +1,5 @@
 import { Result } from "../utils/Result";
-import { type FileSystemPath } from "./FileSystemPath";
+import { FileSystemPath } from "./FileSystemPath";
 import { save_FileSystem, type FileSystemDataInstance, load_FileSystem } from './fs_saver_loader/FileSystemSaverLoader.mjs';
 
 // #region Const
@@ -420,24 +420,6 @@ export class VirtualFileSystem {
         return VfsOperationResult.Ok;
     }
 
-    // public seek(handler: VfsId, offset: number, back: boolean = false): Result<number, VfsOperationResult> {
-    //     const _handler = this.get_Handler(handler);
-    //     if (_handler === undefined) return Result.Error(VfsOperationResult.InputsInvalid);
-    //     const buffer = this.get_HandlerBuffer(handler);
-    //     if (buffer.failed) return Result.Error(buffer.expect_Error());
-    //     const _buffer = buffer.expect();
-    //     if (_buffer === undefined) {
-    //         _handler.buffer_pointer = 0;
-    //         return Result.Error(VfsOperationResult.EmptyInvalid);
-    //     }
-    //     else {
-    //         const byte_length = _buffer.byteLength;
-    //         const _offset = Math.min(byte_length - 1, Math.max(0, !back ? offset : (byte_length - 1 - offset)));
-    //         _handler.buffer_pointer = _offset;
-    //         return Result.Ok(_offset);
-    //     }
-    // }
-
     public read(handler: VfsId): Result<ArrayBuffer | undefined, VfsOperationResult> {
         const buffer = this.get_HandlerBuffer(handler);
         if (buffer.failed) return Result.Error(buffer.expect_Error());
@@ -452,29 +434,142 @@ export class VirtualFileSystem {
         return VfsOperationResult.Ok;
     }
 
+    public list(dir: VfsId): Result<VfsId[], VfsOperationResult>;
+    public list(path: FileSystemPath): Result<VfsId[], VfsOperationResult>;
+    public list(src: VfsId | FileSystemPath): Result<VfsId[], VfsOperationResult> {
+        if (src instanceof FileSystemPath) {
+            const _src = this.lookup(src);
+            if (_src.failed) return Result.Error(_src.expect_Error());
+            src = _src.expect();
+        }
+        const dir = this.get_Node(src);
+        if (dir === undefined || !(dir instanceof VfsDirectoryNode)) return Result.Error(VfsOperationResult.SrcInvalid);
+        return Result.Ok([...dir.subs]);
+    }
+
+    public is_Directory(dir: VfsId): boolean;
+    public is_Directory(path: FileSystemPath): boolean;
+    public is_Directory(src: VfsId | FileSystemPath): boolean {
+        if (src instanceof FileSystemPath) {
+            const _src = this.lookup(src);
+            if (_src.failed) return false;
+            src = _src.expect();
+        }
+        const dir = this.get_Node(src);
+        if (dir === undefined || !(dir instanceof VfsDirectoryNode)) return false;
+        return true;
+    }
+
+    public is_File(dir: VfsId): boolean;
+    public is_File(path: FileSystemPath): boolean;
+    public is_File(src: VfsId | FileSystemPath): boolean {
+        if (src instanceof FileSystemPath) {
+            const _src = this.lookup(src);
+            if (_src.failed) return false;
+            src = _src.expect();
+        }
+        const dir = this.get_Node(src);
+        if (dir === undefined || !(dir instanceof VfsFileNode)) return false;
+        return true;
+    }
+
     // system
+
+    public dump(root_path: FileSystemPath) {
+        const root = this.lookup(root_path);
+        if (root.failed) throw new Error('<VirtualFileSystem> load: root path invalid');
+
+        const nodes: FileSystemDataInstance[] = [];
+        const blocks: ArrayBuffer[] = [];
+
+        const walk = (path: VfsId, root = false) => {
+            const dir = this.list(path);
+            if (dir.failed) return;
+
+            const subs = [];
+
+            for (const d of dir.expect()) {
+                const node = this.get_Node(d);
+                if (node === undefined) continue;
+
+                const name = node.name;
+
+                const is_file = this.is_File(d);
+                const is_dir = this.is_Directory(d);
+
+                if (is_file) {
+                    const idx = nodes.length;
+                    let buffer = undefined;
+                    if ((node as VfsFileNode).handler !== undefined) {
+                        const _buffer = this.get_HandlerBuffer((node as VfsFileNode).handler!);
+                        if (_buffer.failed || _buffer.expect() === undefined) {}
+                        else {
+                            buffer = _buffer.expect()!.slice(0);
+                        }
+                    }
+                    const buffer_idx = blocks.length;
+                    if (buffer !== undefined) blocks.push(buffer);
+                    nodes.push({
+                        name: name,
+                        is_file: true,
+                        is_root: root,
+                        buffer: buffer !== undefined ? buffer_idx : undefined,
+                        subs: undefined,
+                    });
+                    subs.push(idx);
+                }
+                else if (is_dir) {
+                    const idx = nodes.length;
+                    nodes.push({
+                        name: name,
+                        is_file: false,
+                        is_root: root,
+                        buffer: undefined,
+                        subs: walk(d, false),
+                    });
+                    subs.push(idx);
+                }
+            }
+            return subs;
+        }
+
+        walk(root.expect(), true);
+
+        return save_FileSystem(nodes, blocks);
+    }
 
     public load(data: ArrayBuffer, root_path: FileSystemPath) {
         const root = this.lookup(root_path);
         if (root.failed) throw new Error('<VirtualFileSystem> load: root path invalid');
         const _root = root.expect();
 
-        const nodes_data = load_FileSystem(data);
-        if (nodes_data === undefined) throw new Error('<VirtualFileSystem> load: data invalid');
+        const _data = load_FileSystem(data);
+        if (_data === undefined) throw new Error('<VirtualFileSystem> load: data invalid');
+
+        const { nodes: nodes_data, blocks: blocks_data } = _data;
+
+        // nodes
         const nodes = [];
-        const file_block_map: Map<VfsId, VfsId> = new Map();
+        const file_block_map: Map<VfsId, number> = new Map();
         for (const { name, is_file, buffer } of nodes_data) {
             const node = is_file ? this.create_File(name) : this.create_Directory(name);
             nodes.push(node);
             if (is_file && buffer !== undefined) {
-                const block = this.create_Block();
-                this.set_BlockBuffer(block, buffer);
-                file_block_map.set(node, block);
+                file_block_map.set(node, buffer);
             }
         }
+
+        // blocks
+        const blocks = [];
+        for (const buffer of blocks_data) {
+            const block = this.create_Block();
+            this.set_BlockBuffer(block, buffer);
+            blocks.push(block);
+        }
+
         // build structural
         let i = 0;
-        for (const { is_file, is_root, subs, name } of nodes_data) {
+        for (const { is_file, is_root, subs } of nodes_data) {
             const node = nodes[i];
             if (is_root) {
                 this.attach_Node(node, _root);
@@ -486,9 +581,10 @@ export class VirtualFileSystem {
             }
             i++;
         }
+
         // load data
         for (const [file, block] of file_block_map) {
-            this.link_Block(file, block);
+            this.link_Block(file, blocks[block]);
         }
     }
 

@@ -54,7 +54,7 @@ function save_File(path: string, data: ArrayBuffer): Result<undefined, Error> {
     return Result.Ok(undefined);
 }
 
-function download_File(name: string, data: ArrayBuffer) {
+export function download_File(name: string, data: ArrayBuffer) {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob(
         [data],

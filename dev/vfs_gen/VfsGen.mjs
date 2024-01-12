@@ -22,6 +22,7 @@ console.log(`${chalk.bold.greenBright('[ building vfs data ]')}\n`);
  * @type {FileSystemDataInstance[]}
  */
 const nodes = [];
+const blocks = [];
 
 function get_FileBuffer(path) {
     const ext = extname(path).toLowerCase();
@@ -55,11 +56,13 @@ function walk(path, root = false, header = '') {
             const buffer = get_FileBuffer(rel_path);
             console.log(`${`${header}> file : ${name} `.padEnd(60, '.')} ${buffer !== undefined ? chalk.greenBright(`loaded ${get_MemorySize(buffer.byteLength)}`) : chalk.red('ignored')}`);
             if (buffer === undefined) continue;
+            const buffer_idx = blocks.length;
+            blocks.push(buffer);
             nodes.push({
                 name: name,
                 is_file: true,
                 is_root: root,
-                buffer: buffer,
+                buffer: buffer_idx,
                 subs: undefined,
             });
             subs.push(idx);
@@ -87,10 +90,23 @@ walk(base_path, true);
 console.log(`\nloaded ${dirs_count} dir(s), ${files_count} file(s)`);
 
 console.log(`${chalk.bold.blueBright('\n[ encoding data ]')}\n`);
-const buffer = save_FileSystem(nodes);
+const buffer = save_FileSystem(nodes, blocks);
 
 console.log(`${chalk.bold.blueBright(`[ write to ${out_path} file ]`)}\n`);
 writeFileSync(out_path, new Uint8Array(buffer));
 console.log(`write to ${out_path} with ${get_MemorySize(buffer.byteLength)}\n`);
+
+// async function compress_Blob(blob) {
+//     console.log(blob);
+//     const ds = new CompressionStream("deflate");
+//     const stream = blob.stream().pipeThrough(ds);
+//     return await new Response(stream).arrayBuffer();
+// }
+
+// import { Blob } from 'buffer';
+// const compressed = await compress_Blob(new Blob([buffer], {type:'application/octet-stream'}));
+// console.log(compressed);
+// writeFileSync(`${out_path}.gz`, new Uint8Array(compressed));
+// console.log(`write to ${out_path}.gz with ${get_MemorySize(compressed.byteLength)}\n`);
 
 console.log(`${chalk.bold.greenBright('[ ok ]')}\n`);

@@ -13,7 +13,7 @@ import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds
 import { BoxGeometryResource, CylinderGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
 import { NormalMaterialResource, PlainColorMaterialResource, UVMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { color, color8 } from "@/system/fivepebble/graphics/Color";
-import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
+import { Euler, euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
@@ -23,7 +23,7 @@ import { MultiLineMaterialResource } from "@/system/engine/resources/material_re
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { RenderServerDevice, RenderServerPlainColorTexture } from "@/system/engine/render_server/RenderServer";
 import { StandardMaterialResource } from "../system/engine/resources/material_resources/PrimitiveMaterialResource";
-import { ClassLoader, ClassSaver } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
+import { ClassLoader, ClassSaver, download_File } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
 import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
 import { ImageTextureResource } from "@/system/engine/resources/texture_resources/ImageTextureResource";
 import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
@@ -160,6 +160,7 @@ import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { ClassBinaryDecoder, ClassBinaryEncoder, type ClassBinaryDecoderOption } from "@/system/engine/classes/saver_loader/encoder_decoders/ClassBinaryEncoderDecoder";
 import { ArrayGeometryResource } from "@/system/engine/resources/geometry_resources/ArrayGeometryResource";
 import { FileAccess } from "@/system/filesystem/FileAccess";
+import { Pi } from "@/system/fivepebble/Scalar";
 
 const Mesh1 = new MeshInstance3D(DefaultConfig);
 Mesh1.geometry = multi_geometry;
@@ -359,5 +360,6 @@ export function createEditorViewport() {
 	mesh0.local_position = vec3(-250, 0, -100);
 	World.add_Child(mesh0);
 
-	// new ClassSaver().save(monkey_mesh2, "download://test.lttmbin").expect();
+	// const mesh1 = new ClassLoader(DefaultInstanceCache).fetch<MeshInstance3D>('res://test.lttmbin').expect();
+	// World.add_Child(mesh1);
 }

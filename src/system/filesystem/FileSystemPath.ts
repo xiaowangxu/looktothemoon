@@ -14,11 +14,35 @@ export class FileSystemPath {
         return this.is_valid && this.routers[0] === FileSystemPath.Root;
     }
     public get path() {
-        if (this.routers.length === 0) return '';
+        if (!this.is_valid) return '';
         if (this.routers[0] === FileSystemPath.Root) return `/${this.routers.slice(1).join('/')}`;
         return this.routers.join('/');
     }
     public readonly is_file: boolean;
+    public get dir() {
+        if (!this.is_valid) return '';
+        if (this.is_file) {
+            if (this.routers[0] === FileSystemPath.Root) return `/${this.routers.slice(1, -1).join('/')}`;
+            return this.routers.slice(0, -1).join('/');
+        }
+        else return this.path;
+    }
+    public get name() {
+        if (!this.is_valid) return '';
+        const last = this.routers[this.routers.length - 1];
+        if (this.is_file) {
+            const items = last.split('.');
+            return items.slice(0, -1).join('.');
+        }
+        else {
+            return last;
+        }
+    }
+    public get ext() {
+        if (!this.is_valid || !this.is_file) return '';
+        const last = this.routers[this.routers.length - 1];
+        return last.slice(last.lastIndexOf('.'));
+    }
 
     *[Symbol.iterator]() {
         if (!this.is_valid) return;
@@ -63,7 +87,7 @@ export class FileSystemPath {
         }
     }
 
-    static #path_regax = /^((?<dir>([\w_]+:\/\/|\/)))?(?<parent>(([\w]+|\.{1,2})\/)*)((?<file>[\w]*)(\.(?<filetype>[\w]+))?|(?<folder>\.{1,2}))?$/;
+    static #path_regax = /^((?<dir>([^\/^\s^\.]+:\/\/|\/)))?(?<parent>(([^\/^\s^\.]+|\.{1,2})\/)*)((?<file>[^\/^\s^\.]*(\.[^\/^\s^\.]+)*)|(?<folder>\.{1,2}))?$/;
 
     public static from_Path(path: string) {
         const result = FileSystemPath.#path_regax.exec(path);
@@ -105,3 +129,22 @@ export function fspath(path: string, base?: string): FileSystemPath {
     if (base === undefined) return FileSystemPath.from_Path(path);
     return FileSystemPath.merge(FileSystemPath.from_Path(base), FileSystemPath.from_Path(path))
 }
+
+// test
+let p0;
+
+p0 = fspath('res://test/a/b/c.ignore.txt');
+console.log('res://test/a/b/c.ignore.txt');
+console.log('v', p0.is_valid, 'if', p0.is_file, 'abs', p0.is_absolute, 'dir:', p0.dir, 'name:', p0.name, 'ext:', p0.ext);
+
+p0 = fspath('/usr/share/ovirt_plugin/password-test.ignore.txt');
+console.log('/usr/share/ovirt_plugin/password-test.ignore.txt');
+console.log('v', p0.is_valid, 'if', p0.is_file, 'abs', p0.is_absolute, 'dir:', p0.dir, 'name:', p0.name, 'ext:', p0.ext);
+
+p0 = fspath('res://test/a/.././test/a');
+console.log('res://test/a/.././test/a');
+console.log('v', p0.is_valid, 'if', p0.is_file, 'abs', p0.is_absolute, 'dir:', p0.dir, 'name:', p0.name, 'ext:', p0.ext);
+
+p0 = fspath('./../a');
+console.log('./../a');
+console.log('v', p0.is_valid, 'if', p0.is_file, 'abs', p0.is_absolute, 'dir:', p0.dir, 'name:', p0.name, 'ext:', p0.ext);

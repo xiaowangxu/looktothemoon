@@ -5,7 +5,7 @@
  * @property {string | undefined} name
  * @property {boolean} is_file
  * @property {boolean} is_root
- * @property {ArrayBuffer | undefined} buffer
+ * @property {number | undefined} buffer
  * @property {number[] | undefined} subs
  */
 
@@ -15,10 +15,11 @@ const Version2 = 1;
 
 /**
  * @param {FileSystemDataInstance[]} data 
+ * @param {ArrayBuffer[]} blocks 
  * @returns {ArrayBuffer}
  */
-export function save_FileSystem(data) {
-    const size = calcu_Size(data);
+export function save_FileSystem(nodes, blocks) {
+    const size = calcu_Size(nodes, blocks);
     const array_buffer = new ArrayBuffer(size);
     const uint_array = new Uint8Array(array_buffer);
     const data_view = new DataView(array_buffer);
@@ -43,15 +44,16 @@ export function save_FileSystem(data) {
     //#endregion
 
     //#region body
-    // nodes count
-    const nodes_count = data.length;
+    
+    const nodes_count = nodes.length;
     data_view.setUint32(pnt, nodes_count, little_endian); pnt += 4;
-    const buffers = [];
     for (let i = 0; i < nodes_count; i++) {
         // is_file | is_root
-        const { name, is_file, is_root, subs, buffer } = data[i];
+        const { name, is_file, is_root, subs, buffer } = nodes[i];
         const type = ((is_file ? 1 : 0) << 1) | (is_root ? 1 : 0);
         data_view.setUint8(pnt, type); pnt += 1;
+        // flags
+        pnt += 2;
         // name length
         if (name === undefined) {
             data_view.setUint32(pnt, 0, little_endian); pnt += 4;
@@ -80,21 +82,21 @@ export function save_FileSystem(data) {
                 data_view.setUint32(pnt, 0, little_endian); pnt += 4;
             }
             else {
-                const block_id = buffers.length;
-                buffers.push(buffer);
+                const block_id = buffer;
                 data_view.setUint32(pnt, block_id + 1, little_endian); pnt += 4;
             }
         }
     }
 
-    const buffers_count = buffers.length;
+    const buffers_count = blocks.length;
     data_view.setUint32(pnt, buffers_count, little_endian); pnt += 4;
     for (let i = 0; i < buffers_count; i++) {
-        const buffer = buffers[i];
+        const buffer = blocks[i];
         const buffer_length = buffer.byteLength;
         data_view.setUint32(pnt, buffer_length, little_endian); pnt += 4;
         uint_array.set(new Uint8Array(buffer), pnt); pnt += buffer_length;
     }
+    
     //#endregion
 
     return array_buffer;
@@ -102,9 +104,10 @@ export function save_FileSystem(data) {
 
 /**
  * @param {FileSystemDataInstance[]} nodes 
+ * @param {ArrayBuffer[]} blocks 
  * @returns {number}
  */
-function calcu_Size(nodes) {
+function calcu_Size(nodes, blocks) {
     let size = 0;
     // LTTM VFS
     size += 8;
@@ -120,9 +123,11 @@ function calcu_Size(nodes) {
     size += 4;
     // buffers count
     size += 4;
-    for (const { name, is_file, subs, buffer } of nodes) {
+    for (const { name, is_file, subs } of nodes) {
         // type | root
         size += 1;
+        // flags
+        size += 2;
         // name length
         size += 4;
         if (name !== undefined) {
@@ -142,20 +147,26 @@ function calcu_Size(nodes) {
         else {
             // block id 0 - for no block / block id + 1 for a block index
             size += 4;
-            if (buffer !== undefined) {
-                // buffer size
-                size += 4;
-                // buffer data
-                size += buffer.byteLength;
-            }
         }
+    }
+    for (const block of blocks) {
+        // buffer size
+        size += 4;
+        // buffer data
+        size += block.byteLength;
     }
     return size;
 }
 
 /**
+ * @typedef {Object}  FileSystemData
+ * @property {FileSystemDataInstance[]} nodes
+ * @property {ArrayBuffer[]} blocks
+ */
+
+/**
  * @param {ArrayBuffer} data 
- * @return {FileSystemDataInstance[] | undefined}
+ * @return {FileSystemData | undefined}
  */
 export function load_FileSystem(data) {
     let pnt = 0;
@@ -196,6 +207,8 @@ export function load_FileSystem(data) {
         const type = data_view.getUint8(pnt); pnt += 1;
         const is_file = (type >> 1) !== 0;
         const is_root = (type & 0b1) !== 0;
+        // flags
+        pnt += 2;
         // name
         const name_length = data_view.getUint32(pnt, little_endian); pnt += 4;
         let name = undefined;
@@ -228,8 +241,8 @@ export function load_FileSystem(data) {
                 is_file: true,
                 is_root: is_root,
                 name: name,
-                subs: block_id === 0 ? undefined : [block_id - 1],
-                buffer: undefined,
+                subs: undefined,
+                buffer: block_id === 0 ? undefined : block_id - 1,
             });
         }
     }
@@ -242,12 +255,5 @@ export function load_FileSystem(data) {
         buffers.push(buffer);
     }
 
-    for (const node of nodes) {
-        if (node.is_file && node.subs !== undefined) {
-            node.buffer = buffers[node.subs[0]];
-            node.subs = undefined;
-        }
-    }
-
-    return nodes;
+    return { nodes, blocks: buffers };
 }
