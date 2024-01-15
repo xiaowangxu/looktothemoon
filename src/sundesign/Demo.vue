@@ -11,8 +11,8 @@
                 <Globe />确认按钮
             </SunButton>
             <SunButton size="normal" :color-scheme="ColorSchemeRed">取消</SunButton>
-            <SunButton size="large" squared>
-                <Search />这是一个测试
+            <SunButton size="large" equal-padding>
+                <Search />
             </SunButton>
             <SunButton size="normal" flat>Flat</SunButton>
             <SunButton size="normal" flat disabled>Flat disabled</SunButton>
