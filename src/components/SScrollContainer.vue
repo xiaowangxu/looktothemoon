@@ -117,13 +117,6 @@ const has_more_left = computed(() => value_scrollable_h.value > SCROLL_EPSILON);
 const has_more_bottom = computed(() => value_scrollable_v.value + SCROLL_EPSILON < max_scrollable_v.value);
 const has_more_top = computed(() => value_scrollable_v.value > SCROLL_EPSILON);
 
-// watch(has_more_bottom, (v) => {
-//     console.log("bottom", v)
-// }, { immediate: true });
-// watch(has_more_right, (v) => {
-//     console.log("right", v, content_width.value, container_width.value);
-// }, { immediate: true });
-
 // methods
 function on_ContainerResized(border_size: BoxSize, content_size: BoxSize, target: Element) {
     container_width.value = content_size.width;

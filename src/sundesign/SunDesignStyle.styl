@@ -1,0 +1,232 @@
+@import './SunDesignStyleConstants.styl';
+
+.__sun-design__
+    appearance: none
+    border: none
+    font-family: sans-serif, Arial, Helvetica
+    box-sizing: border-box
+    user-select: none
+    outline-offset: 0px
+
+    --focus-color:  focus-color
+    --color-normal:  color-normal
+    --color-hover:  color-hover
+    --color-pressed:  color-pressed
+    --color-disabled:  color-disabled
+    --color-active:  color-active
+    --color-active-hover:  color-active-hover
+    --color-active-pressed:  color-active-pressed
+    --color-active-disabled:  color-active-disabled
+    --font-color-normal:  font-color-normal
+    --font-color-hover:  font-color-hover
+    --font-color-pressed:  font-color-pressed
+    --font-color-disabled:  font-color-disabled
+    --font-color-active:  font-color-active
+    --font-color-active-hover:  font-color-active-hover
+    --font-color-active-pressed:  font-color-active-pressed
+    --font-color-active-disabled:  font-color-active-disabled
+
+    // colors
+    background-color: var(--color-normal)
+    color: var(--font-color-normal)
+
+
+    &:focus
+        outline: focus-width var(--focus-color) solid
+
+    &:hover
+        background-color: var(--color-hover)
+        color: var(--font-color-hover)
+    
+    &:active
+        background-color: var(--color-pressed)
+        color: var(--font-color-pressed)
+    
+    &:disabled, &.disabled
+        background-color: var(--color-disabled)
+        color: var(--font-color-disabled)
+
+    &.active, &:checked
+        background-color: var(--color-active)
+        color: var(--font-color-active)
+        &:hover
+            background-color: var(--color-active-hover)
+            color: var(--font-color-active-hover)
+        &:active
+            background-color: var(--color-active-pressed)
+            color: var(--font-color-active-pressed)
+        &:disabled, &.disabled
+            background-color: var(--color-active-disabled)
+            color: var(--font-color-active-disabled)
+
+    &.flat
+        background-color: transparent
+
+        &:hover
+            background-color: var(--color-normal)
+            color: var(--font-color-normal)
+
+        &:active
+            background-color: var(--color-pressed)
+            color: var(--font-color-pressed)
+
+        &:disabled, &.disabled
+            background-color: transparent
+            color: var(--font-color-disabled)
+
+        &.active, &:checked
+            background-color: var(--color-active)
+            color: var(--font-color-active)
+            &:hover
+                background-color: var(--color-active-hover)
+                color: var(--font-color-active-hover)
+            &:active
+                background-color: var(--color-active-pressed)
+                color: var(--font-color-active-pressed)
+            &:disabled, &.disabled
+                background-color: var(--color-active-disabled)
+                color: var(--font-color-active-disabled)
+
+   
+        
+    // disabled
+    &:disabled, &.disabled
+        cursor: not-allowed
+
+    // squared
+    &.squared
+        border-radius: border-radius-size-small !important
+    
+    // size
+    &[data-size="small"]
+        height: size-small
+        font-size: font-size-small
+        border-radius: border-radius-size-small
+        padding: padding-small gap-small * 2
+        gap: gap-small
+
+        &.equal-padding
+            padding: padding-small
+
+        &.rounded
+            border-radius: (size-small / 2)
+    
+    &[data-size="normal"]
+        height: size-normal
+        font-size: font-size-normal
+        border-radius: border-radius-size-normal
+        padding: padding-normal gap-normal * 2
+        gap: gap-normal
+        
+        &.equal-padding
+            padding: padding-normal
+        
+        &.rounded
+            border-radius: (size-normal / 2)
+        
+    &[data-size="large"]
+        height: size-large
+        font-size: font-size-large
+        border-radius: border-radius-size-large
+        padding: padding-large gap-large * 2
+        gap: gap-large
+        
+        &.equal-padding
+            padding: padding-large
+        
+        &.rounded
+            border-radius: (size-large / 2)
+
+    // border mask
+    &[data-border-mask="0"]
+	    border-radius: 0 0 0 0
+
+    &[data-border-mask="8"]
+	    // border-top-left-radius: 0
+	    border-top-right-radius: 0
+	    border-bottom-right-radius: 0
+	    border-bottom-left-radius: 0
+
+    &[data-border-mask="4"]
+	    border-top-left-radius: 0
+	    // border-top-right-radius: 0
+	    border-bottom-right-radius: 0
+	    border-bottom-left-radius: 0
+
+    &[data-border-mask="2"]
+	    border-top-left-radius: 0
+	    border-top-right-radius: 0
+	    // border-bottom-right-radius: 0
+	    border-bottom-left-radius: 0
+
+    &[data-border-mask="1"]
+	    border-top-left-radius: 0
+	    border-top-right-radius: 0
+	    border-bottom-right-radius: 0
+	    // border-bottom-left-radius: 0
+
+    &[data-border-mask="3"]
+	    border-top-left-radius: 0
+	    border-top-right-radius: 0
+	    // border-bottom-right-radius: 0
+	    // border-bottom-left-radius: 0
+
+    &[data-border-mask="5"]
+	    border-top-left-radius: 0
+	    // border-top-right-radius: 0
+	    border-bottom-right-radius: 0
+	    // border-bottom-left-radius: 0
+
+    &[data-border-mask="6"]
+	    border-top-left-radius: 0
+	    // border-top-right-radius: 0
+	    // border-bottom-right-radius: 0
+	    border-bottom-left-radius: 0
+
+    &[data-border-mask="7"]
+	    border-top-left-radius: 0
+	    // border-top-right-radius: 0
+	    // border-bottom-right-radius: 0
+	    // border-bottom-left-radius: 0
+
+    &[data-border-mask="9"]
+	    // border-top-left-radius: 0
+	    border-top-right-radius: 0
+	    border-bottom-right-radius: 0
+	    // border-bottom-left-radius: 0
+
+    &[data-border-mask="10"]
+	    // border-top-left-radius: 0
+	    border-top-right-radius: 0
+	    // border-bottom-right-radius: 0
+	    border-bottom-left-radius: 0
+
+    &[data-border-mask="11"]
+	    // border-top-left-radius: 0
+	    border-top-right-radius: 0
+	    // border-bottom-right-radius: 0
+	    // border-bottom-left-radius: 0
+
+    &[data-border-mask="12"]
+	    // border-top-left-radius: 0
+	    // border-top-right-radius: 0
+	    border-bottom-right-radius: 0
+	    border-bottom-left-radius: 0
+
+    &[data-border-mask="13"]
+	    // border-top-left-radius: 0
+	    // border-top-right-radius: 0
+	    border-bottom-right-radius: 0
+	    // border-bottom-left-radius: 0
+
+    &[data-border-mask="14"]
+	    // border-top-left-radius: 0
+	    // border-top-right-radius: 0
+	    // border-bottom-right-radius: 0
+	    border-bottom-left-radius: 0
+
+    &[data-border-mask="15"]
+	    // border-top-left-radius: 0
+	    // border-top-right-radius: 0
+	    // border-bottom-right-radius: 0
+	    // border-bottom-left-radius: 0

@@ -36,6 +36,17 @@
                         <SItem label="剪切" description="Ctrl+X" />
                         <SItem label="复制" description="Ctrl+C" />
                         <SItem label="粘贴" description="Ctrl+V" />
+                        <SSelect style="min-width: 100px; max-width: 100px;">
+                            <SItem label="0">
+                                <SLabel min-size="unset" color="inherit" width="100%" align-h="center">G0</SLabel>
+                            </SItem>
+                            <SItem label="1">
+                                <SLabel min-size="unset" color="inherit" width="100%" align-h="center">G1</SLabel>
+                            </SItem>
+                            <SItem label="2">
+                                <SLabel min-size="unset" color="inherit" width="100%" align-h="center">G2</SLabel>
+                            </SItem>
+                        </SSelect>
                     </template>
                 </SPopupMenuButton>
                 <!-- <SPopupMenuButton ref="smenu_select_ref" @mouseenter="on_MenuButtonMouseEntered('select')"
@@ -53,9 +64,9 @@
                         视图
                     </template>
                     <template #items="{ open, close, triggerSubItemHide }">
-                        <SItem label="前视图" description="Num 1"/>
-                        <SItem label="左视图" description="Num 2"/>
-                        <SItem label="顶视图" description="Num 3"/>
+                        <SItem label="前视图" description="Num 1" />
+                        <SItem label="左视图" description="Num 2" />
+                        <SItem label="顶视图" description="Num 3" />
                         <SItem label="更多...">
                             <template #subitems>
                                 <SItem label="后视图" />
@@ -104,8 +115,12 @@
         </SPanel>
         <SPanel style="pointer-events: all;">
             <SFlow>
-                <SButton icon-only flat icon-size="small"><Undo2/></SButton>
-                <SButton icon-only flat icon-size="small"><Redo2/></SButton>
+                <SButton icon-only flat icon-size="small">
+                    <Undo2 />
+                </SButton>
+                <SButton icon-only flat icon-size="small">
+                    <Redo2 />
+                </SButton>
             </SFlow>
         </SPanel>
     </SFlow>
@@ -113,6 +128,7 @@
 
 <script setup lang="ts">
 
+import SSelect from '@/components/SSelect';
 import SFlow from '@/components/SFlow.vue';
 import SButton from '@/components/SButton.vue';
 import SPanel from '@/components/SPanel.vue';

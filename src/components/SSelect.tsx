@@ -61,16 +61,20 @@ export default defineComponent({
         const { width: window_width, height: window_height } = useWindowSize();
 
         const { focus, blur } = useComponentRefFocusBlur(sbutton_ref);
-        function on_ItemClicked(label: LabelTypes) {
+        function on_ItemClicked(label: LabelTypes, evt: InputEvent) {
+            console.log(">!!!!!");
+            console.log(">>>>", label, evt);
             if (label === props.value) {
                 if (props.deselectable) {
-                    on_SelectClicked();
-                    emit('update:value', undefined);
+                    evt.stopPropagation();
+                    // on_SelectClicked();
+                    // emit('update:value', undefined);
                 }
             }
             else {
-                on_SelectClicked();
-                emit('update:value', label);
+                evt.stopPropagation();
+                // on_SelectClicked();
+                // emit('update:value', label);
             }
         }
         function on_SelectClicked() {
@@ -162,13 +166,13 @@ export default defineComponent({
                     if (prop_use_active_color) active_color = color;
                 }
                 const btn = children === undefined ?
-                    <SMenuButton ref={active ? 'active_item_ref' : undefined} active={active} label={label} icon={prop_icon} description={description} color={color} disabled={is_disabled} key={key} onClick={() => on_ItemClicked(label)} >
+                    <SMenuButton ref={active ? 'active_item_ref' : undefined} active={active} label={label} icon={prop_icon} description={description} color={color} disabled={is_disabled} key={key} onClick={(evt: InputEvent) => on_ItemClicked(label, evt)} >
                         {{
                             icon: () => icon,
                         }}
                     </SMenuButton> :
                     <SButton ref={active ? 'active_item_ref' : undefined} flat={true} square={true} active={active} color={color} disabled={is_disabled}
-                        style="width: 100%;" key={key} onClick={() => on_ItemClicked(label)}>{i}</SButton>;
+                        style="width: 100%;" key={key} onClick={(evt: InputEvent) => on_ItemClicked(label, evt)}>{i}</SButton>;
                 return btn;
             }
             else return i;
