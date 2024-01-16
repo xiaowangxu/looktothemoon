@@ -1,6 +1,6 @@
 <template>
-    <input class="__sun-design__ __sun-design-lineedit__" :class="{ 'equal-padding': equalPadding }" :data-size="size"
-        :data-border-mask="borderMask" :style="colorScheme">
+    <input class="__sun-design__ __sun-design-lineedit__ colored bordered" :class="{ 'equal-padding': equalPadding }"
+        :data-size="size" :data-border-mask="borderMask" :style="colorScheme">
 </template>
 
 <script setup lang="ts">

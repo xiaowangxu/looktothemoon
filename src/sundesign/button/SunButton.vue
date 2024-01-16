@@ -1,5 +1,6 @@
 <template>
-    <button class="__sun-design__ __sun-design-button__" :class="{ 'equal-padding': equalPadding, active, flat, rounded, squared }"
+    <button class="__sun-design__ __sun-design-button__ colored"
+        :class="{ 'equal-padding': equalPadding, active, flat, bordered: !flat, rounded, 'square-bordered': squareBorderd, squared }"
         :data-size="size" :data-border-mask="borderMask" :style="colorScheme">
         <slot>Button</slot>
     </button>
@@ -21,13 +22,11 @@ const props = withDefaults(
         colorScheme?: ColorScheme,
         rounded?: boolean,
         squared?: boolean,
+        squareBorderd?: boolean,
     }>(),
     {
         size: 'normal',
-        flat: false,
-        active: false,
-        border_mask: 15,
-        equal_padding: false,
+        borderMask: 15,
     }
 );
 
@@ -37,8 +36,9 @@ const props = withDefaults(
 @import '../SunDesignStyleConstants.styl';
 
 .__sun-design__.__sun-design-button__
-    display: flex
+    display: inline-flex
     flex-wrap: nowrap
+    justify-content: center
     align-items: center
     text-wrap: nowrap
 

@@ -27,51 +27,24 @@
     --font-color-active-disabled:  font-color-active-disabled
 
     // colors
-    background-color: var(--color-normal)
-    color: var(--font-color-normal)
+    &.colored
+        background-color: var(--color-normal)
+        color: var(--font-color-normal)
 
-
-    &:focus
-        outline: focus-width var(--focus-color) solid
-
-    &:hover
-        background-color: var(--color-hover)
-        color: var(--font-color-hover)
-    
-    &:active
-        background-color: var(--color-pressed)
-        color: var(--font-color-pressed)
-    
-    &:disabled, &.disabled
-        background-color: var(--color-disabled)
-        color: var(--font-color-disabled)
-
-    &.active, &:checked
-        background-color: var(--color-active)
-        color: var(--font-color-active)
-        &:hover
-            background-color: var(--color-active-hover)
-            color: var(--font-color-active-hover)
-        &:active
-            background-color: var(--color-active-pressed)
-            color: var(--font-color-active-pressed)
-        &:disabled, &.disabled
-            background-color: var(--color-active-disabled)
-            color: var(--font-color-active-disabled)
-
-    &.flat
-        background-color: transparent
+        &:focus
+            outline: focus-width var(--focus-color) solid
+            outline-offset: focus-offset
 
         &:hover
-            background-color: var(--color-normal)
-            color: var(--font-color-normal)
+            background-color: var(--color-hover)
+            color: var(--font-color-hover)
 
         &:active
             background-color: var(--color-pressed)
             color: var(--font-color-pressed)
 
         &:disabled, &.disabled
-            background-color: transparent
+            background-color: var(--color-disabled)
             color: var(--font-color-disabled)
 
         &.active, &:checked
@@ -87,23 +60,54 @@
                 background-color: var(--color-active-disabled)
                 color: var(--font-color-active-disabled)
 
-   
-        
-    // disabled
-    &:disabled, &.disabled
-        cursor: not-allowed
+        &.flat
+            background-color: transparent
+            &:hover, &.hover
+                background-color: var(--color-normal)
+                color: var(--font-color-normal)
+            &:active
+                background-color: var(--color-pressed)
+                color: var(--font-color-pressed)
+            &:disabled, &.disabled
+                background-color: transparent
+                color: var(--font-color-disabled)
 
-    // squared
-    &.squared
-        border-radius: border-radius-size-small !important
+        &.active, &:checked
+            background-color: var(--color-active)
+            color: var(--font-color-active)
+            &:hover, &.hover
+                background-color: var(--color-active-hover)
+                color: var(--font-color-active-hover)
+            &:active
+                background-color: var(--color-active-pressed)
+                color: var(--font-color-active-pressed)
+            &:disabled, &.disabled
+                background-color: var(--color-active-disabled)
+                color: var(--font-color-active-disabled)
+
+        &.bordered
+            border: solid-border
+            &:disabled, &.disabled
+                border: solid-border-disabled
+
+        // disabled
+        &:disabled, &.disabled
+            cursor: not-allowed
+
+        // squared
+        &.square-bordered
+            border-radius: border-radius-size-small !important
     
     // size
     &[data-size="small"]
-        height: size-small
+        min-height: size-small
         font-size: font-size-small
         border-radius: border-radius-size-small
         padding: padding-small gap-small * 2
         gap: gap-small
+
+        &.squared
+            min-width: size-small
 
         &.equal-padding
             padding: padding-small
@@ -112,11 +116,14 @@
             border-radius: (size-small / 2)
     
     &[data-size="normal"]
-        height: size-normal
+        min-height: size-normal
         font-size: font-size-normal
         border-radius: border-radius-size-normal
         padding: padding-normal gap-normal * 2
         gap: gap-normal
+
+        &.squared
+            min-width: size-normal
         
         &.equal-padding
             padding: padding-normal
@@ -125,11 +132,14 @@
             border-radius: (size-normal / 2)
         
     &[data-size="large"]
-        height: size-large
+        min-height: size-large
         font-size: font-size-large
         border-radius: border-radius-size-large
         padding: padding-large gap-large * 2
         gap: gap-large
+
+        &.squared
+            min-width: size-large
         
         &.equal-padding
             padding: padding-large
