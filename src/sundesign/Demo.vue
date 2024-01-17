@@ -1,5 +1,5 @@
 <template>
-    <div style="padding: 50px;">
+    <div style="padding: 20px;">
         <div style="padding: 10px; background-color: white; display: flex; gap: 6px; align-items: center;">
             <h4>Buttons</h4>
             <SunButton size="small" equal-padding squared>
@@ -13,6 +13,7 @@
                 <Globe />确认按钮
             </SunButton>
             <SunButton size="normal" :color-scheme="ColorSchemeRed">取消</SunButton>
+            <SunButton :color-scheme="ColorSchemeGreen">测试</SunButton>
             <SunButton size="large" equal-padding squared>
                 <Trash2 />
             </SunButton>
@@ -42,7 +43,7 @@ import SunButton from './button/SunButton.vue';
 import SunLineEdit from './lineedit/SunLineEdit.vue';
 import SunCheckBox from './checkbox/SunCheckBox.vue';
 import SunLabel from './label/SunLabel.vue';
-import { ColorSchemeRed, ColorSchemeBlue } from './SunDesignConstants';
+import { ColorSchemeRed, ColorSchemeBlue, ColorSchemeGreen } from './SunDesignConstants';
 
 </script>
 
