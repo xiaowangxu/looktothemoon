@@ -29,7 +29,7 @@ export interface ColorScheme extends CSSProperties {
 export const ColorSchemeBlue = readonly<ColorScheme>({
     '--focus-color': 'rgba(70, 111, 214, 0.4)',
     '--border-color-normal': 'rgb(145, 170, 232)',
-    '--border-color-disabled': 'rgb(200, 200, 200)',
+    '--border-color-disabled': 'rgb(220, 220, 220)',
     '--color-normal': 'rgb(222, 231, 255)',
     '--color-hover': 'rgb(205, 218, 253)',
     '--color-pressed': 'rgb(70, 111, 214)',
@@ -51,7 +51,7 @@ export const ColorSchemeBlue = readonly<ColorScheme>({
 export const ColorSchemeRed = readonly<ColorScheme>({
     '--focus-color': 'rgb(244, 64, 64, 0.4)',
     '--border-color-normal': 'rgb(245, 180, 180)',
-    '--border-color-disabled': 'rgb(200, 200, 200)',
+    '--border-color-disabled': 'rgb(220, 220, 220)',
     '--color-normal': 'rgb(255, 233, 233)',
     '--color-hover': 'rgb(255, 220, 220)',
     '--color-pressed': 'rgb(244, 64, 64)',
@@ -73,7 +73,7 @@ export const ColorSchemeRed = readonly<ColorScheme>({
 export const ColorSchemeGreen = readonly<ColorScheme>({
     '--focus-color': 'rgb(36 177 57 / 40%)',
     '--border-color-normal': 'rgb(136 208 180)',
-    '--border-color-disabled': 'rgb(200, 200, 200)',
+    '--border-color-disabled': 'rgb(220, 220, 220)',
     '--color-normal': 'rgb(210 248 231)',
     '--color-hover': 'rgb(194 239 222)',
     '--color-pressed': 'rgb(4, 185, 115)',

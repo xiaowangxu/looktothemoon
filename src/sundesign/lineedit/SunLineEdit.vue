@@ -1,6 +1,7 @@
 <template>
-    <input class="__sun-design__ __sun-design-lineedit__ colored bordered" :class="{ 'equal-padding': equalPadding }"
-        :data-size="size" :data-border-mask="borderMask" :style="colorScheme">
+    <input class="__sun-design__ __sun-design-lineedit__ colored sized"
+        :class="{ 'equal-padding': false, flat, bordered: bordered && !flat, 'no-background': noBackground }" :data-size="size" :data-border-mask="borderMask"
+        :style="colorScheme">
 </template>
 
 <script setup lang="ts">
@@ -12,14 +13,19 @@ import type { Size, BorderMask, ColorScheme } from '../SunDesignConstants';
 const props = withDefaults(
     defineProps<{
         size?: Size,
+        flat?: boolean,
+        bordered?: boolean,
         borderMask?: BorderMask,
-        equalPadding?: boolean,
+        // equalPadding?: boolean,
         colorScheme?: ColorScheme,
+        noBackground?: boolean,
     }>(),
     {
         size: 'normal',
-        border_mask: 15,
-        equal_padding: false,
+        flat: false,
+        bordered: true,
+        borderMask: 15,
+        noBackground: false,
     }
 );
 
@@ -28,7 +34,15 @@ const props = withDefaults(
 <style lang="stylus">
 @import '../SunDesignStyleConstants.styl';
 
-.__sun-design__.__sun-design-lineedit__
+.__sun-design__.__sun-design-lineedit__, .__sun-design__.__sun-design-lineedit__.flat
+    min-width: 0
+
+    &.no-background
+        background-color: transparent !important
+
+    &:focus-visible
+        outline: none
+
     &:active
         background-color: var(--color-hover)
         color: var(--font-color-normal)

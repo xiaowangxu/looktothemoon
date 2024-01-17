@@ -62,19 +62,15 @@ export default defineComponent({
 
         const { focus, blur } = useComponentRefFocusBlur(sbutton_ref);
         function on_ItemClicked(label: LabelTypes, evt: InputEvent) {
-            console.log(">!!!!!");
-            console.log(">>>>", label, evt);
             if (label === props.value) {
                 if (props.deselectable) {
-                    evt.stopPropagation();
-                    // on_SelectClicked();
-                    // emit('update:value', undefined);
+                    on_SelectClicked();
+                    emit('update:value', undefined);
                 }
             }
             else {
-                evt.stopPropagation();
-                // on_SelectClicked();
-                // emit('update:value', label);
+                on_SelectClicked();
+                emit('update:value', label);
             }
         }
         function on_SelectClicked() {

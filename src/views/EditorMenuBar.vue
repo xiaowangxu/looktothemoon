@@ -1,6 +1,32 @@
 <template>
     <SFlow>
-        <SPanel style="pointer-events: all;">
+
+        <SunPanel style="pointer-events: all;">
+            <SunPanelContainer>
+                <SunButton flat squared>
+                    <Save />
+                </SunButton>
+            </SunPanelContainer>
+            <SunPanelSeparator />
+            <SunPanelContainer>
+                <SunButton flat squared>
+                    <Undo2 />
+                </SunButton>
+                <SunButton flat squared>
+                    <Redo2 />
+                </SunButton>
+            </SunPanelContainer>
+        </SunPanel>
+
+        <SunPanel style="pointer-events: all;">
+            <SunPanelContainer>
+                <SunButton flat>文件</SunButton>
+                <SunButton flat>编辑</SunButton>
+                <SunButton flat>视图</SunButton>
+            </SunPanelContainer>
+        </SunPanel>
+
+        <!-- <SPanel style="pointer-events: all;">
             <SFlow gap="0">
                 <SPopupMenuButton ref="smenu_file_ref" @mouseenter="on_MenuButtonMouseEntered('file')"
                     @opened="on_MenuOpened('file')" @closed="on_MenuClosed('file')">
@@ -49,15 +75,6 @@
                         </SSelect>
                     </template>
                 </SPopupMenuButton>
-                <!-- <SPopupMenuButton ref="smenu_select_ref" @mouseenter="on_MenuButtonMouseEntered('select')"
-                    @opened="on_MenuOpened('select')" @closed="on_MenuClosed('select')">
-                    <template #button>
-                        选择
-                    </template>
-                    <template #items>
-                        <SItem label="取消选择" disabled />
-                    </template>
-                </SPopupMenuButton> -->
                 <SPopupMenuButton ref="smenu_view_ref" @mouseenter="on_MenuButtonMouseEntered('view')"
                     @opened="on_MenuOpened('view')" @closed="on_MenuClosed('view')" @click="on_ViewMenuClicked">
                     <template #button>
@@ -112,21 +129,18 @@
                     </template>
                 </SPopupMenuButton>
             </SFlow>
-        </SPanel>
-        <SPanel style="pointer-events: all;">
-            <SFlow>
-                <SButton icon-only flat icon-size="small">
-                    <Undo2 />
-                </SButton>
-                <SButton icon-only flat icon-size="small">
-                    <Redo2 />
-                </SButton>
-            </SFlow>
-        </SPanel>
+        </SPanel> -->
+
     </SFlow>
 </template>
 
 <script setup lang="ts">
+
+import SunPanel from '@/sundesign/panel/SunPanel.vue';
+import SunPanelContainer from '@/sundesign/panel/SunPanelContainer.vue';
+import SunPanelSeparator from '@/sundesign/panel/SunPanelSeparator.vue';
+import SunButton from '@/sundesign/button/SunButton.vue';
+import { Cog, Undo2, Redo2, Save } from 'lucide-vue-next';
 
 import SSelect from '@/components/SSelect';
 import SFlow from '@/components/SFlow.vue';
@@ -137,7 +151,6 @@ import SPopupMenuButton from '@/components/SPopupMenuButton';
 import SVSeparator from '@/components/SVSeparator.vue';
 import SFakeCheckBox from '@/components/SFakeCheckBox.vue';
 import SFakeRadioBox from '@/components/SFakeRadioBox.vue';
-import { Cog, Undo2, Redo2 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 import SNumberEdit from '@/components/SNumberEdit.vue';
 import SActiveArea from '@/components/SActiveArea.vue';

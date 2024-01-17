@@ -1,5 +1,5 @@
 <template>
-    <div class="__sun-design__ __sun-design-label__" :data-size="size">
+    <div class="__sun-design__ __sun-design-label__ sized" :style="{ '--font-color-normal': color }" :data-size="size">
         <slot />
     </div>
 </template>
@@ -13,6 +13,7 @@ import type { Size } from '../SunDesignConstants';
 const props = withDefaults(
     defineProps<{
         size?: Size,
+        color?: string,
     }>(),
     {
         size: 'normal',

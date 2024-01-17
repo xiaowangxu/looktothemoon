@@ -9,6 +9,7 @@
     outline-offset: 0px
 
     &.color-def
+        --panel-color:  panel-color
         --focus-color:  focus-color
         --border-color-normal: border-color-normal
         --border-color-disabled: border-color-disabled
@@ -28,13 +29,19 @@
         --font-color-active-hover:  font-color-active-hover
         --font-color-active-pressed:  font-color-active-pressed
         --font-color-active-disabled:  font-color-active-disabled
+    
+   
 
     // colors
     &.colored
         background-color: var(--color-normal)
         color: var(--font-color-normal)
+        
+        &::placeholder
+            color: var(--font-color-disabled)
+            opacity: 1; /* Firefox */
 
-        &:focus
+        &:focus-visible
             outline: focus-width var(--focus-color) solid
             outline-offset: focus-offset
 
@@ -97,58 +104,55 @@
         &:disabled, &.disabled
             cursor: not-allowed
 
-        // squared
-        &.square-bordered
-            border-radius: border-radius-size-small !important
-    
     // size
-    &[data-size="small"]
-        min-height: size-small
-        font-size: font-size-small
-        border-radius: border-radius-size-small
-        padding: padding-small gap-small * 2
-        gap: gap-small
+    &.sized
+        &[data-size="small"]
+            min-height: size-small
+            font-size: font-size-small
+            border-radius: border-radius-size-small
+            padding: padding-small padding-extend-small
+            gap: gap-small
 
-        &.squared
-            min-width: size-small
+            &.squared
+                min-width: size-small
 
-        &.equal-padding
-            padding: padding-small
+            &.equal-padding
+                padding: padding-small
 
-        &.rounded
-            border-radius: (size-small / 2)
-    
-    &[data-size="normal"]
-        min-height: size-normal
-        font-size: font-size-normal
-        border-radius: border-radius-size-normal
-        padding: padding-normal gap-normal * 2
-        gap: gap-normal
+            &.rounded
+                border-radius: (size-small / 2)
 
-        &.squared
-            min-width: size-normal
-        
-        &.equal-padding
-            padding: padding-normal
-        
-        &.rounded
-            border-radius: (size-normal / 2)
-        
-    &[data-size="large"]
-        min-height: size-large
-        font-size: font-size-large
-        border-radius: border-radius-size-large
-        padding: padding-large gap-large * 2
-        gap: gap-large
+        &[data-size="normal"]
+            min-height: size-normal
+            font-size: font-size-normal
+            border-radius: border-radius-size-normal
+            padding: padding-normal padding-extend-normal
+            gap: gap-normal
 
-        &.squared
-            min-width: size-large
-        
-        &.equal-padding
-            padding: padding-large
-        
-        &.rounded
-            border-radius: (size-large / 2)
+            &.squared
+                min-width: size-normal
+
+            &.equal-padding
+                padding: padding-normal
+
+            &.rounded
+                border-radius: (size-normal / 2)
+
+        &[data-size="large"]
+            min-height: size-large
+            font-size: font-size-large
+            border-radius: border-radius-size-large
+            padding: padding-large padding-extend-large
+            gap: gap-large
+
+            &.squared
+                min-width: size-large
+
+            &.equal-padding
+                padding: padding-large
+
+            &.rounded
+                border-radius: (size-large / 2)
 
     // border mask
     &[data-border-mask="0"]

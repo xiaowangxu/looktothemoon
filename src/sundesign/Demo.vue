@@ -41,7 +41,6 @@
 import { Globe, Undo2, Search, Trash2, X } from 'lucide-vue-next';
 import SunButton from './button/SunButton.vue';
 import SunLineEdit from './lineedit/SunLineEdit.vue';
-import SunCheckBox from './checkbox/SunCheckBox.vue';
 import SunLabel from './label/SunLabel.vue';
 import { ColorSchemeRed, ColorSchemeBlue, ColorSchemeGreen } from './SunDesignConstants';
 

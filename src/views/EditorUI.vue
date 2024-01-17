@@ -5,7 +5,31 @@
         </div>
         <div id="top-panel">
             <SFlow align-h="center" align-v="start" style="width: 100%; height: 100%;">
-                <SPanel class="pointer-event" style="overflow: hidden; padding: 0px;">
+                <SunPanel class="pointer-event">
+                    <SunPanelContainer>
+                        <SunLineEdit />
+                    </SunPanelContainer>
+                    <SunPanelSeparator />
+                    <SunPanelContainer gap>
+                        <SunButton squared>
+                            <Undo2 />
+                        </SunButton>
+                        <SunLineEdit />
+                        <SunButton squared>
+                            <Redo2 />
+                        </SunButton>
+                    </SunPanelContainer>
+                    <SunPanelSeparator />
+                    <SunPanelContainer gap>
+                        <SunButton :color-scheme="ColorSchemeRed">
+                            <X />取消
+                        </SunButton>
+                        <SunButton :color-scheme="ColorSchemeGreen">
+                            <Check />确认
+                        </SunButton>
+                    </SunPanelContainer>
+                </SunPanel>
+                <!-- <SPanel class="pointer-event" style="overflow: hidden; padding: 0px;">
                     <SScrollContainer scroll-bar-state-h="hidden" scroll-bar-state-v="hidden">
                         <SFlow padding="var(--GapAndMargin)">
                             <SLineEdit :clearable="false" align-text="start" v-model:value="lineedit" lazy />
@@ -102,7 +126,7 @@
                             </SButton>
                         </SFlow>
                     </SScrollContainer>
-                </SPanel>
+                </SPanel> -->
             </SFlow>
         </div>
         <div id="top-right-panel">
@@ -125,6 +149,13 @@ import { type BasicTypes, type Alignment, type BoxSize } from '@/components/SCon
 import EditorMenuBar from './EditorMenuBar.vue';
 import EditorToolBar from './EditorToolBar.vue';
 import EditorCompass from './EditorCompass.vue';
+
+import SunPanel from '@/sundesign/panel/SunPanel.vue';
+import SunPanelContainer from '@/sundesign/panel/SunPanelContainer.vue';
+import SunPanelSeparator from '@/sundesign/panel/SunPanelSeparator.vue';
+import SunButton from '@/sundesign/button/SunButton.vue';
+import SunLineEdit from '@/sundesign/lineedit/SunLineEdit.vue';
+import { ColorSchemeRed, ColorSchemeGreen } from '@/sundesign/SunDesignConstants';
 
 import SPanel from '@/components/SPanel.vue';
 import SButton from '@/components/SButton.vue';

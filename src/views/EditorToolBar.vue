@@ -50,37 +50,42 @@
         </SFlow>
     </SPanel>
     <!-- Tools -->
-    <SPanel style="overflow: hidden; padding: 0; pointer-events: all;">
-        <SScrollContainer scroll-bar-state-h="hidden" scroll-bar-state-v="hidden">
-            <SFlow padding="var(--GapAndMargin)" vertical>
-                <SButton icon-only icon-size="medium">
-                    <Globe />
-                </SButton>
-                <SVSeparator />
-                <SButton icon-only icon-size="medium">
-                    <Workflow />
-                </SButton>
-                <SButton icon-only icon-size="medium">
-                    <Globe />
-                </SButton>
-                <SButton icon-only icon-size="medium">
-                    <Search />
-                </SButton>
-                <SButton icon-only icon-size="medium">
-                    <Trash />
-                </SButton>
-                <SButton icon-only icon-size="medium">
-                    <Globe />
-                </SButton>
-                <SButton icon-only icon-size="medium">
-                    <Check />
-                </SButton>
-            </SFlow>
-        </SScrollContainer>
-    </SPanel>
+    <SunPanel vertical style="overflow: hidden; pointer-events: all; height: 300px;" size="large">
+        <SunPanelContainer vertical gap>
+            <SunButton squared size="large">
+                <Globe />
+            </SunButton>
+        </SunPanelContainer>
+        <SunPanelSeparator />
+        <SunPanelContainer vertical gap>
+            <SunButton squared size="large">
+                <Workflow />
+            </SunButton>
+            <SunButton squared size="large">
+                <Globe />
+            </SunButton>
+            <SunButton squared size="large">
+                <Search />
+            </SunButton>
+            <SunButton squared size="large">
+                <Trash />
+            </SunButton>
+            <SunButton squared size="large">
+                <Globe />
+            </SunButton>
+            <SunButton squared size="large">
+                <Check />
+            </SunButton>
+        </SunPanelContainer>
+    </SunPanel>
 </template>
 
 <script setup lang="ts">
+
+import SunButton from '@/sundesign/button/SunButton.vue';
+import SunPanel from '@/sundesign/panel/SunPanel.vue';
+import SunPanelContainer from '@/sundesign/panel/SunPanelContainer.vue';
+import SunPanelSeparator from '@/sundesign/panel/SunPanelSeparator.vue';
 
 import SFlow from '@/components/SFlow.vue';
 import SPanel from '@/components/SPanel.vue';
