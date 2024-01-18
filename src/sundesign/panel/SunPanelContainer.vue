@@ -26,7 +26,7 @@ const props = withDefaults(
 .__sun-design__.__sun-design-panel-container__
     padding: panel-padding
     display: flex
-    gap: 0
+    gap: (panel-padding / 2)
     flex-direction: row
 
     &.vertical

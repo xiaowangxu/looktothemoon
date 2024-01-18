@@ -37,11 +37,6 @@ export const Select: Story = {
 		options: [
 			[
 				{
-					asTitle: true,
-					label: '分类',
-					uid: -1,
-				},
-				{
 					label: '测试',
 					icon: 'Globe',
 					uid: 0,
@@ -56,7 +51,7 @@ export const Select: Story = {
 				asTitle: true,
 				label: '分类12',
 				uid: -1,
-			},{
+			}, {
 				label: '测试',
 				icon: 'Globe',
 				disabled: true,
@@ -72,14 +67,14 @@ export const Select: Story = {
 				label: 'Test',
 				icon: 'Trash',
 				uid: 4,
-				description:'有快捷键哦~~~~~~~',
+				description: '有快捷键哦~~~~~~~',
 				shortcut: 'Ctrl B',
 			}],
 			[{
 				asTitle: true,
 				label: '分类 ABC',
 				uid: -1,
-			},{
+			}, {
 				label: '测试',
 				icon: 'Globe',
 				uid: 5,
@@ -101,7 +96,7 @@ export const Select: Story = {
 				asTitle: true,
 				label: 'hello world',
 				uid: -1,
-			},{
+			}, {
 				label: '测试',
 				icon: 'Globe',
 				uid: 8,

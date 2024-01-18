@@ -15,12 +15,16 @@
                 <span class="__sun-design-select-empty__">无选中项</span>
             </slot>
         </template>
-        <slot name="closed">
+        <slot v-if="!opened" name="closed">
             <ChevronDown />
         </slot>
+        <slot v-else name="opened">
+            <ChevronUp />
+        </slot>
     </SunButton>
-    <SunPopup :visible="opened" :rect="{ x: 16, y: 39, width: 200, height: 300 }">
-        <SunPanel class="__sun-design-select-panel__" style="width: 100%; height: 100%;" :size="size">
+    <SunPopup :visible="opened" :rect="rect">
+        <SunPanel class="__sun-design-select-panel__" style="width: 100%; height: 100%;" :size="size"
+            :data-select-size="size">
             <SunScrollContainer width="100%">
                 <template v-for="option in options">
                     <SunPanelContainer vertical>
@@ -51,7 +55,7 @@
 <script setup lang="ts">
 
 import '../SunDesignStyle.styl';
-import { type Size, type Item, type BorderMask, type ColorScheme, UID } from '../SunDesignConstants';
+import { type Size, type Item, type BorderMask, type ColorScheme, type UID } from '../SunDesignConstants';
 import SunButton from '../button/SunButton.vue';
 import SunButtonLike from '../button/SunButtonLike.vue';
 import SunIcon from '../icon/SunIcon.vue';
@@ -90,6 +94,7 @@ const props = withDefaults(
 
 const opened = ref(false);
 const value = ref<UID | undefined>(undefined);
+const rect = ref<Rect>({ x: 16, y: 44, width: 200, height: 300 });
 
 // data
 const selected = computed(() => {
@@ -113,8 +118,8 @@ function onClick(uid: UID, event: InputEvent) {
     width: 200px
 
     &.opened
-        border-bottom-left-radius: 0 !important
-        border-bottom-right-radius: 0 !important
+        // border-bottom-left-radius: 0 !important
+        // border-bottom-right-radius: 0 !important
 
     > span
         background-color: unset
@@ -124,8 +129,20 @@ function onClick(uid: UID, event: InputEvent) {
 
 .__sun-design__.__sun-design-select-panel__
     &[data-size]
-        border-top-left-radius: 0 !important
-        border-top-right-radius: 0 !important
+        // border-top-left-radius: 0 !important
+        // border-top-right-radius: 0 !important
+
+    &[data-select-size="small"]
+        border-top-left-radius: border-radius-size-small !important
+        border-top-right-radius: border-radius-size-small !important
+
+    &[data-select-size="normal"]
+        border-top-left-radius: border-radius-size-normal !important
+        border-top-right-radius: border-radius-size-normal !important
+
+    &[data-select-size="large"]
+        border-top-left-radius: border-radius-size-large !important
+        border-top-right-radius: border-radius-size-large !important
 
 .__sun-design-select-title__
     margin-left: auto
