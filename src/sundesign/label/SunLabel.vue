@@ -1,7 +1,7 @@
 <template>
-    <div class="__sun-design__ __sun-design-label__ sized" :style="{ '--font-color-normal': color }" :data-size="size">
+    <span class="__sun-design__ __sun-design-label__ sized" :style="{ '--font-color-normal': color }" :data-size="size">
         <slot />
-    </div>
+    </span>
 </template>
 
 <script setup lang="ts">
@@ -28,10 +28,12 @@ const props = withDefaults(
 .__sun-design__.__sun-design-label__
     background-color: unset
     color: var(--font-color-normal)
-    padding-left: 0
-    padding-right: 0
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    overflow: hidden
+    white-space: nowrap
+    text-overflow: ellipsis
+
+    &[data-size]
+        padding-left: 0
+        padding-right: 0
 
 </style>

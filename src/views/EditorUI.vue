@@ -11,13 +11,29 @@
                     </SunPanelContainer>
                     <SunPanelSeparator />
                     <SunPanelContainer gap>
-                        <SunButton squared>
-                            <Undo2 />
-                        </SunButton>
-                        <SunLineEdit />
-                        <SunButton squared>
-                            <Redo2 />
-                        </SunButton>
+                        <SunControlGroup>
+                            <SunControlGroupRow>
+                                <SunButton squared>
+                                    <SkipBack />
+                                </SunButton>
+                                <SunButton squared>
+                                    <StepBack />
+                                </SunButton>
+                                <SunButton squared>
+                                    <Play />
+                                </SunButton>
+                                <SunButton squared>
+                                    <StepForward />
+                                </SunButton>
+                                <SunButton squared>
+                                    <SkipForward />
+                                </SunButton>
+                                <SunLineEdit />
+                                <SunButton squared>
+                                    <Shuffle />
+                                </SunButton>
+                            </SunControlGroupRow>
+                        </SunControlGroup>
                     </SunPanelContainer>
                     <SunPanelSeparator />
                     <SunPanelContainer gap>
@@ -28,7 +44,58 @@
                             <Check />确认
                         </SunButton>
                     </SunPanelContainer>
+                    <SunPanelContainer>
+                        <SSelect v-model:value="select" deselectable style="min-width: 200px; max-width: 200px;">
+                            <template #empty>
+                                无项目
+                            </template>
+                            <SItem label="这些是选项" icon="Undo">
+                            </SItem>
+                            <SItem label="1">
+                                <Globe />
+                                <SLabel min-size="unset" color="inherit">{{ checkbox ?
+                                    '更多...ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890' : '???' }}</SLabel>
+                                <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;" align-h="end">
+                                    1234</SLabel>
+                            </SItem>
+                            <SVSeparator />
+                            <SItem label="2">
+                                <Workflow />
+                                <SLabel min-size="unset" color="inherit">禁用项目</SLabel>
+                                <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;" align-h="end">
+                                    Disable Item</SLabel>
+                            </SItem>
+                            <SItem label="3">
+                                <Search />
+                                <SLabel min-size="unset" color="inherit">查找</SLabel>
+                            </SItem>
+                            <SItem label="4" :disabled="select === '2'">
+                                <Minus />
+                                <SLabel min-size="unset" color="inherit">Flat Active</SLabel>
+                            </SItem>
+                            <SItem label="5">
+                                <Redo2 />
+                                <SLabel min-size="unset" color="inherit">更多...</SLabel>
+                                <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;" align-h="end">
+                                </SLabel>
+                            </SItem>
+                            <SVSeparator />
+                            <SItem label="6" color="var(--ColorRed)">
+                                <Trash />
+                                <SLabel min-size="unset" color="inherit">删除</SLabel>
+                                <SLabel min-size="unset" color="var(--SColorActiveDisabled)" style="flex: 1;" align-h="end">
+                                    Delete
+                                </SLabel>
+                            </SItem>
+                            <SItem label="这是一个测试" description="hahaha" uid="7" color="orange">
+                                <template #icon>
+                                    <Search />
+                                </template>
+                            </SItem>
+                        </SSelect>
+                    </SunPanelContainer>
                 </SunPanel>
+
                 <!-- <SPanel class="pointer-event" style="overflow: hidden; padding: 0px;">
                     <SScrollContainer scroll-bar-state-h="hidden" scroll-bar-state-v="hidden">
                         <SFlow padding="var(--GapAndMargin)">
@@ -155,6 +222,8 @@ import SunPanelContainer from '@/sundesign/panel/SunPanelContainer.vue';
 import SunPanelSeparator from '@/sundesign/panel/SunPanelSeparator.vue';
 import SunButton from '@/sundesign/button/SunButton.vue';
 import SunLineEdit from '@/sundesign/lineedit/SunLineEdit.vue';
+import SunControlGroup from '@/sundesign/controlgroup/SunControlGroup.vue';
+import SunControlGroupRow from '@/sundesign/controlgroup/SunControlGroupRow.vue';
 import { ColorSchemeRed, ColorSchemeGreen } from '@/sundesign/SunDesignConstants';
 
 import SPanel from '@/components/SPanel.vue';
@@ -164,7 +233,7 @@ import SNumberEdit from '@/components/SNumberEdit.vue';
 import SCheckBox from '@/components/SCheckBox.vue';
 import SRadioBox from '@/components/SRadioBox.vue';
 import SFlow from '@/components/SFlow.vue';
-import { Cog, Tangent, Radius, Dot, X, Check, Workflow, Globe, Search, Undo2, Redo2, PanelLeftInactive, Minus, Trash, ChevronRight, Baseline } from 'lucide-vue-next';
+import { Cog, Tangent, Radius, Dot, X, Check, StepBack, StepForward, SkipBack, SkipForward, Play, Shuffle, Workflow, Globe, Search, Undo2, Redo2, PanelLeftInactive, Minus, Trash, ChevronRight, Baseline } from 'lucide-vue-next';
 import { onMounted, ref, watch } from 'vue';
 import SSpan from '@/components/typography/SSpan.vue';
 import SLabel from '@/components/typography/SLabel.vue';

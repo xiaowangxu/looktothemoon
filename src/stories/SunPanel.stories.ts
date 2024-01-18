@@ -10,7 +10,7 @@ import SunKeyboard from '@/sundesign/keyboard/SunKeyboard.vue';
 import { Search, Undo2, Redo2, Trash, X, Save, ChevronRight, MoreHorizontal } from 'lucide-vue-next';
 import { SizeArgs, SizeArgsTypes, Decorators } from './SunDesignArgs';
 import { ColorSchemeBlue, ColorSchemeRed } from '@/sundesign/SunDesignConstants';
-import SunScrollBar from '../sundesign/scrollbar/SunScrollBar.vue';
+import SunScrollBar from '../sundesign/scrollcontainer/SunScrollBar.vue';
 import { ref } from 'vue';
 
 const meta: Meta<typeof SunPanel> = {
@@ -27,6 +27,7 @@ type Story = StoryObj<typeof SunPanel>;
  */
 export const Panel: Story = {
 	decorators: Decorators,
+	tags: ['autodocs'],
 	render: (args) => ({
 		components: { SunPanel, SunButton, SunScrollBar, SunButtonLike, SunLineEdit, SunKeyboard, SunPanelContainer, SunPanelSeparator, Search, Undo2, Redo2, Trash, X, Save, ChevronRight, MoreHorizontal },
 		setup() {
@@ -36,14 +37,18 @@ export const Panel: Story = {
 		template: `
 			<SunPanel v-bind="args">
 				<SunPanelContainer>
-					<SunButton flat></SunButton>
 					<SunButton flat :color-scheme="colorSchemeBlue"></SunButton>
-					<SunButton flat></SunButton>
 				</SunPanelContainer>
 				<SunPanelSeparator />
 				<SunPanelContainer>
 					<SunButton flat :color-scheme="colorSchemeRed"></SunButton>
-					<SunButton flat></SunButton>
+				</SunPanelContainer>
+			</SunPanel>
+			<SunPanel v-bind="args" size="small">
+				<SunPanelContainer>
+					<SunButton flat squared size="small"><Save /></SunButton>
+					<SunButton flat squared size="small"><Undo2 /></SunButton>
+					<SunButton flat squared size="small"><Redo2 /></SunButton>
 				</SunPanelContainer>
 			</SunPanel>
 			<SunPanel v-bind="args">
@@ -51,6 +56,13 @@ export const Panel: Story = {
 					<SunButton flat squared><Save /></SunButton>
 					<SunButton flat squared><Undo2 /></SunButton>
 					<SunButton flat squared><Redo2 /></SunButton>
+				</SunPanelContainer>
+			</SunPanel>
+			<SunPanel v-bind="args" size="large">
+				<SunPanelContainer>
+					<SunButton flat squared size="large"><Save /></SunButton>
+					<SunButton flat squared size="large"><Undo2 /></SunButton>
+					<SunButton flat squared size="large"><Redo2 /></SunButton>
 				</SunPanelContainer>
 			</SunPanel>
 			<SunPanel v-bind="args" vertical>
@@ -67,7 +79,7 @@ export const Panel: Story = {
 					<SunPanelContainer>
 						<SunButton flat :color-scheme="colorSchemeRed"></SunButton>
 					</SunPanelContainer>
-					<SunPanelSeparator />
+					<SunPanelSeparator :override-vertical="false"/>
 					<SunPanelContainer>
 						<SunButton flat></SunButton>
 					</SunPanelContainer>
@@ -103,7 +115,9 @@ export const Panel: Story = {
 		`,
 	}),
 	argTypes: {
+		...SizeArgsTypes,
 	},
 	args: {
+		...SizeArgs,
 	},
 };

@@ -2,7 +2,7 @@
     <div ref="track_div_dom" class="__sun-design__ __sun-design-scrollbar__"
         :class="{ vertical: vertical, hoverparent: visibility === 'hover', hovertrack: visibility === 'hover-track' }"
         :style="{ '--SPercentage': clamped_percent }">
-        <div ref="nob_div_dom" v-show="visibility !== 'hidden'" class="__sun-design__ __sun-design-scrollbar-nob__ colored"
+        <div ref="nob_div_dom" v-show="visibility !== 'hidden'" class="__sun-design__ __sun-design-scrollbar-nob__ colored bordered"
             :class="{ dragging: is_dragging }" @mousedown="on_MouseDown"></div>
     </div>
 </template>
@@ -76,13 +76,13 @@ function on_MouseUp(evt: MouseEvent) {
 <style lang="stylus">
 @import '../SunDesignStyleConstants.styl';
 
-scrollbar-panel-border-radius = 5px
+scrollbar-panel-border-radius = 4px
 scrollbar-track-size = scrollbar-panel-border-radius * 2
-scrollbar-nob-border-radius = 3px
+scrollbar-nob-border-radius = 2px
 scrollbar-nob-size = scrollbar-nob-border-radius * 2
 scrollbar-nob-offset = scrollbar-panel-border-radius - scrollbar-nob-border-radius
 scrollbar-nob-opacity = 1
-scrollbar-track-offset = 8px
+scrollbar-track-offset = 6px
 
 .__sun-design__.__sun-design-scrollbar__
     position: absolute

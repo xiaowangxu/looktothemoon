@@ -13,6 +13,7 @@
         --focus-color:  focus-color
         --border-color-normal: border-color-normal
         --border-color-disabled: border-color-disabled
+        --border-color-active-disabled: border-color-active-disabled
         --color-normal:  color-normal
         --color-hover:  color-hover
         --color-pressed:  color-pressed
@@ -99,6 +100,9 @@
             border: solid-border
             &:disabled, &.disabled
                 border: solid-border-disabled
+            &.active, &:checked
+                &:disabled, &.disabled
+                    border: solid-border-active-disabled
 
         // disabled
         &:disabled, &.disabled
@@ -154,6 +158,7 @@
             &.rounded
                 border-radius: (size-large / 2)
 
+    &.border-masked
         // border mask
         &[data-border-mask="0"]
     	    border-radius: 0 0 0 0

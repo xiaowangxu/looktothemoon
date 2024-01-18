@@ -1,5 +1,5 @@
 <template>
-    <input class="__sun-design__ __sun-design-lineedit__ colored sized"
+    <input class="__sun-design__ __sun-design-lineedit__ colored sized border-masked"
         :class="{ 'equal-padding': false, flat, bordered: bordered && !flat, 'no-background': noBackground }" :data-size="size" :data-border-mask="borderMask"
         :style="colorScheme">
 </template>

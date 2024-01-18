@@ -4,6 +4,32 @@ export type Size = 'small' | 'normal' | 'large';
 
 export type BorderMask = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
 
+export type BasicTypes = string | number | boolean | bigint | symbol;
+
+export type LabelTypes = BasicTypes | undefined | null;
+
+export type BoxSize = { width: number, height: number };
+
+export type Position = { x: number, y: number };
+
+export type Rect = Position & BoxSize;
+
+export type PopupOpenMode = 'instance' | 'visibility';
+
+export type UID = string | number | symbol | undefined;
+
+export interface Item {
+    asTitle?: boolean,
+    label: LabelTypes,
+    colorScheme?: ColorScheme,
+    active?: boolean,
+    disabled?: boolean,
+    description?: string,
+    uid: UID,
+    shortcut?: string,
+    icon?: string,
+}
+
 export interface ColorScheme extends CSSProperties {
     '--focus-color'?: string,
     '--border-color-normal'?: string,
@@ -30,6 +56,7 @@ export const ColorSchemeBlue = readonly<ColorScheme>({
     '--focus-color': 'rgba(70, 111, 214, 0.4)',
     '--border-color-normal': 'rgb(145, 170, 232)',
     '--border-color-disabled': 'rgb(220, 220, 220)',
+    '--border-color-active-disabled': 'rgb(205, 218, 253)',
     '--color-normal': 'rgb(222, 231, 255)',
     '--color-hover': 'rgb(205, 218, 253)',
     '--color-pressed': 'rgb(70, 111, 214)',
@@ -52,6 +79,7 @@ export const ColorSchemeRed = readonly<ColorScheme>({
     '--focus-color': 'rgb(244, 64, 64, 0.4)',
     '--border-color-normal': 'rgb(245, 180, 180)',
     '--border-color-disabled': 'rgb(220, 220, 220)',
+    '--border-color-active-disabled': 'rgb(255, 220, 220)',
     '--color-normal': 'rgb(255, 233, 233)',
     '--color-hover': 'rgb(255, 220, 220)',
     '--color-pressed': 'rgb(244, 64, 64)',
@@ -74,6 +102,7 @@ export const ColorSchemeGreen = readonly<ColorScheme>({
     '--focus-color': 'rgb(36 177 57 / 40%)',
     '--border-color-normal': 'rgb(136 208 180)',
     '--border-color-disabled': 'rgb(220, 220, 220)',
+    '--border-color-active-disabled': 'rgb(194 239 222)',
     '--color-normal': 'rgb(210 248 231)',
     '--color-hover': 'rgb(194 239 222)',
     '--color-pressed': 'rgb(4, 185, 115)',
@@ -91,3 +120,34 @@ export const ColorSchemeGreen = readonly<ColorScheme>({
     '--font-color-active-pressed': 'rgb(4, 185, 115)',
     '--font-color-active-disabled': 'rgb(255, 255, 255)',
 });
+
+const GlobalResizeObserver = new ResizeObserver(on_GlobalResizeObserverCallback);
+export type ResizeObserverCallback = (entry: ResizeObserverEntry) => void;
+const ResizeObserverTargetCallbackMap: WeakMap<Element, Set<ResizeObserverCallback>> = new WeakMap();
+function on_GlobalResizeObserverCallback(entrise: ResizeObserverEntry[]) {
+    for (const entry of entrise) {
+        const target = entry.target;
+        ResizeObserverTargetCallbackMap.get(target)?.forEach(c => c(entry));
+    }
+}
+
+export function observe_Resize(el: Element, callback: ResizeObserverCallback) {
+    if (ResizeObserverTargetCallbackMap.has(el)) {
+        ResizeObserverTargetCallbackMap.get(el)?.add(callback);
+    }
+    else {
+        ResizeObserverTargetCallbackMap.set(el, new Set([callback]));
+        GlobalResizeObserver.observe(el);
+    }
+}
+
+export function unobserve_Resize(el: Element, callback: ResizeObserverCallback) {
+    if (ResizeObserverTargetCallbackMap.has(el)) {
+        const callbacks = ResizeObserverTargetCallbackMap.get(el)!;
+        callbacks.delete(callback);
+        if (callbacks.size === 0) {
+            ResizeObserverTargetCallbackMap.delete(el);
+            GlobalResizeObserver.unobserve(el);
+        }
+    }
+}

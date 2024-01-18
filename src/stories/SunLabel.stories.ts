@@ -17,6 +17,7 @@ type Story = StoryObj<typeof SunLabel>;
  */
 export const Label: Story = {
 	decorators: Decorators,
+	tags: ['autodocs'],
 	render: (args) => ({
 		components: { SunLabel },
 		setup() {

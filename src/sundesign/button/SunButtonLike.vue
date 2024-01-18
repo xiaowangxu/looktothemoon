@@ -4,7 +4,7 @@
         'no-vertical-padding': noVerticalPadding,
         'no-left-padding': noLeftPadding,
         'no-right-padding': noRightPadding,
-    }" :data-size="size">
+    }" :data-size="size" :style="colorScheme">
         <slot>Button</slot>
     </div>
 </template>
@@ -23,6 +23,7 @@ const props = withDefaults(
         noVerticalPadding?: boolean,
         noLeftPadding?: boolean,
         noRightPadding?: boolean,
+        colorScheme?: ColorScheme,
     }>(),
     {
         size: 'normal',
@@ -43,6 +44,7 @@ const props = withDefaults(
     justify-content: center
     align-items: center
     text-wrap: nowrap
+    color: var(--font-color-normal)
 
     &.no-vertical-padding
         padding-top: 0

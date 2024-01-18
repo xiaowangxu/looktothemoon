@@ -1,5 +1,5 @@
 <template>
-    <button class="__sun-design__ __sun-design-button__ colored sized"
+    <button class="__sun-design__ __sun-design-button__ colored sized border-masked"
         :class="{ 'equal-padding': squared, squared, active, flat, bordered: bordered && !flat, rounded, hover }"
         :data-size="size" :data-border-mask="borderMask" :style="colorScheme">
         <slot>Button</slot>
@@ -45,21 +45,21 @@ const props = withDefaults(
     text-wrap: nowrap
 
     &[data-size="small"]
-        > svg, > __sun-design-icon__
+        > svg, > .__sun-design-icon__
             min-width: content-size-small
             min-height: content-size-small
             max-width: content-size-small
             max-height: content-size-small
     
     &[data-size="normal"] 
-        > svg, > __sun-design-icon__
+        > svg, > .__sun-design-icon__
             min-width: content-size-normal
             min-height: content-size-normal
             max-width: content-size-small
             max-height: content-size-small
     
     &[data-size="large"]
-        > svg, > __sun-design-icon__
+        > svg, > .__sun-design-icon__
             min-width: content-size-large
             min-height: content-size-large
             max-width: content-size-small

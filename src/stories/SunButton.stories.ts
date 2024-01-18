@@ -18,6 +18,7 @@ type Story = StoryObj<typeof SunButton>;
  */
 export const Button: Story = {
 	decorators: Decorators,
+	tags: ['autodocs'],
 	render: (args) => ({
 		components: { SunButton, Search, X },
 		setup() {
@@ -26,7 +27,7 @@ export const Button: Story = {
 		template: `
 			<SunButton v-bind="args">按钮</SunButton>
 			<SunButton v-bind="args"><Search />按钮</SunButton>
-			<SunButton v-bind="args"><Search /></SunButton>
+			<SunButton v-bind="args" squared><Search /></SunButton>
 			<SunButton v-bind="args" disabled>disabled</SunButton>
 			<div style="display: flex; flex-wrap: nowrap;">
 				<SunButton v-bind="args" :border-mask="0b1001" style="margin-right: -1px;">查找</SunButton>
@@ -50,9 +51,9 @@ export const IconOnly: Story = {
 			return { args };
 		},
 		template: `
-			<SunButton v-bind="args" size="small"><Search /></SunButton>
-			<SunButton v-bind="args" size="normal"><Search /></SunButton>
-			<SunButton v-bind="args" size="large"><Search /></SunButton>
+			<SunButton v-bind="args" size="small" squared><Search /></SunButton>
+			<SunButton v-bind="args" size="normal" squared><Search /></SunButton>
+			<SunButton v-bind="args" size="large" squared><Search /></SunButton>
 		`,
 	}),
 	argTypes: {
@@ -60,7 +61,5 @@ export const IconOnly: Story = {
 	},
 	args: {
 		...Args,
-		squared: true,
-		equalPadding: true,
 	},
 };

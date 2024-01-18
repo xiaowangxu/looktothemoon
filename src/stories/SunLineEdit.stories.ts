@@ -17,6 +17,7 @@ type Story = StoryObj<typeof SunLineEdit>;
  */
 export const LineEdit: Story = {
 	decorators: Decorators,
+	tags: ['autodocs'],
 	render: (args) => ({
 		components: { SunLineEdit },
 		setup() {
