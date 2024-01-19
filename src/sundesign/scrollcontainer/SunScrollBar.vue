@@ -1,7 +1,7 @@
 <template>
     <div ref="track_div_dom" class="__sun-design__ __sun-design-scrollbar__"
         :class="{ vertical: vertical, hoverparent: visibility === 'hover', hovertrack: visibility === 'hover-track' }"
-        :style="{ '--SPercentage': clamped_percent }">
+        :style="{ '--SPercentage': clamped_percent }" @wheel="onWheel">
         <div ref="nob_div_dom" v-show="visibility !== 'hidden'"
             class="__sun-design__ __sun-design-scrollbar-nob__ colored bordered" :class="{ dragging: is_dragging }"
             @mousedown="onMouseDown"></div>
@@ -32,6 +32,7 @@ const props = withDefaults(
 // emits
 const emits = defineEmits<{
     'update:percentage': [percentage: number],
+    'scroll': [delta: number],
 }>();
 
 // datas
@@ -53,6 +54,7 @@ function onMouseDown(evt: MouseEvent) {
     last_mouse_position = props.vertical ? evt.clientY : evt.clientX;
     last_percentage = props.percentage;
 }
+
 function onMouseMove(evt: MouseEvent) {
     if (!is_dragging || track_div_dom.value === undefined || nob_div_dom.value === undefined) return
     const height = props.vertical ? track_div_dom.value?.offsetHeight : track_div_dom.value?.offsetWidth;
@@ -64,6 +66,7 @@ function onMouseMove(evt: MouseEvent) {
     const new_percentage = Math.max(0, Math.min(1, last_percentage + delta_percentage));
     emits('update:percentage', new_percentage);
 }
+
 function onMouseUp(evt: MouseEvent) {
     evt.preventDefault();
     evt.stopPropagation();
@@ -72,18 +75,23 @@ function onMouseUp(evt: MouseEvent) {
     is_dragging.value = false;
 }
 
+function onWheel(evt: WheelEvent) {
+    evt.preventDefault();
+    emits('scroll', evt.deltaY);
+}
+
 </script>
 
 <style lang="stylus">
 @import '../SunDesignStyleConstants.styl';
 
-scrollbar-panel-border-radius = 4px
+scrollbar-panel-border-radius = 5px
 scrollbar-track-size = scrollbar-panel-border-radius * 2
-scrollbar-nob-border-radius = 2px
+scrollbar-nob-border-radius = 2.5px
 scrollbar-nob-size = scrollbar-nob-border-radius * 2
-scrollbar-nob-offset = scrollbar-panel-border-radius - scrollbar-nob-border-radius
+scrollbar-nob-offset = 2.5px // scrollbar-panel-border-radius - scrollbar-nob-border-radius
 scrollbar-nob-opacity = 1
-scrollbar-track-offset = 6px
+scrollbar-track-offset = 7px
 
 .__sun-design__.__sun-design-scrollbar__
     position: absolute

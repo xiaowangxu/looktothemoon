@@ -25,10 +25,10 @@
         </template>
         <SunScrollBar v-if="scrollable_visible_h" v-show="is_scrollable_h" :vertical="false"
             :visibility="scrollBarVisibility" class="__s_scrollcontainer_hbar__" :percentage="percentage_h"
-            @update:percentage="onHScrolled" />
+            @update:percentage="onHScrolled" @scroll="onHWheel"/>
         <SunScrollBar v-if="scrollable_visible_v" v-show="is_scrollable_v" :vertical="true"
             :visibility="scrollBarVisibility" class="__s_scrollcontainer_vbar__" :percentage="percentage_v"
-            @update:percentage="onVScrolled" />
+            @update:percentage="onVScrolled" @scroll="onVWheel" />
         <!-- <div
             style="position: absolute; left: 0; top: 0; font-size: 8px; padding: 2px 4px; font-family: consolas; pointer-events: none;">
             h {{ is_scrollable_h ? '*' : '~' }} {{ has_more_left ? '[' : '&nbsp;' }}{{ has_more_right ? ']' : '&nbsp;' }} {{
@@ -189,6 +189,16 @@ function onVScrolled(percentage: number) {
     const top = max_scrollable_v.value * percentage;
     if (container_div_dom.value) {
         container_div_dom.value.scrollTop = top;
+    }
+}
+function onHWheel(delta: number) {
+    if (container_div_dom.value) {
+        scrollTo(container_div_dom.value.scrollLeft + delta, undefined );
+    }
+}
+function onVWheel(delta: number) {
+    if (container_div_dom.value) {
+        scrollTo(undefined, container_div_dom.value.scrollTop + delta);
     }
 }
 

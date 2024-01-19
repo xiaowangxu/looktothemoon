@@ -1,7 +1,6 @@
 <template>
     <div ref="div_ref" class="__sun-design__ __sun-design-panel__"
-        :class="{ vertical, 'not-container': !container, 'drop-shadow': dropShadow, bordered }" :data-size="size"
-        :data-control-size="controlSize">
+        :class="{ vertical, 'not-container': !container, 'drop-shadow': dropShadow, bordered }" :data-size="size">
         <slot />
     </div>
 </template>
@@ -16,7 +15,6 @@ import { ref } from 'vue';
 const props = withDefaults(
     defineProps<{
         size?: Size,
-        controlSize?: Size,
         vertical?: boolean,
         bordered?: boolean,
         dropShadow?: boolean,
@@ -70,17 +68,5 @@ defineExpose({
     
     &.vertical
         flex-direction: column
-
-    &[data-control-size="small"]
-        border-top-left-radius: border-radius-size-small !important
-        border-top-right-radius: border-radius-size-small !important
-
-    &[data-control-size="normal"]
-        border-top-left-radius: border-radius-size-normal !important
-        border-top-right-radius: border-radius-size-normal !important
-
-    &[data-control-size="large"]
-        border-top-left-radius: border-radius-size-large !important
-        border-top-right-radius: border-radius-size-large !important
 
 </style>
