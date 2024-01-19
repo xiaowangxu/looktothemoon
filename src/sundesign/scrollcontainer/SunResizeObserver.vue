@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 
-import { type BoxSize, observe_Resize, unobserve_Resize } from '../SunDesignConstants';
+import { type BoxSize, observeResize, unobserveResize } from '../SunDesignConstants';
 import { getCurrentInstance, onMounted, onBeforeUnmount } from 'vue';
 
 // emits
@@ -27,17 +27,17 @@ onMounted(() => {
     }
     if (el.nextElementSibling !== null) {
         dom = el.nextElementSibling;
-        observe_Resize(dom, on_Resized);
+        observeResize(dom, onResized);
     }
 });
 onBeforeUnmount(() => {
     if (dom !== undefined) {
-        unobserve_Resize(dom, on_Resized);
+        unobserveResize(dom, onResized);
     }
 });
 
 // methods
-function on_Resized(entry: ResizeObserverEntry) {
+function onResized(entry: ResizeObserverEntry) {
     const { inlineSize: border_width, blockSize: border_height } = entry.borderBoxSize[0];
     const { inlineSize: content_width, blockSize: content_height } = entry.contentBoxSize[0];
     const { width: content_rect_width, height: content_rect_height } = entry.contentRect;

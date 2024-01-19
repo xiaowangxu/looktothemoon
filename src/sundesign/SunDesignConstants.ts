@@ -19,15 +19,16 @@ export type PopupOpenMode = 'instance' | 'visibility';
 export type UID = string | number | symbol | undefined;
 
 export interface Item {
-    asTitle?: boolean,
+    uid: UID,
     label: LabelTypes,
     colorScheme?: ColorScheme,
+    icon?: string,
+    title?: string,
+    description?: string,
+    shortcut?: string,
     active?: boolean,
     disabled?: boolean,
-    description?: string,
-    uid: UID,
-    shortcut?: string,
-    icon?: string,
+    sub?: boolean,
 }
 
 export interface ColorScheme extends CSSProperties {
@@ -121,17 +122,17 @@ export const ColorSchemeGreen = readonly<ColorScheme>({
     '--font-color-active-disabled': 'rgb(255, 255, 255)',
 });
 
-const GlobalResizeObserver = new ResizeObserver(on_GlobalResizeObserverCallback);
+const GlobalResizeObserver = new ResizeObserver(onGlobalResizeObserverCallback);
 export type ResizeObserverCallback = (entry: ResizeObserverEntry) => void;
 const ResizeObserverTargetCallbackMap: WeakMap<Element, Set<ResizeObserverCallback>> = new WeakMap();
-function on_GlobalResizeObserverCallback(entrise: ResizeObserverEntry[]) {
+function onGlobalResizeObserverCallback(entrise: ResizeObserverEntry[]) {
     for (const entry of entrise) {
         const target = entry.target;
         ResizeObserverTargetCallbackMap.get(target)?.forEach(c => c(entry));
     }
 }
 
-export function observe_Resize(el: Element, callback: ResizeObserverCallback) {
+export function observeResize(el: Element, callback: ResizeObserverCallback) {
     if (ResizeObserverTargetCallbackMap.has(el)) {
         ResizeObserverTargetCallbackMap.get(el)?.add(callback);
     }
@@ -141,7 +142,7 @@ export function observe_Resize(el: Element, callback: ResizeObserverCallback) {
     }
 }
 
-export function unobserve_Resize(el: Element, callback: ResizeObserverCallback) {
+export function unobserveResize(el: Element, callback: ResizeObserverCallback) {
     if (ResizeObserverTargetCallbackMap.has(el)) {
         const callbacks = ResizeObserverTargetCallbackMap.get(el)!;
         callbacks.delete(callback);
@@ -150,4 +151,50 @@ export function unobserve_Resize(el: Element, callback: ResizeObserverCallback) 
             GlobalResizeObserver.unobserve(el);
         }
     }
+}
+
+// popup rect calculation
+
+const DefualtWindowMargin = 10;
+
+export function calcButtonPopupRect(button_rect: Rect, content_size: BoxSize, window_size: BoxSize, prefered_direction: 0 | 1, offset: number = 0, gap: BoxSize = { width: DefualtWindowMargin, height: DefualtWindowMargin }): Rect {
+    const { width: gap_width, height: gap_height } = gap;
+    const min_window_width = window_size.width - gap_width * 2;
+    const min_window_height = window_size.height - gap_height * 2;
+    const base_width = Math.max(content_size.width, button_rect.width);
+    const base_height = content_size.height;
+    const top_space = Math.min(button_rect.y - gap_height, min_window_height) - offset;
+    const bottom_space = window_size.height - gap_height - button_rect.y - button_rect.height - offset;
+    const left_space = Math.min(button_rect.x + button_rect.width - gap_width, min_window_width);
+    const right_space = window_size.width - gap_width - button_rect.x;
+    let x: number, y: number, width: number, height: number;
+    if (bottom_space >= top_space || bottom_space >= top_space) {
+        height = Math.min(base_height, bottom_space);
+        y = button_rect.y + button_rect.height + offset;
+    }
+    else {
+        height = Math.min(base_height, top_space);
+        y = gap_height + top_space - height;
+    }
+    if (prefered_direction === 0) {
+        if (right_space >= base_width || right_space >= left_space) {
+            width = Math.min(base_width, right_space);
+            x = button_rect.x;
+        }
+        else {
+            width = Math.min(base_width, left_space);
+            x = gap_width + left_space - width;
+        }
+    }
+    else {
+        if (left_space >= base_width || left_space >= right_space) {
+            width = Math.min(base_width, left_space);
+            x = gap_width + left_space - width;
+        }
+        else {
+            width = Math.min(base_width, right_space);
+            x = button_rect.x;
+        }
+    }
+    return { x, y, width, height };
 }

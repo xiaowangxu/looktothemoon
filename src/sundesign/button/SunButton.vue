@@ -1,5 +1,5 @@
 <template>
-    <button class="__sun-design__ __sun-design-button__ colored sized border-masked"
+    <button ref="button_ref" class="__sun-design__ __sun-design-button__ colored sized border-masked"
         :class="{ 'equal-padding': squared, squared, active, flat, bordered: bordered && !flat, rounded, hover }"
         :data-size="size" :data-border-mask="borderMask" :style="colorScheme">
         <slot>Button</slot>
@@ -10,6 +10,7 @@
 
 import '../SunDesignStyle.styl';
 import type { Size, BorderMask, ColorScheme } from '../SunDesignConstants';
+import { ref } from 'vue';
 
 // props
 const props = withDefaults(
@@ -32,12 +33,20 @@ const props = withDefaults(
     }
 );
 
+const button_ref = ref<HTMLButtonElement>();
+
+// exposes
+defineExpose({
+    button: button_ref,
+});
+
 </script>
 
 <style lang="stylus">
 @import '../SunDesignStyleConstants.styl';
 
 .__sun-design__.__sun-design-button__
+    overflow: hidden
     display: inline-flex
     flex-wrap: nowrap
     justify-content: center

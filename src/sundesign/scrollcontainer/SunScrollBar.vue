@@ -2,8 +2,9 @@
     <div ref="track_div_dom" class="__sun-design__ __sun-design-scrollbar__"
         :class="{ vertical: vertical, hoverparent: visibility === 'hover', hovertrack: visibility === 'hover-track' }"
         :style="{ '--SPercentage': clamped_percent }">
-        <div ref="nob_div_dom" v-show="visibility !== 'hidden'" class="__sun-design__ __sun-design-scrollbar-nob__ colored bordered"
-            :class="{ dragging: is_dragging }" @mousedown="on_MouseDown"></div>
+        <div ref="nob_div_dom" v-show="visibility !== 'hidden'"
+            class="__sun-design__ __sun-design-scrollbar-nob__ colored bordered" :class="{ dragging: is_dragging }"
+            @mousedown="onMouseDown"></div>
     </div>
 </template>
 
@@ -42,17 +43,17 @@ let last_mouse_position = 0;
 let last_percentage = 0;
 
 // methods
-function on_MouseDown(evt: MouseEvent) {
+function onMouseDown(evt: MouseEvent) {
     evt.preventDefault();
     evt.stopPropagation();
     if (track_div_dom.value === undefined || nob_div_dom.value === undefined) return;
     is_dragging.value = true;
-    window.addEventListener('mousemove', on_MouseMove, { capture: true });
-    window.addEventListener('mouseup', on_MouseUp, { capture: true });
+    window.addEventListener('mousemove', onMouseMove, { capture: true });
+    window.addEventListener('mouseup', onMouseUp, { capture: true });
     last_mouse_position = props.vertical ? evt.clientY : evt.clientX;
     last_percentage = props.percentage;
 }
-function on_MouseMove(evt: MouseEvent) {
+function onMouseMove(evt: MouseEvent) {
     if (!is_dragging || track_div_dom.value === undefined || nob_div_dom.value === undefined) return
     const height = props.vertical ? track_div_dom.value?.offsetHeight : track_div_dom.value?.offsetWidth;
     const nob_height = props.vertical ? nob_div_dom.value?.offsetHeight : nob_div_dom.value?.offsetWidth;
@@ -63,11 +64,11 @@ function on_MouseMove(evt: MouseEvent) {
     const new_percentage = Math.max(0, Math.min(1, last_percentage + delta_percentage));
     emits('update:percentage', new_percentage);
 }
-function on_MouseUp(evt: MouseEvent) {
+function onMouseUp(evt: MouseEvent) {
     evt.preventDefault();
     evt.stopPropagation();
-    window.removeEventListener('mousemove', on_MouseMove, { capture: true });
-    window.removeEventListener('mouseup', on_MouseUp, { capture: true });
+    window.removeEventListener('mousemove', onMouseMove, { capture: true });
+    window.removeEventListener('mouseup', onMouseUp, { capture: true });
     is_dragging.value = false;
 }
 

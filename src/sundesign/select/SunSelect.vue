@@ -1,77 +1,60 @@
 <template>
-    <SunButton class="__sun-design-select-button__" :class="{ opened }" :active="active" :disabled="disabled" :size="size"
-        :flat="flat" :border-mask="borderMask" :bordered="bordered" :color-scheme="selected?.colorScheme ?? colorScheme"
-        @click="opened = !opened">
-        <template v-if="selected !== undefined">
-            <SunIcon v-if="selected?.icon !== undefined" :name="selected?.icon"></SunIcon>
-            <span class="__sun-design-select-label__">{{ selected?.label }}</span>
-            <span class="__sun-design-select-description__">
-                {{ selected?.description }}
-            </span>
-            <SunKeyboard v-if="selected?.shortcut !== undefined">{{ selected?.shortcut }}</SunKeyboard>
-        </template>
-        <template v-else>
-            <slot name="empty">
-                <span class="__sun-design-select-empty__">无选中项</span>
+    <SunButtonPopup ref="buttonpopup_ref" class="__sun-design-select-button__" :mode="mode" :get-popup-rect="getPopupRect"
+        :active="active" :disabled="disabled" :size="size" :flat="flat" :border-mask="borderMask" :bordered="bordered"
+        drop-shadow :color-scheme="selected?.colorScheme ?? colorScheme" vertical scrollable-indicators width="100%"
+        @opened="onOpened">
+        <template #button="{ opened }">
+            <template v-if="selected !== undefined">
+                <SunButtonItem :item="selected" hide-shortcut hide-sub/>
+            </template>
+            <template v-else>
+                <span class="__sun-design-select-empty__">
+                    <slot name="empty">
+                        无选中项
+                    </slot>
+                </span>
+            </template>
+            <slot v-if="!opened" name="closed">
+                <ChevronDown />
+            </slot>
+            <slot v-else name="opened">
+                <ChevronUp />
             </slot>
         </template>
-        <slot v-if="!opened" name="closed">
-            <ChevronDown />
-        </slot>
-        <slot v-else name="opened">
-            <ChevronUp />
-        </slot>
-    </SunButton>
-    <SunPopup :visible="opened" :rect="rect">
-        <SunPanel class="__sun-design-select-panel__" style="width: 100%; height: 100%;" :size="size"
-            :data-select-size="size">
-            <SunScrollContainer width="100%">
-                <template v-for="option in options">
-                    <SunPanelContainer vertical>
-                        <template v-for="item in option">
-                            <SunButton v-if="item?.asTitle !== true" class="__sun-design-select-item__" :size="size"
-                                :active="(value !== undefined && item.uid === value) || item?.active" flat
-                                :disabled="item?.disabled" :color-scheme="item?.colorScheme"
-                                @click="onClick(item.uid, $event)">
-                                <SunIcon v-if="item?.icon !== undefined" :name="item?.icon"></SunIcon>
-                                <span class="__sun-design-select-label__">{{ item?.label }}</span>
-                                <span class="__sun-design-select-description__">
-                                    {{ item?.description }}
-                                </span>
-                                <SunKeyboard v-if="item?.shortcut !== undefined">{{ item?.shortcut }}</SunKeyboard>
-                            </SunButton>
-                            <SunButtonLike v-else :size="size" :color-scheme="item?.colorScheme"><span
-                                    class="__sun-design-select-title__">{{ item.label }}</span>
-                            </SunButtonLike>
-                        </template>
-                    </SunPanelContainer>
-                    <SunPanelSeparator :override-vertical="true" />
-                </template>
-            </SunScrollContainer>
-        </SunPanel>
-    </SunPopup>
+        <template #popup>
+            <template v-for="option in options">
+                <SunPanelContainer vertical style="width: 100%;">
+                    <template v-for="item in option">
+                        <SunButton class="__sun-design-select-item__" :size="size"
+                            :ref="(value !== undefined && item.uid === value) ? 'item_refs' : undefined"
+                            :active="(value !== undefined && item.uid === value) || item?.active" flat
+                            :disabled="item?.disabled" :color-scheme="item?.colorScheme" @click="onClick(item.uid, $event)">
+                            <SunButtonItem :item="item"/>
+                        </SunButton>
+                    </template>
+                </SunPanelContainer>
+                <SunPanelSeparator :override-vertical="true" />
+            </template>
+        </template>
+    </SunButtonPopup>
 </template>
 
 <script setup lang="ts">
 
 import '../SunDesignStyle.styl';
-import { type Size, type Item, type BorderMask, type ColorScheme, type UID } from '../SunDesignConstants';
+import SunButtonPopup from '../buttonpopup/SunButtonPopup.vue';
+import { type Size, type Item, type BorderMask, type ColorScheme, type UID, type Rect, type BoxSize, type PopupOpenMode, calcButtonPopupRect } from '../SunDesignConstants';
 import SunButton from '../button/SunButton.vue';
-import SunButtonLike from '../button/SunButtonLike.vue';
-import SunIcon from '../icon/SunIcon.vue';
-import SunPopup from '../popup/SunPopup.vue';
+import SunButtonItem from '../item/SunButtonItem.vue';
 import { ChevronDown, ChevronUp } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
-import SunKeyboard from '../keyboard/SunKeyboard.vue';
-import SunPanel from '../panel/SunPanel.vue';
+import { computed, nextTick, ref } from 'vue';
 import SunPanelSeparator from '../panel/SunPanelSeparator.vue';
 import SunPanelContainer from '../panel/SunPanelContainer.vue';
-import SunScrollContainer from '../scrollcontainer/SunScrollContainer.vue';
 
 // props
-
 const props = withDefaults(
     defineProps<{
+        mode?: PopupOpenMode,
         size?: Size,
         flat?: boolean,
         bordered?: boolean,
@@ -81,22 +64,26 @@ const props = withDefaults(
         value: UID,
         active?: boolean,
         disabled?: boolean,
+        preferedDirection?: 0 | 1,
+        allowDeselect?: boolean,
     }>(),
     {
+        mode: 'instance',
         size: 'normal',
         flat: false,
         bordered: true,
         borderMask: 15,
         active: false,
         disabled: false,
+        preferedDirection: 0,
+        allowDeselect: false,
     }
 );
 
-const opened = ref(false);
+// datas
 const value = ref<UID | undefined>(undefined);
-const rect = ref<Rect>({ x: 16, y: 44, width: 200, height: 300 });
-
-// data
+const buttonpopup_ref = ref<InstanceType<typeof SunButtonPopup> | undefined>();
+const item_refs = ref<InstanceType<typeof SunButton>[] | undefined>();
 const selected = computed(() => {
     const uid = value.value;
     if (uid === undefined) return undefined;
@@ -105,8 +92,33 @@ const selected = computed(() => {
 
 // methods
 function onClick(uid: UID, event: InputEvent) {
-    value.value = uid;
-    opened.value = false;
+    if (value.value === uid) {
+        if (props.allowDeselect) {
+            value.value = undefined;
+        }
+    }
+    else {
+        value.value = uid;
+    }
+    buttonpopup_ref.value?.toggle(false);
+}
+
+function getPopupRect(buttonRect: Rect, contentMinSize: BoxSize, windowSize: BoxSize): Rect {
+    const offset = 3; // buttonRect.height * 0.1;
+    return calcButtonPopupRect(buttonRect, contentMinSize, windowSize, props.preferedDirection, offset);
+}
+
+const focus_selected_item = () => {
+    item_refs.value?.[0]?.button?.focus();
+};
+
+function onOpened() {
+    if (props.mode === 'instance') {
+        nextTick(focus_selected_item);
+    }
+    else {
+        focus_selected_item();
+    }
 }
 
 </script>
@@ -114,57 +126,13 @@ function onClick(uid: UID, event: InputEvent) {
 <style lang="stylus">
 @import '../SunDesignStyleConstants.styl';
 
-.__sun-design__.__sun-design-select-button__ 
-    width: 200px
-
-    &.opened
-        // border-bottom-left-radius: 0 !important
-        // border-bottom-right-radius: 0 !important
-
-    > span
-        background-color: unset
-        overflow: hidden
-        white-space: nowrap
-        text-overflow: ellipsis
-
-.__sun-design__.__sun-design-select-panel__
-    &[data-size]
-        // border-top-left-radius: 0 !important
-        // border-top-right-radius: 0 !important
-
-    &[data-select-size="small"]
-        border-top-left-radius: border-radius-size-small !important
-        border-top-right-radius: border-radius-size-small !important
-
-    &[data-select-size="normal"]
-        border-top-left-radius: border-radius-size-normal !important
-        border-top-right-radius: border-radius-size-normal !important
-
-    &[data-select-size="large"]
-        border-top-left-radius: border-radius-size-large !important
-        border-top-right-radius: border-radius-size-large !important
-
-.__sun-design-select-title__
-    margin-left: auto
-    overflow: hidden
-    white-space: nowrap
-    text-overflow: ellipsis
-
 .__sun-design-select-item__
     // 
-
-.__sun-design-select-description__
-    text-align: end
-    flex: 1
-    color: var(--color-active-disabled)
-    overflow: hidden
-    white-space: nowrap
-    text-overflow: ellipsis
     
 .__sun-design-select-empty__
     text-align: start
     flex: 1
-    color: var(--color-active-disabled)
+    color: var(--placeholder-color)
     overflow: hidden
     white-space: nowrap
     text-overflow: ellipsis

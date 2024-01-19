@@ -1,15 +1,12 @@
 <template>
-    <div class="__s_scrollcontainer__" :class="{
-        scrollh: scrollable_visible_h && is_scrollable_h,
-        scrollv: scrollable_visible_v && is_scrollable_v
-    }">
-        <SunResizeObserver @resized="on_ContainerResized">
-            <div ref="container_div_dom" class="__s__ __s_scrollcontainer_container__" :class="{
-                disabledh: scrollable_disabled_h,
-                disabledv: scrollable_disabled_v,
-            }" @scroll="on_Scroll">
-                <SunResizeObserver @resized="on_ContentResized">
-                    <div ref="content_div_dom" class="__s__ __s_scrollcontainer_content__"
+    <div class="__sun-design-scrollcontainer__">
+        <SunResizeObserver @resized="onContainerResized">
+            <div ref="container_div_dom" class="__sun-design-scrollcontainer-container__" :class="{
+                'disabled-h': scrollable_disabled_h,
+                'disabled-v': scrollable_disabled_v,
+            }" @scroll="onScroll">
+                <SunResizeObserver @resized="onContentResized">
+                    <div ref="content_div_dom" class="__sun-design-scrollcontainer-content__"
                         :style="{ ...content_width_css, ...content_height_css }">
                         <slot />
                     </div>
@@ -18,20 +15,20 @@
         </SunResizeObserver>
         <template v-if="scrollableIndicators">
             <template v-if="!scrollable_disabled_h">
-                <div v-show="has_more_left" class="__s__ __s_scrollcontainer_lindicator__" />
-                <div v-show="has_more_right" class="__s__ __s_scrollcontainer_rindicator__" />
+                <div v-show="has_more_left" class="__sun-design-scrollcontainer-lindicator__" />
+                <div v-show="has_more_right" class="__sun-design-scrollcontainer-rindicator__" />
             </template>
             <template v-if="!scrollable_disabled_v">
-                <div v-show="has_more_top" class="__s__ __s_scrollcontainer_tindicator__" />
-                <div v-show="has_more_bottom" class="__s__ __s_scrollcontainer_bindicator__" />
+                <div v-show="has_more_top" class="__sun-design-scrollcontainer-tindicator__" />
+                <div v-show="has_more_bottom" class="__sun-design-scrollcontainer-bindicator__" />
             </template>
         </template>
         <SunScrollBar v-if="scrollable_visible_h" v-show="is_scrollable_h" :vertical="false"
-            :visibility="scrollBarVisibility" class="__s__ __s_scrollcontainer_hbar__" :percentage="percentage_h"
-            @update:percentage="on_HScrolled" />
+            :visibility="scrollBarVisibility" class="__s_scrollcontainer_hbar__" :percentage="percentage_h"
+            @update:percentage="onHScrolled" />
         <SunScrollBar v-if="scrollable_visible_v" v-show="is_scrollable_v" :vertical="true"
-            :visibility="scrollBarVisibility" class="__s__ __s_scrollcontainer_vbar__" :percentage="percentage_v"
-            @update:percentage="on_VScrolled" />
+            :visibility="scrollBarVisibility" class="__s_scrollcontainer_vbar__" :percentage="percentage_v"
+            @update:percentage="onVScrolled" />
         <!-- <div
             style="position: absolute; left: 0; top: 0; font-size: 8px; padding: 2px 4px; font-family: consolas; pointer-events: none;">
             h {{ is_scrollable_h ? '*' : '~' }} {{ has_more_left ? '[' : '&nbsp;' }}{{ has_more_right ? ']' : '&nbsp;' }} {{
@@ -47,13 +44,13 @@
 
 <script setup lang="ts">
 
-import { ComputedRef, Ref, computed, ref, toRef, watch } from 'vue';
-import { type BoxSize, type Size } from '../SunDesignConstants';
+import { type ComputedRef, type Ref, computed, ref, toRef, watch } from 'vue';
+import { type BoxSize } from '../SunDesignConstants';
 import SunResizeObserver from './SunResizeObserver.vue';
 import SunScrollBar, { type ScrollBarVisibility } from './SunScrollBar.vue';
 
 // props
-type ScrollBarState = 'visible' | 'hidden' | 'adaptive' | 'disabled';
+export type ScrollBarState = 'visible' | 'hidden' | 'adaptive' | 'disabled';
 const props = withDefaults(
     defineProps<{
         minWidth?: string,
@@ -66,8 +63,7 @@ const props = withDefaults(
         scrollBarStateH?: ScrollBarState,
         scrollBarStateV?: ScrollBarState,
         scrollBarVisibility?: ScrollBarVisibility,
-        contentWidth?: string,
-        contentHeight?: string,
+        overscrollCascade?: boolean,
     }>(),
     {
         scrollableIndicators: true,
@@ -76,6 +72,7 @@ const props = withDefaults(
         scrollBarVisibility: 'hover-track',
         width: 'fit-content',
         height: 'fit-content',
+        overscrollCascade: false,
     }
 );
 
@@ -164,15 +161,15 @@ const has_more_bottom = computed(() => value_scrollable_v.value + SCROLL_EPSILON
 const has_more_top = computed(() => value_scrollable_v.value > SCROLL_EPSILON);
 
 // methods
-function on_ContainerResized(border_size: BoxSize, content_size: BoxSize, target: Element) {
+function onContainerResized(border_size: BoxSize, content_size: BoxSize, target: Element) {
     container_width.value = content_size.width;
     container_height.value = content_size.height;
 }
-function on_ContentResized(border_size: BoxSize, content_size: BoxSize, target: Element) {
+function onContentResized(border_size: BoxSize, content_size: BoxSize, target: Element) {
     content_width.value = content_size.width;
     content_height.value = content_size.height;
 }
-function on_Scroll(evt: UIEvent) {
+function onScroll(evt: UIEvent) {
     value_scrollable_h.value = (evt.target as HTMLDivElement).scrollLeft;
     value_scrollable_v.value = (evt.target as HTMLDivElement).scrollTop;
 }
@@ -182,13 +179,13 @@ function scrollTo(left: number | undefined, top: number | undefined, behavior: S
 function scrollBy(left: number | undefined, top: number | undefined, behavior: ScrollBehavior = 'smooth') {
     container_div_dom.value?.scrollBy({ left, top, behavior });
 }
-function on_HScrolled(percentage: number) {
+function onHScrolled(percentage: number) {
     const left = max_scrollable_h.value * percentage;
     if (container_div_dom.value) {
         container_div_dom.value.scrollLeft = left;
     }
 }
-function on_VScrolled(percentage: number) {
+function onVScrolled(percentage: number) {
     const top = max_scrollable_v.value * percentage;
     if (container_div_dom.value) {
         container_div_dom.value.scrollTop = top;
@@ -217,74 +214,65 @@ indicator-background-l = linear-gradient(-90deg, transparent, indicator-color 12
 indicator-background-b = linear-gradient(-180deg, transparent, indicator-color 120%)
 indicator-background-t = linear-gradient(0deg, transparent, indicator-color 120%)
 
-.__s_scrollcontainer__ {
-    --LargeRadius: 10px;
-    box-sizing: border-box;
-    width: 100%;
-    height: 100%;
-    position: relative;
-}
+.__sun-design-scrollcontainer__
+    width: 100%
+    height: 100%
+    position: relative
 
-.__s_scrollcontainer_container__ {
-    box-sizing: border-box;
-    width: 100%;
-    height: 100%;
-    overflow: scroll;
-}
+.__sun-design-scrollcontainer-container__
+    width: 100%
+    height: 100%
+    overflow: scroll
+    overscroll-behavior: contain
 
-.__s_scrollcontainer_container__::-webkit-scrollbar {
-    display: none;
-}
+.__sun-design-scrollcontainer-container__
+    &::-webkit-scrollbar
+        display: none
 
-.__s_scrollcontainer_container__.disabledh {
-    overflow-x: hidden;
-}
+    &.disabled-h
+        overflow-x: hidden
 
-.__s_scrollcontainer_container__.disabledv {
-    overflow-y: hidden;
-}
+    &.disabledv
+        overflow-y: hidden
 
-.__s_scrollcontainer_content__ {
-    width: fit-content;
-}
+.__sun-design-scrollcontainer-content__
+    width: fit-content
 
-.__s_scrollcontainer_rindicator__ {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    width: 'calc(min(100%, %s))' % (indicator-size);
-    background: indicator-background-r;
-    pointer-events: none;
-}
+.__sun-design-scrollcontainer-rindicator__
+    position: absolute
+    top: 0
+    bottom: 0
+    right: 0
+    width: 'calc(min(100%, %s))' % (indicator-size)
+    background: indicator-background-r
+    pointer-events: none
 
-.__s_scrollcontainer_lindicator__ {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 'calc(min(100%, %s))' % (indicator-size);
-    background: indicator-background-l;
-    pointer-events: none;
-}
+.__sun-design-scrollcontainer-lindicator__
+    position: absolute
+    top: 0
+    bottom: 0
+    left: 0
+    width: 'calc(min(100%, %s))' % (indicator-size)
+    background: indicator-background-l
+    pointer-events: none
 
-.__s_scrollcontainer_bindicator__ {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 'calc(min(100%, %s))' % (indicator-size);
-    background: indicator-background-b;
-    pointer-events: none;
-}
 
-.__s_scrollcontainer_tindicator__ {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 'calc(min(100%, %s))' % (indicator-size);
-    background: indicator-background-t;
-    pointer-events: none;
-}
+.__sun-design-scrollcontainer-bindicator__
+    position: absolute
+    left: 0
+    right: 0
+    bottom: 0
+    height: 'calc(min(100%, %s))' % (indicator-size)
+    background: indicator-background-b
+    pointer-events: none
+
+.__sun-design-scrollcontainer-tindicator__
+    position: absolute
+    left: 0
+    right: 0
+    top: 0
+    height: 'calc(min(100%, %s))' % (indicator-size)
+    background: indicator-background-t
+    pointer-events: none
+
 </style>

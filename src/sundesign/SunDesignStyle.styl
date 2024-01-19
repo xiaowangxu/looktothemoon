@@ -1,7 +1,10 @@
 @import './SunDesignStyleConstants.styl';
 
 .__sun-design__
+
     appearance: none
+    min-width: 0
+    min-height: 0
     border: none
     font-family: sans-serif, Arial, Helvetica
     box-sizing: border-box
@@ -30,8 +33,7 @@
         --font-color-active-hover:  font-color-active-hover
         --font-color-active-pressed:  font-color-active-pressed
         --font-color-active-disabled:  font-color-active-disabled
-    
-   
+        --placeholder-color:  var(--font-color-disabled)
 
     // colors
     &.colored
@@ -39,7 +41,7 @@
         color: var(--font-color-normal)
         
         &::placeholder
-            color: var(--font-color-disabled)
+            color: var(--placeholder-color)
             opacity: 1; /* Firefox */
 
         &:focus-visible

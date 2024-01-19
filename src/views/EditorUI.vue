@@ -29,9 +29,25 @@
                                     <SkipForward />
                                 </SunButton>
                                 <SunLineEdit />
-                                <SunButton squared>
-                                    <Shuffle />
-                                </SunButton>
+                                <SunSelect :options="[
+                                    [
+                                        {
+                                            label: '循环',
+                                            icon: 'Repeat',
+                                            uid: 0,
+                                        },
+                                        {
+                                            label: '单曲循环',
+                                            icon: 'Repeat1',
+                                            uid: 1,
+                                        },
+                                        {
+                                            label: '随机',
+                                            icon: 'Shuffle',
+                                            uid: 2,
+                                        }
+                                    ]
+                                ]" :preferedDirection="1" allow-deselect />
                             </SunControlGroupRow>
                         </SunControlGroup>
                     </SunPanelContainer>
@@ -44,7 +60,7 @@
                             <Check />确认
                         </SunButton>
                     </SunPanelContainer>
-                    <SunPanelContainer>
+                    <!-- <SunPanelContainer>
                         <SSelect v-model:value="select" deselectable style="min-width: 200px; max-width: 200px;">
                             <template #empty>
                                 无项目
@@ -93,7 +109,7 @@
                                 </template>
                             </SItem>
                         </SSelect>
-                    </SunPanelContainer>
+                    </SunPanelContainer> -->
                 </SunPanel>
 
                 <!-- <SPanel class="pointer-event" style="overflow: hidden; padding: 0px;">
@@ -222,6 +238,7 @@ import SunPanelContainer from '@/sundesign/panel/SunPanelContainer.vue';
 import SunPanelSeparator from '@/sundesign/panel/SunPanelSeparator.vue';
 import SunButton from '@/sundesign/button/SunButton.vue';
 import SunLineEdit from '@/sundesign/lineedit/SunLineEdit.vue';
+import SunSelect from '@/sundesign/select/SunSelect.vue';
 import SunControlGroup from '@/sundesign/controlgroup/SunControlGroup.vue';
 import SunControlGroupRow from '@/sundesign/controlgroup/SunControlGroupRow.vue';
 import { ColorSchemeRed, ColorSchemeGreen } from '@/sundesign/SunDesignConstants';

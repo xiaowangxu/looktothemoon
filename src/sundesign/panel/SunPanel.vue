@@ -1,6 +1,7 @@
 <template>
-    <div class="__sun-design__ __sun-design-panel__" :class="{ vertical, 'not-container': !container, 'drop-shadow': dropShadow, bordered }"
-        :data-size="size">
+    <div ref="div_ref" class="__sun-design__ __sun-design-panel__"
+        :class="{ vertical, 'not-container': !container, 'drop-shadow': dropShadow, bordered }" :data-size="size"
+        :data-control-size="controlSize">
         <slot />
     </div>
 </template>
@@ -9,11 +10,13 @@
 
 import '../SunDesignStyle.styl';
 import { type Size } from '../SunDesignConstants';
+import { ref } from 'vue';
 
 // props
 const props = withDefaults(
     defineProps<{
         size?: Size,
+        controlSize?: Size,
         vertical?: boolean,
         bordered?: boolean,
         dropShadow?: boolean,
@@ -26,7 +29,15 @@ const props = withDefaults(
         dropShadow: true,
         container: false,
     }
-)
+);
+
+// datas
+const div_ref = ref<HTMLDivElement | undefined>();
+
+// exposes
+defineExpose({
+    div: div_ref,
+});
 
 </script>
 
@@ -59,5 +70,17 @@ const props = withDefaults(
     
     &.vertical
         flex-direction: column
+
+    &[data-control-size="small"]
+        border-top-left-radius: border-radius-size-small !important
+        border-top-right-radius: border-radius-size-small !important
+
+    &[data-control-size="normal"]
+        border-top-left-radius: border-radius-size-normal !important
+        border-top-right-radius: border-radius-size-normal !important
+
+    &[data-control-size="large"]
+        border-top-left-radius: border-radius-size-large !important
+        border-top-right-radius: border-radius-size-large !important
 
 </style>

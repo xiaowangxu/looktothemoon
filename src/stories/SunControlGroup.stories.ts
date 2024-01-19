@@ -6,7 +6,7 @@ import SunButton from '../sundesign/button/SunButton.vue';
 import SunLineEdit from '../sundesign/lineedit/SunLineEdit.vue';
 import SunSelect from '@/sundesign/select/SunSelect.vue';
 import { Decorators } from './SunDesignArgs';
-import { StepBack, StepForward, SkipBack, SkipForward, Play, Shuffle } from 'lucide-vue-next';
+import { StepBack, StepForward, SkipBack, SkipForward, Play } from 'lucide-vue-next';
 
 const meta: Meta<typeof SunControlGroup> = {
 	component: SunControlGroup,
@@ -24,7 +24,7 @@ export const ControlGroup: Story = {
 	decorators: Decorators,
 	tags: ['autodocs'],
 	render: (args) => ({
-		components: { SunControlGroup, SunControlGroupRow, SunButton, SunSelect, SunLineEdit, StepBack, StepForward, SkipBack, SkipForward, Play, Shuffle },
+		components: { SunControlGroup, SunControlGroupRow, SunButton, SunSelect, SunLineEdit, StepBack, StepForward, SkipBack, SkipForward, Play },
 		setup() {
 			return { args };
 		},
@@ -70,12 +70,25 @@ export const ControlGroup: Story = {
 					<SunButton squared><StepForward/></SunButton>
 					<SunButton squared><SkipForward/></SunButton>
 					<SunLineEdit />		
-					<SunButton squared><Shuffle /></SunButton>
-					<SunSelect :options="{
-						label: 'Test',
-						icon: 'Cog',
-						description: 'Test 1234567890',
-					}"/>
+					<SunSelect style="max-width: 100px; min-width: 50px;" :options="[
+						[
+							{
+								label: '循环',
+								icon: 'Repeat',
+								uid: 0,
+							},
+							{
+								label: '单曲循环',
+								icon: 'Repeat1',
+								uid: 1,
+							},
+							{
+								label: '随机',
+								icon: 'Shuffle',
+								uid: 2,
+							}
+						]
+					]" :preferedDirection="1"/>
 				</SunControlGroupRow>
 			</SunControlGroup>
 			<SunControlGroup>

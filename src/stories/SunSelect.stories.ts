@@ -26,7 +26,11 @@ export const Select: Story = {
 			return { args };
 		},
 		template: `
-			<SunSelect v-bind="args"></SunSelect>
+			<SunSelect style="min-width: 80px; max-width: 150px;" v-bind="args">
+				<template #empty>
+					没有选中的东西哦
+				</template>
+			</SunSelect>
 		`,
 	}),
 	argTypes: {
@@ -47,73 +51,64 @@ export const Select: Story = {
 					description: 'Test 1234567890',
 					uid: 1,
 				}],
-			[{
-				asTitle: true,
-				label: '分类12',
-				uid: -1,
-			}, {
-				label: '测试',
-				icon: 'Globe',
-				disabled: true,
-				uid: 2,
-			},
-			{
-				label: 'Test',
-				icon: 'Cog',
-				description: 'Test',
-				uid: 3,
-			},
-			{
-				label: 'Test',
-				icon: 'Trash',
-				uid: 4,
-				description: '有快捷键哦~~~~~~~',
-				shortcut: 'Ctrl B',
-			}],
-			[{
-				asTitle: true,
-				label: '分类 ABC',
-				uid: -1,
-			}, {
-				label: '测试',
-				icon: 'Globe',
-				uid: 5,
-			},
-			{
-				label: 'Test',
-				icon: 'Cog',
-				description: 'Test',
-				uid: 6,
-			},
-			{
-				label: 'Test',
-				icon: 'Trash',
-				uid: 7,
-				colorScheme: ColorSchemeRed,
-				shortcut: 'Ctrl B',
-			}],
-			[{
-				asTitle: true,
-				label: 'hello world',
-				uid: -1,
-			}, {
-				label: '测试',
-				icon: 'Globe',
-				uid: 8,
-			},
-			{
-				label: 'More',
-				icon: 'MoreHorizontal',
-				colorScheme: ColorSchemeGreen,
-				uid: 9,
-			},
-			{
-				label: 'Test',
-				colorScheme: ColorSchemeBlue,
-				icon: 'Trash',
-				uid: 10,
-				shortcut: 'Ctrl B',
-			}]
+			[
+				{
+					label: '测试',
+					icon: 'Globe',
+					disabled: true,
+					uid: 2,
+				},
+				{
+					label: 'Test',
+					icon: 'Cog',
+					description: 'Test',
+					uid: 3,
+				},
+				{
+					label: 'Test',
+					icon: 'Trash',
+					uid: 4,
+					description: '有快捷键哦~~~~~~~',
+					shortcut: 'Ctrl B',
+				}],
+			[
+				{
+					label: '测试',
+					icon: 'Globe',
+					uid: 5,
+				},
+				{
+					label: 'Test',
+					icon: 'Cog',
+					description: 'Test',
+					uid: 6,
+				},
+				{
+					label: 'Test',
+					icon: 'Trash',
+					uid: 7,
+					colorScheme: ColorSchemeRed,
+					shortcut: 'Ctrl B',
+				}],
+			[
+				{
+					label: '测试',
+					icon: 'Globe',
+					uid: 8,
+				},
+				{
+					label: 'More',
+					icon: 'MoreHorizontal',
+					colorScheme: ColorSchemeGreen,
+					uid: 9,
+				},
+				{
+					label: 'Test',
+					colorScheme: ColorSchemeBlue,
+					icon: 'Trash',
+					uid: 10,
+					shortcut: 'Ctrl B',
+				}]
 		],
 		value: 1,
 	},

@@ -3,26 +3,26 @@
 
         <SunPanel style="pointer-events: all;">
             <SunPanelContainer>
-                <SunButton flat squared>
+                <SunButton flat>文件</SunButton>
+                <SunButton flat>编辑</SunButton>
+                <SunButton flat>视图</SunButton>
+            </SunPanelContainer>
+        </SunPanel>
+
+        <SunPanel style="pointer-events: all;" size="small">
+            <SunPanelContainer>
+                <SunButton size="small" flat squared>
                     <Save />
                 </SunButton>
             </SunPanelContainer>
             <SunPanelSeparator />
             <SunPanelContainer>
-                <SunButton flat squared>
+                <SunButton size="small" flat squared>
                     <Undo2 />
                 </SunButton>
-                <SunButton flat squared>
+                <SunButton size="small" flat squared>
                     <Redo2 />
                 </SunButton>
-            </SunPanelContainer>
-        </SunPanel>
-
-        <SunPanel style="pointer-events: all;">
-            <SunPanelContainer>
-                <SunButton flat>文件</SunButton>
-                <SunButton flat>编辑</SunButton>
-                <SunButton flat>视图</SunButton>
             </SunPanelContainer>
         </SunPanel>
 
