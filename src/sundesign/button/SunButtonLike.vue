@@ -57,24 +57,24 @@ const props = withDefaults(
         padding-right: 0
 
     &[data-size="small"]
-        > svg, > __sun-design-icon__
+        svg, .__sun-design-icon__
             min-width: content-size-small
             min-height: content-size-small
             max-width: content-size-small
             max-height: content-size-small
-
+    
     &[data-size="normal"] 
-        > svg, > __sun-design-icon__
+        svg, .__sun-design-icon__
             min-width: content-size-normal
             min-height: content-size-normal
-            max-width: content-size-small
-            max-height: content-size-small
-
+            max-width: content-size-normal
+            max-height: content-size-normal
+    
     &[data-size="large"]
-        > svg, > __sun-design-icon__
+        svg, .__sun-design-icon__
             min-width: content-size-large
             min-height: content-size-large
-            max-width: content-size-small
-            max-height: content-size-small
+            max-width: content-size-large
+            max-height: content-size-large
 
 </style>

@@ -5,14 +5,14 @@
         @opened="onOpened">
         <template #button="{ opened }">
             <template v-if="selected !== undefined">
-                <SunButtonItem :item="selected" hide-shortcut hide-sub/>
+                <SunButtonItem :item="selected" hide-shortcut hide-sub />
             </template>
             <template v-else>
-                <span class="__sun-design-select-empty__">
-                    <slot name="empty">
+                <slot name="empty">
+                    <span class="__sun-design-select-empty__">
                         无选中项
-                    </slot>
-                </span>
+                    </span>
+                </slot>
             </template>
             <slot v-if="!opened" name="closed">
                 <ChevronDown />
@@ -29,7 +29,7 @@
                             :ref="(value !== undefined && item.uid === value) ? 'item_refs' : undefined"
                             :active="(value !== undefined && item.uid === value) || item?.active" flat
                             :disabled="item?.disabled" :color-scheme="item?.colorScheme" @click="onClick(item.uid, $event)">
-                            <SunButtonItem :item="item"/>
+                            <SunButtonItem :item="item" />
                         </SunButton>
                     </template>
                 </SunPanelContainer>
@@ -136,5 +136,8 @@ function onOpened() {
     overflow: hidden
     white-space: nowrap
     text-overflow: ellipsis
+
+    :disabled > &, .disabled > &
+        color: var(--placeholder-color-disabled)
 
 </style>

@@ -1,7 +1,7 @@
 <template>
     <input class="__sun-design__ __sun-design-lineedit__ colored sized border-masked"
-        :class="{ 'equal-padding': false, flat, bordered: bordered && !flat, 'no-background': noBackground }" :data-size="size" :data-border-mask="borderMask"
-        :style="colorScheme">
+        :class="{ 'equal-padding': false, flat, bordered: bordered && !flat, 'no-background': noBackground }"
+        :data-size="size" :data-border-mask="borderMask" :style="colorScheme">
 </template>
 
 <script setup lang="ts">
@@ -35,7 +35,6 @@ const props = withDefaults(
 @import '../SunDesignStyleConstants.styl';
 
 .__sun-design__.__sun-design-lineedit__, .__sun-design__.__sun-design-lineedit__.flat
-    min-width: 0
 
     &.no-background
         background-color: transparent !important

@@ -24,7 +24,7 @@ export const LineEdit: Story = {
 			return { args };
 		},
 		template: `
-			<SunLineEdit value="输入文本" v-bind="args"/>
+			<SunLineEdit value="" v-bind="args" placeholder="输入文本"/>
 			<SunLineEdit value="输入文本" v-bind="args" flat/>
 			<SunLineEdit v-bind="args" disabled placeholder="disabled"/>
 			<SunLineEdit value="输入文本 disabled" v-bind="args" disabled placeholder="disabled"/>

@@ -28,7 +28,7 @@ export const Select: Story = {
 		template: `
 			<SunSelect style="min-width: 80px; max-width: 150px;" v-bind="args">
 				<template #empty>
-					没有选中的东西哦
+					<span class="__sun-design-select-empty__">没有选中的东西哦</span>
 				</template>
 			</SunSelect>
 		`,

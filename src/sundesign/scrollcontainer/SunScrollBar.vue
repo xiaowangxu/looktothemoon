@@ -1,7 +1,7 @@
 <template>
     <div ref="track_div_dom" class="__sun-design__ __sun-design-scrollbar__"
         :class="{ vertical: vertical, hoverparent: visibility === 'hover', hovertrack: visibility === 'hover-track' }"
-        :style="{ '--SPercentage': clamped_percent }" @wheel="onWheel">
+        :style="{ '--Percentage': clamped_percent }" @wheel="onWheel">
         <div ref="nob_div_dom" v-show="visibility !== 'hidden'"
             class="__sun-design__ __sun-design-scrollbar-nob__ colored bordered" :class="{ dragging: is_dragging }"
             @mousedown="onMouseDown"></div>
@@ -119,7 +119,7 @@ scrollbar-track-offset = 7px
     bottom: 0
     width: 30%
     height: scrollbar-nob-size
-    left: calc(70% * var(--SPercentage))
+    left: calc(70% * var(--Percentage))
     border-radius: scrollbar-nob-border-radius
     opacity: scrollbar-nob-opacity
 
@@ -128,7 +128,7 @@ scrollbar-track-offset = 7px
         right: 0
         height: 30%
         width: scrollbar-nob-size
-        top: calc(70% * var(--SPercentage))
+        top: calc(70% * var(--Percentage))
 
     :hover>.hoverparent>&.dragging,
     .hovertrack:hover>&.dragging,

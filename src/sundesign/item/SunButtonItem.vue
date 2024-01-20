@@ -52,7 +52,7 @@ const has_description = computed(() => !props.hideDescription && props.item?.des
 
 .__sun-design-button-item-description__
     text-align: end
-    color: var(--color-active-disabled)
+    color: var(--placeholder-color)
     overflow: hidden
     white-space: nowrap
     text-overflow: ellipsis
@@ -60,5 +60,8 @@ const has_description = computed(() => !props.hideDescription && props.item?.des
     flex-grow: 1
     flex-basis: 0px
     min-width: 0px
+
+    :disabled &, .disabled &
+        color: var(--placeholder-color-disabled)
 
 </style>

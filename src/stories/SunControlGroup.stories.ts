@@ -3,10 +3,13 @@ import type { Meta, StoryObj } from '@storybook/vue3';
 import SunControlGroup from '../sundesign/controlgroup/SunControlGroup.vue';
 import SunControlGroupRow from '../sundesign/controlgroup/SunControlGroupRow.vue';
 import SunButton from '../sundesign/button/SunButton.vue';
+import SunButtonLike from '../sundesign/button/SunButtonLike.vue';
 import SunLineEdit from '../sundesign/lineedit/SunLineEdit.vue';
+import SunNumberEdit from '../sundesign/numberedit/SunNumberEdit.vue'
 import SunSelect from '@/sundesign/select/SunSelect.vue';
 import { Decorators } from './SunDesignArgs';
 import { StepBack, StepForward, SkipBack, SkipForward, Play } from 'lucide-vue-next';
+import {ColorSchemeBlue, ColorSchemeRed, ColorSchemeGreen} from '../sundesign/SunDesignConstants';
 
 const meta: Meta<typeof SunControlGroup> = {
 	component: SunControlGroup,
@@ -24,9 +27,9 @@ export const ControlGroup: Story = {
 	decorators: Decorators,
 	tags: ['autodocs'],
 	render: (args) => ({
-		components: { SunControlGroup, SunControlGroupRow, SunButton, SunSelect, SunLineEdit, StepBack, StepForward, SkipBack, SkipForward, Play },
+		components: { SunControlGroup, SunControlGroupRow, SunNumberEdit, SunButton, SunButtonLike, SunSelect, SunLineEdit, StepBack, StepForward, SkipBack, SkipForward, Play },
 		setup() {
-			return { args };
+			return { args , ColorSchemeBlue, ColorSchemeRed, ColorSchemeGreen };
 		},
 		template: `
 			<!-- single -->
@@ -54,11 +57,11 @@ export const ControlGroup: Story = {
 			<!-- grid two -->
 			<SunControlGroup>
 				<SunControlGroupRow>
-					<SunButton squared>&nbsp;</SunButton>
+					<SunButton style="width: 70px;">&nbsp;</SunButton>
 					<SunButton squared>&nbsp;</SunButton>
 				</SunControlGroupRow>
 				<SunControlGroupRow>
-					<SunButton squared>&nbsp;</SunButton>
+					<SunLineEdit style="width: 70px;" placeholder="这是文本框"/>
 					<SunButton squared>&nbsp;</SunButton>
 				</SunControlGroupRow>
 			</SunControlGroup>
@@ -69,7 +72,11 @@ export const ControlGroup: Story = {
 					<SunButton squared><Play/></SunButton>
 					<SunButton squared><StepForward/></SunButton>
 					<SunButton squared><SkipForward/></SunButton>
-					<SunLineEdit />		
+					<SunNumberEdit :value="256" v-bind="args" suffix="/ 3:44" style="width: 120px;">
+						<template #suffix>
+							/ 4:33
+						</template>
+					</SunNumberEdit>
 					<SunSelect style="max-width: 100px; min-width: 50px;" :options="[
 						[
 							{
@@ -89,6 +96,30 @@ export const ControlGroup: Story = {
 							}
 						]
 					]" :preferedDirection="1"/>
+				</SunControlGroupRow>
+			</SunControlGroup>
+			<!-- row two -->
+			<SunControlGroup style="width: 100px;">
+				<SunControlGroupRow>
+					<SunNumberEdit progress :value="128" :color-scheme="ColorSchemeRed" style="flex: 1;">
+						<template #prefix>
+							红
+						</template>
+					</SunNumberEdit>
+				</SunControlGroupRow>
+				<SunControlGroupRow>
+					<SunNumberEdit progress :value="128" :color-scheme="ColorSchemeGreen" style="flex: 1;">
+						<template #prefix>
+							绿
+						</template>
+					</SunNumberEdit>
+				</SunControlGroupRow>
+				<SunControlGroupRow>
+					<SunNumberEdit progress :value="128" :color-scheme="ColorSchemeBlue" style="flex: 1;">
+						<template #prefix>
+							蓝
+						</template>
+					</SunNumberEdit>
 				</SunControlGroupRow>
 			</SunControlGroup>
 			<SunControlGroup>
