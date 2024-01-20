@@ -33,6 +33,16 @@ export const NumberEdit: Story = {
 					米(m)
 				</template>
 			</SunNumberEdit>
+			<SunNumberEdit v-bind="args" style="width: 100px;" :value="3.12344">
+				<template #suffix>
+					后缀
+				</template>
+			</SunNumberEdit>
+			<SunNumberEdit v-bind="args" style="width: 100px;" :value="3.12344">
+				<template #prefix>
+					前缀
+				</template>
+			</SunNumberEdit>
 			<SunNumberEdit v-bind="args" progress style="width: 150px;" disabled/>
 		`,
 	}),

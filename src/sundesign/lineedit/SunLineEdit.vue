@@ -1,5 +1,5 @@
 <template>
-    <input class="__sun-design__ __sun-design-lineedit__ colored sized border-masked"
+    <input ref="input_ref" class="__sun-design__ __sun-design-lineedit__ colored sized border-masked"
         :class="{ 'equal-padding': false, flat, bordered: bordered && !flat, 'no-background': noBackground }"
         :data-size="size" :data-border-mask="borderMask" :style="colorScheme">
 </template>
@@ -8,6 +8,7 @@
 
 import '../SunDesignStyle.styl';
 import type { Size, BorderMask, ColorScheme } from '../SunDesignConstants';
+import { ref } from 'vue';
 
 // props
 const props = withDefaults(
@@ -28,6 +29,15 @@ const props = withDefaults(
         noBackground: false,
     }
 );
+
+// datas
+const input_ref = ref<HTMLInputElement | undefined>();
+
+// exposes
+defineExpose({
+    input: input_ref,
+});
+
 
 </script>
 

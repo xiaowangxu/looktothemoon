@@ -9,7 +9,7 @@ import SunNumberEdit from '../sundesign/numberedit/SunNumberEdit.vue'
 import SunSelect from '@/sundesign/select/SunSelect.vue';
 import { Decorators } from './SunDesignArgs';
 import { StepBack, StepForward, SkipBack, SkipForward, Play } from 'lucide-vue-next';
-import {ColorSchemeBlue, ColorSchemeRed, ColorSchemeGreen} from '../sundesign/SunDesignConstants';
+import { ColorSchemeBlue, ColorSchemeRed, ColorSchemeGreen } from '../sundesign/SunDesignConstants';
 
 const meta: Meta<typeof SunControlGroup> = {
 	component: SunControlGroup,
@@ -29,7 +29,7 @@ export const ControlGroup: Story = {
 	render: (args) => ({
 		components: { SunControlGroup, SunControlGroupRow, SunNumberEdit, SunButton, SunButtonLike, SunSelect, SunLineEdit, StepBack, StepForward, SkipBack, SkipForward, Play },
 		setup() {
-			return { args , ColorSchemeBlue, ColorSchemeRed, ColorSchemeGreen };
+			return { args, ColorSchemeBlue, ColorSchemeRed, ColorSchemeGreen };
 		},
 		template: `
 			<!-- single -->
@@ -72,7 +72,7 @@ export const ControlGroup: Story = {
 					<SunButton squared><Play/></SunButton>
 					<SunButton squared><StepForward/></SunButton>
 					<SunButton squared><SkipForward/></SunButton>
-					<SunNumberEdit :value="256" v-bind="args" suffix="/ 3:44" style="width: 120px;">
+					<SunNumberEdit :value="256" v-bind="args" suffix="/ 3:44" style="width: 120px;" :step-button="false">
 						<template #suffix>
 							/ 4:33
 						</template>

@@ -1,7 +1,7 @@
 <template>
-    <template v-if="true">
+    <template v-if="!inputing || disabled || !allowInput">
         <SunButton class="__sun-design-numberedit-container__" :size="size" :flat="flat" :bordered="bordered"
-            :color-scheme="colorScheme" :border-mask="borderMask" @click="() => { console.log('!!') }" :disabled="disabled">
+            :color-scheme="colorScheme" :border-mask="borderMask" @click="onInputClick" :disabled="disabled">
             <button v-if="stepButton"
                 class="__sun-design__ __sun-design-numberedit-dec__ __sun-design-button-like__ colored"
                 :class="{ bordered: bordered && !flat }" :data-size="size" @click.stop="() => { console.log('dec') }"
@@ -29,9 +29,14 @@
         </SunButton>
     </template>
     <template v-else>
-        <input class="__sun-design__ __sun-design-lineedit__ colored sized border-masked"
-            :class="{ 'equal-padding': false, flat, bordered: bordered && !flat }" :data-size="size"
-            :data-border-mask="borderMask" :style="colorScheme">
+        <form class="__sun-design__ __sun-design_numberedit-input-container__ sized" :data-size="size"
+            @submit.prevent="() => { console.log('>>>>') }">
+            <SunLineEdit ref="input_ref" class="__sun-design-numberedit-input__" :class="{
+                left: $slots.prefix === undefined && $slots.suffix !== undefined,
+                right: $slots.prefix !== undefined && $slots.suffix === undefined
+            }" :value="value" :size="size" :flat="flat" :bordered="bordered" :style="colorScheme" :disabled="disabled"
+                :color-scheme="colorScheme" @blur="inputing = false" />
+        </form>
     </template>
 </template>
 
@@ -39,10 +44,10 @@
 
 import '../SunDesignStyle.styl';
 import SunButton from '../button/SunButton.vue';
-import SunLabel from '../label/SunLabel.vue';
+import SunLineEdit from '../lineedit/SunLineEdit.vue';
 import type { Size, BorderMask, ColorScheme } from '../SunDesignConstants';
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { ref, watch } from 'vue';
 
 // props
 const props = withDefaults(
@@ -57,6 +62,7 @@ const props = withDefaults(
         value?: number,
         progress?: boolean,
         stepButton?: boolean,
+        allowInput?: boolean,
     }>(),
     {
         size: 'normal',
@@ -67,13 +73,46 @@ const props = withDefaults(
         value: 0,
         progress: false,
         stepButton: true,
+        allowInput: true,
     }
 );
+
+// datas
+const inputing = ref(false);
+const input_ref = ref<InstanceType<typeof SunLineEdit> | undefined>();
+
+watch([input_ref], ([input]) => {
+    const _input = input?.input;
+    if (_input !== undefined) {
+        _input.focus();
+        _input.setSelectionRange(0, _input.value.length);
+    }
+});
+
+function onInputClick() {
+    if (props.allowInput && !inputing.value) {
+        inputing.value = true;
+    }
+}
 
 </script>
 
 <style lang="stylus">
 @import '../SunDesignStyleConstants.styl';
+
+.__sun-design_numberedit-input-container__
+    padding: 0 !important
+
+.__sun-design-numberedit-input__
+    text-align: center
+    width: 100%
+    height: 100%
+
+    &.left
+        text-align: start
+
+    &.right
+        text-align: end
 
 .__sun-design__.__sun-design-numberedit-container__, .__sun-design__.__sun-design-numberedit-container__.flat
     &:active
