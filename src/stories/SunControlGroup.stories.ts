@@ -72,7 +72,7 @@ export const ControlGroup: Story = {
 					<SunButton squared><Play/></SunButton>
 					<SunButton squared><StepForward/></SunButton>
 					<SunButton squared><SkipForward/></SunButton>
-					<SunNumberEdit :value="256" v-bind="args" suffix="/ 3:44" style="width: 120px;" :step-button="false">
+					<SunNumberEdit :value="256" v-bind="args" suffix="/ 3:44" style="width: 120px;" :step-button="true">
 						<template #suffix>
 							/ 4:33
 						</template>
@@ -130,10 +130,10 @@ export const ControlGroup: Story = {
 					<SunButton squared size="large">4</SunButton>
 				</SunControlGroupRow>
 				<SunControlGroupRow>
-					<SunButton style="flex: 1;" size="small">5</SunButton>
-					<SunButton style="flex: 1;" size="small">6</SunButton>
-					<SunButton style="flex: 1;" size="small">7</SunButton>
-					<SunButton style="flex: 1;" size="small">8</SunButton>
+					<SunButton squared size="large">5</SunButton>
+					<SunButton squared size="large">6</SunButton>
+					<SunButton squared size="large">7</SunButton>
+					<SunButton squared size="large">8</SunButton>
 				</SunControlGroupRow>
 				<SunControlGroupRow>
 					<SunButton squared size="large">9</SunButton>
@@ -142,10 +142,10 @@ export const ControlGroup: Story = {
 					<SunButton squared size="large">12</SunButton>
 				</SunControlGroupRow>
 				<SunControlGroupRow>
-					<SunButton style="flex: 1;" size="normal">13</SunButton>
-					<SunButton style="flex: 1;" size="normal">14</SunButton>
-					<SunButton style="flex: 1;" size="normal">15</SunButton>
-					<SunButton style="flex: 1;" size="normal">16</SunButton>
+					<SunButton squared size="large">13</SunButton>
+					<SunButton squared size="large">14</SunButton>
+					<SunButton squared size="large">15</SunButton>
+					<SunButton squared size="large">16</SunButton>
 				</SunControlGroupRow>
 			</SunControlGroup>
 		`,

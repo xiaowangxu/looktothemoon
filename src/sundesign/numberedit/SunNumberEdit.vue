@@ -30,7 +30,7 @@
     </template>
     <template v-else>
         <form class="__sun-design__ __sun-design_numberedit-input-container__ sized" :data-size="size"
-            @submit.prevent="() => { console.log('>>>>') }">
+            @submit.prevent="inputing = false">
             <SunLineEdit ref="input_ref" class="__sun-design-numberedit-input__" :class="{
                 left: $slots.prefix === undefined && $slots.suffix !== undefined,
                 right: $slots.prefix !== undefined && $slots.suffix === undefined

@@ -5,6 +5,7 @@
 </template>
 
 <style lang="stylus">
+@import '../SunDesignStyleConstants.styl';
 
 .__sun-design__.__sun-design-controlgroup__
     display: flex
