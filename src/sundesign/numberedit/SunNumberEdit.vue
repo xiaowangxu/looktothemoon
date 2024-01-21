@@ -29,12 +29,13 @@
         </SunButton>
     </template>
     <template v-else>
-        <form class="__sun-design__ __sun-design_numberedit-input-container__ sized" :data-size="size"
-            @submit.prevent="inputing = false">
+        <form class="__sun-design__ __sun-design_numberedit-input-container__ sized colored"
+            :class="{ bordered: bordered && !flat }" :data-size="size" @submit.prevent="inputing = false"
+            :style="colorScheme">
             <SunLineEdit ref="input_ref" class="__sun-design-numberedit-input__" :class="{
                 left: $slots.prefix === undefined && $slots.suffix !== undefined,
                 right: $slots.prefix !== undefined && $slots.suffix === undefined
-            }" :value="value" :size="size" :flat="flat" :bordered="bordered" :style="colorScheme" :disabled="disabled"
+            }" :value="value" :size="size" :flat="flat" :bordered="false" :style="colorScheme" :disabled="disabled"
                 :color-scheme="colorScheme" @blur="inputing = false" />
         </form>
     </template>
@@ -102,11 +103,17 @@ function onInputClick() {
 
 .__sun-design_numberedit-input-container__
     padding: 0 !important
+    background-color: unset !important
+    overflow: hidden
+    position: relative
 
 .__sun-design-numberedit-input__
+    position: absolute
     text-align: center
     width: 100%
     height: 100%
+    min-height: unset !important
+    border-radius: 0 !important
 
     &.left
         text-align: start

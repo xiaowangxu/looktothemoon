@@ -10,7 +10,8 @@
             <!-- :data-buttonpopup-size="size" -->
             <SunScrollContainer :minWidth="minWidth" :maxWidth="maxWidth" :width="width" :minHeight="minHeight"
                 :maxHeight="maxHeight" :height="height" :scrollableIndicators="scrollableIndicators"
-                :scrollBarStateH="scrollBarStateH" :scrollBarStateV="scrollBarStateV" :scrollBarVisibility="scrollBarVisibility">
+                :scrollBarStateH="scrollBarStateH" :scrollBarStateV="scrollBarStateV"
+                :scrollBarVisibility="scrollBarVisibility">
                 <SunPanel class="__sun-design-buttonpopup-panel-container__" container :vertical="vertical">
                     <slot name="popup" :opened="opened" :toggle="toggle" />
                 </SunPanel>
@@ -91,6 +92,7 @@ const content_min_size = ref<BoxSize>({ width: 0, height: 0 });
 const { width: windowWidth, height: windowHeight } = useWindowSize();
 
 const get_panel_content_min_size = () => {
+    console.log(">>>>>>>");
     const div = panel_ref.value?.div;
     if (div !== undefined) {
         const style_width = (div as HTMLDivElement).style.width;
@@ -142,9 +144,14 @@ function onCoverClick(evt: Event) {
     toggle(false);
 }
 
+function refreshPopupContentMinSize() {
+    get_panel_content_min_size();
+}
+
 // exposes
 defineExpose({
     toggle,
+    refreshPopupContentMinSize,
 });
 
 </script>

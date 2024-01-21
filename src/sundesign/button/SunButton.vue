@@ -2,7 +2,7 @@
     <button ref="button_ref" class="__sun-design__ __sun-design-button__ colored sized border-masked"
         :class="{ 'equal-padding': squared, squared, active, flat, bordered: bordered && !flat, rounded, hover }"
         :data-size="size" :data-border-mask="borderMask" :style="colorScheme">
-        <slot>Button</slot>
+        <slot />
     </button>
 </template>
 
