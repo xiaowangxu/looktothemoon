@@ -92,7 +92,6 @@ const content_min_size = ref<BoxSize>({ width: 0, height: 0 });
 const { width: windowWidth, height: windowHeight } = useWindowSize();
 
 const get_panel_content_min_size = () => {
-    console.log(">>>>>>>");
     const div = panel_ref.value?.div;
     if (div !== undefined) {
         const style_width = (div as HTMLDivElement).style.width;

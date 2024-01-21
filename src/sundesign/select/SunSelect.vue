@@ -1,18 +1,20 @@
 <template>
     <SunButtonPopup ref="buttonpopup_ref" class="__sun-design-select-button__" :mode="mode" :get-popup-rect="getPopupRect"
         :active="active" :disabled="disabled" :size="size" :flat="flat" :border-mask="borderMask" :bordered="bordered"
-        drop-shadow :color-scheme="selected?.colorScheme ?? colorScheme" vertical scrollable-indicators width="100%"
-        @opened="onOpened">
+        :squared="squared" drop-shadow :color-scheme="selected?.colorScheme ?? colorScheme" vertical scrollable-indicators
+        width="100%" @opened="onOpened">
         <template #button="{ opened }">
-            <template v-if="selected !== undefined">
-                <SunButtonItem :item="selected" hide-shortcut hide-sub />
-            </template>
-            <template v-else>
-                <slot name="empty">
-                    <span class="__sun-design-select-empty__">
-                        无选中项
-                    </span>
-                </slot>
+            <template v-if="!iconOnly">
+                <template v-if="selected !== undefined">
+                    <SunButtonItem :item="selected" hide-shortcut hide-sub />
+                </template>
+                <template v-else>
+                    <slot name="empty">
+                        <span class="__sun-design-select-empty__">
+                            无选中项
+                        </span>
+                    </slot>
+                </template>
             </template>
             <slot v-if="!opened" name="closed">
                 <ChevronDown />
@@ -50,6 +52,7 @@ import { ChevronDown, ChevronUp } from 'lucide-vue-next';
 import { computed, nextTick, ref } from 'vue';
 import SunPanelSeparator from '../panel/SunPanelSeparator.vue';
 import SunPanelContainer from '../panel/SunPanelContainer.vue';
+import { useVModel } from '@vueuse/core';
 
 // props
 const props = withDefaults(
@@ -60,28 +63,38 @@ const props = withDefaults(
         bordered?: boolean,
         borderMask?: BorderMask,
         colorScheme?: ColorScheme,
+        squared?: boolean,
         options: Item[][],
-        value: UID,
+        modelValue: UID | undefined,
         active?: boolean,
         disabled?: boolean,
         preferedDirection?: 0 | 1,
         allowDeselect?: boolean,
+        iconOnly?: boolean,
     }>(),
     {
         mode: 'instance',
         size: 'normal',
         flat: false,
+        squared: false,
         bordered: true,
         borderMask: 15,
         active: false,
         disabled: false,
         preferedDirection: 0,
         allowDeselect: false,
+        iconOnly: false,
     }
 );
 
+// emits
+const emits = defineEmits<{
+    (event: 'update:modelValue', uid: UID | undefined): void
+}>();
+
+const value = useVModel(props, "modelValue", emits, { defaultValue: undefined });
+
 // datas
-const value = ref<UID | undefined>(undefined);
 const buttonpopup_ref = ref<InstanceType<typeof SunButtonPopup> | undefined>();
 const item_refs = ref<InstanceType<typeof SunButton>[] | undefined>();
 const selected = computed(() => {

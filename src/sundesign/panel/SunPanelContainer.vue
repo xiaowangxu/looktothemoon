@@ -1,5 +1,5 @@
 <template>
-    <div class="__sun-design__ __sun-design-panel-container__" :class="{ vertical, gap }">
+    <div class="__sun-design__ __sun-design-panel-container__" :class="{ vertical, gap, 'no-padding': noPadding }">
         <slot />
     </div>
 </template>
@@ -11,10 +11,12 @@ const props = withDefaults(
     defineProps<{
         vertical?: boolean,
         gap?: boolean,
+        noPadding?: boolean,
     }>(),
     {
         vertical: false,
         gap: false,
+        noPadding: false,
     }
 )
 
@@ -28,6 +30,9 @@ const props = withDefaults(
     display: flex
     gap: (panel-padding / 2)
     flex-direction: row
+
+    &.no-padding
+        padding: 0
 
     &.vertical
         flex-direction: column
