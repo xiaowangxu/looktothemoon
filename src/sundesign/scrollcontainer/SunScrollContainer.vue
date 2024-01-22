@@ -1,5 +1,5 @@
 <template>
-    <div class="__sun-design-scrollcontainer__">
+    <div ref="div_ref" class="__sun-design-scrollcontainer__">
         <SunResizeObserver @resized="onContainerResized">
             <div ref="container_div_dom" class="__sun-design-scrollcontainer-container__" :class="{
                 'disabled-h': scrollable_disabled_h,
@@ -83,8 +83,9 @@ const emits = defineEmits<{
 }>();
 
 // datas
-const container_div_dom = ref<HTMLDivElement>();
-const content_div_dom = ref<HTMLDivElement>();
+const div_ref = ref<HTMLDivElement|undefined>();
+const container_div_dom = ref<HTMLDivElement|undefined>();
+const content_div_dom = ref<HTMLDivElement|undefined>();
 
 function useWidthDefineCss(
     width: Ref<string | undefined>,
@@ -204,8 +205,9 @@ function onVWheel(delta: number) {
 
 // exposes
 defineExpose({
-    containerDomElement: container_div_dom,
-    contentDomElement: content_div_dom,
+    div: div_ref,
+    container: container_div_dom,
+    content: content_div_dom,
     scrollTo,
     scrollBy,
     isScrollableH: is_scrollable_h,

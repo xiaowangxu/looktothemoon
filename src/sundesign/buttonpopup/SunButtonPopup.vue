@@ -5,8 +5,8 @@
         <slot name="button" :opened="opened" :toggle="toggle" />
     </SunButton>
     <SunPopup v-if="instance" :visible="opened" :rect="popup_rect" @cover-click="onCoverClick">
-        <SunPanel ref="panel_ref" class="__sun-design-buttonpopup-panel__" :size="size" bordered :vertical="vertical"
-            :dropShadow="dropShadow" :container="container">
+        <SunPanel ref="panel_ref" class="__sun-design-buttonpopup-panel__" :style="panelStyle" :size="size" bordered
+            :vertical="vertical" :dropShadow="dropShadow" :container="container">
             <!-- :data-buttonpopup-size="size" -->
             <SunScrollContainer :minWidth="minWidth" :maxWidth="maxWidth" :width="width" :minHeight="minHeight"
                 :maxHeight="maxHeight" :height="height" :scrollableIndicators="scrollableIndicators"
@@ -46,6 +46,7 @@ const props = withDefaults(
         colorScheme?: ColorScheme,
         rounded?: boolean,
         squared?: boolean,
+        panelStyle?: string,
         // panel
         vertical?: boolean,
         dropShadow?: boolean,
@@ -62,9 +63,17 @@ const props = withDefaults(
         scrollBarStateV?: ScrollBarState,
         scrollBarVisibility?: ScrollBarVisibility,
         getPopupRect: (buttonRect: Rect, contentMinSize: BoxSize, windowSize: BoxSize) => Rect,
+        measureIgnoreMaxHeight?: boolean,
+        measureIgnoreMinHeight?: boolean,
+        measureIgnoreMaxWidth?: boolean,
+        measureIgnoreMinWidth?: boolean,
     }>(),
     {
         mode: 'instance',
+        measureIgnoreMaxHeight: false,
+        measureIgnoreMinHeight: false,
+        measureIgnoreMaxWidth: false,
+        measureIgnoreMinWidth: false,
     }
 );
 
@@ -76,6 +85,8 @@ defineSlots<{
 
 // emits
 const emits = defineEmits<{
+    (event: 'beforeMeasure'): void,
+    (event: 'afterMeasure'): void,
     (event: 'opened'): void,
     (event: 'closed'): void,
     (event: 'coverClick', evt: Event): void,
@@ -93,16 +104,28 @@ const { width: windowWidth, height: windowHeight } = useWindowSize();
 
 const get_panel_content_min_size = () => {
     const div = panel_ref.value?.div;
-    if (div !== undefined) {
-        const style_width = (div as HTMLDivElement).style.width;
-        const style_height = (div as HTMLDivElement).style.height;
-        (div as HTMLDivElement).style.width = 'min-content';
-        (div as HTMLDivElement).style.height = 'min-content';
-        const { x, y, width, height } = (div as HTMLDivElement).getBoundingClientRect();
-        (div as HTMLDivElement).style.width = style_width;
-        (div as HTMLDivElement).style.height = style_height;
-        content_min_size.value.width = width;
-        content_min_size.value.height = height;
+    if (div !== undefined && opened.value) {
+        const _div = (div as HTMLDivElement);
+        emits('beforeMeasure');
+        const style_width = _div.style.width;
+        const style_height = _div.style.height;
+        _div.style.width = 'min-content';
+        _div.style.height = 'min-content';
+        // ignore
+        let max_width, min_width, max_height, min_height;
+        if (props.measureIgnoreMaxWidth) { max_width = _div.style.maxWidth; _div.style.maxWidth = ''; }
+        if (props.measureIgnoreMinWidth) { min_width = _div.style.minWidth; _div.style.minWidth = ''; }
+        if (props.measureIgnoreMaxHeight) { max_height = _div.style.maxHeight; _div.style.maxHeight = ''; }
+        if (props.measureIgnoreMinHeight) { min_height = _div.style.minHeight; _div.style.minHeight = ''; }
+        const { x, y, width, height } = _div.getBoundingClientRect();
+        _div.style.width = style_width;
+        _div.style.height = style_height;
+        if (props.measureIgnoreMaxWidth) { _div.style.maxWidth = max_width!; }
+        if (props.measureIgnoreMinWidth) { _div.style.minWidth = min_width!; }
+        if (props.measureIgnoreMaxHeight) { _div.style.maxHeight = max_height!; }
+        if (props.measureIgnoreMinHeight) { _div.style.minHeight = min_height!; }
+        emits('afterMeasure');
+        content_min_size.value = { width, height };
     }
 };
 
@@ -112,10 +135,7 @@ watch([opened], ([opened]) => {
         const button = button_ref.value?.button;
         if (button !== undefined) {
             const { x, y, width, height } = (button as HTMLButtonElement).getBoundingClientRect();
-            button_rect.value.x = x;
-            button_rect.value.y = y;
-            button_rect.value.width = width;
-            button_rect.value.height = height;
+            button_rect.value = { x, y, width, height };
         }
         // panel content
         if (props.mode === 'instance') {

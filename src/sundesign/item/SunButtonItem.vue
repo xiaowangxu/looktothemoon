@@ -18,7 +18,7 @@ import { ChevronRight } from 'lucide-vue-next';
 // props
 const props = withDefaults(
     defineProps<{
-        item: Item,
+        item: Pick<Item, 'label' | 'icon' | 'description' | 'shortcut' | 'sub'>,
         hideDescription?: boolean,
         hideShortcut?: boolean,
         hideSub?: boolean,

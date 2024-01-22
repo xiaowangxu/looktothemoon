@@ -7,6 +7,7 @@ import SunButtonLike from '../sundesign/button/SunButtonLike.vue';
 import SunLineEdit from '../sundesign/lineedit/SunLineEdit.vue';
 import SunNumberEdit from '../sundesign/numberedit/SunNumberEdit.vue'
 import SunSelect from '@/sundesign/select/SunSelect.vue';
+import SunColorPicker from '@/sundesign/colorpicker/SunColorPicker.vue';
 import { Decorators } from './SunDesignArgs';
 import { StepBack, StepForward, SkipBack, SkipForward, Play } from 'lucide-vue-next';
 import { ColorSchemeBlue, ColorSchemeRed, ColorSchemeGreen } from '../sundesign/SunDesignConstants';
@@ -27,7 +28,7 @@ export const ControlGroup: Story = {
 	decorators: Decorators,
 	tags: ['autodocs'],
 	render: (args) => ({
-		components: { SunControlGroup, SunControlGroupRow, SunNumberEdit, SunButton, SunButtonLike, SunSelect, SunLineEdit, StepBack, StepForward, SkipBack, SkipForward, Play },
+		components: { SunControlGroup, SunControlGroupRow, SunColorPicker, SunNumberEdit, SunButton, SunButtonLike, SunSelect, SunLineEdit, StepBack, StepForward, SkipBack, SkipForward, Play },
 		setup() {
 			return { args, ColorSchemeBlue, ColorSchemeRed, ColorSchemeGreen };
 		},
@@ -77,6 +78,7 @@ export const ControlGroup: Story = {
 							/ 4:33
 						</template>
 					</SunNumberEdit>
+					<SunColorPicker squared />
 					<SunSelect style="max-width: 100px; min-width: 50px;" :options="[
 						[
 							{
@@ -98,30 +100,7 @@ export const ControlGroup: Story = {
 					]" :preferedDirection="1"/>
 				</SunControlGroupRow>
 			</SunControlGroup>
-			<!-- row two -->
-			<SunControlGroup style="width: 100px;">
-				<SunControlGroupRow>
-					<SunNumberEdit progress :value="128" :color-scheme="ColorSchemeRed" style="flex: 1;">
-						<template #prefix>
-							红
-						</template>
-					</SunNumberEdit>
-				</SunControlGroupRow>
-				<SunControlGroupRow>
-					<SunNumberEdit progress :value="128" :color-scheme="ColorSchemeGreen" style="flex: 1;">
-						<template #prefix>
-							绿
-						</template>
-					</SunNumberEdit>
-				</SunControlGroupRow>
-				<SunControlGroupRow>
-					<SunNumberEdit progress :value="128" :color-scheme="ColorSchemeBlue" style="flex: 1;">
-						<template #prefix>
-							蓝
-						</template>
-					</SunNumberEdit>
-				</SunControlGroupRow>
-			</SunControlGroup>
+			
 			<SunControlGroup>
 				<SunControlGroupRow>
 					<SunButton squared size="large">1</SunButton>

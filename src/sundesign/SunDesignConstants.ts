@@ -1,4 +1,4 @@
-import { type CSSProperties, readonly } from 'vue';
+import { type CSSProperties, readonly, markRaw } from 'vue';
 
 export type Size = 'small' | 'normal' | 'large';
 
@@ -16,10 +16,10 @@ export type Rect = Position & BoxSize;
 
 export type PopupOpenMode = 'instance' | 'visibility';
 
-export type UID = string | number | symbol;
+export type UID = string | number | symbol | boolean;
 
-export interface Item {
-    uid: UID,
+export interface Item<T extends UID = UID> {
+    uid: T,
     label: LabelTypes,
     colorScheme?: ColorScheme,
     icon?: string,
@@ -56,7 +56,7 @@ export interface ColorScheme extends CSSProperties {
     '--font-color-active-disabled'?: string,
 }
 
-export const ColorSchemeBlue = readonly<ColorScheme>({
+export const ColorSchemeBlue = markRaw<ColorScheme>({
     '--focus-color': 'rgba(70, 111, 214, 0.4)',
     '--border-color-normal': 'rgb(145, 170, 232)',
     '--border-color-disabled': 'rgb(220, 220, 220)',
@@ -81,7 +81,7 @@ export const ColorSchemeBlue = readonly<ColorScheme>({
     '--font-color-active-disabled': 'rgb(255, 255, 255)',
 });
 
-export const ColorSchemeRed = readonly<ColorScheme>({
+export const ColorSchemeRed = markRaw<ColorScheme>({
     '--focus-color': 'rgb(244, 64, 64, 0.4)',
     '--border-color-normal': 'rgb(255 159 159)',
     '--border-color-disabled': 'rgb(220, 220, 220)',
@@ -106,7 +106,7 @@ export const ColorSchemeRed = readonly<ColorScheme>({
     '--font-color-active-disabled': 'rgb(255, 255, 255)',
 });
 
-export const ColorSchemeGreen = readonly<ColorScheme>({
+export const ColorSchemeGreen = markRaw<ColorScheme>({
     '--focus-color': 'rgb(36 177 57 / 40%)',
     '--border-color-normal': 'rgb(136 208 180)',
     '--border-color-disabled': 'rgb(220, 220, 220)',
@@ -165,8 +165,9 @@ export function unobserveResize(el: Element, callback: ResizeObserverCallback) {
 // popup rect calculation
 
 const DefualtWindowMargin = 10;
+const DefaultOffset = 3;
 
-export function calcButtonPopupRect(button_rect: Rect, content_size: BoxSize, window_size: BoxSize, prefered_direction: 0 | 1, offset: number = 0, gap: BoxSize = { width: DefualtWindowMargin, height: DefualtWindowMargin }): Rect {
+export function calcButtonPopupRect(button_rect: Rect, content_size: BoxSize, window_size: BoxSize, prefered_direction: 0 | 1, offset: number = DefaultOffset, gap: BoxSize = { width: DefualtWindowMargin, height: DefualtWindowMargin }): Rect {
     const { width: gap_width, height: gap_height } = gap;
     const min_window_width = window_size.width - gap_width * 2;
     const min_window_height = window_size.height - gap_height * 2;
@@ -206,4 +207,98 @@ export function calcButtonPopupRect(button_rect: Rect, content_size: BoxSize, wi
         }
     }
     return { x, y, width, height };
+}
+
+export function calcMenuPopupRect(content_size: BoxSize, button_rect: Rect, window_size: BoxSize, prefered_direction: 0 | 1, offset: BoxSize = { width: 0, height: -4 }, allow_shift_up: boolean = true, gap: BoxSize = { width: 7, height: 6 }): { rect: Rect, direction: 0 | 1 } {
+    const { width: gap_width, height: gap_height } = gap;
+    const { width: offset_width, height: offset_height } = offset;
+    const min_window_width = window_size.width - gap_width * 2;
+    const min_window_height = window_size.height - gap_height * 2;
+    const right_space = (window_size.width - button_rect.x - button_rect.width) - gap_width - offset_width;
+    const left_space = Math.min(button_rect.x - gap_width - offset_width, min_window_width);
+    let x: number, y: number, width: number, height: number, direction: 0 | 1;
+    if (prefered_direction === 1) {
+        // right
+        if (right_space >= content_size.width) {
+            x = button_rect.x + button_rect.width + offset_width;
+            width = content_size.width;
+            direction = 1;
+        }
+        else if (left_space >= content_size.width) {
+            x = button_rect.x - offset_width - content_size.width;
+            width = content_size.width;
+            direction = 0;
+        }
+        else if (right_space >= left_space) {
+            width = right_space;
+            x = button_rect.x + button_rect.width + offset_width;
+            direction = 1;
+        }
+        else {
+            width = left_space;
+            x = button_rect.x - offset_width - left_space;
+            direction = 0;
+        }
+    }
+    else {
+        // left
+        if (left_space >= content_size.width) {
+            x = button_rect.x - offset_width - content_size.width;
+            width = content_size.width;
+            direction = 0;
+        }
+        else if (right_space >= content_size.width) {
+            x = button_rect.x + button_rect.width + offset_width;
+            width = content_size.width;
+            direction = 1;
+        }
+        else if (left_space >= right_space) {
+            width = left_space;
+            x = button_rect.x - offset_width - left_space;
+            direction = 0;
+        }
+        else {
+            width = right_space;
+            x = button_rect.x + button_rect.width + offset_width;
+            direction = 1;
+        }
+    }
+    const bottom_space = window_size.height - button_rect.y - gap_height - offset_height;
+    if (bottom_space >= content_size.height) {
+        y = button_rect.y + offset_height;
+        height = content_size.height;
+    }
+    else if (allow_shift_up) {
+        height = Math.min(content_size.height, min_window_height);
+        y = window_size.height - gap_height - height;
+    }
+    else {
+        y = button_rect.y + offset_height;
+        height = bottom_space;
+    }
+    return {
+        rect: { x, y, width, height },
+        direction: direction,
+    };
+}
+
+// timer
+
+export type TimerCanceller = () => void;
+
+export function timer(func: () => void, time_ms: number): TimerCanceller {
+    let cancelled = false, finished = false;
+    // console.log('start timer');
+    setTimeout(() => {
+        if (cancelled || finished) return;
+        func(); 
+        // console.log('timer finished');
+        finished = true;
+    }, time_ms);
+    return () => {
+        if (!cancelled && !finished) {
+            // console.log('cancel timer');
+            cancelled = true;
+        }
+    };
 }

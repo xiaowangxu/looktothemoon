@@ -4,6 +4,7 @@ import SunSelect from '../sundesign/select/SunSelect.vue';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
 import { ColorSchemeBlue, ColorSchemeGreen } from '@/sundesign/SunDesignConstants';
 import { ColorSchemeRed } from '../sundesign/SunDesignConstants';
+import { ref } from 'vue';
 
 const meta: Meta<typeof SunSelect> = {
 	component: SunSelect,
@@ -23,10 +24,11 @@ export const Select: Story = {
 	render: (args) => ({
 		components: { SunSelect },
 		setup() {
-			return { args };
+			const value = ref(undefined);
+			return { args, value };
 		},
 		template: `
-			<SunSelect style="min-width: 80px; max-width: 150px;" v-bind="args">
+			<SunSelect style="min-width: 80px; max-width: 150px;" v-bind="args" v-model="value">
 				<template #empty>
 					<span class="__sun-design-select-empty__">没有选中的东西哦</span>
 				</template>
@@ -110,6 +112,5 @@ export const Select: Story = {
 					shortcut: 'Ctrl B',
 				}]
 		],
-		value: 1,
 	},
 };

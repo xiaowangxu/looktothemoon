@@ -32,31 +32,31 @@ export const ScrollContainer: Story = {
 			<SunPanel style="height: 200px; overflow: hidden;" vertical>
 				<SunScrollContainer v-bind="args">
 					<SunPanelContainer vertical gap>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
+						<SunButton>AAA</SunButton>
+						<SunButton>BBB</SunButton>
+						<SunButton>CCC</SunButton>
+						<SunButton>DDD</SunButton>
+						<SunButton>EEE</SunButton>
+						<SunButton>FFF</SunButton>
+						<SunButton>GGG</SunButton>
+						<SunButton>HHH</SunButton>
+						<SunButton>III</SunButton>
+						<SunButton>JJJ</SunButton>
+						<SunButton>KKK</SunButton>
 					</SunPanelContainer>
 					<SunPanelSeparator />
 					<SunPanelContainer vertical gap>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
-						<SunButton></SunButton>
+						<SunButton>LLL</SunButton>
+						<SunButton>MMM</SunButton>
+						<SunButton>NNN</SunButton>
+						<SunButton>OOO</SunButton>
+						<SunButton>PPP</SunButton>
+						<SunButton>QQQ</SunButton>
+						<SunButton>RRR</SunButton>
+						<SunButton>SSS</SunButton>
+						<SunButton>TTT</SunButton>
+						<SunButton>UUU</SunButton>
+						<SunButton>VVV</SunButton>
 					</SunPanelContainer>
 				</SunScrollContainer>
 			</SunPanel>
