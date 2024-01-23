@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/vue3';
 import SunRange from '../sundesign/range/SunRange.vue';
 import { Cog } from 'lucide-vue-next';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
+import { ref } from 'vue';
 
 const meta: Meta<typeof SunRange> = {
 	component: SunRange,
@@ -22,11 +23,12 @@ export const Range: Story = {
 	render: (args) => ({
 		components: { SunRange, Cog },
 		setup() {
-			return { args };
+			const val = ref(0);
+			return { args, val };
 		},
 		template: `
-			<SunRange v-bind="args" style="width: 150px;" />
-			<SunRange v-bind="args" style="height: 150px;" vertical />
+			<SunRange v-bind="args" style="width: 150px;" v-model="val"/>
+			<SunRange v-bind="args" style="height: 150px;" vertical v-model="val"/>
 		`,
 	}),
 	argTypes: {

@@ -3,10 +3,14 @@
         :class="{ bordered: !flat, vertical, flat, disabled }" :data-size="size" :data-border-mask="borderMask"
         :style="{ ...colorScheme, '--Percentage': percentage }">
         <div ref="container_ref" class="__sun-design-range-nob-container__">
-            <div v-if="progress" class="__sun-design-range-progress__"></div>
+            <div v-if="progress" class="__sun-design-range-progress__" />
             <div v-for="tick in tick_percentages" class="__sun-design-range-tick__" :style="{ '--TickPercentage': tick }" />
-            <div ref="nob_ref" class="__sun-design__ __sun-design-range-nob__ colored"
-                :class="{ bordered: !flat, disabled }" :tabindex="disabled ? undefined : 0" @mousedown="onMouseDown" />
+            <div ref="nob_ref" class="__sun-design__ __sun-design-range-nob__" :tabindex="disabled ? undefined : 0"
+                @mousedown="onMouseDown">
+                <div class="__sun-design__ colored" :class="{ bordered: !flat, disabled }"
+                    style="width: 16px; height: 6px; margin: auto; border-radius: 999px;">
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -16,6 +20,7 @@
 import '../SunDesignStyle.styl';
 import { type Size, type BorderMask, type ColorScheme } from '../SunDesignConstants';
 import { computed, onBeforeMount, onBeforeUnmount, ref } from 'vue';
+import { useVModel } from '@vueuse/core';
 
 // props
 const props = withDefaults(
@@ -41,6 +46,13 @@ const props = withDefaults(
         progress: true,
     }
 );
+
+// emits
+const emits = defineEmits<{
+    (event: 'update:modelValue', value: number): void,
+}>();
+
+const value = useVModel(props, 'modelValue', emits);
 
 // datas
 const container_ref = ref<HTMLDivElement | null>(null);
@@ -73,12 +85,16 @@ function onMouseDown(evt: MouseEvent) {
     window.addEventListener('mouseup', onMouseUp, { capture: true });
 }
 function onMouseMove(evt: MouseEvent) {
+    let delta;
     if (props.vertical) {
-        console.log(`${last_mouse_pos - evt.clientY}`);
+        delta = last_mouse_pos - evt.clientY;
     }
     else {
-        console.log(`${evt.clientX - last_mouse_pos}`);
+        delta = evt.clientX - last_mouse_pos;
     }
+    const delta_percentage = delta / total_range;
+    const val = props.min + (props.max - props.min) * (last_percentage + delta_percentage);
+    value.value = Math.min(props.max, Math.max(props.min, val));
 }
 function onMouseUp(evt: MouseEvent) {
     removeDraggingEvents();
@@ -216,7 +232,7 @@ tick-size = 1px
                 top: 'calc(%s + (100% - %s) * (1 - var(--TickPercentage)))' % (border-radius-size-normal border-radius-size-normal * 2)
             > .__sun-design-range-progress__
                 right: unset
-                top: 'calc(%s + (100% - %s) * (1 - var(--Percentage)))' % (border-radius-size-normal border-radius-size-normal * 2)
+                top: 'calc((100% - %s) * (1 - var(--Percentage)))' % ( border-radius-size-normal * 2)
             
         &[data-size="large"] > .__sun-design-range-nob-container__ 
             > .__sun-design-range-nob__
@@ -244,7 +260,7 @@ tick-size = 1px
     inset: 0
     
     .__sun-design-range-container__.bordered > &
-        margin: - border-width
+        // margin: - border-width
     
     border-radius: inherit
 
@@ -252,6 +268,7 @@ tick-size = 1px
     position: absolute
     width: 100%
     height: 100%
+    // border-radius: border-radius-size-normal - border-width
     background-color: var(--color-active)
 
     .__sun-design-range-container__.disabled > .__sun-design-range-nob-container__ > &
@@ -266,12 +283,6 @@ tick-size = 1px
 
 .__sun-design-range-nob__
     position: absolute
-    border-radius: inherit
+    display: flex
 
-    &:active, &.active
-        background-color: var(--color-hover) !important
-    
-    &:disabled, &.disabled
-        background-color: var(--color-disabled) !important
-    
 </style>

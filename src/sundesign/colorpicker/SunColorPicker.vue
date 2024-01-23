@@ -21,20 +21,18 @@
             <SunPanelSeparator override-vertical />
             <!-- Picker -->
             <SunPanelContainer gap vertical style="min-height: 120px; flex-shrink: 0;">
-                <SunPanelContainer gap no-padding style="--Color: rgb(0 0 255); flex: 1;">
-                    <SunRange
+                <SunPanelContainer gap no-padding style="flex: 1;" :style="{ '--Color': hue_color }">
+                    <SunRange v-model="hue"
                         style="background: linear-gradient(0deg,red 0,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,red);"
-                        vertical :min="0" :max="360" :model-value="360 * 0.67" :progress="false"
+                        vertical :min="0" :max="360" :progress="false"
                         :ticks="[0, 360 * 0.17, 360 * 0.33, 180, 360 * 0.67, 360 * 0.83, 360]" />
-                    <!-- <div
-                        style="min-width: 24px; border-radius: 6px; background: linear-gradient(0deg,red 0,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,red);" /> -->
-                    <div class="__sun-design__ bordered" style="flex: 1; border-radius: 6px; align-self: stretch;
+                    <div class="__sun-design__ bordered border-masked" data-border-mask="15" style="flex: 1; border-radius: 6px; align-self: stretch;
 									background: linear-gradient(0deg, black, transparent), linear-gradient(90deg, white, var(--Color));" />
                     <div class="__sun-design-transparent-bg__"
                         style="min-width: 24px; border-radius: 6px; position: relative; overflow: hidden;">
-                        <SunRange style="background: linear-gradient(180deg, var(--Color), transparent); height: 100%;"
-                            vertical :min="0" :max="255" :model-value="255 * 0.75" :progress="false"
-                            :ticks="[0, 128, 255]" />
+                        <SunRange v-model="alpha"
+                            style="background: linear-gradient(180deg, var(--Color), transparent); height: 100%;" vertical
+                            :min="0" :max="1" :progress="false" :ticks="[0, 0.5, 1]" />
                     </div>
                     <!-- <div v-else-if="edit_format === 'HSL'"
                     style="flex: 1; border-radius: 6px;	background: linear-gradient(0deg, black, transparent, white), linear-gradient(90deg,red 0,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,red);" /> -->
@@ -153,7 +151,7 @@ import SunLineEdit from '../lineedit/SunLineEdit.vue';
 import SunScrollContainer from '../scrollcontainer/SunScrollContainer.vue';
 import { RotateCcw, Pipette, Plus, Hash, Palette, ClipboardCopy, Bookmark } from 'lucide-vue-next';
 import { calcButtonPopupRect, type Rect, type BoxSize, type Size, type BorderMask, type PopupOpenMode } from '../SunDesignConstants';
-import { nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useColorPickerData } from './SunColorPickerConstants';
 import SunRange from '../range/SunRange.vue';
 
@@ -179,6 +177,10 @@ const props = withDefaults(
 );
 
 // datas
+const hue = ref(0);
+const hue_color = computed(() => `hsl(${hue.value}deg, 100%, 50%)`);
+const alpha = ref(1);
+
 const {
     edit_formats, edit_format,
     edit_label_r, edit_label_g, edit_label_b, edit_label_a,
@@ -186,7 +188,6 @@ const {
     library
 } = useColorPickerData();
 const buttonpopup_ref = ref<InstanceType<typeof SunButtonPopup> | undefined>();
-const scrollcontainer_ref = ref<InstanceType<typeof SunScrollContainer> | undefined>();
 
 watch([library], () => {
     nextTick(() => {
