@@ -87,9 +87,9 @@ export const Panel: Story = {
 			</SunPanel>
 			<SunPanel v-bind="args" vertical style="min-width: 170px;">
 				<SunPanelContainer vertical>
-					<SunButtonLike no-vertical-padding>
+					<SunButtonLike flat no-pressed-color>
 						<Search />
-						<SunLineEdit placeholder="查找" flat no-background style="padding-left: 0; padding-right: 0; flex: 1; width: 0;"/>
+						<input class="__sun-design__" style="flex: 1; border: none; padding: 0; background-color: transparent; outline: none; width: 0px;" placeholder="查找"/>
 						<SunButton size="small" squared><X /></SunButton>
 					</SunButtonLike>
 				</SunPanelContainer>
@@ -100,7 +100,7 @@ export const Panel: Story = {
 				</SunPanelContainer>
 				<SunPanelSeparator />
 				<SunPanelContainer vertical>
-					<SunButtonLike size="small" style="margin-right: auto; overflow: hidden; white-space: nowrap;text-overflow: ellipsis">Test
+					<SunButtonLike size="small" :colored="false" flat style="margin-right: auto; overflow: hidden; white-space: nowrap;text-overflow: ellipsis">Test
                     </SunButtonLike>
 					<SunButton flat><MoreHorizontal /><span style="margin-right: auto;">更多</span><ChevronRight /></SunButton>
 				</SunPanelContainer>

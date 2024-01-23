@@ -30,7 +30,7 @@ export const ScrollContainer: Story = {
 		},
 		template: `
 			<SunPanel style="height: 200px; overflow: hidden;" vertical>
-				<SunScrollContainer v-bind="args">
+				<SunScrollContainer v-bind="args" content-style="width: 100px;">
 					<SunPanelContainer vertical gap>
 						<SunButton>AAA</SunButton>
 						<SunButton>BBB</SunButton>
@@ -61,7 +61,7 @@ export const ScrollContainer: Story = {
 				</SunScrollContainer>
 			</SunPanel>
 			<SunPanel style="width: 200px; overflow: hidden;">
-				<SunScrollContainer v-bind="{...args, width: undefined}">
+				<SunScrollContainer v-bind="{...args}">
 					<SunPanel container>
 						<SunPanelContainer>
 							<SunButton squared flat>1</SunButton>
@@ -112,7 +112,6 @@ export const ScrollContainer: Story = {
 		},
 	},
 	args: {
-		width: '100%',
 		scrollableIndicators: true,
 	},
 };

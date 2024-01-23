@@ -1,6 +1,6 @@
 <template>
     <div ref="div_ref" class="__sun-design__ __sun-design-panel__"
-        :class="{ vertical, 'not-container': !container, 'drop-shadow': dropShadow, bordered }" :data-size="size">
+        :class="{ vertical, 'not-container': !container, 'drop-shadow': dropShadow, bordered: !container }" :data-size="size">
         <slot />
     </div>
 </template>
@@ -16,14 +16,12 @@ const props = withDefaults(
     defineProps<{
         size?: Size,
         vertical?: boolean,
-        bordered?: boolean,
         dropShadow?: boolean,
         container?: boolean,
     }>(),
     {
         size: 'normal',
         vertical: false,
-        bordered: true,
         dropShadow: true,
         container: false,
     }
@@ -51,9 +49,6 @@ defineExpose({
     position: relative
 
     &.not-container
-        &.bordered
-            border: solid-border
-        
         &.drop-shadow
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.1)
 

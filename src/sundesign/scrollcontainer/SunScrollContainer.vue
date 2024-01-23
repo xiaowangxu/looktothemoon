@@ -6,13 +6,13 @@
                 'disabled-v': scrollable_disabled_v,
             }" @scroll="onScroll">
                 <SunResizeObserver @resized="onContentResized">
-                    <div ref="content_div_dom" class="__sun-design-scrollcontainer-content__"
-                        :style="{ ...content_width_css, ...content_height_css }">
+                    <div ref="content_div_dom" class="__sun-design-scrollcontainer-content__" :style="contentStyle">
                         <slot />
                     </div>
                 </SunResizeObserver>
             </div>
         </SunResizeObserver>
+        <!-- indicators -->
         <template v-if="scrollableIndicators">
             <template v-if="!scrollable_disabled_h">
                 <div v-show="has_more_left" class="__sun-design-scrollcontainer-lindicator__" />
@@ -23,9 +23,10 @@
                 <div v-show="has_more_bottom" class="__sun-design-scrollcontainer-bindicator__" />
             </template>
         </template>
+        <!-- scrollbar -->
         <SunScrollBar v-if="scrollable_visible_h" v-show="is_scrollable_h" :vertical="false"
             :visibility="scrollBarVisibility" class="__s_scrollcontainer_hbar__" :percentage="percentage_h"
-            @update:percentage="onHScrolled" @scroll="onHWheel"/>
+            @update:percentage="onHScrolled" @scroll="onHWheel" />
         <SunScrollBar v-if="scrollable_visible_v" v-show="is_scrollable_v" :vertical="true"
             :visibility="scrollBarVisibility" class="__s_scrollcontainer_vbar__" :percentage="percentage_v"
             @update:percentage="onVScrolled" @scroll="onVWheel" />
@@ -53,12 +54,7 @@ import SunScrollBar, { type ScrollBarVisibility } from './SunScrollBar.vue';
 export type ScrollBarState = 'visible' | 'hidden' | 'adaptive' | 'disabled';
 const props = withDefaults(
     defineProps<{
-        minWidth?: string,
-        maxWidth?: string,
-        width?: string,
-        minHeight?: string,
-        maxHeight?: string,
-        height?: string,
+        contentStyle?: string,
         scrollableIndicators?: boolean,
         scrollBarStateH?: ScrollBarState,
         scrollBarStateV?: ScrollBarState,
@@ -70,65 +66,21 @@ const props = withDefaults(
         scrollBarStateH: 'adaptive',
         scrollBarStateV: 'adaptive',
         scrollBarVisibility: 'hover-track',
-        width: 'fit-content',
-        height: 'fit-content',
         overscrollCascade: false,
     }
 );
 
 // emits
 const emits = defineEmits<{
-    containerResized: [boxSize: BoxSize],
-    contentResized: [boxSize: BoxSize],
+    (event: 'containerResized', boxSize: BoxSize): void,
+    (event: 'contentResized', boxSize: BoxSize): void,
 }>();
 
 // datas
-const div_ref = ref<HTMLDivElement|undefined>();
-const container_div_dom = ref<HTMLDivElement|undefined>();
-const content_div_dom = ref<HTMLDivElement|undefined>();
+const div_ref = ref<HTMLDivElement | undefined>();
+const container_div_dom = ref<HTMLDivElement | undefined>();
+const content_div_dom = ref<HTMLDivElement | undefined>();
 
-function useWidthDefineCss(
-    width: Ref<string | undefined>,
-    min_width: Ref<string | undefined>,
-    max_width: Ref<string | undefined>
-): ComputedRef<{ width?: string, minWidth?: string, maxWidth?: string }> {
-    return computed(() => {
-        const result: { width?: string, minWidth?: string, maxWidth?: string } = {};
-        if (width.value !== undefined) {
-            result.width = width.value;
-        }
-        if (min_width.value !== undefined) {
-            result.minWidth = min_width.value;
-        }
-        if (max_width.value !== undefined) {
-            result.maxWidth = max_width.value;
-        }
-        return result;
-    });
-}
-
-function useHeightDefineCss(
-    height: Ref<string | undefined>,
-    min_height: Ref<string | undefined>,
-    max_height: Ref<string | undefined>
-): ComputedRef<{ height?: string, minHeight?: string, maxHeight?: string }> {
-    return computed(() => {
-        const result: { height?: string, minHeight?: string, maxHeight?: string } = {};
-        if (height.value !== undefined) {
-            result.height = height.value;
-        }
-        if (min_height.value !== undefined) {
-            result.minHeight = min_height.value;
-        }
-        if (max_height.value !== undefined) {
-            result.maxHeight = max_height.value;
-        }
-        return result;
-    });
-}
-
-const content_width_css = useWidthDefineCss(toRef(props, 'width'), toRef(props, 'minWidth'), toRef(props, 'maxWidth'));
-const content_height_css = useHeightDefineCss(toRef(props, 'height'), toRef(props, 'minHeight'), toRef(props, 'maxHeight'));
 const scrollable_disabled_h = computed(() => props.scrollBarStateH === 'disabled');
 const scrollable_disabled_v = computed(() => props.scrollBarStateV === 'disabled');
 const scrollable_visible_h = computed(() => props.scrollBarStateH !== 'hidden' && props.scrollBarStateH !== 'disabled');
@@ -194,7 +146,7 @@ function onVScrolled(percentage: number) {
 }
 function onHWheel(delta: number) {
     if (container_div_dom.value) {
-        scrollTo(container_div_dom.value.scrollLeft + delta, undefined );
+        scrollTo(container_div_dom.value.scrollLeft + delta, undefined);
     }
 }
 function onVWheel(delta: number) {
@@ -244,11 +196,12 @@ indicator-background-t = linear-gradient(0deg, transparent, indicator-color 120%
     &.disabled-h
         overflow-x: hidden
 
-    &.disabledv
+    &.disabled-v
         overflow-y: hidden
 
 .__sun-design-scrollcontainer-content__
     width: fit-content
+    height: fit-content
 
 .__sun-design-scrollcontainer-rindicator__
     position: absolute
@@ -267,7 +220,6 @@ indicator-background-t = linear-gradient(0deg, transparent, indicator-color 120%
     width: 'calc(min(100%, %s))' % (indicator-size)
     background: indicator-background-l
     pointer-events: none
-
 
 .__sun-design-scrollcontainer-bindicator__
     position: absolute

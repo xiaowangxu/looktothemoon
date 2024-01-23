@@ -9,7 +9,7 @@ import { getCurrentInstance, onMounted, onBeforeUnmount } from 'vue';
 
 // emits
 const emits = defineEmits<{
-    resized: [borderBoxSize: BoxSize, contentBoxSize: BoxSize, target: Element],
+    (event: 'resized', borderBoxSize: BoxSize, contentBoxSize: BoxSize, target: Element): void,
 }>();
 
 // datas

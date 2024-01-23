@@ -1,10 +1,10 @@
 <template>
     <template v-if="!inputing || disabled || !allowInput">
-        <SunButton class="__sun-design-numberedit-container__" :size="size" :flat="flat" :bordered="bordered"
+        <SunButton class="__sun-design-numberedit-container__" :class="{ hover }" :size="size" :flat="flat"
             :color-scheme="colorScheme" :border-mask="borderMask" @click="onInputClick" :disabled="disabled">
             <button v-if="stepButton"
                 class="__sun-design__ __sun-design-numberedit-dec__ __sun-design-button-like__ colored"
-                :class="{ bordered: bordered && !flat }" :data-size="size" @click.stop="() => { console.log('dec') }"
+                :class="{ bordered: !flat }" :data-size="size" @click.stop="() => { console.log('dec') }"
                 :disabled="disabled">
                 <ChevronLeft />
             </button>
@@ -22,21 +22,19 @@
             </div>
             <button v-if="stepButton"
                 class="__sun-design__ __sun-design-numberedit-inc__ __sun-design-button-like__ colored"
-                :class="{ bordered: bordered && !flat }" :data-size="size" @click.stop="() => { console.log('inc') }"
+                :class="{ bordered: !flat }" :data-size="size" @click.stop="() => { console.log('inc') }"
                 :disabled="disabled">
                 <ChevronRight />
             </button>
         </SunButton>
     </template>
     <template v-else>
-        <form class="__sun-design__ __sun-design_numberedit-input-container__ sized colored"
-            :class="{ bordered: bordered && !flat }" :data-size="size" @submit.prevent="inputing = false"
-            :style="colorScheme">
-            <SunLineEdit ref="input_ref" class="__sun-design-numberedit-input__" :class="{
+        <form class="__sun-design__ __sun-design_numberedit-input-container__ sized colored border-masked" :class="{ bordered: !flat, hover }"
+            :data-size="size" :data-border-mask="borderMask" @submit.prevent="inputing = false" :style="colorScheme">
+            <input ref="input_ref" class="__sun-design__ __sun-design-numberedit-input__" :class="{
                 left: $slots.prefix === undefined && $slots.suffix !== undefined,
                 right: $slots.prefix !== undefined && $slots.suffix === undefined
-            }" :value="value" :size="size" :flat="flat" :bordered="false" :style="colorScheme" :disabled="disabled"
-                :color-scheme="colorScheme" @blur="inputing = false" />
+            }" :value="value" @blur="inputing = false" />
         </form>
     </template>
 </template>
@@ -45,7 +43,6 @@
 
 import '../SunDesignStyle.styl';
 import SunButton from '../button/SunButton.vue';
-import SunLineEdit from '../lineedit/SunLineEdit.vue';
 import type { Size, BorderMask, ColorScheme } from '../SunDesignConstants';
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
@@ -55,11 +52,10 @@ const props = withDefaults(
     defineProps<{
         size?: Size,
         flat?: boolean,
-        bordered?: boolean,
         borderMask?: BorderMask,
+        hover?: boolean,
         disabled?: boolean,
         colorScheme?: ColorScheme,
-        // 
         value?: number,
         progress?: boolean,
         stepButton?: boolean,
@@ -68,8 +64,8 @@ const props = withDefaults(
     {
         size: 'normal',
         flat: false,
-        bordered: true,
         borderMask: 15,
+        hover: false,
         disabled: false,
         value: 0,
         progress: false,
@@ -80,13 +76,12 @@ const props = withDefaults(
 
 // datas
 const inputing = ref(false);
-const input_ref = ref<InstanceType<typeof SunLineEdit> | undefined>();
+const input_ref = ref<HTMLInputElement | null>(null);
 
-watch([input_ref], ([input]) => {
-    const _input = input?.input;
-    if (_input !== undefined) {
-        _input.focus();
-        _input.setSelectionRange(0, _input.value.length);
+watch(input_ref, (input) => {
+    if (input !== null) {
+        input.focus();
+        input.setSelectionRange(0, input.value.length);
     }
 });
 
@@ -102,18 +97,32 @@ function onInputClick() {
 @import '../SunDesignStyleConstants.styl';
 
 .__sun-design_numberedit-input-container__
-    padding: 0 !important
-    background-color: unset !important
     overflow: hidden
-    position: relative
+    display: inline-flex
+    padding: 0 !important
+
+    &:active
+        background-color: var(--color-hover) !important
+        color: var(--font-color-normal) !important
+
+    &[data-size="small"] > .__sun-design-numberedit-input__
+        padding: 0 padding-extend-small
+    
+    &[data-size="normal"] > .__sun-design-numberedit-input__
+        padding: 0 padding-extend-normal
+
+    &[data-size="large"] > .__sun-design-numberedit-input__
+        padding: 0 padding-extend-large
 
 .__sun-design-numberedit-input__
-    position: absolute
     text-align: center
-    width: 100%
-    height: 100%
-    min-height: unset !important
-    border-radius: 0 !important
+    min-height: unset
+    min-width: 0
+    width: 0px
+    flex: 1
+    border: none
+    outline: none
+    background-color: transparent
 
     &.left
         text-align: start
@@ -131,7 +140,7 @@ function onInputClick() {
         color: var(--font-color-disabled)
 
 .__sun-design-numberedit-display-container__
-    cursor: text
+    // cursor: text
     display: flex
     flex-direction: row
     flex-wrap: nowrap
@@ -166,7 +175,7 @@ function onInputClick() {
                 background: linear-gradient(90deg, var(--border-color-disabled) var(--Percentage), transparent var(--Percentage))
 
     > .__sun-design-numberedit-display-container__
-        cursor: text
+        // cursor: text
 
     &[data-size="small"] > .__sun-design-numberedit-display-container__
         padding-left: padding-extend-small

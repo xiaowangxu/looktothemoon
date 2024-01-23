@@ -1,7 +1,7 @@
 <template>
     <button ref="button_ref" class="__sun-design__ __sun-design-button__ colored sized border-masked"
-        :class="{ 'equal-padding': squared, squared, active, flat, bordered: bordered && !flat, rounded, hover }"
-        :data-size="size" :data-border-mask="borderMask" :style="colorScheme">
+        :class="{ 'equal-padding': squared, squared, active, flat, bordered: !flat, hover }"
+        :data-size="size" :data-border-mask="borderMask" :style="colorScheme" :disabled="disabled">
         <slot />
     </button>
 </template>
@@ -17,18 +17,15 @@ const props = withDefaults(
     defineProps<{
         size?: Size,
         flat?: boolean,
-        bordered?: boolean,
         active?: boolean,
+        disabled?: boolean,
         borderMask?: BorderMask,
         hover?: boolean,
-        // equalPadding?: boolean,
         colorScheme?: ColorScheme,
-        rounded?: boolean,
         squared?: boolean,
     }>(),
     {
         size: 'normal',
-        bordered: true,
         borderMask: 15,
     }
 );
@@ -73,4 +70,5 @@ defineExpose({
             min-height: content-size-large
             max-width: content-size-large
             max-height: content-size-large
+            
 </style>

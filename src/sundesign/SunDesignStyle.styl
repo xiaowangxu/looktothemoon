@@ -11,6 +11,14 @@
     user-select: none
     outline-offset: 0px
 
+    input
+        color: inherit
+        font-size: inherit
+
+        &::placeholder
+            color: var(--placeholder-color)
+            opacity: 1; /* Firefox */
+
     &.color-def
         --panel-color:  panel-color
         --focus-color:  focus-color
@@ -49,7 +57,7 @@
             outline: focus-width var(--focus-color) solid
             outline-offset: focus-offset
 
-        &:hover
+        &:hover, &.hover
             background-color: var(--color-hover)
             color: var(--font-color-hover)
 
@@ -66,7 +74,7 @@
         &.active, &:checked
             background-color: var(--color-active)
             color: var(--font-color-active)
-            &:hover
+            &:hover, &.hover
                 background-color: var(--color-active-hover)
                 color: var(--font-color-active-hover)
             &:active
@@ -107,18 +115,20 @@
                 &::placeholder
                     color: var(--placeholder-color-disabled)
 
-        &.bordered
-            border: solid-border
-            &:disabled, &.disabled
-                border: solid-border-disabled
-            &.active, &:checked
-                &:disabled, &.disabled
-                    border: solid-border-active-disabled
+        
 
         // disabled
         &:disabled, &.disabled
             cursor: not-allowed
-
+            
+    &.bordered
+        border: solid-border
+        &:disabled, &.disabled
+            border: solid-border-disabled
+        &.active, &:checked
+            &:disabled, &.disabled
+                border: solid-border-active-disabled
+        
     // size
     &.sized
         &[data-size="small"]

@@ -1,16 +1,17 @@
 <template>
     <SunButtonPopup ref="buttonpopup_ref" class="__sun-design-transparent-bg__" style="position: relative;" v-bind="$attrs"
         :size="size" :flat="flat" :bordered="bordered" :borderMask="borderMask" :rounded="rounded" :squared="squared"
-        mode="instance" vertical width="100%" max-width="180px" :getPopupRect="getPopupRect">
+        mode="instance" vertical content-style="width: 100%; max-width: 180px;" :getPopupRect="getPopupRect"
+        scrollable-indicators>
         <template #button>
-            <div style="position: absolute; inset: 0; background: rgba(0, 0, 255, 0.401);" />
+            <div style="position: absolute; inset: 0; background: rgba(0, 0, 255, 0.75);" />
         </template>
         <template #popup>
             <!-- Previewer -->
             <SunPanelContainer gap style="flex-shrink: 0;">
                 <div class="__sun-design-transparent-bg__"
                     style="flex: 1; position: relative; overflow: hidden; border-radius: 6px;">
-                    <div style="position: absolute; inset: 0; right: 50%; background: blue;" />
+                    <div style="position: absolute; inset: 0; right: 50%; background: rgba(0, 0, 255, 0.75);" />
                     <div style="position: absolute; inset: 0; left: 50%; background: rgba(123, 233, 12, 0.5);" />
                 </div>
                 <SunButton squared>
@@ -21,14 +22,19 @@
             <!-- Picker -->
             <SunPanelContainer gap vertical style="min-height: 120px; flex-shrink: 0;">
                 <SunPanelContainer gap no-padding style="--Color: rgb(0 0 255); flex: 1;">
-                    <div
-                        style="min-width: 24px; border-radius: 6px; background: linear-gradient(0deg,red 0,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,red);" />
-                    <div style="flex: 1; border-radius: 6px; align-self: stretch;
+                    <SunRange
+                        style="background: linear-gradient(0deg,red 0,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,red);"
+                        vertical :min="0" :max="360" :model-value="360 * 0.67" :progress="false"
+                        :ticks="[0, 360 * 0.17, 360 * 0.33, 180, 360 * 0.67, 360 * 0.83, 360]" />
+                    <!-- <div
+                        style="min-width: 24px; border-radius: 6px; background: linear-gradient(0deg,red 0,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,red);" /> -->
+                    <div class="__sun-design__ bordered" style="flex: 1; border-radius: 6px; align-self: stretch;
 									background: linear-gradient(0deg, black, transparent), linear-gradient(90deg, white, var(--Color));" />
                     <div class="__sun-design-transparent-bg__"
                         style="min-width: 24px; border-radius: 6px; position: relative; overflow: hidden;">
-                        <div
-                            style="position: absolute; inset: 0; background: linear-gradient(0deg, var(--Color), transparent);" />
+                        <SunRange style="background: linear-gradient(180deg, var(--Color), transparent); height: 100%;"
+                            vertical :min="0" :max="255" :model-value="255 * 0.75" :progress="false"
+                            :ticks="[0, 128, 255]" />
                     </div>
                     <!-- <div v-else-if="edit_format === 'HSL'"
                     style="flex: 1; border-radius: 6px;	background: linear-gradient(0deg, black, transparent, white), linear-gradient(90deg,red 0,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,red);" /> -->
@@ -149,6 +155,7 @@ import { RotateCcw, Pipette, Plus, Hash, Palette, ClipboardCopy, Bookmark } from
 import { calcButtonPopupRect, type Rect, type BoxSize, type Size, type BorderMask, type PopupOpenMode } from '../SunDesignConstants';
 import { nextTick, ref, watch } from 'vue';
 import { useColorPickerData } from './SunColorPickerConstants';
+import SunRange from '../range/SunRange.vue';
 
 // props
 const props = withDefaults(
@@ -188,7 +195,12 @@ watch([library], () => {
 });
 
 function getPopupRect(buttonRect: Rect, contentMinSize: BoxSize, windowSize: BoxSize): Rect {
-    return calcButtonPopupRect(buttonRect, contentMinSize, windowSize, 0);
+    const btn_rect = { ...buttonRect };
+    if (btn_rect.width > contentMinSize.width) {
+        btn_rect.x += (btn_rect.width - contentMinSize.width) / 2;
+        btn_rect.width = contentMinSize.width;
+    }
+    return calcButtonPopupRect(btn_rect, contentMinSize, windowSize, 0);
 }
 
 </script>

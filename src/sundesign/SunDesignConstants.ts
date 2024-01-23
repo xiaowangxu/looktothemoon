@@ -167,7 +167,9 @@ export function unobserveResize(el: Element, callback: ResizeObserverCallback) {
 const DefualtWindowMargin = 10;
 const DefaultOffset = 3;
 
-export function calcButtonPopupRect(button_rect: Rect, content_size: BoxSize, window_size: BoxSize, prefered_direction: 0 | 1, offset: number = DefaultOffset, gap: BoxSize = { width: DefualtWindowMargin, height: DefualtWindowMargin }): Rect {
+export type PreferedDirection = 0 | 1;
+
+export function calcButtonPopupRect(button_rect: Rect, content_size: BoxSize, window_size: BoxSize, prefered_direction: PreferedDirection, offset: number = DefaultOffset, gap: BoxSize = { width: DefualtWindowMargin, height: DefualtWindowMargin }): Rect {
     const { width: gap_width, height: gap_height } = gap;
     const min_window_width = window_size.width - gap_width * 2;
     const min_window_height = window_size.height - gap_height * 2;
@@ -209,7 +211,7 @@ export function calcButtonPopupRect(button_rect: Rect, content_size: BoxSize, wi
     return { x, y, width, height };
 }
 
-export function calcMenuPopupRect(content_size: BoxSize, button_rect: Rect, window_size: BoxSize, prefered_direction: 0 | 1, offset: BoxSize = { width: 0, height: -4 }, allow_shift_up: boolean = true, gap: BoxSize = { width: 7, height: 6 }): { rect: Rect, direction: 0 | 1 } {
+export function calcMenuPopupRect(content_size: BoxSize, button_rect: Rect, window_size: BoxSize, prefered_direction: PreferedDirection, offset: BoxSize = { width: 0, height: -4 }, allow_shift_up: boolean = true, gap: BoxSize = { width: 7, height: 6 }): { rect: Rect, direction: 0 | 1 } {
     const { width: gap_width, height: gap_height } = gap;
     const { width: offset_width, height: offset_height } = offset;
     const min_window_width = window_size.width - gap_width * 2;

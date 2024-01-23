@@ -73,11 +73,6 @@ export const ControlGroup: Story = {
 					<SunButton squared><Play/></SunButton>
 					<SunButton squared><StepForward/></SunButton>
 					<SunButton squared><SkipForward/></SunButton>
-					<SunNumberEdit :value="256" v-bind="args" suffix="/ 3:44" style="width: 120px;" :step-button="true">
-						<template #suffix>
-							/ 4:33
-						</template>
-					</SunNumberEdit>
 					<SunColorPicker squared />
 					<SunSelect style="max-width: 100px; min-width: 50px;" :options="[
 						[
@@ -98,6 +93,11 @@ export const ControlGroup: Story = {
 							}
 						]
 					]" :preferedDirection="1"/>
+					<SunNumberEdit :value="256" v-bind="args" suffix="/ 3:44" style="width: 120px;" :step-button="true">
+						<template #suffix>
+							/ 4:33
+						</template>
+					</SunNumberEdit>
 				</SunControlGroupRow>
 			</SunControlGroup>
 			

@@ -1,6 +1,6 @@
 <template>
     <div class="__sun-design__ __sun-design-checkbox-container__ sized" :data-size="size" :style="colorScheme">
-        <input type="checkbox" class="__sun-design__ __sun-design-checkbox__ colored" :class="{ bordered }"
+        <input type="checkbox" class="__sun-design__ __sun-design-checkbox__ colored" :class="{ bordered: !flat, hover }"
             :checked="checked" :disabled="disabled">
         <div class="__sun-design__ __sun-design-checkbox-icon__">
             <slot name="icon">
@@ -21,15 +21,15 @@ const props = withDefaults(
     defineProps<{
         size?: Size,
         colorScheme?: ColorScheme,
-        bordered?: boolean,
-        // input
+        flat?: boolean,
+        hover?: boolean,
         disabled?: boolean,
         checked?: boolean,
     }>(),
     {
         size: 'normal',
-        bordered: true,
-        // input
+        flat: false,
+        hover: false,
         disabled: false,
         checked: false,
     }

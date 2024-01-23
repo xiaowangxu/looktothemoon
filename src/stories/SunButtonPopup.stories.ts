@@ -42,7 +42,7 @@ export const ButtonPopup: Story = {
 			return { args, calcButtonPopupRect };
 		},
 		template: `
-			<SunButtonPopup v-bind="args" squared vertical style="width: 100px;" width="100%">
+			<SunButtonPopup v-bind="args" squared vertical style="width: 100px;" content-style="width: 100%;">
 				<template #button="{ opened }">
 					{{ opened }}
 				</template>

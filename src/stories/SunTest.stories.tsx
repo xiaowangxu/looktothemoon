@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
-import SunTest from '../sundesign/test/SunTest.vue';
+import SunTest from '../sundesign/button/SunButtonLike.vue';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
 import SunSelectVue from '@/sundesign/select/SunSelect.vue';
 import SunColorPickerVue from '@/sundesign/colorpicker/SunColorPicker.vue';
@@ -24,30 +24,10 @@ export const Select: Story = {
 	render: (args) => ({
 		components: { SunTest },
 		setup() {
-			return { args, b };
+			return { args };
 		},
 		template: `
-			<SunTest :render="b"/>
+			<SunTest/>
 		`,
 	}),
 };
-
-const a: Raw<Component<{ id: number }>> = (props, context) => {
-	console.log(props, context);
-	return <>
-		<span>!!!!!{props.id}</span>
-	</>
-};
-
-const b: Raw<Component> = defineComponent({
-	props: {
-		id: {
-			type: Number,
-		}
-	},
-	setup(props, ctx) {
-		return () => <>
-			?{props.id}?
-		</>
-	},
-});

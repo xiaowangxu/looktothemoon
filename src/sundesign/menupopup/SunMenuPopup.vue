@@ -1,34 +1,31 @@
 <template>
-    <SunPopup v-if="instance" :visible="visible" :rect="popup_rect" :stop-events="stopEvents" @cover-click="onClickOutside">
-        <SunPanel ref="panel_ref" class="__sun-design-menupopup-panel__" :style="panelStyle" bordered vertical dropShadow>
-            <SunScrollContainer width="100%" :scrollableIndicators="scrollableIndicators" :scrollBarStateH="scrollBarStateH"
-                :scrollBarStateV="scrollBarStateV" :scrollBarVisibility="scrollBarVisibility">
-                <SunPanel class="__sun-design-menupopup-panel-container__" container vertical>
-                    <template v-for="option in options">
-                        <SunPanelContainer vertical style="width: 100%;">
-                            <template v-for="item in option">
-                                <template v-if="(item as RenderMenuItem).render === undefined">
-                                    <SunButton class="__sun-design-select-item__" :size="size" flat
-                                        :color-scheme="(item as ItemMenuItem).colorScheme"
-                                        @mouseenter="onMouseEnter((item as ItemMenuItem).uid, (item as ItemMenuItem).subs, $event)"
-                                        @click="onItemButtonClick((item as ItemMenuItem).uid, (item as ItemMenuItem).subs, $event)">
-                                        <SunButtonItem
-                                            :item="{ label: (item as ItemMenuItem).label, icon: (item as ItemMenuItem).icon, description: (item as ItemMenuItem).description, shortcut: (item as ItemMenuItem).shortcut, sub: (item as ItemMenuItem).subs !== undefined }" />
-                                    </SunButton>
-                                </template>
-                                <template v-else>
-                                    <component :is="(item as RenderMenuItem).render" :uid="item.uid" :hover="onMouseEnter"
-                                        :expand="expandSubMenu" :click="onClick" />
-                                </template>
-                            </template>
-                        </SunPanelContainer>
-                        <SunPanelSeparator :override-vertical="true" />
+    <SunMeasurePopupPanel ref="measurepopuppanel_ref" vertical :mode="mode" :visible="visible"
+        class="__sun-design-menupopup-panel__" content-style="width: 100%;" :style="panelStyle" :stop-events="stopEvents"
+        :get-popup-rect="getPopupPanelRect" @cover-click="onClickOutside" :scrollableIndicators="scrollableIndicators"
+        :scrollBarStateH="scrollBarStateH" :scrollBarStateV="scrollBarStateV" :scrollBarVisibility="scrollBarVisibility">
+        <template v-for="option in options">
+            <SunPanelContainer vertical style="width: 100%;">
+                <template v-for="item in option">
+                    <template v-if="(item as RenderMenuItem).render === undefined">
+                        <SunButton class="__sun-design-select-item__" :size="size" flat
+                            :color-scheme="(item as ItemMenuItem).colorScheme" :active="(item as ItemMenuItem).active"
+                            :disabled="(item as ItemMenuItem).disabled"
+                            @mouseenter="onMouseEnter((item as ItemMenuItem).uid, (item as ItemMenuItem).subs, $event)"
+                            @click="onItemButtonClick((item as ItemMenuItem).uid, (item as ItemMenuItem).subs, $event)">
+                            <SunButtonItem
+                                :item="{ label: (item as ItemMenuItem).label, icon: (item as ItemMenuItem).icon, description: (item as ItemMenuItem).description, shortcut: (item as ItemMenuItem).shortcut, sub: (item as ItemMenuItem).subs !== undefined }" />
+                        </SunButton>
                     </template>
-                </SunPanel>
-            </SunScrollContainer>
-        </SunPanel>
-    </SunPopup>
-    <SunMenuPopup v-if="sub_menu !== undefined" :options="sub_menu" :mode="mode" :size="size" :stop-events="false"
+                    <template v-else>
+                        <component :is="(item as RenderMenuItem).render" :uid="item.uid" :hover="onMouseEnter"
+                            :expand="expandSubMenu" :click="onClick" />
+                    </template>
+                </template>
+            </SunPanelContainer>
+            <SunPanelSeparator :override-vertical="true" />
+        </template>
+    </SunMeasurePopupPanel>
+    <SunMenuPopup v-if="sub_menu !== undefined && visible" :options="sub_menu" :size="size" :stop-events="false"
         :prefered-direction="popup_direction" :show-delay="showDelay" :hide-delay="hideDelay" :get-popup-rect="getPopupRect"
         @click="onClick" />
 </template>
@@ -36,17 +33,15 @@
 <script setup lang="ts">
 
 import '../SunDesignStyle.styl';
-import SunPopup from '../popup/SunPopup.vue';
-import SunPanel from '../panel/SunPanel.vue';
+import SunMeasurePopupPanel from '../measurepopuppanel/SunMeasurePopupPanel.vue';
 import SunButton from '../button/SunButton.vue';
 import SunButtonItem from '../item/SunButtonItem.vue';
 import SunPanelContainer from '../panel/SunPanelContainer.vue';
 import SunPanelSeparator from '../panel/SunPanelSeparator.vue';
-import SunScrollContainer, { type ScrollBarState } from '../scrollcontainer/SunScrollContainer.vue';
+import { type ScrollBarState } from '../scrollcontainer/SunScrollContainer.vue';
 import { type ScrollBarVisibility } from '../scrollcontainer/SunScrollBar.vue';
-import { type Item, type Rect, type BoxSize, type PopupOpenMode, type Size, calcMenuPopupRect, type UID, type TimerCanceller, timer } from '../SunDesignConstants';
-import { computed, nextTick, onBeforeUnmount, ref, toRef, watch, type Component, type Raw } from 'vue';
-import { useWindowSize } from '@vueuse/core';
+import { type Item, type Rect, type BoxSize, type PopupOpenMode, type Size, calcMenuPopupRect, type UID, type TimerCanceller, type PreferedDirection, timer } from '../SunDesignConstants';
+import { onBeforeUnmount, ref, type Component, type Raw, toRef, watch, nextTick } from 'vue';
 
 type ItemMenuItem<T extends UID = UID> = Omit<Item<T>, 'sub'> & { subs?: MenuItem<T>[][] };
 type RenderMenuItem<T extends UID = UID> = {
@@ -67,18 +62,16 @@ const props = withDefaults(
         visible?: boolean,
         size?: Size,
         options: MenuItem[][],
-        preferedDirection?: 0 | 1,
+        preferedDirection?: PreferedDirection,
         stopEvents?: boolean,
         panelStyle?: string,
-        getPopupRect: (contentMinSize: BoxSize, preferedDirection: 0 | 1, windowSize: BoxSize) => { rect: Rect, direction?: 0 | 1 },
-        // popup
+        getPopupRect: (contentMinSize: BoxSize, preferedDirection: PreferedDirection, windowSize: BoxSize) => { rect: Rect, direction?: PreferedDirection },
         minWidth?: number,
         maxWidth?: number,
         scrollableIndicators?: boolean,
         scrollBarStateH?: ScrollBarState,
         scrollBarStateV?: ScrollBarState,
         scrollBarVisibility?: ScrollBarVisibility,
-        //
         showDelay?: number,
         hideDelay?: number,
     }>(),
@@ -105,51 +98,31 @@ const emits = defineEmits<{
 }>();
 
 // datas
-const instance = computed(() => props.mode === 'visibility' || props.visible === true);
-const opened = computed(() => instance && props.visible === true);
-const panel_ref = ref<InstanceType<typeof SunPanel> | undefined>();
-const content_min_size = ref<BoxSize>({ width: 0, height: 0 });
-const { width: windowWidth, height: windowHeight } = useWindowSize();
-
-const get_panel_content_min_size = () => {
-    const div = panel_ref.value?.div;
-    if (div !== undefined && props.visible) {
-        const _div = (div as HTMLDivElement);
-        const style_width = _div.style.width;
-        const style_height = _div.style.height;
-        _div.style.width = 'min-content';
-        _div.style.height = 'min-content';
-        const { width, height } = _div.getBoundingClientRect();
-        _div.style.width = style_width;
-        _div.style.height = style_height;
-        content_min_size.value = { width, height };
-    }
+const measurepopuppanel_ref = ref<InstanceType<typeof SunMeasurePopupPanel> | undefined>();
+const refresh_content_min_size = () => {
+    measurepopuppanel_ref.value?.refreshPopupContentMinSize();
 };
-
-watch([instance, opened, toRef(props, 'options'), panel_ref, toRef(props, 'options')], ([_, opened]) => {
+watch(toRef(props, 'options'), () => {
     clearState();
-    if (opened) {
-        // panel content
-        if (props.mode === 'instance') {
-            nextTick(get_panel_content_min_size);
-        }
-        else {
-            get_panel_content_min_size();
-        }
-    }
+    nextTick(refresh_content_min_size);
 });
 
-const popup_value = computed(() => {
-    const { width, height } = content_min_size.value;
-    return props.getPopupRect({ width: Math.max(props.minWidth, Math.min(props.maxWidth, width)), height }, props.preferedDirection, { width: windowWidth.value, height: windowHeight.value });
+const popup_direction = ref<PreferedDirection>(0);
+function getPopupPanelRect(contentMinSize: BoxSize, windowSize: BoxSize): Rect {
+    const { width, height } = contentMinSize;
+    const { rect, direction } = props.getPopupRect(
+        { width: Math.max(props.minWidth, Math.min(props.maxWidth, width)), height },
+        props.preferedDirection, windowSize);
+    popup_direction.value = direction ?? props.preferedDirection;
+    return rect;
+}
+watch(toRef(props, 'visible'), (visible) => {
+    if (!visible) clearState();
 });
-
-const popup_rect = computed(() => popup_value.value.rect);
-const popup_direction = computed(() => popup_value.value.direction ?? props.preferedDirection);
 
 let button_ref: HTMLButtonElement | undefined = undefined;
 
-function getPopupRect(contentMinSize: BoxSize, preferedDirection: 0 | 1, windowSize: BoxSize) {
+function getPopupRect(contentMinSize: BoxSize, preferedDirection: PreferedDirection, windowSize: BoxSize) {
     const { x, y, width, height } = button_ref!.getBoundingClientRect();
     return calcMenuPopupRect(contentMinSize, { x, y, width, height }, windowSize, preferedDirection,);
 }

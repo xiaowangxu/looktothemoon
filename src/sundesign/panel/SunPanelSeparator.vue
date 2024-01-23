@@ -24,8 +24,6 @@ const props = withDefaults(
 .__sun-design__.__sun-design-panel-separator__
     background-color: border-color-normal
 
-    
-
     .__sun-design__.__sun-design-panel__ &
         &:first-child, &:last-child
             display: none

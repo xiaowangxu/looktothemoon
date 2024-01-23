@@ -1,6 +1,6 @@
 <template>
     <div ref="track_div_dom" class="__sun-design__ __sun-design-scrollbar__"
-        :class="{ vertical: vertical, hoverparent: visibility === 'hover', hovertrack: visibility === 'hover-track' }"
+        :class="{ flat, vertical: vertical, hoverparent: visibility === 'hover', hovertrack: visibility === 'hover-track' }"
         :style="{ '--Percentage': clamped_percent }" @wheel="onWheel">
         <div ref="nob_div_dom" v-show="visibility !== 'hidden'"
             class="__sun-design__ __sun-design-scrollbar-nob__ colored bordered" :class="{ dragging: is_dragging }"
@@ -16,6 +16,7 @@ import { computed, ref } from 'vue';
 export type ScrollBarVisibility = 'always' | 'hover' | 'hover-track' | 'hidden';
 const props = withDefaults(
     defineProps<{
+        flat?: boolean,
         vertical?: boolean,
         percentage?: number,
         visibility?: ScrollBarVisibility,
@@ -31,8 +32,8 @@ const props = withDefaults(
 
 // emits
 const emits = defineEmits<{
-    'update:percentage': [percentage: number],
-    'scroll': [delta: number],
+    (event: 'update:percentage', percentage: number): void,
+    (event: 'scroll', delta: number): void,
 }>();
 
 // datas

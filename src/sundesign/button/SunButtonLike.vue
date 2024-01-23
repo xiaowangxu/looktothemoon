@@ -1,11 +1,8 @@
 <template>
-    <div class="__sun-design__ __sun-design-button-like__ sized" :class="{
-        'equal-padding': equalPadding, squared,
-        'no-vertical-padding': noVerticalPadding,
-        'no-left-padding': noLeftPadding,
-        'no-right-padding': noRightPadding,
-    }" :data-size="size" :style="colorScheme">
-        <slot>Button</slot>
+    <div class="__sun-design__ __sun-design-button-like__ sized border-masked " :class="{
+        colored, 'no-pressed-color': noPressedColor, 'equal-padding': squared, squared, disabled, active, flat, bordered: !flat, hover, 'no-vertical-padding': noVerticalPadding
+    }" :data-size="size" :data-border-mask="borderMask" :style="colorScheme">
+        <slot></slot>
     </div>
 </template>
 
@@ -18,18 +15,24 @@ import type { Size, BorderMask, ColorScheme } from '../SunDesignConstants';
 const props = withDefaults(
     defineProps<{
         size?: Size,
-        equalPadding?: boolean,
-        squared?: boolean,
-        noVerticalPadding?: boolean,
-        noLeftPadding?: boolean,
-        noRightPadding?: boolean,
+        flat?: boolean,
+        active?: boolean,
+        borderMask?: BorderMask,
+        hover?: boolean,
         colorScheme?: ColorScheme,
+        squared?: boolean,
+        colored?: boolean,
+        disabled?: boolean,
+        noVerticalPadding?: boolean,
+        noPressedColor?: boolean,
     }>(),
     {
         size: 'normal',
+        borderMask: 15,
+        colored: true,
+        disabled: false,
         noVerticalPadding: false,
-        noLeftPadding: false,
-        noRightPadding: false,
+        noPressedColor: false,
     }
 );
 
@@ -50,12 +53,11 @@ const props = withDefaults(
         padding-top: 0
         padding-bottom: 0
     
-    &.no-left-padding
-        padding-left: 0
+    &.no-pressed-color
+        &:active
+            background-color: var(--color-hover)
+            color: var(--font-color-normal)
     
-    &.no-right-padding
-        padding-right: 0
-
     &[data-size="small"]
         svg, .__sun-design-icon__
             min-width: content-size-small

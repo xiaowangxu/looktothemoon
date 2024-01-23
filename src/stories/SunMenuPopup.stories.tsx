@@ -64,9 +64,15 @@ export const MenuPopup: Story = {
 					uid: 123,
 					render: (props, context) => {
 						return <>
-							<SunButtonLike noVerticalPadding onMouseenter={(evt: Event) => props.hover(props.uid, undefined, evt)}>
+							<SunButtonLike flat noPressedColor onMouseenter={(evt: Event) => props.hover(props.uid, [[
+								{
+									label: '测试',
+									icon: 'Globe',
+									uid: 100,
+								}
+							]], evt)}>
 								<Search />
-								<SunLineEdit placeholder="查找" flat no-background style="padding-left: 0; padding-right: 0; flex: 1; width: 0;" />
+								<input class="__sun-design__" style="flex: 1; border: none; padding: 0; background-color: transparent; outline: none; width: 0px;" placeholder="查找" />
 								<SunButton size="small" squared><X /></SunButton>
 							</SunButtonLike>
 						</>
@@ -184,6 +190,7 @@ export const MenuPopup: Story = {
 					label: 'More',
 					icon: 'MoreHorizontal',
 					colorScheme: ColorSchemeGreen,
+					active: true,
 					uid: 9,
 				},
 				{

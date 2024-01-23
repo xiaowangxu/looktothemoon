@@ -2,11 +2,16 @@
     <SunButtonPopup ref="buttonpopup_ref" class="__sun-design-select-button__" :mode="mode" :get-popup-rect="getPopupRect"
         :active="active" :disabled="disabled" :size="size" :flat="flat" :border-mask="borderMask" :bordered="bordered"
         :squared="squared" drop-shadow :color-scheme="selected?.colorScheme ?? colorScheme" vertical scrollable-indicators
-        width="100%" @opened="onOpened">
+        content-style="width: 100%;" @opened="onOpened">
         <template #button="{ opened }">
             <template v-if="!iconOnly">
                 <template v-if="selected !== undefined">
-                    <SunButtonItem :item="selected" hide-shortcut hide-sub />
+                    <template v-if="(selected as RenderSelectItem).renderButtonContent === undefined">
+                        <SunButtonItem :item="(selected as ItemSelectItem)" hide-shortcut hide-sub />
+                    </template>
+                    <template v-else>
+                        <component :is="(selected as RenderSelectItem).renderButtonContent" :uid="selected.uid" />
+                    </template>
                 </template>
                 <template v-else>
                     <slot name="empty">
@@ -27,12 +32,19 @@
             <template v-for="option in options">
                 <SunPanelContainer vertical style="width: 100%;">
                     <template v-for="item in option">
-                        <SunButton class="__sun-design-select-item__" :size="size"
-                            :ref="(value !== undefined && item.uid === value) ? 'item_refs' : undefined"
-                            :active="(value !== undefined && item.uid === value) || item?.active" flat
-                            :disabled="item?.disabled" :color-scheme="item?.colorScheme" @click="onClick(item.uid, $event)">
-                            <SunButtonItem :item="item" />
-                        </SunButton>
+                        <template v-if="(item as RenderSelectItem).render === undefined">
+                            <SunButton class="__sun-design-select-item__" :size="size"
+                                :ref="(value !== undefined && item.uid === value) ? 'item_refs' : undefined"
+                                :active="(value !== undefined && item.uid === value) || (item as ItemSelectItem)?.active"
+                                flat :disabled="(item as ItemSelectItem)?.disabled" :color-scheme="item?.colorScheme"
+                                @click="onClick(item.uid, $event)">
+                                <SunButtonItem :item="(item as ItemSelectItem)" />
+                            </SunButton>
+                        </template>
+                        <template v-else>
+                            <component :is="(item as RenderSelectItem).render" :uid="item.uid"
+                                :selected="(value !== undefined && item.uid === value)" :click="onClick" />
+                        </template>
                     </template>
                 </SunPanelContainer>
                 <SunPanelSeparator :override-vertical="true" />
@@ -49,10 +61,25 @@ import { type Size, type Item, type BorderMask, type ColorScheme, type UID, type
 import SunButton from '../button/SunButton.vue';
 import SunButtonItem from '../item/SunButtonItem.vue';
 import { ChevronDown, ChevronUp } from 'lucide-vue-next';
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, ref, type Raw, type Component } from 'vue';
 import SunPanelSeparator from '../panel/SunPanelSeparator.vue';
 import SunPanelContainer from '../panel/SunPanelContainer.vue';
 import { useVModel } from '@vueuse/core';
+
+type ItemSelectItem<T extends UID = UID> = Omit<Item<T>, 'sub'>;
+type RenderSelectItem<T extends UID = UID> = {
+    uid: T,
+    colorScheme?: ColorScheme,
+    renderButtonContent: Raw<Component<{
+        uid: T,
+    }>>,
+    render: Raw<Component<{
+        uid: T,
+        selected: boolean,
+        click: (uid: T, evt: Event) => void,
+    }>>,
+};
+export type SelectItem<T extends UID = UID> = ItemSelectItem<T> | RenderSelectItem<T>;
 
 // props
 const props = withDefaults(
@@ -64,7 +91,7 @@ const props = withDefaults(
         borderMask?: BorderMask,
         colorScheme?: ColorScheme,
         squared?: boolean,
-        options: Item[][],
+        options: SelectItem[][],
         modelValue: UID | undefined,
         active?: boolean,
         disabled?: boolean,

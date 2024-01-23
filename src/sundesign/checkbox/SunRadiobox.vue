@@ -1,6 +1,6 @@
 <template>
     <div class="__sun-design__ __sun-design-radiobox-container__ sized" :data-size="size" :style="colorScheme">
-        <input type="radio" class="__sun-design__ __sun-design-radiobox__ colored" :class="{ bordered }"
+        <input type="radio" class="__sun-design__ __sun-design-radiobox__ colored" :class="{ bordered: !flat, hover }"
             :checked="checked" :disabled="disabled">
     </div>
 </template>
@@ -15,15 +15,15 @@ const props = withDefaults(
     defineProps<{
         size?: Size,
         colorScheme?: ColorScheme,
-        bordered?: boolean,
-        // input
+        flat?: boolean,
+        hover?: boolean,
         disabled?: boolean,
         checked?: boolean,
     }>(),
     {
         size: 'normal',
-        bordered: true,
-        // input
+        flat: false,
+        hover: false,
         disabled: false,
         checked: false,
     }
