@@ -1,11 +1,11 @@
 <template>
     <template v-if="!inputing || disabled || !allowInput">
-        <SunButton class="__sun-design-numberedit-container__ no-pressed-color" :class="{ hover }" :size="size" :flat="flat"
-            :color-scheme="colorScheme" :border-mask="borderMask" @click="onInputClick" :disabled="disabled">
+        <SunButton class="__sun-design-numberedit-container__ no-pressed-color" :class="{ hover, dragging }" :size="size"
+            :flat="flat" :color-scheme="colorScheme" :border-mask="borderMask" @click="onInputClick" :disabled="disabled">
             <button v-if="stepButton"
                 class="__sun-design__ __sun-design-numberedit-dec__ __sun-design-button-like__ colored"
-                :class="{ bordered: !flat }" :data-size="size" @click.stop="() => { console.log('dec') }"
-                :disabled="disabled">
+                :class="{ bordered: !flat, dragging }" :data-size="size" @click.stop="() => { console.log('dec') }"
+                :disabled="disabled || dragging">
                 <ChevronLeft />
             </button>
             <div class="__sun-design-numberedit-display-container__"
@@ -22,15 +22,16 @@
             </div>
             <button v-if="stepButton"
                 class="__sun-design__ __sun-design-numberedit-inc__ __sun-design-button-like__ colored"
-                :class="{ bordered: !flat }" :data-size="size" @click.stop="() => { console.log('inc') }"
-                :disabled="disabled">
+                :class="{ bordered: !flat, dragging }" :data-size="size" @click.stop="() => { console.log('inc') }"
+                :disabled="disabled || dragging">
                 <ChevronRight />
             </button>
         </SunButton>
     </template>
     <template v-else>
-        <form class="__sun-design__ __sun-design_numberedit-input-container__ sized colored border-masked" :class="{ bordered: !flat, hover }"
-            :data-size="size" :data-border-mask="borderMask" @submit.prevent="inputing = false" :style="colorScheme">
+        <form class="__sun-design__ __sun-design_numberedit-input-container__ sized colored border-masked"
+            :class="{ bordered: !flat, hover }" :data-size="size" :data-border-mask="borderMask"
+            @submit.prevent="inputing = false" :style="colorScheme">
             <input ref="input_ref" class="__sun-design__ __sun-design-numberedit-input__" :class="{
                 left: $slots.prefix === undefined && $slots.suffix !== undefined,
                 right: $slots.prefix !== undefined && $slots.suffix === undefined
@@ -85,6 +86,8 @@ watch(input_ref, (input) => {
     }
 });
 
+const dragging = ref(false);
+
 function onInputClick() {
     if (props.allowInput && !inputing.value) {
         inputing.value = true;
@@ -123,10 +126,8 @@ function onInputClick() {
     border: none
     outline: none
     background-color: transparent
-
     &.left
         text-align: start
-
     &.right
         text-align: end
 
@@ -153,10 +154,7 @@ function onInputClick() {
     flex-direction: row
     flex-wrap: nowrap
     position: relative
-    padding-top: 0 !important
-    padding-bottom: 0 !important
-    padding-left: 0 !important
-    padding-right: 0 !important
+    padding: 0 !important
     gap: 0 !important
 
     &:disabled, &.diasbled
@@ -164,9 +162,6 @@ function onInputClick() {
             cursor: not-allowed
             &.progress
                 background: linear-gradient(90deg, var(--border-color-disabled) var(--Percentage), transparent var(--Percentage))
-
-    > .__sun-design-numberedit-display-container__
-        // cursor: text
 
     &[data-size="small"] > .__sun-design-numberedit-display-container__
         padding-left: padding-extend-small
@@ -183,7 +178,7 @@ function onInputClick() {
         padding-right: padding-extend-large
         gap: gap-large
 
-    &:hover
+    &:hover, &.dragging
         &[data-size="small"] > .__sun-design-numberedit-display-container__.step-button
             padding-left: gap-small
             padding-right: gap-small
@@ -214,11 +209,15 @@ function onInputClick() {
     border-top: none !important
     border-left: none !important
     border-bottom: none !important
+    &.dragging
+        cursor: unset
 
 .__sun-design-numberedit-inc__
     border-top: none !important
     border-right: none !important
     border-bottom: none !important
+    &.dragging
+        cursor: unset
 
 .__sun-design-numberedit-prefix__
     text-wrap: nowrap
@@ -231,7 +230,6 @@ function onInputClick() {
     flex-grow: 0
     flex-shrink: 1
     justify-content: flex-start
-
     &.disabled
         color: var(--placeholder-color-disabled)
 
@@ -255,7 +253,6 @@ function onInputClick() {
     flex-grow: 0
     flex-shrink: 1
     justify-content: flex-end
-
     &.disabled
         color: var(--placeholder-color-disabled)
 

@@ -23,7 +23,7 @@ import SunButton from '../button/SunButton.vue';
 import { type ScrollBarState } from '../scrollcontainer/SunScrollContainer.vue';
 import { type ScrollBarVisibility } from '../scrollcontainer/SunScrollBar.vue';
 import { type Size, type BorderMask, type ColorScheme, type Rect, type BoxSize, type PopupOpenMode, calcButtonPopupRect } from '../SunDesignConstants';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 defineOptions({
     inheritAttrs: false,
@@ -89,6 +89,14 @@ const emits = defineEmits<{
 
 // datas
 const opened = ref(false);
+watch(opened, (opened) => {
+    if (opened) {
+        emits('opened');
+    }
+    else {
+        emits('closed');
+    }
+});
 const button_ref = ref<InstanceType<typeof SunButton> | undefined>();
 const measurepopuppanel_ref = ref<InstanceType<typeof SunMeasurePopupPanel> | undefined>();
 

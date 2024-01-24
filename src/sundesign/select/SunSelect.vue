@@ -153,6 +153,7 @@ const focus_selected_item = () => {
 };
 
 function onOpened() {
+    console.log(">>>>>>");
     if (props.mode === 'instance') {
         nextTick(focus_selected_item);
     }

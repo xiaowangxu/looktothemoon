@@ -1,7 +1,13 @@
 <template>
     <div ref="div_ref" class="__sun-design__ __sun-design-panel__"
-        :class="{ vertical, 'not-container': !container, 'drop-shadow': dropShadow, bordered: !container }" :data-size="size">
+        :class="{ vertical, 'not-container': !container, 'drop-shadow': dropShadow, bordered: !container }"
+        :data-size="size">
+        <div v-if="!container" ref="div_focus_top_ref" class="test" tabindex="0"
+            style="width: 100%; height: 0px; position: absolute; top: 0; background-color: aqua;">
+        </div>
         <slot />
+        <div v-if="!container" class="test" tabindex="0"
+            style="width: 100%; height: 0px; position: absolute; bottom: 0; background-color: red;"></div>
     </div>
 </template>
 
@@ -9,7 +15,7 @@
 
 import '../SunDesignStyle.styl';
 import { type Size } from '../SunDesignConstants';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 // props
 const props = withDefaults(
@@ -29,6 +35,14 @@ const props = withDefaults(
 
 // datas
 const div_ref = ref<HTMLDivElement | null>(null);
+const div_focus_top_ref = ref<HTMLDivElement | null>(null);
+
+onMounted(() => {
+    if (!props.container) {
+        console.log(">>>>>>> focus");
+        // div_focus_top_ref.value?.focus();
+    }
+});
 
 // exposes
 defineExpose({
@@ -39,6 +53,10 @@ defineExpose({
 
 <style lang="stylus">
 @import '../SunDesignStyleConstants.styl';
+
+.test:focus
+    z-index: 1
+    border: green 2px solid
 
 .__sun-design__.__sun-design-panel__
     display: flex
