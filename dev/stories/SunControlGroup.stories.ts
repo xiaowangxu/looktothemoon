@@ -1,16 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
-import SunControlGroup from '../sundesign/controlgroup/SunControlGroup.vue';
-import SunControlGroupRow from '../sundesign/controlgroup/SunControlGroupRow.vue';
-import SunButton from '../sundesign/button/SunButton.vue';
-import SunButtonLike from '../sundesign/button/SunButtonLike.vue';
-import SunLineEdit from '../sundesign/lineedit/SunLineEdit.vue';
-import SunNumberEdit from '../sundesign/numberedit/SunNumberEdit.vue'
+import SunControlGroup from '../../src/sundesign/controlgroup/SunControlGroup.vue';
+import SunControlGroupRow from '../../src/sundesign/controlgroup/SunControlGroupRow.vue';
+import SunButton from '../../src/sundesign/button/SunButton.vue';
+import SunButtonLike from '../../src/sundesign/button/SunButtonLike.vue';
+import SunLineEdit from '../../src/sundesign/lineedit/SunLineEdit.vue';
+import SunNumberEdit from '../../src/sundesign/numberedit/SunNumberEdit.vue'
 import SunSelect from '@/sundesign/select/SunSelect.vue';
 import SunColorPicker from '@/sundesign/colorpicker/SunColorPicker.vue';
 import { Decorators } from './SunDesignArgs';
 import { StepBack, StepForward, SkipBack, SkipForward, Play } from 'lucide-vue-next';
-import { ColorSchemeBlue, ColorSchemeRed, ColorSchemeGreen } from '../sundesign/SunDesignConstants';
+import { ColorSchemeBlue, ColorSchemeRed, ColorSchemeGreen } from '../../src/sundesign/SunDesignConstants';
 
 const meta: Meta<typeof SunControlGroup> = {
 	component: SunControlGroup,

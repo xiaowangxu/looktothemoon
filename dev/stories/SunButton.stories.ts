@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
-import SunButton from '../sundesign/button/SunButton.vue';
+import SunButton from '../../src/sundesign/button/SunButton.vue';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
 import { Search, X } from 'lucide-vue-next';
 

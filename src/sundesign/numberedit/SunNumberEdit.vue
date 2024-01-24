@@ -1,6 +1,6 @@
 <template>
     <template v-if="!inputing || disabled || !allowInput">
-        <SunButton class="__sun-design-numberedit-container__" :class="{ hover }" :size="size" :flat="flat"
+        <SunButton class="__sun-design-numberedit-container__ no-pressed-color" :class="{ hover }" :size="size" :flat="flat"
             :color-scheme="colorScheme" :border-mask="borderMask" @click="onInputClick" :disabled="disabled">
             <button v-if="stepButton"
                 class="__sun-design__ __sun-design-numberedit-dec__ __sun-design-button-like__ colored"
@@ -129,15 +129,6 @@ function onInputClick() {
 
     &.right
         text-align: end
-
-.__sun-design__.__sun-design-numberedit-container__, .__sun-design__.__sun-design-numberedit-container__.flat
-    &:active
-        background-color: var(--color-hover)
-        color: var(--font-color-normal)
-        
-    &:disabled, &.disabled
-        background-color: var(--color-disabled)
-        color: var(--font-color-disabled)
 
 .__sun-design-numberedit-display-container__
     // cursor: text

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
-import SunMenuPopup from '../sundesign/menupopup/SunMenuPopup.vue';
+import SunMenuPopup from '../../src/sundesign/menupopup/SunMenuPopup.vue';
 import SunButton from '@/sundesign/button/SunButton.vue';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
 import { ColorSchemeBlue, ColorSchemeGreen, ColorSchemeRed, calcButtonPopupRect, type UID } from '@/sundesign/SunDesignConstants';

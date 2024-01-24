@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
-import SunControlGroup from '../sundesign/controlgroup/SunControlGroup.vue';
-import SunLabel from '../sundesign/label/SunLabel.vue';
-import SunControlGroupRow from '../sundesign/controlgroup/SunControlGroupRow.vue';
-import SunButtonPopup from '../sundesign/buttonpopup/SunButtonPopup.vue';
+import SunControlGroup from '../../src/sundesign/controlgroup/SunControlGroup.vue';
+import SunLabel from '../../src/sundesign/label/SunLabel.vue';
+import SunControlGroupRow from '../../src/sundesign/controlgroup/SunControlGroupRow.vue';
+import SunButtonPopup from '../../src/sundesign/buttonpopup/SunButtonPopup.vue';
 import SunButton from '@/sundesign/button/SunButton.vue';
 import SunButtonLike from '@/sundesign/button/SunButtonLike.vue';
 import SunLineEdit from '@/sundesign/lineedit/SunLineEdit.vue';
@@ -12,7 +12,7 @@ import { ChevronDown, ChevronUp } from 'lucide-vue-next';
 import SunPanelContainer from '@/sundesign/panel/SunPanelContainer.vue';
 import SunPanelSeparator from '@/sundesign/panel/SunPanelSeparator.vue';
 import { calcButtonPopupRect } from '@/sundesign/SunDesignConstants';
-import SunNumberEdit from '../sundesign/numberedit/SunNumberEdit.vue'
+import SunNumberEdit from '../../src/sundesign/numberedit/SunNumberEdit.vue'
 import SunSelect from '@/sundesign/select/SunSelect.vue';
 import SunScrollContainer from '@/sundesign/scrollcontainer/SunScrollContainer.vue';
 import { RotateCcw, Pipette, Plus, Hash, Palette, ClipboardCopy, Bookmark } from 'lucide-vue-next';

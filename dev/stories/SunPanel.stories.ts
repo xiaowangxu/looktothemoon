@@ -1,16 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
-import SunPanel from '../sundesign/panel/SunPanel.vue';
-import SunLineEdit from '../sundesign/lineedit/SunLineEdit.vue';
-import SunPanelContainer from '../sundesign/panel/SunPanelContainer.vue';
-import SunPanelSeparator from '../sundesign/panel/SunPanelSeparator.vue';
-import SunButton from '../sundesign/button/SunButton.vue';
-import SunButtonLike from '../sundesign/button/SunButtonLike.vue';
+import SunPanel from '../../src/sundesign/panel/SunPanel.vue';
+import SunLineEdit from '../../src/sundesign/lineedit/SunLineEdit.vue';
+import SunPanelContainer from '../../src/sundesign/panel/SunPanelContainer.vue';
+import SunPanelSeparator from '../../src/sundesign/panel/SunPanelSeparator.vue';
+import SunButton from '../../src/sundesign/button/SunButton.vue';
+import SunButtonLike from '../../src/sundesign/button/SunButtonLike.vue';
 import SunKeyboard from '@/sundesign/keyboard/SunKeyboard.vue';
 import { Search, Undo2, Redo2, Trash, X, Save, ChevronRight, MoreHorizontal } from 'lucide-vue-next';
 import { SizeArgs, SizeArgsTypes, Decorators } from './SunDesignArgs';
 import { ColorSchemeBlue, ColorSchemeRed } from '@/sundesign/SunDesignConstants';
-import SunScrollBar from '../sundesign/scrollcontainer/SunScrollBar.vue';
+import SunScrollBar from '../../src/sundesign/scrollcontainer/SunScrollBar.vue';
 import { ref } from 'vue';
 
 const meta: Meta<typeof SunPanel> = {

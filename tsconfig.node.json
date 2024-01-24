@@ -9,6 +9,7 @@
     "dev/**/*",
   ],
   "compilerOptions": {
+    "jsx": "preserve",
     "composite": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",

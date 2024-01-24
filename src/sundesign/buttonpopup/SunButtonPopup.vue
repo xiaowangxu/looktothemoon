@@ -1,7 +1,7 @@
 <template>
-    <SunButton ref="button_ref" class="__sun-design-buttonpopup-button__" :class="{ opened }" :size="size" :flat="flat"
-        :active="active" :disabled="disabled" :borderMask="borderMask" :hover="hover" :colorScheme="colorScheme"
-        :squared="squared" @click="opened = !opened" v-bind="$attrs">
+    <SunButton ref="button_ref" class="__sun-design-buttonpopup-button__" :class="{ active: opened && openActive }"
+        :size="size" :flat="flat" :active="active" :disabled="disabled" :borderMask="borderMask" :hover="hover"
+        :colorScheme="colorScheme" :squared="squared" @click="opened = !opened" v-bind="$attrs">
         <slot name="button" :opened="opened" :toggle="toggle" />
     </SunButton>
     <SunMeasurePopupPanel ref="measurepopuppanel_ref" :mode="mode" :visible="opened" :style="panelStyle"
@@ -22,7 +22,7 @@ import SunMeasurePopupPanel from '../measurepopuppanel/SunMeasurePopupPanel.vue'
 import SunButton from '../button/SunButton.vue';
 import { type ScrollBarState } from '../scrollcontainer/SunScrollContainer.vue';
 import { type ScrollBarVisibility } from '../scrollcontainer/SunScrollBar.vue';
-import { type Size, type BorderMask, type ColorScheme, type Rect, type BoxSize, type PopupOpenMode } from '../SunDesignConstants';
+import { type Size, type BorderMask, type ColorScheme, type Rect, type BoxSize, type PopupOpenMode, calcButtonPopupRect } from '../SunDesignConstants';
 import { ref } from 'vue';
 
 defineOptions({
@@ -42,6 +42,7 @@ const props = withDefaults(
         colorScheme?: ColorScheme,
         squared?: boolean,
         // panel
+        openActive?: boolean,
         panelStyle?: string,
         vertical?: boolean,
         dropShadow?: boolean,
@@ -51,7 +52,7 @@ const props = withDefaults(
         scrollBarStateH?: ScrollBarState,
         scrollBarStateV?: ScrollBarState,
         scrollBarVisibility?: ScrollBarVisibility,
-        getPopupRect: (buttonRect: Rect, contentMinSize: BoxSize, windowSize: BoxSize) => Rect,
+        getPopupRect?: (buttonRect: Rect, contentMinSize: BoxSize, windowSize: BoxSize) => Rect,
         measureIgnoreMaxHeight?: boolean,
         measureIgnoreMinHeight?: boolean,
         measureIgnoreMaxWidth?: boolean,
@@ -59,10 +60,15 @@ const props = withDefaults(
     }>(),
     {
         mode: 'instance',
+        openActive: true,
         measureIgnoreMaxHeight: false,
         measureIgnoreMinHeight: false,
         measureIgnoreMaxWidth: false,
         measureIgnoreMinWidth: false,
+        scrollableIndicators: true,
+        scrollBarStateH: 'adaptive',
+        scrollBarStateV: 'adaptive',
+        scrollBarVisibility: 'hover-track',
     }
 );
 
@@ -88,7 +94,8 @@ const measurepopuppanel_ref = ref<InstanceType<typeof SunMeasurePopupPanel> | un
 
 function getPopupPanelRect(contentMinSize: BoxSize, windowSize: BoxSize): Rect {
     const { x, y, width, height } = (button_ref.value?.button as HTMLButtonElement)?.getBoundingClientRect() ?? { x: 0, y: 0, width: 0, height: 0 };
-    return props.getPopupRect({ x, y, width, height }, contentMinSize, windowSize);
+    if (props.getPopupRect !== undefined) props.getPopupRect({ x, y, width, height }, contentMinSize, windowSize);
+    return calcButtonPopupRect({ x, y, width, height }, contentMinSize, windowSize, 0);
 }
 
 function toggle(open: boolean) {
@@ -117,7 +124,6 @@ defineExpose({
 @import '../SunDesignStyleConstants.styl';
 
 .__sun-design-buttonpopup-button__
-    &.opened
-        // 
+    // 
 
 </style>

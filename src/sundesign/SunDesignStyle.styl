@@ -100,6 +100,31 @@
                 &::placeholder
                     color: var(--placeholder-color-disabled)
 
+        &.no-pressed-color, &.flat.no-pressed-color
+            &:active
+                background-color: var(--color-hover)
+                color: var(--font-color-hover)
+
+            &:disabled, &.disabled
+                background-color: var(--color-disabled)
+                color: var(--font-color-disabled)
+
+            &.no-hover-color
+                &:active
+                    background-color: var(--color-normal)
+                    color: var(--font-color-normal)
+
+                &:disabled, &.disabled
+                    background-color: var(--color-disabled)
+                    color: var(--font-color-disabled)
+
+                &.flat
+                    background-color: transparent
+        
+        &.no-hover-color
+            background-color: var(--color-normal)
+            color: var(--font-color-normal)
+    
         &.active, &:checked
             background-color: var(--color-active)
             color: var(--font-color-active)
@@ -115,11 +140,9 @@
                 &::placeholder
                     color: var(--placeholder-color-disabled)
 
-        
-
-        // disabled
-        &:disabled, &.disabled
-            cursor: not-allowed
+    // disabled
+    &:disabled, &.disabled
+        cursor: not-allowed
             
     &.bordered
         border: solid-border

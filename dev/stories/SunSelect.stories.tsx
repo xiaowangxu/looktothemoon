@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
-import SunSelect, { type SelectItem } from '../sundesign/select/SunSelect.vue';
+import SunSelect, { type SelectItem } from '../../src/sundesign/select/SunSelect.vue';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
 import { ColorSchemeBlue, ColorSchemeGreen } from '@/sundesign/SunDesignConstants';
-import { ColorSchemeRed } from '../sundesign/SunDesignConstants';
+import { ColorSchemeRed } from '../../src/sundesign/SunDesignConstants';
 import { ref, watch } from 'vue';
 import SunColorPickerVue from '@/sundesign/colorpicker/SunColorPicker.vue';
 import SunButtonVue from '@/sundesign/button/SunButton.vue';

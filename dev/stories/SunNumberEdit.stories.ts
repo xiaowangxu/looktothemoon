@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
-import SunNumberEdit from '../sundesign/numberedit/SunNumberEdit.vue';
+import SunNumberEdit from '../../src/sundesign/numberedit/SunNumberEdit.vue';
 import { Cog } from 'lucide-vue-next';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
 

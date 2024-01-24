@@ -28,7 +28,7 @@ const props = withDefaults(
 );
 
 // datas
-const div_ref = ref<HTMLDivElement | undefined>();
+const div_ref = ref<HTMLDivElement | null>(null);
 
 // exposes
 defineExpose({

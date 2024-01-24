@@ -1,17 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
-import SunTest from '../sundesign/button/SunButtonLike.vue';
+import SunCalculatePopup from '../../src/sundesign/calculatepopup/SunCalculatePopup.vue';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
-import SunSelectVue from '@/sundesign/select/SunSelect.vue';
-import SunColorPickerVue from '@/sundesign/colorpicker/SunColorPicker.vue';
-import { ref, type Raw, type Component, defineComponent } from 'vue';
 
-const meta: Meta<typeof SunTest> = {
-	component: SunTest,
+const meta: Meta<typeof SunCalculatePopup> = {
+	component: SunCalculatePopup,
 };
 
 export default meta;
-type Story = StoryObj<typeof SunTest>;
+type Story = StoryObj<typeof SunCalculatePopup>;
 
 /*
  *👇 Render functions are a framework specific feature to allow you control on how the component renders.
@@ -22,12 +19,12 @@ export const Select: Story = {
 	decorators: Decorators,
 	tags: ['autodocs'],
 	render: (args) => ({
-		components: { SunTest },
+		components: { SunCalculatePopup },
 		setup() {
 			return { args };
 		},
 		template: `
-			<SunTest/>
+			<SunCalculatePopup/>
 		`,
 	}),
 };

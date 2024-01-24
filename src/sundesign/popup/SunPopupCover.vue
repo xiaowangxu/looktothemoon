@@ -1,5 +1,5 @@
 <template>
-    <div class="__sun-design-popup-cover__" :class="{ 'stop-events': stopEvents }" @mousedown.self="onMouseDownSelf" @click.stop.self="onClickSelf">
+    <div class="__sun-design-popup-cover__" :class="{ 'stop-events': stopEvents }" @mousedown.self="onMouseDownSelf" @contextmenu.prevent @click.stop.self="onClickSelf">
         <slot />
     </div>
 </template>

@@ -166,6 +166,7 @@ export function unobserveResize(el: Element, callback: ResizeObserverCallback) {
 
 const DefualtWindowMargin = 10;
 const DefaultOffset = 3;
+const DefaultMenuPopupSubMenuOffsetY = -4;
 
 export type PreferedDirection = 0 | 1;
 
@@ -211,7 +212,7 @@ export function calcButtonPopupRect(button_rect: Rect, content_size: BoxSize, wi
     return { x, y, width, height };
 }
 
-export function calcMenuPopupRect(content_size: BoxSize, button_rect: Rect, window_size: BoxSize, prefered_direction: PreferedDirection, offset: BoxSize = { width: 0, height: -4 }, allow_shift_up: boolean = true, gap: BoxSize = { width: 7, height: 6 }): { rect: Rect, direction: 0 | 1 } {
+export function calcMenuPopupRect(content_size: BoxSize, button_rect: Rect, window_size: BoxSize, prefered_direction: PreferedDirection, offset: BoxSize = { width: 0, height: DefaultMenuPopupSubMenuOffsetY }, allow_shift_up: boolean = true, gap: BoxSize = { width: DefualtWindowMargin, height: DefualtWindowMargin }): { rect: Rect, direction: PreferedDirection } {
     const { width: gap_width, height: gap_height } = gap;
     const { width: offset_width, height: offset_height } = offset;
     const min_window_width = window_size.width - gap_width * 2;
@@ -219,27 +220,27 @@ export function calcMenuPopupRect(content_size: BoxSize, button_rect: Rect, wind
     const right_space = (window_size.width - button_rect.x - button_rect.width) - gap_width - offset_width;
     const left_space = Math.min(button_rect.x - gap_width - offset_width, min_window_width);
     let x: number, y: number, width: number, height: number, direction: 0 | 1;
-    if (prefered_direction === 1) {
+    if (prefered_direction === 0) {
         // right
         if (right_space >= content_size.width) {
             x = button_rect.x + button_rect.width + offset_width;
             width = content_size.width;
-            direction = 1;
+            direction = 0;
         }
         else if (left_space >= content_size.width) {
             x = button_rect.x - offset_width - content_size.width;
             width = content_size.width;
-            direction = 0;
+            direction = 1;
         }
         else if (right_space >= left_space) {
             width = right_space;
             x = button_rect.x + button_rect.width + offset_width;
-            direction = 1;
+            direction = 0;
         }
         else {
             width = left_space;
             x = button_rect.x - offset_width - left_space;
-            direction = 0;
+            direction = 1;
         }
     }
     else {
@@ -247,22 +248,22 @@ export function calcMenuPopupRect(content_size: BoxSize, button_rect: Rect, wind
         if (left_space >= content_size.width) {
             x = button_rect.x - offset_width - content_size.width;
             width = content_size.width;
-            direction = 0;
+            direction = 1;
         }
         else if (right_space >= content_size.width) {
             x = button_rect.x + button_rect.width + offset_width;
             width = content_size.width;
-            direction = 1;
+            direction = 0;
         }
         else if (left_space >= right_space) {
             width = left_space;
             x = button_rect.x - offset_width - left_space;
-            direction = 0;
+            direction = 1;
         }
         else {
             width = right_space;
             x = button_rect.x + button_rect.width + offset_width;
-            direction = 1;
+            direction = 0;
         }
     }
     const bottom_space = window_size.height - button_rect.y - gap_height - offset_height;
@@ -293,7 +294,7 @@ export function timer(func: () => void, time_ms: number): TimerCanceller {
     // console.log('start timer');
     setTimeout(() => {
         if (cancelled || finished) return;
-        func(); 
+        func();
         // console.log('timer finished');
         finished = true;
     }, time_ms);

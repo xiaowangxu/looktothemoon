@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
-import SunScrollContainer from '../sundesign/scrollcontainer/SunScrollContainer.vue';
-import SunButton from '../sundesign/button/SunButton.vue';
-import SunPanel from '../sundesign/panel/SunPanel.vue';
-import SunPanelContainer from '../sundesign/panel/SunPanelContainer.vue';
-import SunPanelSeparator from '../sundesign/panel/SunPanelSeparator.vue';
+import SunScrollContainer from '../../src/sundesign/scrollcontainer/SunScrollContainer.vue';
+import SunButton from '../../src/sundesign/button/SunButton.vue';
+import SunPanel from '../../src/sundesign/panel/SunPanel.vue';
+import SunPanelContainer from '../../src/sundesign/panel/SunPanelContainer.vue';
+import SunPanelSeparator from '../../src/sundesign/panel/SunPanelSeparator.vue';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
 import { ref } from 'vue';
 

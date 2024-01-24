@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
-import SunLineEdit from '../sundesign/lineedit/SunLineEdit.vue';
+import SunLineEdit from '../../src/sundesign/lineedit/SunLineEdit.vue';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
 
 const meta: Meta<typeof SunLineEdit> = {

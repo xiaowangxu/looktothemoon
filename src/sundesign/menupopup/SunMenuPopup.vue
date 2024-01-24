@@ -11,7 +11,7 @@
                             :color-scheme="(item as ItemMenuItem).colorScheme" :active="(item as ItemMenuItem).active"
                             :disabled="(item as ItemMenuItem).disabled"
                             @mouseenter="onMouseEnter((item as ItemMenuItem).uid, (item as ItemMenuItem).subs, $event)"
-                            @click="onItemButtonClick((item as ItemMenuItem).uid, (item as ItemMenuItem).subs, $event)">
+                            @click="onItemButtonClick((item as ItemMenuItem).uid, (item as ItemMenuItem).subs, (item as ItemMenuItem).clickable, $event)">
                             <SunButtonItem
                                 :item="{ label: (item as ItemMenuItem).label, icon: (item as ItemMenuItem).icon, description: (item as ItemMenuItem).description, shortcut: (item as ItemMenuItem).shortcut, sub: (item as ItemMenuItem).subs !== undefined }" />
                         </SunButton>
@@ -43,7 +43,7 @@ import { type ScrollBarVisibility } from '../scrollcontainer/SunScrollBar.vue';
 import { type Item, type Rect, type BoxSize, type PopupOpenMode, type Size, calcMenuPopupRect, type UID, type TimerCanceller, type PreferedDirection, timer } from '../SunDesignConstants';
 import { onBeforeUnmount, ref, type Component, type Raw, toRef, watch, nextTick } from 'vue';
 
-type ItemMenuItem<T extends UID = UID> = Omit<Item<T>, 'sub'> & { subs?: MenuItem<T>[][] };
+type ItemMenuItem<T extends UID = UID> = Omit<Item<T>, 'sub'> & { subs?: MenuItem<T>[][], clickable?: boolean };
 type RenderMenuItem<T extends UID = UID> = {
     uid: T,
     render: Raw<Component<{
@@ -53,7 +53,7 @@ type RenderMenuItem<T extends UID = UID> = {
         click: (data: any, hasSubMenu: boolean, evt: Event) => void,
     }>>,
 };
-type MenuItem<T extends UID = UID> = ItemMenuItem<T> | RenderMenuItem<T>;
+export type MenuItem<T extends UID = UID> = ItemMenuItem<T> | RenderMenuItem<T>;
 
 // props
 const props = withDefaults(
@@ -195,9 +195,11 @@ function expandSubMenu(uid: UID, subs: MenuItem[][] | undefined, evt: Event): vo
     }
 }
 
-function onItemButtonClick(uid: UID, subs: MenuItem[][] | undefined, evt: Event): void {
+function onItemButtonClick(uid: UID, subs: MenuItem[][] | undefined, clickable: boolean | undefined, evt: Event): void {
     expandSubMenu(uid, subs, evt);
-    onClick(uid, subs !== undefined, evt);
+    if (subs === undefined || clickable === true) {
+        onClick(uid, subs !== undefined, evt);
+    }
 }
 
 function onClick(data: any, hasSubMenu: boolean, evt: Event) {

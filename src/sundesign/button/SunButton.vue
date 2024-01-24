@@ -30,7 +30,7 @@ const props = withDefaults(
     }
 );
 
-const button_ref = ref<HTMLButtonElement>();
+const button_ref = ref<HTMLButtonElement | null>(null);
 
 // exposes
 defineExpose({

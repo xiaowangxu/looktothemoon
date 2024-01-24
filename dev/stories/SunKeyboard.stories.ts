@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
-import SunKeyboard from '../sundesign/keyboard/SunKeyboard.vue';
+import SunKeyboard from '../../src/sundesign/keyboard/SunKeyboard.vue';
 import { Decorators } from './SunDesignArgs';
 
 const meta: Meta<typeof SunKeyboard> = {

@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
-import SunCheckbox from '../sundesign/checkbox/SunCheckbox.vue';
-import SunRadiobox from '../sundesign/checkbox/SunRadiobox.vue';
-import SunLabel from '../sundesign/label/SunLabel.vue';
+import SunCheckbox from '../../src/sundesign/checkbox/SunCheckbox.vue';
+import SunRadiobox from '../../src/sundesign/checkbox/SunRadiobox.vue';
+import SunLabel from '../../src/sundesign/label/SunLabel.vue';
 import { SizeArgs, SizeArgsTypes, ColorSchemeArgs, ColorSchemeArgsTypes, Decorators } from './SunDesignArgs';
 import { Cog } from 'lucide-vue-next';
 

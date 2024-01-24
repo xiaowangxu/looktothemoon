@@ -57,7 +57,7 @@
 
 import '../SunDesignStyle.styl';
 import SunButtonPopup from '../buttonpopup/SunButtonPopup.vue';
-import { type Size, type Item, type BorderMask, type ColorScheme, type UID, type Rect, type BoxSize, type PopupOpenMode, calcButtonPopupRect } from '../SunDesignConstants';
+import { type Size, type Item, type BorderMask, type ColorScheme, type UID, type Rect, type BoxSize, type PopupOpenMode, calcButtonPopupRect, type PreferedDirection } from '../SunDesignConstants';
 import SunButton from '../button/SunButton.vue';
 import SunButtonItem from '../item/SunButtonItem.vue';
 import { ChevronDown, ChevronUp } from 'lucide-vue-next';
@@ -95,7 +95,7 @@ const props = withDefaults(
         modelValue: UID | undefined,
         active?: boolean,
         disabled?: boolean,
-        preferedDirection?: 0 | 1,
+        preferedDirection?: PreferedDirection,
         allowDeselect?: boolean,
         iconOnly?: boolean,
     }>(),

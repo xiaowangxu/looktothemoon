@@ -22,7 +22,7 @@
             <!-- Picker -->
             <SunPanelContainer gap vertical style="min-height: 120px; flex-shrink: 0;">
                 <SunPanelContainer gap no-padding style="flex: 1;" :style="{ '--Color': hue_color }">
-                    <SunRange v-model="hue"
+                    <SunRange v-model="hue" :active="false"
                         style="background: linear-gradient(0deg,red 0,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,red);"
                         vertical :min="0" :max="360" :progress="false"
                         :ticks="[0, 360 * 0.17, 360 * 0.33, 180, 360 * 0.67, 360 * 0.83, 360]" />
@@ -30,7 +30,7 @@
 									background: linear-gradient(0deg, black, transparent), linear-gradient(90deg, white, var(--Color));" />
                     <div class="__sun-design-transparent-bg__"
                         style="min-width: 24px; border-radius: 6px; position: relative; overflow: hidden;">
-                        <SunRange v-model="alpha"
+                        <SunRange v-model="alpha" :active="false"
                             style="background: linear-gradient(180deg, var(--Color), transparent); height: 100%;" vertical
                             :min="0" :max="1" :progress="false" :ticks="[0, 0.5, 1]" />
                     </div>
@@ -83,46 +83,42 @@
                         </SunControlGroupRow>
                     </SunControlGroup>
                 </SunPanelContainer>
-                <SunPanelContainer no-padding gap>
-                    <SunPanelContainer gap no-padding vertical>
-                        <SunControlGroup>
-                            <SunControlGroupRow>
-                                <SunSelect style="width: min-content; align-self: flex-end;" icon-only squared
-                                    v-model="edit_format" :options="edit_formats">
-                                    <template #closed>
-                                        <Palette />
-                                    </template>
-                                    <template #opened>
-                                        <Palette />
-                                    </template>
-                                </SunSelect>
-                            </SunControlGroupRow>
-                            <SunControlGroupRow>
-                                <SunButton squared>
-                                    <Pipette />
-                                </SunButton>
-                            </SunControlGroupRow>
-                        </SunControlGroup>
-                        <SunControlGroup style="margin-top: auto;">
-                            <SunControlGroupRow>
-                                <SunSelect style="width: min-content; align-self: flex-end;" icon-only squared
-                                    v-model="library"
-                                    :options="[[{ label: '最近使用', uid: 8 }, { label: 'Color String', uid: 200 }]]">
-                                    <template #closed>
-                                        <Bookmark />
-                                    </template>
-                                    <template #opened>
-                                        <Bookmark />
-                                    </template>
-                                </SunSelect>
-                            </SunControlGroupRow>
-                            <SunControlGroupRow>
-                                <SunButton squared style="margin-top: auto;">
-                                    <Plus />
-                                </SunButton>
-                            </SunControlGroupRow>
-                        </SunControlGroup>
-                    </SunPanelContainer>
+                <SunPanelContainer gap no-padding vertical>
+                    <SunControlGroup>
+                        <SunControlGroupRow>
+                            <SunSelect icon-only squared v-model="edit_format" :options="edit_formats">
+                                <template #closed>
+                                    <Palette />
+                                </template>
+                                <template #opened>
+                                    <Palette />
+                                </template>
+                            </SunSelect>
+                        </SunControlGroupRow>
+                        <SunControlGroupRow>
+                            <SunButton squared>
+                                <Pipette />
+                            </SunButton>
+                        </SunControlGroupRow>
+                    </SunControlGroup>
+                    <SunControlGroup style="margin-top: auto;">
+                        <SunControlGroupRow>
+                            <SunSelect icon-only squared v-model="library"
+                                :options="[[{ label: '最近使用', uid: 8 }, { label: 'Color String', uid: 200 }]]">
+                                <template #closed>
+                                    <Bookmark />
+                                </template>
+                                <template #opened>
+                                    <Bookmark />
+                                </template>
+                            </SunSelect>
+                        </SunControlGroupRow>
+                        <SunControlGroupRow>
+                            <SunButton squared>
+                                <Plus />
+                            </SunButton>
+                        </SunControlGroupRow>
+                    </SunControlGroup>
                 </SunPanelContainer>
             </SunPanelContainer>
             <SunPanelSeparator override-vertical />

@@ -18,5 +18,8 @@
     border-style: solid
     border-color: @color
     border-image: initial
+    overflow: hidden
+    white-space: nowrap
+    text-overflow: ellipsis
 
 </style>

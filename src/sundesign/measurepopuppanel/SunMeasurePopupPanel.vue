@@ -28,6 +28,7 @@ defineOptions({
 });
 
 // props
+type MeasureMethod = 'min-content' | 'fit-content' | 'max-content';
 const props = withDefaults(
     defineProps<{
         mode?: PopupOpenMode,
@@ -47,15 +48,22 @@ const props = withDefaults(
         measureIgnoreMinHeight?: boolean,
         measureIgnoreMaxWidth?: boolean,
         measureIgnoreMinWidth?: boolean,
+        measureMethodH?: MeasureMethod,
+        measureMethodV?: MeasureMethod,
     }>(),
     {
         mode: 'instance',
         visible: true,
         stopEvents: true,
+        dropShadow: true,
         measureIgnoreMaxHeight: false,
         measureIgnoreMinHeight: false,
         measureIgnoreMaxWidth: false,
         measureIgnoreMinWidth: false,
+        scrollableIndicators: true,
+        scrollBarStateH: 'adaptive',
+        scrollBarStateV: 'adaptive',
+        scrollBarVisibility: 'hover-track',
     }
 );
 
@@ -87,8 +95,8 @@ const get_panel_content_min_size = () => {
         emits('beforeMeasure');
         const style_width = _div.style.width;
         const style_height = _div.style.height;
-        _div.style.width = 'fit-content';
-        _div.style.height = 'fit-content';
+        _div.style.width = props.measureMethodH ?? 'max-content';
+        _div.style.height = props.measureMethodV ?? 'max-content';
         // ignore
         let max_width, min_width, max_height, min_height;
         if (props.measureIgnoreMaxWidth) { max_width = _div.style.maxWidth; _div.style.maxWidth = ''; }
@@ -123,7 +131,7 @@ watch(opened, (opened) => {
     }
 }, { immediate: true });
 
-watch([windowWidth, windowHeight], ()=>{
+watch([windowWidth, windowHeight], () => {
     calcuPopupRect();
 });
 

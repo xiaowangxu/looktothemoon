@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
-import SunRange from '../sundesign/range/SunRange.vue';
+import SunRange from '../../src/sundesign/range/SunRange.vue';
 import { Cog } from 'lucide-vue-next';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
 import { ref } from 'vue';
@@ -38,7 +38,6 @@ export const Range: Story = {
 		...Args,
 		min: 0,
 		max: 100,
-		modelValue: 37,
-		ticks: [25, 50, 75]
+		ticks: [0, 25, 50, 75, 100]
 	}
 };

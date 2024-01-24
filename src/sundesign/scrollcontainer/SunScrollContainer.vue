@@ -77,9 +77,9 @@ const emits = defineEmits<{
 }>();
 
 // datas
-const div_ref = ref<HTMLDivElement | undefined>();
-const container_div_dom = ref<HTMLDivElement | undefined>();
-const content_div_dom = ref<HTMLDivElement | undefined>();
+const div_ref = ref<HTMLDivElement | null>(null);
+const container_div_dom = ref<HTMLDivElement | null>(null);
+const content_div_dom = ref<HTMLDivElement | null>(null);
 
 const scrollable_disabled_h = computed(() => props.scrollBarStateH === 'disabled');
 const scrollable_disabled_v = computed(() => props.scrollBarStateV === 'disabled');

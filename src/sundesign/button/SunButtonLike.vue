@@ -1,6 +1,6 @@
 <template>
     <div class="__sun-design__ __sun-design-button-like__ sized border-masked " :class="{
-        colored, 'no-pressed-color': noPressedColor, 'equal-padding': squared, squared, disabled, active, flat, bordered: !flat, hover, 'no-vertical-padding': noVerticalPadding
+        colored, 'no-pressed-color': noPressedColor, 'no-hover-color': noHoverColor, 'equal-padding': squared, squared, disabled, active, flat, bordered: !flat, hover, 'no-vertical-padding': noVerticalPadding
     }" :data-size="size" :data-border-mask="borderMask" :style="colorScheme">
         <slot></slot>
     </div>
@@ -25,6 +25,7 @@ const props = withDefaults(
         disabled?: boolean,
         noVerticalPadding?: boolean,
         noPressedColor?: boolean,
+        noHoverColor?: boolean,
     }>(),
     {
         size: 'normal',
@@ -33,6 +34,7 @@ const props = withDefaults(
         disabled: false,
         noVerticalPadding: false,
         noPressedColor: false,
+        noHoverColor: false,
     }
 );
 

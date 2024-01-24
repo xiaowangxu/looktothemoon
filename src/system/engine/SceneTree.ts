@@ -84,9 +84,8 @@ export class SceneTree extends ConfiguredObject {
         }
         // queue free
         for (const node of this.node_queued_free) {
-            const parent = node.get_Parent();
-            if (parent !== this.root) {
-                parent?.remove_Child(node);
+            if (node !== this.root) {
+                node.get_Parent()?.remove_Child(node);
                 node.free();
             }
         }
@@ -151,6 +150,7 @@ export class SceneTree extends ConfiguredObject {
 
     public queue_Free(node: Node) {
         if (!node.is_inside_tree) throw new Error('<SceneTree> queue_Free: can not queue free node which is not inside scene tree');
+        if (node === this.root) throw new Error('<SceneTree> queue_Free: root not can not be freeed');
         this.node_queued_free.add(node);
     }
 

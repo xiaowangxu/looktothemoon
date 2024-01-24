@@ -1,6 +1,7 @@
 <template>
-    <input ref="input_ref" class="__sun-design__ __sun-design-lineedit__ colored sized border-masked"
-        :class="{ flat, bordered: !flat, hover }" :disabled="disabled" :data-size="size" :data-border-mask="borderMask" :style="colorScheme">
+    <input ref="input_ref" class="__sun-design__ __sun-design-lineedit__ colored sized border-masked no-pressed-color"
+        :class="{ flat, bordered: !flat, hover }" :disabled="disabled" :data-size="size" :data-border-mask="borderMask"
+        :style="colorScheme">
 </template>
 
 <script setup lang="ts">
@@ -27,13 +28,12 @@ const props = withDefaults(
 );
 
 // datas
-const input_ref = ref<HTMLInputElement | undefined>();
+const input_ref = ref<HTMLInputElement | null>(null);
 
 // exposes
 defineExpose({
     input: input_ref,
 });
-
 
 </script>
 
@@ -44,13 +44,5 @@ defineExpose({
 
     &:focus-visible
         outline: none
-
-    &:active
-        background-color: var(--color-hover)
-        color: var(--font-color-normal)
-        
-    &:disabled, &.disabled
-        background-color: var(--color-disabled)
-        color: var(--font-color-disabled)
     
 </style>
