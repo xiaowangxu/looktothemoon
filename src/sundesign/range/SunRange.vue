@@ -4,7 +4,8 @@
         :style="colorScheme" @click.self="onClick">
         <div ref="container_ref" class="__sun-design-range-region__" :style="{ '--Percentage': percentage }">
             <div v-if="progress" class="__sun-design-range-progress__"></div>
-            <div v-for="tick in tick_percentages" class="__sun-design-range-tick__" :style="{ '--TickPercentage': tick }" />
+            <div v-for="tick in tick_percentages" class="__sun-design-range-tick__" :style="{ '--TickPercentage': tick }"
+                :key="tick" />
             <label class="__sun-design__ __sun-design-range-nob-container__" :class="{ disabled }"
                 @mousedown.self.stop="onMouseDown">
                 <button class="__sun-design__ __sun-design-range-nob__ colored bordered" :class="{ active }"
@@ -18,7 +19,7 @@
 
 import '../SunDesignStyle.styl';
 import { type Size, type BorderMask, type ColorScheme } from '../SunDesignConstants';
-import { computed, onBeforeMount, onBeforeUnmount, ref } from 'vue';
+import { computed, onBeforeUnmount, ref } from 'vue';
 import { useVModel } from '@vueuse/core';
 
 // props
@@ -99,7 +100,7 @@ function onMouseMove(evt: MouseEvent) {
     }
     const delta_percentage = delta / total_range;
     const val = props.min + (props.max - props.min) * (last_percentage + delta_percentage);
-    setValueSafe(val,evt.ctrlKey);
+    setValueSafe(val, evt.ctrlKey);
 }
 function onMouseUp(evt: MouseEvent) {
     dragging.value = false;

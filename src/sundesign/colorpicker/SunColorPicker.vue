@@ -4,14 +4,14 @@
         mode="instance" vertical content-style="width: 100%; max-width: 180px;" :getPopupRect="getPopupRect"
         scrollable-indicators>
         <template #button>
-            <div style="position: absolute; inset: 0; background: rgba(0, 0, 255, 0.75);" />
+            <div style="position: absolute; inset: 0;" :style="{ background: color_str }" />
         </template>
         <template #popup>
             <!-- Previewer -->
             <SunPanelContainer gap style="flex-shrink: 0;">
                 <div class="__sun-design-transparent-bg__"
                     style="flex: 1; position: relative; overflow: hidden; border-radius: 6px;">
-                    <div style="position: absolute; inset: 0; right: 50%; background: rgba(0, 0, 255, 0.75);" />
+                    <div style="position: absolute; inset: 0; right: 50%;" :style="{ background: color_str }" />
                     <div style="position: absolute; inset: 0; left: 50%; background: rgba(123, 233, 12, 0.5);" />
                 </div>
                 <SunButton squared>
@@ -26,13 +26,14 @@
                         style="background: linear-gradient(0deg,red 0,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,red);"
                         vertical :min="0" :max="360" :progress="false"
                         :ticks="[0, 360 * 0.17, 360 * 0.33, 180, 360 * 0.67, 360 * 0.83, 360]" />
-                    <div class="__sun-design__ bordered border-masked" data-border-mask="15" style="flex: 1; border-radius: 6px; align-self: stretch;
-									background: linear-gradient(0deg, black, transparent), linear-gradient(90deg, white, var(--Color));" />
+                    <SunRange2D v-model="lum_sat" :active="false" style="flex: 1; border-radius: 6px; align-self: stretch;
+									background: linear-gradient(0deg, black, transparent), linear-gradient(90deg, white, var(--Color));"
+                        :min="[0, 0]" :max="[100, 100]" />
                     <div class="__sun-design-transparent-bg__"
                         style="min-width: 24px; border-radius: 6px; position: relative; overflow: hidden;">
                         <SunRange v-model="alpha" :active="false"
                             style="background: linear-gradient(180deg, var(--Color), transparent); height: 100%;" vertical
-                            :min="0" :max="1" :progress="false" :ticks="[0, 0.5, 1]" />
+                            :min="0" :max="1" :progress="false" />
                     </div>
                     <!-- <div v-else-if="edit_format === 'HSL'"
                     style="flex: 1; border-radius: 6px;	background: linear-gradient(0deg, black, transparent, white), linear-gradient(90deg,red 0,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,red);" /> -->
@@ -96,7 +97,7 @@
                             </SunSelect>
                         </SunControlGroupRow>
                         <SunControlGroupRow>
-                            <SunButton squared>
+                            <SunButton squared @click="onEyeDropper">
                                 <Pipette />
                             </SunButton>
                         </SunControlGroupRow>
@@ -149,6 +150,8 @@ import { calcButtonPopupRect, type Rect, type BoxSize, type Size, type BorderMas
 import { computed, ref, watch } from 'vue';
 import { useColorPickerData } from './SunColorPickerConstants';
 import SunRange from '../range/SunRange.vue';
+import SunRange2D from '../range/SunRange2D.vue';
+import { useEyeDropper } from '@vueuse/core';
 
 // props
 const props = withDefaults(
@@ -175,6 +178,9 @@ const props = withDefaults(
 const hue = ref(0);
 const hue_color = computed(() => `hsl(${hue.value}deg, 100%, 50%)`);
 const alpha = ref(1);
+const lum_sat = ref<[number, number]>([100, 100]);
+
+const color_str = computed(() => `hsl(${hue.value}deg, ${lum_sat.value[0]}%, ${lum_sat.value[1]}%, ${alpha.value})`);
 
 const {
     edit_formats, edit_format,
@@ -195,6 +201,10 @@ function getPopupRect(buttonRect: Rect, contentMinSize: BoxSize, windowSize: Box
         btn_rect.width = contentMinSize.width;
     }
     return calcButtonPopupRect(btn_rect, contentMinSize, windowSize, 0);
+}
+
+function onEyeDropper() {
+    useEyeDropper().open().then();
 }
 
 </script>
