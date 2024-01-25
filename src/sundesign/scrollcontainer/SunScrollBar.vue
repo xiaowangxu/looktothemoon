@@ -146,8 +146,5 @@ scrollbar-track-offset = 7px
     :hover>.hoverparent>&, .hovertrack:hover>&
         opacity: scrollbar-nob-opacity
         transition: opacity 0.15s ease-out
-    
-    &:active 
-        background-color: var(--color-hover) !important
 
 </style>

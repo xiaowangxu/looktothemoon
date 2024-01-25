@@ -144,10 +144,9 @@ import SunControlGroup from '../controlgroup/SunControlGroup.vue';
 import SunControlGroupRow from '../controlgroup/SunControlGroupRow.vue';
 import SunNumberEdit from '../numberedit/SunNumberEdit.vue';
 import SunLineEdit from '../lineedit/SunLineEdit.vue';
-import SunScrollContainer from '../scrollcontainer/SunScrollContainer.vue';
 import { RotateCcw, Pipette, Plus, Hash, Palette, ClipboardCopy, Bookmark } from 'lucide-vue-next';
-import { calcButtonPopupRect, type Rect, type BoxSize, type Size, type BorderMask, type PopupOpenMode } from '../SunDesignConstants';
-import { computed, nextTick, ref, watch } from 'vue';
+import { calcButtonPopupRect, type Rect, type BoxSize, type Size, type BorderMask } from '../SunDesignConstants';
+import { computed, ref, watch } from 'vue';
 import { useColorPickerData } from './SunColorPickerConstants';
 import SunRange from '../range/SunRange.vue';
 
@@ -186,10 +185,8 @@ const {
 const buttonpopup_ref = ref<InstanceType<typeof SunButtonPopup> | undefined>();
 
 watch([library], () => {
-    nextTick(() => {
-        buttonpopup_ref?.value?.refreshPopupContentMinSize();
-    });
-});
+    buttonpopup_ref?.value?.refreshPopupContentMinSize();
+}, { flush: 'post' });
 
 function getPopupRect(buttonRect: Rect, contentMinSize: BoxSize, windowSize: BoxSize): Rect {
     const btn_rect = { ...buttonRect };

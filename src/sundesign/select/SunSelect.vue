@@ -61,7 +61,7 @@ import { type Size, type Item, type BorderMask, type ColorScheme, type UID, type
 import SunButton from '../button/SunButton.vue';
 import SunButtonItem from '../item/SunButtonItem.vue';
 import { ChevronDown, ChevronUp } from 'lucide-vue-next';
-import { computed, nextTick, ref, type Raw, type Component } from 'vue';
+import { computed, ref, type Raw, type Component } from 'vue';
 import SunPanelSeparator from '../panel/SunPanelSeparator.vue';
 import SunPanelContainer from '../panel/SunPanelContainer.vue';
 import { useVModel } from '@vueuse/core';
@@ -154,12 +154,7 @@ const focus_selected_item = () => {
 
 function onOpened() {
     console.log(">>>>>>");
-    if (props.mode === 'instance') {
-        nextTick(focus_selected_item);
-    }
-    else {
-        focus_selected_item();
-    }
+    focus_selected_item();
 }
 
 </script>

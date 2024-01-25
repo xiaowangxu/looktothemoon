@@ -54,9 +54,11 @@ defineExpose({
 <style lang="stylus">
 @import '../SunDesignStyleConstants.styl';
 
-.test:focus
+.test:focus 
     z-index: 1
     border: green 2px solid
+    > .__sun-design__.__sun-design-panel__
+        outline: red 2px solid
 
 .__sun-design__.__sun-design-panel__
     display: flex

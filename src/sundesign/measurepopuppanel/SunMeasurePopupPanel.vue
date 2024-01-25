@@ -21,7 +21,7 @@ import SunPanel from '../panel/SunPanel.vue';
 import SunScrollContainer, { type ScrollBarState } from '../scrollcontainer/SunScrollContainer.vue';
 import { type ScrollBarVisibility } from '../scrollcontainer/SunScrollBar.vue';
 import { useWindowSize } from '@vueuse/core';
-import { computed, ref, watch, nextTick } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 defineOptions({
     inheritAttrs: false,
@@ -122,14 +122,9 @@ function calcuPopupRect() {
 
 watch(opened, (opened) => {
     if (opened) {
-        if (props.mode === 'instance' || panel_ref.value === undefined) {
-            nextTick(get_panel_content_min_size);
-        }
-        else {
-            get_panel_content_min_size();
-        }
+        get_panel_content_min_size();
     }
-}, { immediate: true });
+}, { immediate: true, flush: 'post' });
 
 watch([windowWidth, windowHeight], () => {
     calcuPopupRect();
