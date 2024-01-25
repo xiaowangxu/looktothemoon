@@ -29,7 +29,7 @@
             </slot>
         </template>
         <template #popup>
-            <template v-for="option in options">
+            <template v-for="option, idx in options">
                 <SunPanelContainer vertical style="width: 100%;">
                     <template v-for="item in option">
                         <template v-if="(item as RenderSelectItem).render === undefined">
@@ -47,7 +47,7 @@
                         </template>
                     </template>
                 </SunPanelContainer>
-                <SunPanelSeparator :override-vertical="true" />
+                <SunPanelSeparator v-if="idx < options.length - 1" :override-vertical="true" />
             </template>
         </template>
     </SunButtonPopup>
@@ -153,7 +153,6 @@ const focus_selected_item = () => {
 };
 
 function onOpened() {
-    console.log(">>>>>>");
     focus_selected_item();
 }
 

@@ -1,5 +1,6 @@
 <template>
-    <div class="__sun-design-popup-cover__" :class="{ 'stop-events': stopEvents }" @mousedown.self="onMouseDownSelf" @contextmenu.prevent @click.stop.self="onClickSelf">
+    <div class="__sun-design-popup-cover__" :class="{ 'stop-events': stopEvents }" @mousedown.self="onMouseDownSelf"
+        @contextmenu.prevent @click.stop.self="onClickSelf" @keydown.esc.stop="onEsc" tabindex="-1">
         <slot />
     </div>
 </template>
@@ -37,6 +38,10 @@ function onClickSelf(evt: Event) {
     mouse_down_self.value = false;
 }
 
+function onEsc(evt: Event) {
+    emits('click', evt);
+}
+
 </script>
 
 <style lang="stylus">
@@ -46,6 +51,8 @@ function onClickSelf(evt: Event) {
     overscroll-behavior: auto
     inset: 0
     pointer-events: none
+    outline: none
+    border: none
     // background-color: rgba(255, 0, 0, 0.1)
 
     &.stop-events

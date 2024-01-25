@@ -3,14 +3,14 @@
         class="__sun-design-menupopup-panel__" content-style="width: 100%;" :style="panelStyle" :stop-events="stopEvents"
         :get-popup-rect="getPopupPanelRect" @cover-click="onClickOutside" :scrollableIndicators="scrollableIndicators"
         :scrollBarStateH="scrollBarStateH" :scrollBarStateV="scrollBarStateV" :scrollBarVisibility="scrollBarVisibility">
-        <template v-for="option in options">
+        <template v-for="option, idx in options">
             <SunPanelContainer vertical style="width: 100%;">
                 <template v-for="item in option">
                     <template v-if="(item as RenderMenuItem).render === undefined">
                         <SunButton class="__sun-design-select-item__" :size="size" flat
                             :color-scheme="(item as ItemMenuItem).colorScheme" :active="(item as ItemMenuItem).active"
                             :disabled="(item as ItemMenuItem).disabled"
-                            @mouseenter="onMouseEnter((item as ItemMenuItem).uid, (item as ItemMenuItem).subs, $event)"
+                            @mouseenter="onMouseEnter((item as ItemMenuItem).uid, (item as ItemMenuItem).subs, $event.target, $event.target)"
                             @click="onItemButtonClick((item as ItemMenuItem).uid, (item as ItemMenuItem).subs, (item as ItemMenuItem).clickable, $event)">
                             <SunButtonItem
                                 :item="{ label: (item as ItemMenuItem).label, icon: (item as ItemMenuItem).icon, description: (item as ItemMenuItem).description, shortcut: (item as ItemMenuItem).shortcut, sub: (item as ItemMenuItem).subs !== undefined }" />
@@ -22,12 +22,12 @@
                     </template>
                 </template>
             </SunPanelContainer>
-            <SunPanelSeparator :override-vertical="true" />
+            <SunPanelSeparator v-if="idx < options.length - 1" :override-vertical="true" />
         </template>
     </SunMeasurePopupPanel>
     <SunMenuPopup v-if="sub_menu !== undefined && visible" :options="sub_menu" :size="size" :stop-events="false"
         :prefered-direction="popup_direction" :show-delay="showDelay" :hide-delay="hideDelay" :get-popup-rect="getPopupRect"
-        @click="onClick" />
+        @click="onClick" @click-outside="onSubMenuClickOutSide" />
 </template>
 
 <script setup lang="ts">
@@ -48,8 +48,8 @@ type RenderMenuItem<T extends UID = UID> = {
     uid: T,
     render: Raw<Component<{
         uid: T,
-        hover: (uid: T, subs: MenuItem<T>[][] | undefined, evt: Event) => void,
-        expand: (uid: T, subs: MenuItem<T>[][] | undefined, evt: Event) => void,
+        hover: (uid: T, subs: MenuItem<T>[][] | undefined, expand_target: HTMLElement | Rect, focus_target: HTMLElement | undefined) => void,
+        expand: (uid: T, subs: MenuItem<T>[][] | undefined, expand_target: HTMLElement | Rect, focus_target: HTMLElement | undefined) => void,
         click: (data: any, hasSubMenu: boolean, evt: Event) => void,
     }>>,
 };
@@ -119,16 +119,30 @@ function getPopupPanelRect(contentMinSize: BoxSize, windowSize: BoxSize): Rect {
 watch(toRef(props, 'visible'), (visible) => {
     if (!visible) clearState();
 });
-
-let button_ref: HTMLButtonElement | undefined = undefined;
+let expand_ref: HTMLElement | Rect | undefined = undefined;
+let button_ref: HTMLElement | undefined = undefined;
 
 function getPopupRect(contentMinSize: BoxSize, preferedDirection: PreferedDirection, windowSize: BoxSize) {
-    const { x, y, width, height } = button_ref!.getBoundingClientRect();
+    let x: number = 0, y: number = 0, width: number = 0, height: number = 0;
+    if (expand_ref instanceof HTMLElement) {
+        const { x: _x, y: _y, width: _width, height: _height } = expand_ref.getBoundingClientRect();
+        x = _x;
+        y = _y;
+        width = _width;
+        height = _height;
+    }
+    else if (expand_ref !== undefined) {
+        x = expand_ref.x;
+        y = expand_ref.y;
+        width = expand_ref.width;
+        height = expand_ref.height;
+    }
     return calcMenuPopupRect(contentMinSize, { x, y, width, height }, windowSize, preferedDirection,);
 }
 
 function clearState() {
     sub_menu.value = undefined;
+    expand_ref = undefined;
     button_ref = undefined;
     hover_uid = undefined;
     hover_sub_menu = undefined;
@@ -156,7 +170,7 @@ const on_hide_time_up = () => {
     hide_timer = undefined;
 }
 
-function onMouseEnter(uid: UID, subs: MenuItem[][] | undefined, evt: Event) {
+function onMouseEnter(uid: UID, subs: MenuItem[][] | undefined, expand_target: HTMLElement | Rect | undefined, focus_target: HTMLElement | undefined) {
     if (hover_uid === uid) return;
     hover_uid = uid;
     hover_sub_menu = subs;
@@ -164,7 +178,8 @@ function onMouseEnter(uid: UID, subs: MenuItem[][] | undefined, evt: Event) {
         // hovered sub menu
         hide_timer?.();
         hide_timer = undefined;
-        button_ref = evt.target as HTMLButtonElement;
+        expand_ref = expand_target;
+        button_ref = focus_target;
         show_timer?.();
         show_timer = timer(on_show_time_up, props.showDelay);
     }
@@ -178,7 +193,7 @@ function onMouseEnter(uid: UID, subs: MenuItem[][] | undefined, evt: Event) {
     }
 }
 
-function expandSubMenu(uid: UID, subs: MenuItem[][] | undefined, evt: Event): void {
+function expandSubMenu(uid: UID, subs: MenuItem[][] | undefined, expand_target: HTMLElement | Rect | undefined, focus_target: HTMLElement | undefined): void {
     hover_uid = uid;
     hover_sub_menu = subs;
     show_timer?.();
@@ -186,7 +201,8 @@ function expandSubMenu(uid: UID, subs: MenuItem[][] | undefined, evt: Event): vo
     hide_timer?.();
     hide_timer = undefined;
     if (hover_sub_menu !== undefined) {
-        button_ref = evt.target as HTMLButtonElement;
+        expand_ref = expand_target;
+        button_ref = focus_target;
         on_show_time_up();
     }
     else {
@@ -196,9 +212,20 @@ function expandSubMenu(uid: UID, subs: MenuItem[][] | undefined, evt: Event): vo
 }
 
 function onItemButtonClick(uid: UID, subs: MenuItem[][] | undefined, clickable: boolean | undefined, evt: Event): void {
-    expandSubMenu(uid, subs, evt);
+    expandSubMenu(uid, subs, evt.target as HTMLElement, evt.target as HTMLElement);
     if (subs === undefined || clickable === true) {
         onClick(uid, subs !== undefined, evt);
+    }
+}
+
+function onSubMenuClickOutSide() {
+    const last_button = button_ref;
+    clearState();
+    if (last_button) {
+        last_button?.focus();
+    }
+    else {
+        measurepopuppanel_ref.value?.focusTop();
     }
 }
 
