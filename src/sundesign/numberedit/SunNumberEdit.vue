@@ -5,7 +5,7 @@
             <button v-if="stepButton"
                 class="__sun-design__ __sun-design-numberedit-dec__ __sun-design-button-like__ colored"
                 :class="{ bordered: !flat, dragging }" :data-size="size" @click.stop="() => { console.log('dec') }"
-                :disabled="disabled || dragging">
+                :disabled="disabled">
                 <ChevronLeft />
             </button>
             <div class="__sun-design-numberedit-display-container__"
@@ -23,7 +23,7 @@
             <button v-if="stepButton"
                 class="__sun-design__ __sun-design-numberedit-inc__ __sun-design-button-like__ colored"
                 :class="{ bordered: !flat, dragging }" :data-size="size" @click.stop="() => { console.log('inc') }"
-                :disabled="disabled || dragging">
+                :disabled="disabled">
                 <ChevronRight />
             </button>
         </SunButton>
@@ -86,7 +86,7 @@ watch(input_ref, (input) => {
     }
 });
 
-const dragging = ref(false);
+const dragging = ref(true);
 
 function onInputClick() {
     if (props.allowInput && !inputing.value) {
