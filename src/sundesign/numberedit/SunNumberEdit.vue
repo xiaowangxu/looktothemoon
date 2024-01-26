@@ -86,7 +86,7 @@ watch(input_ref, (input) => {
     }
 });
 
-const dragging = ref(true);
+const dragging = ref(false);
 
 function onInputClick() {
     if (props.allowInput && !inputing.value) {

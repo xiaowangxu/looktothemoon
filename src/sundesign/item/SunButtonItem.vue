@@ -1,15 +1,15 @@
 <template>
-    <SunIcon v-if="item?.icon !== undefined" :name="item?.icon"></SunIcon>
-    <span class="__sun-design-button-item-label__" :class="{ 'has-description': has_description }">{{ item?.label }}</span>
+    <SunIcon v-if="icon !== undefined" :name="icon"></SunIcon>
+    <span class="__sun-design-button-item-label__" :class="{ 'has-description': has_description }">{{ label }}</span>
     <span v-if="has_description" class="__sun-design-button-item-description__"> {{
-        item?.description }} </span>
-    <SunKeyboard v-if="!hideShortcut && item?.shortcut !== undefined">{{ item?.shortcut }}</SunKeyboard>
-    <ChevronRight v-if="!hideSub && item?.sub === true" />
+        description }} </span>
+    <SunKeyboard v-if="!hideShortcut && shortcut !== undefined">{{ shortcut }}</SunKeyboard>
+    <ChevronRight v-if="!hideSub && sub === true" />
 </template>
 
 <script setup lang="ts">
 
-import { type Item } from '../SunDesignConstants';
+import '../SunDesignStyle.styl';
 import SunIcon from '../icon/SunIcon.vue';
 import SunKeyboard from '../keyboard/SunKeyboard.vue';
 import { computed } from 'vue';
@@ -18,7 +18,11 @@ import { ChevronRight } from 'lucide-vue-next';
 // props
 const props = withDefaults(
     defineProps<{
-        item: Pick<Item, 'label' | 'icon' | 'description' | 'shortcut' | 'sub'>,
+        label?: string,
+        icon?: string,
+        description?: string,
+        shortcut?: string,
+        sub?: boolean,
         hideDescription?: boolean,
         hideShortcut?: boolean,
         hideSub?: boolean,
@@ -31,7 +35,7 @@ const props = withDefaults(
 );
 
 // datas
-const has_description = computed(() => !props.hideDescription && props.item?.description !== undefined);
+const has_description = computed(() => !props.hideDescription && props.description !== undefined);
 
 </script>
 

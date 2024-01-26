@@ -22,16 +22,16 @@
             <!-- Picker -->
             <SunPanelContainer gap vertical style="min-height: 120px; flex-shrink: 0;">
                 <SunPanelContainer gap no-padding style="flex: 1;" :style="{ '--Color': hue_color }">
-                    <SunRange v-model="hue" :active="false"
+                    <SunRange v-memo="[hue]" v-model="hue" :active="false"
                         style="background: linear-gradient(0deg,red 0,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,red);"
                         vertical :min="0" :max="360" :progress="false"
                         :ticks="[0, 360 * 0.17, 360 * 0.33, 180, 360 * 0.67, 360 * 0.83, 360]" />
-                    <SunRange2D v-model="lum_sat" :active="false" style="flex: 1; border-radius: 6px; align-self: stretch;
+                    <SunRange2D v-memo="[lum_sat]" v-model="lum_sat" :active="false" style="flex: 1; border-radius: 6px; align-self: stretch;
 									background: linear-gradient(0deg, black, transparent), linear-gradient(90deg, white, var(--Color));"
                         :min="[0, 0]" :max="[100, 100]" />
                     <div class="__sun-design-transparent-bg__"
                         style="min-width: 24px; border-radius: 6px; position: relative; overflow: hidden;">
-                        <SunRange v-model="alpha" :active="false"
+                        <SunRange v-memo="[alpha]" v-model="alpha" :active="false"
                             style="background: linear-gradient(180deg, var(--Color), transparent); height: 100%;" vertical
                             :min="0" :max="1" :progress="false" />
                     </div>
@@ -136,6 +136,7 @@
 
 <script setup lang="ts">
 
+import '../SunDesignStyle.styl';
 import SunButtonPopup from '../buttonpopup/SunButtonPopup.vue';
 import SunButton from '../button/SunButton.vue';
 import SunSelect from '../select/SunSelect.vue';

@@ -3,31 +3,32 @@
         class="__sun-design-menupopup-panel__" content-style="width: 100%;" :style="panelStyle" :stop-events="stopEvents"
         :get-popup-rect="getPopupPanelRect" @cover-click="onClickOutside" :scrollableIndicators="scrollableIndicators"
         :scrollBarStateH="scrollBarStateH" :scrollBarStateV="scrollBarStateV" :scrollBarVisibility="scrollBarVisibility">
-        <template v-for="option, idx in options">
+        <template v-for="option, idx in  options ">
             <SunPanelContainer vertical style="width: 100%;">
-                <template v-for="item in option">
+                <template v-for="item in  option ">
                     <template v-if="(item as RenderMenuItem).render === undefined">
                         <SunButton class="__sun-design-select-item__" :size="size" flat
                             :color-scheme="(item as ItemMenuItem).colorScheme" :active="(item as ItemMenuItem).active"
                             :disabled="(item as ItemMenuItem).disabled"
                             @mouseenter="onMouseEnter((item as ItemMenuItem).uid, (item as ItemMenuItem).subs, $event.target, $event.target)"
-                            @click="onItemButtonClick((item as ItemMenuItem).uid, (item as ItemMenuItem).subs, (item as ItemMenuItem).clickable, $event)">
-                            <SunButtonItem
-                                :item="{ label: (item as ItemMenuItem).label, icon: (item as ItemMenuItem).icon, description: (item as ItemMenuItem).description, shortcut: (item as ItemMenuItem).shortcut, sub: (item as ItemMenuItem).subs !== undefined }" />
+                            @click="onItemButtonClick((item as ItemMenuItem).uid, (item as ItemMenuItem).subs, (item as ItemMenuItem).clickable, $event)"
+                            :key="item.uid">
+                            <SunButtonItem :label="(item as ItemMenuItem).label" :icon="(item as ItemMenuItem).icon"
+                                :description="(item as ItemMenuItem).description" :shortcut="(item as ItemMenuItem).shortcut" :sub="(item as ItemMenuItem).subs !== undefined" />
                         </SunButton>
                     </template>
                     <template v-else>
-                        <component :is="(item as RenderMenuItem).render" :uid="item.uid" :hover="onMouseEnter"
-                            :expand="expandSubMenu" :click="onClick" />
+                        <component :is="(item as RenderMenuItem).render" :uid=" item.uid " :hover=" onMouseEnter "
+                            :expand=" expandSubMenu " :click=" onClick " :key=" item.uid " />
                     </template>
                 </template>
             </SunPanelContainer>
-            <SunPanelSeparator v-if="idx < options.length - 1" :override-vertical="true" />
+            <SunPanelSeparator v-if=" idx < options.length - 1 " :override-vertical=" true " :key=" idx " />
         </template>
     </SunMeasurePopupPanel>
-    <SunMenuPopup v-if="sub_menu !== undefined && visible" :options="sub_menu" :size="size" :stop-events="false"
-        :prefered-direction="popup_direction" :show-delay="showDelay" :hide-delay="hideDelay" :get-popup-rect="getPopupRect"
-        @click="onClick" @click-outside="onSubMenuClickOutSide" />
+    <SunMenuPopup v-if=" sub_menu !== undefined && visible " :options=" sub_menu " :size=" size " :stop-events=" false "
+        :prefered-direction=" popup_direction " :show-delay=" showDelay " :hide-delay=" hideDelay " :get-popup-rect=" getPopupRect "
+        @click=" onClick " @click-outside=" onSubMenuClickOutSide " />
 </template>
 
 <script setup lang="ts">

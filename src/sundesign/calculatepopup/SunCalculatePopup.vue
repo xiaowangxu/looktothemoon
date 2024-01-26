@@ -135,6 +135,7 @@
 
 <script setup lang="ts">
 
+import '../SunDesignStyle.styl';
 import SunMeasurePopupPanel from '../measurepopuppanel/SunMeasurePopupPanel.vue';
 import SunPanelContainer from '../panel/SunPanelContainer.vue'
 import SunPanelSeparator from '../panel/SunPanelSeparator.vue'

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
 import SunButton from '../../src/sundesign/button/SunButton.vue';
+import SunLoading from '../../src/sundesign/loading/SunLoading.vue';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
 import { Search, X } from 'lucide-vue-next';
 
@@ -20,7 +21,7 @@ export const Button: Story = {
 	decorators: Decorators,
 	tags: ['autodocs'],
 	render: (args) => ({
-		components: { SunButton, Search, X },
+		components: { SunButton, Search, X, SunLoading },
 		setup() {
 			return { args };
 		},
@@ -33,7 +34,8 @@ export const Button: Story = {
 				<SunButton v-bind="args" :border-mask="0b1001" style="margin-right: -1px;">查找</SunButton>
 				<SunButton v-bind="args" :border-mask="0b0110" squared><X /></SunButton>
 			</div>
-		`,
+			<SunButton v-bind="args" disabled><SunLoading size="small"/>加载中</SunButton>
+      `,
 	}),
 	argTypes: {
 		...ArgsTypes,

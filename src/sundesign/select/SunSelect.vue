@@ -7,14 +7,15 @@
             <template v-if="!iconOnly">
                 <template v-if="selected !== undefined">
                     <template v-if="(selected as RenderSelectItem).renderButtonContent === undefined">
-                        <SunButtonItem :item="(selected as ItemSelectItem)" hide-shortcut hide-sub />
+                        <SunButtonItem :label="(selected as ItemSelectItem).label" :icon="(selected as ItemSelectItem).icon"
+                            :description="(selected as ItemSelectItem).description" />
                     </template>
                     <template v-else>
                         <component :is="(selected as RenderSelectItem).renderButtonContent" :uid="selected.uid" />
                     </template>
                 </template>
                 <template v-else>
-                    <slot name="empty">
+                    <slot name="button-empty">
                         <span class="__sun-design-select-empty__">
                             无选中项
                         </span>
@@ -29,7 +30,7 @@
             </slot>
         </template>
         <template #popup>
-            <template v-for="option, idx in options">
+            <template v-if="options !== undefined && options.length > 0" v-for="option, idx in options">
                 <SunPanelContainer vertical style="width: 100%;">
                     <template v-for="item in option">
                         <template v-if="(item as RenderSelectItem).render === undefined">
@@ -37,18 +38,27 @@
                                 :ref="(value !== undefined && item.uid === value) ? 'item_refs' : undefined"
                                 :active="(value !== undefined && item.uid === value) || (item as ItemSelectItem)?.active"
                                 flat :disabled="(item as ItemSelectItem)?.disabled" :color-scheme="item?.colorScheme"
-                                @click="onClick(item.uid, $event)">
-                                <SunButtonItem :item="(item as ItemSelectItem)" />
+                                @click="onClick(item.uid, $event)" :key="item.uid">
+                                <SunButtonItem :label="(item as ItemSelectItem).label"
+                                    :icon="(item as ItemSelectItem).icon"
+                                    :description="(item as ItemSelectItem).description"
+                                    :shortcut="(item as ItemSelectItem).shortcut" />
                             </SunButton>
                         </template>
                         <template v-else>
                             <component :is="(item as RenderSelectItem).render" :uid="item.uid"
-                                :selected="(value !== undefined && item.uid === value)" :click="onClick" />
+                                :selected="(value !== undefined && item.uid === value)" :click="onClick" :key="item.uid" />
                         </template>
                     </template>
                 </SunPanelContainer>
-                <SunPanelSeparator v-if="idx < options.length - 1" :override-vertical="true" />
+                <SunPanelSeparator v-if="idx < options.length - 1" :override-vertical="true" :key="idx" />
             </template>
+            <SunPanelContainer v-else vertical>
+                <slot name="popup-empty">
+                    <SunButtonLike flat no-hover-color no-pressed-color><span
+                            style="color: var(--placeholder-color);">无内容</span></SunButtonLike>
+                </slot>
+            </SunPanelContainer>
         </template>
     </SunButtonPopup>
 </template>
@@ -65,6 +75,7 @@ import { computed, ref, type Raw, type Component } from 'vue';
 import SunPanelSeparator from '../panel/SunPanelSeparator.vue';
 import SunPanelContainer from '../panel/SunPanelContainer.vue';
 import { useVModel } from '@vueuse/core';
+import SunButtonLike from '../button/SunButtonLike.vue';
 
 type ItemSelectItem<T extends UID = UID> = Omit<Item<T>, 'sub'>;
 type RenderSelectItem<T extends UID = UID> = {
@@ -91,7 +102,7 @@ const props = withDefaults(
         borderMask?: BorderMask,
         colorScheme?: ColorScheme,
         squared?: boolean,
-        options: SelectItem[][],
+        options?: SelectItem[][],
         modelValue: UID | undefined,
         active?: boolean,
         disabled?: boolean,
@@ -125,6 +136,7 @@ const value = useVModel(props, "modelValue", emits, { defaultValue: undefined })
 const buttonpopup_ref = ref<InstanceType<typeof SunButtonPopup> | undefined>();
 const item_refs = ref<InstanceType<typeof SunButton>[] | undefined>();
 const selected = computed(() => {
+    if (props.options === undefined) return undefined;
     const uid = value.value;
     if (uid === undefined) return undefined;
     return props.options.flat().find(s => s.uid === uid);

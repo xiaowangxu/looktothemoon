@@ -1,7 +1,7 @@
 <template>
     <div class="__sun-design__ __sun-design-range-container__ sized border-masked squared colored no-pressed-color no-hover-color"
         :class="{ bordered: !flat, vertical, flat, disabled }" :data-size="size" :data-border-mask="borderMask"
-        :style="colorScheme" @click.self="onClick">
+        :style="colorScheme" @mousedown.self="onContainerMouseDown">
         <div ref="container_ref" class="__sun-design-range-region__" :style="{ '--Percentage': percentage }">
             <div v-if="progress" class="__sun-design-range-progress__"></div>
             <div v-for="tick in tick_percentages" class="__sun-design-range-tick__" :style="{ '--TickPercentage': tick }"
@@ -19,7 +19,7 @@
 
 import '../SunDesignStyle.styl';
 import { type Size, type BorderMask, type ColorScheme } from '../SunDesignConstants';
-import { computed, onBeforeUnmount, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref } from 'vue';
 import { useVModel } from '@vueuse/core';
 
 // props
@@ -70,6 +70,7 @@ const percentage = computed(() => unlerp(props.min, props.max, props.modelValue)
 const clamped_ticks = computed(() => [...new Set((props.ticks ?? []).filter(t => t >= props.min && t <= props.max))]);
 const tick_percentages = computed(() => clamped_ticks.value.map(t => unlerp(props.min, props.max, t)));
 
+// nob dragging
 const dragging = ref(false);
 let last_percentage = 0;
 let last_mouse_pos = 0;
@@ -110,6 +111,22 @@ function removeDraggingEvents() {
     window.removeEventListener('mousemove', onMouseMove, { capture: true });
     window.removeEventListener('mouseup', onMouseUp, { capture: true });
 }
+
+// container
+function onContainerMouseDown(evt: MouseEvent) {
+    window.addEventListener('mousemove', onContainerMouseMove, { capture: true });
+    window.addEventListener('mouseup', onContainerMouseUp, { capture: true });
+}
+async function onContainerMouseMove(evt: MouseEvent) {
+    onClick(evt);
+    removeContainerEvents();
+    await nextTick();
+    onMouseDown(evt);
+}
+function onContainerMouseUp(evt: MouseEvent) {
+    onClick(evt);
+    removeContainerEvents();
+}
 function onClick(evt: MouseEvent) {
     if (props.disabled || container_ref.value === null) return;
     let min, max, val;
@@ -127,6 +144,10 @@ function onClick(evt: MouseEvent) {
     const percentage = Math.min(1, Math.max(0, unlerp(min, max, val)));
     setValueSafe(lerp(props.min, props.max, props.vertical ? 1 - percentage : percentage), evt.ctrlKey);
 }
+function removeContainerEvents() {
+    window.removeEventListener('mousemove', onContainerMouseMove, { capture: true });
+    window.removeEventListener('mouseup', onContainerMouseUp, { capture: true });
+}
 
 function setValueSafe(val: number, snap: boolean = false) {
     let _val = Math.min(props.max, Math.max(props.min, val));
@@ -138,6 +159,7 @@ function setValueSafe(val: number, snap: boolean = false) {
 
 onBeforeUnmount(() => {
     removeDraggingEvents();
+    removeContainerEvents();
 });
 
 </script>

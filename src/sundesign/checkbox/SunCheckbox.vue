@@ -4,7 +4,8 @@
             :checked="checked" :disabled="disabled">
         <div class="__sun-design__ __sun-design-checkbox-icon__">
             <slot name="icon">
-                <Check />
+                <Check v-if="!partial" />
+                <Minus v-else />
             </slot>
         </div>
     </div>
@@ -14,7 +15,7 @@
 
 import '../SunDesignStyle.styl';
 import type { Size, ColorScheme } from '../SunDesignConstants';
-import { Check } from 'lucide-vue-next';
+import { Check, Minus } from 'lucide-vue-next';
 
 // props
 const props = withDefaults(
@@ -25,6 +26,7 @@ const props = withDefaults(
         hover?: boolean,
         disabled?: boolean,
         checked?: boolean,
+        partial?: boolean,
     }>(),
     {
         size: 'normal',
@@ -32,6 +34,7 @@ const props = withDefaults(
         hover: false,
         disabled: false,
         checked: false,
+        partial: false,
     }
 );
 
@@ -58,18 +61,21 @@ const props = withDefaults(
         border-radius: 0
     
     &[data-size="small"]
+        min-width: content-size-small
         max-width: content-size-small
         > .__sun-design__.__sun-design-checkbox__
             width: content-size-small
             height: content-size-small
             
     &[data-size="normal"]
+        min-width: content-size-normal
         max-width: content-size-normal
         > .__sun-design__.__sun-design-checkbox__
             width: content-size-normal
             height: content-size-normal
 
     &[data-size="large"]
+        min-width: content-size-large
         max-width: content-size-large
         > .__sun-design__.__sun-design-checkbox__
             width: content-size-large

@@ -8,8 +8,6 @@ export const Decorators = [
             <div class="__sun-design__ color-def" style="display: flex; gap: 0.5em; align-items: center;">
                 <story/>
             </div>
-            <div id="popup" class="__sun-design__ color-def" style="position: fixed; width: 100%; height: 100%; left: 0; top: 0; pointer-events: none;">
-            </div>
         ` };
     },
 ];

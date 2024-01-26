@@ -4,7 +4,7 @@ import SunLineEdit from '../../src/sundesign/lineedit/SunLineEdit.vue';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
 
 const meta: Meta<typeof SunLineEdit> = {
-	component: SunLineEdit,
+    component: SunLineEdit,
 };
 
 export default meta;
@@ -16,24 +16,24 @@ type Story = StoryObj<typeof SunLineEdit>;
  * to learn how to use render functions.
  */
 export const LineEdit: Story = {
-	decorators: Decorators,
-	tags: ['autodocs'],
-	render: (args) => ({
-		components: { SunLineEdit },
-		setup() {
-			return { args };
-		},
-		template: `
+    decorators: Decorators,
+    tags: ['autodocs'],
+    render: (args) => ({
+        components: { SunLineEdit },
+        setup() {
+            return { args };
+        },
+        template: `
 			<SunLineEdit value="" v-bind="args" placeholder="输入文本"/>
 			<SunLineEdit value="输入文本" v-bind="args" flat/>
 			<SunLineEdit v-bind="args" disabled placeholder="disabled"/>
 			<SunLineEdit value="输入文本 disabled" v-bind="args" disabled placeholder="disabled"/>
 		`,
-	}),
-	argTypes: {
-		...ArgsTypes,
-	},
-	args: {
-		...Args,
-	},
+    }),
+    argTypes: {
+        ...ArgsTypes,
+    },
+    args: {
+        ...Args,
+    },
 };

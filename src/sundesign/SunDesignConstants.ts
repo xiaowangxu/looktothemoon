@@ -6,8 +6,6 @@ export type BorderMask = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 
 
 export type BasicTypes = string | number | boolean | bigint | symbol;
 
-export type LabelTypes = BasicTypes | undefined | null;
-
 export type BoxSize = { width: number, height: number };
 
 export type Position = { x: number, y: number };
@@ -16,11 +14,11 @@ export type Rect = Position & BoxSize;
 
 export type PopupOpenMode = 'instance' | 'visibility';
 
-export type UID = string | number | symbol | boolean;
+export type UID = string | number | symbol;
 
 export interface Item<T extends UID = UID> {
 	uid: T,
-	label: LabelTypes,
+	label?: string,
 	colorScheme?: ColorScheme,
 	icon?: string,
 	title?: string,
