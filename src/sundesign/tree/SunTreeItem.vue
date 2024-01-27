@@ -1,23 +1,20 @@
 <template>
-    <div class="__sun-design-tree-container__">
-        <SunButton class="__sun-design-tree-item-container__ no-pressed-color" :hover="option.active"
-            :color-scheme="option.colorScheme" :style="{ 'padding-left': padding_left }" flat no-pressed-color
-            @click="onClick">
-            <ChevronRight v-if="folded" />
-            <ChevronDown v-else />
-            <!-- <SunCheckbox :partial="has_subtree_hovered" @click.stop :checked="hovered || has_subtree_hovered" disabled /> -->
-            <SunItemButtonEditable ref="itembutton_ref" :label="option.label" :icon="option.icon"
-                :description="option.description" />
-            <slot name="append" :option="option" />
-        </SunButton>
-        <div v-if="has_subs" v-show="!folded" class="__sun-design-tree-container__">
-            <SunTreeItem v-for="item in option.subs" :option="item" :depth="depth + 1"
-                @click="onSubTreeClick">
-                <template #append="{ option }">
-                    <slot name="append" :option="option" />
-                </template>
-            </SunTreeItem>
-        </div>
+    <SunButton class="__sun-design-tree-item-container__ no-pressed-color" draggable="true" :hover="option.active"
+        :color-scheme="option.colorScheme" :style="{ 'padding-left': padding_left }" flat no-pressed-color @click="onClick">
+        <ChevronRight v-if="folded" class="__sun-design-tree-arrow__" />
+        <ChevronDown v-else class="__sun-design-tree-arrow__" />
+        <SunCheckbox @click.stop />
+        <SunItemButtonEditable ref="itembutton_ref" :label="option.label" :icon="option.icon"
+            :description="option.description" />
+        <slot name="append" :option="option" />
+    </SunButton>
+    <div v-if="has_subs" v-show="!folded" class="__sun-design-tree-container__ __sun-design-tree-relation__"
+        :style="{ '--Depth': depth_padding_left }">
+        <SunTreeItem v-for="item in option.subs" :option="item" :depth="depth + 1" @click="onSubTreeClick">
+            <template #append="{ option }">
+                <slot name="append" :option="option" />
+            </template>
+        </SunTreeItem>
     </div>
 </template>
 
@@ -69,7 +66,8 @@ const emits = defineEmits<{
 // datas
 const itembutton_ref = ref<InstanceType<typeof SunItemButtonEditable> | undefined>();
 const has_subs = computed(() => props.option.subs !== undefined && props.option.subs.length > 0);
-const padding_left = computed(() => props.depth === 0 ? undefined : `${props.depth * 20}px`);
+const padding_left = computed(() => `${props.depth * 20}px`);
+const depth_padding_left = computed(() => `${props.depth * 20 + 20}px`);
 const folded = ref(true);
 
 function onClick(evt: Event) {
@@ -107,6 +105,19 @@ function onSubTreeClick(evt: Event) {
     overflow: hidden
     padding-top: 0px !important
     padding-bottom: 0px !important
+
+.__sun-design-tree-arrow__
+    margin-left: padding-extend-normal
+
+.__sun-design-tree-relation__
+    position: relative
+    &::after
+        content: ''
+        position: absolute
+        height: 100%
+        border-left: border-width var(--border-color-normal) solid
+        left: calc(var(--Depth) - 10px)
+        transform: translate(-50%, 0)
 
 // .__sun-design-tree-item-drop-indicator__
 //     position absolute

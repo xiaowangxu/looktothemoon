@@ -1,17 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
-import SunTest from '../../src/sundesign/button/SunButtonLike.vue';
+import SunButton from '../../src/sundesign/button/SunButton.vue';
+import SunHoverMenu from '../../src/sundesign/hovermenu/SunHoverMenu.tsx';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
-import SunSelectVue from '@/sundesign/select/SunSelect.vue';
-import SunColorPickerVue from '@/sundesign/colorpicker/SunColorPicker.vue';
-import { ref, type Raw, type Component, defineComponent } from 'vue';
+import { ref, type Raw, type Component, type FunctionalComponent, defineComponent } from 'vue';
+import SunPanelContainer from '../../src/sundesign/panel/SunPanelContainer.vue';
+import { Item } from '../../src/sundesign/SunDesignConstants';
+import SunButtonItem from '../../src/sundesign/item/SunButtonItem.vue';
 
-const meta: Meta<typeof SunTest> = {
-	component: SunTest,
+const meta: Meta<typeof SunButton> = {
+	component: SunButton,
 };
 
 export default meta;
-type Story = StoryObj<typeof SunTest>;
+type Story = StoryObj<typeof SunButton>;
 
 /*
  *👇 Render functions are a framework specific feature to allow you control on how the component renders.
@@ -20,14 +22,30 @@ type Story = StoryObj<typeof SunTest>;
  */
 export const Select: Story = {
 	decorators: Decorators,
-	tags: ['autodocs'],
 	render: (args) => ({
-		components: { SunTest },
+		components: { SunButton },
 		setup() {
-			return { args };
+			function onClick() {
+				console.log(">>>>> click");
+				new SunHoverMenu(a, { item: { label: 'Test', icon: 'Globe' }, onClick: (e: Event) => console.log(">>>>>>", e) }, { contentStyle: 'width: 100%;', size: 'small' });
+			}
+			return { args, onClick };
 		},
 		template: `
-			<SunTest/>
+			<SunButton @click="onClick">HoverMenu</SunButton>
 		`,
 	}),
 };
+
+const a: FunctionalComponent<{ item: Item }, { click: (evt: Event) => void }> = (props, context) => {
+	return <>
+		<SunPanelContainer style="width: 100%; flex: 1;">
+			<SunButton style="flex: 1;" onClick={(e: MouseEvent) => {
+				e.preventDefault();
+				context.emit('click', e as any as Event);
+			}} colorScheme={props.item.colorScheme} size="small">
+				<SunButtonItem label={props.item.label} icon={props.item.icon} />
+			</SunButton>
+		</SunPanelContainer>
+	</>
+}

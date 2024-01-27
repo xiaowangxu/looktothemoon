@@ -27,7 +27,6 @@ export default class SunContextMenu<T extends UID = UID> {
     };
 
     static #consume_catch: (reason: Event) => Promise<void> = (evt) => {
-        console.log(evt);
         return Promise.resolve();
     };
 

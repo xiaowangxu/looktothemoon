@@ -101,6 +101,52 @@ export const Tree: Story = {
                         uid: 1,
                         icon: 'Cog',
                         label: 'sub 0',
+                        subs: [
+                            {
+                                uid: 0,
+                                label: 'test',
+                                icon: 'Figma',
+                                description: 'test',
+                                subs: [
+                                    {
+                                        uid: 1,
+                                        icon: 'Cog',
+                                        colorScheme: ColorSchemeBlue,
+                                        label: 'sub 0',
+                                    },
+                                    {
+                                        uid: 1,
+                                        icon: 'Cog',
+                                        label: 'sub 0',
+                                    },
+                                    {
+                                        uid: 1,
+                                        icon: 'Cog',
+                                        label: 'sub 0',
+                                    },
+                                    {
+                                        uid: 1,
+                                        icon: 'Cog',
+                                        label: 'sub 0',
+                                    },
+                                    {
+                                        uid: 1,
+                                        icon: 'Cog',
+                                        label: 'sub 0',
+                                    },
+                                    {
+                                        uid: 1,
+                                        icon: 'Cog',
+                                        label: 'sub 0',
+                                    },
+                                    {
+                                        uid: 1,
+                                        icon: 'Cog',
+                                        label: 'sub 0',
+                                    }
+                                ]
+                            }
+                        ]
                     },
                     {
                         uid: 1,

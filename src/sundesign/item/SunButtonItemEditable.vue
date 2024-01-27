@@ -16,7 +16,6 @@ import '../SunDesignStyle.styl';
 import SunIcon from '../icon/SunIcon.vue';
 import SunButtonItem from './SunButtonItem.vue';
 import { nextTick, ref } from 'vue';
-import { type Size, type BorderMask, type ColorScheme } from '../SunDesignConstants';
 
 // props
 const props = withDefaults(

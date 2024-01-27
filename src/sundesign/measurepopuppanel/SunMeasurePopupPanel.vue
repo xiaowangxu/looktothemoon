@@ -170,5 +170,6 @@ defineExpose({
 .__sun-design__.__sun-design-measurepopuppanel-panel__, .__sun-design-measurepopuppanel-container__
     height: 100%
     width: 100%
+    pointer-events: initial
 
 </style>

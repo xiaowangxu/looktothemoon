@@ -67,7 +67,7 @@ export const ColorSchemeBlue = markRaw<ColorScheme>({
 	'--color-disabled': 'rgb(249, 249, 249)',
 	'--color-active': 'rgb(70, 111, 214)',
 	'--color-active-hover': 'rgb(103, 137, 224)',
-	'--color-active-pressed': 'rgb(205, 218, 253)',
+	'--color-active-pressed': 'rgb(145, 170, 232)',
 	'--color-active-disabled': 'rgb(145, 170, 232)',
 	'--font-color-normal': 'rgb(70, 111, 214)',
 	'--font-color-hover': 'rgb(70, 111, 214)',
@@ -75,7 +75,7 @@ export const ColorSchemeBlue = markRaw<ColorScheme>({
 	'--font-color-disabled': 'rgb(200, 200, 200)',
 	'--font-color-active': 'rgb(255, 255, 255)',
 	'--font-color-active-hover': 'rgb(255, 255, 255)',
-	'--font-color-active-pressed': 'rgb(70, 111, 214)',
+	'--font-color-active-pressed': 'rgb(255, 255, 255)',
 	'--font-color-active-disabled': 'rgb(255, 255, 255)',
 });
 
@@ -92,7 +92,7 @@ export const ColorSchemeRed = markRaw<ColorScheme>({
 	'--color-disabled': 'rgb(249, 249, 249)',
 	'--color-active': 'rgb(244, 64, 64)',
 	'--color-active-hover': 'rgb(250, 86, 86)',
-	'--color-active-pressed': 'rgb(255, 220, 220)',
+	'--color-active-pressed': 'rgb(245, 180, 180)',
 	'--color-active-disabled': 'rgb(245, 180, 180)',
 	'--font-color-normal': 'rgb(244, 64, 64)',
 	'--font-color-hover': 'rgb(244, 64, 64)',
@@ -100,7 +100,7 @@ export const ColorSchemeRed = markRaw<ColorScheme>({
 	'--font-color-disabled': 'rgb(200, 200, 200)',
 	'--font-color-active': 'rgb(255, 255, 255)',
 	'--font-color-active-hover': 'rgb(255, 255, 255)',
-	'--font-color-active-pressed': 'rgb(244, 64, 64)',
+	'--font-color-active-pressed': 'rgb(255, 255, 255)',
 	'--font-color-active-disabled': 'rgb(255, 255, 255)',
 });
 
@@ -117,7 +117,7 @@ export const ColorSchemeGreen = markRaw<ColorScheme>({
 	'--color-disabled': 'rgb(249, 249, 249)',
 	'--color-active': 'rgb(4, 185, 115)',
 	'--color-active-hover': 'rgb(25 196 130)',
-	'--color-active-pressed': 'rgb(74 209 157)',
+	'--color-active-pressed': 'rgb(150 223 195)',
 	'--color-active-disabled': 'rgb(150 223 195)',
 	'--font-color-normal': 'rgb(4, 185, 115)',
 	'--font-color-hover': 'rgb(4, 185, 115)',
@@ -125,7 +125,7 @@ export const ColorSchemeGreen = markRaw<ColorScheme>({
 	'--font-color-disabled': 'rgb(200, 200, 200)',
 	'--font-color-active': 'rgb(255, 255, 255)',
 	'--font-color-active-hover': 'rgb(255, 255, 255)',
-	'--font-color-active-pressed': 'rgb(4, 185, 115)',
+	'--font-color-active-pressed': 'rgb(255, 255, 255)',
 	'--font-color-active-disabled': 'rgb(255, 255, 255)',
 });
 
@@ -285,23 +285,16 @@ export function calcMenuPopupRect(content_size: BoxSize, button_rect: Rect, wind
 
 // timer
 
-export type TimerCanceller = () => void;
+function clearTimeoutId(id: number | undefined) {
+	clearTimeout(id);
+	console.log('cancel timer');
+}
 
+export type TimerCanceller = () => void;
 export function timer(func: () => void, time_ms: number): TimerCanceller {
-	let cancelled = false, finished = false;
-	// console.log('start timer');
-	setTimeout(() => {
-		if (cancelled || finished) return;
-		func();
-		// console.log('timer finished');
-		finished = true;
-	}, time_ms);
-	return () => {
-		if (!cancelled && !finished) {
-			// console.log('cancel timer');
-			cancelled = true;
-		}
-	};
+	console.log('start timer');
+	const timeout_id = setTimeout(func, time_ms);
+	return clearTimeoutId.bind(undefined, timeout_id);
 }
 
 // focus trap
