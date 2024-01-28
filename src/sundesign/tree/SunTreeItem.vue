@@ -1,16 +1,18 @@
 <template>
-    <SunButton class="__sun-design-tree-item-container__ no-pressed-color" draggable="true" :hover="option.active"
-        :color-scheme="option.colorScheme" :style="{ 'padding-left': padding_left }" flat no-pressed-color @click="onClick">
+    <SunButton class="__sun-design-tree-item-container__ no-pressed-color" draggable="true" :size="size"
+        :hover="option.active" :color-scheme="option.colorScheme" flat no-pressed-color @click="onClick">
         <ChevronRight v-if="folded" class="__sun-design-tree-arrow__" />
         <ChevronDown v-else class="__sun-design-tree-arrow__" />
-        <SunCheckbox @click.stop />
+        <SunCheckbox @click.stop :size="size" />
         <SunItemButtonEditable ref="itembutton_ref" :label="option.label" :icon="option.icon"
             :description="option.description" />
         <slot name="append" :option="option" />
     </SunButton>
     <div v-if="has_subs" v-show="!folded" class="__sun-design-tree-container__ __sun-design-tree-relation__"
-        :style="{ '--Depth': depth_padding_left }">
-        <SunTreeItem v-for="item in option.subs" :option="item" :depth="depth + 1" @click="onSubTreeClick">
+        :class="{ 'no-folder-line': !folderLine }" :style="{ '--Depth': depth + 1 }" :data-size="size"
+        :stylew="option.colorScheme">
+        <SunTreeItem v-for="item in option.subs" :size="size" :folder-line="folderLine" :option="item" :depth="depth + 1"
+            @click="onSubTreeClick">
             <template #append="{ option }">
                 <slot name="append" :option="option" />
             </template>
@@ -25,7 +27,7 @@ import SunItemButtonEditable from '../item/SunButtonItemEditable.vue';
 import SunCheckbox from '../checkbox/SunCheckbox.vue';
 import { ChevronRight, ChevronDown } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, ref } from 'vue';
-import { type Item, type UID } from '../SunDesignConstants';
+import { type Size, type Item, type UID } from '../SunDesignConstants';
 
 type ItemTreeItem<T extends UID = UID> = Omit<Item<T>, 'shortcut' | 'sub' | 'disabled'> & { subs?: TreeItem<T>[] };
 // type RenderTreeItem<T extends UID = UID> = {
@@ -45,10 +47,14 @@ export type TreeItem<T extends UID = UID> = ItemTreeItem<T>; //| RenderTreeItem<
 //props
 const props = withDefaults(
     defineProps<{
+        size?: Size,
+        folderLine?: boolean,
         option: TreeItem,
         depth?: number,
     }>(),
     {
+        size: 'normal',
+        folderLine: true,
         depth: 0,
     }
 );
@@ -66,8 +72,6 @@ const emits = defineEmits<{
 // datas
 const itembutton_ref = ref<InstanceType<typeof SunItemButtonEditable> | undefined>();
 const has_subs = computed(() => props.option.subs !== undefined && props.option.subs.length > 0);
-const padding_left = computed(() => `${props.depth * 20}px`);
-const depth_padding_left = computed(() => `${props.depth * 20 + 20}px`);
 const folded = ref(true);
 
 function onClick(evt: Event) {
@@ -84,10 +88,13 @@ function onSubTreeClick(evt: Event) {
 <style lang="stylus">
 @import '../SunDesignStyleConstants.styl';
 
+relative-offset-small = padding-extend-small + (content-size-small / 2)
+relative-offset-normal = padding-extend-normal + (content-size-normal / 2)
+relative-offset-large = padding-extend-large + (content-size-large / 2)
+
 .__sun-design-tree-container__
     display: flex
     flex-direction: column
-    overflow: hidden
     gap: (panel-padding / 2)
 
 .__sun-design-tree-list-container__
@@ -105,19 +112,32 @@ function onSubTreeClick(evt: Event) {
     overflow: hidden
     padding-top: 0px !important
     padding-bottom: 0px !important
+    padding-left: calc(var(--Depth) * var(--Indent)) !important
 
 .__sun-design-tree-arrow__
-    margin-left: padding-extend-normal
+    .__sun-design-tree-container__[data-size="small"] > .__sun-design-button__ > &
+        margin-left: padding-extend-small
+    .__sun-design-tree-container__[data-size="normal"] > .__sun-design-button__ > &
+        margin-left: padding-extend-normal
+    .__sun-design-tree-container__[data-size="large"] > .__sun-design-button__ > &
+        margin-left: padding-extend-large
 
 .__sun-design-tree-relation__
     position: relative
+    &.no-folder-line::after
+        display: none
     &::after
         content: ''
         position: absolute
         height: 100%
         border-left: border-width var(--border-color-normal) solid
-        left: calc(var(--Depth) - 10px)
         transform: translate(-50%, 0)
+    &[data-size="small"]::after
+        left: 'calc((var(--Depth) - 1) * var(--Indent) + %s)' % (relative-offset-small)
+    &[data-size="normal"]::after
+        left: 'calc((var(--Depth) - 1) * var(--Indent) + %s)' % (relative-offset-normal)
+    &[data-size="large"]::after
+        left: 'calc((var(--Depth) - 1) * var(--Indent) + %s)' % (relative-offset-large)
 
 // .__sun-design-tree-item-drop-indicator__
 //     position absolute

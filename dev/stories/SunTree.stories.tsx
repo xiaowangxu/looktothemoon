@@ -2,9 +2,9 @@ import type { Meta, StoryObj } from '@storybook/vue3';
 
 import SunTree from '../../src/sundesign/tree/SunTree.vue';
 import SunButton from '../../src/sundesign/button/SunButton.vue';
-import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
+import { SizeArgs, SizeArgsTypes, Args, ArgsTypes, Decorators } from './SunDesignArgs';
 import { ref, type Raw, type Component, defineComponent } from 'vue';
-import { ColorSchemeBlue } from '../../src/sundesign/SunDesignConstants';
+import { ColorSchemeBlue, ColorSchemeRed } from '../../src/sundesign/SunDesignConstants';
 
 const meta: Meta<typeof SunTree> = {
     component: SunTree,
@@ -34,7 +34,11 @@ export const Tree: Story = {
             </SunTree>
 		`,
     }),
+    argTypes: {
+        ...SizeArgsTypes,
+    },
     args: {
+        ...SizeArgs,
         options: [
             {
                 uid: 0,
@@ -85,6 +89,7 @@ export const Tree: Story = {
                 label: 'test',
                 icon: 'Figma',
                 description: 'test',
+                colorScheme: ColorSchemeRed,
                 subs: [
                     {
                         uid: 1,

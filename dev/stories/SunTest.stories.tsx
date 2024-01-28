@@ -7,6 +7,7 @@ import { ref, type Raw, type Component, type FunctionalComponent, defineComponen
 import SunPanelContainer from '../../src/sundesign/panel/SunPanelContainer.vue';
 import { Item } from '../../src/sundesign/SunDesignConstants';
 import SunButtonItem from '../../src/sundesign/item/SunButtonItem.vue';
+import SunLabelVue from '../../src/sundesign/label/SunLabel.vue';
 
 const meta: Meta<typeof SunButton> = {
 	component: SunButton,
@@ -39,13 +40,14 @@ export const Select: Story = {
 
 const a: FunctionalComponent<{ item: Item }, { click: (evt: Event) => void }> = (props, context) => {
 	return <>
-		<SunPanelContainer style="width: 100%; flex: 1;">
-			<SunButton style="flex: 1;" onClick={(e: MouseEvent) => {
+		<SunPanelContainer noPadding={true} style="width: 100%; flex: 1;">
+			<SunLabelVue noHorizontalPadding={false}><a href=''>更多信息</a>(Ctrl + 单击)</SunLabelVue>
+			{/* <SunButton style="flex: 1;" onClick={(e: MouseEvent) => {
 				e.preventDefault();
 				context.emit('click', e as any as Event);
 			}} colorScheme={props.item.colorScheme} size="small">
 				<SunButtonItem label={props.item.label} icon={props.item.icon} />
-			</SunButton>
+			</SunButton> */}
 		</SunPanelContainer>
 	</>
 }

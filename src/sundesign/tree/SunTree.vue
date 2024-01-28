@@ -1,6 +1,7 @@
 <template>
-    <div class="__sun-design-tree-container__">
-        <SunTreeItem v-if="options !== undefined" v-for="option in options" :option="option">
+    <div class="__sun-design-tree-container__" :data-size="size" :style="{ '--Indent': `${indentSize}px`, '--Depth': 0 }">
+        <SunTreeItem v-if="options !== undefined" v-for="option in options" :size="size" :folder-line="folderLine"
+            :option="option">
             <template #append="{ option }">
                 <slot name="append" :option="option" />
             </template>
@@ -10,14 +11,21 @@
 
 <script setup lang="ts">
 
+import type { Size } from '../SunDesignConstants';
 import SunTreeItem, { type TreeItem } from './SunTreeItem.vue';
 
 //props
 const props = withDefaults(
     defineProps<{
-        options?: TreeItem[]
+        size?: Size,
+        indentSize?: number,
+        folderLine?: boolean,
+        options?: TreeItem[],
     }>(),
     {
+        size: 'normal',
+        indentSize: 20,
+        folderLine: true,
     }
 );
 
