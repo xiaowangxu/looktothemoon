@@ -3,6 +3,9 @@ import { ColorSchemeBlue, ColorSchemeGreen, ColorSchemeRed, type BorderMask, typ
 export const Decorators = [
     () => {
         document.body?.classList?.add('__sun-design__', 'color-def');
+        const window = document.createElement('div');
+        window.id = 'window';
+        document.body.append(window);
         return {
             template: `
             <div class="__sun-design__ color-def" style="display: flex; gap: 0.5em; align-items: center;">

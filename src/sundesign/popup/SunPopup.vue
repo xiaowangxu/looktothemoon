@@ -1,6 +1,6 @@
 <template>
     <Teleport :to="teleportTarget" :disabled="teleportDisabled">
-        <SunPopupCover @click="emits('coverClick', $event)" :stop-events="stopEvents && visible">
+        <SunPopupCover ref="cover_ref" v-bind="$attrs" @click="emits('coverClick', $event)" :stop-events="stopEvents && visible">
             <div ref="container_div_dom" class="__sun-design__ __sun-design-popup-container__"
                 :class="{ invisible: !visible }" :style="position_style">
                 <slot :rect="rect" />
@@ -14,6 +14,10 @@
 import type { Rect } from '../SunDesignConstants';
 import SunPopupCover from './SunPopupCover.vue';
 import { computed, ref } from 'vue';
+
+defineOptions({
+    inheritAttrs: false,
+});
 
 // props
 const props = withDefaults(
@@ -45,6 +49,7 @@ const emits = defineEmits<{
 
 // datas
 const container_div_dom = ref<HTMLDivElement>();
+const cover_ref = ref<InstanceType<typeof SunPopupCover> | UnderlyingByteSource>();
 const position_style = computed(() => {
     if (props.rect === undefined) return undefined;
     const { x, y, width, height } = props.rect;
@@ -56,6 +61,11 @@ const position_style = computed(() => {
     result.top = `${y}px`;
     // else result.bottom = `${y}px`;
     return result;
+});
+
+// exposes
+defineExpose({
+    cover: cover_ref,
 });
 
 </script>

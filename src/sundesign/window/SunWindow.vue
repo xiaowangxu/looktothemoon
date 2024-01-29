@@ -1,6 +1,6 @@
 <template>
-    <SunPopup :rect="popup_rect">
-        <SunPanel style="width: 100%; height: 100%;" vertical>
+    <SunPopup ref="popup_ref" teleport-target="#window" :rect="popup_rect" :stop-events="false" @focusin="onDrag">
+        <SunPanel v-memo="[]" style="width: 100%; height: 100%;" vertical>
             <SunPanelContainer gap style="align-items: center; padding-right: 10px; background-color: var(--color-normal);"
                 @mousedown="onDragMouseDown('drag', $event)">
                 <SunButtonLike no-vertical-padding no-hover-color no-pressed-color flat style="flex: 1; min-height: unset;">
@@ -20,7 +20,8 @@
                     <SunScrollContainer style="width: 100%; height: 100%;" content-style="width: 100%;">
                         <SunPanelContainer vertical gap>
                             <template v-for="s in 3">
-                                <SunLabel size="large" :no-horizontal-padding="false" squared style="font-weight: bold;">类型区域{{ s }}</SunLabel>
+                                <SunLabel size="large" :no-horizontal-padding="false" squared style="font-weight: bold;">
+                                    类型区域{{ s }}</SunLabel>
                                 <SunButton v-for="i in 10" flat>
                                     <AppWindow />
                                     <SunButtonLabel style="margin-right: auto;">按钮 {{ i }}</SunButtonLabel>
@@ -36,14 +37,14 @@
                 </template>
             </SunPanelResizeContainer>
         </SunPanel>
-        <div class="__sun-design-window-resize-r__" @mousedown="onDragMouseDown('right', $event)" />
-        <div class="__sun-design-window-resize-l__" @mousedown="onDragMouseDown('left', $event)" />
-        <div class="__sun-design-window-resize-t__" @mousedown="onDragMouseDown('top', $event)" />
-        <div class="__sun-design-window-resize-b__" @mousedown="onDragMouseDown('bottom', $event)" />
-        <div class="__sun-design-window-resize-tr__" @mousedown="onDragMouseDown('top-right', $event)" />
-        <div class="__sun-design-window-resize-tl__" @mousedown="onDragMouseDown('top-left', $event)" />
-        <div class="__sun-design-window-resize-br__" @mousedown="onDragMouseDown('bottom-right', $event)" />
-        <div class="__sun-design-window-resize-bl__" @mousedown="onDragMouseDown('bottom-left', $event)" />
+        <div v-once class="__sun-design-window-resize-r__" @mousedown="onDragMouseDown('right', $event)" />
+        <div v-once class="__sun-design-window-resize-l__" @mousedown="onDragMouseDown('left', $event)" />
+        <div v-once class="__sun-design-window-resize-t__" @mousedown="onDragMouseDown('top', $event)" />
+        <div v-once class="__sun-design-window-resize-b__" @mousedown="onDragMouseDown('bottom', $event)" />
+        <div v-once class="__sun-design-window-resize-tr__" @mousedown="onDragMouseDown('top-right', $event)" />
+        <div v-once class="__sun-design-window-resize-tl__" @mousedown="onDragMouseDown('top-left', $event)" />
+        <div v-once class="__sun-design-window-resize-br__" @mousedown="onDragMouseDown('bottom-right', $event)" />
+        <div v-once class="__sun-design-window-resize-bl__" @mousedown="onDragMouseDown('bottom-left', $event)" />
     </SunPopup>
 </template>
 
@@ -64,6 +65,7 @@ import { X, AppWindow, Minimize, Maximize, Globe } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, ref } from 'vue';
 
 // datas
+const popup_ref = ref<InstanceType<typeof SunPopup> | undefined>();
 const popup_x = ref(100);
 const popup_y = ref(100);
 const popup_width = ref(300);
@@ -88,6 +90,7 @@ function onDragMouseDown(type: string, evt: MouseEvent) {
     popup_last_height = popup_height.value;
     window.addEventListener('mousemove', onDragMouseMove, { capture: true });
     window.addEventListener('mouseup', onDragMouseUp, { capture: true });
+    onDrag();
 }
 function adjustLeft(mouse_delta_x: number, mouse_delta_y: number) {
     const width = Math.max(100, popup_last_width - mouse_delta_x);
@@ -157,6 +160,15 @@ function onDragMouseMove(evt: MouseEvent) {
 function onDragMouseUp(evt: MouseEvent) {
     removeDraggingEvents();
 }
+function onDrag() {
+    const div: HTMLDivElement | undefined | null = popup_ref.value?.cover?.div;
+    if (div && div.parentNode) {
+        const parent = div.parentNode;
+        if (parent.lastChild === div) return;
+        parent.removeChild(div);
+        parent.appendChild(div);
+    }
+}
 function removeDraggingEvents() {
     window.removeEventListener('mousemove', onDragMouseMove, { capture: true });
     window.removeEventListener('mouseup', onDragMouseUp, { capture: true });
@@ -180,6 +192,7 @@ resize-size = 6px
     width: resize-size
     cursor: e-resize
     // background-color: rgba(255, 0, 0, 0.1)
+    pointer-events: initial
 
 .__sun-design-window-resize-l__
     position: absolute
@@ -189,6 +202,7 @@ resize-size = 6px
     width: resize-size
     cursor: e-resize
     // background-color: rgba(255, 0, 0, 0.1)
+    pointer-events: initial
 
 .__sun-design-window-resize-t__
     position: absolute
@@ -198,6 +212,7 @@ resize-size = 6px
     height: resize-size
     cursor: n-resize
     // background-color: rgba(255, 0, 0, 0.1)
+    pointer-events: initial
 
 .__sun-design-window-resize-b__
     position: absolute
@@ -207,6 +222,7 @@ resize-size = 6px
     height: resize-size
     cursor: n-resize
     // background-color: rgba(255, 0, 0, 0.1)
+    pointer-events: initial
 
 .__sun-design-window-resize-tr__
     position: absolute
@@ -216,6 +232,7 @@ resize-size = 6px
     height: resize-size * 1.6
     cursor: ne-resize
     // background-color: rgba(0, 255, 0, 0.1)
+    pointer-events: initial
 
 .__sun-design-window-resize-tl__
     position: absolute
@@ -225,6 +242,7 @@ resize-size = 6px
     height: resize-size * 1.6
     cursor: nw-resize
     // background-color: rgba(0, 255, 0, 0.1)
+    pointer-events: initial
 
 .__sun-design-window-resize-bl__
     position: absolute
@@ -234,6 +252,7 @@ resize-size = 6px
     height: resize-size * 1.6
     cursor: sw-resize
     // background-color: rgba(0, 255, 0, 0.1)
+    pointer-events: initial
 
 .__sun-design-window-resize-br__
     position: absolute
@@ -243,5 +262,6 @@ resize-size = 6px
     height: resize-size * 1.6
     cursor: se-resize
     // background-color: rgba(0, 255, 0, 0.1)
+    pointer-events: initial
 
 </style>

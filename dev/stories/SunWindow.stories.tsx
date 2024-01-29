@@ -16,7 +16,7 @@ type Story = StoryObj<typeof SunWindow>;
  * See https://storybook.js.org/docs/api/csf
  * to learn how to use render functions.
  */
-export const Select: Story = {
+export const Window: Story = {
     decorators: Decorators,
     render: (args) => ({
         components: { SunWindow },
@@ -24,6 +24,8 @@ export const Select: Story = {
             return { args };
         },
         template: `
+			      <SunWindow>
+            </SunWindow>
 			      <SunWindow>
             </SunWindow>
 		`,

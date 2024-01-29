@@ -1,6 +1,7 @@
 <template>
-    <div class="__sun-design-popup-cover__" :class="{ 'stop-events': stopEvents }" @mousedown.self="onMouseDownSelf"
-        @contextmenu.prevent @click.stop.self="onClickSelf" @keydown.esc.stop="onEsc" tabindex="-1">
+    <div ref="div_ref" class="__sun-design-popup-cover__" :class="{ 'stop-events': stopEvents }"
+        @mousedown.self="onMouseDownSelf" @contextmenu.prevent @click.stop.self="onClickSelf" @keydown.esc.stop="onEsc"
+        tabindex="-1">
         <slot />
     </div>
 </template>
@@ -26,6 +27,7 @@ const emits = defineEmits<{
 
 // datas
 const mouse_down_self = ref(false);
+const div_ref = ref<HTMLDivElement | null>(null);
 
 function onMouseDownSelf() {
     mouse_down_self.value = true;
@@ -41,6 +43,11 @@ function onClickSelf(evt: Event) {
 function onEsc(evt: Event) {
     emits('click', evt);
 }
+
+// expose
+defineExpose({
+    div: div_ref,
+});
 
 </script>
 

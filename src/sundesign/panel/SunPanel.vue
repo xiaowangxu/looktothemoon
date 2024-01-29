@@ -136,6 +136,7 @@ defineExpose({
     overflow: hidden
     background-color: var(--panel-color)
     position: relative
+    pointer-events: initial
 
     &.not-container
         &.drop-shadow
