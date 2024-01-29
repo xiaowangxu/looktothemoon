@@ -14,21 +14,23 @@
                             @click="onItemButtonClick((item as ItemMenuItem).uid, (item as ItemMenuItem).subs, (item as ItemMenuItem).clickable, $event)"
                             :key="item.uid">
                             <SunButtonItem :label="(item as ItemMenuItem).label" :icon="(item as ItemMenuItem).icon"
-                                :description="(item as ItemMenuItem).description" :shortcut="(item as ItemMenuItem).shortcut" :sub="(item as ItemMenuItem).subs !== undefined" />
+                                :description="(item as ItemMenuItem).description"
+                                :shortcut="(item as ItemMenuItem).shortcut"
+                                :sub="(item as ItemMenuItem).subs !== undefined" />
                         </SunButton>
                     </template>
                     <template v-else>
-                        <component :is="(item as RenderMenuItem).render" :uid=" item.uid " :hover=" onMouseEnter "
-                            :expand=" expandSubMenu " :click=" onClick " :key=" item.uid " />
+                        <component :is="(item as RenderMenuItem).render" :uid="item.uid" :hover="onMouseEnter"
+                            :expand="expandSubMenu" :click="onClick" :key="item.uid" />
                     </template>
                 </template>
             </SunPanelContainer>
-            <SunPanelSeparator v-if=" idx < options.length - 1 " :override-vertical=" true " :key=" idx " />
+            <SunPanelSeparator v-if="idx < options.length - 1" :override-vertical="true" :key="idx" />
         </template>
     </SunMeasurePopupPanel>
-    <SunMenuPopup v-if=" sub_menu !== undefined && visible " :options=" sub_menu " :size=" size " :stop-events=" false "
-        :prefered-direction=" popup_direction " :show-delay=" showDelay " :hide-delay=" hideDelay " :get-popup-rect=" getPopupRect "
-        @click=" onClick " @click-outside=" onSubMenuClickOutSide " />
+    <SunMenuPopup v-if="sub_menu !== undefined && visible" :options="sub_menu" :size="size" :stop-events="false"
+        :prefered-direction="popup_direction" :show-delay="showDelay" :hide-delay="hideDelay" :get-popup-rect="getPopupRect"
+        @click="onClick" @click-outside="onSubMenuClickOutSide" />
 </template>
 
 <script setup lang="ts">
@@ -85,8 +87,8 @@ const props = withDefaults(
         scrollBarStateH: 'adaptive',
         scrollBarStateV: 'adaptive',
         scrollBarVisibility: 'hover-track',
-        minWidth: 160,
-        maxWidth: 400,
+        minWidth: 200,
+        maxWidth: 460,
         showDelay: 150,
         hideDelay: 250,
     }

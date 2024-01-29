@@ -81,9 +81,9 @@ export const ContextMenu: Story = {
       return { args, onContextMenu0, onContextMenu1, onContextMenu2 };
     },
     template: `
-			<div style="width: 200px; height: 200px; background-color: red;" @contextmenu.prevent.self.stop="onContextMenu0"/>
-			<div style="width: 200px; height: 200px; background-color: yellow;" @contextmenu.prevent.self.stop="onContextMenu1">
-				<div style="width: 100px; height: 100px; background-color: green;" @contextmenu.prevent.self.stop="onContextMenu2"/>
+			<div style="width: 200px; height: 200px; border-style: dashed; bordr-width: 2px; border-color: red;" @contextmenu.prevent.self.stop="onContextMenu0"/>
+			<div style="width: 200px; height: 200px; border-style: dashed; bordr-width: 2px; border-color: yellow;" @contextmenu.prevent.self.stop="onContextMenu1">
+				<div style="width: 100px; height: 100px; border-style: dashed; bordr-width: 2px; border-color: green;" @contextmenu.prevent.self.stop="onContextMenu2"/>
 			</div>
 		`,
   }),

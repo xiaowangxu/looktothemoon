@@ -2,10 +2,15 @@ import { ColorSchemeBlue, ColorSchemeGreen, ColorSchemeRed, type BorderMask, typ
 
 export const Decorators = [
     () => {
+        const has_window = document.getElementById('window') !== null;
         document.body?.classList?.add('__sun-design__', 'color-def');
-        const window = document.createElement('div');
-        window.id = 'window';
-        document.body.append(window);
+        if (!has_window) {
+            const window = document.createElement('div');
+            window.id = 'window';
+            window.style.position = 'absolute';
+            window.style.zIndex = '0';
+            document.body.append(window);
+        }
         return {
             template: `
             <div class="__sun-design__ color-def" style="display: flex; gap: 0.5em; align-items: center;">

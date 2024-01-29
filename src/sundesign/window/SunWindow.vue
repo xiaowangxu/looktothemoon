@@ -1,6 +1,7 @@
 <template>
-    <SunPopup ref="popup_ref" teleport-target="#window" :rect="popup_rect" :stop-events="false" @focusin="onDrag">
-        <SunPanel v-memo="[]" style="width: 100%; height: 100%;" vertical>
+    <SunPopup ref="popup_ref" teleport-target="#window" :style="{ 'z-index': layer }" :rect="popup_rect"
+        :stop-events="false" @focusin="focus">
+        <SunPanel style="width: 100%; height: 100%;" vertical>
             <SunPanelContainer gap style="align-items: center; padding-right: 10px; background-color: var(--color-normal);"
                 @mousedown="onDragMouseDown('drag', $event)">
                 <SunButtonLike no-vertical-padding no-hover-color no-pressed-color flat style="flex: 1; min-height: unset;">
@@ -15,27 +16,30 @@
                 </SunButton>
             </SunPanelContainer>
             <SunPanelSeparator />
-            <SunPanelResizeContainer style="flex: 1;" :initial-percentage="0.2">
-                <template #first>
-                    <SunScrollContainer style="width: 100%; height: 100%;" content-style="width: 100%;">
-                        <SunPanelContainer vertical gap>
-                            <template v-for="s in 3">
-                                <SunLabel size="large" :no-horizontal-padding="false" squared style="font-weight: bold;">
-                                    类型区域{{ s }}</SunLabel>
-                                <SunButton v-for="i in 10" flat>
-                                    <AppWindow />
-                                    <SunButtonLabel style="margin-right: auto;">按钮 {{ i }}</SunButtonLabel>
-                                </SunButton>
-                            </template>
-                            <SunColorPicker></SunColorPicker>
-                        </SunPanelContainer>
-                    </SunScrollContainer>
-                </template>
-                <template #second>
-                    <SunPanelResizeContainer vertical style="width: 100%; height: 100%;">
-                    </SunPanelResizeContainer>
-                </template>
-            </SunPanelResizeContainer>
+            <slot>
+                <SunPanelResizeContainer style="flex: 1;" :initial-percentage="0.2">
+                    <template #first>
+                        <SunScrollContainer style="width: 100%; height: 100%;" content-style="width: 100%;">
+                            <SunPanelContainer vertical gap>
+                                <template v-for="s in 3">
+                                    <SunLabel size="large" :no-horizontal-padding="false" squared
+                                        style="font-weight: bold;">
+                                        类型区域{{ s }}</SunLabel>
+                                    <SunButton v-for="i in 10" flat>
+                                        <AppWindow />
+                                        <SunButtonLabel style="margin-right: auto;">按钮 {{ i }}</SunButtonLabel>
+                                    </SunButton>
+                                </template>
+                                <SunColorPicker></SunColorPicker>
+                            </SunPanelContainer>
+                        </SunScrollContainer>
+                    </template>
+                    <template #second>
+                        <SunPanelResizeContainer vertical style="width: 100%; height: 100%;">
+                        </SunPanelResizeContainer>
+                    </template>
+                </SunPanelResizeContainer>
+            </slot>
         </SunPanel>
         <div v-once class="__sun-design-window-resize-r__" @mousedown="onDragMouseDown('right', $event)" />
         <div v-once class="__sun-design-window-resize-l__" @mousedown="onDragMouseDown('left', $event)" />
@@ -63,6 +67,7 @@ import SunScrollContainer from '../scrollcontainer/SunScrollContainer.vue';
 import SunColorPicker from '../colorpicker/SunColorPicker.vue';
 import { X, AppWindow, Minimize, Maximize, Globe } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, ref } from 'vue';
+import { addWindow, focusWindow, removeWindow } from './SunWindowConstants';
 
 // datas
 const popup_ref = ref<InstanceType<typeof SunPopup> | undefined>();
@@ -78,6 +83,7 @@ let popup_last_height = 0;
 let mouse_last_x = 0;
 let mouse_last_y = 0;
 let drag_type = 'none';
+const { id, layer } = addWindow();
 
 // container
 function onDragMouseDown(type: string, evt: MouseEvent) {
@@ -90,7 +96,7 @@ function onDragMouseDown(type: string, evt: MouseEvent) {
     popup_last_height = popup_height.value;
     window.addEventListener('mousemove', onDragMouseMove, { capture: true });
     window.addEventListener('mouseup', onDragMouseUp, { capture: true });
-    onDrag();
+    focus();
 }
 function adjustLeft(mouse_delta_x: number, mouse_delta_y: number) {
     const width = Math.max(100, popup_last_width - mouse_delta_x);
@@ -160,14 +166,8 @@ function onDragMouseMove(evt: MouseEvent) {
 function onDragMouseUp(evt: MouseEvent) {
     removeDraggingEvents();
 }
-function onDrag() {
-    const div: HTMLDivElement | undefined | null = popup_ref.value?.cover?.div;
-    if (div && div.parentNode) {
-        const parent = div.parentNode;
-        if (parent.lastChild === div) return;
-        parent.removeChild(div);
-        parent.appendChild(div);
-    }
+function focus() {
+    focusWindow(id);
 }
 function removeDraggingEvents() {
     window.removeEventListener('mousemove', onDragMouseMove, { capture: true });
@@ -176,6 +176,7 @@ function removeDraggingEvents() {
 
 onBeforeUnmount(() => {
     removeDraggingEvents();
+    removeWindow(id);
 });
 
 </script>
