@@ -1,22 +1,39 @@
 <template>
-    <SunButton class="__sun-design-tree-item-container__ no-pressed-color" draggable="true" :size="size"
-        :hover="option.active" :color-scheme="option.colorScheme" flat no-pressed-color @click="onClick">
-        <ChevronRight v-if="folded" class="__sun-design-tree-arrow__" />
-        <ChevronDown v-else class="__sun-design-tree-arrow__" />
-        <SunCheckbox @click.stop :size="size" />
-        <SunItemButtonEditable ref="itembutton_ref" :label="option.label" :icon="option.icon"
-            :description="option.description" />
-        <slot name="append" :option="option" />
-    </SunButton>
+    <div class="__sun-design-tree-list-container__">
+        <SunButton ref="button_ref" class="__sun-design-tree-item-container__ no-pressed-color" :draggable="draggable"
+            :size="size" :disabled="option.disabled" :active="option.active" :color-scheme="option.colorScheme" flat
+            no-pressed-color @click="onClick" @dragover="onDragOver" @dragenter="onDragEnter" @dragleave="onDragLeave"
+            @drop="onDrop">
+            <ChevronRight v-if="folded" class="__sun-design-tree-arrow__" :class="{ 'no-subs': !has_subs }" />
+            <ChevronDown v-else class="__sun-design-tree-arrow__" :class="{ 'no-subs': !has_subs }" />
+            <SunCheckbox v-if="picking" @click.stop :size="size" :disabled="option.disabled" :checked="option.checked" />
+            <slot name="prepand" :option="option" />
+            <SunItemButtonEditable ref="itembutton_ref" :label="option.label" :icon="option.icon"
+                :description="option.description" />
+            <slot name="append" :option="option" />
+            <div v-if="dragging_over && dragging_in === 'in'"
+                class="__sun-design__ __sun-design-tree-item-dropin-indicator__ bordered" :data-size="size" />
+        </SunButton>
+        <slot name="suffix" :option="option" />
+        <div v-if="dragging_over && dragging_in === 'before'" class="__sun-design-tree-item-drop-indicator__ before" />
+        <div v-if="dragging_over && (!has_subs || folded) && dragging_in === 'after'" class="__sun-design-tree-item-drop-indicator__ after" />
+    </div>
     <div v-if="has_subs" v-show="!folded" class="__sun-design-tree-container__ __sun-design-tree-relation__"
         :class="{ 'no-folder-line': !folderLine }" :style="{ '--Depth': depth + 1 }" :data-size="size"
         :stylew="option.colorScheme">
         <SunTreeItem v-for="item in option.subs" :size="size" :folder-line="folderLine" :option="item" :depth="depth + 1"
-            @click="onSubTreeClick">
+            :draggable="draggable" @click="onSubTreeClick" :unfold-delay="unfoldDelay" :picking="picking">
             <template #append="{ option }">
                 <slot name="append" :option="option" />
             </template>
+            <template #prepand="{ option }">
+                <slot name="prepand" :option="option" />
+            </template>
+            <template #suffix="{ option }">
+                <slot name="suffix" :option="option" />
+            </template>
         </SunTreeItem>
+        <div v-if="dragging_over && !folded && dragging_in === 'after'" class="__sun-design-tree-item-drop-indicator__ after indent" />
     </div>
 </template>
 
@@ -26,10 +43,10 @@ import SunButton from '../button/SunButton.vue';
 import SunItemButtonEditable from '../item/SunButtonItemEditable.vue';
 import SunCheckbox from '../checkbox/SunCheckbox.vue';
 import { ChevronRight, ChevronDown } from 'lucide-vue-next';
-import { computed, onBeforeUnmount, ref } from 'vue';
-import { type Size, type Item, type UID } from '../SunDesignConstants';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { type Size, type Item, type UID, type TimerCanceller, timer } from '../SunDesignConstants';
 
-type ItemTreeItem<T extends UID = UID> = Omit<Item<T>, 'shortcut' | 'sub' | 'disabled'> & { subs?: TreeItem<T>[] };
+type ItemTreeItem<T extends UID = UID> = Omit<Item<T>, 'shortcut' | 'sub'> & { checked?: boolean, subs?: TreeItem<T>[] };
 // type RenderTreeItem<T extends UID = UID> = {
 //     uid: T,
 //     colorScheme?: ColorScheme,
@@ -51,17 +68,25 @@ const props = withDefaults(
         folderLine?: boolean,
         option: TreeItem,
         depth?: number,
+        draggable?: boolean,
+        unfoldDelay?: number,
+        picking?: boolean,
     }>(),
     {
         size: 'normal',
         folderLine: true,
         depth: 0,
+        draggable: true,
+        unfoldDelay: 1000,
+        picking: false,
     }
 );
 
 // slots
 defineSlots<{
+    prepand(props: { option: TreeItem }): void,
     append(props: { option: TreeItem }): void,
+    suffix(props: { option: TreeItem }): void,
 }>();
 
 // emits
@@ -73,6 +98,69 @@ const emits = defineEmits<{
 const itembutton_ref = ref<InstanceType<typeof SunItemButtonEditable> | undefined>();
 const has_subs = computed(() => props.option.subs !== undefined && props.option.subs.length > 0);
 const folded = ref(true);
+const dragging_over = ref(false);
+const dragging_in = ref<'before' | 'in' | 'after'>('before');
+const button_ref = ref<InstanceType<typeof SunButton> | undefined>();
+let dragover_unfold_timer: TimerCanceller | undefined = undefined;
+const unfold = () => folded.value = false;
+
+watch([dragging_over, dragging_in], ([over, within]) => {
+    if (over) {
+        if (within === 'in') {
+            if (dragover_unfold_timer === undefined && has_subs.value && folded.value === true) {
+                dragover_unfold_timer = timer(unfold, props.unfoldDelay);
+            }
+        }
+        else {
+            clearUnfoldTimer();
+        }
+    }
+    else {
+        clearUnfoldTimer();
+    }
+});
+
+function clearUnfoldTimer() {
+    dragover_unfold_timer?.();
+    dragover_unfold_timer = undefined;
+}
+function onDragOver(evt: DragEvent) {
+    evt.preventDefault();
+    if (!button_ref.value?.button) {
+        dragging_in.value = 'before';
+        return;
+    }
+    else {
+        const { x, y, width, height } = button_ref.value.button.getBoundingClientRect();
+        if (evt.clientY - y < height / 3) {
+            dragging_in.value = 'before';
+        }
+        else if (evt.clientY - y < height / 3 * 2) {
+            dragging_in.value = 'in';
+        }
+        else {
+            dragging_in.value = 'after';
+        }
+    }
+}
+function onDragEnter(evt: DragEvent) {
+    if (dragging_over.value !== true) {
+        dragging_over.value = true;
+        evt.preventDefault();
+    }
+}
+function onDragLeave(evt: DragEvent) {
+    evt.preventDefault();
+    if (evt.currentTarget === null || evt.relatedTarget === null) return;
+    if (!(evt.currentTarget as HTMLElement).contains(evt.relatedTarget as HTMLElement)) {
+        dragging_over.value = false;
+    }
+}
+function onDrop(evt: DragEvent) {
+    console.log(">>>>", dragging_in.value);
+    dragging_over.value = false;
+    clearUnfoldTimer();
+}
 
 function onClick(evt: Event) {
     folded.value = !folded.value;
@@ -82,6 +170,10 @@ function onClick(evt: Event) {
 function onSubTreeClick(evt: Event) {
     emits('click', evt);
 }
+
+onBeforeUnmount(() => {
+    clearUnfoldTimer();
+});
 
 </script>
 
@@ -102,7 +194,8 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
     flex-direction: row
     flex: 1
     gap: panel-padding
-    overflow: hidden
+    position: relative
+    align-items: center
 
 .__sun-design-tree-item-container__
     display: flex
@@ -113,13 +206,16 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
     padding-top: 0px !important
     padding-bottom: 0px !important
     padding-left: calc(var(--Depth) * var(--Indent)) !important
+    position: relative
 
 .__sun-design-tree-arrow__
-    .__sun-design-tree-container__[data-size="small"] > .__sun-design-button__ > &
+    &.no-subs
+        color: var(--font-color-disabled)
+    .__sun-design-tree-container__[data-size="small"] > .__sun-design-tree-list-container__ > .__sun-design-button__ > &
         margin-left: padding-extend-small
-    .__sun-design-tree-container__[data-size="normal"] > .__sun-design-button__ > &
+    .__sun-design-tree-container__[data-size="normal"] > .__sun-design-tree-list-container__ > .__sun-design-button__ > &
         margin-left: padding-extend-normal
-    .__sun-design-tree-container__[data-size="large"] > .__sun-design-button__ > &
+    .__sun-design-tree-container__[data-size="large"] > .__sun-design-tree-list-container__ > .__sun-design-button__ > &
         margin-left: padding-extend-large
 
 .__sun-design-tree-relation__
@@ -127,6 +223,7 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
     &.no-folder-line::after
         display: none
     &::after
+        pointer-events: none
         content: ''
         position: absolute
         height: 100%
@@ -139,11 +236,26 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
     &[data-size="large"]::after
         left: 'calc((var(--Depth) - 1) * var(--Indent) + %s)' % (relative-offset-large)
 
-// .__sun-design-tree-item-drop-indicator__
-//     position absolute
-//     bottom: - (panel-padding / 2)
-//     width: 100%
-//     border-top: border-width var(--color-active) solid
-//     transform: translate(0, 50%)
+.__sun-design-tree-item-drop-indicator__
+    position absolute
+    left: calc(var(--Depth) * var(--Indent))
+    right: 0
+    &.before
+        top: - (panel-padding / 2)
+    &.after
+        bottom: - (panel-padding / 2)
+        &.indent
+            left: calc((var(--Depth) - 1) * var(--Indent))
+    border-top: border-width * 2 var(--placeholder-color) solid
+    pointer-events: none
+
+.__sun-design-tree-item-dropin-indicator__
+    position absolute
+    inset: 0
+    left: calc(var(--Depth) * var(--Indent))
+    pointer-events: none
+    border-color: var(--placeholder-color) !important
+    border-width: border-width * 2 !important
+    border-radius: inherit
 
 </style>

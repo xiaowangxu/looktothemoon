@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from '@storybook/vue3';
 
 import SunTree from '../../src/sundesign/tree/SunTree.vue';
 import SunButton from '../../src/sundesign/button/SunButton.vue';
+import SunControlGroup from '../../src/sundesign/controlgroup/SunControlGroup.vue';
+import SunControlGroupRow from '../../src/sundesign/controlgroup/SunControlGroupRow.vue';
 import { SizeArgs, SizeArgsTypes, Args, ArgsTypes, Decorators } from './SunDesignArgs';
 import { ref, type Raw, type Component, defineComponent } from 'vue';
 import { ColorSchemeBlue, ColorSchemeRed } from '../../src/sundesign/SunDesignConstants';
@@ -22,16 +24,22 @@ export const Tree: Story = {
     decorators: Decorators,
     tags: ['autodocs'],
     render: (args) => ({
-        components: { SunTree, SunButton },
+        components: { SunTree, SunButton, SunControlGroupRow, SunControlGroup },
         setup() {
             return { args };
         },
         template: `
-			<SunTree style="width: 300px;" v-bind="args">
-            <template #append>
-                    <SunButton size="small" @click.stop>Test</SunButton>
+			  <SunTree style="width: 300px;" v-bind="args">
+            <template #append="{option}">
+                <SunControlGroup>
+                    <SunControlGroupRow>
+                        <SunButton size="small" squared @click.stop>A</SunButton>
+                        <SunButton size="small" squared @click.stop>V</SunButton>
+                        <SunButton size="small" squared @click.stop>S</SunButton>
+                    </SunControlGroupRow>
+                </SunControlGroup>
             </template>
-            </SunTree>
+        </SunTree>
 		`,
     }),
     argTypes: {
@@ -96,11 +104,14 @@ export const Tree: Story = {
                         icon: 'Cog',
                         colorScheme: ColorSchemeBlue,
                         label: 'sub 0',
+                        active: true,
                     },
                     {
                         uid: 1,
                         icon: 'Cog',
                         label: 'sub 0',
+                        disabled: true,
+                        checked: true,
                     },
                     {
                         uid: 1,
@@ -133,6 +144,7 @@ export const Tree: Story = {
                                         uid: 1,
                                         icon: 'Cog',
                                         label: 'sub 0',
+                                        checked: true,
                                     },
                                     {
                                         uid: 1,

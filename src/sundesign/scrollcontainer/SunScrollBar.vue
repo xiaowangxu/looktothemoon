@@ -1,7 +1,7 @@
 <template>
     <div ref="track_div_dom" class="__sun-design__ __sun-design-scrollbar__"
         :class="{ flat, vertical: vertical, hoverparent: visibility === 'hover', hovertrack: visibility === 'hover-track' }"
-        :style="{ '--Percentage': clamped_percent }" @wheel="onWheel">
+        :style="{ '--Percentage': clamped_percent }">
         <div ref="nob_div_dom" v-show="visibility !== 'hidden'"
             class="__sun-design__ __sun-design-scrollbar-nob__ colored bordered" :class="{ dragging: is_dragging }"
             @mousedown="onMouseDown"></div>
@@ -74,11 +74,6 @@ function onMouseUp(evt: MouseEvent) {
     window.removeEventListener('mousemove', onMouseMove, { capture: true });
     window.removeEventListener('mouseup', onMouseUp, { capture: true });
     is_dragging.value = false;
-}
-
-function onWheel(evt: WheelEvent) {
-    evt.preventDefault();
-    emits('scroll', evt.deltaY);
 }
 
 </script>

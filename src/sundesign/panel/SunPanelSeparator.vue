@@ -22,7 +22,7 @@ const props = withDefaults(
 @import '../SunDesignStyleConstants.styl';
 
 .__sun-design__.__sun-design-panel-separator__
-    background-color: border-color-normal
+    background-color: transparent
 
     .__sun-design__.__sun-design-panel__ &
         &:first-child, &:last-child

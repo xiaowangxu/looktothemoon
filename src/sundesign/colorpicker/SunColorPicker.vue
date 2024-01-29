@@ -1,6 +1,6 @@
 <template>
     <SunButtonPopup ref="buttonpopup_ref" class="__sun-design-transparent-bg__" style="position: relative;" v-bind="$attrs"
-        :size="size" :flat="flat" :bordered="bordered" :borderMask="borderMask" :rounded="rounded" :squared="squared"
+        :size="size" :flat="flat" :bordered="bordered" :borderMask="borderMask" :rounded="rounded" :squared="squared" drop-shadow
         mode="instance" vertical content-style="width: 100%; max-width: 180px;" :getPopupRect="getPopupRect"
         scrollable-indicators>
         <template #button>
