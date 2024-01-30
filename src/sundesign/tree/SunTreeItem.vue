@@ -250,7 +250,7 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
         bottom: - (panel-padding / 2)
         &.indent
             left: calc((var(--Depth) - 1) * var(--Indent))
-    border-top: border-width * 2 var(--placeholder-color) solid
+    border-top: border-width var(--placeholder-color) solid
     pointer-events: none
 
 .__sun-design-tree-item-dropin-indicator__
@@ -259,7 +259,7 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
     left: calc(var(--Depth) * var(--Indent))
     pointer-events: none
     border-color: var(--placeholder-color) !important
-    border-width: border-width * 2 !important
+    border-width: border-width !important
     border-radius: inherit
 
 </style>
