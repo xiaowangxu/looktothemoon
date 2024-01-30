@@ -1,22 +1,26 @@
 <template>
-    <SunPopup ref="popup_ref" teleport-target="#window" :style="{ 'z-index': layer }" :rect="popup_rect"
-        :stop-events="false" @focusin="focus">
+    <SunPopup ref="popup_ref" :teleport-target="WindowTarget" :style="{ 'z-index': layer }" :rect="popup_rect"
+        :stop-events="exclusive" @focusin="focus">
         <SunPanel style="width: 100%; height: 100%;" vertical>
-            <SunPanelContainer gap style="align-items: center; padding-right: 10px; background-color: var(--color-normal);"
-                @mousedown="onDragMouseDown('drag', $event)">
-                <SunButtonLike no-vertical-padding no-hover-color no-pressed-color flat style="flex: 1; min-height: unset;">
-                    <Globe />
-                    <SunButtonLabel style="margin-right: auto;">测试窗体 </SunButtonLabel>
-                </SunButtonLike>
-                <SunButton size="small" squared>
-                    <Maximize />
-                </SunButton>
-                <SunButton size="small" squared>
-                    <X />
-                </SunButton>
-            </SunPanelContainer>
-            <SunPanelSeparator />
-            <slot>
+            <template v-if="!borderless">
+                <SunPanelContainer gap
+                    style="align-items: center; padding-right: 10px; background-color: var(--color-normal);"
+                    @mousedown="onDragMouseDown('drag', $event)">
+                    <SunButtonLike no-vertical-padding no-hover-color no-pressed-color flat
+                        style="flex: 1; min-height: unset;">
+                        <Globe />
+                        <SunButtonLabel style="margin-right: auto;">测试窗体 </SunButtonLabel>
+                    </SunButtonLike>
+                    <SunButton size="small" squared>
+                        <Maximize />
+                    </SunButton>
+                    <SunButton size="small" squared>
+                        <X />
+                    </SunButton>
+                </SunPanelContainer>
+                <SunPanelSeparator />
+            </template>
+            <slot :drag="drag">
                 <SunPanelResizeContainer style="flex: 1;" :initial-percentage="0.2">
                     <template #first>
                         <SunScrollContainer style="width: 100%; height: 100%;" content-style="width: 100%;">
@@ -41,14 +45,17 @@
                 </SunPanelResizeContainer>
             </slot>
         </SunPanel>
-        <div v-once class="__sun-design-window-resize-r__" @mousedown="onDragMouseDown('right', $event)" />
-        <div v-once class="__sun-design-window-resize-l__" @mousedown="onDragMouseDown('left', $event)" />
-        <div v-once class="__sun-design-window-resize-t__" @mousedown="onDragMouseDown('top', $event)" />
-        <div v-once class="__sun-design-window-resize-b__" @mousedown="onDragMouseDown('bottom', $event)" />
-        <div v-once class="__sun-design-window-resize-tr__" @mousedown="onDragMouseDown('top-right', $event)" />
-        <div v-once class="__sun-design-window-resize-tl__" @mousedown="onDragMouseDown('top-left', $event)" />
-        <div v-once class="__sun-design-window-resize-br__" @mousedown="onDragMouseDown('bottom-right', $event)" />
-        <div v-once class="__sun-design-window-resize-bl__" @mousedown="onDragMouseDown('bottom-left', $event)" />
+        <div v-show="resizeable" class="__sun-design-window-resize-r__" @mousedown="onDragMouseDown('right', $event)" />
+        <div v-show="resizeable" class="__sun-design-window-resize-l__" @mousedown="onDragMouseDown('left', $event)" />
+        <div v-show="resizeable" class="__sun-design-window-resize-t__" @mousedown="onDragMouseDown('top', $event)" />
+        <div v-show="resizeable" class="__sun-design-window-resize-b__" @mousedown="onDragMouseDown('bottom', $event)" />
+        <div v-show="resizeable" class="__sun-design-window-resize-tr__"
+            @mousedown="onDragMouseDown('top-right', $event)" />
+        <div v-show="resizeable" class="__sun-design-window-resize-tl__" @mousedown="onDragMouseDown('top-left', $event)" />
+        <div v-show="resizeable" class="__sun-design-window-resize-br__"
+            @mousedown="onDragMouseDown('bottom-right', $event)" />
+        <div v-show="resizeable" class="__sun-design-window-resize-bl__"
+            @mousedown="onDragMouseDown('bottom-left', $event)" />
     </SunPopup>
 </template>
 
@@ -67,7 +74,26 @@ import SunScrollContainer from '../scrollcontainer/SunScrollContainer.vue';
 import SunColorPicker from '../colorpicker/SunColorPicker.vue';
 import { X, AppWindow, Minimize, Maximize, Globe } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, ref } from 'vue';
-import { addWindow, focusWindow, removeWindow } from './SunWindowConstants';
+import { WindowTarget, addWindow, focusWindow, removeWindow } from './SunWindowConstants';
+
+// props
+const props = withDefaults(
+    defineProps<{
+        exclusive?: boolean,
+        borderless?: boolean,
+        resizeable?: boolean,
+    }>(),
+    {
+        exclusive: false,
+        borderless: false,
+        resizeable: true,
+    }
+);
+
+// slots
+defineSlots<{
+    default(props: { drag: (evt: MouseEvent) => void }): void,
+}>();
 
 // datas
 const popup_ref = ref<InstanceType<typeof SunPopup> | undefined>();
@@ -86,6 +112,9 @@ let drag_type = 'none';
 const { id, layer } = addWindow();
 
 // container
+function drag(evt: MouseEvent) {
+    onDragMouseDown('drag', evt);
+}
 function onDragMouseDown(type: string, evt: MouseEvent) {
     mouse_last_x = evt.clientX;
     mouse_last_y = evt.clientY;

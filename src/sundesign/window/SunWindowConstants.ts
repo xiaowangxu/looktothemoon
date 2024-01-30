@@ -1,5 +1,19 @@
 import { ref, type Ref } from "vue";
 
+const WindowTargetId = '__sun-design-window-target__';
+export const WindowTarget = '#__sun-design-window-target__';
+
+export function useWindow() {
+    const window = document.body.querySelector(WindowTarget);
+    if (window === null) {
+        const win = document.createElement('div');
+        win.id = WindowTargetId;
+        win.style.position = 'absolute';
+        win.style.zIndex = '0';
+        document.body.appendChild(win);
+    }
+}
+
 let WindowId = 0;
 
 const Windows: { id: number, layer: Ref<number> }[] = [];
