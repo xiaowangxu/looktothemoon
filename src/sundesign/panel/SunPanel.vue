@@ -140,7 +140,9 @@ defineExpose({
 
     &.not-container
         &.drop-shadow
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.1)
+            // box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.1)
+            // box-shadow: 0 5px 6px -1px rgba(0, 0, 0, 0.05), 0 4px 6px 2px rgba(0, 0, 0, 0.01)
+            box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.05), 0 3px 8px 5px rgba(0, 0, 0, 0.02)
 
         &[data-size="small"]
             border-radius: panel-border-radius-small

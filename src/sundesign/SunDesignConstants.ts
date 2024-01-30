@@ -162,9 +162,9 @@ export function unobserveResize(el: Element, callback: ResizeObserverCallback) {
 
 // popup rect calculation
 
-const DefualtWindowMargin = 10;
-const DefaultOffset = 3;
-const DefaultMenuPopupSubMenuOffsetY = -4;
+export const DefualtWindowMargin = 10;
+export const DefaultOffset = 3;
+export const DefaultMenuPopupSubMenuOffsetY = -4;
 
 export type PreferedDirection = 0 | 1;
 

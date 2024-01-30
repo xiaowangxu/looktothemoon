@@ -1,7 +1,7 @@
 <template>
     <span ref="span_ref" class="__sun-design__ __sun-design-label__ sized"
-        :class="{ 'no-horizontal-padding': noHorizontalPadding, 'equal-padding': squared }" :style="{ '--font-color-normal': color }"
-        :data-size="size">
+        :class="{ 'no-horizontal-padding': noHorizontalPadding, 'equal-padding': squared, bold, italic }"
+        :style="{ '--font-color-normal': color }" :data-size="size">
         <slot />
     </span>
 </template>
@@ -19,6 +19,8 @@ const props = withDefaults(
         color?: string,
         noHorizontalPadding?: boolean,
         squared?: boolean,
+        bold?: boolean,
+        italic?: boolean,
     }>(),
     {
         size: 'normal',
@@ -51,5 +53,11 @@ defineExpose({
     &.no-horizontal-padding[data-size]
         padding-left: 0
         padding-right: 0
+
+    &.bold
+        font-weight: bold
+    
+    &.italic
+        font-style: italic
 
 </style>

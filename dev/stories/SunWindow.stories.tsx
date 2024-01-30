@@ -1,18 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
-import SunWindow from '../../src/sundesign/window/SunWindow.vue';
-import SunButton from '../../src/sundesign/button/SunButton.vue';
-import SunScrollContainerVue from '../../src/sundesign/scrollcontainer/SunScrollContainer.vue';
+import SunWindow from '../../src/sundesign/window/SunWindow';
+import SunWindowItem from './SunWindowItem.vue';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
-import { ref, type Raw, type Component, type FunctionalComponent, defineComponent } from 'vue';
-import { Menu } from 'lucide-vue-next';
+import { ref, type Raw, type Component, type FunctionalComponent, defineComponent, onBeforeUnmount } from 'vue';
 
-const meta: Meta<typeof SunWindow> = {
-    component: SunWindow,
+const meta: Meta<typeof SunWindowItem> = {
+    component: SunWindowItem,
 };
 
 export default meta;
-type Story = StoryObj<typeof SunWindow>;
+type Story = StoryObj<typeof SunWindowItem>;
 
 /*
  *👇 Render functions are a framework specific feature to allow you control on how the component renders.
@@ -22,21 +20,20 @@ type Story = StoryObj<typeof SunWindow>;
 export const Window: Story = {
     decorators: Decorators,
     render: (args) => ({
-        components: { SunWindow, SunScrollContainerVue, SunButton, Menu },
+        beforeUnmount() {
+            this.win0.close();
+            this.win1.close();
+            this.win2.close();
+        },
+        components: {  },
         setup() {
-            return { args };
+            const win0 = new SunWindow(SunWindowItem);
+            const win1 = new SunWindow(SunWindowItem);
+            const win2 = new SunWindow(SunWindowItem);
+            return { args, win0, win1, win2 };
         },
         template: `
-            <SunWindow></SunWindow>
-            <SunWindow borderless>
-                <template #default="{drag}">
-                    <SunScrollContainerVue style="flex: 1; width: 100%; overflow: hidden;">
-                        <div style="width: 600px; height: 600px; background-image: url('https://picsum.photos/600/600');" />
-                    </SunScrollContainerVue>
-                    <SunButton @mousedown="drag" style="position: absolute; margin: 4px;" squared><Menu /></SunButton>
-                </template>
-            </SunWindow>
-            <SunWindow></SunWindow>
+       
         `,
     }),
 };

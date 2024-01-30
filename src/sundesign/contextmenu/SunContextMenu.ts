@@ -44,7 +44,6 @@ export default class SunContextMenu<T extends UID = UID> {
         else {
             this.rect = { ...evt, width: 0, height: 0 };
         }
-        document.body.classList.add('__sun-design__', 'color-def');
         document.body.appendChild(this.root);
         this.vue = createApp(SunMenuPopup, {
             options: options,

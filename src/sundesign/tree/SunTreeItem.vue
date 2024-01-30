@@ -16,7 +16,8 @@
         </SunButton>
         <slot name="suffix" :option="option" />
         <div v-if="dragging_over && dragging_in === 'before'" class="__sun-design-tree-item-drop-indicator__ before" />
-        <div v-if="dragging_over && (!has_subs || folded) && dragging_in === 'after'" class="__sun-design-tree-item-drop-indicator__ after" />
+        <div v-if="dragging_over && (!has_subs || folded) && dragging_in === 'after'"
+            class="__sun-design-tree-item-drop-indicator__ after" />
     </div>
     <div v-if="has_subs" v-show="!folded" class="__sun-design-tree-container__ __sun-design-tree-relation__"
         :class="{ 'no-folder-line': !folderLine }" :style="{ '--Depth': depth + 1 }" :data-size="size"
@@ -33,7 +34,8 @@
                 <slot name="suffix" :option="option" />
             </template>
         </SunTreeItem>
-        <div v-if="dragging_over && !folded && dragging_in === 'after'" class="__sun-design-tree-item-drop-indicator__ after indent" />
+        <div v-if="dragging_over && !folded && dragging_in === 'after'"
+            class="__sun-design-tree-item-drop-indicator__ after indent" />
     </div>
 </template>
 
@@ -77,7 +79,7 @@ const props = withDefaults(
         folderLine: true,
         depth: 0,
         draggable: true,
-        unfoldDelay: 1000,
+        unfoldDelay: 500,
         picking: false,
     }
 );
@@ -151,8 +153,10 @@ function onDragEnter(evt: DragEvent) {
 }
 function onDragLeave(evt: DragEvent) {
     evt.preventDefault();
-    if (evt.currentTarget === null || evt.relatedTarget === null) return;
-    if (!(evt.currentTarget as HTMLElement).contains(evt.relatedTarget as HTMLElement)) {
+    if (evt.currentTarget === null) {
+        dragging_over.value = false;
+    }
+    else if (evt.relatedTarget === null || !(evt.currentTarget as HTMLElement).contains(evt.relatedTarget as HTMLElement)) {
         dragging_over.value = false;
     }
 }

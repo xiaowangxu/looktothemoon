@@ -36,7 +36,7 @@ const props = withDefaults(
         indentSize: 20,
         folderLine: true,
         draggable: true,
-        unfoldDelay: 1000,
+        unfoldDelay: 500,
         picking: false,
     }
 );

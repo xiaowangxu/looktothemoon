@@ -10,8 +10,9 @@
                         <SunButton class="__sun-design-select-item__" :size="size" flat
                             :color-scheme="(item as ItemMenuItem).colorScheme" :active="(item as ItemMenuItem).active"
                             :disabled="(item as ItemMenuItem).disabled"
-                            @mouseenter="onMouseEnter((item as ItemMenuItem).uid, (item as ItemMenuItem).subs, $event.target, $event.target)"
-                            @click="onItemButtonClick((item as ItemMenuItem).uid, (item as ItemMenuItem).subs, (item as ItemMenuItem).clickable, $event)"
+                            :hover="sub_menu_uid === item.uid && hover_uid === item.uid"
+                            @mouseenter="onMouseEnter(item.uid, (item as ItemMenuItem).subs, $event.target, $event.target)"
+                            @click="onItemButtonClick(item.uid, (item as ItemMenuItem).subs, (item as ItemMenuItem).clickable, $event)"
                             :key="item.uid">
                             <SunButtonItem :label="(item as ItemMenuItem).label" :icon="(item as ItemMenuItem).icon"
                                 :description="(item as ItemMenuItem).description"
@@ -21,7 +22,8 @@
                     </template>
                     <template v-else>
                         <component :is="(item as RenderMenuItem).render" :uid="item.uid" :hover="onMouseEnter"
-                            :expand="expandSubMenu" :click="onClick" :key="item.uid" />
+                            :expand="expandSubMenu" :click="onClick" :key="item.uid"
+                            :hovered="sub_menu_uid === item.uid && hover_uid === item.uid" />
                     </template>
                 </template>
             </SunPanelContainer>
@@ -51,6 +53,7 @@ type RenderMenuItem<T extends UID = UID> = {
     uid: T,
     render: Raw<Component<{
         uid: T,
+        hovered: boolean,
         hover: (uid: T, subs: MenuItem<T>[][] | undefined, expand_target: HTMLElement | Rect, focus_target: HTMLElement | undefined) => void,
         expand: (uid: T, subs: MenuItem<T>[][] | undefined, expand_target: HTMLElement | Rect, focus_target: HTMLElement | undefined) => void,
         click: (data: any, hasSubMenu: boolean, evt: Event) => void,
@@ -87,7 +90,7 @@ const props = withDefaults(
         scrollBarStateH: 'adaptive',
         scrollBarStateV: 'adaptive',
         scrollBarVisibility: 'hover-track',
-        minWidth: 200,
+        minWidth: 180,
         maxWidth: 460,
         showDelay: 150,
         hideDelay: 250,
@@ -145,9 +148,10 @@ function getPopupRect(contentMinSize: BoxSize, preferedDirection: PreferedDirect
 
 function clearState() {
     sub_menu.value = undefined;
+    sub_menu_uid.value = undefined;
     expand_ref = undefined;
     button_ref = undefined;
-    hover_uid = undefined;
+    hover_uid.value = undefined;
     hover_sub_menu = undefined;
     show_timer?.();
     show_timer = undefined
@@ -155,27 +159,30 @@ function clearState() {
     hide_timer = undefined;
 }
 
-let hover_uid: UID | undefined = undefined;
+const hover_uid = ref<UID | undefined>();
 let hover_sub_menu: MenuItem[][] | undefined = undefined;
 const sub_menu = ref<MenuItem[][] | undefined>();
+const sub_menu_uid = ref<UID | undefined>();
 
 let show_timer: TimerCanceller | undefined = undefined;
 const on_show_time_up = () => {
     sub_menu.value = hover_sub_menu;
+    sub_menu_uid.value = hover_sub_menu === undefined ? undefined : hover_uid.value;
     show_timer?.();
     show_timer = undefined;
 }
 let hide_timer: TimerCanceller | undefined = undefined;
 const on_hide_time_up = () => {
     sub_menu.value = undefined;
+    sub_menu_uid.value = undefined;
     button_ref = undefined;
     hide_timer?.();
     hide_timer = undefined;
 }
 
 function onMouseEnter(uid: UID, subs: MenuItem[][] | undefined, expand_target: HTMLElement | Rect | undefined, focus_target: HTMLElement | undefined) {
-    if (hover_uid === uid) return;
-    hover_uid = uid;
+    if (hover_uid.value === uid) return;
+    hover_uid.value = uid;
     hover_sub_menu = subs;
     if (hover_sub_menu !== undefined) {
         // hovered sub menu
@@ -197,7 +204,7 @@ function onMouseEnter(uid: UID, subs: MenuItem[][] | undefined, expand_target: H
 }
 
 function expandSubMenu(uid: UID, subs: MenuItem[][] | undefined, expand_target: HTMLElement | Rect | undefined, focus_target: HTMLElement | undefined): void {
-    hover_uid = uid;
+    hover_uid.value = uid;
     hover_sub_menu = subs;
     show_timer?.();
     show_timer = undefined;

@@ -1,7 +1,7 @@
 <template>
     <SunButtonPopup ref="buttonpopup_ref" class="__sun-design-transparent-bg__" style="position: relative;" v-bind="$attrs"
-        :size="size" :flat="flat" :bordered="bordered" :borderMask="borderMask" :rounded="rounded" :squared="squared" drop-shadow
-        mode="instance" vertical content-style="width: 100%; max-width: 180px;" :getPopupRect="getPopupRect"
+        :size="size" :flat="flat" :bordered="bordered" :borderMask="borderMask" :rounded="rounded" :squared="squared" :disabled="disabled"
+        drop-shadow mode="instance" vertical content-style="width: 100%; max-width: 180px;" :getPopupRect="getPopupRect"
         scrollable-indicators>
         <template #button>
             <div style="position: absolute; inset: 0;" :style="{ background: color_str }" />
@@ -21,13 +21,14 @@
             <SunPanelSeparator override-vertical />
             <!-- Picker -->
             <SunPanelContainer gap vertical style="min-height: 120px; flex-shrink: 0;">
-                <SunPanelContainer gap no-padding style="flex: 1;" :style="{ '--Color': hue_color }">
+                <SunPanelContainer gap no-padding style="flex: 1;"
+                    :style="{ '--HueColor': hue_color, '--Color': color_str_without_alpha }">
                     <SunRange v-memo="[hue]" v-model="hue" :active="false"
                         style="background: linear-gradient(0deg,red 0,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,red);"
                         vertical :min="0" :max="360" :progress="false"
                         :ticks="[0, 360 * 0.17, 360 * 0.33, 180, 360 * 0.67, 360 * 0.83, 360]" />
                     <SunRange2D v-memo="[lum_sat]" v-model="lum_sat" :active="false" style="flex: 1; border-radius: 6px; align-self: stretch;
-									background: linear-gradient(0deg, black, transparent), linear-gradient(90deg, white, var(--Color));"
+									background: linear-gradient(0deg, black, transparent), linear-gradient(90deg, white, var(--HueColor));"
                         :min="[0, 0]" :max="[100, 100]" />
                     <div class="__sun-design-transparent-bg__"
                         style="min-width: 24px; border-radius: 6px; position: relative; overflow: hidden;">
@@ -164,6 +165,7 @@ const props = withDefaults(
         // equalPadding?: boolean,
         rounded?: boolean,
         squared?: boolean,
+        disabled?: boolean,
     }>(),
     {
         size: 'normal',
@@ -172,6 +174,7 @@ const props = withDefaults(
         borderMask: 15,
         rounded: false,
         squared: false,
+        disabled: false,
     }
 );
 
@@ -180,7 +183,7 @@ const hue = ref(0);
 const hue_color = computed(() => `hsl(${hue.value}deg, 100%, 50%)`);
 const alpha = ref(1);
 const lum_sat = ref<[number, number]>([100, 100]);
-
+const color_str_without_alpha = computed(() => `hsl(${hue.value}deg, ${lum_sat.value[0]}%, ${lum_sat.value[1]}%)`);
 const color_str = computed(() => `hsl(${hue.value}deg, ${lum_sat.value[0]}%, ${lum_sat.value[1]}%, ${alpha.value})`);
 
 const {
