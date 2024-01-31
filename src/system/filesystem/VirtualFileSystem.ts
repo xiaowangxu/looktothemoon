@@ -1,4 +1,5 @@
 import { Result } from "../utils/Result";
+import { SignalEmitter } from "../utils/SignalEmitter";
 import { FileSystemPath } from "./FileSystemPath";
 import { save_FileSystem, type FileSystemDataInstance, load_FileSystem } from './fs_saver_loader/FileSystemSaverLoader.mjs';
 
@@ -25,6 +26,15 @@ export enum VfsOperationResult {
     NotFound,
 }
 
+export type VfsQueryResult = {
+    id: VfsId,
+    parent?: VfsId,
+    type: 'file' | 'directory' | 'unknown',
+    name?: string,
+    mode: VfsMode,
+    subs?: VfsId[],
+}
+
 // #endregion
 
 export class VirtualFileSystem {
@@ -37,6 +47,9 @@ export class VirtualFileSystem {
 
     private _vfs_id = 1;
     private get vfs_id() { return this._vfs_id++; }
+
+    // signal
+    public readonly signal_node_modify: SignalEmitter<(action: 'attach' | 'detach' | 'rename', id: VfsId) => void> = new SignalEmitter();
 
     constructor() {
         const dir = new VfsDirectoryNode(VirtualFileSystem.RootVfsId, this);
@@ -111,7 +124,8 @@ export class VirtualFileSystem {
         if (this.is_OrphanNode(_parent.id)) return VfsOperationResult.DstInvalid;
         _node.parent = _parent.id;
         _parent.subs.add(_node.id);
-        if (!this.is_OrphanNode(_parent.id)) this.attach_NodeInternal(_node.id);
+        this.attach_NodeInternal(_node.id);
+        this.signal_node_modify.defer('attach', _node.id);
         return VfsOperationResult.Ok;
     }
 
@@ -135,6 +149,7 @@ export class VirtualFileSystem {
         _node.parent = undefined;
         _parent.subs.delete(_node.id);
         this.detach_NodeInternal(_node.id);
+        this.signal_node_modify.defer('detach', _node.id);
         return VfsOperationResult.Ok;
     }
 
@@ -177,6 +192,7 @@ export class VirtualFileSystem {
         const _node = this.get_Node(node);
         if (_node === undefined) return VfsOperationResult.SrcInvalid;
         _node.name = name;
+        this.signal_node_modify.defer('rename', _node.id);
         return VfsOperationResult.Ok;
     }
 
@@ -314,9 +330,17 @@ export class VirtualFileSystem {
 
     // #endregion
 
-    // api
+    // #region api
 
-    public lookup(path: FileSystemPath): Result<VfsId, VfsOperationResult> {
+    private get_NonOrphanNode(id: VfsId) {
+        return this.is_OrphanNode(id) ? undefined : this.get_Node(id);
+    }
+
+    public lookup(path: VfsId | FileSystemPath): Result<VfsId, VfsOperationResult> {
+        if (!(path instanceof FileSystemPath)) {
+            // if is vfsid return it, this will not check its existence
+            return Result.Ok(path);
+        }
         if (!path.is_valid || !path.is_absolute) return Result.Error(VfsOperationResult.InputsInvalid);
         let root = VirtualFileSystem.RootVfsId;
         for (const { item, is_file } of path.get_IgnoredRootIter()) {
@@ -334,7 +358,11 @@ export class VirtualFileSystem {
         return Result.Ok(root);
     }
 
-    public touch(path: FileSystemPath, mode?: VfsMode): Result<VfsId, VfsOperationResult> {
+    public touch(path: VfsId | FileSystemPath, mode?: VfsMode): Result<VfsId, VfsOperationResult> {
+        if (!(path instanceof FileSystemPath)) {
+            // if is vfsid return it, this will not check its existence
+            return Result.Ok(path);
+        }
         if (!path.is_valid || !path.is_absolute) return Result.Error(VfsOperationResult.SrcInvalid);
         let root = VirtualFileSystem.RootVfsId;
         for (const { item, is_file } of path.get_IgnoredRootIter()) {
@@ -364,7 +392,7 @@ export class VirtualFileSystem {
         return Result.Ok(root);
     }
 
-    public remove(path: FileSystemPath): VfsOperationResult {
+    public remove(path: VfsId | FileSystemPath): VfsOperationResult {
         const node = this.lookup(path);
         if (node.failed) return node.expect_Error();
         const _node = node.expect();
@@ -374,7 +402,7 @@ export class VirtualFileSystem {
         return VfsOperationResult.Ok;
     }
 
-    public open(path: FileSystemPath, mode: VfsMode, create_file: boolean = true) {
+    public open(path: VfsId | FileSystemPath, mode: VfsMode, create_file: boolean = true) {
         const node = create_file ? this.touch(path, mode) : this.lookup(path);
         if (node.failed) return node;
         const _node = node.expect();
@@ -385,13 +413,13 @@ export class VirtualFileSystem {
         return this.close_Handler(handler);
     }
 
-    public rename(path: FileSystemPath, name: string, unique: boolean = true) {
+    public rename(path: VfsId | FileSystemPath, name: string, unique: boolean = true) {
         const node = this.lookup(path);
         if (node.failed) return node.expect_Error();
         const _node = node.expect();
         if (unique) {
             // check name's exist
-            const __node = this.get_Node(_node);
+            const __node = this.get_NonOrphanNode(_node);
             if (__node === undefined || __node.parent === undefined) return VfsOperationResult.SrcInvalid;
             const res = this.find_Node(__node.parent, name);
             if (res.failed) {
@@ -405,7 +433,7 @@ export class VirtualFileSystem {
         return this.set_NodeName(_node, name);
     }
 
-    public flush(path: FileSystemPath, handler: VfsId, create_file: boolean = false, create_mode?: VfsMode) {
+    public flush(path: VfsId | FileSystemPath, handler: VfsId, create_file: boolean = false, create_mode?: VfsMode) {
         const _handler = this.get_Handler(handler);
         if (_handler === undefined) return VfsOperationResult.InputsInvalid;
         if (_handler.write_buffer === undefined) return VfsOperationResult.Ok;
@@ -434,46 +462,60 @@ export class VirtualFileSystem {
         return VfsOperationResult.Ok;
     }
 
-    public list(dir: VfsId): Result<VfsId[], VfsOperationResult>;
-    public list(path: FileSystemPath): Result<VfsId[], VfsOperationResult>;
     public list(src: VfsId | FileSystemPath): Result<VfsId[], VfsOperationResult> {
         if (src instanceof FileSystemPath) {
             const _src = this.lookup(src);
             if (_src.failed) return Result.Error(_src.expect_Error());
             src = _src.expect();
         }
-        const dir = this.get_Node(src);
+        const dir = this.get_NonOrphanNode(src);
         if (dir === undefined || !(dir instanceof VfsDirectoryNode)) return Result.Error(VfsOperationResult.SrcInvalid);
         return Result.Ok([...dir.subs]);
     }
 
-    public is_Directory(dir: VfsId): boolean;
-    public is_Directory(path: FileSystemPath): boolean;
+    public query(src: VfsId | FileSystemPath): Result<VfsQueryResult, VfsOperationResult> {
+        if (src instanceof FileSystemPath) {
+            const _src = this.lookup(src);
+            if (_src.failed) return Result.Error(_src.expect_Error());
+            src = _src.expect();
+        }
+        const node = this.get_NonOrphanNode(src);
+        if (node === undefined) return Result.Error(VfsOperationResult.SrcInvalid);
+        return Result.Ok({
+            id: node.id,
+            parent: node.parent,
+            type: (node instanceof VfsFileNode) ? 'file' : (node instanceof VfsDirectoryNode) ? 'directory' : 'unknown',
+            name: node.name,
+            mode: node.mode,
+            subs: (node instanceof VfsDirectoryNode) ? [...node.subs] : undefined,
+        });
+    }
+
     public is_Directory(src: VfsId | FileSystemPath): boolean {
         if (src instanceof FileSystemPath) {
             const _src = this.lookup(src);
             if (_src.failed) return false;
             src = _src.expect();
         }
-        const dir = this.get_Node(src);
+        const dir = this.get_NonOrphanNode(src);
         if (dir === undefined || !(dir instanceof VfsDirectoryNode)) return false;
         return true;
     }
 
-    public is_File(dir: VfsId): boolean;
-    public is_File(path: FileSystemPath): boolean;
     public is_File(src: VfsId | FileSystemPath): boolean {
         if (src instanceof FileSystemPath) {
             const _src = this.lookup(src);
             if (_src.failed) return false;
             src = _src.expect();
         }
-        const dir = this.get_Node(src);
+        const dir = this.get_NonOrphanNode(src);
         if (dir === undefined || !(dir instanceof VfsFileNode)) return false;
         return true;
     }
 
-    // system
+    // #endregion
+
+    // #region system
 
     public dump(root_path: FileSystemPath) {
         const root = this.lookup(root_path);
@@ -489,7 +531,7 @@ export class VirtualFileSystem {
             const subs = [];
 
             for (const d of dir.expect()) {
-                const node = this.get_Node(d);
+                const node = this.get_NonOrphanNode(d);
                 if (node === undefined) continue;
 
                 const name = node.name;
@@ -502,7 +544,7 @@ export class VirtualFileSystem {
                     let buffer = undefined;
                     if ((node as VfsFileNode).handler !== undefined) {
                         const _buffer = this.get_HandlerBuffer((node as VfsFileNode).handler!);
-                        if (_buffer.failed || _buffer.expect() === undefined) {}
+                        if (_buffer.failed || _buffer.expect() === undefined) { }
                         else {
                             buffer = _buffer.expect()!.slice(0);
                         }
@@ -587,6 +629,8 @@ export class VirtualFileSystem {
             this.link_Block(file, blocks[block]);
         }
     }
+
+    // #endregion
 
     // debug
 
