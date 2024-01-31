@@ -1,5 +1,6 @@
 <template>
-    <SunPopup v-if="instance" :visible="opened" :rect="popup_rect" :stop-events="stopEvents" @cover-click="onCoverClick">
+    <SunPopup v-if="instance" :visible="opened" :rect="popup_rect" :stop-events="stopEvents" @cover-click="onCoverClick"
+        @cover-contextmenu="onCoverContextmenu">
         <SunPanel ref="panel_ref" class="__sun-design-measurepopuppanel-panel__" v-bind="$attrs" :size="size" bordered
             :vertical="vertical" :dropShadow="dropShadow" :container="container" :trap-focus="trapFocus"
             @trap-focus-out="emits('trapFocusOut', $event)" @mouseenter="emits('mouseenter', $event)"
@@ -81,6 +82,7 @@ const emits = defineEmits<{
     (event: 'beforeMeasure'): void,
     (event: 'afterMeasure'): void,
     (event: 'coverClick', evt: Event): void,
+    (event: 'coverContextmenu', evt: Event): void,
     (event: 'trapFocusOut', evt: TrapFocusOutEvent): void,
     (event: 'mouseenter', evt: MouseEvent): void,
     (event: 'mouseleave', evt: MouseEvent): void,
@@ -139,6 +141,10 @@ watch([windowWidth, windowHeight], () => {
 
 function onCoverClick(evt: Event) {
     emits('coverClick', evt);
+}
+
+function onCoverContextmenu(evt: Event) {
+    emits('coverContextmenu', evt);
 }
 
 function refreshPopupContentMinSize() {

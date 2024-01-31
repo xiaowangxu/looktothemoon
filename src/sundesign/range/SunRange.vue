@@ -262,11 +262,12 @@ nob-container-width-large = nob-width-large + nob-padding-large * 2
 
 .__sun-design-range-progress__
     position: absolute
-    background-color: var(--border-color-normal)
+    background-color: var(--border-color-disabled)
     pointer-events: none
 
     .__sun-design-range-container__.disabled > .__sun-design-range-region__ > &
-        background-color: var(--border-color-disabled)
+        display: none
+        // background-color: var(--border-color-disabled)
 
     .__sun-design-range-container__[data-size="small"] > .__sun-design-range-region__ > &
         height: 100%
@@ -314,19 +315,20 @@ nob-container-width-large = nob-width-large + nob-padding-large * 2
         border-color: var(--placeholder-color-disabled)
 
     .__sun-design-range-container__ > .__sun-design-range-region__ > &
-        transform: translate(-50%, 0)
         border-left: border-width var(--placeholder-color) solid
         border-top: none
-        left: calc(var(--TickPercentage) * 100%)
+        left: 'calc(var(--TickPercentage) * 100% - %s)' % (border-width / 2)
         top: ((100% - tick-size) / 2)
         bottom: ((100% - tick-size) / 2)
         right: unset
 
+    .__sun-design-range-container__.vertical.disabled > .__sun-design-range-region__ > &
+        border-color: var(--placeholder-color-disabled)
+
     .__sun-design-range-container__.vertical > .__sun-design-range-region__ > &
-        transform: translate(0, -50%)
         border-top: border-width var(--placeholder-color) solid
         border-left: none
-        top: calc((1 - var(--TickPercentage)) * 100%)
+        top: 'calc((1 - var(--TickPercentage)) * 100% - %s)' % (border-width / 2)
         left: ((100% - tick-size) / 2)
         right: ((100% - tick-size) / 2)
         bottom: unset

@@ -1,15 +1,19 @@
 <template>
     <div class="__sun-design-tree-list-container__">
-        <SunButton ref="button_ref" class="__sun-design-tree-item-container__ no-pressed-color" :draggable="draggable"
-            :size="size" :disabled="option.disabled" :active="option.active" :color-scheme="option.colorScheme" flat
-            no-pressed-color @click="onClick" @dragover="onDragOver" @dragenter="onDragEnter" @dragleave="onDragLeave"
-            @drop="onDrop">
-            <ChevronRight v-if="folded" class="__sun-design-tree-arrow__" :class="{ 'no-subs': !has_subs }" />
-            <ChevronDown v-else class="__sun-design-tree-arrow__" :class="{ 'no-subs': !has_subs }" />
+        <SunButton ref="button_ref" class="__sun-design-tree-item-container__ no-pressed-color" :size="size"
+            :disabled="option.disabled" :active="option.active" :color-scheme="option.colorScheme" flat no-pressed-color
+            @click="onClick">
             <SunCheckbox v-if="picking" @click.stop :size="size" :disabled="option.disabled" :checked="option.checked" />
-            <slot name="prepand" :option="option" />
-            <SunItemButtonEditable ref="itembutton_ref" :label="option.label" :icon="option.icon"
-                :description="option.description" />
+            <div class="__sun-design-tree-drag-zoom__" :class="{ draggable }" :draggable="draggable"
+                @dragstart="onDragStart" @dragover="onDragOver" @dragenter="onDragEnter" @dragleave="onDragLeave"
+                @drop="onDrop">
+                <ChevronRight v-if="folded" class="__sun-design-tree-arrow__" :class="{ 'no-subs': !has_subs }" />
+                <ChevronDown v-else class="__sun-design-tree-arrow__" :class="{ 'no-subs': !has_subs }" />
+
+                <slot name="prepand" :option="option" />
+                <SunItemButtonEditable ref="itembutton_ref" :label="option.label" :icon="option.icon"
+                    :description="option.description" />
+            </div>
             <slot name="append" :option="option" />
             <div v-if="dragging_over && dragging_in === 'in'"
                 class="__sun-design__ __sun-design-tree-item-dropin-indicator__ bordered" :data-size="size" />
@@ -45,8 +49,8 @@ import SunButton from '../button/SunButton.vue';
 import SunItemButtonEditable from '../item/SunButtonItemEditable.vue';
 import SunCheckbox from '../checkbox/SunCheckbox.vue';
 import { ChevronRight, ChevronDown } from 'lucide-vue-next';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
-import { type Size, type Item, type UID, type TimerCanceller, timer } from '../SunDesignConstants';
+import { computed, onBeforeUnmount, ref, watch, nextTick } from 'vue';
+import { type Size, type Item, type UID, type TimerCanceller, timer, setDragMessage } from '../SunDesignConstants';
 
 type ItemTreeItem<T extends UID = UID> = Omit<Item<T>, 'shortcut' | 'sub'> & { checked?: boolean, subs?: TreeItem<T>[] };
 // type RenderTreeItem<T extends UID = UID> = {
@@ -126,6 +130,9 @@ function clearUnfoldTimer() {
     dragover_unfold_timer?.();
     dragover_unfold_timer = undefined;
 }
+async function onDragStart(evt: DragEvent) {
+    setDragMessage(evt, props.option.label);
+}
 function onDragOver(evt: DragEvent) {
     evt.preventDefault();
     if (!button_ref.value?.button) {
@@ -161,7 +168,7 @@ function onDragLeave(evt: DragEvent) {
     }
 }
 function onDrop(evt: DragEvent) {
-    console.log(">>>>", dragging_in.value);
+    console.log(">>>>", props.option.uid, dragging_in.value);
     dragging_over.value = false;
     clearUnfoldTimer();
 }
@@ -209,18 +216,31 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
     overflow: hidden
     padding-top: 0px !important
     padding-bottom: 0px !important
-    padding-left: calc(var(--Depth) * var(--Indent)) !important
     position: relative
+
+    .__sun-design-tree-container__[data-size="small"] > .__sun-design-tree-list-container__ > &
+        padding-left: 'calc(var(--Depth) * var(--Indent) + %s)' % (padding-extend-small)
+    .__sun-design-tree-container__[data-size="normal"] > .__sun-design-tree-list-container__ > &
+        padding-left: 'calc(var(--Depth) * var(--Indent) + %s)' % (padding-extend-normal)
+    .__sun-design-tree-container__[data-size="large"] > .__sun-design-tree-list-container__ > &
+        padding-left: 'calc(var(--Depth) * var(--Indent) + %s)' % (padding-extend-large)
+
+.__sun-design-tree-drag-zoom__   
+    display: inline-flex
+    gap: inherit
+    flex: 1
+    align-self: stretch
+    border-radius: inherit
+    align-items: center
+    overflow: hidden
+    width: 0
+    &.draggable
+        & > *
+            pointer-events: none
 
 .__sun-design-tree-arrow__
     &.no-subs
         color: var(--font-color-disabled)
-    .__sun-design-tree-container__[data-size="small"] > .__sun-design-tree-list-container__ > .__sun-design-button__ > &
-        margin-left: padding-extend-small
-    .__sun-design-tree-container__[data-size="normal"] > .__sun-design-tree-list-container__ > .__sun-design-button__ > &
-        margin-left: padding-extend-normal
-    .__sun-design-tree-container__[data-size="large"] > .__sun-design-tree-list-container__ > .__sun-design-button__ > &
-        margin-left: padding-extend-large
 
 .__sun-design-tree-relation__
     position: relative
@@ -232,13 +252,12 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
         position: absolute
         height: 100%
         border-left: border-width var(--border-color-normal) solid
-        transform: translate(-50%, 0)
     &[data-size="small"]::after
-        left: 'calc((var(--Depth) - 1) * var(--Indent) + %s)' % (relative-offset-small)
+        left: 'calc((var(--Depth) - 1) * var(--Indent) + %s)' % (relative-offset-small - border-width / 2)
     &[data-size="normal"]::after
-        left: 'calc((var(--Depth) - 1) * var(--Indent) + %s)' % (relative-offset-normal)
+        left: 'calc((var(--Depth) - 1) * var(--Indent) + %s)' % (relative-offset-normal - border-width / 2)
     &[data-size="large"]::after
-        left: 'calc((var(--Depth) - 1) * var(--Indent) + %s)' % (relative-offset-large)
+        left: 'calc((var(--Depth) - 1) * var(--Indent) + %s)' % (relative-offset-large - border-width / 2)
 
 .__sun-design-tree-item-drop-indicator__
     position absolute

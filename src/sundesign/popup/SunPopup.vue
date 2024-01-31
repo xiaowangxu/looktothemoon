@@ -1,6 +1,7 @@
 <template>
     <Teleport :to="teleportTarget" :disabled="teleportDisabled">
-        <SunPopupCover ref="cover_ref" v-bind="$attrs" @click="emits('coverClick', $event)" :stop-events="stopEvents && visible">
+        <SunPopupCover ref="cover_ref" v-bind="$attrs" @click="emits('coverClick', $event)"
+            @contextmenu="emits('coverContextmenu', $event)" :stop-events="stopEvents && visible">
             <div ref="container_div_dom" class="__sun-design__ __sun-design-popup-container__"
                 :class="{ invisible: !visible }" :style="position_style">
                 <slot :rect="rect" />
@@ -45,6 +46,7 @@ defineSlots<{
 // emits
 const emits = defineEmits<{
     (event: 'coverClick', evt: Event): void,
+    (event: 'coverContextmenu', evt: Event): void,
 }>();
 
 // datas

@@ -317,3 +317,21 @@ export class TrapFocusOutEvent extends Event {
         this._defaultPrevented = true;
     }
 }
+
+// drag
+
+export function setDragMessage(evt: DragEvent, message: string = '放置项目', size: Size = 'small', offset: BoxSize = { width: -18, height: -8 }) {
+    const dom = document.createElement('div');
+    dom.className = '__sun-design__ __sun-design-button-like__ colored sized bordered border-masked';
+    dom.innerHTML = `<span class="__sun-design__ __sun-design-label__">${message}</span>`;
+    dom.dataset.size = size;
+    dom.style.overflow = 'hidden';
+    dom.style.maxWidth = '160px';
+    dom.style.position = 'fixed';
+    dom.style.bottom = '-1000px';
+    document.body.appendChild(dom);
+    evt.dataTransfer!.setDragImage(dom, offset.width, offset.height);
+    setTimeout(() => {
+        document.body.removeChild(dom);
+    }, 0);
+}

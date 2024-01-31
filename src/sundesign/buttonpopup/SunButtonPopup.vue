@@ -8,7 +8,7 @@
     <SunMeasurePopupPanel ref="measurepopuppanel_ref" :mode="mode" :visible="opened" :style="panelStyle"
         :content-style="contentStyle" :vertical="vertical" :dropShadow="dropShadow" :container="container"
         :scrollableIndicators="scrollableIndicators" :scrollBarStateH="scrollBarStateH" :scrollBarStateV="scrollBarStateV"
-        :scrollBarVisibility="scrollBarVisibility" :get-popup-rect="getPopupPanelRect" @cover-click="onCoverClick"
+        :scrollBarVisibility="scrollBarVisibility" :get-popup-rect="getPopupPanelRect" @cover-click="onCoverClick"  @cover-contextmenu="onCoverClick"
         :measureIgnoreMaxHeight="measureIgnoreMaxHeight" :measureIgnoreMinHeight="measureIgnoreMinHeight"
         :measureIgnoreMaxWidth="measureIgnoreMaxWidth" :measureIgnoreMinWidth="measureIgnoreMinWidth"
         @before-measure="emits('beforeMeasure')" @after-measure="emits('afterMeasure')" @trap-focus-out="onTrapFocusOut">

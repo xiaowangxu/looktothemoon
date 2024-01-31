@@ -11,9 +11,10 @@ import SunColorPicker from '@/sundesign/colorpicker/SunColorPicker.vue';
 import { Decorators } from './SunDesignArgs';
 import { StepBack, StepForward, SkipBack, SkipForward, Play } from 'lucide-vue-next';
 import { ColorSchemeBlue, ColorSchemeRed, ColorSchemeGreen } from '../../src/sundesign/SunDesignConstants';
+import { ref } from 'vue';
 
 const meta: Meta<typeof SunControlGroup> = {
-	component: SunControlGroup,
+    component: SunControlGroup,
 };
 
 export default meta;
@@ -25,14 +26,15 @@ type Story = StoryObj<typeof SunControlGroup>;
  * to learn how to use render functions.
  */
 export const ControlGroup: Story = {
-	decorators: Decorators,
-	tags: ['autodocs'],
-	render: (args) => ({
-		components: { SunControlGroup, SunControlGroupRow, SunColorPicker, SunNumberEdit, SunButton, SunButtonLike, SunSelect, SunLineEdit, StepBack, StepForward, SkipBack, SkipForward, Play },
-		setup() {
-			return { args, ColorSchemeBlue, ColorSchemeRed, ColorSchemeGreen };
-		},
-		template: `
+    decorators: Decorators,
+    tags: ['autodocs'],
+    render: (args) => ({
+        components: { SunControlGroup, SunControlGroupRow, SunColorPicker, SunNumberEdit, SunButton, SunButtonLike, SunSelect, SunLineEdit, StepBack, StepForward, SkipBack, SkipForward, Play },
+        setup() {
+            const progress = ref(0);
+            return { args, ColorSchemeBlue, ColorSchemeRed, ColorSchemeGreen, progress };
+        },
+        template: `
 			<!-- single -->
 			<SunControlGroup>
 				<SunControlGroupRow>
@@ -93,9 +95,9 @@ export const ControlGroup: Story = {
 							}
 						]
 					]" :preferedDirection="1"/>
-					<SunNumberEdit :value="256" v-bind="args" suffix="/ 3:44" style="width: 120px;" :step-button="true">
+					<SunNumberEdit :value="256" v-bind="args" style="width: 140px;" progress :min="0" :max="224" :step="1" :display-percision="1" display-remove-tailing-zeros :display-formatter="v => \`\$\{Math.trunc(v / 60).toFixed(0).padStart(2, '0')\}:\$\{Math.trunc(v % 60).toFixed(0).padStart(2, '0')\}.\$\{(v % 1).toFixed(2).slice(2)\}\`" v-model="progress">
 						<template #suffix>
-							/ 4:33
+							/ 3:44
 						</template>
 					</SunNumberEdit>
 				</SunControlGroupRow>
@@ -128,9 +130,9 @@ export const ControlGroup: Story = {
 				</SunControlGroupRow>
 			</SunControlGroup>
 		`,
-	}),
-	argTypes: {
-	},
-	args: {
-	},
+    }),
+    argTypes: {
+    },
+    args: {
+    },
 };

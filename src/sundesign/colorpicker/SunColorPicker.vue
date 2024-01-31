@@ -9,7 +9,7 @@
         <template #popup>
             <!-- Previewer -->
             <SunPanelContainer gap style="flex-shrink: 0;">
-                <div class="__sun-design-transparent-bg__"
+                <div class="__sun-design__ __sun-design-transparent-bg__  bordered"
                     style="flex: 1; position: relative; overflow: hidden; border-radius: 6px;">
                     <div style="position: absolute; inset: 0; right: 50%;" :style="{ background: color_str }" />
                     <div style="position: absolute; inset: 0; left: 50%; background: rgba(123, 233, 12, 0.5);" />
@@ -46,23 +46,23 @@
                 <SunPanelContainer gap no-padding vertical style="flex: 1;">
                     <SunControlGroup>
                         <SunControlGroupRow>
-                            <SunNumberEdit :value="255" style="flex: 1;">
-                                <template #prefix> {{ edit_label_r }} </template>
+                            <SunNumberEdit :model-value="255" :min="0" :max="255" :step="1" progress progress-color="var(--border-color-disabled)" style="flex: 1;">
+                                <template #suffix> {{ edit_label_r }} </template>
                             </SunNumberEdit>
                         </SunControlGroupRow>
                         <SunControlGroupRow>
-                            <SunNumberEdit :value="255" style="flex: 1;">
-                                <template #prefix> {{ edit_label_g }} </template>
+                            <SunNumberEdit :model-value="255" :min="0" :max="255" :step="1" progress progress-color="var(--border-color-disabled)" style="flex: 1;">
+                                <template #suffix> {{ edit_label_g }} </template>
                             </SunNumberEdit>
                         </SunControlGroupRow>
                         <SunControlGroupRow>
-                            <SunNumberEdit :value="255" style="flex: 1;">
-                                <template #prefix> {{ edit_label_b }} </template>
+                            <SunNumberEdit :model-value="255" :min="0" :max="255" :step="1" progress progress-color="var(--border-color-disabled)" style="flex: 1;">
+                                <template #suffix> {{ edit_label_b }} </template>
                             </SunNumberEdit>
                         </SunControlGroupRow>
                         <SunControlGroupRow>
-                            <SunNumberEdit :value="255" style="flex: 1;">
-                                <template #prefix> {{ edit_label_a }} </template>
+                            <SunNumberEdit :model-value="255" :min="0" :max="255" :step="1" style="flex: 1;">
+                                <template #suffix> {{ edit_label_a }} </template>
                             </SunNumberEdit>
                         </SunControlGroupRow>
                     </SunControlGroup>

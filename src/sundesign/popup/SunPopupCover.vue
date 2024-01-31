@@ -1,7 +1,7 @@
 <template>
     <div ref="div_ref" class="__sun-design-popup-cover__" :class="{ 'stop-events': stopEvents }"
-        @mousedown.self="onMouseDownSelf" @contextmenu.prevent @click.stop.self="onClickSelf" @keydown.esc.stop="onEsc"
-        tabindex="-1">
+        @mousedown.self="onMouseDownSelf" @click.stop.self="onClickSelf"
+        @contextmenu.stop.self="onContextmenuSelf" @keydown.esc.stop="onEsc" tabindex="-1">
         <slot />
     </div>
 </template>
@@ -23,21 +23,31 @@ const props = withDefaults(
 // events
 const emits = defineEmits<{
     (event: 'click', evt: Event): void
+    (event: 'contextmenu', evt: Event): void
 }>();
 
 // datas
-const mouse_down_self = ref(false);
+let mouse_down_self = false;
 const div_ref = ref<HTMLDivElement | null>(null);
 
 function onMouseDownSelf() {
-    mouse_down_self.value = true;
+    mouse_down_self = true;
 }
 
 function onClickSelf(evt: Event) {
-    if (mouse_down_self.value === true) {
+    if (mouse_down_self === true) {
         emits('click', evt);
     }
-    mouse_down_self.value = false;
+    mouse_down_self = false;
+}
+
+function onContextmenuSelf(evt: Event) {
+    if (mouse_down_self === true) {
+        emits('contextmenu', evt);
+    }
+    mouse_down_self = false;
+    // call preventDefault after evt is propogated
+    evt.preventDefault();
 }
 
 function onEsc(evt: Event) {

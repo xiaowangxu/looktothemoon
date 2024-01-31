@@ -1,8 +1,9 @@
 <template>
     <SunMeasurePopupPanel ref="measurepopuppanel_ref" vertical :mode="mode" :visible="visible"
         class="__sun-design-menupopup-panel__" content-style="width: 100%;" :style="panelStyle" :stop-events="stopEvents"
-        :get-popup-rect="getPopupPanelRect" @cover-click="onClickOutside" :scrollableIndicators="scrollableIndicators"
-        :scrollBarStateH="scrollBarStateH" :scrollBarStateV="scrollBarStateV" :scrollBarVisibility="scrollBarVisibility">
+        :get-popup-rect="getPopupPanelRect" @cover-click="onClickOutside" @cover-contextmenu="onClickOutside"
+        :scrollableIndicators="scrollableIndicators" :scrollBarStateH="scrollBarStateH" :scrollBarStateV="scrollBarStateV"
+        :scrollBarVisibility="scrollBarVisibility" @trap-focus-out="onTrapFocusOut">
         <template v-for="option, idx in  options ">
             <SunPanelContainer vertical style="width: 100%;">
                 <template v-for="item in  option ">
@@ -45,7 +46,7 @@ import SunPanelContainer from '../panel/SunPanelContainer.vue';
 import SunPanelSeparator from '../panel/SunPanelSeparator.vue';
 import { type ScrollBarState } from '../scrollcontainer/SunScrollContainer.vue';
 import { type ScrollBarVisibility } from '../scrollcontainer/SunScrollBar.vue';
-import { type Item, type Rect, type BoxSize, type PopupOpenMode, type Size, calcMenuPopupRect, type UID, type TimerCanceller, type PreferedDirection, timer } from '../SunDesignConstants';
+import { type Item, type Rect, type BoxSize, type PopupOpenMode, type Size, calcMenuPopupRect, type UID, type TimerCanceller, type PreferedDirection, timer, TrapFocusOutEvent } from '../SunDesignConstants';
 import { onBeforeUnmount, ref, type Component, type Raw, toRef, watch } from 'vue';
 
 type ItemMenuItem<T extends UID = UID> = Omit<Item<T>, 'sub'> & { subs?: MenuItem<T>[][], clickable?: boolean };
@@ -99,6 +100,7 @@ const props = withDefaults(
 
 // emits
 const emits = defineEmits<{
+    (event: 'trapFocusOut', evt: TrapFocusOutEvent): void,
     (event: 'click', data: any, hasSubMenu: boolean, evt: Event): void,
     (event: 'clickOutside', evt: Event): void,
 }>();
@@ -247,11 +249,34 @@ function onClickOutside(evt: Event): void {
     emits('clickOutside', evt);
 }
 
+function onTrapFocusOut(evt: TrapFocusOutEvent) {
+    emits('trapFocusOut', evt);
+}
+
+function focusTop() {
+    measurepopuppanel_ref.value?.focusTop();
+}
+
+function focusFirst() {
+    measurepopuppanel_ref.value?.focusFirst();
+}
+
+function focusLast() {
+    measurepopuppanel_ref.value?.focusLast();
+}
+
 onBeforeUnmount(() => {
     show_timer?.();
     show_timer = undefined
     hide_timer?.();
     hide_timer = undefined;
+});
+
+// exposes
+defineExpose({
+    focusTop,
+    focusFirst,
+    focusLast,
 });
 
 </script>

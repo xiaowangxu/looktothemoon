@@ -120,7 +120,7 @@ export const Tree: Story = {
                         subs: [
                             {
                                 uid: 0,
-                                label: 'test',
+                                label: 'test12783gdwegyuerg7834f78',
                                 icon: 'Figma',
                                 description: 'test',
                                 subs: [
@@ -149,7 +149,7 @@ export const Tree: Story = {
                                     {
                                         uid: 1,
                                         icon: 'Cog',
-                                        label: 'sub 0',
+                                        label: '这是一个测试，这是一个测试，这是一个测试，这是一个测试，这是一个测试',
                                     },
                                     {
                                         uid: 1,

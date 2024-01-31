@@ -1,41 +1,44 @@
 <template>
     <template v-if="!inputing || disabled || !allowInput">
-        <SunButton class="__sun-design-numberedit-container__ no-pressed-color" :class="{ hover, dragging }" :size="size"
-            :flat="flat" :color-scheme="colorScheme" :border-mask="borderMask" @click="onInputClick" :disabled="disabled">
-            <button v-if="stepButton"
+        <SunButton class="__sun-design-numberedit-container__ no-pressed-color"
+            :class="{ hover, dragging, 'no-hover-color': dragging }" :size="size" :flat="flat" :color-scheme="colorScheme"
+            :border-mask="borderMask" @mousedown="onContainerMouseDown" @click="onClick" :disabled="disabled">
+            <button v-if="show_step_button" :disabled="disabled || !show_decrease"
                 class="__sun-design__ __sun-design-numberedit-dec__ __sun-design-button-like__ colored"
-                :class="{ bordered: !flat, dragging }" :data-size="size" @click.stop="() => { console.log('dec') }"
-                :disabled="disabled">
-                <ChevronLeft />
+                :class="{ bordered: !flat, dragging }" :data-size="size" @mousedown.stop @click.stop="decrease">
+                <slot name="decrease">
+                    <ChevronLeft />
+                </slot>
             </button>
-            <div class="__sun-design-numberedit-display-container__"
-                :class="{ progress: progress, 'step-button': stepButton }">
+            <div class="__sun-design-numberedit-display-container__" :class="{ 'step-button': show_step_button }">
                 <span class="__sun-design__ __sun-design-numberedit-display__" :data-size="size">
                     <span v-if="$slots.prefix !== undefined" class="__sun-design-numberedit-prefix__" :class="{ disabled }">
                         <slot name="prefix" />
                     </span>
-                    <span class="__sun-design-numberedit-value__">{{ value }}</span>
+                    <span class="__sun-design-numberedit-value__">{{ display_value }}</span>
                     <span v-if="$slots.suffix !== undefined" class="__sun-design-numberedit-suffix__" :class="{ disabled }">
                         <slot name="suffix" />
                     </span>
                 </span>
             </div>
-            <button v-if="stepButton"
+            <button v-if="show_step_button" :disabled="disabled || !show_increase"
                 class="__sun-design__ __sun-design-numberedit-inc__ __sun-design-button-like__ colored"
-                :class="{ bordered: !flat, dragging }" :data-size="size" @click.stop="() => { console.log('inc') }"
-                :disabled="disabled">
-                <ChevronRight />
+                :class="{ bordered: !flat, dragging }" :data-size="size" @mousedown.stop @click.stop="increase">
+                <slot name="increase">
+                    <ChevronRight />
+                </slot>
             </button>
         </SunButton>
     </template>
     <template v-else>
         <form class="__sun-design__ __sun-design_numberedit-input-container__ sized colored border-masked"
             :class="{ bordered: !flat, hover }" :data-size="size" :data-border-mask="borderMask"
-            @submit.prevent="inputing = false" :style="colorScheme">
-            <input ref="input_ref" class="__sun-design__ __sun-design-numberedit-input__" :class="{
+            @submit.prevent="onSubmit(($event.target as any).label.value)" :style="colorScheme">
+            <input ref="input_ref" name="label" class="__sun-design__ __sun-design-numberedit-input__" :class="{
                 left: $slots.prefix === undefined && $slots.suffix !== undefined,
-                right: $slots.prefix !== undefined && $slots.suffix === undefined
-            }" :value="value" @blur="inputing = false" />
+                right: $slots.prefix !== undefined && $slots.suffix === undefined,
+            }" :value="inputEditFormatValue ? display_input_value : value"
+                @blur="onSubmit(($event.target as any).value)" @input="onInput(($event.target as any).value)" />
         </form>
     </template>
 </template>
@@ -45,8 +48,10 @@
 import '../SunDesignStyle.styl';
 import SunButton from '../button/SunButton.vue';
 import type { Size, BorderMask, ColorScheme } from '../SunDesignConstants';
+import { validateExpression, evalExpression } from './SunNumberEditConstants';
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
-import { ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { useVModel } from '@vueuse/core';
 
 // props
 const props = withDefaults(
@@ -57,10 +62,24 @@ const props = withDefaults(
         hover?: boolean,
         disabled?: boolean,
         colorScheme?: ColorScheme,
-        value?: number,
-        progress?: boolean,
         stepButton?: boolean,
         allowInput?: boolean,
+        allowDrag?: boolean,
+        inputEditFormatValue?: boolean,
+        displayPercision?: number,
+        displayRemoveTailingZeros?: boolean,
+        displayFormatter?: (val: number) => string,
+        // value
+        modelValue: number,
+        min?: number,
+        max?: number,
+        step?: number,
+        allowLess?: boolean,
+        allowGreater?: boolean,
+        dragFactor?: number,
+        dragFineFactor?: number,
+        valueSnapBase?: number,
+        valueSnapGap?: number,
     }>(),
     {
         size: 'normal',
@@ -68,17 +87,124 @@ const props = withDefaults(
         borderMask: 15,
         hover: false,
         disabled: false,
-        value: 0,
-        progress: false,
         stepButton: true,
+        allowDrag: true,
         allowInput: true,
+        inputEditFormatValue: true,
+        displayRemoveTailingZeros: false,
+        // value
+        allowLess: false,
+        allowGreater: false,
+        dragFactor: 0.5,
+        dragFineFactor: 0.1,
+        valueSnapBase: 0,
     }
 );
 
-// datas
-const inputing = ref(false);
-const input_ref = ref<HTMLInputElement | null>(null);
+// emits
+const emits = defineEmits<{
+    (event: 'update:modelValue', value: number): void,
+}>();
 
+const value = useVModel(props, 'modelValue', emits, { defaultValue: 0 });
+
+// datas
+const show_step_button = computed(() => !(props.disabled ?? false) && props.stepButton && props.step !== undefined && props.step !== 0);
+const show_increase = computed(() => props.allowGreater || props.max === undefined || value.value < props.max);
+const show_decrease = computed(() => props.allowLess || props.min === undefined || value.value > props.min);
+const display_input_value = computed(() => {
+    let s = props.displayPercision === undefined ? value.value.toString() : value.value.toFixed(props.displayPercision)
+    if (!props.displayRemoveTailingZeros || s.includes('.')) return s;
+    s = s.replace(/0+$/, '');
+    if (s.endsWith('.')) return s.slice(0, -1);
+    return s;
+});
+const display_value = computed(() => props.displayFormatter === undefined ? display_input_value.value : props.displayFormatter(value.value));
+
+function formatNumber(val: number) {
+    // snap
+    if (props.valueSnapGap !== undefined && props.valueSnapGap !== 0) {
+        const g = val - props.valueSnapBase;
+        val = props.valueSnapBase + Math.round(g / props.valueSnapGap) * props.valueSnapGap;
+    }
+    // clamp
+    if (!props.allowLess && props.min !== undefined) {
+        val = Math.max(props.min, val);
+    }
+    if (!props.allowGreater && props.max !== undefined) {
+        val = Math.min(props.max, val);
+    }
+    return val;
+}
+
+function increase() {
+    if (dragging.value) return;
+    setValueSafe(formatNumber(value.value) + (props.step ?? 0));
+}
+function decrease() {
+    if (dragging.value) return;
+    setValueSafe(formatNumber(value.value) - (props.step ?? 0));
+}
+
+// dragging
+const dragging = ref(false);
+let last_mouse_pos = 0;
+let last_value = 0;
+let ignore_click = false;
+function onMouseDown(evt: MouseEvent) {
+    if (!props.allowDrag) return;
+    dragging.value = true;
+    last_mouse_pos = evt.clientX;
+    last_value = formatNumber(value.value);
+    window.addEventListener('mousemove', onMouseMove, { capture: true });
+    window.addEventListener('mouseup', onMouseUp, { capture: true });
+}
+function onMouseMove(evt: MouseEvent) {
+    const delta = evt.clientX - last_mouse_pos;
+    const d = delta * (evt.ctrlKey ? props.dragFineFactor : props.dragFactor) * (props.step ?? 1);
+    setValueSafe(last_value + d);
+}
+function onMouseUp(evt: MouseEvent) {
+    dragging.value = false;
+    ignore_click = true;
+    removeDraggingEvents();
+}
+function removeDraggingEvents() {
+    window.removeEventListener('mousemove', onMouseMove, { capture: true });
+    window.removeEventListener('mouseup', onMouseUp, { capture: true });
+}
+// container
+function onContainerMouseDown(evt: MouseEvent) {
+    window.addEventListener('mousemove', onContainerMouseMove, { capture: true });
+    window.addEventListener('mouseup', onContainerMouseUp, { capture: true });
+}
+function onContainerMouseMove(evt: MouseEvent) {
+    removeContainerEvents();
+    onMouseDown(evt);
+}
+function onContainerMouseUp(evt: MouseEvent) {
+    onClick(evt);
+    removeContainerEvents();
+}
+function removeContainerEvents() {
+    window.removeEventListener('mousemove', onContainerMouseMove, { capture: true });
+    window.removeEventListener('mouseup', onContainerMouseUp, { capture: true });
+}
+
+function onClick(evt: Event) {
+    if (ignore_click) {
+        ignore_click = false;
+        return;
+    }
+    if (props.allowInput && !inputing.value) {
+        inputing.value = true;
+    }
+}
+
+// input
+const inputing = ref(false);
+const input_invalid = ref(false);
+const input_ref = ref<HTMLInputElement | null>(null);
 watch(input_ref, (input) => {
     if (input !== null) {
         input.focus();
@@ -86,13 +212,42 @@ watch(input_ref, (input) => {
     }
 });
 
-const dragging = ref(false);
-
-function onInputClick() {
-    if (props.allowInput && !inputing.value) {
-        inputing.value = true;
+function onInput(str: string) {
+    input_invalid.value = !validateExpression(str, ['x']);
+    if (input_invalid.value) {
+        input_ref.value?.classList?.add('invalid');
+    }
+    else {
+        input_ref.value?.classList?.remove('invalid');
     }
 }
+function onSubmit(str: string) {
+    if (inputing.value) {
+        inputing.value = false;
+        input_invalid.value = false;
+        const val = evalExpression(str, { x: value.value }, value.value);
+        setValueSafe(val);
+    }
+}
+
+function setValueSafe(val: number) {
+    if (Number.isNaN(val)) {
+        value.value = formatNumber(0);
+    }
+    else {
+        value.value = formatNumber(val);
+    }
+}
+
+onBeforeUnmount(() => {
+    removeContainerEvents();
+    removeDraggingEvents();
+});
+
+// exposes
+defineExpose({
+    setValueSafe,
+});
 
 </script>
 
@@ -130,6 +285,8 @@ function onInputClick() {
         text-align: start
     &.right
         text-align: end
+    &.invalid
+        text-decoration: underline red
 
 .__sun-design-numberedit-display-container__
     // cursor: text
@@ -144,10 +301,7 @@ function onInputClick() {
     position: relative
     box-sizing: border-box
     align-self: stretch
-    --Percentage: 50%
-
-    &.progress
-        background: linear-gradient(90deg, var(--border-color-normal) var(--Percentage), transparent var(--Percentage))
+    --Percentage: 0%
 
 .__sun-design-numberedit-container__
     display: flex
@@ -160,8 +314,6 @@ function onInputClick() {
     &:disabled, &.diasbled
         > .__sun-design-numberedit-display-container__
             cursor: not-allowed
-            &.progress
-                background: linear-gradient(90deg, var(--border-color-disabled) var(--Percentage), transparent var(--Percentage))
 
     &[data-size="small"] > .__sun-design-numberedit-display-container__
         padding-left: padding-extend-small
@@ -209,15 +361,19 @@ function onInputClick() {
     border-top: none !important
     border-left: none !important
     border-bottom: none !important
+    // border-top-left-radius: inherit
+    // border-bottom-left-radius: inherit
     &.dragging
-        cursor: unset
+        pointer-events: none
 
 .__sun-design-numberedit-inc__
     border-top: none !important
     border-right: none !important
     border-bottom: none !important
+    // border-top-right-radius: inherit
+    // border-bottom-right-radius: inherit
     &.dragging
-        cursor: unset
+        pointer-events: none
 
 .__sun-design-numberedit-prefix__
     text-wrap: nowrap
