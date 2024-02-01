@@ -150,6 +150,7 @@ export const Tree: Story = {
                                         uid: 1,
                                         icon: 'Cog',
                                         label: '这是一个测试，这是一个测试，这是一个测试，这是一个测试，这是一个测试',
+                                        leaf: true,
                                     },
                                     {
                                         uid: 1,

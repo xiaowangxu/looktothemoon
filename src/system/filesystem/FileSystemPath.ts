@@ -38,6 +38,11 @@ export class FileSystemPath {
             return last;
         }
     }
+    public get tags(){
+        const name = this.name;
+        if (name === '') return [];
+        return name.split('.').slice(1);
+    }
     public get ext() {
         if (!this.is_valid || !this.is_file) return '';
         const last = this.routers[this.routers.length - 1];

@@ -7,4 +7,3 @@
 import EditorUI from './views/EditorUI.vue';
 
 </script>
-

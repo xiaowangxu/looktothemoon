@@ -1,4 +1,5 @@
-import { type CSSProperties, readonly, markRaw } from 'vue';
+import './SunDesignStyle.styl';
+import { type CSSProperties, markRaw } from 'vue';
 
 export type Size = 'small' | 'normal' | 'large';
 
@@ -300,7 +301,7 @@ export function timer(func: () => void, time_ms: number): TimerCanceller {
 // focus trap
 
 export function getFocusables(dom: HTMLElement) {
-    const focusables = dom.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]):not(.__sun-design-panel-trapfocus__)');
+    const focusables = dom.querySelectorAll('button:not(:disabled, .disabled), [href]:not(:disabled, .disabled), input:not(:disabled, .disabled), select:not(:disabled, .disabled), textarea:not(:disabled, .disabled), [tabindex]:not(:disabled, .disabled):not([tabindex="-1"]):not(.__sun-design-panel-trapfocus__)');
     return focusables;
 }
 
@@ -322,13 +323,15 @@ export class TrapFocusOutEvent extends Event {
 
 export function setDragMessage(evt: DragEvent, message: string = '放置项目', size: Size = 'small', offset: BoxSize = { width: -18, height: -8 }) {
     const dom = document.createElement('div');
-    dom.className = '__sun-design__ __sun-design-button-like__ colored sized bordered border-masked';
-    dom.innerHTML = `<span class="__sun-design__ __sun-design-label__">${message}</span>`;
+    dom.className = '__sun-design__ colored sized bordered border-masked';
+    dom.innerHTML = `<span class="__sun-design__" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">${message}</span>`;
     dom.dataset.size = size;
     dom.style.overflow = 'hidden';
     dom.style.maxWidth = '160px';
     dom.style.position = 'fixed';
     dom.style.bottom = '-1000px';
+    dom.style.display = 'inline-flex';
+    dom.style.flexWrap = 'nowrap';
     document.body.appendChild(dom);
     evt.dataTransfer!.setDragImage(dom, offset.width, offset.height);
     setTimeout(() => {

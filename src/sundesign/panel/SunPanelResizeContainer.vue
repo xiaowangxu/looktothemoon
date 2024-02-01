@@ -10,7 +10,8 @@
                 <slot name="second" />
             </div>
             <div class="__sun-design-panel-resize-conatiner-split__" @mousedown="onDragMouseDown" />
-            <SunButton v-if="expandIndicator" class="__sun-design-panel-resize-button__" size="small" @click="setSize(initialSize)"></SunButton>
+            <SunButton v-if="expandIndicator" class="__sun-design-panel-resize-button__" size="small"
+                @click="setSize(initialSize)"></SunButton>
         </div>
     </SunResizeObserver>
 </template>
@@ -20,7 +21,7 @@
 import SunResizeObserver from '../scrollcontainer/SunResizeObserver.vue';
 import SunButton from '../button/SunButton.vue';
 import { type BoxSize } from '../SunDesignConstants';
-import { computed, onBeforeUnmount, ref } from 'vue';
+import { computed, onBeforeUnmount, ref, toRef } from 'vue';
 
 defineOptions({
     inheritAttrs: false,
@@ -38,7 +39,7 @@ const props = withDefaults(
     }>(),
     {
         vertical: false,
-        initialSize: 150,
+        initialSize: 200,
         flipDirection: false,
         min: 0,
         max: Infinity,
@@ -109,6 +110,7 @@ defineExpose({
 @import '../SunDesignStyleConstants.styl';
 
 split-size = 8px
+resize-button-margin = panel-padding * 2
 
 .__sun-design-panel-resize-conatiner__
     position: relative
@@ -125,6 +127,7 @@ split-size = 8px
     border-right: solid-border
     border-bottom: none
     box-sizing: border-box
+    overflow: hidden
     // background-color: rgba(255, 0, 0, 0.1)
     .__sun-design-panel-resize-conatiner__.flip-direction > &
         width: calc(100% - var(--Offset))
@@ -148,6 +151,7 @@ split-size = 8px
     top: 0
     bottom: 0
     height: unset
+    overflow: hidden
     width: calc(100% - var(--Offset))
     // background-color: rgba(0, 255, 0, 0.1)
     .__sun-design-panel-resize-conatiner__.flip-direction > &
@@ -191,7 +195,7 @@ split-size = 8px
     display: none !important
 
     .__sun-design-panel-resize-conatiner__:not(.vertical).start > &
-        margin: panel-padding 0
+        margin: resize-button-margin 0
         min-width: (size-small / 2) !important
         min-height: size-small !important
         display: inline-block !important
@@ -200,7 +204,7 @@ split-size = 8px
         border-bottom-left-radius: 0 !important
         padding: padding-extend-small padding-small !important
     .__sun-design-panel-resize-conatiner__:not(.vertical).end > &
-        margin: panel-padding 0
+        margin: resize-button-margin 0
         min-width: (size-small / 2) !important
         min-height: size-small !important
         right: 0
@@ -211,7 +215,7 @@ split-size = 8px
         padding: padding-extend-small padding-small !important
 
     .__sun-design-panel-resize-conatiner__.vertical.start > &
-        margin: 0 panel-padding
+        margin: 0 resize-button-margin
         min-height: (size-small / 2) !important
         min-width: size-small !important
         right: 0
@@ -220,7 +224,7 @@ split-size = 8px
         border-top-left-radius: 0 !important
         border-top-right-radius: 0 !important
     .__sun-design-panel-resize-conatiner__.vertical.end > &
-        margin: 0 panel-padding
+        margin: 0 resize-button-margin
         min-height: (size-small / 2) !important
         min-width: size-small !important
         right: 0

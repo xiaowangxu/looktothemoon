@@ -26,7 +26,7 @@ const blocks = [];
 
 function get_FileBuffer(path) {
     const ext = extname(path).toLowerCase();
-    const is_text = ['.txt', '.json'].includes(ext);
+    const is_text = ['.txt', '.json', '.vue', '.ts', '.tsx', '.styl'].includes(ext);
     const is_lttm = ['.lttmbin'].includes(ext);
     const name = parse(path).name;
     const name_ext = extname(name);
@@ -71,13 +71,15 @@ function walk(path, root = false, header = '') {
         else if (stat.isDirectory()) {
             console.log(chalk.grey(`${header}* dir  : ${d}`));
             const idx = nodes.length;
-            nodes.push({
+            const _node = {
                 name: d,
                 is_file: false,
                 is_root: root,
                 buffer: undefined,
-                subs: walk(rel_path, false, `    ${header}`),
-            });
+                subs: undefined,
+            };
+            nodes.push(_node);
+            _node.subs = walk(rel_path, false, `    ${header}`);
             subs.push(idx);
             dirs_count++;
         }

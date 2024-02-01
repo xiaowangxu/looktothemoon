@@ -1,5 +1,8 @@
 <template>
     <div class="__sun-design-breadcrumb-container__">
+        <SunButton v-if="options.length <= 0" disabled squared flat>
+            <ChevronRight />
+        </SunButton>
         <template v-for="option, idx in options" :key="option.item.uid">
             <SunSelect :size="size" flat icon-only squared :model-value="option.item.uid"
                 :disabled="disabled || option.item.disabled || option.siblings === undefined || option.siblings.length <= 0"
@@ -10,7 +13,8 @@
                     </slot>
                 </template>
             </SunSelect>
-            <SunButton :size="size" flat :active="active && idx === options.length - 1" :disabled="disabled || option.item.disabled">
+            <SunButton :size="size" flat :active="active && idx === options.length - 1"
+                :disabled="disabled || option.item.disabled" :squared="option.item.label === undefined">
                 <SunButtonItem :label="option.item.label" :icon="option.item.icon"></SunButtonItem>
             </SunButton>
         </template>
@@ -26,7 +30,7 @@ import SunButtonItem from '../item/SunButtonItem.vue';
 import { ChevronRight } from 'lucide-vue-next';
 import type { Item, Size } from '../SunDesignConstants';
 
-type BreadcrumbItem = { item: Item, siblings?: Item[] };
+export type BreadcrumbItem = { item: Item, siblings?: Item[] };
 
 // props
 const props = withDefaults(

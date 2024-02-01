@@ -33,7 +33,7 @@ export const ContextMenu: Story = {
                     [
                         { label: '全选', uid: 'select-all', icon: 'TextCursorInput', shortcut: 'Ctrl A' },
                     ]
-                ], evt).await.then((a) => {
+                ], evt).signal_click.connect((a: any, b: any, c: any) => {
                     console.log(a);
                 });
             }
@@ -132,7 +132,7 @@ export const ContextMenu: Story = {
                             colorScheme: ColorSchemeRed,
                         }
                     ]
-                ], evt).await.then((a) => {
+                ], evt).signal_click.connect((a: any) => {
                     console.log(a);
                 });
             }
@@ -158,7 +158,7 @@ export const ContextMenu: Story = {
                             }
                         },
                     ]
-                ], evt).await.then((a) => {
+                ], evt).signal_click.connect((a: any) => {
                     console.log(a);
                 });
             }

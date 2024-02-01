@@ -1,0 +1,245 @@
+import type { TreeItem } from "@/sundesign/tree/SunTreeItem.vue";
+import { VFS, VirtualFileSystem, type VfsId, VfsMode } from "./VirtualFileSystem";
+import { ref, type Ref, toRef } from "vue";
+import { FileSystemPath, fspath } from "./FileSystemPath";
+import type { BreadcrumbItem } from "@/sundesign/breadcrumb/SunBreadcrumb.vue";
+import type { Item } from "@/sundesign/SunDesignConstants";
+
+export interface FileSystemRefItem extends TreeItem {
+    uid: VfsId,
+    subs: FileSystemRefItem[],
+    parent: VfsId | undefined,
+}
+
+function get_Icon(name: string | undefined, is_file: boolean) {
+    if (name === undefined) {
+        if (is_file) return 'AlertTriangle';
+        return 'FolderRoot';
+    }
+    const path = fspath(name);
+    if (!path.is_valid) return 'AlertTriangle';
+    if (!is_file) {
+        switch (name) {
+            case 'sys': return 'FolderLock';
+            case 'user': return 'FolderHeart';
+            default: return 'Folder';
+        }
+    }
+    else {
+        const ext = path.ext;
+        let icon = 'File';
+        switch (ext) {
+            case '.txt': return 'FileText';
+            case '.json': return 'FileJson';
+            case '.lttm':
+            case '.lttmbin': {
+                icon = 'FileBox';
+                break;
+            }
+        }
+        const tags = path.tags;
+        if (tags.length <= 0) return icon;
+        const last = tags[tags.length - 1].toLowerCase();
+        switch (last) {
+            case 'geometry': return 'Box';
+            case 'material': return 'Brush';
+            case 'texture': return 'Image';
+            case 'scene': return 'Globe2';
+        }
+        return icon;
+    }
+}
+
+function is_Hidden(name: string | undefined) {
+    if (name === undefined) {
+        return false;
+    }
+    const path = fspath(name);
+    if (!path.is_valid || !path.is_file) return false;
+    if (path.tags.includes('ignore')) return true;
+    return false;
+}
+
+export class FileSystemReactive {
+    public readonly root = ref<FileSystemRefItem[]>([]);
+    private readonly vfs: VirtualFileSystem;
+    private readonly node_map: Map<VfsId, FileSystemRefItem> = new Map();
+    private readonly watchers_map: Map<VfsId, Set<Ref<FileSystemRefItem | undefined>>> = new Map();
+
+    constructor(vfs: VirtualFileSystem) {
+        this.vfs = vfs;
+        this.vfs.signal_node_modify.connect(this._on_VfsNodeModify);
+    }
+
+    public watch(path: FileSystemPath) {
+        const id = this.vfs.lookup(path);
+        if (id.failed) return ref<FileSystemRefItem | undefined>();
+        const _id = id.expect();
+        const item_ref = this.trace_Node(_id);
+        if (item_ref === undefined) return ref<FileSystemRefItem | undefined>();
+        const watcher = ref(item_ref);
+        if (this.watchers_map.has(_id)) {
+            this.watchers_map.get(_id)!.add(watcher);
+        }
+        else {
+            this.watchers_map.set(_id, new Set([watcher]));
+        }
+        return watcher;
+    }
+
+    public unwatch(ref: Ref<FileSystemRefItem | undefined>) {
+        for (const [key, set] of [...this.watchers_map.entries()]) {
+            if (set.has(ref)) {
+                ref.value = undefined;
+                set.delete(ref);
+            }
+            if (set.size <= 0) {
+                this.watchers_map.delete(key);
+            }
+        }
+    }
+
+    private release_Watcher(id: VfsId) {
+        if (!this.watchers_map.has(id)) return;
+        const watchers = this.watchers_map.get(id)!;
+        this.watchers_map.delete(id);
+        for (const watcher of watchers) {
+            watcher.value = undefined;
+        }
+    }
+
+    public get_Breadcrumb(path: FileSystemPath | VfsId) {
+        const id = this.vfs.lookup(path);
+        if (id.failed) return [];
+        const _id = id.expect();
+        if (!this.has_Node(_id)) return [];
+        const crumbs: BreadcrumbItem[] = [];
+        let node = this.node_map.get(_id);
+        while (node !== undefined) {
+            const parent = node.parent === undefined ? undefined : this.node_map.get(node.parent);
+            const subs = parent === undefined ? [] : parent.subs.filter(s => s.leaf === false).map(s => {
+                return {
+                    label: s.label,
+                    uid: s.uid,
+                    icon: s.icon,
+                } as Item
+            });
+            crumbs.unshift({
+                item: {
+                    label: node.label,
+                    uid: node.uid,
+                    icon: node.icon,
+                },
+                siblings: subs,
+            });
+            node = parent;
+        }
+        return crumbs;
+    }
+
+    private has_Node(id: VfsId) {
+        return this.node_map.has(id);
+    }
+
+    private create_NodeRef(id: VfsId, parent: VfsId | undefined, is_file: boolean, name: string | undefined, hidden: boolean): FileSystemRefItem {
+        return {
+            parent: parent,
+            label: name,
+            uid: id,
+            leaf: is_file,
+            disabled: hidden || is_Hidden(name),
+            icon: get_Icon(name, is_file),
+            subs: [],
+        };
+    }
+
+    private trace_Node(id: VfsId) {
+        if (this.has_Node(id)) return this.node_map.get(id)!;
+        const query = this.vfs.query(id);
+        if (query.failed) return undefined;
+        const { name, id: _id, parent, type, mode } = query.expect();
+        const ref_item = this.create_NodeRef(_id, parent, type === 'file', name, (mode & VfsMode.Hidden) !== 0);
+        if (parent === undefined) {
+            // as root
+            this.node_map.set(_id, ref_item);
+            this.root.value.push(ref_item);
+        }
+        else {
+            this.node_map.set(_id, ref_item);
+            const _parent = this.trace_Node(parent);
+            if (_parent === undefined) return undefined;
+            toRef(_parent).value.subs.push(ref_item);
+        }
+        const subs = this.vfs.list(_id);
+        if (subs.succeed) {
+            for (const sub of subs.expect()) {
+                this.trace_Node(sub);
+            }
+        }
+        return ref_item;
+    }
+
+    private rename_Node(id: VfsId) {
+        if (!this.has_Node(id)) return;
+        const query = this.vfs.query(id);
+        if (query.failed) return undefined;
+        const { name, id: _id, parent, type, mode } = query.expect();
+        const ref_item = this.node_map.get(id)!;
+        const _ref_item = toRef(ref_item);
+        const is_file = type === 'file';
+        _ref_item.value.label = name;
+        _ref_item.value.uid = id;
+        _ref_item.value.leaf = is_file;
+        _ref_item.value.disabled = (mode & VfsMode.Hidden) !== 0 || is_Hidden(name);
+        _ref_item.value.icon = get_Icon(name, is_file);
+    }
+
+    private _release_Watcher(item: FileSystemRefItem) {
+        this.release_Watcher(item.uid);
+        for (const sub of item.subs) {
+            this._release_Watcher(sub);
+        }
+    }
+    private delete_Node(id: VfsId) {
+        if (!this.has_Node(id)) return;
+        const ref_item = this.node_map.get(id)!;
+        const parent = ref_item.parent;
+        if (parent === undefined) return;
+        if (!this.has_Node(parent)) return;
+        const parent_item = this.node_map.get(parent)!;
+        toRef(parent_item).value.subs = parent_item.subs.filter(i => i.uid !== id);
+        this.node_map.delete(id);
+        this._release_Watcher(ref_item);
+    }
+
+    private readonly _on_VfsNodeModify = this.on_VfsNodeModify.bind(this);
+    private on_VfsNodeModify(action: 'attach' | 'detach' | 'rename', id: VfsId) {
+        switch (action) {
+            case 'attach': {
+                this.trace_Node(id);
+                break;
+            }
+            case 'detach': {
+                this.delete_Node(id);
+                break;
+            }
+            case 'rename': {
+                this.rename_Node(id);
+                break;
+            }
+        }
+    }
+
+    public dispose() {
+        this.root.value = [];
+        this.node_map.clear();
+        for (const set of this.watchers_map.values()) {
+            for (const ref of set) {
+                ref.value = undefined;
+            }
+        }
+        this.watchers_map.clear();
+    }
+}
+
+export const VFSReactive = new FileSystemReactive(VFS);

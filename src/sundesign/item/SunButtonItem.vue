@@ -1,6 +1,7 @@
 <template>
     <SunIcon v-if="icon !== undefined" :name="icon"></SunIcon>
-    <span class="__sun-design-button-item-label__" :class="{ 'has-description': has_description }">{{ label }}</span>
+    <span v-if="label !== undefined" class="__sun-design-button-item-label__"
+        :class="{ 'has-description': has_description }">{{ label }}</span>
     <span v-if="has_description" class="__sun-design-button-item-description__"> {{
         description }} </span>
     <SunKeyboard v-if="!hideShortcut && shortcut !== undefined">{{ shortcut }}</SunKeyboard>
