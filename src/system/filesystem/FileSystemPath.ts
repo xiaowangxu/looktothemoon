@@ -130,21 +130,21 @@ export function fspath(path: string, base?: string): FileSystemPath {
     return FileSystemPath.merge(FileSystemPath.from_Path(base), FileSystemPath.from_Path(path))
 }
 
-// test
-let p0;
+// // test
+// let p0;
 
-p0 = fspath('res://test/a/b/c.ignore.txt');
-console.log('res://test/a/b/c.ignore.txt');
-console.log('v', p0.is_valid, 'if', p0.is_file, 'abs', p0.is_absolute, 'dir:', p0.dir, 'name:', p0.name, 'ext:', p0.ext);
+// p0 = fspath('res://test/a/b/c.ignore.txt');
+// console.log('res://test/a/b/c.ignore.txt');
+// console.log('v', p0.is_valid, 'if', p0.is_file, 'abs', p0.is_absolute, 'dir:', p0.dir, 'name:', p0.name, 'ext:', p0.ext);
 
-p0 = fspath('/usr/share/ovirt_plugin/password-test.ignore.txt');
-console.log('/usr/share/ovirt_plugin/password-test.ignore.txt');
-console.log('v', p0.is_valid, 'if', p0.is_file, 'abs', p0.is_absolute, 'dir:', p0.dir, 'name:', p0.name, 'ext:', p0.ext);
+// p0 = fspath('/usr/share/ovirt_plugin/password-test.ignore.txt');
+// console.log('/usr/share/ovirt_plugin/password-test.ignore.txt');
+// console.log('v', p0.is_valid, 'if', p0.is_file, 'abs', p0.is_absolute, 'dir:', p0.dir, 'name:', p0.name, 'ext:', p0.ext);
 
-p0 = fspath('res://test/a/.././test/a');
-console.log('res://test/a/.././test/a');
-console.log('v', p0.is_valid, 'if', p0.is_file, 'abs', p0.is_absolute, 'dir:', p0.dir, 'name:', p0.name, 'ext:', p0.ext);
+// p0 = fspath('res://test/a/.././test/a');
+// console.log('res://test/a/.././test/a');
+// console.log('v', p0.is_valid, 'if', p0.is_file, 'abs', p0.is_absolute, 'dir:', p0.dir, 'name:', p0.name, 'ext:', p0.ext);
 
-p0 = fspath('./../a');
-console.log('./../a');
-console.log('v', p0.is_valid, 'if', p0.is_file, 'abs', p0.is_absolute, 'dir:', p0.dir, 'name:', p0.name, 'ext:', p0.ext);
+// p0 = fspath('./../a');
+// console.log('./../a');
+// console.log('v', p0.is_valid, 'if', p0.is_file, 'abs', p0.is_absolute, 'dir:', p0.dir, 'name:', p0.name, 'ext:', p0.ext);

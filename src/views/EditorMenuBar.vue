@@ -1,23 +1,16 @@
 <template>
-    <SFlow>
-        <SunPanel style="pointer-events: all;">
+    <div style="display: flex; align-items: flex-start; gap: 8px; pointer-events: none;">
+        <SunPanel>
             <SunPanelContainer>
-                <SunButtonMenuPopup ref="sys_option_ref" :options="system_options" squared flat @opened="onOpen(0)"
-                    @closed="onClose(0)">
+                <SunButtonMenuPopup ref="sys_option_ref" :options="system_options" squared flat>
                     <MoonStar />
                 </SunButtonMenuPopup>
-                <SunButtonMenuPopup ref="file_option_ref" :options="options" flat @opened="onOpen(1)" @closed="onClose(1)">
-                    文件
-                </SunButtonMenuPopup>
-                <SunButtonMenuPopup ref="edit_option_ref" :options="edit_options" flat @opened="onOpen(2)"
-                    @closed="onClose(2)">编辑
-                </SunButtonMenuPopup>
-                <SunButtonMenuPopup ref="view_option_ref" :options="options" flat @opened="onOpen(3)" @closed="onClose(3)">
-                    视图
-                </SunButtonMenuPopup>
+                <SunButtonMenuPopup ref="file_option_ref" :options="options" flat>文件</SunButtonMenuPopup>
+                <SunButtonMenuPopup ref="edit_option_ref" :options="edit_options" flat>编辑</SunButtonMenuPopup>
+                <SunButtonMenuPopup ref="view_option_ref" :options="options" flat>视图</SunButtonMenuPopup>
             </SunPanelContainer>
         </SunPanel>
-        <SunPanel style="pointer-events: all;" size="small">
+        <SunPanel size="small">
             <SunPanelContainer>
                 <SunButton size="small" flat squared>
                     <Save />
@@ -33,7 +26,7 @@
                 </SunButton>
             </SunPanelContainer>
         </SunPanel>
-    </SFlow>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -43,16 +36,9 @@ import SunPanel from '@/sundesign/panel/SunPanel.vue';
 import SunPanelContainer from '@/sundesign/panel/SunPanelContainer.vue';
 import SunPanelSeparator from '@/sundesign/panel/SunPanelSeparator.vue';
 import SunButton from '@/sundesign/button/SunButton.vue';
-import SFlow from '@/components/SFlow.vue';
 import { Undo2, Redo2, Save, MoonStar } from 'lucide-vue-next';
 import { ColorSchemeRed } from '@/sundesign/SunDesignConstants';
-import { onBeforeMount, onBeforeUnmount, ref } from 'vue';
-
-const sys_option_ref = ref<InstanceType<typeof SunButtonMenuPopup> | undefined>();
-const file_option_ref = ref<InstanceType<typeof SunButtonMenuPopup> | undefined>();
-const edit_option_ref = ref<InstanceType<typeof SunButtonMenuPopup> | undefined>();
-const view_option_ref = ref<InstanceType<typeof SunButtonMenuPopup> | undefined>();
-const menu_list = [sys_option_ref, file_option_ref, edit_option_ref, view_option_ref];
+import { ref } from 'vue';
 
 const system_options = ref([
     [
@@ -156,55 +142,5 @@ const options = ref([
         }
     ]
 ]);
-
-let opened_menu_id: number | undefined = undefined;
-
-function onOpen(id: number) {
-    if (opened_menu_id === undefined) {
-        opened_menu_id = id;
-        window.addEventListener('mousemove', onMouseMove, { capture: true });
-    }
-}
-
-function onClose(id: number) {
-    if (opened_menu_id === id) {
-        window.removeEventListener('mousemove', onMouseMove, { capture: true });
-        opened_menu_id = undefined;
-    }
-}
-
-onBeforeUnmount(() => {
-    window.removeEventListener('mousemove', onMouseMove, { capture: true });
-});
-
-function onMouseMove(evt: MouseEvent) {
-    if (opened_menu_id !== undefined) {
-        let idx = 0;
-        for (const i of menu_list) {
-            if (idx === opened_menu_id) {
-                idx++;
-                continue;
-            }
-            if (i.value !== undefined && i.value.button?.button) {
-                const { x, y, width, height } = i.value.button.button.getBoundingClientRect();
-                if (x <= evt.clientX && evt.clientX <= x + width &&
-                    y <= evt.clientY && evt.clientY <= y + height
-                ) {
-                    opened_menu_id = idx;
-                    for (const j of menu_list) {
-                        if (j === i) {
-                            j.value?.toggle(true);
-                        }
-                        else {
-                            j.value?.toggle(false);
-                        }
-                    }
-                    return;
-                }
-            }
-            idx++;
-        }
-    }
-}
 
 </script>
