@@ -18,15 +18,15 @@ import { Box3 } from "@/system/fivepebble/geometries/Box3";
 // |-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|
 // |  I32  |  I32  |   I8  |  I32  |  I32  |  I32  |  I32  |  I32  |  I32  |  I32  |  I32  |  I32  |  I32  |  I32  |
 // |-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------| --------------+
-// |  'LTTM BIN'   | Flags | Ver 0 | Ver 1 | Ver 2 |        128bit md5 hash        |      date     | root  | count |               |------ header region
+// |  'LTTM BIN'   | Flags | Ver 0 |      uid      |        128bit md5 hash        |   preserved   | root  | count |               |------ header region
+// |-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------| --------------+
+// |    meta len   |                                 ...meta map                                                   |               |------ meta region
 // |-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------| --------------+
 // |                                                ...instances                                                   |               |------ body region
 // |-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------| --------------+
 
 const InitialFileByteLength = 512;
 const Version0 = 0;
-const Version1 = 0;
-const Version2 = 1;
 
 const MD5HashOffset = 21;
 const BodyOffset = MD5HashOffset + 16 + 16;
@@ -299,20 +299,31 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEnc
         // header
         this.append_RawArrayBuffer(ClassBinaryEncoder.#header_title); // LTTM BIN [8B]
         this.append_Byte(this.little_endian ? 1 : 0); // flags 0001 --- for little_endian [1B]
-        this.append_Uint32(Version0);
-        this.append_Uint32(Version1);
-        this.append_Uint32(Version2); // verions xxx.xxx.xxx --- 3 * uint32 eg: 0.0.1 [12B]
-        this.skip_Bytes(16); // [16B]
-        this.append_Uint64(BigInt(Date.now())); // date [8B]
+        this.append_Uint32(Version0); // verions xxx --- uint32 [4B]
+        this.append_Uint64(this.data.uid); // uid [8B]
+        this.skip_Bytes(16); // hash [16B]
+        this.skip_Bytes(8) // preserved [8B]
         // root
         this.append_Uint32(this.data.root); // root refid [4B]
         // count
         this.append_Uint32(this.data.instances.length); // instances' count [4B]
+        // meta
+        if (this.data.meta === undefined || this.data.meta.size <= 0) {
+            this.append_Uint32(0); // no meta
+        }
+        else {
+            const cnt_pnt = this.byte_pointer;
+            this.skip_Bytes(4); // skip meta len
+            this.append_Map(this.data.meta); // meta map
+            const length = this.byte_pointer - cnt_pnt - 4;
+            this.data_view.setUint32(cnt_pnt, length); // set meta len
+        }
         // instances may throw Error
         try {
             for (const instance of this.data.instances) {
                 this.append_AsciiString(instance.type); // type
                 this.append_Uint32(instance.refid); // refid
+                this.append_Uint64(instance.uid); // uid
                 this.append_Byte((instance.unique ?? false) ? 1 : 0); //unique
                 this.append_Byte(instance.external !== undefined ? 1 : 0); // external
                 if (instance.external !== undefined) {
@@ -346,7 +357,7 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEnc
     }
 }
 
-export type ClassBinaryDecoderOption = { validate?: boolean };
+export type ClassBinaryDecoderOption = { validate?: boolean, ignore_meta?: boolean };
 
 export class ClassBinaryDecoder extends ClassDecoder<ArrayBuffer, ClassBinaryDecoderOption> {
     static #md5_byte_hex_map = [
@@ -361,11 +372,10 @@ export class ClassBinaryDecoder extends ClassDecoder<ArrayBuffer, ClassBinaryDec
     // options
 
     private validate: boolean = true;
+    private ignore_meta: boolean = false;
 
     private little_endian: boolean = false;
-    private version_0: number = 0;
-    private version_1: number = 0;
-    private version_2: number = 0;
+    private version: number = 0;
 
     constructor(data: ArrayBuffer, option?: ClassBinaryDecoderOption) {
         super(data);
@@ -373,6 +383,7 @@ export class ClassBinaryDecoder extends ClassDecoder<ArrayBuffer, ClassBinaryDec
         this.uint8array = new Uint8Array(this.data);
         // options
         this.validate = option?.validate ?? true;
+        this.ignore_meta = option?.ignore_meta ?? false;
     }
 
     private init() {
@@ -620,6 +631,8 @@ export class ClassBinaryDecoder extends ClassDecoder<ArrayBuffer, ClassBinaryDec
         const type = this.get_AsciiString();
         // refid
         const refid = this.get_Uint32();
+        // uid
+        const uid = this.get_Uint64();
         // unique
         const unique = this.get_Byte() !== 0;
         // external
@@ -631,6 +644,7 @@ export class ClassBinaryDecoder extends ClassDecoder<ArrayBuffer, ClassBinaryDec
         const instance: ClassInstanceData = {
             type,
             refid,
+            uid,
             unique,
             external,
             property: undefined
@@ -676,7 +690,7 @@ export class ClassBinaryDecoder extends ClassDecoder<ArrayBuffer, ClassBinaryDec
         return Result.Ok(undefined);
     }
 
-    private decode_Header(): Result<undefined, Error> {
+    private decode_Header(): Result<bigint, Error> {
         if (this.data.byteLength < BodyOffset) return Result.Error(new Error('<ClassBinaryDecoder> decode_Header: header invalid'));
         // header
         const header0 = this.get_Byte();
@@ -692,31 +706,43 @@ export class ClassBinaryDecoder extends ClassDecoder<ArrayBuffer, ClassBinaryDec
         const flags = this.get_Byte();
         // set little_endian
         this.little_endian = (flags & 0x1) > 0;
-        this.version_0 = this.get_Uint32();
-        this.version_1 = this.get_Uint32();
-        this.version_2 = this.get_Uint32();
-        return Result.Ok(undefined);
+        this.version = this.get_Uint32();
+        const uid = this.get_Uint64();
+        return Result.Ok(uid);
     }
 
     public decode(): Result<ClassExchangeData, Error> {
         this.init();
         // header
-        const header = this.decode_Header()
-        if (header.failed) return Result.Error(header.expect_Error());
+        const uid = this.decode_Header()
+        if (uid.failed) return Result.Error(uid.expect_Error());
         // hash
         if (this.validate) {
             const md5_validate = this.validate_MD5();
             if (md5_validate.failed) return Result.Error(md5_validate.expect_Error());
         }
         else this.skip_Bytes(16);
-        // date
-        const date = this.get_Uint64();
+        // preserved
+        const preserved = this.get_Uint64();
         // root
         const root = this.get_Uint32();
         // count
         const count = this.get_Uint32();
+        // meta
+        const meta_length = this.get_Uint32();
+        let meta: Map<any, any> | undefined = undefined;
+        if (meta_length > 0) {
+            if (this.ignore_meta) {
+                this.skip_Bytes(meta_length);
+            }
+            else {
+                meta = this.get_Map();
+            }
+        }
         const exchange_data: ClassExchangeData = {
             root,
+            uid: uid.expect(),
+            meta,
             instances: new Array<ClassInstanceData>(count),
         };
         // instances

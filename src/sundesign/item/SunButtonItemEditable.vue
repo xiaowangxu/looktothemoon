@@ -76,5 +76,6 @@ defineExpose({
     padding: 0
     background-color: transparent
     outline: none
+    text-decoration: none
 
 </style>

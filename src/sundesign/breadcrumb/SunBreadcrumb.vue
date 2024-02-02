@@ -5,8 +5,8 @@
         </SunButton>
         <template v-for="option, idx in options" :key="option.item.uid">
             <SunSelect :size="size" flat icon-only squared :model-value="option.item.uid"
-                :disabled="disabled || option.item.disabled || option.siblings === undefined || option.siblings.length <= 0"
-                :options="option.siblings === undefined ? undefined : [option.siblings]">
+                :disabled="disabled || option.item.disabled || sorted_options[idx] === undefined || sorted_options[idx]!.length <= 0"
+                :options="sorted_options[idx]">
                 <template #closed>
                     <slot name="separator">
                         <ChevronRight />
@@ -19,7 +19,7 @@
                 <SunButtonItem v-if="(option.item as RenderBreadcrumbItem).render === undefined"
                     :label="(option.item as ItemBreadcrumbItem).label" :icon="(option.item as ItemBreadcrumbItem).icon">
                 </SunButtonItem>
-                <component v-else :is="(option.item as RenderBreadcrumbItem).render"/>
+                <component v-else :is="(option.item as RenderBreadcrumbItem).render" />
             </SunButton>
         </template>
     </div>
@@ -33,7 +33,7 @@ import SunButton from '../button/SunButton.vue';
 import SunButtonItem from '../item/SunButtonItem.vue';
 import { ChevronRight } from 'lucide-vue-next';
 import type { ColorScheme, Item, Size, UID } from '../SunDesignConstants';
-import type { Component, Raw } from 'vue';
+import { computed, type Component, type Raw } from 'vue';
 
 type ItemBreadcrumbItem<T extends UID = UID> = Item<T>;
 type RenderBreadcrumbItem<T extends UID = UID> = {
@@ -54,6 +54,7 @@ const props = withDefaults(
         options: BreadcrumbItem[],
         active?: boolean,
         disabled?: boolean,
+        filterSort?: (options: SelectItem[]) => SelectItem[],
     }>(),
     {
         size: 'normal',
@@ -61,6 +62,17 @@ const props = withDefaults(
         disabled: false,
     }
 );
+
+// datas
+const sorted_options = computed(() => {
+    if (props.filterSort === undefined) return props.options.map(option => option.siblings === undefined || option.siblings.length <= 0 ? undefined : [option.siblings]);
+    return props.options.map(option => {
+        if (option.siblings === undefined || option.siblings.length <= 0) return undefined;
+        const filter_sorted = props.filterSort!(option.siblings);
+        if (filter_sorted.length <= 0) return undefined;
+        return [filter_sorted];
+    });
+});
 
 </script>
 

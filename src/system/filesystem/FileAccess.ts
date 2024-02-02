@@ -10,9 +10,9 @@ export class FileAccess {
         return this.handler !== undefined;
     }
 
-    constructor(path: string, mode: VfsMode, create_file: boolean = true, fs: VirtualFileSystem = VFS) {
+    constructor(path: string | FileSystemPath, mode: VfsMode, create_file: boolean = true, fs: VirtualFileSystem = VFS) {
         this.fs = fs;
-        this.path = fspath(path);
+        this.path = path instanceof FileSystemPath ? path : fspath(path);
         const hnd = this.fs.open(this.path, mode, create_file);
         if (hnd.failed) {
             this.handler = undefined;

@@ -23,10 +23,10 @@
 
             <!-- drag area -->
             <SunButton ref="button_ref" class="__sun-design-tree-drag-zoom__ no-hover-color no-pressed-color"
-                :class="{ 'no-append': $slots.append !== undefined, draggable }" flat :size="size"
-                :draggable="!editting && draggable && !(option.disabled ?? false)" :disabled="option.disabled"
-                :active="option.active" @dragstart="onDragStart" @dragover="onDragOver" @dragenter="onDragEnter"
-                @dragleave="onDragLeave" @drop="onDrop" @click="onClick" @contextmenu="onContextMenu">
+                :class="{ 'no-append': $slots.append !== undefined, draggable: is_draggable }" flat :size="size"
+                :draggable="is_draggable" :disabled="option.disabled" :active="option.active" @dragstart="onDragStart"
+                @dragover="onDragOver" @dragenter="onDragEnter" @dragleave="onDragLeave" @drop="onDrop" @click="onClick"
+                @contextmenu="onContextMenu">
                 <SunItemButtonEditable v-if="(option as RenderTreeItem).render === undefined" ref="itembutton_ref"
                     :label="(option as ItemTreeItem).label" :icon="(option as ItemTreeItem).icon"
                     :description="(option as ItemTreeItem).description" @edit="onEdit" />
@@ -138,6 +138,7 @@ const has_subs = computed(() => !(props.option.leaf ?? false) && props.option.su
 const sorted_subs = computed(() => (!has_subs.value || props.filterSort === undefined) ? props.option.subs : props.filterSort(props.option.subs!));
 const folded = ref(false);
 const button_ref = ref<InstanceType<typeof SunButton> | undefined>();
+const is_draggable = computed(() => !editting.value && props.draggable && !(props.option.disabled ?? false));
 
 const dragging_over = ref(false);
 const dragging_in = ref<'before' | 'in' | 'after'>('before');
@@ -212,6 +213,7 @@ function onDrop(evt: DragEvent) {
 }
 
 function onClick(evt: Event) {
+    if (editting.value) return;
     emits('click', props.option.uid, evt);
     if (evt.defaultPrevented) return;
     if (props.clickFolding) {
@@ -219,6 +221,7 @@ function onClick(evt: Event) {
     }
 }
 function onContextMenu(evt: MouseEvent) {
+    if (editting.value) return;
     const ctx_menu = new SunContextMenuEvent(evt);
     ctx_menu.addOptions([{
         label: '重命名',
@@ -268,6 +271,7 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
     display: flex
     flex-direction: column
     gap: (panel-padding / 2)
+    pointer-events: none
 
 .__sun-design-tree-list-container__
     display: flex
@@ -276,6 +280,7 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
     position: relative
     align-items: center
     flex: 1
+    pointer-events: initial
 
 .__sun-design-tree-item-container__
     width: 100%

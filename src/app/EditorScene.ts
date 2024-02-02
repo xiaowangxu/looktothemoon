@@ -31,11 +31,11 @@ import { VFS, VfsMode } from "@/system/filesystem/VirtualFileSystem";
 import { fspath } from "@/system/filesystem/FileSystemPath";
 
 const DefaultConfig: Config = {
-	render_server: new RenderServerDevice(document.getElementById('render-server-canvas') as HTMLCanvasElement),
-	render_server_size: undefined,
-	render_server_pixel_ratio: undefined,
-	render_server_scale: 1,
-	physics_fps: 60,
+    render_server: new RenderServerDevice(document.getElementById('render-server-canvas') as HTMLCanvasElement),
+    render_server_size: undefined,
+    render_server_pixel_ratio: undefined,
+    render_server_scale: 1,
+    physics_fps: 60,
 }
 const DefaultInstanceCache = new ResourceInstanceCache(DefaultConfig);
 
@@ -97,12 +97,12 @@ EditorSceneTree.get_InputActionMap().add_Action('switch_LeftView', new ShortCut(
 EditorSceneTree.get_InputActionMap().add_Action('switch_TopView', new ShortCut(DefaultConfig).set([new KeyInputEvent(DefaultConfig).set_Key('3', '3', true, false)]));
 EditorSceneTree.get_InputActionMap().add_Action('switch_CameraType', new ShortCut(DefaultConfig).set([new KeyInputEvent(DefaultConfig).set_Key('`', 'Backquote', true, false)]));
 EditorSceneTree.get_InputActionMap().add_Action('zoomIn', new ShortCut(DefaultConfig).set([
-	new MouseButtonInputEvent(DefaultConfig).set_Button(MouseButton.WheelUp, true, false, false).set_Compose(true),
-	new MouseButtonInputEvent(DefaultConfig).set_Button(MouseButton.WheelUp, true, false, false),
+    new MouseButtonInputEvent(DefaultConfig).set_Button(MouseButton.WheelUp, true, false, false).set_Compose(true),
+    new MouseButtonInputEvent(DefaultConfig).set_Button(MouseButton.WheelUp, true, false, false),
 ]));
 EditorSceneTree.get_InputActionMap().add_Action('zoomOut', new ShortCut(DefaultConfig).set([
-	new MouseButtonInputEvent(DefaultConfig).set_Button(MouseButton.WheelDown, true, false, false).set_Compose(true),
-	new MouseButtonInputEvent(DefaultConfig).set_Button(MouseButton.WheelDown, true, false, false),
+    new MouseButtonInputEvent(DefaultConfig).set_Button(MouseButton.WheelDown, true, false, false).set_Compose(true),
+    new MouseButtonInputEvent(DefaultConfig).set_Button(MouseButton.WheelDown, true, false, false),
 ]));
 
 // viewport 0
@@ -128,9 +128,9 @@ const count = 2;
 multi_geometry.set_InstanceCount(count * count, false, false);
 
 for (let i = 0; i < count; i++) {
-	for (let j = 0; j < count; j++) {
-		multi_geometry.set_InstanceTransform(i * count + j, Matrix4.from_BasisPosition(undefined, vec3(i * 2, j * 2, 0)), false);
-	}
+    for (let j = 0; j < count; j++) {
+        multi_geometry.set_InstanceTransform(i * count + j, Matrix4.from_BasisPosition(undefined, vec3(i * 2, j * 2, 0)), false);
+    }
 }
 
 multi_geometry.commit_InstanceTransforms();
@@ -161,6 +161,7 @@ import { ClassBinaryDecoder, ClassBinaryEncoder, type ClassBinaryDecoderOption }
 import { ArrayGeometryResource } from "@/system/engine/resources/geometry_resources/ArrayGeometryResource";
 import { FileAccess } from "@/system/filesystem/FileAccess";
 import { Pi } from "@/system/fivepebble/Scalar";
+import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
 
 const Mesh1 = new MeshInstance3D(DefaultConfig);
 Mesh1.geometry = multi_geometry;
@@ -180,9 +181,9 @@ point_light.radius = 100.0;
 World.add_Child(point_light);
 
 TranslateGrabber.signal_grabbing.connect(pos => {
-	// EditorViewport.world_3d?.visual_world.set_LightGlobalPosition(3, pos);
-	// debugger
-	point_light.global_position = pos;
+    // EditorViewport.world_3d?.visual_world.set_LightGlobalPosition(3, pos);
+    // debugger
+    point_light.global_position = pos;
 });
 
 const TranslateGrabber2 = new TranslateGrabber3D(DefaultConfig);
@@ -193,9 +194,9 @@ spot_light.color = vec3(1, 0, 0);
 World.add_Child(spot_light);
 
 TranslateGrabber2.signal_grabbing.connect(pos => {
-	// EditorViewport.world_3d?.visual_world.set_LightGlobalPosition(3, pos);
-	// debugger
-	spot_light.global_position = pos;
+    // EditorViewport.world_3d?.visual_world.set_LightGlobalPosition(3, pos);
+    // debugger
+    spot_light.global_position = pos;
 });
 
 // const mat = new PlainColorMaterialResource(DefaultConfig);
@@ -224,14 +225,14 @@ TranslateGrabber2.signal_grabbing.connect(pos => {
 // }
 
 EditorViewport.signal_input.connect((evt, pro) => {
-	if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
-		EditorSceneTree.start_Tween(
-			tween_parallel(
-				new PropertyTween(point_light, 'radius', Math.random() * 10, 0.4, TweenTransitionType.Linear, TweenEasingType.Out),
-				new PropertyTween(point_light, 'color', vec3(Math.random(), Math.random(), Math.random()), 0.4, TweenTransitionType.Linear, TweenEasingType.Out)
-			)
-		);
-	}
+    if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
+        EditorSceneTree.start_Tween(
+            tween_parallel(
+                new PropertyTween(point_light, 'radius', Math.random() * 10, 0.4, TweenTransitionType.Linear, TweenEasingType.Out),
+                new PropertyTween(point_light, 'color', vec3(Math.random(), Math.random(), Math.random()), 0.4, TweenTransitionType.Linear, TweenEasingType.Out)
+            )
+        );
+    }
 });
 
 export const signal = new SignalEmitter<(...args: any[]) => void>();
@@ -248,30 +249,30 @@ MeshLine.render_queue = 1;
 World.add_Child(MeshLine);
 
 signal.connect((action) => {
-	if (action === 'orth') {
-		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_CameraTypeOrth', true, false));
-	}
-	else if (action === 'persp') {
-		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_CameraTypePersp', true, false));
-	}
-	else if (action === '顶视图') {
-		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_TopView', true, false));
-	}
-	else if (action === '底视图') {
-		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_BottomView', true, false));
-	}
-	else if (action === '左视图') {
-		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_LeftView', true, false));
-	}
-	else if (action === '右视图') {
-		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_RightView', true, false));
-	}
-	else if (action === '前视图') {
-		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_FrontView', true, false));
-	}
-	else if (action === '后视图') {
-		EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_BackView', true, false));
-	}
+    if (action === 'orth') {
+        EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_CameraTypeOrth', true, false));
+    }
+    else if (action === 'persp') {
+        EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_CameraTypePersp', true, false));
+    }
+    else if (action === '顶视图') {
+        EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_TopView', true, false));
+    }
+    else if (action === '底视图') {
+        EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_BottomView', true, false));
+    }
+    else if (action === '左视图') {
+        EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_LeftView', true, false));
+    }
+    else if (action === '右视图') {
+        EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_RightView', true, false));
+    }
+    else if (action === '前视图') {
+        EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_FrontView', true, false));
+    }
+    else if (action === '后视图') {
+        EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_BackView', true, false));
+    }
 });
 
 // function create_CompassScene() {
@@ -353,13 +354,29 @@ signal.connect((action) => {
 // 	});
 // }
 
-export function createEditorViewport() {
-	EditorSceneTree.start_Loop();
-	// create_CompassScene();
-	const mesh0 = new ClassLoader(DefaultInstanceCache).fetch<MeshInstance3D>('sys://MonkeyMesh.lttmbin').expect();
-	mesh0.local_position = vec3(-250, 0, -100);
-	World.add_Child(mesh0);
+import huli from 'res://huli.obj?url';
 
-	// const mesh1 = new ClassLoader(DefaultInstanceCache).fetch<MeshInstance3D>('res://test.lttmbin').expect();
-	// World.add_Child(mesh1);
+export function createEditorViewport() {
+    EditorSceneTree.start_Loop();
+    // create_CompassScene();
+    
+    // const mesh0 = new ClassLoader(DefaultInstanceCache).fetch<MeshInstance3D>('sys://MonkeyMesh.lttmbin').expect();
+    // mesh0.local_position = vec3(-250, 0, -100);
+    // World.add_Child(mesh0);
+
+    // const mesh1 = new ClassLoader(DefaultInstanceCache).fetch<MeshInstance3D>('res://test.lttmbin').expect();
+    // World.add_Child(mesh1);
+    fetch(huli).then(r => r.text()).then(t => {
+        const class_saver = new ObjLoader().parse(t).expect();
+        class_saver.save(undefined, 'sys://huli.geometry.lttmbin');
+
+        const huli_geo = new ClassLoader(DefaultInstanceCache).fetch<ArrayGeometryResource>('sys://huli.geometry.lttmbin').expect();
+        
+        const mesh = new MeshInstance3D(DefaultConfig);
+        mesh.geometry = huli_geo;
+        mesh.material = new NormalMaterialResource(DefaultConfig);
+        mesh.local_scale = vec3(100, 100, 100);
+        mesh.local_position = vec3(-500, -100, 250);
+        World.add_Child(mesh);
+    });
 }

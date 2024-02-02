@@ -23,22 +23,25 @@
                 <SunPanel container vertical style="width: 100%; height: 100%;">
                     <SunScrollContainer content-style="width: 100%;">
                         <SunPanelContainer vertical style="width: 100%;">
-                            <SunTree :options="fs_options" :filter-sort="(sort as any)" @click="onClick" :click-folding="false"
-                                @contextmenu="$event.open()" @edit="onEdit">
+                            <SunTree :options="fs_options" :filter-sort="(sort as any)" @click="onClick"
+                                :click-folding="false" @contextmenu="$event.open()" @edit="onEdit">
                             </SunTree>
                         </SunPanelContainer>
                     </SunScrollContainer>
                 </SunPanel>
             </template>
             <template #second>
-                <SunPanel container vertical>
+                <SunPanel container vertical style="height: 100%;">
                     <SunScrollContainer style="width: 100%; height: unset;">
                         <SunPanelContainer>
-                            <SunBreadcrumb :options="nav_options" />
+                            <SunBreadcrumb :options="nav_options" :filter-sort="(sort as any)" />
                         </SunPanelContainer>
                     </SunScrollContainer>
                     <SunPanelSeparator />
-                    <SunScrollContainer style="width: 100%; flex: 1;">
+                    <SunScrollContainer style="width: 100%; flex: 1; height: 0;">
+                        <SunPanelContainer>
+                            <div style="white-space: pre; font-size: 12px; padding: 10px; font-family: 'fira code';" v-text="data"></div>
+                        </SunPanelContainer>
                     </SunScrollContainer>
                 </SunPanel>
             </template>
@@ -65,8 +68,9 @@ import type { TreeItem } from '@/sundesign/tree/SunTreeItem.vue';
 import { fspath } from '@/system/filesystem/FileSystemPath';
 import { VFSReactive, type FileSystemRefItem } from '@/system/filesystem/FileSystemReactive';
 import { computed, ref, watch } from 'vue';
-import { VFS, type VfsId } from '@/system/filesystem/VirtualFileSystem';
+import { VFS, VfsMode, type VfsId } from '@/system/filesystem/VirtualFileSystem';
 import { type BreadcrumbItem } from '../sundesign/breadcrumb/SunBreadcrumb.vue';
+import { FileAccess } from '@/system/filesystem/FileAccess';
 
 const root_options = VFSReactive.watch(fspath('/'));
 const fs_options = computed(() => root_options.value === undefined ? [] : root_options.value.subs);
@@ -85,9 +89,19 @@ function sort(options: FileSystemRefItem[]) {
     }) as TreeItem[];
 }
 
-function onClick(data: any, evt: Event) {
-    console.log(data);
-    nav_options.value = VFSReactive.get_Breadcrumb(data as VfsId);
+const data = ref('');
+function onClick(vfsid: any, evt: Event) {
+    nav_options.value = VFSReactive.get_Breadcrumb(vfsid as VfsId);
+    const p = VFS.abspath(vfsid as VfsId).expect();
+    const file = new FileAccess(p, VfsMode.Read);
+    if (file.is_opened) {
+        const str = file.read_String();
+        data.value = str ?? 'decode error';
+    }
+    else {
+        data.value = 'open error';
+    }
+    file.close();
 }
 
 function onEdit(data: any, label: string) {

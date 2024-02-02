@@ -16,31 +16,28 @@ import { WorldObject } from "../WorldObject";
 import { RID, type Rid } from "../../Rid";
 import { GeometryResource } from "../../resources/geometry_resources/GeometryResource";
 import type { MaterialResource } from "../../resources/material_resources/MaterialResource";
-import type { Renderer3DQueue } from "../../renderer/renderer_3d/EditorRenderer3D";
+import type { Renderer3DQueue } from "../../renderer/renderer_3d/Renderer3DQueue";
 import type { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
 import { ConfiguredObject, type Config } from "../../ConfiguredObject";
 import { Cacher } from "@/system/utils/Cacher";
 import type { WebGL2RenderStateProgram } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateProgram";
 import { RenderServerLightType, RenderServerLightsData } from "../../render_server/RenderServerLightData";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import type { Color } from "@/system/fivepebble/graphics/Color";
-import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
-import { Deg2Rad } from "@/system/fivepebble/Scalar";
 
 // #region sky
 
 const SkyQuadGeometry = new Cacher((config: Config) => {
-	const quad_position = new RenderDeviceVector2AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
-		/* 0 */vec2(-1, 1),			//   1  0 ------ 2
-		/* 1 */vec2(-1, -1),		//   |  |        |
-		/* 2 */vec2(1, 1),			//   |  |        |
-		/* 3 */vec2(1, -1),			//  -1  1 ------ 3
-		/*                        *///     -1 ------ 1
-	]);
-	const quad_index = new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 1, 2, 3]);
-	const quad_surface = config.render_server.create_Geometry();
-	quad_surface.set_Geometry(RenderStatePrimitiveType.TriangleStrip, { position: quad_position }, quad_index);
-	return quad_surface;
+    const quad_position = new RenderDeviceVector2AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
+	      /* 0 */vec2(-1, 1),			//   1  0 ------ 2
+	      /* 1 */vec2(-1, -1),		//   |  |        |
+	      /* 2 */vec2(1, 1),			//   |  |        |
+	      /* 3 */vec2(1, -1),			//  -1  1 ------ 3
+        /*                    *///     -1 ------ 1
+    ]);
+    const quad_index = new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 1, 2, 3]);
+    const quad_surface = config.render_server.create_Geometry();
+    quad_surface.set_Geometry(RenderStatePrimitiveType.TriangleStrip, { position: quad_position }, quad_index);
+    return quad_surface;
 });
 
 const quad_vert_shader_code = `#version 300 es
@@ -148,545 +145,545 @@ void main() {
 `;
 
 const SkyProgramUniform = new Cacher((config: Config) => {
-	const quad_vert_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, quad_vert_shader_code).expect();
-	const quad_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, sky_frag_shader_code).expect();
-	const sky_program = config.render_server.render_state.create_Program(quad_vert_shader, quad_frag_shader).expect();
-	const uniform_time_location = config.render_server.render_state.get_ProgramUniformLocation(sky_program, 'time');
-	const uniform_time_slot = new WebGL2RenderStateFloatUniformSlot(config.render_server.render_state, sky_program, uniform_time_location!, 0);
-	return { sky_program, uniform_time_slot };
+    const quad_vert_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, quad_vert_shader_code).expect();
+    const quad_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, sky_frag_shader_code).expect();
+    const sky_program = config.render_server.render_state.create_Program(quad_vert_shader, quad_frag_shader).expect();
+    const uniform_time_location = config.render_server.render_state.get_ProgramUniformLocation(sky_program, 'time');
+    const uniform_time_slot = new WebGL2RenderStateFloatUniformSlot(config.render_server.render_state, sky_program, uniform_time_location!, 0);
+    return { sky_program, uniform_time_slot };
 });
 
 // #endregion
 
 export class VisualWorld3DMesh extends WorldObject {
-	public readonly geometry_ref: Ref<RenderServerGeometry> = new Ref();
-	protected readonly surface_materials_ref: RefArray<RenderServerMaterial> = new RefArray();
-	public readonly material_override_ref: Ref<RenderServerMaterial> = new Ref();
+    public readonly geometry_ref: Ref<RenderServerGeometry> = new Ref();
+    protected readonly surface_materials_ref: RefArray<RenderServerMaterial> = new RefArray();
+    public readonly material_override_ref: Ref<RenderServerMaterial> = new Ref();
 
-	private is_surface_materials_empty: boolean = false;
+    private is_surface_materials_empty: boolean = false;
 
-	public readonly global_transform: Matrix4 = Matrix4.make_Identity();
-	public _visible: boolean = true;
-	public layer: number = 0xffffffff;
-	public cast_shadow: boolean = false;
-	public render_queue: number = 0;
+    public readonly global_transform: Matrix4 = Matrix4.make_Identity();
+    public _visible: boolean = true;
+    public layer: number = 0xffffffff;
+    public cast_shadow: boolean = false;
+    public render_queue: number = 0;
 
-	public get visible() {
-		return this._visible && !this.is_bbox_empty;
-	}
+    public get visible() {
+        return this._visible && !this.is_bbox_empty;
+    }
 
-	public get has_geometry() {
-		return !this.geometry_ref.is_empty && this.geometry_ref.expect.has_geometry;
-	}
+    public get has_geometry() {
+        return !this.geometry_ref.is_empty && this.geometry_ref.expect.has_geometry;
+    }
 
-	public get bbox() { return this._bbox; }
-	private is_bbox_empty: boolean = true;
-	private _bbox: Box3 = new Box3();
+    public get bbox() { return this._bbox; }
+    private is_bbox_empty: boolean = true;
+    private _bbox: Box3 = new Box3();
 
-	constructor(config: Config, rid: Rid) {
-		super(config, rid);
-	}
+    constructor(config: Config, rid: Rid) {
+        super(config, rid);
+    }
 
-	private on_geometry_bbox_changed = (bbox: Box3) => {
-		this.update_BBox();
-	}
+    private on_geometry_bbox_changed = (bbox: Box3) => {
+        this.update_BBox();
+    }
 
-	static #zero_vec3: Vector3 = new Vector3(0, 0, 0);
+    static #zero_vec3: Vector3 = new Vector3(0, 0, 0);
 
-	private update_BBox() {
-		if (!this.has_geometry) {
-			this._bbox.set(VisualWorld3DMesh.#zero_vec3, VisualWorld3DMesh.#zero_vec3);
-		}
-		else {
-			this._bbox.applys_Matrix4(this.geometry_ref.expect.bbox, this.global_transform);
-		}
-		this.is_bbox_empty = this._bbox.is_empty;
-	}
+    private update_BBox() {
+        if (!this.has_geometry) {
+            this._bbox.set(VisualWorld3DMesh.#zero_vec3, VisualWorld3DMesh.#zero_vec3);
+        }
+        else {
+            this._bbox.applys_Matrix4(this.geometry_ref.expect.bbox, this.global_transform);
+        }
+        this.is_bbox_empty = this._bbox.is_empty;
+    }
 
-	private update_SurfaceMaterialsEmpty() {
-		const count = this.surface_materials_ref.length;
-		for (let i = 0; i < count; i++) {
-			if (!this.surface_materials_ref.get(i, true)!.is_empty) {
-				this.is_surface_materials_empty = false;
-			}
-		}
-		this.is_surface_materials_empty = true;
-	}
+    private update_SurfaceMaterialsEmpty() {
+        const count = this.surface_materials_ref.length;
+        for (let i = 0; i < count; i++) {
+            if (!this.surface_materials_ref.get(i, true)!.is_empty) {
+                this.is_surface_materials_empty = false;
+            }
+        }
+        this.is_surface_materials_empty = true;
+    }
 
-	public set_Geometry(geometry: RenderServerGeometry | undefined) {
-		if (!this.geometry_ref.is_empty) {
-			this.geometry_ref.expect.singal_bbox_changed.disconnect(this.on_geometry_bbox_changed);
-		}
-		this.geometry_ref.value = geometry;
-		if (!this.geometry_ref.is_empty) {
-			this.geometry_ref.expect.singal_bbox_changed.connect(this.on_geometry_bbox_changed);
-			const surface_count = this.geometry_ref.expect.surface_count;
-			if (surface_count === 0) this.surface_materials_ref.clear();
-			else {
-				this.surface_materials_ref.resize(surface_count);
-			}
-		}
-		else {
-			this.surface_materials_ref.clear();
-		}
-		this.update_SurfaceMaterialsEmpty();
-		this.update_BBox();
-	}
+    public set_Geometry(geometry: RenderServerGeometry | undefined) {
+        if (!this.geometry_ref.is_empty) {
+            this.geometry_ref.expect.singal_bbox_changed.disconnect(this.on_geometry_bbox_changed);
+        }
+        this.geometry_ref.value = geometry;
+        if (!this.geometry_ref.is_empty) {
+            this.geometry_ref.expect.singal_bbox_changed.connect(this.on_geometry_bbox_changed);
+            const surface_count = this.geometry_ref.expect.surface_count;
+            if (surface_count === 0) this.surface_materials_ref.clear();
+            else {
+                this.surface_materials_ref.resize(surface_count);
+            }
+        }
+        else {
+            this.surface_materials_ref.clear();
+        }
+        this.update_SurfaceMaterialsEmpty();
+        this.update_BBox();
+    }
 
-	public set_SurfaceMaterial(surface_idx: number, material: RenderServerMaterial | undefined) {
-		if (this.geometry_ref.is_empty) return;
-		const geometry = this.geometry_ref.expect;
-		if (surface_idx < 0 || surface_idx >= geometry.surface_count || surface_idx >= this.surface_materials_ref.length) return;
-		this.surface_materials_ref.set(surface_idx, material);
-		if (material === undefined) this.update_SurfaceMaterialsEmpty();
-		else this.is_surface_materials_empty = false;
-	}
+    public set_SurfaceMaterial(surface_idx: number, material: RenderServerMaterial | undefined) {
+        if (this.geometry_ref.is_empty) return;
+        const geometry = this.geometry_ref.expect;
+        if (surface_idx < 0 || surface_idx >= geometry.surface_count || surface_idx >= this.surface_materials_ref.length) return;
+        this.surface_materials_ref.set(surface_idx, material);
+        if (material === undefined) this.update_SurfaceMaterialsEmpty();
+        else this.is_surface_materials_empty = false;
+    }
 
-	public set_MaterialOverride(material: RenderServerMaterial | undefined) {
-		this.material_override_ref.value = material;
-	}
+    public set_MaterialOverride(material: RenderServerMaterial | undefined) {
+        this.material_override_ref.value = material;
+    }
 
-	public set_GlobalTransform(mat: Matrix4) {
-		this.global_transform.copy(mat);
-		this.update_BBox();
-	}
+    public set_GlobalTransform(mat: Matrix4) {
+        this.global_transform.copy(mat);
+        this.update_BBox();
+    }
 
-	public set_Visible(visible: boolean) {
-		this._visible = visible;
-	}
+    public set_Visible(visible: boolean) {
+        this._visible = visible;
+    }
 
-	public set_Layer(layer: number) {
-		this.layer = layer & 0xffffffff;
-	}
+    public set_Layer(layer: number) {
+        this.layer = layer & 0xffffffff;
+    }
 
-	public set_RenderQueue(render_queue: number) {
-		this.render_queue = render_queue;
-	}
+    public set_RenderQueue(render_queue: number) {
+        this.render_queue = render_queue;
+    }
 
-	public set_CastShadow(cast: boolean) {
-		this.cast_shadow = cast;
-	}
+    public set_CastShadow(cast: boolean) {
+        this.cast_shadow = cast;
+    }
 
-	public clear_Materials() {
-		this.material_override_ref.clear();
-		this.surface_materials_ref.clear();
-	}
+    public clear_Materials() {
+        this.material_override_ref.clear();
+        this.surface_materials_ref.clear();
+    }
 
-	// fill render queue
+    // fill render queue
 
-	public fill_RenderQueue(queue: Renderer3DQueue, mask: number, frustum: Frustum3): boolean {
-		if (!this.visible || (this.layer & mask) === 0 || this.geometry_ref.is_empty || !frustum.contain_Box(this.bbox, false)) return false;
-		if (this.is_surface_materials_empty) {
-			if (this.material_override_ref.is_empty) return false;
-			const geometry = this.geometry_ref.expect;
-			const vertex_array = geometry.get_Geometry();
-			if (vertex_array !== undefined) queue.add(vertex_array, this.material_override_ref.expect, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer);
-		}
-		else {
-			const surface_materials_count = this.surface_materials_ref.length;
-			for (let i = 0; i < surface_materials_count; i++) {
-				let material = this.surface_materials_ref.get(i, false);
-				if (material === undefined) {
-					if (this.material_override_ref.is_empty) continue;
-					else material = this.material_override_ref.expect;
-				}
-				const geometry = this.geometry_ref.expect;
-				const vertex_array_view = geometry.get_Surface(i);
-				if (vertex_array_view !== undefined) queue.add(vertex_array_view, material, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer);
-			}
-		}
-		return true;
-	}
+    public fill_RenderQueue(queue: Renderer3DQueue, mask: number, frustum: Frustum3): boolean {
+        if (!this.visible || (this.layer & mask) === 0 || this.geometry_ref.is_empty || !frustum.contain_Box(this.bbox, false)) return false;
+        if (this.is_surface_materials_empty) {
+            if (this.material_override_ref.is_empty) return false;
+            const geometry = this.geometry_ref.expect;
+            const vertex_array = geometry.get_Geometry();
+            if (vertex_array !== undefined) queue.add(vertex_array, this.material_override_ref.expect, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer);
+        }
+        else {
+            const surface_materials_count = this.surface_materials_ref.length;
+            for (let i = 0; i < surface_materials_count; i++) {
+                let material = this.surface_materials_ref.get(i, false);
+                if (material === undefined) {
+                    if (this.material_override_ref.is_empty) continue;
+                    else material = this.material_override_ref.expect;
+                }
+                const geometry = this.geometry_ref.expect;
+                const vertex_array_view = geometry.get_Surface(i);
+                if (vertex_array_view !== undefined) queue.add(vertex_array_view, material, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer);
+            }
+        }
+        return true;
+    }
 
-	public dispose(): void {
-		this.geometry_ref.clear();
-		this.clear_Materials();
-	}
+    public dispose(): void {
+        this.geometry_ref.clear();
+        this.clear_Materials();
+    }
 }
 
 export class VisualWorld3DLight extends WorldObject {
-	public type: RenderServerLightType = RenderServerLightType.SpotLight;
-	public readonly position: Vector3 = new Vector3();
-	public readonly direction: Vector3 = new Vector3(0, 0, -1);
-	public readonly color: Vector3 = new Vector3(1, 1, 1);
-	public intensity: number = 1.0;
-	public attenuation: number = 2.0;
-	public layer: number = 0xffffffff;
-	public visible: boolean = true;
-	public param_0: number = 0;
-	public param_1: number = 0;
-	public param_2: number = 0;
-	public param_3: number = 0;
-	public shadow_bias: number = 0;
-	public shadow_normal_bias: number = 0;
-	public shadow_opacity: number = 0;
+    public type: RenderServerLightType = RenderServerLightType.SpotLight;
+    public readonly position: Vector3 = new Vector3();
+    public readonly direction: Vector3 = new Vector3(0, 0, -1);
+    public readonly color: Vector3 = new Vector3(1, 1, 1);
+    public intensity: number = 1.0;
+    public attenuation: number = 2.0;
+    public layer: number = 0xffffffff;
+    public visible: boolean = true;
+    public param_0: number = 0;
+    public param_1: number = 0;
+    public param_2: number = 0;
+    public param_3: number = 0;
+    public shadow_bias: number = 0;
+    public shadow_normal_bias: number = 0;
+    public shadow_opacity: number = 0;
 
-	constructor(config: Config, rid: Rid) {
-		super(config, rid);
-	}
+    constructor(config: Config, rid: Rid) {
+        super(config, rid);
+    }
 
-	public set_Type(type: RenderServerLightType) {
-		this.type = type;
-	}
+    public set_Type(type: RenderServerLightType) {
+        this.type = type;
+    }
 
-	public set_GlobalPosition(position: Vector3) {
-		this.position.copy(position);
-	}
+    public set_GlobalPosition(position: Vector3) {
+        this.position.copy(position);
+    }
 
-	public set_GlobalDirection(direction: Vector3) {
-		this.direction.copy(direction);
-	}
+    public set_GlobalDirection(direction: Vector3) {
+        this.direction.copy(direction);
+    }
 
-	public set_Color(color: Vector3) {
-		this.color.copy(color);
-	}
+    public set_Color(color: Vector3) {
+        this.color.copy(color);
+    }
 
-	public set_Intensity(intensity: number) {
-		this.intensity = intensity;
-	}
+    public set_Intensity(intensity: number) {
+        this.intensity = intensity;
+    }
 
-	public set_Attenuation(attenuation: number) {
-		this.attenuation = attenuation;
-	}
+    public set_Attenuation(attenuation: number) {
+        this.attenuation = attenuation;
+    }
 
-	public set_Layer(layer: number) {
-		this.layer = layer & 0xffffffff;
-	}
+    public set_Layer(layer: number) {
+        this.layer = layer & 0xffffffff;
+    }
 
-	public set_Visible(visible: boolean) {
-		this.visible = visible;
-	}
+    public set_Visible(visible: boolean) {
+        this.visible = visible;
+    }
 
-	public set_Parameter0(val: number) {
-		this.param_0 = val;
-	}
+    public set_Parameter0(val: number) {
+        this.param_0 = val;
+    }
 
-	public set_Parameter1(val: number) {
-		this.param_1 = val;
-	}
+    public set_Parameter1(val: number) {
+        this.param_1 = val;
+    }
 
-	public set_Parameter2(val: number) {
-		this.param_2 = val;
-	}
+    public set_Parameter2(val: number) {
+        this.param_2 = val;
+    }
 
-	public set_Parameter3(val: number) {
-		this.param_3 = val;
-	}
+    public set_Parameter3(val: number) {
+        this.param_3 = val;
+    }
 
-	public set_ShadowBias(bias: number) {
-		this.shadow_bias = bias;
-	}
+    public set_ShadowBias(bias: number) {
+        this.shadow_bias = bias;
+    }
 
-	public set_ShadowNormalBias(bias: number) {
-		this.shadow_normal_bias = bias;
-	}
+    public set_ShadowNormalBias(bias: number) {
+        this.shadow_normal_bias = bias;
+    }
 
-	public set_ShadowOpacity(opacity: number) {
-		this.shadow_opacity = opacity;
-	}
+    public set_ShadowOpacity(opacity: number) {
+        this.shadow_opacity = opacity;
+    }
 
-	// fill light data
+    // fill light data
 
-	static #color: Vector3 = new Vector3();
+    static #color: Vector3 = new Vector3();
 
-	public fill_LightData(lights_data: RenderServerLightsData, idx: number, lid: number): number {
-		if (idx >= lights_data.max_light_count) return idx;
-		const color = VisualWorld3DLight.#color;
-		color.mults_Number(this.color, this.intensity);
-		lights_data.set_Light(idx, this.type, lid, this.position, this.direction, color, this.attenuation, this.layer, this.param_0, this.param_1, this.param_2, this.param_3, this.shadow_bias, this.shadow_normal_bias, this.shadow_opacity, undefined);
-		return idx;
-	}
+    public fill_LightData(lights_data: RenderServerLightsData, idx: number, lid: number): number {
+        if (idx >= lights_data.max_light_count) return idx;
+        const color = VisualWorld3DLight.#color;
+        color.mults_Number(this.color, this.intensity);
+        lights_data.set_Light(idx, this.type, lid, this.position, this.direction, color, this.attenuation, this.layer, this.param_0, this.param_1, this.param_2, this.param_3, this.shadow_bias, this.shadow_normal_bias, this.shadow_opacity, undefined);
+        return idx;
+    }
 
-	public dispose(): void { }
+    public dispose(): void { }
 }
 
 export class VisualWorld3D extends ConfiguredObject {
-	protected readonly meshes_map: Map<Rid, VisualWorld3DMesh> = new Map();
-	protected readonly lights_map: Map<Rid, VisualWorld3DLight> = new Map();
+    protected readonly meshes_map: Map<Rid, VisualWorld3DMesh> = new Map();
+    protected readonly lights_map: Map<Rid, VisualWorld3DLight> = new Map();
 
-	public get render_server() { return this.config.render_server; }
+    public get render_server() { return this.config.render_server; }
 
-	public get meshes() { return this.meshes_map.values(); }
-	public get lights() { return this.lights_map.values(); }
+    public get meshes() { return this.meshes_map.values(); }
+    public get lights() { return this.lights_map.values(); }
 
-	// signal
-	public signal_before_render: SignalEmitter<() => void> = new SignalEmitter();
+    // signal
+    public signal_before_render: SignalEmitter<() => void> = new SignalEmitter();
 
-	public readonly sky_texture: Ref<WebGL2RenderStateTexture> = new Ref();
-	public readonly sky_frame_buffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
-	private readonly sky_quad_geometry: RenderServerGeometry;
-	private readonly sky_program: WebGL2RenderStateProgram;
-	private readonly sky_uniform_time_slot: WebGL2RenderStateFloatUniformSlot;
+    public readonly sky_texture: Ref<WebGL2RenderStateTexture> = new Ref();
+    public readonly sky_frame_buffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
+    private readonly sky_quad_geometry: RenderServerGeometry;
+    private readonly sky_program: WebGL2RenderStateProgram;
+    private readonly sky_uniform_time_slot: WebGL2RenderStateFloatUniformSlot;
 
-	constructor(config: Config) {
-		super(config);
-		this.sky_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0, undefined, undefined, undefined, RenderStateTextureMinFilter.Linear, RenderStateTextureMagFilter.Linear).expect();
-		this.render_server.render_state.alloc_Texture2D(this.sky_texture.expect, 2048, 1024, 0, RenderStateTextureDataFormat.RGBA);
-		this.sky_frame_buffer.value = this.render_server.render_state.create_FrameBuffer().expect();
-		this.render_server.render_state.set_FrameBufferAttachment(this.sky_frame_buffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.sky_texture.expect);
-		this.render_server.render_state.enable_FrameBuffer(this.sky_frame_buffer.expect);
-		this.sky_quad_geometry = SkyQuadGeometry.get(this.config);
-		const { sky_program, uniform_time_slot } = SkyProgramUniform.get(this.config);
-		this.sky_program = sky_program;
-		this.sky_uniform_time_slot = uniform_time_slot;
-	}
+    constructor(config: Config) {
+        super(config);
+        this.sky_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0, undefined, undefined, undefined, RenderStateTextureMinFilter.Linear, RenderStateTextureMagFilter.Linear).expect();
+        this.render_server.render_state.alloc_Texture2D(this.sky_texture.expect, 2048, 1024, 0, RenderStateTextureDataFormat.RGBA);
+        this.sky_frame_buffer.value = this.render_server.render_state.create_FrameBuffer().expect();
+        this.render_server.render_state.set_FrameBufferAttachment(this.sky_frame_buffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.sky_texture.expect);
+        this.render_server.render_state.enable_FrameBuffer(this.sky_frame_buffer.expect);
+        this.sky_quad_geometry = SkyQuadGeometry.get(this.config);
+        const { sky_program, uniform_time_slot } = SkyProgramUniform.get(this.config);
+        this.sky_program = sky_program;
+        this.sky_uniform_time_slot = uniform_time_slot;
+    }
 
-	public trigger_BeforeRender(scene_tree: SceneTree) {
-		this.signal_before_render.trigger();
-		this.update_Sky(scene_tree);
-	}
+    public trigger_BeforeRender(scene_tree: SceneTree) {
+        this.signal_before_render.trigger();
+        this.update_Sky(scene_tree);
+    }
 
-	// Sky
+    // Sky
 
-	private sky_changed: boolean = true;
+    private sky_changed: boolean = true;
 
-	private update_Sky(scene_tree: SceneTree) {
-		if (this.sky_changed) {
-			this.sky_changed = false;
-			this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false);
-			this.render_server.render_state.set_ViewportProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
-			this.render_server.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
-			this.render_server.render_state.use_FrameBuffer(this.sky_frame_buffer.expect);
-			this.sky_uniform_time_slot.value = scene_tree.time;
-			this.sky_uniform_time_slot.commit();
-			this.render_server.render_state.draw_Elements(this.sky_program, this.sky_quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
-		}
-	}
+    private update_Sky(scene_tree: SceneTree) {
+        if (this.sky_changed) {
+            this.sky_changed = false;
+            this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false);
+            this.render_server.render_state.set_ViewportProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
+            this.render_server.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
+            this.render_server.render_state.use_FrameBuffer(this.sky_frame_buffer.expect);
+            this.sky_uniform_time_slot.value = scene_tree.time;
+            this.sky_uniform_time_slot.commit();
+            this.render_server.render_state.draw_Elements(this.sky_program, this.sky_quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+        }
+    }
 
-	// Mesh
+    // Mesh
 
-	public create_Mesh(): Rid {
-		const rid = RID();
-		const mesh = new VisualWorld3DMesh(this.config, rid);
-		this.meshes_map.set(rid, mesh);
-		return rid;
-	}
+    public create_Mesh(): Rid {
+        const rid = RID();
+        const mesh = new VisualWorld3DMesh(this.config, rid);
+        this.meshes_map.set(rid, mesh);
+        return rid;
+    }
 
-	protected get_Mesh(rid: Rid): VisualWorld3DMesh | undefined {
-		return this.meshes_map.get(rid);
-	}
+    protected get_Mesh(rid: Rid): VisualWorld3DMesh | undefined {
+        return this.meshes_map.get(rid);
+    }
 
-	public free_Mesh(rid: Rid) {
-		const instance = this.get_Mesh(rid);
-		if (instance === undefined) return;
-		instance.dispose();
-		this.meshes_map.delete(rid);
-	}
+    public free_Mesh(rid: Rid) {
+        const instance = this.get_Mesh(rid);
+        if (instance === undefined) return;
+        instance.dispose();
+        this.meshes_map.delete(rid);
+    }
 
-	public set_MeshGeometry(rid: Rid, geometry: GeometryResource | undefined) {
-		const instance = this.get_Mesh(rid);
-		if (instance) {
-			if (geometry === undefined) {
-				instance.set_Geometry(undefined);
-			}
-			else {
-				instance.set_Geometry(geometry.geometry);
-			}
-		}
-	}
+    public set_MeshGeometry(rid: Rid, geometry: GeometryResource | undefined) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            if (geometry === undefined) {
+                instance.set_Geometry(undefined);
+            }
+            else {
+                instance.set_Geometry(geometry.geometry);
+            }
+        }
+    }
 
-	public set_MeshSurfaceMaterial(rid: Rid, surface_idx: number, material: MaterialResource | undefined) {
-		const instance = this.get_Mesh(rid);
-		if (instance) {
-			if (material === undefined) {
-				instance.set_SurfaceMaterial(surface_idx, undefined);
-			}
-			else {
-				instance.set_SurfaceMaterial(surface_idx, material.material);
-			}
-		}
-	}
+    public set_MeshSurfaceMaterial(rid: Rid, surface_idx: number, material: MaterialResource | undefined) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            if (material === undefined) {
+                instance.set_SurfaceMaterial(surface_idx, undefined);
+            }
+            else {
+                instance.set_SurfaceMaterial(surface_idx, material.material);
+            }
+        }
+    }
 
-	public set_MeshMaterialOverride(rid: Rid, material: MaterialResource | undefined) {
-		const instance = this.get_Mesh(rid);
-		if (instance) {
-			if (material === undefined) {
-				instance.set_MaterialOverride(undefined);
-			}
-			else {
-				instance.set_MaterialOverride(material.material);
-			}
-		}
-	}
+    public set_MeshMaterialOverride(rid: Rid, material: MaterialResource | undefined) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            if (material === undefined) {
+                instance.set_MaterialOverride(undefined);
+            }
+            else {
+                instance.set_MaterialOverride(material.material);
+            }
+        }
+    }
 
-	public set_MeshGlobalTransform(rid: Rid, transform: Matrix4) {
-		const instance = this.get_Mesh(rid);
-		if (instance) {
-			instance.set_GlobalTransform(transform);
-		}
-	}
+    public set_MeshGlobalTransform(rid: Rid, transform: Matrix4) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            instance.set_GlobalTransform(transform);
+        }
+    }
 
-	public set_MeshVisibility(rid: Rid, visible: boolean) {
-		const instance = this.get_Mesh(rid);
-		if (instance) {
-			instance.set_Visible(visible);
-		}
-	}
+    public set_MeshVisibility(rid: Rid, visible: boolean) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            instance.set_Visible(visible);
+        }
+    }
 
-	public set_MeshLayer(rid: Rid, layer: number) {
-		const instance = this.get_Mesh(rid);
-		if (instance) {
-			instance.set_Layer(layer);
-		}
-	}
+    public set_MeshLayer(rid: Rid, layer: number) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            instance.set_Layer(layer);
+        }
+    }
 
-	public set_MeshRenderQueue(rid: Rid, render_queue: number) {
-		const instance = this.get_Mesh(rid);
-		if (instance) {
-			instance.set_RenderQueue(render_queue);
-		}
-	}
+    public set_MeshRenderQueue(rid: Rid, render_queue: number) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            instance.set_RenderQueue(render_queue);
+        }
+    }
 
-	public set_MeshCastShadow(rid: Rid, cast: boolean) {
-		const instance = this.get_Mesh(rid);
-		if (instance) {
-			instance.set_CastShadow(cast);
-		}
-	}
+    public set_MeshCastShadow(rid: Rid, cast: boolean) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            instance.set_CastShadow(cast);
+        }
+    }
 
-	// Light
+    // Light
 
-	public create_Light(): Rid {
-		const rid = RID();
-		const mesh = new VisualWorld3DLight(this.config, rid);
-		this.lights_map.set(rid, mesh);
-		return rid;
-	}
+    public create_Light(): Rid {
+        const rid = RID();
+        const mesh = new VisualWorld3DLight(this.config, rid);
+        this.lights_map.set(rid, mesh);
+        return rid;
+    }
 
-	protected get_Light(rid: Rid): VisualWorld3DLight | undefined {
-		return this.lights_map.get(rid);
-	}
+    protected get_Light(rid: Rid): VisualWorld3DLight | undefined {
+        return this.lights_map.get(rid);
+    }
 
-	public free_Light(rid: Rid) {
-		const instance = this.get_Light(rid);
-		if (instance === undefined) return;
-		instance.dispose();
-		this.lights_map.delete(rid);
-	}
+    public free_Light(rid: Rid) {
+        const instance = this.get_Light(rid);
+        if (instance === undefined) return;
+        instance.dispose();
+        this.lights_map.delete(rid);
+    }
 
-	public set_LightType(rid: Rid, type: RenderServerLightType) {
-		const instance = this.get_Light(rid);
-		if (instance) {
-			instance.set_Type(type);
-		}
-	}
+    public set_LightType(rid: Rid, type: RenderServerLightType) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Type(type);
+        }
+    }
 
-	public set_LightGlobalPosition(rid: Rid, position: Vector3) {
-		const instance = this.get_Light(rid);
-		if (instance) {
-			instance.set_GlobalPosition(position);
-		}
-	}
+    public set_LightGlobalPosition(rid: Rid, position: Vector3) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_GlobalPosition(position);
+        }
+    }
 
-	public set_LightGlobalDirection(rid: Rid, direction: Vector3) {
-		const instance = this.get_Light(rid);
-		if (instance) {
-			instance.set_GlobalDirection(direction);
-		}
-	}
+    public set_LightGlobalDirection(rid: Rid, direction: Vector3) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_GlobalDirection(direction);
+        }
+    }
 
-	public set_LightColor(rid: Rid, color: Vector3) {
-		const instance = this.get_Light(rid);
-		if (instance) {
-			instance.set_Color(color);
-		}
-	}
+    public set_LightColor(rid: Rid, color: Vector3) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Color(color);
+        }
+    }
 
-	public set_LightIntensity(rid: Rid, intensity: number) {
-		const instance = this.get_Light(rid);
-		if (instance) {
-			instance.set_Intensity(intensity);
-		}
-	}
+    public set_LightIntensity(rid: Rid, intensity: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Intensity(intensity);
+        }
+    }
 
-	public set_LightAttenuation(rid: Rid, attenuation: number) {
-		const instance = this.get_Light(rid);
-		if (instance) {
-			instance.set_Attenuation(attenuation);
-		}
-	}
+    public set_LightAttenuation(rid: Rid, attenuation: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Attenuation(attenuation);
+        }
+    }
 
-	public set_LightLayer(rid: Rid, layer: number) {
-		const instance = this.get_Light(rid);
-		if (instance) {
-			instance.set_Layer(layer);
-		}
-	}
+    public set_LightLayer(rid: Rid, layer: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Layer(layer);
+        }
+    }
 
-	public set_LightVisibility(rid: Rid, visible: boolean) {
-		const instance = this.get_Light(rid);
-		if (instance) {
-			instance.set_Visible(visible);
-		}
-	}
+    public set_LightVisibility(rid: Rid, visible: boolean) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Visible(visible);
+        }
+    }
 
-	public set_LightParameters(rid: Rid, val0?: number, val1?: number, val2?: number, val3?: number) {
-		const instance = this.get_Light(rid);
-		if (instance) {
-			if (val0 !== undefined) instance.set_Parameter0(val0);
-			if (val1 !== undefined) instance.set_Parameter1(val1);
-			if (val2 !== undefined) instance.set_Parameter2(val2);
-			if (val3 !== undefined) instance.set_Parameter3(val3);
-		}
-	}
+    public set_LightParameters(rid: Rid, val0?: number, val1?: number, val2?: number, val3?: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            if (val0 !== undefined) instance.set_Parameter0(val0);
+            if (val1 !== undefined) instance.set_Parameter1(val1);
+            if (val2 !== undefined) instance.set_Parameter2(val2);
+            if (val3 !== undefined) instance.set_Parameter3(val3);
+        }
+    }
 
-	public set_LightParameter0(rid: Rid, val: number) {
-		const instance = this.get_Light(rid);
-		if (instance) {
-			instance.set_Parameter0(val);
-		}
-	}
+    public set_LightParameter0(rid: Rid, val: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Parameter0(val);
+        }
+    }
 
-	public set_LightParameter1(rid: Rid, val: number) {
-		const instance = this.get_Light(rid);
-		if (instance) {
-			instance.set_Parameter1(val);
-		}
-	}
+    public set_LightParameter1(rid: Rid, val: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Parameter1(val);
+        }
+    }
 
-	public set_LightParameter2(rid: Rid, val: number) {
-		const instance = this.get_Light(rid);
-		if (instance) {
-			instance.set_Parameter2(val);
-		}
-	}
+    public set_LightParameter2(rid: Rid, val: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Parameter2(val);
+        }
+    }
 
-	public set_LightParameter3(rid: Rid, val: number) {
-		const instance = this.get_Light(rid);
-		if (instance) {
-			instance.set_Parameter3(val);
-		}
-	}
-	
-	public set_LightShadowBias(rid: Rid, bias: number) {
-		const instance = this.get_Light(rid);
-		if (instance) {
-			instance.set_ShadowBias(bias);
-		}
-	}
+    public set_LightParameter3(rid: Rid, val: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Parameter3(val);
+        }
+    }
 
-	public set_LightShadowNormalBias(rid: Rid, bias: number) {
-		const instance = this.get_Light(rid);
-		if (instance) {
-			instance.set_ShadowNormalBias(bias);
-		}
-	}
+    public set_LightShadowBias(rid: Rid, bias: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_ShadowBias(bias);
+        }
+    }
 
-	public set_LightShadowOpacity(rid: Rid, opacity: number) {
-		const instance = this.get_Light(rid);
-		if (instance) {
-			instance.set_ShadowOpacity(opacity);
-		}
-	}
+    public set_LightShadowNormalBias(rid: Rid, bias: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_ShadowNormalBias(bias);
+        }
+    }
 
-	public dispose() {
-		for (const mesh of this.meshes) {
-			mesh.dispose();
-		}
-		for (const light of this.lights) {
-			light.dispose();
-		}
-		this.meshes_map.clear();
-		this.lights_map.clear();
-	}
+    public set_LightShadowOpacity(rid: Rid, opacity: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_ShadowOpacity(opacity);
+        }
+    }
+
+    public dispose() {
+        for (const mesh of this.meshes) {
+            mesh.dispose();
+        }
+        for (const light of this.lights) {
+            light.dispose();
+        }
+        this.meshes_map.clear();
+        this.lights_map.clear();
+    }
 }

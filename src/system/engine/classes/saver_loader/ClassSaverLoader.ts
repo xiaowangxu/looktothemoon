@@ -21,10 +21,11 @@ export type ClassInstanceData = {
     // for resource default unique is false, but some resource type may override it to true, the loader will first check this then the resource's default unique, namely !unique && !Resource.unique will cause a cache operation
     unique: boolean | undefined,
     external: string | undefined,
+    uid: bigint,
     property: PropertyMap | undefined,
 }
 
-export type ClassExchangeData = { root: RefId, instances: ClassInstanceData[] };
+export type ClassExchangeData = { root: RefId, uid: bigint, meta: PropertyMap | undefined, instances: ClassInstanceData[] };
 
 // #region Saver
 
@@ -34,6 +35,11 @@ export interface ClassSaverOption {
 
 function save_File(path: string, data: ArrayBuffer): Result<undefined, Error> {
     const p = fspath(path);
+    if (p.routers[1] !== undefined && p.routers[1] === 'download') {
+        if (p.routers.length > 3 || p.routers[2] === undefined) return Result.Error(new Error(`<ClassSaver> save: download path ${path} is not valid`));
+        download_File(p.routers[2], data);
+        return Result.Ok(undefined);
+    }
     if (!p.is_valid) {
         return Result.Error(new Error(`<save_File> : path is invalid`));
     }
@@ -71,6 +77,7 @@ export class ClassSaver {
     private get refid() { return this._refid++; }
 
     private readonly rid_instance_data_map: Map<Rid, ClassInstanceData> = new Map();
+    private readonly refid_rid_map: Map<RefId, Rid> = new Map();
 
     private root_refid: RefId | undefined
 
@@ -84,15 +91,17 @@ export class ClassSaver {
 
     // data api
 
-    public create_Data(rid: Rid, type: string, unique: boolean | undefined = undefined, external: string | undefined = undefined): RefId {
+    public create_Data(rid: Rid, type: string, unique: boolean | undefined = undefined, external: string | undefined = undefined, uid: bigint = 0n): RefId {
         if (this.rid_instance_data_map.has(rid)) return this.rid_instance_data_map.get(rid)!.refid;
         else {
             const refid = this.refid;
+            this.refid_rid_map.set(refid, rid);
             this.rid_instance_data_map.set(rid, {
                 refid,
                 type,
                 unique,
                 external,
+                uid,
                 property: new Map(),
             });
             return refid;
@@ -123,8 +132,15 @@ export class ClassSaver {
     private get_Data(): Result<ClassExchangeData, Error> {
         const root_refid = this.root_refid;
         if (root_refid === undefined) return Result.Error(new Error('<ClassSaver> get_Data: no root instance to be saved'));
+        const rid = this.refid_rid_map.get(root_refid);
+        if (rid === undefined || !this.rid_instance_data_map.has(rid)) return Result.Error(new Error('<ClassSaver> get_Data: root instance not registered'));
         return Result.Ok({
             root: root_refid,
+            uid: this.rid_instance_data_map.get(rid)!.uid,
+            meta: new Map([
+                ['author', 'lttmsaver'],
+                ['date', new Date().toISOString()]
+            ]),
             instances: [...this.rid_instance_data_map.values()],
         });
     }
@@ -184,17 +200,20 @@ export class ClassSaver {
         return _encoder.encode();
     }
 
-    public save(obj: ClassBase, path: string, save_option?: ClassSaverOption): Result<undefined, Error> {
-        const res = this.dump(obj, ClassBinaryEncoder, save_option);
+    public save(obj: ClassBase | undefined, path: string, save_option?: ClassSaverOption): Result<undefined, Error> {
+        let res: Result<ArrayBuffer, Error>;
+        if (obj === undefined) {
+            const data = this.get_Data();
+            if (data.failed) return Result.Error(data.expect_Error());
+            res = this.enocde(data.expect(), ClassBinaryEncoder);
+        }
+        else {
+            res = this.dump(obj, ClassBinaryEncoder, save_option);
+        }
         if (res.failed) return Result.Error(res.expect_Error());
         const data = res.expect();
         const p = fspath(path);
         if (!p.is_valid || !p.is_absolute || !p.is_file) return Result.Error(new Error(`<ClassSaver> save: path ${path} is not valid`));
-        if (p.routers[1] !== undefined && p.routers[1] === 'download') {
-            if (p.routers.length > 3 || p.routers[2] === undefined) return Result.Error(new Error(`<ClassSaver> save: path ${path} is not valid`));
-            download_File(p.routers[2], data);
-            return Result.Ok(undefined);
-        }
         const save = save_File(path, data);
         if (save.failed) return save;
         return Result.Ok(undefined);
