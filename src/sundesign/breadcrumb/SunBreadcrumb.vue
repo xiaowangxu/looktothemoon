@@ -14,8 +14,12 @@
                 </template>
             </SunSelect>
             <SunButton :size="size" flat :active="active && idx === options.length - 1"
-                :disabled="disabled || option.item.disabled" :squared="option.item.label === undefined">
-                <SunButtonItem :label="option.item.label" :icon="option.item.icon"></SunButtonItem>
+                :disabled="disabled || option.item.disabled"
+                :squared="(option.item as RenderBreadcrumbItem).render === undefined ? ((option.item as ItemBreadcrumbItem).iconOnly ?? false) : ((option.item as RenderBreadcrumbItem).squared ?? false)">
+                <SunButtonItem v-if="(option.item as RenderBreadcrumbItem).render === undefined"
+                    :label="(option.item as ItemBreadcrumbItem).label" :icon="(option.item as ItemBreadcrumbItem).icon">
+                </SunButtonItem>
+                <component v-else :is="(option.item as RenderBreadcrumbItem).render"/>
             </SunButton>
         </template>
     </div>
@@ -24,13 +28,24 @@
 <script setup lang="ts">
 
 import '../SunDesignStyle.styl';
-import SunSelect from '../select/SunSelect.vue';
+import SunSelect, { type SelectItem } from '../select/SunSelect.vue';
 import SunButton from '../button/SunButton.vue';
 import SunButtonItem from '../item/SunButtonItem.vue';
 import { ChevronRight } from 'lucide-vue-next';
-import type { Item, Size } from '../SunDesignConstants';
+import type { ColorScheme, Item, Size, UID } from '../SunDesignConstants';
+import type { Component, Raw } from 'vue';
 
-export type BreadcrumbItem = { item: Item, siblings?: Item[] };
+type ItemBreadcrumbItem<T extends UID = UID> = Item<T>;
+type RenderBreadcrumbItem<T extends UID = UID> = {
+    uid: T,
+    squared?: boolean,
+    disabled?: boolean,
+    colorScheme?: ColorScheme,
+    render: Raw<Component<{
+        uid: T,
+    }>>,
+};
+export type BreadcrumbItem<T extends UID = UID> = { item: ItemBreadcrumbItem<T> | RenderBreadcrumbItem<T>, siblings?: SelectItem[] };
 
 // props
 const props = withDefaults(

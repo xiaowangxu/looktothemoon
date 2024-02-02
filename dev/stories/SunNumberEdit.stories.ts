@@ -27,7 +27,7 @@ export const NumberEdit: Story = {
             return { args, val };
         },
         template: `
-			  <SunNumberEdit v-bind="args" style="width: 150px;" v-model="val">
+			  <SunNumberEdit v-bind="args" style="width: 150px;" :model-value="val">
 			  	  <template #prefix>
 			  	  	  长度
 			  	  </template>

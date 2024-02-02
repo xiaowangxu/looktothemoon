@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/vue3';
 
 import SunBreadcrumb from '../../src/sundesign/breadcrumb/SunBreadcrumb.vue';
 import { SizeArgs, SizeArgsTypes, Args, ArgsTypes, Decorators } from './SunDesignArgs';
-import { ref, type Raw, type Component, defineComponent } from 'vue';
+import { ref, type Raw, type Component, defineComponent, markRaw } from 'vue';
 
 const meta: Meta<typeof SunBreadcrumb> = {
     component: SunBreadcrumb,
@@ -37,9 +37,9 @@ export const Breadcrumb: Story = {
         options: [
             {
                 item: {
-                    label: '根目录',
                     icon: 'FolderRoot',
-                    uid: 'root'
+                    uid: 'root',
+                    iconOnly: true,
                 },
             },
             {
@@ -117,6 +117,16 @@ export const Breadcrumb: Story = {
                         uid: 'monkey.lttmbin/body',
                     }
                 ]
+            },
+            {
+                item: {
+                    uid: 100,
+                    render: (props, ctx) => {
+                        return <>
+                            <span style={{ fontFamily: "consolas", fontWeight: 'bold' }}><span style={{ color: 'purple' }}>func</span> <span style={{ color: 'blue' }}>main</span>()</span>
+                        </>
+                    }
+                }
             }
         ]
     }

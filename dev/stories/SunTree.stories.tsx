@@ -7,6 +7,8 @@ import SunControlGroupRow from '../../src/sundesign/controlgroup/SunControlGroup
 import { SizeArgs, SizeArgsTypes, Args, ArgsTypes, Decorators } from './SunDesignArgs';
 import { ref, type Raw, type Component, defineComponent } from 'vue';
 import { ColorSchemeBlue, ColorSchemeRed } from '../../src/sundesign/SunDesignConstants';
+import SunIcon from '../../src/sundesign/icon/SunIcon.vue';
+import { Coins, Sun } from 'lucide-vue-next';
 
 const meta: Meta<typeof SunTree> = {
     component: SunTree,
@@ -26,16 +28,18 @@ export const Tree: Story = {
     render: (args) => ({
         components: { SunTree, SunButton, SunControlGroupRow, SunControlGroup },
         setup() {
-            return { args };
+            const v = ref(false);
+            function onClick(data: any, evt: Event) {
+                console.log(data, evt);
+            }
+            return { args, onClick, v };
         },
         template: `
-			  <SunTree style="width: 300px;" v-bind="args">
+			  <SunTree style="width: 500px;" v-bind="args" @click="onClick">
             <template #append="{option}">
                 <SunControlGroup>
                     <SunControlGroupRow>
                         <SunButton size="small" squared @click.stop>A</SunButton>
-                        <SunButton size="small" squared @click.stop>V</SunButton>
-                        <SunButton size="small" squared @click.stop>S</SunButton>
                     </SunControlGroupRow>
                 </SunControlGroup>
             </template>
@@ -44,145 +48,164 @@ export const Tree: Story = {
     }),
     argTypes: {
         ...SizeArgsTypes,
+        picking: {
+            options: ['leaf', 'group', 'instance', 'none'],
+            mapping: {
+                leaf: 'leaf',
+                group: 'group',
+                instance: 'instance',
+                none: undefined,
+            }
+        }
     },
     args: {
         ...SizeArgs,
         options: [
             {
-                uid: 0,
+                uid: 320,
                 label: 'test',
                 icon: 'Figma',
                 description: 'test',
                 subs: [
                     {
-                        uid: 1,
+                        uid: 3211,
                         icon: 'Cog',
                         colorScheme: ColorSchemeBlue,
                         label: 'sub 0',
                     },
                     {
-                        uid: 1,
+                        uid: 121,
                         icon: 'Cog',
                         label: 'sub 0',
                     },
                     {
-                        uid: 1,
+                        uid: 167,
                         icon: 'Cog',
                         label: 'sub 0',
                     },
                     {
-                        uid: 1,
+                        uid: 13265,
                         icon: 'Cog',
                         label: 'sub 0',
                     },
                     {
-                        uid: 1,
+                        uid: 13412,
                         icon: 'Cog',
                         label: 'sub 0',
                     },
                     {
-                        uid: 1,
+                        uid: 45,
                         icon: 'Cog',
                         label: 'sub 0',
                     },
                     {
-                        uid: 1,
+                        uid: 234,
                         icon: 'Cog',
                         label: 'sub 0',
                     }
                 ]
             },
             {
-                uid: 0,
+                uid: 425,
                 label: 'test',
                 icon: 'Figma',
                 description: 'test',
                 colorScheme: ColorSchemeRed,
                 subs: [
                     {
-                        uid: 1,
+                        uid: 546531,
                         icon: 'Cog',
                         colorScheme: ColorSchemeBlue,
                         label: 'sub 0',
-                        active: true,
                     },
                     {
-                        uid: 1,
+                        uid: 1223,
                         icon: 'Cog',
                         label: 'sub 0',
                         disabled: true,
-                        checked: true,
                     },
                     {
-                        uid: 1,
+                        uid: 6531,
                         icon: 'Cog',
                         label: 'sub 0',
                         subs: [
                             {
-                                uid: 0,
+                                uid: 346,
                                 label: 'test12783gdwegyuerg7834f78',
                                 icon: 'Figma',
                                 description: 'test',
                                 subs: [
                                     {
-                                        uid: 1,
+                                        uid: 5471,
                                         icon: 'Cog',
                                         colorScheme: ColorSchemeBlue,
                                         label: 'sub 0',
-                                    },
-                                    {
-                                        uid: 1,
-                                        icon: 'Cog',
-                                        label: 'sub 0',
-                                    },
-                                    {
-                                        uid: 1,
-                                        icon: 'Cog',
-                                        label: 'sub 0',
-                                    },
-                                    {
-                                        uid: 1,
-                                        icon: 'Cog',
-                                        label: 'sub 0',
-                                        checked: true,
-                                    },
-                                    {
-                                        uid: 1,
-                                        icon: 'Cog',
-                                        label: '这是一个测试，这是一个测试，这是一个测试，这是一个测试，这是一个测试',
                                         leaf: true,
                                     },
                                     {
-                                        uid: 1,
+                                        uid: 561,
                                         icon: 'Cog',
                                         label: 'sub 0',
+                                        leaf: true,
                                     },
                                     {
-                                        uid: 1,
+                                        uid: 467,
                                         icon: 'Cog',
                                         label: 'sub 0',
-                                    }
+                                        leaf: true,
+                                    },
+                                    {
+                                        uid: 623531,
+                                        icon: 'Cog',
+                                        label: 'sub 0',
+                                        leaf: true,
+                                    },
                                 ]
                             }
                         ]
                     },
                     {
-                        uid: 1,
+                        uid: 541,
+                        icon: 'Cog',
+                        label: 'sub 0',
+                        subs: [
+                            {
+                                uid: 65467,
+                                icon: 'Cog',
+                                label: '这是一个测试，这是一个测试，这是一个测试，这是一个测试，这是一个测试',
+                                leaf: true,
+                            },
+                            {
+                                uid: 176565,
+                                label: 'RenderTreeItem',
+                                leaf: true,
+                                render: (props, ctx) => {
+                                    return <>
+                                        <Sun />
+                                        <span style={{ marginRight: 'auto', textOverflow: 'ellipsis', overflow: 'hidden' }}>这是一个测试，这是一个测试，这是一个测试，这是一个测试，这是一个测试</span>
+                                        <div style={{ minWidth: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'red' }}></div>
+                                    </>
+                                }
+                            },
+                            {
+                                uid: 45361,
+                                icon: 'Cog',
+                                label: 'sub 0',
+                            }
+                        ]
+                    },
+                    {
+                        uid: 123,
                         icon: 'Cog',
                         label: 'sub 0',
                     },
                     {
-                        uid: 1,
+                        uid: 2341,
                         icon: 'Cog',
                         label: 'sub 0',
                     },
                     {
-                        uid: 1,
-                        icon: 'Cog',
-                        label: 'sub 0',
-                    },
-                    {
-                        uid: 1,
+                        uid: 354631,
                         icon: 'Cog',
                         label: 'sub 0',
                     }

@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/vue3';
 
 import SunLineEdit from '../../src/sundesign/lineedit/SunLineEdit.vue';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
+import { ref } from 'vue';
 
 const meta: Meta<typeof SunLineEdit> = {
     component: SunLineEdit,
@@ -21,13 +22,14 @@ export const LineEdit: Story = {
     render: (args) => ({
         components: { SunLineEdit },
         setup() {
-            return { args };
+            const value = ref('test');
+            return { args, value };
         },
         template: `
-			<SunLineEdit value="" v-bind="args" placeholder="输入文本"/>
-			<SunLineEdit value="输入文本" v-bind="args" flat/>
-			<SunLineEdit v-bind="args" disabled placeholder="disabled"/>
-			<SunLineEdit value="输入文本 disabled" v-bind="args" disabled placeholder="disabled"/>
+			  <SunLineEdit v-bind="args" v-model:value="value" placeholder="输入文本"/>
+			  <SunLineEdit value="输入文本" v-bind="args" flat/>
+			  <SunLineEdit v-bind="args" disabled placeholder="disabled"/>
+			  <SunLineEdit value="输入文本 disabled" v-bind="args" disabled placeholder="disabled"/>
 		`,
     }),
     argTypes: {

@@ -2,17 +2,14 @@
     <SunButtonPopup ref="buttonpopup_ref" class="__sun-design-select-button__" :mode="mode" :get-popup-rect="getPopupRect"
         :active="active" :disabled="disabled" :size="size" :flat="flat" :border-mask="borderMask" :bordered="bordered"
         :squared="squared" drop-shadow :color-scheme="selected?.colorScheme ?? colorScheme" vertical scrollable-indicators
-        content-style="width: 100%;" @opened="onOpened">
+        align="start" content-style="width: 100%;" @opened="onOpened">
         <template #button="{ opened }">
             <template v-if="!iconOnly">
                 <template v-if="selected !== undefined">
-                    <template v-if="(selected as RenderSelectItem).renderButtonContent === undefined">
-                        <SunButtonItem :label="(selected as ItemSelectItem).label" :icon="(selected as ItemSelectItem).icon"
-                            :description="(selected as ItemSelectItem).description" />
-                    </template>
-                    <template v-else>
-                        <component :is="(selected as RenderSelectItem).renderButtonContent" :uid="selected.uid" />
-                    </template>
+                    <SunButtonItem v-if="(selected as RenderSelectItem).renderButtonContent === undefined"
+                        :label="(selected as ItemSelectItem).label" :icon="(selected as ItemSelectItem).icon"
+                        :description="(selected as ItemSelectItem).description" always-show-label />
+                    <component v-else :is="(selected as RenderSelectItem).renderButtonContent" />
                 </template>
                 <template v-else>
                     <slot name="button-empty">
@@ -32,23 +29,18 @@
         <template #popup>
             <template v-if="options !== undefined && options.length > 0" v-for="option, idx in options">
                 <SunPanelContainer vertical style="width: 100%;">
-                    <template v-for="item in option">
-                        <template v-if="(item as RenderSelectItem).render === undefined">
-                            <SunButton class="__sun-design-select-item__" :size="size"
-                                :ref="(value !== undefined && item.uid === value) ? 'item_refs' : undefined"
-                                :active="(value !== undefined && item.uid === value) || (item as ItemSelectItem)?.active"
-                                flat :disabled="(item as ItemSelectItem)?.disabled" :color-scheme="item?.colorScheme"
-                                @click="onClick(item.uid, $event)" :key="item.uid">
-                                <SunButtonItem :label="(item as ItemSelectItem).label"
-                                    :icon="(item as ItemSelectItem).icon"
-                                    :description="(item as ItemSelectItem).description"
-                                    :shortcut="(item as ItemSelectItem).shortcut" />
-                            </SunButton>
-                        </template>
-                        <template v-else>
-                            <component :is="(item as RenderSelectItem).render" :uid="item.uid"
-                                :selected="(value !== undefined && item.uid === value)" :click="onClick" :key="item.uid" />
-                        </template>
+                    <template v-for="item in option" :key="item.uid">
+                        <SunButton class="__sun-design-select-item__" :size="size"
+                            :ref="(value !== undefined && item.uid === value) ? 'item_refs' : undefined"
+                            :active="(value !== undefined && item.uid === value)" flat :disabled="item?.disabled"
+                            :color-scheme="item?.colorScheme" @click="onClick(item.uid, $event)">
+                            <SunButtonItem v-if="(item as RenderSelectItem).render === undefined"
+                                :label="(item as ItemSelectItem).label" :icon="(item as ItemSelectItem).icon"
+                                :description="(item as ItemSelectItem).description"
+                                :shortcut="(item as ItemSelectItem).shortcut" always-show-label />
+                            <component v-else :is="(item as RenderSelectItem).render"
+                                :selected="(value !== undefined && item.uid === value)" />
+                        </SunButton>
                     </template>
                 </SunPanelContainer>
                 <SunPanelSeparator v-if="idx < options.length - 1" :override-vertical="true" :key="idx" />
@@ -77,18 +69,13 @@ import SunPanelContainer from '../panel/SunPanelContainer.vue';
 import { useVModel } from '@vueuse/core';
 import SunButtonLike from '../button/SunButtonLike.vue';
 
-type ItemSelectItem<T extends UID = UID> = Omit<Item<T>, 'sub'>;
+type ItemSelectItem<T extends UID = UID> = Omit<Item<T>, 'sub' | 'active' | 'iconOnly'>;
 type RenderSelectItem<T extends UID = UID> = {
     uid: T,
+    disabled?: boolean,
     colorScheme?: ColorScheme,
-    renderButtonContent: Raw<Component<{
-        uid: T,
-    }>>,
-    render: Raw<Component<{
-        uid: T,
-        selected: boolean,
-        click: (uid: T, evt: Event) => void,
-    }>>,
+    renderButtonContent: Raw<Component<{}>>,
+    render: Raw<Component<{ selected: boolean }>>,
 };
 export type SelectItem<T extends UID = UID> = ItemSelectItem<T> | RenderSelectItem<T>;
 

@@ -3,12 +3,21 @@ import { VFS, VirtualFileSystem, type VfsId, VfsMode } from "./VirtualFileSystem
 import { ref, type Ref, toRef } from "vue";
 import { FileSystemPath, fspath } from "./FileSystemPath";
 import type { BreadcrumbItem } from "@/sundesign/breadcrumb/SunBreadcrumb.vue";
-import type { Item } from "@/sundesign/SunDesignConstants";
+import type { ColorScheme, Item } from "@/sundesign/SunDesignConstants";
 
-export interface FileSystemRefItem extends TreeItem {
+export interface FileSystemRefItem {
     uid: VfsId,
+    label?: string | undefined,
+    colorScheme?: ColorScheme | undefined,
+    icon?: string | undefined,
+    active?: boolean | undefined,
+    disabled?: boolean | undefined,
+    checked?: boolean | undefined,
+    leaf?: boolean | undefined,
+    droppable?: boolean | undefined,
     subs: FileSystemRefItem[],
     parent: VfsId | undefined,
+    hidden: boolean,
 }
 
 function get_Icon(name: string | undefined, is_file: boolean) {
@@ -127,6 +136,7 @@ export class FileSystemReactive {
             crumbs.unshift({
                 item: {
                     label: node.label,
+                    iconOnly: node.label === undefined,
                     uid: node.uid,
                     icon: node.icon,
                 },
@@ -149,6 +159,7 @@ export class FileSystemReactive {
             leaf: is_file,
             disabled: hidden || is_Hidden(name),
             icon: get_Icon(name, is_file),
+            hidden: hidden,
             subs: [],
         };
     }

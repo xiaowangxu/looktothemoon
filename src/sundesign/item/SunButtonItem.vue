@@ -1,6 +1,6 @@
 <template>
     <SunIcon v-if="icon !== undefined" :name="icon"></SunIcon>
-    <span v-if="label !== undefined" class="__sun-design-button-item-label__"
+    <span v-if="alwaysShowLabel || label !== undefined" class="__sun-design-button-item-label__"
         :class="{ 'has-description': has_description }">{{ label }}</span>
     <span v-if="has_description" class="__sun-design-button-item-description__"> {{
         description }} </span>
@@ -24,11 +24,13 @@ const props = withDefaults(
         description?: string,
         shortcut?: string,
         sub?: boolean,
+        alwaysShowLabel?: boolean,
         hideDescription?: boolean,
         hideShortcut?: boolean,
         hideSub?: boolean,
     }>(),
     {
+        alwaysShowLabel: false,
         hideDescription: false,
         hideShortcut: false,
         hideSub: false,

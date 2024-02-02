@@ -3,6 +3,8 @@ import { type CSSProperties, markRaw } from 'vue';
 
 export type Size = 'small' | 'normal' | 'large';
 
+export type Align = 'start' | 'center' | 'end';
+
 export type BorderMask = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
 
 export type BasicTypes = string | number | boolean | bigint | symbol;
@@ -22,6 +24,7 @@ export interface Item<T extends UID = UID> {
     label?: string,
     colorScheme?: ColorScheme,
     icon?: string,
+    iconOnly?: boolean,
     title?: string,
     description?: string,
     shortcut?: string,

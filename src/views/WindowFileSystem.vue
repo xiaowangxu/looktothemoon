@@ -23,7 +23,7 @@
                 <SunPanel container vertical style="width: 100%; height: 100%;">
                     <SunScrollContainer content-style="width: 100%;">
                         <SunPanelContainer vertical style="width: 100%;">
-                            <SunTree :options="fs_options" :sort="(sort as any)" @click="onClick" :click-folding="false"
+                            <SunTree :options="fs_options" :filter-sort="(sort as any)" @click="onClick" :click-folding="false"
                                 @contextmenu="$event.open()" @edit="onEdit">
                             </SunTree>
                         </SunPanelContainer>

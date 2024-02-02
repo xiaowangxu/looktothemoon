@@ -1,7 +1,7 @@
 <template>
     <div class="__sun-design__ __sun-design-checkbox-container__ sized" :data-size="size" :style="colorScheme">
         <input type="checkbox" class="__sun-design__ __sun-design-checkbox__ colored" :class="{ bordered: !flat, hover }"
-            :checked="checked" :disabled="disabled">
+            v-model="value" :disabled="disabled">
         <div class="__sun-design__ __sun-design-checkbox-icon__">
             <slot name="icon">
                 <Check v-if="!partial" />
@@ -16,6 +16,7 @@
 import '../SunDesignStyle.styl';
 import type { Size, ColorScheme } from '../SunDesignConstants';
 import { Check, Minus } from 'lucide-vue-next';
+import { useVModel } from '@vueuse/core';
 
 // props
 const props = withDefaults(
@@ -25,7 +26,7 @@ const props = withDefaults(
         flat?: boolean,
         hover?: boolean,
         disabled?: boolean,
-        checked?: boolean,
+        modelValue?: boolean,
         partial?: boolean,
     }>(),
     {
@@ -33,10 +34,17 @@ const props = withDefaults(
         flat: false,
         hover: false,
         disabled: false,
-        checked: false,
         partial: false,
     }
 );
+
+// emits
+const emits = defineEmits<{
+    (event: 'update:modelValue', val: boolean): void,
+}>();
+
+// datas
+const value = useVModel(props, 'modelValue', emits);
 
 </script>
 

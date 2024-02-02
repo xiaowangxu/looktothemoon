@@ -2,14 +2,9 @@ import type { Meta, StoryObj } from '@storybook/vue3';
 
 import SunSelect, { type SelectItem } from '../../src/sundesign/select/SunSelect.vue';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
-import { ColorSchemeBlue, ColorSchemeGreen } from '@/sundesign/SunDesignConstants';
+import { ColorSchemeBlue, ColorSchemeGreen } from '../../src/sundesign/SunDesignConstants';
 import { ColorSchemeRed } from '../../src/sundesign/SunDesignConstants';
-import { ref, watch } from 'vue';
-import SunColorPickerVue from '@/sundesign/colorpicker/SunColorPicker.vue';
-import SunButtonVue from '@/sundesign/button/SunButton.vue';
-import { Plus } from 'lucide-vue-next';
-import SunPanelContainerVue from '@/sundesign/panel/SunPanelContainer.vue';
-import SunLabelVue from '@/sundesign/label/SunLabel.vue';
+import { ref } from 'vue';
 
 const meta: Meta<typeof SunSelect> = {
     component: SunSelect,
@@ -65,44 +60,47 @@ export const Select: Story = {
                     icon: 'Globe',
                     disabled: true,
                     uid: 2,
-                },
-                {
-                    label: 'Test',
-                    icon: 'Cog',
-                    description: 'Test',
-                    uid: 3,
-                },
-                {
-                    label: 'Test',
-                    icon: 'Trash',
-                    uid: 4,
-                    description: '有快捷键哦~~~~~~~',
-                    shortcut: 'Ctrl B',
-                }],
+                }
+            ],
             [
                 {
-                    label: '测试',
-                    icon: 'Globe',
-                    uid: 5,
+                    uid: '123'
                 },
                 {
-                    label: 'Test',
                     icon: 'Cog',
-                    description: 'Test',
                     uid: 6,
                 },
+                {
+                    uid: '124',
+                    icon: '',
+                    label: 'Icon Blank'
+                },
+                {
+                    uid: '125',
+                    icon: 'Info',
+                    description: 'test'
+                },
+                {
+                    uid: '126',
+                    description: 'description only'
+                },
+                {
+                    uid: '127',
+                    shortcut: 'shortcut only'
+                },
+                {
+                    uid: '128',
+                    description: 'description only',
+                    shortcut: 'shortcut only'
+                }
+            ],
+            [
                 {
                     label: 'Test',
                     icon: 'Trash',
                     uid: 7,
                     colorScheme: ColorSchemeRed,
                     shortcut: 'Ctrl B',
-                }],
-            [
-                {
-                    label: '测试',
-                    icon: 'Globe',
-                    uid: 8,
                 },
                 {
                     label: 'More',
@@ -123,12 +121,12 @@ export const Select: Story = {
                     uid: 20,
                     renderButtonContent: (props, context) => {
                         return <>
-                            <span style="margin-right: auto;">你好世界</span>
+                            <span style={{ marginRight: 'auto' }}>你好世界</span>
                         </>
                     },
                     render: (props, context) => {
                         return <>
-                            <h1 class="__sun-design__ colored sized border-masked" data-size="large" data-border-mask="15" style="margin: 0;" onClick={(evt) => props.click(props.uid, evt)}>Hello World</h1>
+                            <h1>Hello World</h1>
                         </>
                     },
                 }
@@ -144,16 +142,14 @@ const images = new Array(6).fill(0).map(
             uid: i,
             renderButtonContent: (props, context) => {
                 return <>
-                    <div class="__sun-design-icon__" style={`background-image: url('https://picsum.photos/id/${props.uid.toString()}/60/60'); background-size: contain;`} />
-                    <span style="margin-right: auto;">图片{i}</span>
+                    <div className="__sun-design-icon__" style={{ backgroundImage: `url('https://picsum.photos/id/${i.toString()}/60/60')`, backgroundSize: 'contain' }} />
+                    <span style={{ marginRight: 'auto' }}>图片{i}</span>
                 </>
             },
             render: (props, context) => {
                 return <>
-                    <SunButtonVue flat active={props.selected} onClick={(evt) => props.click(props.uid, evt)}>
-                        <div style={`width: 60px; height: 60px; background-image: url('https://picsum.photos/id/${props.uid.toString()}/60/60')`} />
-                        <span style="margin: 0 auto 0 5px;">图片{i}</span>
-                    </SunButtonVue>
+                    <div style={{ width: '60px', height: '60px', backgroundImage: `url('https://picsum.photos/id/${i.toString()}/60/60')` }} />
+                    <span style={{ margin: '0 auto 0 5px' }}>图片{i}</span>
                 </>
             },
         } as SelectItem
