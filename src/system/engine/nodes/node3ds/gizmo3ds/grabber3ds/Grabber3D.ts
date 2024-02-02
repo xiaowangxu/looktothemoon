@@ -13,6 +13,7 @@ import { vec4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { Color } from "@/system/fivepebble/graphics/Color";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { Node3D } from "../../Node3D";
+import { PrimitiveFragmentPreZShader, PrimitiveFragmentPreZShaderUniforms, PrimitiveVertexShader, PrimitiveVertexShaderUniforms } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 
 export class GrabberElement3D<T> extends FixSizeNode3D {
     // signals
@@ -49,7 +50,7 @@ export class GrabberElement3D<T> extends FixSizeNode3D {
     protected on_VisibleChanged() {
         throw new Error('abstract method');
     }
-    
+
     constructor(config: Config) {
         super(config);
         this.top_level = true;
@@ -102,51 +103,6 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
         u_hidden: RenderStateUniformType.Int,
     };
 
-    static #vertex_shader = `#version 300 es
-    precision highp float;
-    precision highp usampler2DArray;
-    precision highp sampler3D;
-    
-    ${RenderServerDevice.ConstantsCode}
-    
-    ${RenderServerDevice.WorldUniformsCode}
-    
-    ${RenderServerGeometry.GeometryAttributesCode}
-    
-    uniform mat4 model_world;
-    
-    out vec3 v_world;
-    out vec3 v_normal;
-    out vec2 v_uv;
-    
-    void main() {
-        mat4 _model_world = model_world * a_instance_transform;
-        vec4 world = _model_world * vec4(a_position, 1.0);
-        gl_Position = camera_projection * inverse(camera_world) * world;
-        v_normal = normalize(mat3(transpose(inverse(_model_world))) * a_normal);
-        v_uv = a_uv;
-        v_world = world.xyz;
-    }`;
-    static #vertex_uniforms: UniformInitSet<WebGL2RenderState> = {
-        model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.make_Identity() },
-    };
-    static #fragment_prez_shader = `#version 300 es
-    precision highp float;
-    precision highp usampler2DArray;
-    precision highp sampler3D;
-
-    ${RenderServerDevice.WorldUniformsCode}
-    
-    in vec3 v_world;
-    in vec3 v_normal;
-    in vec2 v_uv;
-
-    ${RenderServerDevice.FrameOutputBufferCode}
-
-    void main() {
-        o_normal = normalize(v_normal);
-    }`;
-    static #fragment_prez_uniforms: UniformInitSet<WebGL2RenderState> = {};
     static #fragment_shade_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
@@ -228,17 +184,17 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     public update_Material() {
         const render_server = this.config.render_server;
         const shader = render_server.create_Shader();
-        const vertex_shader = render_server.render_state.create_Shader(RenderStateShaderType.Vertex, GrabberPlainColorMaterialResource.#vertex_shader).expect();
-        const fragment_prez_shader = render_server.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_prez_shader).expect();
+        const vertex_shader = PrimitiveVertexShader.get(this.config);
+        const fragment_prez_shader = PrimitiveFragmentPreZShader.get(this.config);
         const fragment_shade_shader = render_server.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_shade_shader).expect();
         const fragment_oit_shader = render_server.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_oit_shader).expect();
         shader.set_Shaders(
             vertex_shader,
-            GrabberPlainColorMaterialResource.#vertex_uniforms,
+            PrimitiveVertexShaderUniforms,
             {
                 prez: {
                     shader: fragment_prez_shader,
-                    uniforms: GrabberPlainColorMaterialResource.#fragment_prez_uniforms,
+                    uniforms: PrimitiveFragmentPreZShaderUniforms,
                 },
                 shade: {
                     shader: fragment_shade_shader,

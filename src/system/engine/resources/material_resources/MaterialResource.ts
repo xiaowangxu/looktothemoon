@@ -18,7 +18,7 @@ export abstract class MaterialResource extends Resource {
 
 	public get render_server() { return this.config.render_server; }
 
-	static empty_uniforms = {}
+	static readonly empty_uniforms: MaterialReadOnlyUniforms = {};
 
 	public get uniforms(): MaterialReadOnlyUniforms { return MaterialResource.empty_uniforms; }
 
@@ -43,6 +43,8 @@ export class MaterialOverrideResource extends MaterialResource {
 
 	public get uniforms(): MaterialReadOnlyUniforms { return this._uniforms ?? MaterialResource.empty_uniforms; }
 
+	private readonly override_material_ref: Ref<MaterialResource> = new Ref();
+
 	constructor(config: Config) {
 		super(config);
 		this.material_ref.value = this.render_server.create_Material();
@@ -50,6 +52,7 @@ export class MaterialOverrideResource extends MaterialResource {
 
 	public set_OverrideMaterial(material: MaterialResource) {
 		if (!material.material.has_shader) throw new Error('<MaterialOverrideResource> set_OverrideMaterial: base material does not have a shader, maybe it is not properly initialized');
+		this.override_material_ref.value = material;
 		this._uniforms = material.uniforms;
 		this.material.set_Material(material.material.shader, material.uniforms);
 	}
@@ -60,6 +63,7 @@ export class MaterialOverrideResource extends MaterialResource {
 
 	protected dispose(): void {
 		console.log(">>> dispose <MaterialOverrideResource>", this.rid);
+		this.override_material_ref.clear();
 		super.dispose();
 	}
 }

@@ -355,11 +355,12 @@ signal.connect((action) => {
 // }
 
 import huli from 'res://huli.obj?url';
+import { MaterialOverrideResource } from "@/system/engine/resources/material_resources/MaterialResource";
 
 export function createEditorViewport() {
     EditorSceneTree.start_Loop();
     // create_CompassScene();
-    
+
     // const mesh0 = new ClassLoader(DefaultInstanceCache).fetch<MeshInstance3D>('sys://MonkeyMesh.lttmbin').expect();
     // mesh0.local_position = vec3(-250, 0, -100);
     // World.add_Child(mesh0);
@@ -371,12 +372,17 @@ export function createEditorViewport() {
         class_saver.save(undefined, 'sys://huli.geometry.lttmbin');
 
         const huli_geo = new ClassLoader(DefaultInstanceCache).fetch<ArrayGeometryResource>('sys://huli.geometry.lttmbin').expect();
-        
+
+        const normal_material = new StandardMaterialResource(DefaultConfig);
+        const override_material = new MaterialOverrideResource(DefaultConfig);
+        override_material.set_OverrideMaterial(normal_material);
+
         const mesh = new MeshInstance3D(DefaultConfig);
         mesh.geometry = huli_geo;
-        mesh.material = new NormalMaterialResource(DefaultConfig);
+        mesh.material = override_material;
         mesh.local_scale = vec3(100, 100, 100);
         mesh.local_position = vec3(-500, -100, 250);
         World.add_Child(mesh);
+
     });
 }

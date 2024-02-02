@@ -15,7 +15,7 @@ import type { TextureResource } from "../texture_resources/TextureResource";
 import { Ref } from "@/system/utils/RefCounted";
 import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 
-const PrimitiveVertexShader = new Cacher((config: Config) => {
+export const PrimitiveVertexShader = new Cacher((config: Config) => {
     const code = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
@@ -43,20 +43,12 @@ const PrimitiveVertexShader = new Cacher((config: Config) => {
     }`;
     return config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect();
 });
-
-const PrimitiveVertexShaderUniforms: UniformInitSet<WebGL2RenderState> = {
+export const PrimitiveVertexShaderUniforms: UniformInitSet<WebGL2RenderState> = {
     model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.make_Identity() },
 };
 
-export class PlainColorMaterialResource extends MaterialResource {
-
-    static #uniforms: MaterialReadOnlyUniforms = {
-        model_world: RenderStateUniformType.Mat4,
-        u_color: RenderStateUniformType.Vec4,
-        u_texture: RenderStateUniformType.Tex2D,
-    };
-
-    static #fragment_prez_shader = `#version 300 es
+export const PrimitiveFragmentPreZShader = new Cacher((config: Config) => {
+    const code = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -72,7 +64,18 @@ export class PlainColorMaterialResource extends MaterialResource {
     void main() {
         o_normal = normalize(v_normal);
     }`;
-    static #fragment_prez_uniforms: UniformInitSet<WebGL2RenderState> = {};
+    return config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect();
+});
+export const PrimitiveFragmentPreZShaderUniforms: UniformInitSet<WebGL2RenderState> = {};
+
+export class PlainColorMaterialResource extends MaterialResource {
+
+    static #uniforms: MaterialReadOnlyUniforms = {
+        model_world: RenderStateUniformType.Mat4,
+        u_color: RenderStateUniformType.Vec4,
+        u_texture: RenderStateUniformType.Tex2D,
+    };
+
     static #fragment_shade_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
@@ -153,7 +156,7 @@ export class PlainColorMaterialResource extends MaterialResource {
     public update_Material() {
         const shader = this.render_server.create_Shader();
         const vertex_shader = PrimitiveVertexShader.get(this.config);
-        const fragment_prez_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_prez_shader).expect();
+        const fragment_prez_shader = PrimitiveFragmentPreZShader.get(this.config);
         const fragment_shade_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_shade_shader).expect();
         const fragment_oit_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_oit_shader).expect();
         shader.set_Shaders(
@@ -162,7 +165,7 @@ export class PlainColorMaterialResource extends MaterialResource {
             {
                 prez: {
                     shader: fragment_prez_shader,
-                    uniforms: PlainColorMaterialResource.#fragment_prez_uniforms,
+                    uniforms: PrimitiveFragmentPreZShaderUniforms,
                 },
                 shade: {
                     shader: fragment_shade_shader,
@@ -192,22 +195,6 @@ export class NormalMaterialResource extends MaterialResource {
         u_remap: RenderStateUniformType.Int,
     };
 
-    static #fragment_prez_shader = `#version 300 es
-    precision highp float;
-    precision highp usampler2DArray;
-    precision highp sampler3D;
-
-    ${RenderServerDevice.WorldUniformsCode}
-    
-    in vec3 v_world;
-    in vec3 v_normal;
-
-    ${RenderServerDevice.FrameOutputBufferCode}
-
-    void main() {
-        o_normal = normalize(v_normal);
-    }`;
-    static #fragment_prez_uniforms: UniformInitSet<WebGL2RenderState> = {};
     static #fragment_shade_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
@@ -252,16 +239,11 @@ export class NormalMaterialResource extends MaterialResource {
     public update_Material() {
         const shader = this.render_server.create_Shader();
         const vertex_shader = PrimitiveVertexShader.get(this.config);
-        const fragment_prez_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, NormalMaterialResource.#fragment_prez_shader).expect();
         const fragment_shade_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, NormalMaterialResource.#fragment_shade_shader).expect();
         shader.set_Shaders(
             vertex_shader,
             PrimitiveVertexShaderUniforms,
             {
-                prez: {
-                    shader: fragment_prez_shader,
-                    uniforms: NormalMaterialResource.#fragment_prez_uniforms,
-                },
                 shade: {
                     shader: fragment_shade_shader,
                     uniforms: NormalMaterialResource.#fragment_shade_uniforms,
@@ -290,23 +272,6 @@ export class UVMaterialResource extends MaterialResource {
         model_world: RenderStateUniformType.Mat4,
     };
 
-    static #fragment_prez_shader = `#version 300 es
-    precision highp float;
-    precision highp usampler2DArray;
-    precision highp sampler3D;
-
-    ${RenderServerDevice.WorldUniformsCode}
-    
-    in vec3 v_world;
-    in vec3 v_normal;
-    in vec2 v_uv;
-
-    ${RenderServerDevice.FrameOutputBufferCode}
-
-    void main() {
-        o_normal = normalize(v_normal);
-    }`;
-    static #fragment_prez_uniforms: UniformInitSet<WebGL2RenderState> = {};
     static #fragment_shade_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
@@ -337,16 +302,11 @@ export class UVMaterialResource extends MaterialResource {
     public update_Material() {
         const shader = this.render_server.create_Shader();
         const vertex_shader = PrimitiveVertexShader.get(this.config);
-        const fragment_prez_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, UVMaterialResource.#fragment_prez_shader).expect();
         const fragment_shade_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, UVMaterialResource.#fragment_shade_shader).expect();
         shader.set_Shaders(
             vertex_shader,
             PrimitiveVertexShaderUniforms,
             {
-                prez: {
-                    shader: fragment_prez_shader,
-                    uniforms: UVMaterialResource.#fragment_prez_uniforms,
-                },
                 shade: {
                     shader: fragment_shade_shader,
                     uniforms: UVMaterialResource.#fragment_shade_uniforms,
@@ -373,23 +333,6 @@ export class StandardMaterialResource extends MaterialResource {
         u_color: RenderStateUniformType.Vec4,
     };
 
-    static #fragment_prez_shader = `#version 300 es
-    precision highp float;
-    precision highp usampler2DArray;
-    precision highp sampler3D;
-
-    ${RenderServerDevice.WorldUniformsCode}
-    
-    in vec3 v_world;
-    in vec3 v_normal;
-    in vec2 v_uv;
-
-    ${RenderServerDevice.FrameOutputBufferCode}
-
-    void main() {
-        o_normal = normalize(v_normal);
-    }`;
-    static #fragment_prez_uniforms: UniformInitSet<WebGL2RenderState> = {};
     static #fragment_shade_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
@@ -727,7 +670,7 @@ export class StandardMaterialResource extends MaterialResource {
     public update_Material() {
         const shader = this.render_server.create_Shader();
         const vertex_shader = PrimitiveVertexShader.get(this.config);
-        const fragment_prez_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, StandardMaterialResource.#fragment_prez_shader).expect();
+        const fragment_prez_shader = PrimitiveFragmentPreZShader.get(this.config);
         const fragment_shade_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, StandardMaterialResource.#fragment_shade_shader).expect();
         const fragment_oit_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, StandardMaterialResource.#fragment_oit_shader).expect();
         shader.set_Shaders(
@@ -736,7 +679,7 @@ export class StandardMaterialResource extends MaterialResource {
             {
                 prez: {
                     shader: fragment_prez_shader,
-                    uniforms: StandardMaterialResource.#fragment_prez_uniforms,
+                    uniforms: PrimitiveFragmentPreZShaderUniforms,
                 },
                 shade: {
                     shader: fragment_shade_shader,
