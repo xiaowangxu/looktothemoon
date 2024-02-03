@@ -38,7 +38,7 @@ const emits = defineEmits<{
     (event: 'change', val: string): void,
 }>();
 
-const { value, setValueOnInput, setValueOnChange } = useInputModel(props, 'modelValue', 'modelModifiers', emits, { defaultValue: '', emitInput: 'input', emitChange: 'change' });
+const { value, setValueOnInput, setValueOnChange } = useInputModel(props, 'modelValue', 'modelModifiers', emits, { emitInput: 'input', emitChange: 'change' });
 
 // datas
 const input_ref = ref<HTMLInputElement | null>(null);

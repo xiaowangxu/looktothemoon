@@ -108,7 +108,7 @@ const emits = defineEmits<{
     (event: 'change', val: string): void,
 }>();
 
-const { value, setValueOnInput, setValueOnChange } = useInputModel(props, 'modelValue', 'modelModifiers', emits, { defaultValue: 0, emitInput: 'input', emitChange: 'change' });
+const { value, setValueOnInput, setValueOnChange } = useInputModel(props, 'modelValue', 'modelModifiers', emits, { emitInput: 'input', emitChange: 'change' });
 
 // datas
 const show_step_button = computed(() => !(props.disabled ?? false) && props.stepButton && props.step !== undefined && props.step !== 0);
@@ -179,7 +179,9 @@ function onMouseDown(evt: MouseEvent) {
 function onMouseMove(evt: MouseEvent) {
     const delta = evt.clientX - last_mouse_pos;
     const d = delta * (evt.ctrlKey ? props.dragFineFactor : props.dragFactor) * (props.step ?? 1);
-    dragging_new_value.value = formatNumber(last_value + d);
+    const new_drag_value = formatNumber(last_value + d);
+    if (new_drag_value === dragging_new_value.value) return;
+    dragging_new_value.value = new_drag_value;
     setValueSafe(dragging_new_value.value);
 }
 function onMouseUp(evt: MouseEvent) {

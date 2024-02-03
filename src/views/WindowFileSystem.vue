@@ -34,13 +34,15 @@
                 <SunPanel container vertical style="height: 100%;">
                     <SunScrollContainer style="width: 100%; height: unset;">
                         <SunPanelContainer>
+                            <SunLineEdit />
                             <SunBreadcrumb :options="nav_options" :filter-sort="(sort as any)" />
                         </SunPanelContainer>
                     </SunScrollContainer>
                     <SunPanelSeparator />
                     <SunScrollContainer style="width: 100%; flex: 1; height: 0;">
                         <SunPanelContainer>
-                            <div style="white-space: pre; font-size: 12px; padding: 10px; font-family: 'fira code';" v-text="data"></div>
+                            <div style="white-space: pre; font-size: 12px; padding: 10px; font-family: 'fira code';"
+                                v-text="data"></div>
                         </SunPanelContainer>
                     </SunScrollContainer>
                 </SunPanel>
@@ -54,6 +56,7 @@
 <script setup lang="ts">
 
 import SunPanel from '@/sundesign/panel/SunPanel.vue';
+import SunLineEdit from '@/sundesign/lineedit/SunLineEdit.vue';
 import SunPanelContainer from '@/sundesign/panel/SunPanelContainer.vue';
 import SunPanelSeparator from '@/sundesign/panel/SunPanelSeparator.vue';
 import SunPanelResizeContainer from '@/sundesign/panel/SunPanelResizeContainer.vue';
