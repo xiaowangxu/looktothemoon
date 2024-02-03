@@ -27,7 +27,7 @@ export const NumberEdit: Story = {
             return { args, val };
         },
         template: `
-			  <SunNumberEdit v-bind="args" style="width: 150px;" :model-value="val">
+			  <SunNumberEdit v-bind="args" style="width: 150px;" v-model="val">
 			  	  <template #prefix>
 			  	  	  长度
 			  	  </template>
@@ -35,7 +35,7 @@ export const NumberEdit: Story = {
 			  	  	  米(m)
 			  	  </template>
 			  </SunNumberEdit>
-			  <SunNumberEdit v-bind="args" style="width: 100px;" v-model="val">
+			  <SunNumberEdit v-bind="args" style="width: 100px;" v-model.lazy="val">
 			  	  <template #suffix>
 			  	  	  后缀
 			  	  </template>

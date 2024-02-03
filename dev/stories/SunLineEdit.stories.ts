@@ -26,10 +26,10 @@ export const LineEdit: Story = {
             return { args, value };
         },
         template: `
-			  <SunLineEdit v-bind="args" v-model:value="value" placeholder="输入文本"/>
-			  <SunLineEdit value="输入文本" v-bind="args" flat/>
-			  <SunLineEdit v-bind="args" disabled placeholder="disabled"/>
-			  <SunLineEdit value="输入文本 disabled" v-bind="args" disabled placeholder="disabled"/>
+			  <SunLineEdit v-bind="args" v-model.lazy="value" placeholder="输入文本"/>
+			  <SunLineEdit v-model="value" v-bind="args" flat/>
+			  <SunLineEdit v-bind="args" v-model="value" disabled placeholder="disabled"/>
+			  <SunLineEdit v-model="value" v-bind="args" disabled placeholder="disabled"/>
 		`,
     }),
     argTypes: {

@@ -47,11 +47,10 @@
 
 import '../SunDesignStyle.styl';
 import SunButton from '../button/SunButton.vue';
-import type { Size, BorderMask, ColorScheme } from '../SunDesignConstants';
+import { type Size, type BorderMask, type ColorScheme, useInputModel } from '../SunDesignConstants';
 import { validateExpression, evalExpression } from './SunNumberEditConstants';
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
-import { useVModel } from '@vueuse/core';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
 // props
 const props = withDefaults(
@@ -71,6 +70,7 @@ const props = withDefaults(
         displayFormatter?: (val: number) => string,
         // value
         modelValue: number,
+        modelModifiers?: Record<string, boolean>,
         min?: number,
         max?: number,
         step?: number,
@@ -104,24 +104,35 @@ const props = withDefaults(
 // emits
 const emits = defineEmits<{
     (event: 'update:modelValue', value: number): void,
+    (event: 'input', val: string): void,
+    (event: 'change', val: string): void,
 }>();
 
-const value = useVModel(props, 'modelValue', emits, { defaultValue: 0 });
+const { value, setValueOnInput, setValueOnChange } = useInputModel(props, 'modelValue', 'modelModifiers', emits, { defaultValue: 0, emitInput: 'input', emitChange: 'change' });
 
 // datas
 const show_step_button = computed(() => !(props.disabled ?? false) && props.stepButton && props.step !== undefined && props.step !== 0);
 const show_increase = computed(() => props.allowGreater || props.max === undefined || value.value < props.max);
 const show_decrease = computed(() => props.allowLess || props.min === undefined || value.value > props.min);
-const display_input_value = computed(() => {
-    let s = props.displayPercision === undefined ? value.value.toString() : value.value.toFixed(props.displayPercision)
-    if (!props.displayRemoveTailingZeros || s.includes('.')) return s;
+const display_input_value = computed(() => { return editableStringFormat(value.value); });
+const display_value = computed(() => {
+    if (!dragging.value && props.displayFormatter === undefined) return display_input_value.value;
+    let val: number;
+    if (dragging.value) val = dragging_new_value.value;
+    else val = value.value;
+    return props.displayFormatter === undefined ? editableStringFormat(val) : props.displayFormatter(val);
+});
+
+function editableStringFormat(val: number) {
+    let s = props.displayPercision === undefined ? val.toString() : val.toFixed(props.displayPercision)
+    if (!props.displayRemoveTailingZeros || !s.includes('.')) return s;
     s = s.replace(/0+$/, '');
     if (s.endsWith('.')) return s.slice(0, -1);
     return s;
-});
-const display_value = computed(() => props.displayFormatter === undefined ? display_input_value.value : props.displayFormatter(value.value));
+}
 
 function formatNumber(val: number) {
+    val = Number.isNaN(val) ? 0 : val;
     // snap
     if (props.valueSnapGap !== undefined && props.valueSnapGap !== 0) {
         const g = val - props.valueSnapBase;
@@ -139,11 +150,15 @@ function formatNumber(val: number) {
 
 function increase() {
     if (dragging.value) return;
-    setValueSafe(formatNumber(value.value) + (props.step ?? 0));
+    const val = formatNumber(value.value) + (props.step ?? 0);
+    setValueSafe(val, true);
+    setValueSafe(val, false);
 }
 function decrease() {
     if (dragging.value) return;
-    setValueSafe(formatNumber(value.value) - (props.step ?? 0));
+    const val = formatNumber(value.value) - (props.step ?? 0);
+    setValueSafe(val, true);
+    setValueSafe(val, false);
 }
 
 // dragging
@@ -151,23 +166,27 @@ const dragging = ref(false);
 let last_mouse_pos = 0;
 let last_value = 0;
 let ignore_click = false;
+const dragging_new_value = ref(0);
 function onMouseDown(evt: MouseEvent) {
     if (!props.allowDrag) return;
     dragging.value = true;
     last_mouse_pos = evt.clientX;
     last_value = formatNumber(value.value);
+    dragging_new_value.value = last_value;
     window.addEventListener('mousemove', onMouseMove, { capture: true });
     window.addEventListener('mouseup', onMouseUp, { capture: true });
 }
 function onMouseMove(evt: MouseEvent) {
     const delta = evt.clientX - last_mouse_pos;
     const d = delta * (evt.ctrlKey ? props.dragFineFactor : props.dragFactor) * (props.step ?? 1);
-    setValueSafe(last_value + d);
+    dragging_new_value.value = formatNumber(last_value + d);
+    setValueSafe(dragging_new_value.value);
 }
 function onMouseUp(evt: MouseEvent) {
     dragging.value = false;
     ignore_click = true;
     removeDraggingEvents();
+    setValueSafe(dragging_new_value.value, false);
 }
 function removeDraggingEvents() {
     window.removeEventListener('mousemove', onMouseMove, { capture: true });
@@ -226,16 +245,18 @@ function onSubmit(str: string) {
         inputing.value = false;
         input_invalid.value = false;
         const val = evalExpression(str, { x: value.value }, value.value);
-        setValueSafe(val);
+        setValueSafe(val, true);
+        setValueSafe(val, false);
     }
 }
 
-function setValueSafe(val: number) {
-    if (Number.isNaN(val)) {
-        value.value = formatNumber(0);
+function setValueSafe(val: number, input: boolean = true) {
+    const n = formatNumber(val);
+    if (input) {
+        setValueOnInput(n);
     }
     else {
-        value.value = formatNumber(val);
+        setValueOnChange(n);
     }
 }
 

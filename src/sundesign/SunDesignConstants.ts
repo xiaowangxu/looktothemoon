@@ -1,5 +1,6 @@
+import { useVModel, type UseVModelOptions } from '@vueuse/core';
 import './SunDesignStyle.styl';
-import { type CSSProperties, markRaw } from 'vue';
+import { type CSSProperties, markRaw, toRef, type Ref, readonly } from 'vue';
 
 export type Size = 'small' | 'normal' | 'large';
 
@@ -340,4 +341,43 @@ export function setDragMessage(evt: DragEvent, message: string = '放置项目',
     setTimeout(() => {
         document.body.removeChild(dom);
     }, 0);
+}
+
+// composables
+
+type ModifiersKeyNameString<T extends string | number | symbol> = T extends string ? (T extends 'modelValue' ? 'modelModifiers' : `${T}Modifiers`) : never;
+
+type UseInputModelOptions<T> = UseVModelOptions<T, false> & {
+    set?: (val: T, modifiers: Record<string, boolean> | undefined) => T,
+    emitInput?: string,
+    emitChange?: string,
+}
+
+export function useInputModel<P extends object, ValKey extends keyof P, ModifiersKey extends keyof P & ModifiersKeyNameString<ValKey>, Name extends string>(props: P, val_key: ValKey, modifiers_key: ModifiersKey, emit?: (name: Name, ...args: any[]) => void, options?: UseInputModelOptions<P[ValKey]>) {
+    const value = useVModel(props, val_key, emit, options);
+    const set = options?.set;
+    const emitInput = options?.emitInput;
+    const emitChange = options?.emitChange;
+    const modifiers = toRef(props, modifiers_key);
+    return {
+        value: readonly(value),
+        setValueOnInput: (val: P[ValKey]) => {
+            const v = set?.(val, modifiers.value) ?? val
+            if (!(modifiers.value?.lazy ?? false)) {
+                value.value = v;
+            }
+            if (emitInput !== undefined && emit !== undefined) {
+                emit(emitInput as any, v);
+            }
+        },
+        setValueOnChange: (val: P[ValKey]) => {
+            const v = set?.(val, modifiers.value) ?? val
+            if ((modifiers.value?.lazy ?? false)) {
+                value.value = v;
+            }
+            if (emitChange !== undefined && emit !== undefined) {
+                emit(emitChange as any, v);
+            }
+        }
+    }
 }
