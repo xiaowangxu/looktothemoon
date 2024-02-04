@@ -302,6 +302,46 @@ export function timer(func: () => void, time_ms: number): TimerCanceller {
     return clearTimeoutId.bind(undefined, timeout_id);
 }
 
+// cacher
+
+function cachecall<F extends (...args: any[]) => any>(f: F): { call: (...args: Parameters<F>) => ReturnType<F>, clear: () => void } {
+    let last_params: Parameters<F> | undefined = undefined;
+    let last_result: ReturnType<F> | undefined = undefined;
+    return {
+        call: (...args: Parameters<F>) => {
+            let re_call = false;
+            if (last_params === undefined) {
+                re_call = true;
+            }
+            else {
+                if (last_params.length !== args.length) {
+                    re_call = true;
+                }
+                else {
+                    for (let i = 0; i < args.length; i++) {
+                        if (last_params[i] !== args[i]) {
+                            re_call = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (re_call) {
+                last_params = args;
+                last_result = f(...last_params);
+                return last_result as ReturnType<F>;
+            }
+            else {
+                return last_result as ReturnType<F>;
+            }
+        },
+        clear: () => {
+            last_params = undefined;
+            last_result = undefined;
+        },
+    };
+}
+
 // focus trap
 
 export function getFocusables(dom: HTMLElement) {
