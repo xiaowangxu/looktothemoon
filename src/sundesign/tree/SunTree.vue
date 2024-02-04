@@ -31,7 +31,7 @@ const props = withDefaults(
         mode?: PopupOpenMode,
         size?: Size,
         folderLine?: boolean,
-        options?: TreeItem[] | Raw<SunTreeOptionsRef>,
+        options?: TreeItem[],
         draggable?: boolean,
         unfoldDelay?: number,
         clickFolding?: boolean,
@@ -66,7 +66,7 @@ const emits = defineEmits<{
 
 // datas
 const treeitem_refs = ref<InstanceType<typeof SunTreeItem>[]>([]);
-const sorted_options = computed(() => props.options === undefined ? undefined : (props.filterSort === undefined ? props.options instanceof SunTreeOptionsRef ? props.options.options.value : props.options : props.filterSort(props.options instanceof SunTreeOptionsRef ? props.options.options.value : props.options)));
+const sorted_options = computed(() => props.options === undefined ? undefined : (props.filterSort === undefined ? props.options : props.filterSort(props.options)));
 
 function onClick(data: any, evt: Event) {
     emits('click', data, evt);

@@ -29,7 +29,7 @@ export const Tree: Story = {
     render: (args) => ({
         components: { SunTree, SunButton, SunControlGroupRow, SunControlGroup },
         setup() {
-            const tree_data = new SunTreeOptionsRef([
+            const tree_data = new SunTreeOptionsRef<TreeItem>([
                 {
                     uid: 320,
                     label: 'test',
@@ -181,7 +181,7 @@ export const Tree: Story = {
                     ]
                 }
             ]);
-            watch(tree_data.options, _ => console.log([...tree_data.uid_map.entries()]), { deep: true });
+            const options = tree_data.options;
             const tree_ref = ref<InstanceType<typeof SunTree> | undefined>();
             function onClick(data: any, evt: Event) {
                 console.log(data, evt);
@@ -202,7 +202,7 @@ export const Tree: Story = {
                     tree_data.get(option.uid)!.label += '*';
                 }
             }
-            return { args, onClick, tree_ref, toggle, tree_data: markRaw(tree_data), onAppend, onRemove, onName };
+            return { args, onClick, tree_ref, toggle, tree_data: options, onAppend, onRemove, onName };
         },
         template: `
         <button @click="toggle">Fold All</button>
