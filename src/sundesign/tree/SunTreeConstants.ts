@@ -10,7 +10,7 @@ import { type TreeItem } from "./SunTreeItem.vue";
 
 type TreeUIDMap<T extends TreeItem> = Map<UID, { parent: UID | undefined, option: T }>;
 
-export class SunTreeOptionsRef<T extends TreeItem> {
+export class SunTreeOptionsRef<T extends TreeItem = TreeItem> {
     public readonly options: Ref<T[]> = ref([]);
     public readonly uid_map: TreeUIDMap<T> = new Map();
 
