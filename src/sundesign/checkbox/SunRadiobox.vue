@@ -1,33 +1,58 @@
 <template>
     <div class="__sun-design__ __sun-design-radiobox-container__ sized" :data-size="size" :style="colorScheme">
         <input type="radio" class="__sun-design__ __sun-design-radiobox__ colored" :class="{ bordered: !flat, hover }"
-            :checked="checked" :disabled="disabled">
+            :checked="checked" :disabled="disabled" @change="onChange">
     </div>
 </template>
 
 <script setup lang="ts">
 
 import '../SunDesignStyle.styl';
-import type { Size, ColorScheme } from '../SunDesignConstants';
+import { type Size, type ColorScheme, useInputModel, type UID } from '../SunDesignConstants';
+import { computed, inject } from 'vue';
+import { SunRadioGroupInjection } from './SunRadioGroupConstants';
+
+const radiogroup_injection = inject(SunRadioGroupInjection, undefined);
 
 // props
 const props = withDefaults(
     defineProps<{
+        uid?: UID,
         size?: Size,
         colorScheme?: ColorScheme,
         flat?: boolean,
         hover?: boolean,
         disabled?: boolean,
-        checked?: boolean,
+        modelValue?: boolean,
+        modelModifiers?: Record<string, boolean>,
     }>(),
     {
         size: 'normal',
         flat: false,
         hover: false,
         disabled: false,
-        checked: false,
+        modelValue: false,
     }
 );
+
+// emits
+const emits = defineEmits<{
+    (event: 'update:modelValue', val: boolean): void,
+    (event: 'change', val: boolean): void,
+}>();
+
+// datas
+const { value, setValueOnChange } = useInputModel(props, 'modelValue', 'modelModifiers', emits, { forceUpdate: true, emitChange: 'change' });
+const checked = computed(() => radiogroup_injection === undefined ? value.value : radiogroup_injection.value.value === props.uid);
+
+function onChange(evt: Event) {
+    if (radiogroup_injection === undefined) {
+        setValueOnChange((evt.target as HTMLInputElement).checked);
+    }
+    else {
+        radiogroup_injection.toggle(props.uid);
+    }
+}
 
 </script>
 
@@ -46,11 +71,13 @@ const props = withDefaults(
         margin: 0
         position: relative
         border-radius: 50%
+        &.bordered::before
+            inset: 5px - border-width
         &::before
             display: block
             content: ''
             position: absolute
-            inset: 4px
+            inset: 5px
             border-radius: 50%
 
     &[data-size]

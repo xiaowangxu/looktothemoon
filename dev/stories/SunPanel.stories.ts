@@ -67,21 +67,21 @@ export const Panel: Story = {
 			</SunPanel>
 			<SunPanel v-bind="args" vertical>
 				<SunPanelContainer vertical>
-					<SunButton flat></SunButton>
-					<SunButton flat :color-scheme="colorSchemeBlue"></SunButton>
+					<SunButton flat>A</SunButton>
+					<SunButton flat :color-scheme="colorSchemeBlue">A</SunButton>
 					</SunPanelContainer>
 				<SunPanelSeparator />
 				<SunPanelContainer vertical>
-					<SunButton flat></SunButton>
+					<SunButton flat>A</SunButton>
 				</SunPanelContainer>
 				<SunPanelSeparator />
 				<SunPanel v-bind="args" container>
 					<SunPanelContainer>
-						<SunButton flat :color-scheme="colorSchemeRed"></SunButton>
+						<SunButton flat :color-scheme="colorSchemeRed">A</SunButton>
 					</SunPanelContainer>
 					<SunPanelSeparator :override-vertical="false"/>
 					<SunPanelContainer>
-						<SunButton flat></SunButton>
+						<SunButton flat>A</SunButton>
 					</SunPanelContainer>
 				</SunPanel>
 			</SunPanel>
@@ -95,8 +95,8 @@ export const Panel: Story = {
 				</SunPanelContainer>
 				<SunPanelSeparator />
 				<SunPanelContainer vertical>
-					<SunButton flat><Undo2 /><span style="margin-right: auto;">撤销</span><SunKeyboard>Ctrl Z</SunKeyboard></SunButton>
-					<SunButton flat disabled><Redo2 /><span style="margin-right: auto;">重做</span><SunKeyboard>Ctrl Y</SunKeyboard></SunButton>
+					<SunButton flat><Undo2 /><span style="margin-right: auto;">撤销</span><SunKeyboard label="Ctrl Z"></SunKeyboard></SunButton>
+					<SunButton flat disabled><Redo2 /><span style="margin-right: auto;">重做</span><SunKeyboard label="Ctrl Y"></SunKeyboard></SunButton>
 				</SunPanelContainer>
 				<SunPanelSeparator />
 				<SunPanelContainer vertical>
@@ -106,7 +106,7 @@ export const Panel: Story = {
 				</SunPanelContainer>
 				<SunPanelSeparator />
 				<SunPanelContainer vertical>
-					<SunButton flat :color-scheme="colorSchemeRed"><Trash /><span style="margin-right: auto;">删除</span><SunKeyboard>Del</SunKeyboard></SunButton>
+					<SunButton flat :color-scheme="colorSchemeRed"><Trash /><span style="margin-right: auto;">删除</span><SunKeyboard label="Del"></SunKeyboard></SunButton>
 				</SunPanelContainer>
 				<SunScrollBar v-bind="args" vertical v-model:percentage="percentage" :drag-factor="1"/>
 			</SunPanel>

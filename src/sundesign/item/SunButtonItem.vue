@@ -4,7 +4,7 @@
         :class="{ 'has-description': has_description }">{{ label }}</span>
     <span v-if="has_description" class="__sun-design-button-item-description__"> {{
         description }} </span>
-    <SunKeyboard v-if="!hideShortcut && shortcut !== undefined">{{ shortcut }}</SunKeyboard>
+    <SunKeyboard v-if="!hideShortcut && shortcut !== undefined" :label="shortcut"></SunKeyboard>
     <ChevronRight v-if="!hideSub && sub === true" />
 </template>
 

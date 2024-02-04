@@ -1,8 +1,29 @@
 <template>
     <kbd class="__sun-design__ __sun-design-keyboard__">
-        <slot />
+        {{ formatted_label }}
     </kbd>
 </template>
+
+<script setup lang="ts">
+
+import { computed } from 'vue';
+
+// props
+const props = withDefaults(
+    defineProps<{
+        label?: string,
+    }>(),
+    {
+        label: '',
+    }
+);
+
+// datas
+const formatted_label = computed(()=>{
+    return props.label;
+});
+
+</script>
 
 <style lang="stylus">
 @import '../SunDesignStyleConstants.styl';

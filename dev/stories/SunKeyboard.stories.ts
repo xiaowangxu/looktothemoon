@@ -24,9 +24,9 @@ export const Keyboard: Story = {
 			return { args };
 		},
 		template: `
-			<SunKeyboard v-bind="args">A</SunKeyboard>
-			<SunKeyboard v-bind="args">文本</SunKeyboard>
-			<SunKeyboard v-bind="args">Ctrl Shift C</SunKeyboard>
+			<SunKeyboard v-bind="args" label="A"></SunKeyboard>
+			<SunKeyboard v-bind="args" label="文本"></SunKeyboard>
+			<SunKeyboard v-bind="args" label="Ctrl Shift C"></SunKeyboard>
 		`,
 	}),
 	argTypes: {

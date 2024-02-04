@@ -45,13 +45,15 @@
             class="__sun-design-tree-item-drop-indicator__ after" />
     </div>
     <!-- sub tree -->
-    <div v-if="has_subs" v-show="!folded" class="__sun-design-tree-container__ __sun-design-tree-relation__"
-        :class="{ 'no-folder-line': !folderLine }" :style="{ '--Depth': depth + 1 }" :data-size="size"
-        :stylew="option.colorScheme">
-        <SunTreeItem v-memo="[item, size, folderLine, depth, draggable, unfoldDelay, filterSort, clickFolding]"
-            v-for="item in sorted_subs" :size="size" :folder-line="folderLine" :option="item" :depth="depth + 1"
-            :draggable="draggable" @click="onSubTreeClick" @contextmenu="emits('contextmenu', $event)" @edit="onSubTreeEdit"
-            :unfold-delay="unfoldDelay" :filter-sort="filterSort" :click-folding="clickFolding">
+    <div v-if="has_subs && (mode === 'visibility' || !folded)" v-show="!folded"
+        class="__sun-design-tree-container__ __sun-design-tree-relation__" :class="{ 'no-folder-line': !folderLine }"
+        :style="{ '--Depth': depth + 1 }" :data-size="size">
+        <SunTreeItem ref="subtree_refs"
+            v-memo="[item, mode, size, folderLine, depth, draggable, unfoldDelay, filterSort, clickFolding]"
+            v-for="item in sorted_subs" :default-fold="option.defaultFold ?? defaultFold" :mode="mode" :size="size"
+            :folder-line="folderLine" :option="item" :depth="depth + 1" :draggable="draggable" @click="onSubTreeClick"
+            @contextmenu="emits('contextmenu', $event)" @edit="onSubTreeEdit" :unfold-delay="unfoldDelay"
+            :filter-sort="filterSort" :click-folding="clickFolding">
             <template v-if="$slots.append" #append="{ option }">
                 <slot name="append" :option="option" />
             </template>
@@ -72,15 +74,14 @@
 import SunButton from '../button/SunButton.vue';
 import SunButtonLike from '../button/SunButtonLike.vue';
 import SunItemButtonEditable from '../item/SunButtonItemEditable.vue';
-import SunCheckbox from '../checkbox/SunCheckbox.vue';
 import { ChevronRight, ChevronDown } from 'lucide-vue-next';
-import { computed, onBeforeUnmount, ref, watch, type Component, type Raw, inject, type Ref, onBeforeUpdate, getCurrentInstance } from 'vue';
-import { type Size, type Item, type UID, type TimerCanceller, timer, setDragMessage, type ColorScheme } from '../SunDesignConstants';
+import { computed, onBeforeUnmount, ref, watch, type Component, type Raw, toRef } from 'vue';
+import { type Size, type Item, type UID, type TimerCanceller, timer, setDragMessage, type ColorScheme, type PopupOpenMode } from '../SunDesignConstants';
 import { SunContextMenuEvent } from '../contextmenu/SunContextMenu';
 // import { TreeCheckedDataInjectionKey } from './SunTreeConstants';
 
-type ItemTreeItem<T extends UID = UID> = Omit<Item<T>, 'shortcut' | 'sub' | 'iconOnly'> & { leaf?: boolean, droppable?: boolean, subs?: TreeItem<T>[] };
-type RenderTreeItem<T extends UID = UID> = {
+export type ItemTreeItem<T extends UID = UID> = Omit<Item<T>, 'shortcut' | 'sub' | 'iconOnly'> & { leaf?: boolean, droppable?: boolean, subs?: TreeItem<T>[], defaultFold?: boolean };
+export type RenderTreeItem<T extends UID = UID> = {
     uid: T,
     label?: string,
     colorScheme?: ColorScheme,
@@ -89,6 +90,7 @@ type RenderTreeItem<T extends UID = UID> = {
     leaf?: boolean,
     droppable?: boolean,
     subs?: TreeItem<T>[],
+    defaultFold?: boolean,
     render: Raw<Component<{}>>,
 };
 export type TreeItem<T extends UID = UID> = ItemTreeItem<T> | RenderTreeItem<T>;
@@ -99,6 +101,7 @@ export type TreeItem<T extends UID = UID> = ItemTreeItem<T> | RenderTreeItem<T>;
 //props
 const props = withDefaults(
     defineProps<{
+        mode?: PopupOpenMode,
         size?: Size,
         folderLine?: boolean,
         option: TreeItem,
@@ -107,14 +110,17 @@ const props = withDefaults(
         unfoldDelay?: number,
         clickFolding?: boolean,
         filterSort?: (options: TreeItem[]) => TreeItem[],
+        defaultFold?: boolean,
     }>(),
     {
+        mode: 'visibility',
         size: 'normal',
         folderLine: true,
         depth: 0,
         draggable: true,
         unfoldDelay: 500,
         clickFolding: true,
+        defaultFold: false,
     }
 );
 
@@ -134,9 +140,10 @@ const emits = defineEmits<{
 
 // datas
 const itembutton_ref = ref<InstanceType<typeof SunItemButtonEditable> | undefined>();
+const subtree_refs = ref<{ toggle: (fold: boolean, deep: boolean) => void }[]>([]);
 const has_subs = computed(() => !(props.option.leaf ?? false) && props.option.subs !== undefined && props.option.subs.length > 0);
 const sorted_subs = computed(() => (!has_subs.value || props.filterSort === undefined) ? props.option.subs : props.filterSort(props.option.subs!));
-const folded = ref(false);
+const folded = ref(props.defaultFold);
 const button_ref = ref<InstanceType<typeof SunButton> | undefined>();
 const is_draggable = computed(() => !editting.value && props.draggable && !(props.option.disabled ?? false));
 
@@ -217,7 +224,7 @@ function onClick(evt: Event) {
     emits('click', props.option.uid, evt);
     if (evt.defaultPrevented) return;
     if (props.clickFolding) {
-        folded.value = !folded.value;
+        toggle(!folded.value);
     }
 }
 function onContextMenu(evt: MouseEvent) {
@@ -254,8 +261,23 @@ function onSubTreeClick(data: any, evt: Event) {
     emits('click', data, evt);
 }
 
+function toggle(fold: boolean, deep: boolean = false) {
+    folded.value = fold;
+    if (deep) {
+        for (const sub of subtree_refs.value) {
+            sub.toggle(fold, true);
+        }
+    }
+}
+
 onBeforeUnmount(() => {
     clearUnfoldTimer();
+});
+
+// exposes
+defineExpose({
+    uid: toRef(() => props.option.uid),
+    toggle,
 });
 
 </script>

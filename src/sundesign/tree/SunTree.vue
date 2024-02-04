@@ -1,9 +1,9 @@
 <template>
     <div class="__sun-design-tree-container__" :data-size="size" :style="{ '--Depth': 0 }">
-        <SunTreeItem v-if="sorted_options !== undefined" v-for="option in sorted_options" :size="size"
-            :folder-line="folderLine" :option="option" :draggable="draggable" :unfold-delay="unfoldDelay"
-            :filter-sort="filterSort" :click-folding="clickFolding" @click="onClick"
-            @contextmenu="emits('contextmenu', $event)" @edit="onSubTreeEdit">
+        <SunTreeItem ref="treeitem_refs" v-if="sorted_options !== undefined" v-for="option in sorted_options"
+            :default-fold="defaultFold" :mode="mode" :size="size" :folder-line="folderLine" :option="option"
+            :draggable="draggable" :unfold-delay="unfoldDelay" :filter-sort="filterSort" :click-folding="clickFolding"
+            @click="onClick" @contextmenu="emits('contextmenu', $event)" @edit="onSubTreeEdit">
             <template v-if="$slots.append" #append="{ option }">
                 <slot name="append" :option="option" />
             </template>
@@ -19,28 +19,34 @@
 
 <script setup lang="ts">
 
-import { computed, provide, ref, toRef, watch } from 'vue';
-import type { Size, UID } from '../SunDesignConstants';
+import { computed, ref, type Raw } from 'vue';
+import type { PopupOpenMode, Size, UID } from '../SunDesignConstants';
 import SunTreeItem, { type TreeItem } from './SunTreeItem.vue';
 import type { SunContextMenuEvent } from '../contextmenu/SunContextMenu';
+import { SunTreeOptionsRef } from './SunTreeConstants';
 
 //props
 const props = withDefaults(
     defineProps<{
+        mode?: PopupOpenMode,
         size?: Size,
         folderLine?: boolean,
-        options?: TreeItem[],
+        options?: TreeItem[] | Raw<SunTreeOptionsRef>,
         draggable?: boolean,
         unfoldDelay?: number,
         clickFolding?: boolean,
         filterSort?: (options: TreeItem[]) => TreeItem[],
+        defaultFold?: boolean,
+        activeOptions?: UID[],
     }>(),
     {
+        mode: 'visibility',
         size: 'normal',
         folderLine: true,
         draggable: true,
         unfoldDelay: 500,
         clickFolding: true,
+        defaultFold: false,
     }
 );
 
@@ -59,7 +65,8 @@ const emits = defineEmits<{
 }>();
 
 // datas
-const sorted_options = computed(() => props.options === undefined ? undefined : (props.filterSort === undefined ? props.options : props.filterSort(props.options)));
+const treeitem_refs = ref<InstanceType<typeof SunTreeItem>[]>([]);
+const sorted_options = computed(() => props.options === undefined ? undefined : (props.filterSort === undefined ? props.options instanceof SunTreeOptionsRef ? props.options.options.value : props.options : props.filterSort(props.options instanceof SunTreeOptionsRef ? props.options.options.value : props.options)));
 
 function onClick(data: any, evt: Event) {
     emits('click', data, evt);
@@ -68,6 +75,17 @@ function onClick(data: any, evt: Event) {
 function onSubTreeEdit(data: any, label: string) {
     emits('edit', data, label);
 }
+
+function toggle(fold: boolean, deep: boolean = false) {
+    for (const item of treeitem_refs.value) {
+        item.toggle(fold, deep);
+    }
+}
+
+// exposes
+defineExpose({
+    toggle,
+});
 
 </script>
 

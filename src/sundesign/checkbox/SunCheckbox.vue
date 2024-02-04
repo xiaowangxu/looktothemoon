@@ -1,11 +1,11 @@
 <template>
     <div class="__sun-design__ __sun-design-checkbox-container__ sized" :data-size="size" :style="colorScheme">
         <input type="checkbox" class="__sun-design__ __sun-design-checkbox__ colored" :class="{ bordered: !flat, hover }"
-            v-model="value" :disabled="disabled">
+            :checked="value" :disabled="disabled" @change="onChange">
         <div class="__sun-design__ __sun-design-checkbox-icon__">
             <slot name="icon">
-                <Check v-if="!partial" />
-                <Minus v-else />
+                <Check v-if="!partial" :stroke-width="3" />
+                <Minus v-else :stroke-width="3" />
             </slot>
         </div>
     </div>
@@ -14,9 +14,8 @@
 <script setup lang="ts">
 
 import '../SunDesignStyle.styl';
-import type { Size, ColorScheme } from '../SunDesignConstants';
+import { type Size, type ColorScheme, useInputModel } from '../SunDesignConstants';
 import { Check, Minus } from 'lucide-vue-next';
-import { useVModel } from '@vueuse/core';
 
 // props
 const props = withDefaults(
@@ -26,7 +25,8 @@ const props = withDefaults(
         flat?: boolean,
         hover?: boolean,
         disabled?: boolean,
-        modelValue?: boolean,
+        modelValue: boolean,
+        modelModifiers?: Record<string, boolean>,
         partial?: boolean,
     }>(),
     {
@@ -41,10 +41,15 @@ const props = withDefaults(
 // emits
 const emits = defineEmits<{
     (event: 'update:modelValue', val: boolean): void,
+    (event: 'change', val: boolean): void,
 }>();
 
 // datas
-const value = useVModel(props, 'modelValue', emits);
+const { value, setValueOnChange } = useInputModel(props, 'modelValue', 'modelModifiers', emits, { forceUpdate: true, emitChange: 'change' });
+
+function onChange(evt: Event) {
+    setValueOnChange((evt.target as HTMLInputElement).checked);
+}
 
 </script>
 
@@ -93,21 +98,19 @@ const value = useVModel(props, 'modelValue', emits);
 
     > .__sun-design__.__sun-design-checkbox-icon__
         position: absolute
-        width: 100%
-        aspect-ratio: 1
-        padding: 2px
-        display: flex;
-        align-items: center;
-        justify-content: center;
         overflow: hidden
+        inset: 0
+        padding: 2px
         pointer-events: none
 
         > svg, > .__sun-design-icon__
-            min-width: 100%
-            min-height: 100%
-            max-width: 100%
-            max-height: 100%
-    
+            position: absolute
+            width: 100%
+            height: 100%
+            inset: 0
+            padding: 2px
+            box-sizing: border-box
+
     > .__sun-design__.__sun-design-checkbox__
         + .__sun-design__.__sun-design-checkbox-icon__
             display: none

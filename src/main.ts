@@ -6,7 +6,6 @@ import '@/system/filesystem/VirtualFileSystem';
 import sys_vfs from 'res://sys.vfs?url';
 import { VFS } from '@/system/filesystem/VirtualFileSystem';
 import { fspath } from './system/filesystem/FileSystemPath';
-import * as Icons from 'lucide-vue-next';
 import SunWindow from './sundesign/window/SunWindow';
 import WindowFileSystem from './views/WindowFileSystem.vue';
 

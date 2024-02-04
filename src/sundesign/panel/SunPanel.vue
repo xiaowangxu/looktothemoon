@@ -1,6 +1,6 @@
 <template>
     <div ref="div_ref" class="__sun-design__ __sun-design-panel__"
-        :class="{ vertical, 'not-container': !container, 'drop-shadow': dropShadow, bordered: !container }"
+        :class="{ vertical, 'not-container': !container, 'drop-shadow': dropShadow, 'panel-bordered': !container }"
         :data-size="size">
         <div v-if="trapFocus && !container" ref="div_focus_top_ref" class="__sun-design-panel-trapfocus__" tabindex="0"
             @focus="onTrapFocusTopFocused" @keydown.tab.shift.prevent="focusLast">
@@ -138,11 +138,12 @@ defineExpose({
     position: relative
     pointer-events: initial
 
+    &.panel-bordered
+        border: panel-border
+
     &.not-container
         &.drop-shadow
-            // box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.1)
-            // box-shadow: 0 5px 6px -1px rgba(0, 0, 0, 0.05), 0 4px 6px 2px rgba(0, 0, 0, 0.01)
-            box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.05), 0 3px 8px 5px rgba(0, 0, 0, 0.02)
+            box-shadow: panel-drop-shadow
 
         &[data-size="small"]
             border-radius: panel-border-radius-small

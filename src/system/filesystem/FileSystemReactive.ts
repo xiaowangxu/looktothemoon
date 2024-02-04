@@ -4,6 +4,7 @@ import { ref, type Ref, toRef } from "vue";
 import { FileSystemPath, fspath } from "./FileSystemPath";
 import type { BreadcrumbItem } from "@/sundesign/breadcrumb/SunBreadcrumb.vue";
 import type { ColorScheme, Item } from "@/sundesign/SunDesignConstants";
+import { SunTreeOptionsRef } from "../../sundesign/tree/SunTreeConstants";
 
 export interface FileSystemRefItem {
     uid: VfsId,
@@ -69,10 +70,10 @@ function is_Hidden(name: string | undefined) {
     return false;
 }
 
-export class FileSystemReactive {
-    public readonly root = ref<FileSystemRefItem[]>([]);
+export class FileSystemTreeOptionsRef {
+    private readonly tree_data = new SunTreeOptionsRef<FileSystemRefItem>();
+    public get root() { return this.tree_data.options };
     private readonly vfs: VirtualFileSystem;
-    private readonly node_map: Map<VfsId, FileSystemRefItem> = new Map();
     private readonly watchers_map: Map<VfsId, Set<Ref<FileSystemRefItem | undefined>>> = new Map();
 
     constructor(vfs: VirtualFileSystem) {
@@ -123,9 +124,9 @@ export class FileSystemReactive {
         const _id = id.expect();
         if (!this.has_Node(_id)) return [];
         const crumbs: BreadcrumbItem[] = [];
-        let node = this.node_map.get(_id);
+        let node = this.tree_data.get(_id);
         while (node !== undefined) {
-            const parent = node.parent === undefined ? undefined : this.node_map.get(node.parent);
+            const parent = node.parent === undefined ? undefined : this.tree_data.get(node.parent);
             const subs = parent === undefined ? [] : parent.subs.filter(s => s.leaf === false).map(s => {
                 return {
                     label: s.label,
@@ -148,7 +149,7 @@ export class FileSystemReactive {
     }
 
     private has_Node(id: VfsId) {
-        return this.node_map.has(id);
+        return this.tree_data.has(id);
     }
 
     private create_NodeRef(id: VfsId, parent: VfsId | undefined, is_file: boolean, name: string | undefined, hidden: boolean): FileSystemRefItem {
@@ -165,22 +166,12 @@ export class FileSystemReactive {
     }
 
     private trace_Node(id: VfsId) {
-        if (this.has_Node(id)) return this.node_map.get(id)!;
+        if (this.has_Node(id)) return this.tree_data.get(id)!;
         const query = this.vfs.query(id);
         if (query.failed) return undefined;
         const { name, id: _id, parent, type, mode } = query.expect();
         const ref_item = this.create_NodeRef(_id, parent, type === 'file', name, (mode & VfsMode.Hidden) !== 0);
-        if (parent === undefined) {
-            // as root
-            this.node_map.set(_id, ref_item);
-            this.root.value.push(ref_item);
-        }
-        else {
-            this.node_map.set(_id, ref_item);
-            const _parent = this.trace_Node(parent);
-            if (_parent === undefined) return undefined;
-            toRef(_parent).value.subs.push(ref_item);
-        }
+        this.tree_data.push(parent, ref_item);
         const subs = this.vfs.list(_id);
         if (subs.succeed) {
             for (const sub of subs.expect()) {
@@ -194,15 +185,14 @@ export class FileSystemReactive {
         if (!this.has_Node(id)) return;
         const query = this.vfs.query(id);
         if (query.failed) return undefined;
-        const { name, id: _id, parent, type, mode } = query.expect();
-        const ref_item = this.node_map.get(id)!;
-        const _ref_item = toRef(ref_item);
+        const { name, id: _id, type, mode } = query.expect();
+        const ref_item = this.tree_data.get(id)!;
         const is_file = type === 'file';
-        _ref_item.value.label = name;
-        _ref_item.value.uid = id;
-        _ref_item.value.leaf = is_file;
-        _ref_item.value.disabled = (mode & VfsMode.Hidden) !== 0 || is_Hidden(name);
-        _ref_item.value.icon = get_Icon(name, is_file);
+        ref_item.label = name;
+        ref_item.uid = id;
+        ref_item.leaf = is_file;
+        ref_item.disabled = (mode & VfsMode.Hidden) !== 0 || is_Hidden(name);
+        ref_item.icon = get_Icon(name, is_file);
     }
 
     private _release_Watcher(item: FileSystemRefItem) {
@@ -213,13 +203,8 @@ export class FileSystemReactive {
     }
     private delete_Node(id: VfsId) {
         if (!this.has_Node(id)) return;
-        const ref_item = this.node_map.get(id)!;
-        const parent = ref_item.parent;
-        if (parent === undefined) return;
-        if (!this.has_Node(parent)) return;
-        const parent_item = this.node_map.get(parent)!;
-        toRef(parent_item).value.subs = parent_item.subs.filter(i => i.uid !== id);
-        this.node_map.delete(id);
+        const ref_item = this.tree_data.get(id)!;
+        this.tree_data.delete(id);
         this._release_Watcher(ref_item);
     }
 
@@ -243,7 +228,7 @@ export class FileSystemReactive {
 
     public dispose() {
         this.root.value = [];
-        this.node_map.clear();
+        this.tree_data.clear();
         for (const set of this.watchers_map.values()) {
             for (const ref of set) {
                 ref.value = undefined;
@@ -253,4 +238,4 @@ export class FileSystemReactive {
     }
 }
 
-export const VFSReactive = new FileSystemReactive(VFS);
+export const VFSTreeOptionsRef = new FileSystemTreeOptionsRef(VFS);

@@ -1,8 +1,8 @@
+import '../SunDesignStyle.styl';
 import { createApp, type App, markRaw } from "vue";
 import { calcMenuPopupRect, type BoxSize, type Position, type PreferedDirection, type Rect, type UID } from "../SunDesignConstants";
 import type { MenuItem } from "../menupopup/SunMenuPopup.vue";
 import SunMenuPopup from "../menupopup/SunMenuPopup.vue";
-import '../SunDesignStyle.styl';
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
 
 type ContextMenuItem<T extends UID = UID> = MenuItem<T>;

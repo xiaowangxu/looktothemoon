@@ -34,7 +34,6 @@
                 <SunPanel container vertical style="height: 100%;">
                     <SunScrollContainer style="width: 100%; height: unset;">
                         <SunPanelContainer>
-                            <SunLineEdit />
                             <SunBreadcrumb :options="nav_options" :filter-sort="(sort as any)" />
                         </SunPanelContainer>
                     </SunScrollContainer>
@@ -69,13 +68,13 @@ import SunButtonLabel from '@/sundesign/button/SunButtonLabel.vue';
 import { X, AppWindow, Minimize, Maximize, Globe } from 'lucide-vue-next';
 import type { TreeItem } from '@/sundesign/tree/SunTreeItem.vue';
 import { fspath } from '@/system/filesystem/FileSystemPath';
-import { VFSReactive, type FileSystemRefItem } from '@/system/filesystem/FileSystemReactive';
+import { VFSTreeOptionsRef, type FileSystemRefItem } from '@/system/filesystem/FileSystemReactive';
 import { computed, ref, watch } from 'vue';
 import { VFS, VfsMode, type VfsId } from '@/system/filesystem/VirtualFileSystem';
 import { type BreadcrumbItem } from '../sundesign/breadcrumb/SunBreadcrumb.vue';
 import { FileAccess } from '@/system/filesystem/FileAccess';
 
-const root_options = VFSReactive.watch(fspath('/'));
+const root_options = VFSTreeOptionsRef.watch(fspath('/'));
 const fs_options = computed(() => root_options.value === undefined ? [] : root_options.value.subs);
 const nav_options = ref<BreadcrumbItem[]>([]);
 
@@ -94,7 +93,7 @@ function sort(options: FileSystemRefItem[]) {
 
 const data = ref('');
 function onClick(vfsid: any, evt: Event) {
-    nav_options.value = VFSReactive.get_Breadcrumb(vfsid as VfsId);
+    nav_options.value = VFSTreeOptionsRef.get_Breadcrumb(vfsid as VfsId);
     const p = VFS.abspath(vfsid as VfsId).expect();
     const file = new FileAccess(p, VfsMode.Read);
     if (file.is_opened) {

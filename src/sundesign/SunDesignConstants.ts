@@ -349,6 +349,8 @@ type ModifiersKeyNameString<T extends string | number | symbol> = T extends stri
 
 interface UseInputModelOptions<T> {
     set?: (val: T, modifiers: Record<string, boolean> | undefined) => T,
+    forceUpdate?: boolean,
+    skipEqualityCheck?: boolean,
     emitInput?: string,
     emitChange?: string,
 };
@@ -360,11 +362,13 @@ export function useInputModel<P extends object, ValKey extends keyof P & string,
     const emitChange = options?.emitChange;
     const modifiers = toRef(props, modifiers_key);
     const update_event = `update:${val_key}`;
+    const forceUpdate = options?.forceUpdate ?? false;
+    const skipEqualityCheck = options?.skipEqualityCheck ?? false;
     return {
         value: value,
         setValueOnInput: (val: P[ValKey]) => {
             const v = set?.(val, modifiers.value) ?? val
-            if (!(modifiers.value?.lazy ?? false) && value.value !== val) {
+            if (forceUpdate || (!(modifiers.value?.lazy ?? false) && (skipEqualityCheck || value.value !== val))) {
                 emit(update_event as any, v);
             }
             if (emitInput !== undefined && emit !== undefined) {
@@ -373,7 +377,7 @@ export function useInputModel<P extends object, ValKey extends keyof P & string,
         },
         setValueOnChange: (val: P[ValKey]) => {
             const v = set?.(val, modifiers.value) ?? val
-            if ((modifiers.value?.lazy ?? false) && value.value !== val) {
+            if (forceUpdate || ((modifiers.value?.lazy ?? false) && (skipEqualityCheck || value.value !== val))) {
                 emit(update_event as any, v);
             }
             if (emitChange !== undefined && emit !== undefined) {
