@@ -24,7 +24,7 @@
     "spark-md5": "^3.0.2",
     "three": "^0.157.0",
     "three-mesh-bvh": "^0.6.8",
-    "vue": "^3.4.15"
+    "vue": "^3.3.4"
   },
   "devDependencies": {
     "@storybook/addon-essentials": "^7.6.8",

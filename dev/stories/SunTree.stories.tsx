@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
 import SunTree, { type TreeItem } from '../../src/sundesign/tree/SunTree.vue';
-import { SunTreeOptionsRef } from '../../src/sundesign/tree/SunTreeConstants';
+import { SunTreeDroppable, SunTreeOptionsRef } from '../../src/sundesign/tree/SunTreeConstants';
 import SunButton from '../../src/sundesign/button/SunButton.vue';
 import SunControlGroup from '../../src/sundesign/controlgroup/SunControlGroup.vue';
 import SunControlGroupRow from '../../src/sundesign/controlgroup/SunControlGroupRow.vue';
 import { SizeArgs, SizeArgsTypes, Args, ArgsTypes, Decorators } from './SunDesignArgs';
 import { ref, markRaw, type Raw, type Component, defineComponent, watch } from 'vue';
-import { ColorSchemeBlue, ColorSchemeRed } from '../../src/sundesign/SunDesignConstants';
+import { ColorSchemeBlue, ColorSchemeRed, UID } from '../../src/sundesign/SunDesignConstants';
 import SunIcon from '../../src/sundesign/icon/SunIcon.vue';
 import { Coins, Sun } from 'lucide-vue-next';
 
@@ -181,17 +181,27 @@ export const Tree: Story = {
                     ]
                 }
             ]);
-            const options = tree_data.options;
             const tree_ref = ref<InstanceType<typeof SunTree> | undefined>();
             function onClick(data: any, evt: Event) {
                 console.log(data, evt);
+                tree_data.get(data)!.active = true;
             }
-            function toggle() {
-                tree_ref.value?.toggle(true, true);
+            function toggle(folded: boolean) {
+                tree_ref.value?.toggle(folded);
             }
             function onAppend(option: TreeItem) {
                 const uid = option.uid;
-                tree_data.push(uid, { uid: Date.now(), label: new Date().toString() });
+                tree_data.push(uid, {
+                    uid: Date.now(), label: new Date().toString(), subs: [{
+                        label: '0',
+                        uid: `${new Date().toString()}-0`,
+                        leaf: true,
+                    }, {
+                        label: '1',
+                        uid: `${new Date().toString()}-1`,
+                        leaf: true,
+                    }]
+                });
             }
             function onRemove(option: TreeItem) {
                 const uid = option.uid;
@@ -202,11 +212,21 @@ export const Tree: Story = {
                     tree_data.get(option.uid)!.label += '*';
                 }
             }
-            return { args, onClick, tree_ref, toggle, tree_data: options, onAppend, onRemove, onName };
+            const uid = 346;
+            function foldOption() {
+                tree_ref.value?.toggleOption(uid, true);
+            }
+            function unfoldOption() {
+                tree_ref.value?.toggleOption(uid, false);
+            }
+            function onDrop(drag: UID | UID[], drop: UID, mode: SunTreeDroppable) {
+                console.log(drag, drop, mode);
+            }
+            return { args, onClick, tree_ref, toggle, tree_data, onAppend, onRemove, onName, foldOption, unfoldOption, onDrop };
         },
         template: `
-        <button @click="toggle">Fold All</button>
-			  <SunTree ref="tree_ref" style="width: 500px;" v-bind="args" :options="tree_data" @click="onClick">
+        
+			  <SunTree ref="tree_ref" style="width: 500px;" v-bind="args" :options="tree_data" @click="onClick" @drop="onDrop">
             <template #append="{option}">
                 <SunControlGroup>
                     <SunControlGroupRow>
@@ -217,6 +237,10 @@ export const Tree: Story = {
                 </SunControlGroup>
             </template>
         </SunTree>
+        <button @click="toggle(true)">Fold All</button>
+        <button @click="toggle(false)">unFold</button>
+        <button @click="foldOption">Fold 346</button>
+        <button @click="unfoldOption">unFold 346</button>
 		`,
     }),
     argTypes: {

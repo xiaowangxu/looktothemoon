@@ -1,4 +1,3 @@
-import { type UseVModelOptions } from '@vueuse/core';
 import './SunDesignStyle.styl';
 import { type CSSProperties, markRaw, toRef, type Ref, readonly } from 'vue';
 
@@ -8,8 +7,6 @@ export type Align = 'start' | 'center' | 'end';
 
 export type BorderMask = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
 
-export type BasicTypes = string | number | boolean | bigint | symbol;
-
 export type BoxSize = { width: number, height: number };
 
 export type Position = { x: number, y: number };
@@ -18,7 +15,7 @@ export type Rect = Position & BoxSize;
 
 export type PopupOpenMode = 'instance' | 'visibility';
 
-export type UID = string | number | symbol;
+export type UID = string | number;
 
 export interface Item<T extends UID = UID> {
     uid: T,
@@ -304,7 +301,7 @@ export function timer(func: () => void, time_ms: number): TimerCanceller {
 
 // cacher
 
-function cachecall<F extends (...args: any[]) => any>(f: F): { call: (...args: Parameters<F>) => ReturnType<F>, clear: () => void } {
+export function cachecall<F extends (...args: any[]) => any>(f: F): { call: (...args: Parameters<F>) => ReturnType<F>, clear: () => void } {
     let last_params: Parameters<F> | undefined = undefined;
     let last_result: ReturnType<F> | undefined = undefined;
     return {
@@ -365,21 +362,84 @@ export class TrapFocusOutEvent extends Event {
 
 // drag
 
-export function setDragMessage(evt: DragEvent, message: string = '放置项目', size: Size = 'small', offset: BoxSize = { width: -18, height: -8 }) {
-    const dom = document.createElement('div');
-    dom.className = '__sun-design__ colored sized bordered border-masked';
-    dom.innerHTML = `<span class="__sun-design__" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">${message}</span>`;
-    dom.dataset.size = size;
-    dom.style.overflow = 'hidden';
-    dom.style.maxWidth = '160px';
-    dom.style.position = 'fixed';
-    dom.style.bottom = '-1000px';
-    dom.style.display = 'inline-flex';
-    dom.style.flexWrap = 'nowrap';
-    document.body.appendChild(dom);
-    evt.dataTransfer!.setDragImage(dom, offset.width, offset.height);
+export interface DragData {
+    type: string,
+}
+
+let DraggingData: DragData | undefined = undefined;
+
+export function setDragData(evt: DragEvent, data: DragData[]) {
+    DraggingData = data;
+}
+
+export function clearDragData() {
+    DraggingData = undefined;
+}
+
+export function getDragData<T extends DragData>(evt: DragEvent, type: T['type']) {
+    if (DraggingData === undefined) return undefined;
+    const datas = DraggingData;
+    for (const data of datas) {
+        if (data.type === type) {
+            return data as T;
+        }
+    }
+    return undefined;
+}
+
+export function setDragImage(evt: DragEvent, message: string | string[] = '放置项目', size: Size = 'small', offset: BoxSize = { width: -18, height: -8 }) {
+    const messages = message instanceof Array ? message : [message];
+    const container = document.createElement('div');
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.gap = '4px';
+    container.style.position = 'fixed';
+    container.style.bottom = '-1000px';
+    container.style.flexWrap = 'nowrap';
+    container.style.justifyContent = 'flex-start';
+    for (const msg of messages.sort((a, b) => b.length - a.length).slice(0, 2)) {
+        const dom = document.createElement('div');
+        dom.className = '__sun-design__ colored sized bordered border-masked';
+        dom.innerHTML = `<span class="__sun-design__" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">${msg}</span>`;
+        dom.dataset.size = size;
+        if (messages.length > 2) {
+            dom.style.marginLeft = '10px';
+        }
+        dom.style.overflow = 'hidden';
+        dom.style.maxWidth = '160px';
+        dom.style.width = 'fit-content';
+        dom.style.display = 'inline-flex';
+        dom.style.flexWrap = 'nowrap';
+        container.appendChild(dom);
+    }
+    if (messages.length > 2) {
+        const dom = document.createElement('div');
+        dom.className = '__sun-design__ colored sized bordered border-masked rounded';
+        dom.innerHTML = `<span class="__sun-design__" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">+ ${messages.length} 项目</span>`;
+        dom.dataset.size = size;
+        dom.style.overflow = 'hidden';
+        dom.style.maxWidth = '160px';
+        dom.style.width = 'fit-content';
+        dom.style.display = 'inline-flex';
+        dom.style.flexWrap = 'nowrap';
+        container.prepend(dom);
+        const dom2 = document.createElement('div');
+        dom2.className = '__sun-design__ sized';
+        dom2.innerHTML = `<span class="__sun-design__" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">:</span>`;
+        dom2.dataset.size = size;
+        dom2.style.paddingTop = '0px';
+        dom2.style.marginLeft = '10px';
+        dom2.style.overflow = 'hidden';
+        dom2.style.maxWidth = '160px';
+        dom2.style.width = 'fit-content';
+        dom2.style.display = 'inline-flex';
+        dom2.style.flexWrap = 'nowrap';
+        container.append(dom2);
+    }
+    document.body.appendChild(container);
+    evt.dataTransfer!.setDragImage(container, offset.width, offset.height);
     setTimeout(() => {
-        document.body.removeChild(dom);
+        document.body.removeChild(container);
     }, 0);
 }
 

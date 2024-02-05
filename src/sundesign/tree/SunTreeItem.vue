@@ -3,7 +3,7 @@
     <div class="__sun-design-tree-list-container__">
         <SunButtonLike class="__sun-design-tree-item-container__ no-pressed-color"
             :class="{ 'no-append': $slots.append === undefined }" :size="size" :disabled="option.disabled"
-            :active="option.active" :color-scheme="option.colorScheme" flat no-pressed-color>
+            :active="option_active" :color-scheme="option.colorScheme" flat no-pressed-color>
             <slot name="prepand" :option="option" />
 
             <!-- folding button -->
@@ -23,9 +23,9 @@
 
             <!-- drag area -->
             <SunButton ref="button_ref" class="__sun-design-tree-drag-zoom__ no-hover-color no-pressed-color"
-                :class="{ 'no-append': $slots.append !== undefined, draggable: is_draggable }" flat :size="size"
-                :draggable="is_draggable" :disabled="option.disabled" :active="option.active" @dragstart="onDragStart"
-                @dragover="onDragOver" @dragenter="onDragEnter" @dragleave="onDragLeave" @drop="onDrop" @click="onClick"
+                :class="{ 'no-append': $slots.append !== undefined, 'not-editting': !editting }" flat :size="size"
+                :draggable="is_draggable" :disabled="option.disabled" @dragstart="onDragStart" @dragover="onDragOver"
+                @dragenter="onDragEnter" @dragleave="onDragLeave" @drop="onDrop" @dragend="onDragEnd" @click="onClick"
                 @contextmenu="onContextMenu">
                 <SunItemButtonEditable v-if="(option as RenderTreeItem).render === undefined" ref="itembutton_ref"
                     :label="(option as ItemTreeItem).label" :icon="(option as ItemTreeItem).icon"
@@ -36,24 +36,24 @@
             <!-- append -->
             <slot name="append" :option="option" />
 
-            <div v-if="(option.droppable ?? true) && dragging_over && dragging_in === 'in'"
+            <div v-if="(droppable & SunTreeDroppable.In) !== 0 || parent_drop_requested"
                 class="__sun-design__ __sun-design-tree-item-dropin-indicator__ bordered" :data-size="size" />
+
         </SunButtonLike>
         <slot name="suffix" :option="option" />
-        <div v-if="dragging_over && dragging_in === 'before'" class="__sun-design-tree-item-drop-indicator__ before" />
-        <div v-if="dragging_over && (!has_subs || folded) && dragging_in === 'after'"
-            class="__sun-design-tree-item-drop-indicator__ after" />
+        <div v-if="(droppable & SunTreeDroppable.Above) !== 0" class="__sun-design-tree-item-drop-indicator__ before"
+            :data-size="size" />
+        <div v-if="(!has_subs || folded) && (droppable & SunTreeDroppable.Below) !== 0"
+            class="__sun-design-tree-item-drop-indicator__ after" :data-size="size" />
     </div>
     <!-- sub tree -->
     <div v-if="has_subs && (mode === 'visibility' || !folded)" v-show="!folded"
         class="__sun-design-tree-container__ __sun-design-tree-relation__" :class="{ 'no-folder-line': !folderLine }"
         :style="{ '--Depth': depth + 1 }" :data-size="size">
-        <SunTreeItem ref="subtree_refs"
-            v-memo="[item, mode, size, folderLine, depth, draggable, unfoldDelay, filterSort, clickFolding]"
-            v-for="item in sorted_subs" :default-fold="option.defaultFold ?? defaultFold" :mode="mode" :size="size"
-            :folder-line="folderLine" :option="item" :depth="depth + 1" :draggable="draggable" @click="onSubTreeClick"
-            @contextmenu="emits('contextmenu', $event)" @edit="onSubTreeEdit" :unfold-delay="unfoldDelay"
-            :filter-sort="filterSort" :click-folding="clickFolding">
+        <!-- ref="subtree_refs" -->
+        <SunTreeItem v-for=" item  in  sorted_subs " v-memo="[item, depth]" :option="item" :depth="depth + 1"
+            @click="onSubTreeClick" @contextmenu="onSubTreeContextMenu" @edit="onSubTreeEdit" @drop="onSubTreeDrop"
+            :key="item.uid" @request-parent-drop="onRequestParentDrop">
             <template v-if="$slots.append" #append="{ option }">
                 <slot name="append" :option="option" />
             </template>
@@ -64,8 +64,8 @@
                 <slot name="suffix" :option="option" />
             </template>
         </SunTreeItem>
-        <div v-if="dragging_over && !folded && dragging_in === 'after'"
-            class="__sun-design-tree-item-drop-indicator__ after indent" />
+        <div v-if="!folded && (droppable & SunTreeDroppable.Below) !== 0"
+            class="__sun-design-tree-item-drop-indicator__ after indent" :data-size="size" />
     </div>
 </template>
 
@@ -75,12 +75,45 @@ import SunButton from '../button/SunButton.vue';
 import SunButtonLike from '../button/SunButtonLike.vue';
 import SunItemButtonEditable from '../item/SunButtonItemEditable.vue';
 import { ChevronRight, ChevronDown } from 'lucide-vue-next';
-import { computed, onBeforeUnmount, ref, watch, type Component, type Raw, toRef } from 'vue';
-import { type Size, type Item, type UID, type TimerCanceller, timer, setDragMessage, type ColorScheme, type PopupOpenMode } from '../SunDesignConstants';
+import { computed, inject, onBeforeUnmount, ref, watch, type Component, type Raw, toRef, onBeforeMount, getCurrentInstance } from 'vue';
+import { type Size, type Item, type UID, type TimerCanceller, timer, cachecall, setDragImage, setDragData, type ColorScheme, type PopupOpenMode, type DragData, getDragData as _getDragData, clearDragData } from '../SunDesignConstants';
 import { SunContextMenuEvent } from '../contextmenu/SunContextMenu';
-// import { TreeCheckedDataInjectionKey } from './SunTreeConstants';
+import { SunTreeDroppable, SunTreeInjection, type SunTreeItemDragData } from './SunTreeConstants';
 
-export type ItemTreeItem<T extends UID = UID> = Omit<Item<T>, 'shortcut' | 'sub' | 'iconOnly'> & { leaf?: boolean, droppable?: boolean, subs?: TreeItem<T>[], defaultFold?: boolean };
+// emits
+const emits = defineEmits<{
+    (event: 'click', data: UID, evt: Event): void,
+    (event: 'contextmenu', data: UID, evt: SunContextMenuEvent): void,
+    (event: 'edit', uid: UID, label: string): void,
+    (event: 'drop', drag_uid: UID | UID[], drop_uid: UID, drop_mode: SunTreeDroppable): void,
+    (event: 'requestParentDrop', drop: boolean): void,
+}>();
+
+// inject props
+const {
+    treeUID,
+    size, folderLine, mode, draggable, unfoldDelay, clickFolding, filterSort,
+    setUIDComponentCache, deleteUIDComponentCache, setUIDFoldedCache, getUIDFoldedCache,
+    onDragStart: _onTreeDragStart, canDrop,
+    isActive,
+    onClick: onTreeClick, onContextMenu: onTreeContextMenu, onEdit: onTreeEdit, onDrop: onTreeDrop,
+} = inject(SunTreeInjection, () => ({
+    treeUID: ref(undefined),
+    isActive: (uid: UID) => false,
+    onClick: (data: UID, evt: Event) => emits('click', data, evt),
+    onContextMenu: (data: UID, evt: SunContextMenuEvent) => emits('contextmenu', data, evt),
+    onEdit: (data: UID, label: string) => emits('edit', data, label),
+    onDrop: (drag_uid: UID | UID[], drop_uid: UID, drop_mode: SunTreeDroppable) => emits('drop', drag_uid, drop_uid, drop_mode),
+    size: ref<Size>('normal'),
+    folderLine: ref(true),
+    mode: ref<PopupOpenMode>('visibility'),
+    draggable: ref(true),
+    unfoldDelay: ref(500),
+    clickFolding: ref(true),
+    filterSort: ref(undefined),
+}), true);
+
+export type ItemTreeItem<T extends UID = UID> = Omit<Item<T>, 'shortcut' | 'sub' | 'iconOnly'> & { leaf?: boolean, subs?: TreeItem<T>[], defaultFold?: boolean };
 export type RenderTreeItem<T extends UID = UID> = {
     uid: T,
     label?: string,
@@ -88,41 +121,35 @@ export type RenderTreeItem<T extends UID = UID> = {
     disabled?: boolean,
     active?: boolean,
     leaf?: boolean,
-    droppable?: boolean,
     subs?: TreeItem<T>[],
     defaultFold?: boolean,
     render: Raw<Component<{}>>,
 };
 export type TreeItem<T extends UID = UID> = ItemTreeItem<T> | RenderTreeItem<T>;
 
-// inject
-// const tree_checked_data_injection = inject(TreeCheckedDataInjectionKey, undefined);
-
 //props
 const props = withDefaults(
     defineProps<{
-        mode?: PopupOpenMode,
-        size?: Size,
-        folderLine?: boolean,
         option: TreeItem,
         depth?: number,
-        draggable?: boolean,
-        unfoldDelay?: number,
-        clickFolding?: boolean,
-        filterSort?: (options: TreeItem[]) => TreeItem[],
-        defaultFold?: boolean,
     }>(),
     {
-        mode: 'visibility',
-        size: 'normal',
-        folderLine: true,
         depth: 0,
-        draggable: true,
-        unfoldDelay: 500,
-        clickFolding: true,
-        defaultFold: false,
     }
 );
+
+onBeforeMount(() => {
+    setUIDComponentCache?.(props.option.uid, getCurrentInstance()!);
+    folded.value = getUIDFoldedCache?.(props.option.uid) ?? false;
+    option_active.value = isActive(props.option.uid);
+});
+
+watch(toRef(() => props.option.uid), (val, old) => {
+    const instance = getCurrentInstance()!;
+    if (deleteUIDComponentCache?.(old, instance) ?? false) {
+        setUIDComponentCache?.(val, instance);
+    }
+})
 
 // slots
 defineSlots<{
@@ -131,38 +158,35 @@ defineSlots<{
     suffix(props: { option: TreeItem }): void,
 }>();
 
-// emits
-const emits = defineEmits<{
-    (event: 'click', data: any, evt: Event): void,
-    (event: 'contextmenu', evt: SunContextMenuEvent): void,
-    (event: 'edit', uid: any, label: string): void,
-}>();
-
 // datas
 const itembutton_ref = ref<InstanceType<typeof SunItemButtonEditable> | undefined>();
-const subtree_refs = ref<{ toggle: (fold: boolean, deep: boolean) => void }[]>([]);
 const has_subs = computed(() => !(props.option.leaf ?? false) && props.option.subs !== undefined && props.option.subs.length > 0);
-const sorted_subs = computed(() => (!has_subs.value || props.filterSort === undefined) ? props.option.subs : props.filterSort(props.option.subs!));
-const folded = ref(props.defaultFold);
+const sorted_subs = computed(() => (!has_subs.value || filterSort.value === undefined) ? props.option.subs : filterSort.value(props.option.subs!));
+const folded = ref(true);
+const option_active = ref(false);
+watch(folded, f => setUIDFoldedCache?.(props.option.uid, f));
 const button_ref = ref<InstanceType<typeof SunButton> | undefined>();
-const is_draggable = computed(() => !editting.value && props.draggable && !(props.option.disabled ?? false));
+const is_draggable = computed(() => !editting.value && draggable.value && !(props.option.disabled ?? false));
 
-const dragging_over = ref(false);
-const dragging_in = ref<'before' | 'in' | 'after'>('before');
-watch([dragging_over, dragging_in], ([over, within]) => {
-    if (over) {
-        if (within === 'in') {
-            if (dragover_unfold_timer === undefined && has_subs.value && folded.value === true) {
-                dragover_unfold_timer = timer(unfold, props.unfoldDelay);
-            }
-        }
-        else {
-            clearUnfoldTimer();
+// drag and drop
+const parent_drop_requested = ref(false);
+function onRequestParentDrop(request: boolean) {
+    parent_drop_requested.value = request;
+}
+
+const droppable = ref<SunTreeDroppable>(SunTreeDroppable.None);
+watch(droppable, droppable => {
+    if ((droppable & SunTreeDroppable.In) !== 0) {
+        if (dragover_unfold_timer === undefined && has_subs.value && folded.value === true) {
+            dragover_unfold_timer = timer(unfold, unfoldDelay.value);
         }
     }
     else {
         clearUnfoldTimer();
     }
+});
+watch(() => ((droppable.value & SunTreeDroppable.Parent) !== 0), request => {
+    emits('requestParentDrop', request);
 });
 
 let dragover_unfold_timer: TimerCanceller | undefined = undefined;
@@ -171,62 +195,130 @@ function clearUnfoldTimer() {
     dragover_unfold_timer?.();
     dragover_unfold_timer = undefined;
 }
-async function onDragStart(evt: DragEvent) {
-    setDragMessage(evt, props.option.label);
+
+function onDragStart(evt: DragEvent) {
+    if (_onTreeDragStart !== undefined) {
+        _onTreeDragStart(props.option.uid, evt);
+    }
+    else {
+        setDragData(evt, [({ type: 'SunTreeItemDrag', tree: treeUID.value, uid: props.option.uid } as SunTreeItemDragData)]);
+        setDragImage(evt, props.option.label);
+    }
 }
+function onDragEnd() {
+    clearDragData();
+}
+
+const { call: dragover_candrop, clear: clear_dragover_candrop } = cachecall(checkCanDrop);
+function checkCanDrop(drag_uid: UID | UID[], drop_uid: UID) {
+    return canDrop?.(drag_uid, drop_uid) ?? SunTreeDroppable.None;
+}
+
+let drag_data: UID | UID[] | undefined = undefined;
 function onDragOver(evt: DragEvent) {
+    const _drag_data = _getDragData<SunTreeItemDragData>(evt, 'SunTreeItemDrag');
+    drag_data = _drag_data?.uid;
+    const tree = _drag_data?.tree;
+    const not_same_tree = tree === undefined || treeUID.value === undefined || tree !== treeUID.value;
+    const can_drop = (not_same_tree || drag_data === undefined) ? SunTreeDroppable.None : dragover_candrop(drag_data, props.option.uid);
+    if (can_drop === SunTreeDroppable.None) {
+        droppable.value = SunTreeDroppable.None;
+        return;
+    }
     if (!button_ref.value?.button) {
         evt.preventDefault();
-        dragging_in.value = 'before';
+        droppable.value = SunTreeDroppable.None;
         return;
     }
     else {
-        const { x, y, width, height } = button_ref.value.button.getBoundingClientRect();
-        if (evt.clientY - y < height / 3) {
-            evt.preventDefault();
-            dragging_in.value = 'before';
-        }
-        else if (evt.clientY - y < height / 3 * 2) {
-            dragging_in.value = 'in';
-            if (props.option.droppable ?? true) {
-                evt.preventDefault();
+        const above = (can_drop & SunTreeDroppable.Above) !== 0;
+        const inside = (can_drop & SunTreeDroppable.In) !== 0;
+        const below = (can_drop & SunTreeDroppable.Below) !== 0;
+        const parent = (can_drop & SunTreeDroppable.Parent) !== 0;
+        const { y, height } = button_ref.value.button.getBoundingClientRect();
+        const offset_y = evt.clientY - y;
+        if ((above || below) && (inside || parent)) {
+            // three
+            if (offset_y < height / 3) {
+                if (above) {
+                    evt.preventDefault();
+                    droppable.value = SunTreeDroppable.Above;
+                }
+            }
+            else if (offset_y < height / 3 * 2) {
+                if (inside) {
+                    evt.preventDefault();
+                    droppable.value = SunTreeDroppable.In;
+                }
+                else if (parent) {
+                    evt.preventDefault();
+                    droppable.value = SunTreeDroppable.Parent;
+                }
+            }
+            else {
+                if (below) {
+                    evt.preventDefault();
+                    droppable.value = SunTreeDroppable.Below;
+                }
             }
         }
-        else {
-            evt.preventDefault();
-            dragging_in.value = 'after';
+        else if (above || below) {
+            // two
+            if (offset_y < height / 2) {
+                if (above) {
+                    evt.preventDefault();
+                    droppable.value = SunTreeDroppable.Above;
+                }
+            }
+            else {
+                if (below) {
+                    evt.preventDefault();
+                    droppable.value = SunTreeDroppable.Below;
+                }
+            }
+        }
+        else if (inside || parent) {
+            if (inside) {
+                evt.preventDefault();
+                droppable.value = SunTreeDroppable.In;
+            }
+            else if (parent) {
+                evt.preventDefault();
+                droppable.value = SunTreeDroppable.Parent;
+            }
         }
     }
 }
 function onDragEnter(evt: DragEvent) {
-    if (dragging_over.value !== true) {
-        dragging_over.value = true;
-        evt.preventDefault();
-    }
+    clear_dragover_candrop();
 }
 function onDragLeave(evt: DragEvent) {
-    evt.preventDefault();
-    if (evt.currentTarget === null) {
-        dragging_over.value = false;
-    }
-    else if (evt.relatedTarget === null || !(evt.currentTarget as HTMLElement).contains(evt.relatedTarget as HTMLElement)) {
-        dragging_over.value = false;
-    }
+    droppable.value = SunTreeDroppable.None;
+    drag_data = undefined;
+    clear_dragover_candrop();
 }
 function onDrop(evt: DragEvent) {
-    console.log(">>>>", props.option.uid, dragging_in.value);
-    dragging_over.value = false;
+    const drop_mode = droppable.value;
+    const drag_uid = drag_data;
+    drag_data = undefined;
+    droppable.value = SunTreeDroppable.None;
+    clear_dragover_candrop();
     clearUnfoldTimer();
+    if (drop_mode !== SunTreeDroppable.None && drag_uid !== undefined) {
+        onTreeDrop(drag_uid, props.option.uid, drop_mode);
+    }
 }
 
+// click
 function onClick(evt: Event) {
     if (editting.value) return;
-    emits('click', props.option.uid, evt);
+    onTreeClick(props.option.uid, evt);
     if (evt.defaultPrevented) return;
-    if (props.clickFolding) {
+    if (clickFolding.value) {
         toggle(!folded.value);
     }
 }
+
 function onContextMenu(evt: MouseEvent) {
     if (editting.value) return;
     const ctx_menu = new SunContextMenuEvent(evt);
@@ -242,42 +334,54 @@ function onContextMenu(evt: MouseEvent) {
             }
         }
     })
-    emits('contextmenu', ctx_menu);
+    onTreeContextMenu(props.option.uid, ctx_menu);
 }
 
+// edit
 const editting = ref(false);
 function onEdit(data: string) {
     editting.value = false;
     if (data !== props.option.label) {
-        emits('edit', props.option.uid, data);
+        onTreeEdit(props.option.uid, data);
     }
 }
 
-function onSubTreeEdit(data: any, label: string) {
+function onSubTreeEdit(data: UID, label: string) {
     emits('edit', data, label);
 }
 
-function onSubTreeClick(data: any, evt: Event) {
+function onSubTreeClick(data: UID, evt: Event) {
     emits('click', data, evt);
 }
 
-function toggle(fold: boolean, deep: boolean = false) {
+function onSubTreeContextMenu(data: UID, evt: SunContextMenuEvent) {
+    emits('contextmenu', data, evt);
+}
+
+function onSubTreeDrop(drag_uid: UID | UID[], drop_uid: UID, drop_mode: SunTreeDroppable) {
+    emits('drop', drag_uid, drop_uid, drop_mode);
+}
+
+function toggle(fold: boolean) {
     folded.value = fold;
-    if (deep) {
-        for (const sub of subtree_refs.value) {
-            sub.toggle(fold, true);
-        }
-    }
+}
+
+function active(active: boolean) {
+    option_active.value = active;
 }
 
 onBeforeUnmount(() => {
+    deleteUIDComponentCache?.(props.option.uid, getCurrentInstance()!);
+    setUIDFoldedCache?.(props.option.uid, undefined);
     clearUnfoldTimer();
+    drag_data = undefined;
+    clear_dragover_candrop();
 });
 
 // exposes
 defineExpose({
-    uid: toRef(() => props.option.uid),
     toggle,
+    active,
 });
 
 </script>
@@ -347,7 +451,7 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
     color: inherit !important
     &.no-append
         padding-right: 0px !important
-    &.draggable
+    &.not-editting
         & > *
             pointer-events: none
 
@@ -373,8 +477,13 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
 
 .__sun-design-tree-item-drop-indicator__
     position absolute
-    left: 0
     right: 0
+    &[data-size="small"]
+        left: 'calc(var(--Depth) * %s)' % (content-size-small + gap-small)
+    &[data-size="normal"]
+        left: 'calc(var(--Depth) * %s)' % (content-size-normal + gap-normal)
+    &[data-size="large"]
+        left: 'calc(var(--Depth) * %s)' % (content-size-large + gap-large)
     &.before
         top: - (panel-padding / 2)
     &.after
@@ -385,7 +494,12 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
 .__sun-design-tree-item-dropin-indicator__
     position absolute
     inset: 0
-    left: 'calc(var(--Depth) * 0)'
+    &[data-size="small"]
+        left: 'calc(var(--Depth) * %s)' % (content-size-small + gap-small)
+    &[data-size="normal"]
+        left: 'calc(var(--Depth) * %s)' % (content-size-normal + gap-normal)
+    &[data-size="large"]
+        left: 'calc(var(--Depth) * %s)' % (content-size-large + gap-large)
     pointer-events: none
     border-color: var(--placeholder-color) !important
     border-width: border-width !important

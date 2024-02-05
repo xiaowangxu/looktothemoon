@@ -16,7 +16,8 @@ VFS.touch(fspath('user://'));
 
 await fetch(sys_vfs).then(res => res.arrayBuffer()).then(array_buffer => VFS.load(array_buffer, fspath('sys://')));
 
-const win = new SunWindow(WindowFileSystem);
+const win1 = new SunWindow(WindowFileSystem, { root: '/' });
+const win2 = new SunWindow(WindowFileSystem, { root: 'user://' });
 
 window.VFS = VFS;
 window.fspath = fspath;

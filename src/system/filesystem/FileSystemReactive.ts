@@ -4,7 +4,7 @@ import { ref, type Ref, toRef } from "vue";
 import { FileSystemPath, fspath } from "./FileSystemPath";
 import type { BreadcrumbItem } from "@/sundesign/breadcrumb/SunBreadcrumb.vue";
 import type { ColorScheme, Item } from "@/sundesign/SunDesignConstants";
-import { SunTreeOptionsRef } from "../../sundesign/tree/SunTreeConstants";
+import { SunSubTreeOptionsRef, SunTreeOptionsRef } from "../../sundesign/tree/SunTreeConstants";
 
 export interface FileSystemRefItem {
     uid: VfsId,
@@ -81,12 +81,12 @@ export class FileSystemTreeOptionsRef {
         this.vfs.signal_node_modify.connect(this._on_VfsNodeModify);
     }
 
-    public watch(path: FileSystemPath) {
+    public watch(path: FileSystemPath, contain_root: boolean = true) {
         const id = this.vfs.lookup(path);
-        if (id.failed) return ref<FileSystemRefItem | undefined>();
+        if (id.failed) return new SunSubTreeOptionsRef(this.tree_data, undefined);
         const _id = id.expect();
         const item_ref = this.trace_Node(_id);
-        if (item_ref === undefined) return ref<FileSystemRefItem | undefined>();
+        if (item_ref === undefined) return new SunSubTreeOptionsRef(this.tree_data, undefined);
         const watcher = ref(item_ref);
         if (this.watchers_map.has(_id)) {
             this.watchers_map.get(_id)!.add(watcher);
@@ -94,7 +94,7 @@ export class FileSystemTreeOptionsRef {
         else {
             this.watchers_map.set(_id, new Set([watcher]));
         }
-        return watcher;
+        return new SunSubTreeOptionsRef(this.tree_data, _id, contain_root);
     }
 
     public unwatch(ref: Ref<FileSystemRefItem | undefined>) {

@@ -188,12 +188,30 @@ export class VirtualFileSystem {
         return Result.Error(VfsOperationResult.NotFound);
     }
 
+    private get_ParentNode(child: VfsId): Result<VfsId | undefined, VfsOperationResult> {
+        const _child = this.get_Node(child);
+        if (_child === undefined) return Result.Error(VfsOperationResult.SrcInvalid);
+        return Result.Ok(_child.parent);
+    }
+
+    private get_NodeName(node: VfsId): Result<string | undefined, VfsOperationResult> {
+        const _node = this.get_Node(node);
+        if (_node === undefined) return Result.Error(VfsOperationResult.SrcInvalid);
+        return Result.Ok(_node.name);
+    }
+
     private set_NodeName(node: VfsId, name: string) {
         const _node = this.get_Node(node);
         if (_node === undefined) return VfsOperationResult.SrcInvalid;
         _node.name = name;
         this.signal_node_modify.defer('rename', _node.id);
         return VfsOperationResult.Ok;
+    }
+
+    private get_NodeMode(node: VfsId): Result<VfsMode, VfsOperationResult> {
+        const _node = this.get_Node(node);
+        if (_node === undefined) return Result.Error(VfsOperationResult.SrcInvalid);
+        return Result.Ok(_node.mode);
     }
 
     private set_NodeMode(node: VfsId, mode: VfsMode) {
@@ -399,6 +417,52 @@ export class VirtualFileSystem {
         let err;
         if ((err = this.detach_Node(_node)) !== VfsOperationResult.Ok) return err;
         if ((err = this.delete_Node(_node)) !== VfsOperationResult.Ok) return err;
+        return VfsOperationResult.Ok;
+    }
+
+    public ancestor(child: VfsId | FileSystemPath, parent: VfsId | FileSystemPath): Result<boolean, VfsOperationResult> {
+        const _child = this.lookup(child);
+        if (_child.failed) return Result.Error(_child.expect_Error());
+        const _parent = this.lookup(parent);
+        if (_parent.failed) return Result.Error(_parent.expect_Error());
+        const __child = _child.expect();
+        const __parent = _parent.expect();
+        if (__child === __parent) return Result.Ok(true);
+        const p = this.get_ParentNode(__child);
+        if (p.failed) return Result.Error(p.expect_Error());
+        let _p = p.expect();
+        while (_p !== undefined) {
+            if (_p === __parent) return Result.Ok(true);
+            const p = this.get_ParentNode(_p);
+            if (p.failed) return Result.Error(p.expect_Error());
+            _p = p.expect();
+        }
+        return Result.Ok(false);
+    }
+
+    public move(src: VfsId | FileSystemPath, dst: VfsId | FileSystemPath, unique: boolean = true): VfsOperationResult {
+        const _src = this.lookup(src);
+        if (_src.failed) return _src.expect_Error();
+        const _dst = this.lookup(dst);
+        if (_dst.failed) return _dst.expect_Error();
+        const __src = _src.expect();
+        const __dst = _dst.expect();
+        const src_name = this.get_NodeName(__src).expect();
+        if (src_name !== undefined && unique) {
+            // check name's exist
+            const res = this.find_Node(__dst, src_name);
+            if (res.failed) {
+                if (res.expect_Error() !== VfsOperationResult.NotFound) return res.expect_Error();
+            }
+            else {
+                return VfsOperationResult.InputsInvalid;
+            }
+        }
+        const ancestor = this.ancestor(__dst, __src);
+        if (ancestor.failed || ancestor.expect()) return VfsOperationResult.DstInvalid;
+        let result;
+        if ((result = this.detach_Node(__src)) !== VfsOperationResult.Ok) return result;
+        if ((result = this.attach_Node(__src, __dst)) !== VfsOperationResult.Ok) return result;
         return VfsOperationResult.Ok;
     }
 

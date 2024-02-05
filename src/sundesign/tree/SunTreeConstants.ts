@@ -1,16 +1,61 @@
-import { watch, type InjectionKey, type Ref, ref, customRef, toRef, reactive } from "vue";
-import type { UID } from "../SunDesignConstants";
+import { type InjectionKey, type Ref, ref, toRef, reactive, type ComponentInternalInstance, computed } from "vue";
+import type { Size, UID, PopupOpenMode, DragData } from "../SunDesignConstants";
 import { type TreeItem } from "./SunTreeItem.vue";
+import type { SunContextMenuEvent } from "../contextmenu/SunContextMenu";
 
-// export const SunTreeInjection = Symbol() as InjectionKey<{
-//     activeOptions: Ref<UID[] | undefined>,
-//     setOptionCache(uid: UID, tree_item: InstanceType<typeof SunTreeItem>): void,
-//     deleteOptionCache(uid: UID): void,
-// }>;
+export interface SunTreeItemDragData extends DragData {
+    type: 'SunTreeItemDrag',
+    tree: UID | undefined,
+    uid: UID | UID[],
+}
+
+export enum SunTreeDroppable {
+    None = 0,
+    Above = 1,
+    In = 2,
+    Below = 4,
+    Parent = 8,
+    All = 0b1111,
+}
+
+export const SunTreeInjection = Symbol() as InjectionKey<{
+    treeUID: Ref<UID | undefined>,
+    setUIDComponentCache?: (uid: UID, component: ComponentInternalInstance) => void;
+    deleteUIDComponentCache?: (uid: UID, component: ComponentInternalInstance) => boolean;
+    setUIDFoldedCache?: (uid: UID, folded: boolean | undefined) => void;
+    getUIDFoldedCache?: (uid: UID) => boolean,
+    canDrop?: (drag_uid: UID | UID[], drop_uid: UID) => SunTreeDroppable,
+    onDragStart?: (uid: UID, evt: DragEvent) => void,
+    isActive: (uid: UID) => boolean,
+    onClick: (data: UID, evt: Event) => void,
+    onContextMenu: (data: UID, evt: SunContextMenuEvent) => void,
+    onEdit: (data: UID, label: string) => void,
+    onDrop: (drag_uid: UID | UID[], drop_uid: UID, drop_mode: SunTreeDroppable) => void,
+    folderLine: Ref<boolean>,
+    size: Ref<Size>,
+    mode: Ref<PopupOpenMode>,
+    draggable: Ref<boolean>,
+    unfoldDelay: Ref<number>,
+    clickFolding: Ref<boolean>,
+    filterSort: Ref<((options: TreeItem[]) => TreeItem[]) | undefined>,
+}>;
 
 type TreeUIDMap<T extends TreeItem> = Map<UID, { parent: UID | undefined, option: T }>;
 
-export class SunTreeOptionsRef<T extends TreeItem = TreeItem> {
+export interface SunTreeOptions<T extends TreeItem = TreeItem> {
+    get options(): Ref<T[]>;
+    has(uid: UID): boolean,
+    push(parent: UID | undefined, option: T): void,
+    delete(uid: UID): void,
+    get(uid: UID): T | undefined,
+    set<TT extends T, K extends keyof Omit<TT, 'subs'>>(uid: UID, key: K, val: TT[K]): void,
+    abspath(uid: UID): UID[],
+    parent(uid: UID): UID | undefined,
+    ancestor(child: UID, ancestor: UID): boolean,
+    clear(): void,
+}
+
+export class SunTreeOptionsRef<T extends TreeItem = TreeItem> implements SunTreeOptions<T> {
     public readonly options: Ref<T[]> = ref([]);
     public readonly uid_map: TreeUIDMap<T> = new Map();
 
@@ -117,8 +162,97 @@ export class SunTreeOptionsRef<T extends TreeItem = TreeItem> {
         }
     }
 
+    public parent(uid: UID): UID | undefined {
+        return this.uid_map.get(uid)?.parent;
+    }
+
+    public ancestor(child: UID, ancestor: UID): boolean {
+        if (!this.has(child) || !this.has(ancestor)) return false;
+        if (child === ancestor) return true;
+        let { parent } = this.uid_map.get(child)!;
+        while (parent !== undefined) {
+            if (parent === ancestor) return true;
+            parent = this.uid_map.get(parent)!.parent;
+        }
+        return false;
+    }
+
+    public abspath(uid: UID) {
+        if (!this.has(uid)) return [];
+        const path = [uid];
+        let { parent } = this.uid_map.get(uid)!;
+        while (parent !== undefined) {
+            path.unshift(parent);
+            parent = this.uid_map.get(parent)!.parent;
+        }
+        return path;
+    }
+
     public clear() {
         this.options.value = [];
         this.uid_map.clear();
     }
+}
+
+export class SunSubTreeOptionsRef<T extends TreeItem = TreeItem> implements SunTreeOptions<T> {
+    private readonly tree: SunTreeOptionsRef<T>;
+
+    public readonly options: Ref<T[]> = ref([]);
+    private readonly root_uid: UID | undefined;
+    private readonly contain_root: boolean;
+
+    constructor(tree: SunTreeOptionsRef<T>, uid: UID | undefined, contain_root: boolean = true) {
+        this.tree = tree;
+        this.contain_root = contain_root;
+        if (uid !== undefined) {
+            const option = this.tree.get(uid);
+            if (option !== undefined) {
+                this.root_uid = uid;
+                this.options = contain_root ? (ref([option]) as Ref<T[]>) : computed(() => option.subs as T[] ?? []);
+            }
+        }
+    }
+
+    public has(uid: UID) {
+        return this.tree.has(uid);
+    }
+
+    public push(parent: UID | undefined, option: T) {
+        return this.tree.push(parent, option);
+    }
+
+    public delete(uid: UID) {
+        return this.tree.delete(uid);
+    }
+
+    public get(uid: UID) {
+        return this.tree.get(uid);
+    }
+
+    public set<TT extends T, K extends keyof Omit<TT, 'subs'>>(uid: UID, key: K, val: TT[K]) {
+        return this.tree.set(uid, key, val);
+    }
+
+    public parent(uid: UID): UID | undefined {
+        return this.tree.parent(uid);
+    }
+
+    public ancestor(child: UID, ancestor: UID): boolean {
+        return this.tree.ancestor(child, ancestor);
+    }
+
+    public abspath(uid: UID) {
+        if (this.root_uid === undefined || !this.has(uid)) return [];
+        const path = [uid];
+        let parent: UID | undefined = this.tree.parent(uid)!;
+        while (parent !== undefined) {
+            path.unshift(parent);
+            if (parent === this.root_uid) break;
+            parent = this.tree.parent(parent);
+        }
+        if (!this.contain_root && path[0] === this.root_uid) path.shift();
+        return path;
+    }
+
+    public clear() { }
 }
