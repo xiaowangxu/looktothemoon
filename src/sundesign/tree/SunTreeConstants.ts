@@ -198,7 +198,7 @@ export class SunSubTreeOptionsRef<T extends TreeItem = TreeItem> implements SunT
     private readonly tree: SunTreeOptionsRef<T>;
 
     public readonly options: Ref<T[]> = ref([]);
-    private readonly root_uid: UID | undefined;
+    private root_uid: UID | undefined;
     private readonly contain_root: boolean;
 
     constructor(tree: SunTreeOptionsRef<T>, uid: UID | undefined, contain_root: boolean = true) {
@@ -214,30 +214,37 @@ export class SunSubTreeOptionsRef<T extends TreeItem = TreeItem> implements SunT
     }
 
     public has(uid: UID) {
-        return this.tree.has(uid);
+        if (!this.tree.has(uid) || this.root_uid === undefined) return false;
+        return this.tree.ancestor(uid, this.root_uid);
     }
 
     public push(parent: UID | undefined, option: T) {
+        if (parent === undefined || !this.has(parent)) return;
         return this.tree.push(parent, option);
     }
 
     public delete(uid: UID) {
+        if (!this.has(uid)) return;
         return this.tree.delete(uid);
     }
 
     public get(uid: UID) {
+        if (!this.has(uid)) return undefined;
         return this.tree.get(uid);
     }
 
     public set<TT extends T, K extends keyof Omit<TT, 'subs'>>(uid: UID, key: K, val: TT[K]) {
+        if (!this.has(uid)) return;
         return this.tree.set(uid, key, val);
     }
 
     public parent(uid: UID): UID | undefined {
+        if (!this.has(uid)) return;
         return this.tree.parent(uid);
     }
 
     public ancestor(child: UID, ancestor: UID): boolean {
+        if (!this.has(child) || !this.has(ancestor)) return false;
         return this.tree.ancestor(child, ancestor);
     }
 
@@ -254,5 +261,8 @@ export class SunSubTreeOptionsRef<T extends TreeItem = TreeItem> implements SunT
         return path;
     }
 
-    public clear() { }
+    public clear() {
+        this.options.value = [];
+        this.root_uid = undefined;
+    }
 }

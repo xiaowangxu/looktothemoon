@@ -366,7 +366,7 @@ export interface DragData {
     type: string,
 }
 
-let DraggingData: DragData | undefined = undefined;
+let DraggingData: DragData[] | undefined = undefined;
 
 export function setDragData(evt: DragEvent, data: DragData[]) {
     DraggingData = data;

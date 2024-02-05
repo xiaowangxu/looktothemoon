@@ -420,10 +420,10 @@ export class VirtualFileSystem {
         return VfsOperationResult.Ok;
     }
 
-    public ancestor(child: VfsId | FileSystemPath, parent: VfsId | FileSystemPath): Result<boolean, VfsOperationResult> {
+    public ancestor(child: VfsId | FileSystemPath, ancestor: VfsId | FileSystemPath): Result<boolean, VfsOperationResult> {
         const _child = this.lookup(child);
         if (_child.failed) return Result.Error(_child.expect_Error());
-        const _parent = this.lookup(parent);
+        const _parent = this.lookup(ancestor);
         if (_parent.failed) return Result.Error(_parent.expect_Error());
         const __child = _child.expect();
         const __parent = _parent.expect();

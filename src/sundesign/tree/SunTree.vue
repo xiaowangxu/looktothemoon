@@ -115,6 +115,7 @@ function _canDrop(drag_uid: UID, drop_uid: UID) {
         }
     }
     else if (is_leaf && props.redirectLeafToParent) {
+        // node from different may have drop_parent === undefined
         const drop_parent = props.options.parent(drop_uid);
         if (drag_parent !== undefined && drop_parent !== undefined && drag_parent !== drop_parent) {
             droppable |= SunTreeDroppable.Parent;
@@ -180,7 +181,6 @@ function addActive(uid: UID) {
     }
 }
 function removeActive(uid: UID) {
-    console.log(">>>>> remove active", uid);
     if (active_set.has(uid)) {
         active_set.delete(uid);
     }

@@ -68,7 +68,7 @@ import SunButtonLabel from '@/sundesign/button/SunButtonLabel.vue';
 import { X, Maximize, Globe } from 'lucide-vue-next';
 import type { TreeItem } from '@/sundesign/tree/SunTreeItem.vue';
 import { fspath } from '@/system/filesystem/FileSystemPath';
-import { VFSTreeOptionsRef, type FileSystemRefItem } from '@/system/filesystem/FileSystemReactive';
+import { VFSTreeOptionsRef, type FileSystemRefItem } from '@/system/filesystem/FileSystemTreeOptionsRef';
 import { ref, watch } from 'vue';
 import { VFS, VfsMode, type VfsId } from '@/system/filesystem/VirtualFileSystem';
 import { type BreadcrumbItem } from '../sundesign/breadcrumb/SunBreadcrumb.vue';
@@ -142,4 +142,4 @@ function onDragMouseDown(evt: MouseEvent) {
 
 </script>
 
-<style></style>
+<style></style>@/system/filesystem/FileSystemTreeOptionsRef
