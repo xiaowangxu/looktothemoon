@@ -11,9 +11,9 @@ padding-extend-small = 4px
 padding-extend-normal = 6px
 padding-extend-large = 8px
 
-content-size-small = 13px // size-small - padding-small * 2
-content-size-normal = 16px // size-normal - padding-normal * 2
-content-size-large = 20px // size-large - padding-large * 2
+content-size-small = 13px
+content-size-normal = 16px
+content-size-large = 20px
 
 font-size-small = 10px
 font-size-normal = 12px
@@ -30,49 +30,83 @@ gap-large = 7px
 border-width = 1px
 panel-border-width = 1px
 
+// for description
+major-opacity = 60%
+major-opacity-disabled = 50%
+// for shortcut
+minor-opacity = 40%
+
 panel-border = panel-border-width var(--border-color-normal) solid
-panel-drop-shadow = 0 3px 6px -1px rgba(0, 0, 0, 0.05), 0 3px 4px 5px rgba(0, 0, 0, 0.02)
-// box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.1)
-// box-shadow: 0 5px 6px -1px rgba(0, 0, 0, 0.05), 0 4px 6px 2px rgba(0, 0, 0, 0.01)
+panel-drop-shadow = 0 3px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 10px 4px rgba(0, 0, 0, 0.01)
 
 solid-border = border-width var(--border-color-normal) solid
 solid-border-disabled = border-width var(--border-color-disabled) solid
 solid-border-active-disabled = border-width var(--border-color-active-disabled) solid
 
 focus-width = 2px
-focus-offset = - focus-width // - border-width
+focus-offset = - focus-width
 
 // colors
 scroll-indicator-color = rgba(0, 0, 0, 0.075)
-panel-color = rgb(255, 255, 255)
+panel-color = #ffffff
 panel-padding = 4px
 panel-border-radius-small = border-radius-size-small + panel-padding
 panel-border-radius-normal = border-radius-size-normal + panel-padding
 panel-border-radius-large = border-radius-size-large + panel-padding
 
-focus-color = rgb(177 177 177) // rgba(79, 79, 79, 0.4)
+focus-color = #a7d0ff
 border-color-normal = #d3d3d3
-border-color-disabled = #dcdcdc
+border-color-disabled = #f4f4f4
 border-color-active-disabled = #dcdcdc
 placeholder-color = #a3a3a3
 placeholder-color-disabled = #dcdcdc
 
-color-normal = #f1f1f1
-color-hover = #e4e4e4
-color-pressed = #4f4f4f
-color-disabled = #f9f9f9
+color-normal = #f7f7f7
+color-hover = #f0f0f0
+color-pressed = #ecf6ff
+color-disabled = #fdfdfd
 
-color-active = #4f4f4f
-color-active-hover = #575757
-color-active-pressed = #5f5f5f
-color-active-disabled = #b0b0b0
+color-active = #e1efff
+color-active-hover = #d0e6ff
+color-active-pressed = #c2deff
+color-active-disabled = #eff6ff
 
 font-color-normal = #4f4f4f
 font-color-hover = #4f4f4f
-font-color-pressed = #ffffff
+font-color-pressed = #0073ff
 font-color-disabled = #c8c8c8
 
-font-color-active = #ffffff
-font-color-active-hover = #ffffff
-font-color-active-pressed = #ffffff
-font-color-active-disabled = #ffffff
+font-color-active = #0073ff
+font-color-active-hover = #0073ff
+font-color-active-pressed = #0073ff
+font-color-active-disabled = #b4d4fb
+
+
+// old default color scheme
+
+// focus-color = rgb(177 177 177)
+// border-color-normal = #d3d3d3
+// border-color-disabled = #dcdcdc
+// border-color-active-disabled = #dcdcdc
+// placeholder-color = #a3a3a3
+// placeholder-color-disabled = #dcdcdc
+
+// color-normal = #f1f1f1
+// color-hover = #e4e4e4
+// color-pressed = #4f4f4f
+// color-disabled = #f9f9f9
+
+// color-active = #4f4f4f
+// color-active-hover = #575757
+// color-active-pressed = #5f5f5f
+// color-active-disabled = #b0b0b0
+
+// font-color-normal = #4f4f4f
+// font-color-hover = #4f4f4f
+// font-color-pressed = #ffffff
+// font-color-disabled = #c8c8c8
+
+// font-color-active = #ffffff
+// font-color-active-hover = #ffffff
+// font-color-active-pressed = #ffffff
+// font-color-active-disabled = #ffffff

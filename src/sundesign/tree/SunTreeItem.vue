@@ -449,7 +449,7 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
         &.leaf
             padding-left: 'calc(var(--Depth) * %s + %s)' % (content-size-large + gap-large  padding-extend-large - gap-large) !important
 
-.__sun-design-tree-drag-zoom__   
+.__sun-design-tree-drag-zoom__
     flex: 1
     border-radius: inherit
     align-items: center
@@ -465,7 +465,7 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
             pointer-events: none
 
 .__sun-design-tree-arrow__.no-subs
-    color: var(--font-color-disabled)
+    opacity: minor-opacity
 
 .__sun-design-tree-relation__
     position: relative

@@ -3,7 +3,26 @@
         <SunPanel>
             <SunPanelContainer>
                 <SunButtonMenuPopup ref="sys_option_ref" :options="system_options" squared flat>
-                    <MoonStar />
+                    <svg xmlns="http://www.w3.org/2000/svg" id="a" viewBox="7 7 34 34">
+                        <rect fill="#404040" x="23.41" y="19.41" width="4" height="12" rx="2" ry="2"
+                            transform="translate(-10.53 25.41) rotate(-45)" />
+                        <rect fill="#68abdf" x="24.12" y="11.22" width="4" height="10" rx="2" ry="2"
+                            transform="translate(-3.82 23.22) rotate(-45)" />
+                        <rect fill="#99c47a" x="17.05" y="7.15" width="4" height="4" rx="2" ry="2"
+                            transform="translate(-.89 16.15) rotate(-45)" />
+                        <rect fill="#ffc66d" x="12.45" y="7.95" width="4" height="13" rx="2" ry="2"
+                            transform="translate(-5.99 14.45) rotate(-45)" />
+                        <rect fill="#ff6470" x="12.1" y="16" width="4" height="16" rx="2" ry="2"
+                            transform="translate(-12.84 17) rotate(-45)" />
+                        <rect fill="#404040" x="22.31" y="26.38" width="4" height="12" rx="2" ry="2"
+                            transform="translate(6.5 68.74) rotate(-117)" />
+                        <rect fill="#404040" x="28.6" y="29.58" width="4" height="12" rx="2" ry="2"
+                            transform="translate(66.38 65.94) rotate(171)" />
+                        <rect fill="#404040" x="33.58" y="24.6" width="4" height="12" rx="2" ry="2"
+                            transform="translate(71.37 .24) rotate(99)" />
+                        <rect fill="#404040" x="30.38" y="18.31" width="4" height="12" rx="2" ry="2"
+                            transform="translate(14.57 -12.05) rotate(27)" />
+                    </svg>
                 </SunButtonMenuPopup>
                 <SunButtonMenuPopup ref="file_option_ref" :options="options" flat>文件</SunButtonMenuPopup>
                 <SunButtonMenuPopup ref="edit_option_ref" :options="edit_options" flat>编辑</SunButtonMenuPopup>

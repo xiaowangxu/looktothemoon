@@ -112,7 +112,7 @@ function onChange(evt: Event) {
         &:disabled
             &:checked, &:checked:active
                 &::before
-                    background-color: var(--font-color-active)
+                    background-color: var(--font-color-active-disabled)
 
         &:active
             + .__sun-design__.__sun-design-radiobox-icon__

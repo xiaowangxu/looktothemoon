@@ -19,7 +19,7 @@ const props = withDefaults(
 );
 
 // datas
-const formatted_label = computed(()=>{
+const formatted_label = computed(() => {
     return props.label;
 });
 
@@ -32,7 +32,8 @@ const formatted_label = computed(()=>{
     // font-family: ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace
     font-size: font-size-small
     background-color: transparent
-    color: var(--color-active-disabled)
+    // color: var(--color-active-disabled)
+    opacity: minor-opacity
     padding: padding-small
     // border-radius: border-radius-size-small
     // border-width: 1px // 1px 2px 1px

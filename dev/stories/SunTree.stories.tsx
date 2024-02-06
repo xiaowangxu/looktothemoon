@@ -39,7 +39,6 @@ export const Tree: Story = {
                         {
                             uid: 3211,
                             icon: 'Cog',
-                            colorScheme: ColorSchemeBlue,
                             label: 'sub 0',
                         },
                         {
@@ -83,7 +82,6 @@ export const Tree: Story = {
                         {
                             uid: 32114461,
                             icon: 'Cog',
-                            colorScheme: ColorSchemeBlue,
                             label: 'sub 0',
                         },
 
@@ -94,12 +92,10 @@ export const Tree: Story = {
                     label: 'test',
                     icon: 'Figma',
                     description: 'test',
-                    colorScheme: ColorSchemeRed,
                     subs: [
                         {
                             uid: 546531,
                             icon: 'Cog',
-                            colorScheme: ColorSchemeBlue,
                             label: 'sub 0',
                         },
                         {
@@ -122,7 +118,6 @@ export const Tree: Story = {
                                         {
                                             uid: 5471,
                                             icon: 'Cog',
-                                            colorScheme: ColorSchemeBlue,
                                             label: 'sub 0',
                                             leaf: true,
                                         },

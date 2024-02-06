@@ -92,7 +92,15 @@ export const Select: Story = {
                     uid: '128',
                     description: 'description only',
                     shortcut: 'shortcut only'
-                }
+                },
+                {
+                    label: 'Test abcdefghijkl',
+                    uid: '129',
+                    icon: 'Cog',
+                    description: 'description',
+                    shortcut: 'Ctrl A',
+                    disabled: true,
+                },
             ],
             [
                 {

@@ -59,7 +59,7 @@ const has_description = computed(() => !props.hideDescription && props.descripti
 
 .__sun-design-button-item-description__
     text-align: end
-    color: var(--placeholder-color)
+    opacity: major-opacity
     overflow: hidden
     white-space: nowrap
     text-overflow: ellipsis
@@ -69,6 +69,6 @@ const has_description = computed(() => !props.hideDescription && props.descripti
     min-width: 0px
 
     :disabled &, .disabled &
-        color: var(--placeholder-color-disabled)
+        opacity: major-opacity-disabled
 
 </style>
