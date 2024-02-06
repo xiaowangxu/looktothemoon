@@ -15,7 +15,7 @@ export type Rect = Position & BoxSize;
 
 export type PopupOpenMode = 'instance' | 'visibility';
 
-export type UID = string | number;
+export type UID = string | number | symbol;
 
 export interface Item<T extends UID = UID> {
     uid: T,

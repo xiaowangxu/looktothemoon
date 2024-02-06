@@ -113,13 +113,12 @@ const {
     filterSort: ref(undefined),
 }), true);
 
-export type ItemTreeItem<T extends UID = UID> = Omit<Item<T>, 'shortcut' | 'sub' | 'iconOnly'> & { leaf?: boolean, subs?: TreeItem<T>[], defaultFold?: boolean };
+export type ItemTreeItem<T extends UID = UID> = Omit<Item<T>, 'shortcut' | 'active' | 'sub' | 'iconOnly'> & { leaf?: boolean, subs?: TreeItem<T>[], defaultFold?: boolean };
 export type RenderTreeItem<T extends UID = UID> = {
     uid: T,
     label?: string,
     colorScheme?: ColorScheme,
     disabled?: boolean,
-    active?: boolean,
     leaf?: boolean,
     subs?: TreeItem<T>[],
     defaultFold?: boolean,
@@ -370,6 +369,14 @@ function active(active: boolean) {
     option_active.value = active;
 }
 
+function getIndex(uid: UID) {
+    return sorted_subs.value?.findIndex(i => i.uid === uid) ?? -1;
+}
+
+function getUID(index: number) {
+    return sorted_subs.value?.[index] ?? undefined;
+}
+
 onBeforeUnmount(() => {
     deleteUIDComponentCache?.(props.option.uid, getCurrentInstance()!);
     setUIDFoldedCache?.(props.option.uid, undefined);
@@ -382,6 +389,8 @@ onBeforeUnmount(() => {
 defineExpose({
     toggle,
     active,
+    getIndex,
+    getUID,
 });
 
 </script>

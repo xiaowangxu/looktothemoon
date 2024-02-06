@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
 import SunTree, { type TreeItem } from '../../src/sundesign/tree/SunTree.vue';
-import { SunTreeDroppable, SunTreeOptionsRef } from '../../src/sundesign/tree/SunTreeConstants';
+import { SunSubTreeOptionsRef, SunTreeDroppable, SunTreeOptionsRef } from '../../src/sundesign/tree/SunTreeConstants';
 import SunButton from '../../src/sundesign/button/SunButton.vue';
 import SunControlGroup from '../../src/sundesign/controlgroup/SunControlGroup.vue';
 import SunControlGroupRow from '../../src/sundesign/controlgroup/SunControlGroupRow.vue';
@@ -72,6 +72,21 @@ export const Tree: Story = {
                             icon: 'Cog',
                             label: 'sub 0',
                         }
+                    ]
+                },
+                {
+                    uid: 3223434450,
+                    label: 'test',
+                    icon: 'Figma',
+                    description: 'test',
+                    subs: [
+                        {
+                            uid: 32114461,
+                            icon: 'Cog',
+                            colorScheme: ColorSchemeBlue,
+                            label: 'sub 0',
+                        },
+
                     ]
                 },
                 {
@@ -183,8 +198,8 @@ export const Tree: Story = {
             ]);
             const tree_ref = ref<InstanceType<typeof SunTree> | undefined>();
             function onClick(data: any, evt: Event) {
-                console.log(data, evt);
-                tree_data.get(data)!.active = true;
+                console.log("clicked >>", data);
+                tree_ref.value?.addActive(1223);
             }
             function toggle(folded: boolean) {
                 tree_ref.value?.toggle(folded);
@@ -226,7 +241,7 @@ export const Tree: Story = {
         },
         template: `
         
-			  <SunTree ref="tree_ref" style="width: 500px;" v-bind="args" :options="tree_data" @click="onClick" @drop="onDrop">
+			  <SunTree ref="tree_ref" style="width: 500px;" v-bind="args" uid="tree" :options="tree_data" @click="onClick" @drop="onDrop">
             <template #append="{option}">
                 <SunControlGroup>
                     <SunControlGroupRow>
@@ -261,5 +276,6 @@ export const Tree: Story = {
     },
     args: {
         ...SizeArgs,
+        clickFolding: false,
     }
 };
