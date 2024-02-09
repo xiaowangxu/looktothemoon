@@ -23,3 +23,5 @@ window.VFS = VFS;
 window.fspath = fspath;
 
 createEditorViewport();
+
+import '@/system/fivepebble/shape/Shape';

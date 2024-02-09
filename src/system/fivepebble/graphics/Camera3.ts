@@ -12,7 +12,7 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     get projection() { return this._projection; }
 
     protected _global_transform: Matrix4 = Matrix4.make_Identity();
-    get global_transform() { return this._global_transform; }
+    get global_transform() { return this._global_transform.clone(); }
     set global_transform(transform: Matrix4) {
         const position = transform.position;
         const [rotation, _] = transform.basis.decompose_RotationScale();
@@ -30,19 +30,24 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
 
     public abstract get is_orthogonal(): boolean;
 
-    public project_Point(point: Vector3): Vector2 {
+    project_Point(point: Vector3): Vector2 {
         const p = point.apply_Matrix4(this.global_transform.inverse()).apply_Matrix4(this.projection);
         return new Vector2(p.x, p.y);
     }
-    public abstract unproject_Point(ndc: Vector2, depth?: number): Vector3;
-    public abstract unproject_Normal(ndc: Vector2): Vector3;
-    public project_Ray(ndc: Vector2, depth?: number): Ray3 {
+
+    abstract unproject_Point(ndc: Vector2, depth?: number): Vector3;
+
+    abstract unproject_Normal(ndc: Vector2): Vector3;
+
+    project_Ray(ndc: Vector2, depth?: number): Ray3 {
         return new Ray3(this.unproject_Point(ndc, depth), this.unproject_Normal(ndc));
     }
 
-    public get_Frustum(): Frustum3 {
+    get_Frustum(): Frustum3 {
         return Frustum3.from_Projection(this.global_transform.inverse().compose(this.projection));
     }
+
+    abstract clone(): Camera3;
 }
 
 export class OrthographicCamera3 extends Camera3 {
@@ -109,13 +114,27 @@ export class OrthographicCamera3 extends Camera3 {
         this._projection = Matrix4.make_OrthogonalProjection(-half_width, half_width, half_height, -half_height, this.near, this.far);
     }
 
-    public unproject_Point(point: Vector2, depth: number = this.near): Vector3 {
+    unproject_Point(point: Vector2, depth: number = this.near): Vector3 {
         const half_width = this.width / (2 * this.zoom);
         const half_height = this.height / (2 * this.zoom);
         return new Vector3(point.x * half_width, point.y * half_height, -depth).apply_Matrix4(this.global_transform);
     }
-    public unproject_Normal(point: Vector2): Vector3 {
+
+    unproject_Normal(point: Vector2): Vector3 {
         return new Vector3(0, 0, -1).transform(this.global_transform.basis).normalize();
+    }
+
+    clone(): OrthographicCamera3 {
+        const orth = new OrthographicCamera3();
+        orth.mask = this.mask;
+        orth._global_transform.copy(this._global_transform.clone());
+        orth._width = this.width;
+        orth._height = this.height;
+        orth._near = this.near;
+        orth._far = this.far;
+        orth._zoom = this.zoom;
+        orth.update();
+        return orth;
     }
 }
 
@@ -175,16 +194,28 @@ export class PerspectiveCamera3 extends Camera3 {
         this._projection = Matrix4.make_PerspectiveFovProjection(this.fov, this.aspect, this.near, this.far);
     }
 
-    public unproject_Point(ndc: Vector2, depth: number = this.near): Vector3 {
+    unproject_Point(ndc: Vector2, depth: number = this.near): Vector3 {
         if (depth === 0) return this.global_transform.position;
         const half_height = this.near * Math.tan(this.fov / 2);
         const half_width = this.aspect * half_height;
         const p = new Vector3(ndc.x * half_width, ndc.y * half_height, -depth);
         return p.apply_Matrix4(this.global_transform);
     }
-    
-    public unproject_Normal(ndc: Vector2): Vector3 {
+
+    unproject_Normal(ndc: Vector2): Vector3 {
         const p = this.unproject_Point(ndc, this.near);
         return this.global_transform.position.direction_to(p);
+    }
+
+    clone(): PerspectiveCamera3 {
+        const persp = new PerspectiveCamera3();
+        persp.mask = this.mask;
+        persp._global_transform.copy(this._global_transform.clone());
+        persp._fov = this.fov;
+        persp._aspect = this.aspect;
+        persp._near = this.near;
+        persp._far = this.far;
+        persp.update();
+        return persp;
     }
 }
