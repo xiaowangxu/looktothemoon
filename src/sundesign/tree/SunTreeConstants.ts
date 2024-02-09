@@ -28,7 +28,7 @@ export const SunTreeInjection = Symbol() as InjectionKey<{
     onDragStart?: (uid: UID, evt: DragEvent) => void,
     isActive: (uid: UID) => boolean,
     onClick: (data: UID, evt: Event) => void,
-    onContextMenu: (data: UID, evt: SunContextMenuEvent) => void,
+    onContextMenu: (data: UID, evt: Event) => void,
     onEdit: (data: UID, label: string) => void,
     onDrop: (drag_uid: UID | UID[], drop_uid: UID, drop_mode: SunTreeDroppable) => void,
     folderLine: Ref<boolean>,

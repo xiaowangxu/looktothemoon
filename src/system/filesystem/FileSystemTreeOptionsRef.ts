@@ -11,6 +11,7 @@ export interface FileSystemRefItem {
     label?: string | undefined,
     colorScheme?: ColorScheme | undefined,
     icon?: string | undefined,
+    unfoldIcon?: string | undefined,
     active?: boolean | undefined,
     disabled?: boolean | undefined,
     checked?: boolean | undefined,
@@ -30,8 +31,8 @@ function get_Icon(name: string | undefined, is_file: boolean) {
     if (!path.is_valid) return 'AlertTriangle';
     if (!is_file) {
         switch (name) {
-            case 'sys': return 'FolderLock';
-            case 'user': return 'FolderHeart';
+            // case 'sys': return 'FolderLock';
+            // case 'user': return 'FolderHeart';
             default: return 'Folder';
         }
     }
@@ -139,7 +140,7 @@ export class FileSystemTreeOptionsRef {
                     label: node.label,
                     iconOnly: node.label === undefined,
                     uid: node.uid,
-                    icon: node.icon,
+                    icon: node.unfoldIcon ?? node.icon,
                 },
                 siblings: subs,
             });
@@ -160,6 +161,7 @@ export class FileSystemTreeOptionsRef {
             leaf: is_file,
             disabled: hidden || is_Hidden(name),
             icon: get_Icon(name, is_file),
+            unfoldIcon: !is_file ? 'FolderOpen' : undefined,
             hidden: hidden,
             subs: [],
         };

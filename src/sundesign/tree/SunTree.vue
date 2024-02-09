@@ -1,8 +1,9 @@
 <template>
-    <div class="__sun-design-tree-container__" :data-size="size" :style="{ '--Depth': 0 }">
+    <div class="__sun-design-tree-container__" :data-size="size"
+        :style="{ '--Depth': initialDepth, '--Indent': indent === undefined ? undefined : `${indent}px`, '--LeafIndent': leafIndent === undefined ? undefined : `${leafIndent}px` }">
         <!-- ref="treeitem_refs" -->
         <SunTreeItem v-if="sorted_options !== undefined" v-for="option in sorted_options" :option="option" @click="onClick"
-            @contextmenu="onContextMenu" @edit="onEdit" :key="option.uid">
+            @contextmenu="onContextMenu" @edit="onEdit" :key="option.uid" :depth="initialDepth">
             <template v-if="$slots.append" #append="{ option }">
                 <slot name="append" :option="option" />
             </template>
@@ -18,11 +19,10 @@
 
 <script setup lang="ts">
 
-import { computed, provide, onBeforeUnmount, type ComponentInternalInstance, getCurrentInstance } from 'vue';
 import { setDragData, type DragData, type PopupOpenMode, type Size, type UID, setDragImage } from '../SunDesignConstants';
 import SunTreeItem, { type TreeItem } from './SunTreeItem.vue';
-import type { SunContextMenuEvent } from '../contextmenu/SunContextMenu';
 import { SunTreeDroppable, SunTreeInjection, type SunTreeItemDragData, type SunTreeOptions } from './SunTreeConstants';
+import { computed, provide, onBeforeUnmount, type ComponentInternalInstance } from 'vue';
 import { toRef } from '@vueuse/core';
 
 //props
@@ -32,6 +32,8 @@ const props = withDefaults(
         mode?: PopupOpenMode,
         size?: Size,
         folderLine?: boolean,
+        indent?: number,
+        leafIndent?: number,
         options: SunTreeOptions,
         draggable?: boolean,
         unfoldDelay?: number,
@@ -40,6 +42,7 @@ const props = withDefaults(
         canDrop?: (drag_uid: UID, drop_uid: UID) => SunTreeDroppable,
         getDragData?: (drag_uid: UID | UID[]) => DragData[] | undefined,
         defaultFold?: boolean,
+        initialDepth?: number,
         allowDragReorder?: boolean,
         allowDragInLeaf?: boolean,
         redirectLeafToParent?: boolean,
@@ -53,6 +56,7 @@ const props = withDefaults(
         unfoldDelay: 500,
         clickFolding: true,
         defaultFold: false,
+        initialDepth: 0,
         allowDragReorder: false,
         allowDragInLeaf: false,
         redirectLeafToParent: true,
@@ -70,7 +74,7 @@ defineSlots<{
 // emits
 const emits = defineEmits<{
     (event: 'click', data: UID, evt: Event): void,
-    (event: 'contextmenu', data: UID, evt: SunContextMenuEvent): void,
+    (event: 'contextmenu', data: UID, evt: Event): void,
     (event: 'edit', data: UID, label: string): void,
     (event: 'drop', drag_uid: UID | UID[], drop_uid: UID, drop_mode: SunTreeDroppable): void,
     (event: 'active', data: UID): void,
@@ -393,7 +397,7 @@ function onClick(data: UID, evt: Event) {
     }
     emits('click', data, evt);
 }
-function onContextMenu(data: UID, evt: SunContextMenuEvent) {
+function onContextMenu(data: UID, evt: Event) {
     emits('contextmenu', data, evt);
 }
 function onEdit(data: UID, label: string) {
@@ -460,6 +464,13 @@ function toggleOption(uid: UID, folded: boolean) {
     }
 }
 
+function edit(uid: UID) {
+    if (uid_component_map.has(uid)) {
+        console.log(uid_component_map.get(uid));
+        uid_component_map.get(uid)!.exposed!.edit();
+    }
+}
+
 onBeforeUnmount(() => {
     uid_component_map.clear();
     uid_folded_map.clear();
@@ -472,6 +483,7 @@ onBeforeUnmount(() => {
 defineExpose({
     toggle,
     toggleOption,
+    edit,
     isActive,
     addActive,
     removeActive,

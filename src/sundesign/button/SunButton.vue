@@ -1,7 +1,7 @@
 <template>
     <button ref="button_ref" class="__sun-design__ __sun-design-button__ colored sized border-masked"
-        :class="{ 'equal-padding': squared, squared, active, flat, bordered: !flat, hover }"
-        :data-size="size" :data-border-mask="borderMask" :style="colorScheme" :disabled="disabled">
+        :class="{ 'equal-padding': squared, squared, active, flat, bordered: !flat, hover }" :data-size="size"
+        :data-border-mask="borderMask" :style="colorScheme" :disabled="disabled">
         <slot />
     </button>
 </template>
@@ -51,21 +51,21 @@ defineExpose({
     text-wrap: nowrap
 
     &[data-size="small"]
-        svg, .__sun-design-icon__
+        > svg, > .__sun-design-icon__
             min-width: content-size-small
             min-height: content-size-small
             max-width: content-size-small
             max-height: content-size-small
     
     &[data-size="normal"] 
-        svg, .__sun-design-icon__
+        > svg, > .__sun-design-icon__
             min-width: content-size-normal
             min-height: content-size-normal
             max-width: content-size-normal
             max-height: content-size-normal
     
     &[data-size="large"]
-        svg, .__sun-design-icon__
+        > svg, > .__sun-design-icon__
             min-width: content-size-large
             min-height: content-size-large
             max-width: content-size-large

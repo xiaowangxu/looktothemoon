@@ -20,14 +20,22 @@
                 </template>
             </template>
             <slot v-if="!opened" name="closed">
-                <ChevronDown />
+                <template
+                    v-if="selectedIcon &&
+                        selected !== undefined &&
+                        ((selected as RenderSelectItem).renderButtonContent !== undefined || (selected as ItemSelectItem).icon !== undefined)">
+                    <SunIcon v-if="(selected as RenderSelectItem).renderButtonContent === undefined"
+                        :name="(selected as ItemSelectItem).icon" />
+                    <component v-else :is="(selected as RenderSelectItem).renderButtonContent" />
+                </template>
+                <ChevronDown v-else />
             </slot>
             <slot v-else name="opened">
                 <ChevronUp />
             </slot>
         </template>
         <template #popup>
-            <template v-if="options !== undefined && options.length > 0" v-for="option, idx in options">
+            <template v-if="options !== undefined && options.length > 0" v-for="   option, idx    in    options   ">
                 <SunPanelContainer vertical style="width: 100%;">
                     <template v-for="item in option" :key="item.uid">
                         <SunButton class="__sun-design-select-item__" :size="size"
@@ -58,6 +66,7 @@
 <script setup lang="ts">
 
 import '../SunDesignStyle.styl';
+import SunIcon from '../icon/SunIcon.vue';
 import SunButtonPopup from '../buttonpopup/SunButtonPopup.vue';
 import { type Size, type Item, type BorderMask, type ColorScheme, type UID, type Rect, type BoxSize, type PopupOpenMode, calcButtonPopupRect, type PreferedDirection } from '../SunDesignConstants';
 import SunButton from '../button/SunButton.vue';
@@ -74,7 +83,7 @@ type RenderSelectItem<T extends UID = UID> = {
     uid: T,
     disabled?: boolean,
     colorScheme?: ColorScheme,
-    renderButtonContent: Raw<Component<{}>>,
+    renderButtonContent: Raw<Component<{ iconOnly: boolean }>>,
     render: Raw<Component<{ selected: boolean }>>,
 };
 export type SelectItem<T extends UID = UID> = ItemSelectItem<T> | RenderSelectItem<T>;
@@ -96,6 +105,7 @@ const props = withDefaults(
         preferedDirection?: PreferedDirection,
         allowDeselect?: boolean,
         iconOnly?: boolean,
+        selectedIcon?: boolean,
     }>(),
     {
         mode: 'instance',
@@ -109,8 +119,17 @@ const props = withDefaults(
         preferedDirection: 0,
         allowDeselect: false,
         iconOnly: false,
+        selectedIcon: false,
     }
 );
+
+// slots
+defineSlots<{
+    'button-empty'(props: {}): void;
+    'popup-empty'(props: {}): void;
+    'opened'(props: {}): void;
+    'closed'(props: {}): void;
+}>();
 
 // emits
 const emits = defineEmits<{

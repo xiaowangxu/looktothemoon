@@ -103,10 +103,14 @@ function onChange(evt: Event) {
         padding: 2px
         pointer-events: none
 
-        > svg, > .__sun-design-icon__
+        svg, .__sun-design-icon__
             position: absolute
             width: 100%
             height: 100%
+            min-width: unset
+            min-height: unset
+            max-width: unset
+            max-height: unset
             inset: 0
             padding: 2px
             box-sizing: border-box

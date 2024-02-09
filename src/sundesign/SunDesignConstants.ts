@@ -181,7 +181,7 @@ export function calcButtonPopupRect(button_rect: Rect, content_size: BoxSize, wi
     const left_space = Math.min(button_rect.x + button_rect.width - gap_width, min_window_width);
     const right_space = window_size.width - gap_width - button_rect.x;
     let x: number, y: number, width: number, height: number;
-    if (bottom_space >= top_space || bottom_space >= top_space) {
+    if (bottom_space >= base_height || bottom_space >= top_space) {
         height = Math.min(base_height, bottom_space);
         y = button_rect.y + button_rect.height + offset;
     }

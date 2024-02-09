@@ -21,14 +21,35 @@
         <SunPanelResizeContainer style="widows: 100%; height: 100%;">
             <template #first>
                 <SunPanel container vertical style="width: 100%; height: 100%;">
-                    <SunScrollContainer content-style="width: 100%;">
-                        <SunPanelContainer vertical style="width: 100%;">
-                            <SunTree uid="vfs-tree" :options="fs_options" :filter-sort="(sort as any)" @click="onClick"
-                                :click-folding="false" :allow-drag-reorder="false" @contextmenu="(uid, evt) => evt.open()"
-                                @edit="onEdit" @drop="onDrop">
-                            </SunTree>
-                        </SunPanelContainer>
-                    </SunScrollContainer>
+                    <!-- <SunPanelContainer gap>
+                        <SunLineEdit style="flex: 1;" :model-value="'test'" />
+                        <SunSelect :prefered-direction="1" icon-only selected-icon squared :model-value="2" :options="[[
+                            { uid: 0, label: '文件名顺序', icon: 'ArrowDownAZ' },
+                            { uid: 1, label: '文件名逆序', icon: 'ArrowUpZA' },
+                            { uid: 2, label: '类型', icon: 'ArrowDownWideNarrow' },
+                        ]]">
+                        </SunSelect>
+                    </SunPanelContainer> -->
+                    <!-- <SunPanelSeparator /> -->
+                    <SunPanelFoldContainer unfold-style="flex: 1;">
+                        <template #append>
+                            <SunButton size="small" flat squared @click="tree_ref?.toggle(true)">
+                                <FoldVertical />
+                            </SunButton>
+                        </template>
+                        <SunScrollContainer content-style="width: 100%;">
+                            <SunPanelContainer vertical style="width: 100%;">
+                                <!-- :indent="12" :leaf-indent="9" -->
+                                <SunTree ref="tree_ref" uid="vfs-tree" :options="fs_options" :filter-sort="(sort as any)"
+                                    @click="onClick" :click-folding="false" :allow-drag-reorder="false" @edit="onEdit"
+                                    @drop="onDrop" @contextmenu="onContextMenu">
+                                </SunTree>
+                            </SunPanelContainer>
+                        </SunScrollContainer>
+                    </SunPanelFoldContainer>
+                    <SunPanelSeparator />
+                    <SunPanelFoldContainer unfold-style="flex-basis: 100px; flex-grow: 0; flex-shrink: 1;">
+                    </SunPanelFoldContainer>
                 </SunPanel>
             </template>
             <template #second>
@@ -56,6 +77,7 @@
 <script setup lang="ts">
 
 import SunPanel from '@/sundesign/panel/SunPanel.vue';
+import SunLineEdit from '@/sundesign/lineedit/SunLineEdit.vue';
 import SunPanelContainer from '@/sundesign/panel/SunPanelContainer.vue';
 import SunPanelSeparator from '@/sundesign/panel/SunPanelSeparator.vue';
 import SunPanelResizeContainer from '@/sundesign/panel/SunPanelResizeContainer.vue';
@@ -65,22 +87,27 @@ import SunScrollContainer from '@/sundesign/scrollcontainer/SunScrollContainer.v
 import SunButtonLike from '@/sundesign/button/SunButtonLike.vue';
 import SunButton from '@/sundesign/button/SunButton.vue';
 import SunButtonLabel from '@/sundesign/button/SunButtonLabel.vue';
-import { X, Maximize, Globe } from 'lucide-vue-next';
+import { X, Maximize, Globe, FoldVertical } from 'lucide-vue-next';
 import type { TreeItem } from '@/sundesign/tree/SunTreeItem.vue';
-import { fspath } from '@/system/filesystem/FileSystemPath';
+import { FileSystemPath, fspath } from '@/system/filesystem/FileSystemPath';
 import { VFSTreeOptionsRef, type FileSystemRefItem } from '@/system/filesystem/FileSystemTreeOptionsRef';
-import { ref, watch } from 'vue';
+import { nextTick, ref, watch } from 'vue';
 import { VFS, VfsMode, type VfsId } from '@/system/filesystem/VirtualFileSystem';
 import { type BreadcrumbItem } from '../sundesign/breadcrumb/SunBreadcrumb.vue';
 import { FileAccess } from '@/system/filesystem/FileAccess';
 import { SunTreeDroppable, type SunTreeOptions } from '@/sundesign/tree/SunTreeConstants';
 import type { UID } from '@/sundesign/SunDesignConstants';
+import SunContextMenu from '@/sundesign/contextmenu/SunContextMenu';
+import SunSelect from '@/sundesign/select/SunSelect.vue';
+import SunButtonItem from '@/sundesign/item/SunButtonItem.vue';
+import SunPanelFoldContainer from '@/sundesign/panel/SunPanelFoldContainer.vue';
 
 const props = defineProps<{
     root?: string,
     containRoot?: boolean,
 }>();
 
+const tree_ref = ref<InstanceType<typeof SunTree> | undefined>();
 const fs_options = VFSTreeOptionsRef.watch(fspath(props.root ?? '/'), props.containRoot ?? false) as SunTreeOptions;
 const nav_options = ref<BreadcrumbItem[]>([]);
 
@@ -112,7 +139,58 @@ function onClick(vfsid: any, evt: Event) {
     // file.close();
 }
 
-function onEdit(data: any, label: string) {
+function onContextMenu(data: UID, evt: Event) {
+    evt.preventDefault();
+    const p = VFS.abspath(data as VfsId).expect();
+    if (!p.is_valid) return;
+    const is_folder = VFS.is_Directory(p);
+    new SunContextMenu([
+        [
+            {
+                label: '新建文件夹',
+                uid: 'new_folder',
+                icon: 'Folder',
+            }
+        ],
+        [
+            {
+                label: '重命名...',
+                uid: 'rename',
+                icon: 'TextCursorInput',
+            },
+            {
+                label: '删除',
+                uid: 'delete',
+                icon: 'Trash',
+            }
+        ]
+    ], evt as MouseEvent).signal_click.connect(async (action) => {
+        switch (action) {
+            case 'new_folder': {
+                const vfsid = VFS.touch(FileSystemPath.merge(p, fspath('./新建文件夹'))).expect();
+                console.log('touch', vfsid);
+                setTimeout(() => {
+                    // await nextTick();
+                    tree_ref.value?.toggleOption(vfsid, false);
+                    console.log('toggle', vfsid);
+                    // await nextTick();
+                    tree_ref.value?.edit(vfsid);
+                    console.log('rename', vfsid);
+                }, 0);
+                break;
+            }
+            case 'rename': {
+                tree_ref.value?.edit(data);
+                break;
+            }
+            case 'delete': {
+                VFS.remove(p);
+            }
+        }
+    });
+}
+
+function onEdit(data: UID, label: string) {
     const path = VFS.abspath(data as VfsId);
     if (path.succeed) {
         VFS.rename(path.expect(), label, true);
@@ -142,4 +220,4 @@ function onDragMouseDown(evt: MouseEvent) {
 
 </script>
 
-<style></style>@/system/filesystem/FileSystemTreeOptionsRef
+<style></style>

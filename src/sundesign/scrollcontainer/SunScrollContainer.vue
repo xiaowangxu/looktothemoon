@@ -180,6 +180,7 @@ indicator-background-t = linear-gradient(0deg, transparent, scroll-indicator-col
 .__sun-design-scrollcontainer__
     width: 100%
     height: 100%
+    overflow: hidden
     position: relative
 
 .__sun-design-scrollcontainer-container__

@@ -2,8 +2,9 @@
     <!-- item -->
     <div class="__sun-design-tree-list-container__">
         <SunButtonLike class="__sun-design-tree-item-container__ no-pressed-color"
-            :class="{ 'no-append': $slots.append === undefined }" :size="size" :disabled="option.disabled"
-            :active="option_active" :color-scheme="option.colorScheme" flat no-pressed-color>
+            :class="{ 'no-append': $slots.append === undefined, 'leaf': option.leaf ?? false }" :size="size"
+            :disabled="option.disabled" :active="option_active" :color-scheme="option.colorScheme" flat no-pressed-color>
+
             <slot name="prepand" :option="option" />
 
             <!-- folding button -->
@@ -19,7 +20,7 @@
             </SunButton>
 
             <!-- picking checkbox -->
-            <!-- <SunCheckbox v-if="show_checkbox" :size="size" :disabled="option.disabled" v-model="checked" /> -->
+            <!-- <SunCheckbox :size="size" /> -->
 
             <!-- drag area -->
             <SunButton ref="button_ref" class="__sun-design-tree-drag-zoom__ no-hover-color no-pressed-color"
@@ -28,7 +29,8 @@
                 @dragenter="onDragEnter" @dragleave="onDragLeave" @drop="onDrop" @dragend="onDragEnd" @click="onClick"
                 @contextmenu="onContextMenu">
                 <SunItemButtonEditable v-if="(option as RenderTreeItem).render === undefined" ref="itembutton_ref"
-                    :label="(option as ItemTreeItem).label" :icon="(option as ItemTreeItem).icon"
+                    :label="(option as ItemTreeItem).label"
+                    :icon="folded ? (option as ItemTreeItem).icon : ((option as ItemTreeItem).unfoldIcon ?? (option as ItemTreeItem).icon)"
                     :description="(option as ItemTreeItem).description" @edit="onEdit" />
                 <component v-else :is="(option as RenderTreeItem).render" />
             </SunButton>
@@ -72,6 +74,7 @@
 <script setup lang="ts">
 
 import SunButton from '../button/SunButton.vue';
+// import SunCheckbox from '../checkbox/SunCheckbox.vue';
 import SunButtonLike from '../button/SunButtonLike.vue';
 import SunItemButtonEditable from '../item/SunButtonItemEditable.vue';
 import { ChevronRight, ChevronDown } from 'lucide-vue-next';
@@ -83,7 +86,7 @@ import { SunTreeDroppable, SunTreeInjection, type SunTreeItemDragData } from './
 // emits
 const emits = defineEmits<{
     (event: 'click', data: UID, evt: Event): void,
-    (event: 'contextmenu', data: UID, evt: SunContextMenuEvent): void,
+    (event: 'contextmenu', data: UID, evt: Event): void,
     (event: 'edit', uid: UID, label: string): void,
     (event: 'drop', drag_uid: UID | UID[], drop_uid: UID, drop_mode: SunTreeDroppable): void,
     (event: 'requestParentDrop', drop: boolean): void,
@@ -99,9 +102,9 @@ const {
     onClick: onTreeClick, onContextMenu: onTreeContextMenu, onEdit: onTreeEdit, onDrop: onTreeDrop,
 } = inject(SunTreeInjection, () => ({
     treeUID: ref(undefined),
-    isActive: (uid: UID) => false,
+    isActive: (_: UID) => false,
     onClick: (data: UID, evt: Event) => emits('click', data, evt),
-    onContextMenu: (data: UID, evt: SunContextMenuEvent) => emits('contextmenu', data, evt),
+    onContextMenu: (data: UID, evt: Event) => emits('contextmenu', data, evt),
     onEdit: (data: UID, label: string) => emits('edit', data, label),
     onDrop: (drag_uid: UID | UID[], drop_uid: UID, drop_mode: SunTreeDroppable) => emits('drop', drag_uid, drop_uid, drop_mode),
     size: ref<Size>('normal'),
@@ -113,7 +116,7 @@ const {
     filterSort: ref(undefined),
 }), true);
 
-export type ItemTreeItem<T extends UID = UID> = Omit<Item<T>, 'shortcut' | 'active' | 'sub' | 'iconOnly'> & { leaf?: boolean, subs?: TreeItem<T>[], defaultFold?: boolean };
+export type ItemTreeItem<T extends UID = UID> = Omit<Item<T>, 'shortcut' | 'active' | 'sub' | 'iconOnly'> & { unfoldIcon?: string, leaf?: boolean, subs?: TreeItem<T>[], defaultFold?: boolean };
 export type RenderTreeItem<T extends UID = UID> = {
     uid: T,
     label?: string,
@@ -318,22 +321,9 @@ function onClick(evt: Event) {
     }
 }
 
-function onContextMenu(evt: MouseEvent) {
+function onContextMenu(evt: Event) {
     if (editting.value) return;
-    const ctx_menu = new SunContextMenuEvent(evt);
-    ctx_menu.addOptions([{
-        label: '重命名',
-        uid: 'rename',
-        icon: 'TextCursorInput',
-    }], (data) => {
-        if (data === 'rename') {
-            if (itembutton_ref.value !== undefined) {
-                editting.value = true;
-                itembutton_ref.value.edit();
-            }
-        }
-    })
-    onTreeContextMenu(props.option.uid, ctx_menu);
+    onTreeContextMenu(props.option.uid, evt);
 }
 
 // edit
@@ -353,7 +343,7 @@ function onSubTreeClick(data: UID, evt: Event) {
     emits('click', data, evt);
 }
 
-function onSubTreeContextMenu(data: UID, evt: SunContextMenuEvent) {
+function onSubTreeContextMenu(data: UID, evt: Event) {
     emits('contextmenu', data, evt);
 }
 
@@ -367,6 +357,15 @@ function toggle(fold: boolean) {
 
 function active(active: boolean) {
     option_active.value = active;
+}
+
+function edit() {
+    if (editting.value) return;
+    if (itembutton_ref.value !== undefined) {
+        console.log(props.option.uid);
+        editting.value = true;
+        itembutton_ref.value.edit();
+    }
 }
 
 function getIndex(uid: UID) {
@@ -389,6 +388,7 @@ onBeforeUnmount(() => {
 defineExpose({
     toggle,
     active,
+    edit,
     getIndex,
     getUID,
 });
@@ -427,6 +427,8 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
     justify-content: flex-start !important
     &.no-append
         padding-right: 0px !important
+    &.leaf
+        padding-left: var(--LeafIndent, 0px) !important
 
 .__sun-design-tree-fold-button__
     padding-top: 0px !important
@@ -437,17 +439,17 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
     color: inherit !important
     cursor: initial !important
     &[data-size="small"]
-        padding-left: 'calc(var(--Depth) * %s + %s)' % (content-size-small + gap-small  padding-extend-small) !important
+        padding-left: 'calc(var(--Depth) * var(--Indent, %s) + %s)' % (content-size-small + gap-small  padding-extend-small) !important
         &.leaf
-            padding-left: 'calc(var(--Depth) * %s + %s)' % (content-size-small + gap-small  padding-extend-small - gap-small) !important
+            padding-left: 'calc(var(--Depth) * var(--Indent, %s) + %s)' % (content-size-small + gap-small  padding-extend-small - gap-small) !important
     &[data-size="normal"]
-        padding-left: 'calc(var(--Depth) * %s + %s)' % (content-size-normal + gap-normal  padding-extend-normal) !important
+        padding-left: 'calc(var(--Depth) * var(--Indent, %s) + %s)' % (content-size-normal + gap-normal  padding-extend-normal) !important
         &.leaf
-            padding-left: 'calc(var(--Depth) * %s + %s)' % (content-size-normal + gap-normal padding-extend-normal - gap-normal) !important
+            padding-left: 'calc(var(--Depth) * var(--Indent, %s) + %s)' % (content-size-normal + gap-normal padding-extend-normal - gap-normal) !important
     &[data-size="large"]
-        padding-left: 'calc(var(--Depth) * %s + %s)' % (content-size-large + gap-large  padding-extend-large) !important
+        padding-left: 'calc(var(--Depth) * var(--Indent, %s) + %s)' % (content-size-large + gap-large  padding-extend-large) !important
         &.leaf
-            padding-left: 'calc(var(--Depth) * %s + %s)' % (content-size-large + gap-large  padding-extend-large - gap-large) !important
+            padding-left: 'calc(var(--Depth) * var(--Indent, %s) + %s)' % (content-size-large + gap-large  padding-extend-large - gap-large) !important
 
 .__sun-design-tree-drag-zoom__
     flex: 1
@@ -478,21 +480,21 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
         height: 100%
         border-left: border-width var(--border-color-normal) solid
     &[data-size="small"]::after
-        left: 'calc((var(--Depth) - 1) * %s + %s)' % (content-size-small + gap-small  relative-offset-small - border-width / 2)
+        left: 'calc((var(--Depth) - 1) * var(--Indent, %s) + %s)' % (content-size-small + gap-small  relative-offset-small - border-width / 2)
     &[data-size="normal"]::after
-        left: 'calc((var(--Depth) - 1) * %s + %s)' % (content-size-normal + gap-normal  relative-offset-normal - border-width / 2)
+        left: 'calc((var(--Depth) - 1) * var(--Indent, %s) + %s)' % (content-size-normal + gap-normal  relative-offset-normal - border-width / 2)
     &[data-size="large"]::after
-        left: 'calc((var(--Depth) - 1) * %s + %s)' % (content-size-large + gap-large  relative-offset-large - border-width / 2)
+        left: 'calc((var(--Depth) - 1) * var(--Indent, %s) + %s)' % (content-size-large + gap-large  relative-offset-large - border-width / 2)
 
 .__sun-design-tree-item-drop-indicator__
     position absolute
     right: 0
     &[data-size="small"]
-        left: 'calc(var(--Depth) * %s)' % (content-size-small + gap-small)
+        left: 'calc(var(--Depth) * var(--Indent, %s))' % (content-size-small + gap-small)
     &[data-size="normal"]
-        left: 'calc(var(--Depth) * %s)' % (content-size-normal + gap-normal)
+        left: 'calc(var(--Depth) * var(--Indent, %s))' % (content-size-normal + gap-normal)
     &[data-size="large"]
-        left: 'calc(var(--Depth) * %s)' % (content-size-large + gap-large)
+        left: 'calc(var(--Depth) * var(--Indent, %s))' % (content-size-large + gap-large)
     &.before
         top: - (panel-padding / 2)
     &.after
@@ -504,11 +506,11 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
     position absolute
     inset: 0
     &[data-size="small"]
-        left: 'calc(var(--Depth) * %s)' % (content-size-small + gap-small)
+        left: 'calc(var(--Depth) * var(--Indent, %s))' % (content-size-small + gap-small)
     &[data-size="normal"]
-        left: 'calc(var(--Depth) * %s)' % (content-size-normal + gap-normal)
+        left: 'calc(var(--Depth) * var(--Indent, %s))' % (content-size-normal + gap-normal)
     &[data-size="large"]
-        left: 'calc(var(--Depth) * %s)' % (content-size-large + gap-large)
+        left: 'calc(var(--Depth) * var(--Indent, %s))' % (content-size-large + gap-large)
     pointer-events: none
     border-color: var(--placeholder-color) !important
     border-width: border-width !important
