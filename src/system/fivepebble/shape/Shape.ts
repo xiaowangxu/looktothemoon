@@ -49,7 +49,7 @@ export class Shape {
         return count;
     }
 
-    public _Vertex_add_Edge(v: Vertex, e: Edge) {
+    protected _Vertex_add_Edge(v: Vertex, e: Edge) {
         if (v.edge === undefined) {
             // a new edge
             const vert_disk_loop = this._Edge_get_VertexDiskLoop(e, v);
@@ -103,11 +103,11 @@ export class Shape {
         return Result.Ok(edge);
     }
 
-    public _Edge_get_VertexDiskLoop(e: Edge, v: Vertex) {
+    protected _Edge_get_VertexDiskLoop(e: Edge, v: Vertex) {
         return e.vertex_0 === v ? e.vertex_disk_loop_0 : e.vertex_disk_loop_1;
     }
 
-    public _Edge_get_VertexNextEdge(e: Edge, v: Vertex) {
+    protected _Edge_get_VertexNextEdge(e: Edge, v: Vertex) {
         return v == e.vertex_0 ? e.vertex_disk_loop_0.next_edge : e.vertex_disk_loop_1.next_edge;
     }
 
