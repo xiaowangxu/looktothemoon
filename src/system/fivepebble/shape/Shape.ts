@@ -85,6 +85,27 @@ export class Shape {
         }
     }
 
+    protected _Vertex_delete_Edge(v: Vertex, e: Edge) {
+        // find remove edge's vertex disk loop
+        const vertex_disk_loop_0 = this._Edge_get_VertexDiskLoop(e, v);
+
+        // it's prev.next -> it's next
+        const vertex_disk_loop_1 = this._Edge_get_VertexDiskLoop(vertex_disk_loop_0.prev_edge, v);
+        vertex_disk_loop_1.next_edge = vertex_disk_loop_0.next_edge;
+        // it's next.prev -> it's prev
+        const vertex_disk_loop_2 = this._Edge_get_VertexDiskLoop(vertex_disk_loop_0.next_edge, v);
+        vertex_disk_loop_2.prev_edge = vertex_disk_loop_0.prev_edge;
+
+        // if vertex -> edeg is remove edge set it to next edge
+        if (v.edge === e) {
+            // if v.edge is the only edge set edge to undefined
+            v.edge = (e !== vertex_disk_loop_0.next_edge) ? vertex_disk_loop_0.next_edge : undefined;
+        }
+
+        // initialize not pointing to vertex
+        vertex_disk_loop_0.next_edge = vertex_disk_loop_0.prev_edge = e;
+    }
+
     // #endregion
 
     // #region Edge
