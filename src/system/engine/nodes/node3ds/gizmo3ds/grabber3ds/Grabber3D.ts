@@ -125,7 +125,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
         vec4 hidden_color = mix(u_color, vec4(0.5, 0.5, 0.5, 1.0), 0.75);
         bool not_hidden = depth >= gl_FragCoord.z;
         o_color = !(u_hidden == 1) || not_hidden ? u_color : hidden_color;
-        o_normal = normalize(v_normal);
+        o_normal = vec4(normalize(v_normal), 1.0);
     }`;
     static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
         u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },

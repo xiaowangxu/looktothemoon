@@ -62,7 +62,7 @@ export const PrimitiveFragmentPreZShader = new Cacher((config: Config) => {
     ${RenderServerDevice.FrameOutputBufferCode}
 
     void main() {
-        o_normal = normalize(v_normal);
+        o_normal = vec4(normalize(v_normal), 1.0);
     }`;
     return config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect();
 });
@@ -94,7 +94,7 @@ export class PlainColorMaterialResource extends MaterialResource {
 
     void main() {
         o_color = texture(u_texture, v_uv) * u_color;
-        o_normal = normalize(v_normal);
+        o_normal = vec4(normalize(v_normal), 1.0);
     }`;
     private fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
         u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
@@ -213,7 +213,7 @@ export class NormalMaterialResource extends MaterialResource {
         // camera_world: normalize(mat3(transpose(camera_world)) * normalize(v_normal))
         vec3 normal = normalize(v_normal);
         o_color = vec4(u_remap ? ((normal + 1.0) / 2.0) : normal, 1.0);
-        o_normal = normal;
+        o_normal = vec4(normal, 1.0);
     }`;
     static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
         u_remap: { type: RenderStateUniformType.Int, default: 1 }
@@ -287,7 +287,7 @@ export class UVMaterialResource extends MaterialResource {
 
     void main() {
         o_color = vec4(v_uv, 0.0, 1.0);
-        o_normal = normalize(v_normal);
+        o_normal = vec4(normalize(v_normal), 1.0);
     }`;
     static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {};
 
@@ -485,7 +485,7 @@ export class StandardMaterialResource extends MaterialResource {
         }
 
         o_color = albedo * vec4(diffuse, 1.0) + vec4(specular, 0.0);
-        o_normal = normal;
+        o_normal = vec4(normal, 1.0);
     }`;
     static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
         layer: { type: RenderStateUniformType.Uint, default: 0xffffffff },

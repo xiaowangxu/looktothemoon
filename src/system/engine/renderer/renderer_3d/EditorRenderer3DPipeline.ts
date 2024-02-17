@@ -168,15 +168,16 @@ in vec2 v_uv;
 
 uniform sampler2D sky;
 
-layout(location = 0) out vec4 o_color;
+${RenderServerDevice.FrameOutputBufferCode}
 
 void main() {
 	vec4 dir = mat4(mat3(camera_world)) * inverse(camera_projection) * vec4((v_uv * 2.0 - 1.0), 1.0, 1.0);
 	vec3 R = normalize(dir.xyz);
 	float theta = atan(R.z, R.x);
 	float gamma = acos(R.y);
-	o_color = texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
+	// o_color = texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
     o_color = vec4(0.8, 0.8, 0.8, 1.0);
+    o_normal = vec4(R, 1.0);
 }
 `;
 
@@ -217,6 +218,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
     //#region Render Buffer
     private readonly solid_color_renderbuffer: Ref<WebGL2RenderStateRenderBuffer> = new Ref();
+    private readonly solid_normal_renderbuffer: Ref<WebGL2RenderStateRenderBuffer> = new Ref();
     private readonly solid_depth_renderbuffer: Ref<WebGL2RenderStateRenderBuffer> = new Ref();
     //#endregion
 
@@ -271,6 +273,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         // render buffer
         this.solid_color_renderbuffer.value = this.render_server.render_state.create_RenderBuffer(RenderStateTextureFormat.RGBA32F, this.msaa).expect();
         this.solid_depth_renderbuffer.value = this.render_server.render_state.create_RenderBuffer(RenderStateTextureFormat.D32F, this.msaa).expect();
+        this.solid_normal_renderbuffer.value = this.render_server.render_state.create_RenderBuffer(RenderStateTextureFormat.RGBA32F, this.msaa).expect();
 
         // texture
         this.solid_color_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0).expect();
@@ -282,6 +285,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         // link frame buffer
         this.render_server.render_state.set_FrameBufferAttachment(this.solid_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.solid_color_renderbuffer.expect);
         this.render_server.render_state.set_FrameBufferAttachment(this.solid_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, this.solid_depth_renderbuffer.expect);
+        this.render_server.render_state.set_FrameBufferAttachment(this.solid_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color1, this.solid_normal_renderbuffer.expect);
         this.render_server.render_state.enable_FrameBuffer(this.solid_framebuffer.expect);
 
         this.render_server.render_state.set_FrameBufferAttachment(this.solid_color_depth_copy_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.solid_color_texture.expect);
@@ -292,6 +296,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
     private resize_Solid() {
         this.render_server.render_state.alloc_RenderBuffer(this.solid_color_renderbuffer.expect, this.size.x, this.size.y);
         this.render_server.render_state.alloc_RenderBuffer(this.solid_depth_renderbuffer.expect, this.size.x, this.size.y);
+        this.render_server.render_state.alloc_RenderBuffer(this.solid_normal_renderbuffer.expect, this.size.x, this.size.y);
         this.render_server.render_state.alloc_Texture2D(this.solid_color_texture.expect, this.size.x, this.size.y, 0, RenderStateTextureDataFormat.RGBA);
         this.render_server.render_state.alloc_Texture2D(this.solid_depth_texture.expect, this.size.x, this.size.y, 0, RenderStateTextureDataFormat.Depth);
     }

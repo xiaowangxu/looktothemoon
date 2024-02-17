@@ -8,7 +8,7 @@
                 <ChevronDown v-else />
                 <SunButtonItem label="VFS 虚拟文件系统" />
             </SunButton>
-            <div v-if="$slots.append !== undefined" class="__sun-design-panel-fold-container-append__">
+            <div v-show="!folded" v-if="$slots.append !== undefined" class="__sun-design-panel-fold-container-append__">
                 <slot name="append" />
             </div>
         </SunButtonLike>
@@ -58,9 +58,9 @@ const folded = ref(false);
     padding-top: 0px !important
     padding-bottom: 0px !important
     padding-left : 0px !important
-    padding-right : 0px !important
+    // padding-right : 0px !important
 
-    &.append:hover
+    &.append
         padding-right : padding-extend-normal !important
 
     &:has(> .__sun-design-panel-fold-container-fold-button__:hover)
@@ -78,9 +78,9 @@ const folded = ref(false);
     gap: panel-padding
     flex-direction: row
     flex-wrap: nowrap
-    display: none
+    display: flex
 
-    .__sun-design-panel-fold-container-button__:hover > &
-        display: flex
+    // .__sun-design-panel-fold-container-button__:hover > &
+    //     display: flex
 
 </style>

@@ -144,7 +144,7 @@ export class MultiLineMaterialResource extends MaterialResource {
     ${RenderServerDevice.FrameOutputBufferCode}
 
     void main() {
-        o_normal = vec3(0.0, 0.0, 1.0);
+        o_normal = vec4(0.0, 0.0, 1.0, 1.0);
     }`;
     static #fragment_prez_uniforms: UniformInitSet<WebGL2RenderState> = {};
     static #fragment_shade_shader = `#version 300 es
@@ -169,7 +169,7 @@ export class MultiLineMaterialResource extends MaterialResource {
                 discard;
         }
         o_color = u_color;
-        o_normal = vec3(0.0, 0.0, 1.0);
+        o_normal = vec4(0.0, 0.0, 1.0, 1.0);
     }`;
     static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
         u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },

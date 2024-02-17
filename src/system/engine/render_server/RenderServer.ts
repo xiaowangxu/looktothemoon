@@ -39,7 +39,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     float time;
     bool camera_is_orthogonal;
 };`
-    public static readonly FrameOutputBufferCode = `layout(location = 0) out vec4 o_color;\nlayout(location = 1) out vec3 o_normal;`
+    public static readonly FrameOutputBufferCode = `layout(location = 0) out vec4 o_color;\nlayout(location = 1) out vec4 o_normal;`
     public static readonly FrameOiTOutputBufferCode = `layout(location = 0) out vec4 o_color;\nlayout(location = 1) out float o_accum;`
     public static readonly OitOutputCode = `    // oit
     color.rgb *= color.a;
@@ -114,11 +114,11 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     //   | screen_size |             |     time    | orthogonal  |                    |  16 Bytes
     //   |     256     |             |     264     |     268     |                    |
     //   |-------------|-------------|-------------|-------------| ---- 272 Bytes ----+
-    //   | pixel_ratio |    scale    |             |             |                    |  16 Bytes
-    //   |     272     |     276     |             |             |                    |
+    //   | pixel_ratio |             |             |             |                    |  16 Bytes
+    //   |     272     |             |             |             |                    |
     //   |-------------|-------------|-------------|-------------| ---- 276 Bytes ----+
     //   
-    //   total 280 Bytes => 70 * 4 float32s
+    //   total 276 Bytes => 69 * 4 float32s
 
     private world_uniforms_buffer_ref: Ref<WebGL2RenderStateBuffer> = new Ref();
 
@@ -132,58 +132,10 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     private readonly world_uniforms_camera_is_orthogonal: Uint32Array = new Uint32Array(this.world_uniforms_buffer_data.buffer, 268, 1);
     private readonly world_uniforms_pixel_ratio: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 272, 1);
 
-    // Environment Uniforms layout std140
-    // 
-    //   |-------------|-------------|-------------|-------------|
-    //   |    Byte4    |    Byte8    |    Byte12   |    Byte16   |
-    //   |-------------|-------------|-------------|-------------| ---- 0 Bytes ------+
-    //   |  cam_world  |             |             |             |                    |
-    //   |      0      |             |             |             |                    |
-    //   |-------------|-------------|-------------|-------------|                    |
-    //   |             |             |             |             |                    |  64 Bytes
-    //   |-------------|-------------|-------------|-------------|                    |
-    //   |             |             |             |             |                    |
-    //   |-------------|-------------|-------------|-------------|                    |
-    //   |             |             |             |             |                    |
-    //   |-------------|-------------|-------------|-------------| ---- 64 Bytes  ----+
-    //   |   cam_view  |             |             |             |                    |
-    //   |      64     |             |             |             |                    |
-    //   |-------------|-------------|-------------|-------------|                    |
-    //   |             |             |             |             |                    |  64 Bytes
-    //   |-------------|-------------|-------------|-------------|                    |
-    //   |             |             |             |             |                    |
-    //   |-------------|-------------|-------------|-------------|                    |
-    //   |             |             |             |             |                    |
-    //   |-------------|-------------|-------------|-------------| ---- 128 Bytes ----+
-    //   |   cam_proj  |             |             |             |                    |
-    //   |     128     |             |             |             |                    |
-    //   |-------------|-------------|-------------|-------------|                    |
-    //   |             |             |             |             |                    |  64 Bytes
-    //   |-------------|-------------|-------------|-------------|                    |
-    //   |             |             |             |             |                    |
-    //   |-------------|-------------|-------------|-------------|                    |
-    //   |             |             |             |             |                    |
-    //   |-------------|-------------|-------------|-------------| ---- 192 Bytes ----+
-    //   |   inv_proj  |             |             |             |                    |
-    //   |     192     |             |             |             |                    |
-    //   |-------------|-------------|-------------|-------------|                    |
-    //   |             |             |             |             |                    |  64 Bytes
-    //   |-------------|-------------|-------------|-------------|                    |
-    //   |             |             |             |             |                    |
-    //   |-------------|-------------|-------------|-------------|                    |
-    //   |             |             |             |             |                    |
-    //   |-------------|-------------|-------------|-------------| ---- 256 Bytes ----+
-    //   | screen_size |             |     time    | orthogonal  |                    |  16 Bytes
-    //   |     256     |             |     264     |     268     |                    |
-    //   |-------------|-------------|-------------|-------------| ---- 272 Bytes ----+
-    //   
-    //   total 272 Bytes => 68 * 4 float32s
-
-
-    // default values
-
     private environment_uniforms_buffer_ref: Ref<WebGL2RenderStateBuffer> = new Ref();
     private readonly environment_uniforms_buffer_data: Float32Array = new Float32Array(68);
+
+    // default values
 
     public readonly identity_transform_attribute_buffer_ref: Ref<RenderDeviceMatrix4AttributeBuffer<WebGL2RenderState>> = new Ref();
     public get identity_transform_attribute_buffer() { return this.identity_transform_attribute_buffer_ref.expect; }
