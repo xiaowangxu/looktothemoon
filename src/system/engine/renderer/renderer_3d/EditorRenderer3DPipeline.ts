@@ -102,16 +102,16 @@ const OnscreenProgramUniform = new Cacher((config: Config) => {
 
 // #region ssao
 
-let str = '';
-for (let i = 0; i < 64; i++) {
-    const x = Math.random() * 2.0 - 1.0;
-    const y = Math.random();
-    const z = Math.random() * 2.0 - 1.0;
-    const sample = vec3(x, y, z).normalize();
-    sample.mult_Number(Math.random());
-    str += `\nvec3(${sample.x},${sample.y},${sample.z}),`;
-}
-console.log(str);
+// let str = '';
+// for (let i = 0; i < 64; i++) {
+//     const x = Math.random() * 2.0 - 1.0;
+//     const y = Math.random();
+//     const z = Math.random() * 2.0 - 1.0;
+//     const sample = vec3(x, y, z).normalize();
+//     sample.mult_Number(Math.random());
+//     str += `\nvec3(${sample.x},${sample.y},${sample.z}),`;
+// }
+// console.log(str);
 
 const ssao_frag_shader_code = `#version 300 es
 precision highp float;

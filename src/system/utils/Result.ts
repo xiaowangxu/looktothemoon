@@ -40,4 +40,26 @@ export class Result<T, Err> {
         if (!this.ok) return this.err!;
         throw new Error('<Result> expect_Error: fail to unwrap error');
     }
+
+    public get(default_val: T) {
+        return this.unwrap() ?? default_val;
+    }
+
+    public then<Res>(succeed: (item: T) => Res, failed: (err: Err) => Res) {
+        if (this.failed) return failed(this.expect_Error());
+        return succeed(this.expect());
+    }
+
+    public static If<V, VE>(item: V, func: (item: V) => Result<V, VE>) {
+        const result = func(item);
+        if (result.succeed) return result.expect();
+        return item;
+    }
+
+    public static All<V, VE>(items: Iterable<Result<V, VE>>) {
+        for (const res of items) {
+            if (res.failed) return Result.Error<V[], VE>(res.expect_Error());
+        }
+        return Result.Ok<V[], VE>(Array.from(items, i => i.expect()));
+    }
 }

@@ -1,6 +1,6 @@
 import { Heap } from "./Heap";
 
-export class PriorityQueue<T> {
+export class PriorityQueue<T> implements Iterable<T> {
     private readonly heap: Heap<T>;
 
     public get length() { return this.heap.length; }

@@ -23,7 +23,7 @@ export enum IncTopoGraphResult {
     Ok, Existed, NodesMissing, CyclicReference,
 }
 
-export class IncTopoGraph<T> {
+export class IncTopoGraph<T> implements Iterable<IncTopoGraphNode<T>>{
     private last_order: TopoOrder = 0;
     private readonly nodes_map: Map<T, IncTopoGraphNode<T>> = new Map();
 
