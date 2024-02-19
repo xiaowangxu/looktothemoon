@@ -275,6 +275,15 @@ signal.connect((action) => {
     }
 });
 
+const ground = new MeshInstance3D(DefaultConfig);
+const geo = new BoxGeometryResource(DefaultConfig);
+geo.build();
+ground.geometry = geo;
+ground.material = new UVMaterialResource(DefaultConfig);
+ground.local_scale = vec3(10000, 1, 10000);
+ground.local_position = vec3(0, -50, 0);
+World.add_Child(ground);
+
 // function create_CompassScene() {
 // 	const CompassConfig: Config = {
 // 		render_server: new RenderServerDevice(document.getElementById('compass-canvas')! as HTMLCanvasElement),

@@ -112,7 +112,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
 
     uniform vec4 u_color;
     uniform int u_hidden;
-    uniform highp sampler2DShadow u_scene_depth;
+    uniform highp sampler2D u_scene_depth;
     
     in vec3 v_world;
     in vec3 v_normal;
@@ -121,7 +121,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     ${RenderServerDevice.FrameOutputBufferCode}
 
     void main() {
-        float depth = texture(u_scene_depth, vec3(gl_FragCoord.xy / screen_size, gl_FragCoord.z));
+        float depth = texture(u_scene_depth, gl_FragCoord.xy / screen_size).r;
         vec4 hidden_color = mix(u_color, vec4(0.5, 0.5, 0.5, 1.0), 0.75);
         bool not_hidden = depth >= gl_FragCoord.z;
         o_color = !(u_hidden == 1) || not_hidden ? u_color : hidden_color;
@@ -141,7 +141,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
 
     uniform vec4 u_color;
     uniform int u_hidden;
-    uniform highp sampler2DShadow u_scene_depth;
+    uniform highp sampler2D u_scene_depth;
     
     in vec3 v_world;
     in vec3 v_normal;
@@ -150,7 +150,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     ${RenderServerDevice.FrameOiTOutputBufferCode}
 
     void main() {
-        float depth = texture(u_scene_depth, vec3(gl_FragCoord.xy / screen_size, gl_FragCoord.z));
+        float depth = texture(u_scene_depth, gl_FragCoord.xy / screen_size).r;
         vec4 hidden_color = mix(u_color, vec4(0.5, 0.5, 0.5, u_color.a), 0.75);
         bool not_hidden = depth >= gl_FragCoord.z;
         vec4 color = !(u_hidden == 1) || not_hidden ? u_color : hidden_color;
