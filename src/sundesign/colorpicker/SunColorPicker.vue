@@ -130,12 +130,16 @@
             </SunPanelContainer>
             <SunPanelSeparator override-vertical />
             <!-- Library -->
-            <SunPanelContainer gap style="flex-wrap: wrap;">
-                <SunButton v-for="i in library" class="__sun-design-transparent-bg__" size="small" squared
-                    style="position: relative;">
-                    <div style="position: absolute; inset: 0; background: rgba(123, 233, 12, 0.5);" />
-                </SunButton>
-            </SunPanelContainer>
+            <SunPanelFoldContainer label="收藏"
+                @toggle="() => $nextTick(() => buttonpopup_ref?.refreshPopupContentMinSize())">
+                <SunPanelContainer gap style="flex-wrap: wrap;">
+                    <SunButton v-for="i in library" class="__sun-design-transparent-bg__" size="small" squared
+                        style="position: relative;">
+                        <div style="position: absolute; inset: 0; background: rgba(123, 233, 12, 0.5);" />
+                    </SunButton>
+                </SunPanelContainer>
+            </SunPanelFoldContainer>
+            <SunPanelSeparator />
         </template>
     </SunButtonPopup>
 </template>
@@ -143,6 +147,8 @@
 <script setup lang="ts">
 
 import '../SunDesignStyle.styl';
+import SunButtonItemEditable from '../item/SunButtonItemEditable.vue';
+import SunPanelFoldContainer from '../panel/SunPanelFoldContainer.vue';
 import SunButtonPopup from '../buttonpopup/SunButtonPopup.vue';
 import SunButton from '../button/SunButton.vue';
 import SunSelect from '../select/SunSelect.vue';

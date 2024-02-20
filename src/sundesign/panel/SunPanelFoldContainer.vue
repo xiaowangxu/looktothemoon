@@ -6,7 +6,9 @@
                 style="flex: 1;" @click="folded = !folded">
                 <ChevronRight v-if="folded" />
                 <ChevronDown v-else />
-                <SunButtonItem label="VFS 虚拟文件系统" />
+                <slot name="item">
+                    <SunButtonItem :label="label" />
+                </slot>
             </SunButton>
             <div v-show="!folded" v-if="$slots.append !== undefined" class="__sun-design-panel-fold-container-append__">
                 <slot name="append" />
@@ -20,7 +22,7 @@
 
 <script setup lang="ts">
 
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import SunButtonLike from '../button/SunButtonLike.vue';
 import SunButton from '../button/SunButton.vue';
 import SunButtonItem from '../item/SunButtonItem.vue';
@@ -29,15 +31,28 @@ import { ChevronDown, ChevronRight, FolderMinus } from 'lucide-vue-next';
 // props
 const props = withDefaults(
     defineProps<{
+        label?: string,
         unfoldStyle?: string,
     }>(),
     {
-
+        label: '',
     }
 );
 
+// emits
+const emits = defineEmits<{
+    (event: 'open'): void;
+    (event: 'close'): void;
+    (event: 'toggle', folded: boolean): void;
+}>();
+
 // datas
 const folded = ref(false);
+watch(folded, folded => {
+    if (folded) emits('close');
+    else emits('open');
+    emits('toggle', folded);
+}, { flush: 'post' });
 
 </script>
 

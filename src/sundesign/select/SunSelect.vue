@@ -185,12 +185,12 @@ function onOpened() {
 .__sun-design-select-empty__
     text-align: start
     flex: 1
-    color: var(--placeholder-color)
     overflow: hidden
     white-space: nowrap
     text-overflow: ellipsis
+    opacity: major-opacity
 
     :disabled > &, .disabled > &
-        color: var(--placeholder-color-disabled)
+        opacity: major-opacity-disabled
 
 </style>

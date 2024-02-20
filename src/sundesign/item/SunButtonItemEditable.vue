@@ -2,7 +2,7 @@
     <SunButtonItem v-if="!editting" :label="label" :icon="icon" :description="description" :shortcut="shortcut" :sub="sub"
         :hideDescription="hideDescription" :hideShortcut="hideShortcut" :hideSub="hideSub" />
     <template v-else>
-        <SunIcon :name="icon"></SunIcon>
+        <SunIcon v-if="icon !== undefined" :name="icon"></SunIcon>
         <form class="__sun-design-item-button-form__" @submit.prevent="onSubmit(($event.target as any).label.value)">
             <input ref="input_ref" class="__sun-design__ __sun-design-item-button-input__" name="label" placeholder="查找"
                 @blur="onSubmit(($event.target as any).value)" :value="label ?? ''" />
