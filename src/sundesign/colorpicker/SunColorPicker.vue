@@ -132,6 +132,9 @@
             <!-- Library -->
             <SunPanelFoldContainer label="收藏"
                 @toggle="() => $nextTick(() => buttonpopup_ref?.refreshPopupContentMinSize())">
+                <!-- <template #append>
+                    <SunButton squared flat size="small">+</SunButton>
+                </template> -->
                 <SunPanelContainer gap style="flex-wrap: wrap;">
                     <SunButton v-for="i in library" class="__sun-design-transparent-bg__" size="small" squared
                         style="position: relative;">

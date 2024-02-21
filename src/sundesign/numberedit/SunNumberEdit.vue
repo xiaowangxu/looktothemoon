@@ -150,15 +150,19 @@ function formatNumber(val: number) {
 
 function increase() {
     if (dragging.value) return;
-    const val = formatNumber(value.value) + (props.step ?? 0);
-    setValueSafe(val, true);
-    setValueSafe(val, false);
+    const val = formatNumber(value.value + (props.step ?? 0));
+    if (val !== value.value) {
+        setValueSafe(val, true);
+        setValueSafe(val, false);
+    }
 }
 function decrease() {
     if (dragging.value) return;
-    const val = formatNumber(value.value) - (props.step ?? 0);
-    setValueSafe(val, true);
-    setValueSafe(val, false);
+    const val = formatNumber(value.value - (props.step ?? 0));
+    if (val !== value.value) {
+        setValueSafe(val, true);
+        setValueSafe(val, false);
+    }
 }
 
 // dragging

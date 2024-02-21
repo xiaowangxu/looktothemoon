@@ -13,7 +13,6 @@ import type { ClassWriter, ClassReader } from "../../classes/saver_loader/ClassW
 import { Cacher } from "@/system/utils/Cacher";
 import type { TextureResource } from "../texture_resources/TextureResource";
 import { Ref } from "@/system/utils/RefCounted";
-import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 
 export const PrimitiveVertexShader = new Cacher((config: Config) => {
     const code = `#version 300 es
@@ -119,6 +118,7 @@ export class PlainColorMaterialResource extends MaterialResource {
     void main() {
         vec4 color = texture(u_texture, v_uv) * u_color;
 
+        o_normal = vec4(v_normal, 1.0);
         ${RenderServerDevice.OitOutputCode}
     }`;
     private fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {

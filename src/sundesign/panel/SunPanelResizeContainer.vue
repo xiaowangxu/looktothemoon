@@ -9,7 +9,9 @@
             <div class="__sun-design-panel-resize-conatiner-second__">
                 <slot name="second" />
             </div>
-            <div class="__sun-design-panel-resize-conatiner-split__" @mousedown="onDragMouseDown" />
+            <div class="__sun-design-panel-resize-conatiner-split__" @mousedown="onDragMouseDown">
+                <slot name="nob" />
+            </div>
             <SunButton v-if="expandIndicator" class="__sun-design-panel-resize-button__" size="small"
                 @click="setSize(initialSize)"></SunButton>
         </div>
@@ -53,6 +55,7 @@ const div_ref = ref<HTMLDivElement | null>(null);
 let last_size = 0;
 let mouse_last_x = 0;
 let mouse_last_y = 0;
+let mouse_moved = false;
 const container_rect = ref<BoxSize>({ width: 0, height: 0 });
 const max_size = computed(() => Math.max(0, Math.min(props.max, props.vertical ? container_rect.value.height : container_rect.value.width)));
 const min_size = computed(() => Math.max(0, Math.min(props.min, props.vertical ? container_rect.value.height : container_rect.value.width)));
@@ -69,12 +72,14 @@ function onResized(borderBoxSize: BoxSize, contentBoxSize: BoxSize, target: Elem
 function onDragMouseDown(evt: MouseEvent) {
     if (div_ref.value === null) return;
     last_size = safe_size.value;
+    mouse_moved = false;
     mouse_last_x = evt.clientX;
     mouse_last_y = evt.clientY;
     window.addEventListener('mousemove', onDragMouseMove, { capture: true });
     window.addEventListener('mouseup', onDragMouseUp, { capture: true });
 }
 function onDragMouseMove(evt: MouseEvent) {
+    mouse_moved = true;
     const mouse_delta_x = (evt.clientX - mouse_last_x) * (props.flipDirection ? -1 : 1);
     const mouse_delta_y = (evt.clientY - mouse_last_y) * (props.flipDirection ? -1 : 1);
     if (props.vertical) {
@@ -85,6 +90,9 @@ function onDragMouseMove(evt: MouseEvent) {
     }
 }
 function onDragMouseUp(evt: MouseEvent) {
+    if (!mouse_moved && (start.value || end.value)) {
+        setSize(props.initialSize);
+    }
     removeDraggingEvents();
 }
 function removeDraggingEvents() {

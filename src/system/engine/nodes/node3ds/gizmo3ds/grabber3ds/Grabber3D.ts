@@ -155,6 +155,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
         bool not_hidden = depth >= gl_FragCoord.z;
         vec4 color = !(u_hidden == 1) || not_hidden ? u_color : hidden_color;
 
+        o_normal = vec4(v_normal, 1.0);
         ${RenderServerDevice.OitOutputCode}
     }`;
     static #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {

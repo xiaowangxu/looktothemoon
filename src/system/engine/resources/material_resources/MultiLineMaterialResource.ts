@@ -196,7 +196,8 @@ export class MultiLineMaterialResource extends MaterialResource {
                 discard;
         }
         vec4 color = u_color;
-        
+
+        o_normal = vec4(0.0, 0.0, 1.0, 1.0);
         ${RenderServerDevice.OitOutputCode}
     }`;
     static #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {

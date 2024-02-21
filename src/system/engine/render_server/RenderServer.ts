@@ -40,7 +40,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     bool camera_is_orthogonal;
 };`
     public static readonly FrameOutputBufferCode = `layout(location = 0) out vec4 o_color;\nlayout(location = 1) out vec4 o_normal;`
-    public static readonly FrameOiTOutputBufferCode = `layout(location = 0) out vec4 o_color;\nlayout(location = 1) out float o_accum;`
+    public static readonly FrameOiTOutputBufferCode = `layout(location = 0) out vec4 o_color;\nlayout(location = 1) out float o_accum;\nlayout(location = 2) out vec4 o_normal;`
     public static readonly OitOutputCode = `    // oit
     color.rgb *= color.a;
     float _z = gl_FragCoord.z;

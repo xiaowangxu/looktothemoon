@@ -1,6 +1,6 @@
 <template>
     <div class="__sun-design-panel-fold-container__" :style="!folded ? unfoldStyle : undefined">
-        <SunButtonLike class="__sun-design-panel-fold-container-button__" :class="{ append: $slots.append !== undefined }"
+        <SunButtonLike class="__sun-design-panel-fold-container-button__" :class="{ append: $slots.append !== undefined, unfolded: !folded }"
             no-hover-color no-pressed-color flat>
             <SunButton flat class="__sun-design-panel-fold-container-fold-button__ no-hover-color no-pressed-color"
                 style="flex: 1;" @click="folded = !folded">
@@ -73,9 +73,9 @@ watch(folded, folded => {
     padding-top: 0px !important
     padding-bottom: 0px !important
     padding-left : 0px !important
-    // padding-right : 0px !important
+    padding-right : 0px !important
 
-    &.append
+    &.append.unfolded
         padding-right : padding-extend-normal !important
 
     &:has(> .__sun-design-panel-fold-container-fold-button__:hover)

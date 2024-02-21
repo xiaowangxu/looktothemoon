@@ -143,14 +143,15 @@ export class Node extends ClassBase {
     }
 
     public propagate_Process(delta: number) {
-        if (this.block_process) return;
         for (const child of this.children) {
             child.propagate_Process(delta);
         }
         // process
-        this.nofity(NodeNotification.Process);
-        this._process(delta);
-        this.signal_process.trigger(delta);
+        if (!this.block_process) {
+            this.nofity(NodeNotification.Process);
+            this._process(delta);
+            this.signal_process.trigger(delta);
+        }
     }
 
     public propagate_InternalAfterProcess(delta: number) {
@@ -162,14 +163,15 @@ export class Node extends ClassBase {
     }
 
     public propagate_PhysicsProcess(delta: number) {
-        if (this.block_physics_process) return;
         for (const child of this.children) {
             child.propagate_PhysicsProcess(delta);
         }
-        // process
-        this.nofity(NodeNotification.PhysicsProcess);
-        this._physics_process(delta);
-        this.signal_physics_process.trigger(delta);
+        // physics process
+        if (!this.block_physics_process) {
+            this.nofity(NodeNotification.PhysicsProcess);
+            this._physics_process(delta);
+            this.signal_physics_process.trigger(delta);
+        }
     }
 
     public propagate_InternalAfterPhysicsProcess(delta: number) {
@@ -210,8 +212,8 @@ export class Node extends ClassBase {
 
     private add_ChildInternal(node: Node) {
         if (node.parent === this) return;
-        if (node === this) throw new Error("cannot add child to itself");
-        if (node.parent !== undefined) throw new Error("cannot add child to node because it already has a parent");
+        if (node === this) throw new Error("<Node> add_ChildInternal: cannot add child to itself");
+        if (node.parent !== undefined) throw new Error("<Node> add_ChildInternal: cannot add child to node because it already has a parent");
         // check cyclic dependency
         this.children.unshift(node);
         node.parent = this;
@@ -253,7 +255,7 @@ export class Node extends ClassBase {
     }
 
     private free_Internal() {
-        if (this.is_inside_tree) throw new Error('cannot free a node when it is inside the scenetree');
+        if (this.is_inside_tree) throw new Error('<Node> free_Internal: cannot free a node when it is inside the scenetree');
         this.propagate_Dispose();
     }
 
@@ -305,7 +307,7 @@ export class Node extends ClassBase {
 
     public queue_Free() {
         const scenetree = this.get_SceneTree();
-        if (scenetree === undefined) throw new Error('can not queue free node since it is not inside tree');
+        if (scenetree === undefined) throw new Error('<Node> queue_Free: can not queue free node since it is not inside tree');
         scenetree.queue_Free(this);
     }
 
@@ -532,40 +534,47 @@ export class Viewport extends Node {
     }
 
     private propagate_InputEventInternal(node: Node, event: InputEvent, target: Viewport | undefined) {
-        if (node.block_input) return;
+        if (event.canceled) return;
         if (node instanceof Viewport) {
             if (node === target) {
                 node.push_InputEvent(event, undefined);
             }
             return;
         }
-        node._input(event, true);
-        if (event.canceled) return;
-        node.signal_input.trigger(event, true);
-        if (event.canceled) return;
+        if (!node.block_input) {
+            node._input(event, true);
+            if (event.canceled) return;
+            node.signal_input.trigger(event, true);
+            if (event.canceled) return;
+        }
         for (const child of node.children) {
             this.propagate_InputEventInternal(child, event, target);
             if (event.canceled) return;
         }
-        node._input(event, false);
-        if (event.canceled) return;
-        node.signal_input.trigger(event, false);
-        return;
+        if (!node.block_input) {
+            node._input(event, false);
+            if (event.canceled) return;
+            node.signal_input.trigger(event, false);
+        }
     }
 
     private propagate_InputEvent(event: InputEvent, target: Viewport | undefined) {
         if (event.canceled) return;
-        this._input(event, true);
-        if (event.canceled) return;
-        this.signal_input.trigger(event, true);
+        if (!this.block_input) {
+            this._input(event, true);
+            if (event.canceled) return;
+            this.signal_input.trigger(event, true);
+            if (event.canceled) return;
+        }
         for (const child of this.children) {
             this.propagate_InputEventInternal(child, event, target);
             if (event.canceled) return;
         }
-        this._input(event, false);
-        if (event.canceled) return;
-        this.signal_input.trigger(event, false);
-        return;
+        if (!this.block_input) {
+            this._input(event, false);
+            if (event.canceled) return;
+            this.signal_input.trigger(event, false);
+        }
     }
 
     public emulate_InputEvent(event: InputEvent) {

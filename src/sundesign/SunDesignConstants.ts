@@ -467,8 +467,9 @@ export function useInputModel<P extends object, ValKey extends keyof P & string,
     return {
         value: value,
         setValueOnInput: (val: P[ValKey]) => {
-            const v = set?.(val, modifiers.value) ?? val
-            if (forceUpdate || (!(modifiers.value?.lazy ?? false) && (skipEqualityCheck || value.value !== val))) {
+            const v = set?.(val, modifiers.value) ?? val;
+            const changed = value.value !== val;
+            if (forceUpdate || (!(modifiers.value?.lazy ?? false) && (skipEqualityCheck || changed))) {
                 emit(update_event as any, v);
             }
             if (emitInput !== undefined && emit !== undefined) {
@@ -476,8 +477,9 @@ export function useInputModel<P extends object, ValKey extends keyof P & string,
             }
         },
         setValueOnChange: (val: P[ValKey]) => {
-            const v = set?.(val, modifiers.value) ?? val
-            if (forceUpdate || ((modifiers.value?.lazy ?? false) && (skipEqualityCheck || value.value !== val))) {
+            const v = set?.(val, modifiers.value) ?? val;
+            const changed = value.value !== val;
+            if (forceUpdate || ((modifiers.value?.lazy ?? false) && (skipEqualityCheck || changed))) {
                 emit(update_event as any, v);
             }
             if (emitChange !== undefined && emit !== undefined) {
