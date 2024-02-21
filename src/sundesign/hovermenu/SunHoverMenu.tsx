@@ -1,7 +1,7 @@
 import { createApp, type App, markRaw, type Component, defineComponent, type Directive, type FunctionalComponent, type ObjectDirective } from "vue";
 import SunMeasurePopupPanel from "../measurepopuppanel/SunMeasurePopupPanel.vue";
 import SunLabel from "../label/SunLabel.vue";
-import { timer, type BoxSize, type Rect, type TimerCanceller, calcButtonPopupRect } from "../SunDesignConstants";
+import { timer, type BoxSize, type Rect, type TimerCanceller, calcButtonPopupRect, type Position } from "../SunDesignConstants";
 import '../SunDesignStyle.styl';
 
 const SunHoverMenuPopup = defineComponent({
@@ -98,11 +98,11 @@ class SunHoverMenuBase<D extends Record<string, unknown>, T extends Component> {
     private open_timer: TimerCanceller | undefined;
     private close_timer: TimerCanceller | undefined;
 
-    constructor(content: T, binding: D, get_popup_rect: (contentMinSize: BoxSize, windowSize: BoxSize) => Rect, panel_props?: SunMeasurePopupPanelPropsType, option?: SunHoverMenuOption) {
+    constructor(content: T, binding: D, get_popup_rect: (contentMinSize: BoxSize, windowSize: BoxSize, mousePosition: Position) => Rect, panel_props?: SunMeasurePopupPanelPropsType, option?: SunHoverMenuOption) {
         this.content = content instanceof Function ? content : markRaw(content);
         this.binding = binding;
         this.panel_props = panel_props;
-        this.get_popup_rect = get_popup_rect;
+        this.get_popup_rect = (contentMinSize: BoxSize, windowSize: BoxSize) => get_popup_rect(contentMinSize, windowSize, this.mouse_position);
         this.option = {
             ...option,
             open_delay: option?.open_delay ?? 500,
@@ -183,7 +183,7 @@ export default class SunHoverMenu<D extends Record<string, unknown>, T extends C
     private target: HTMLElement;
 
     constructor(target: HTMLElement, content: T, binding: D, panel_props?: SunMeasurePopupPanelPropsType, option?: SunHoverMenuOption) {
-        super(content, binding, (contentMinSize: BoxSize, windowSize: BoxSize) => {
+        super(content, binding, (contentMinSize: BoxSize, windowSize: BoxSize, mousePosition: Position) => {
             const { x, y, width, height } = target.getBoundingClientRect();
             return calcButtonPopupRect({ x, y, width: 0, height }, contentMinSize, windowSize, 0);
         }, panel_props, option);
@@ -223,7 +223,6 @@ export const vHoverMenu: ObjectDirective<HTMLElement & { [vHoverMenuId]?: SunHov
     content: Component, binding: Record<string, any>, panel_props?: SunMeasurePopupPanelPropsType, option?: SunHoverMenuOption
 } | string> = {
     mounted(el, binding) {
-        console.log(binding);
         if (el[vHoverMenuId] === undefined) {
             const option: SunHoverMenuOption = { group: binding.arg, menu_hover: binding.modifiers.nohover === true ? false : true };
             if (typeof binding.value === 'string') {

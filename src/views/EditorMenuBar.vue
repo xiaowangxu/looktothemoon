@@ -24,6 +24,9 @@
                             transform="translate(14.57 -12.05) rotate(27)" />
                     </svg>
                 </SunButtonMenuPopup>
+            </SunPanelContainer>
+            <SunPanelSeparator />
+            <SunPanelContainer>
                 <SunButtonMenuPopup ref="file_option_ref" :options="options" flat>文件</SunButtonMenuPopup>
                 <SunButtonMenuPopup ref="edit_option_ref" :options="edit_options" flat>编辑</SunButtonMenuPopup>
                 <SunButtonMenuPopup ref="view_option_ref" :options="options" flat>视图</SunButtonMenuPopup>

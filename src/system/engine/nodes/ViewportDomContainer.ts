@@ -79,7 +79,11 @@ export class ViewportDomContainer extends Node {
 
     private update_DomPositionSize() {
         if (this.dom !== undefined) {
-            const { left, top, width, height } = this.dom.getBoundingClientRect();
+            const width = this.dom.offsetWidth;
+            const height = this.dom.offsetHeight;
+            const left = this.dom.offsetLeft;
+            const top = this.dom.offsetTop;
+            // const { left, top, width, height } = this.dom.getBoundingClientRect();
             this.position = new Vector2(left, top);
             this.size = new Vector2(width, height);
         }
@@ -87,7 +91,7 @@ export class ViewportDomContainer extends Node {
 
     public _notification(what: NodeNotification): void {
         switch (what) {
-            case NodeNotification.InternalAfterProcess: {
+            case NodeNotification.InternalBeforeRender: {
                 this.update_DomPositionSize();
                 if (this._size !== undefined && this._position !== undefined && this.viewport_node !== undefined) {
                     this.viewport_node.size = this._size;

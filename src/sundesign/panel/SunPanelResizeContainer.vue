@@ -3,17 +3,18 @@
         <div ref="div_ref" class="__sun-design-panel-resize-conatiner__"
             :class="{ 'flip-direction': flipDirection, vertical, start, end }" :style="{ '--Offset': offset }"
             v-bind="$attrs">
-            <div class="__sun-design-panel-resize-conatiner-first__">
+            <div class="__sun-design-panel-resize-conatiner-first__" :class="{ bordered: !hideBorder }">
                 <slot name="first" />
             </div>
-            <div class="__sun-design-panel-resize-conatiner-second__">
+            <div ref="second_container_ref" class="__sun-design-panel-resize-conatiner-second__">
                 <slot name="second" />
             </div>
-            <div class="__sun-design-panel-resize-conatiner-split__" @mousedown="onDragMouseDown">
-                <slot name="nob" />
+            <div class="__sun-design-panel-resize-conatiner-split__" :style="{ '--NobSize': `${nobSize}px` }"
+                @mousedown="onDragMouseDown">
+                <slot name="nob" :start="start" :end="end" />
             </div>
             <SunButton v-if="expandIndicator" class="__sun-design-panel-resize-button__" size="small"
-                @click="setSize(initialSize)"></SunButton>
+                @click="setSize(open_size)"></SunButton>
         </div>
     </SunResizeObserver>
 </template>
@@ -23,7 +24,7 @@
 import SunResizeObserver from '../scrollcontainer/SunResizeObserver.vue';
 import SunButton from '../button/SunButton.vue';
 import { type BoxSize } from '../SunDesignConstants';
-import { computed, onBeforeUnmount, ref, toRef } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 defineOptions({
     inheritAttrs: false,
@@ -33,11 +34,16 @@ defineOptions({
 const props = withDefaults(
     defineProps<{
         initialSize?: number,
+        initialCollapse?: 'first' | 'second',
         vertical?: boolean,
         flipDirection?: boolean,
         min?: number,
         max?: number,
         expandIndicator?: boolean,
+        hideBorder?: boolean,
+        nobSize?: number,
+        firstSnap?: number,
+        secondSnap?: number,
     }>(),
     {
         vertical: false,
@@ -46,24 +52,51 @@ const props = withDefaults(
         min: 0,
         max: Infinity,
         expandIndicator: true,
+        hideBorder: false,
+        nobSize: 8,
     }
 );
 
+// slots
+defineSlots<{
+    nob(props: { start: boolean, end: boolean }): void,
+    first(props: {}): void,
+    second(props: {}): void,
+}>();
+
 // datas
-const size = ref(100);
+const size = ref(0);
 const div_ref = ref<HTMLDivElement | null>(null);
 let last_size = 0;
+let open_size = props.initialSize;
 let mouse_last_x = 0;
 let mouse_last_y = 0;
 let mouse_moved = false;
 const container_rect = ref<BoxSize>({ width: 0, height: 0 });
-const max_size = computed(() => Math.max(0, Math.min(props.max, props.vertical ? container_rect.value.height : container_rect.value.width)));
+onMounted(() => {
+    if (div_ref.value !== null && (!props.flipDirection && props.initialCollapse === 'second' || props.flipDirection && props.initialCollapse === 'first')) {
+        const { width, height } = div_ref.value.getBoundingClientRect();
+        if (props.vertical) {
+            setSize(Math.ceil(height));
+        }
+        else {
+            setSize(Math.ceil(width));
+        }
+    }
+});
+const calc_max_size = computed(() => props.max <= 0 ? (props.vertical ? container_rect.value.height : container_rect.value.width) + props.max : props.max);
+const max_size = computed(() => Math.max(0, Math.min(calc_max_size.value, props.vertical ? container_rect.value.height : container_rect.value.width)));
 const min_size = computed(() => Math.max(0, Math.min(props.min, props.vertical ? container_rect.value.height : container_rect.value.width)));
 const safe_size = computed(() => Math.min(max_size.value, Math.max(min_size.value, size.value)));
 const start = computed(() => safe_size.value - min_size.value < 0.5);
 const end = computed(() => max_size.value - safe_size.value < 0.5);
 const offset = computed(() => `${safe_size.value}px`);
-setSize(props.initialSize);
+if (props.initialCollapse === undefined) {
+    setSize(open_size);
+}
+else if (!props.flipDirection && props.initialCollapse === 'first' || props.flipDirection && props.initialCollapse === 'second') {
+    setSize(0);
+}
 
 function onResized(borderBoxSize: BoxSize, contentBoxSize: BoxSize, target: Element) {
     container_rect.value = borderBoxSize;
@@ -90,8 +123,17 @@ function onDragMouseMove(evt: MouseEvent) {
     }
 }
 function onDragMouseUp(evt: MouseEvent) {
-    if (!mouse_moved && (start.value || end.value)) {
-        setSize(props.initialSize);
+    const is_one_closed = start.value || end.value;
+    if (mouse_moved) {
+        if (last_size !== 0 && is_one_closed) {
+            open_size = last_size;
+        }
+        else {
+            open_size = props.initialSize;
+        }
+    }
+    else if (is_one_closed) {
+        setSize(open_size);
     }
     removeDraggingEvents();
 }
@@ -100,6 +142,12 @@ function removeDraggingEvents() {
     window.removeEventListener('mouseup', onDragMouseUp, { capture: true });
 }
 function setSize(val: number) {
+    if (props.firstSnap !== undefined && val <= props.firstSnap) {
+        val = min_size.value;
+    }
+    if (props.secondSnap !== undefined && val >= props.secondSnap) {
+        val = max_size.value;
+    }
     size.value = val;
 }
 
@@ -117,7 +165,8 @@ defineExpose({
 <style lang="stylus">
 @import '../SunDesignStyleConstants.styl';
 
-split-size = 8px
+split-size = var(--NobSize,  8px)
+split-size-half = calc(var(--NobSize,  8px) / 2)
 resize-button-margin = panel-padding * 2
 
 .__sun-design-panel-resize-conatiner__
@@ -132,8 +181,9 @@ resize-button-margin = panel-padding * 2
     bottom: 0
     height: unset
     width: var(--Offset)
-    border-right: solid-border
-    border-bottom: none
+    &.bordered
+        border-right: solid-border
+        border-bottom: none
     box-sizing: border-box
     overflow: hidden
     // background-color: rgba(255, 0, 0, 0.1)
@@ -147,8 +197,9 @@ resize-button-margin = panel-padding * 2
         right: 0
         width: unset
         height: var(--Offset)
-        border-right: none
-        border-bottom: solid-border
+        &.bordered
+            border-right: none
+            border-bottom: solid-border
     .__sun-design-panel-resize-conatiner__.start > &, .__sun-design-panel-resize-conatiner__.end > &
         border: none !important
 
@@ -176,11 +227,11 @@ resize-button-margin = panel-padding * 2
 
 .__sun-design-panel-resize-conatiner-split__
     position: absolute
-    left: 'clamp(0%, calc(var(--Offset) - %s), calc(100% - %s))' % (split-size / 2 split-size)
+    left: 'clamp(0%, calc(var(--Offset) - %s), calc(100% - %s))' % (split-size-half split-size)
     .__sun-design-panel-resize-conatiner__.flip-direction > &
-        left: 'clamp(0%, calc(100% - var(--Offset) - %s), calc(100% - %s))' % (split-size / 2 split-size)
+        left: 'clamp(0%, calc(100% - var(--Offset) - %s), calc(100% - %s))' % (split-size-half split-size)
     .__sun-design-panel-resize-conatiner__.vertical.flip-direction > &
-        top: 'clamp(0%, calc(100% - var(--Offset) - %s), calc(100% - %s))' % (split-size / 2 split-size)
+        top: 'clamp(0%, calc(100% - var(--Offset) - %s), calc(100% - %s))' % (split-size-half split-size)
     right: unset
     top: 0
     bottom: 0
@@ -191,7 +242,7 @@ resize-button-margin = panel-padding * 2
     .__sun-design-panel-resize-conatiner__.vertical > &
         left: 0
         right: 0
-        top: 'clamp(0%, calc(var(--Offset) - %s), calc(100% - %s))' % (split-size / 2 split-size)
+        top: 'clamp(0%, calc(var(--Offset) - %s), calc(100% - %s))' % (split-size-half split-size)
         bottom: unset
         height: split-size
         width: unset

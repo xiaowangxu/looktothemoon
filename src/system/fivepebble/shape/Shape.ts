@@ -38,7 +38,7 @@ export class Shape {
         return vertex;
     }
 
-    public get_VertexEdgeCount(v: Vertex) {
+    public get_VertexEdgesCount(v: Vertex) {
         let count = 0;
         let e_iter = v.edge;
         do {
@@ -47,6 +47,17 @@ export class Shape {
         }
         while ((e_iter = this._Edge_get_VertexNextEdge(e_iter, v)) !== v.edge);
         return count;
+    }
+
+    public get_VertexEdges<E extends Edge>(v: Vertex) {
+        const edges : E[] = [];
+        let e_iter = v.edge;
+        do {
+            if (e_iter === undefined) break;
+            edges.push(e_iter as E);
+        }
+        while ((e_iter = this._Edge_get_VertexNextEdge(e_iter, v)) !== v.edge);
+        return edges;
     }
 
     protected _Vertex_add_Edge(v: Vertex, e: Edge) {
@@ -124,6 +135,10 @@ export class Shape {
         return Result.Ok(edge);
     }
 
+    public get_EdgeVertices<V extends Vertex>(e: Edge) {
+        return [e.vertex_0 as V, e.vertex_1 as V];
+    }
+
     protected _Edge_get_VertexDiskLoop(e: Edge, v: Vertex) {
         return e.vertex_0 === v ? e.vertex_disk_loop_0 : e.vertex_disk_loop_1;
     }
@@ -159,4 +174,4 @@ const v2 = shape.create_Vertex();
 const e1 = shape.create_Edge(v0, v2);
 const v3 = shape.create_Vertex();
 const e2 = shape.create_Edge(v0, v3);
-console.log(shape.get_VertexEdgeCount(v1));
+console.log(shape.get_VertexEdges(v0));

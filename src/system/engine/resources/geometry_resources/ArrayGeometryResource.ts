@@ -22,8 +22,6 @@ export type ArrayGeometryResourceArray<RS extends RenderState<RS>> = {
 export class ArrayGeometryResource extends GeometryResource {
     public static class_name: string = 'ArrayGeometryResource';
 
-    private usage: RenderStateBufferUsage = RenderStateBufferUsage.StaticDraw;
-
     constructor(config: Config) {
         super(config);
         this.geometry_ref.value = this.render_server.create_Geometry();
@@ -67,31 +65,6 @@ export class ArrayGeometryResource extends GeometryResource {
 
     public dump(writer: ClassWriter): void {
         throw new Error('<ArrayGeometryResource> dump: better not use ArrayGeometry\'s dump method for data generation, use ArrayGeometryResource.dump_Data instead');
-        // if (this.geometry.has_geometry) {
-        //     writer.property('primitive_type', this.geometry.primitive_type);
-        //     const attr_buf: Map<string, PackedArray> = new Map();
-        //     const attr_loc: Map<string, number> = new Map();
-        //     for (const [key, val] of Object.entries(this.geometry.get_AttributeBuffers())) {
-        //         if (val instanceof RenderDeviceAttributeBuffer) {
-        //             attr_buf.set(key, val.get_PackedArray());
-        //         }
-        //         else {
-        //             attr_buf.set(key, val.attribute.get_PackedArray());
-        //             attr_loc.set(key, val.location);
-        //         }
-        //     }
-        //     writer.property('array', attr_buf);
-        //     writer.property('locations', attr_loc);
-        //     writer.property('index', this.geometry.get_IndexAttributeBuffer()?.get_PackedArray());
-        //     writer.property('vertex_count', this.geometry.vertex_count);
-        //     writer.property('usage', this.usage === RenderStateBufferUsage.StaticDraw ? undefined : this.usage);
-        //     const surfaces: number[] = [];
-        //     for (const { offset, length } of Object.values(this.geometry.get_Surfaces())) {
-        //         surfaces.push(offset, length);
-        //     }
-        //     writer.property('surfaces', surfaces);
-        //     writer.property('bbox', this.geometry.bbox);
-        // }
     }
 
     public load(reader: ClassReader): void {
@@ -151,7 +124,6 @@ export class ArrayGeometryResource extends GeometryResource {
         class_saver.add_Property(refid, 'usage', usage === RenderStateBufferUsage.StaticDraw ? undefined : usage);
         class_saver.add_Property(refid, 'surfaces', surfaces);
         class_saver.add_Property(refid, 'bbox', bbox);
-
         return refid;
     }
 }

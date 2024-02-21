@@ -1,5 +1,5 @@
 <template>
-    <SunPanel style="width: 100%; height: 100%;" vertical>
+    <!-- <SunPanel style="width: 100%; height: 100%;" vertical>
 
         <SunPanelContainer gap
             style="align-items: center; padding-right: 10px; background-color: var(--color-normal); flex-shrink: 0;"
@@ -16,12 +16,12 @@
             </SunButton>
         </SunPanelContainer>
 
-        <SunPanelSeparator />
+        <SunPanelSeparator /> -->
 
-        <SunPanelResizeContainer style="widows: 100%; height: 100%;">
+        <SunPanelResizeContainer style="width: 100%; height: 100%;">
             <template #first>
                 <SunPanel container vertical style="width: 100%; height: 100%;">
-                    <!-- <SunPanelContainer gap>
+                    <SunPanelContainer gap>
                         <SunLineEdit style="flex: 1;" :model-value="'test'" />
                         <SunSelect :prefered-direction="1" icon-only selected-icon squared :model-value="2" :options="[[
                             { uid: 0, label: '文件名顺序', icon: 'ArrowDownAZ' },
@@ -29,9 +29,9 @@
                             { uid: 2, label: '类型', icon: 'ArrowDownWideNarrow' },
                         ]]">
                         </SunSelect>
-                    </SunPanelContainer> -->
-                    <!-- <SunPanelSeparator /> -->
-                    <SunPanelFoldContainer unfold-style="flex: 1;">
+                    </SunPanelContainer>
+                    <SunPanelSeparator />
+                    <SunPanelFoldContainer unfold-style="flex: 1;" label="虚拟文件系统">
                         <template #append>
                             <SunButton size="small" flat squared @click="tree_ref?.toggle(true)">
                                 <FoldVertical />
@@ -48,8 +48,8 @@
                         </SunScrollContainer>
                     </SunPanelFoldContainer>
                     <SunPanelSeparator />
-                    <SunPanelFoldContainer unfold-style="flex-basis: 100px; flex-grow: 0; flex-shrink: 1;">
-                    </SunPanelFoldContainer>
+                    <!-- <SunPanelFoldContainer unfold-style="flex-basis: 100px; flex-grow: 0; flex-shrink: 1;">
+                    </SunPanelFoldContainer> -->
                 </SunPanel>
             </template>
             <template #second>
@@ -71,7 +71,7 @@
             <SunPanelSeparator />
         </SunPanelResizeContainer>
 
-    </SunPanel>
+    <!-- </SunPanel> -->
 </template>
 
 <script setup lang="ts">

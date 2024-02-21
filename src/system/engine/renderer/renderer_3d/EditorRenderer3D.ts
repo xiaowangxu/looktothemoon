@@ -13,8 +13,6 @@ import { type RenderServerLightsData } from "../../render_server/RenderServerLig
 import { Renderer3D } from "./Renderer3D";
 import { Renderer3DQueue } from "./Renderer3DQueue";
 
-const debug_text = document.getElementById('render-server-debug')!;
-
 // #region quad surface
 const QuadGeometry = new Cacher((config: Config) => {
     const quad_position = new RenderDeviceVector2AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
@@ -202,7 +200,10 @@ export class EditorRenderer3D extends Renderer3D {
         // debug
         if (viewport.debug) {
             const delta = viewport.get_SceneTree()!.delta;
-            debug_text.innerHTML = `FPS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ${(1 / delta).toFixed(3)}<br>FrameDelta: ${delta.toFixed(4)} ms<br>RenderObjs: ${rendered_objects_count} / ${total_objects_count}<br>Solid Objs: ${this.render_queue_0.solid_pointer + 1 + this.render_queue_1.solid_pointer + 1}<br>Trans Objs: ${this.render_queue_0.transparent_pointer + 1 + this.render_queue_1.transparent_pointer + 1}<br>Draw Calls: ${'???'}<br>Tweens : ${viewport.get_SceneTree()!.tween_processing_count}`;
+            const debug = document.getElementById('render-server-debug');
+            if (debug) {
+                debug.innerHTML = `FPS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ${(1 / delta).toFixed(3)}<br>FrameDelta: ${delta.toFixed(4)} ms<br>RenderObjs: ${rendered_objects_count} / ${total_objects_count}<br>Solid Objs: ${this.render_queue_0.solid_pointer + 1 + this.render_queue_1.solid_pointer + 1}<br>Trans Objs: ${this.render_queue_0.transparent_pointer + 1 + this.render_queue_1.transparent_pointer + 1}<br>Draw Calls: ${'???'}<br>Tweens : ${viewport.get_SceneTree()!.tween_processing_count}`;
+            }
         }
     }
 

@@ -27,7 +27,7 @@ export class Ref<T extends RefCounted> {
     }
 
     public get expect() {
-        if (this.ref === undefined) throw new Error('failed to get ref counted object');
+        if (this.ref === undefined) throw new Error('<Ref> expect: failed to get ref counted object');
         return this.ref;
     }
 
@@ -35,6 +35,10 @@ export class Ref<T extends RefCounted> {
 
     constructor(item: T | undefined = undefined) {
         this.value = item;
+    }
+
+    public borrow() {
+        return new Ref(this.ref);
     }
 
     public clear() {

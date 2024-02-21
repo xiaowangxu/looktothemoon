@@ -5,6 +5,7 @@ import { Singletion } from "./singletions/Singletion";
 import { Node, Viewport } from "./nodes/Node";
 import type { World3D } from "./worlds/world3ds/World3D";
 import { ConfiguredObject, type Config } from "./ConfiguredObject";
+import { Vector2 } from "../fivepebble/linear_algebra/Vector2";
 
 export class SceneTree extends ConfiguredObject {
     private readonly input_action_map: ShortCutActionMap = new ShortCutActionMap(this.config);

@@ -1,7 +1,6 @@
 import { createApp } from 'vue';
 import App from './App.vue';
-import { createEditorViewport } from './app/EditorScene';
-import './app/EditorSceneStyle.css';
+import { createEditor } from './app/EditorScene';
 import '@/system/filesystem/VirtualFileSystem';
 import sys_vfs from 'res://sys.vfs?url';
 import { VFS } from '@/system/filesystem/VirtualFileSystem';
@@ -16,12 +15,12 @@ VFS.touch(fspath('user://'));
 
 await fetch(sys_vfs).then(res => res.arrayBuffer()).then(array_buffer => VFS.load(array_buffer, fspath('sys://')));
 
-const win1 = new SunWindow(WindowFileSystem, { root: '/' });
-const win2 = new SunWindow(WindowFileSystem, { root: 'user://' });
+// const win1 = new SunWindow(WindowFileSystem, { root: '/' });
+// const win2 = new SunWindow(WindowFileSystem, { root: 'user://' });
 
 window.VFS = VFS;
 window.fspath = fspath;
 
-createEditorViewport();
+createEditor();
 
 import '@/system/fivepebble/shape/Shape';

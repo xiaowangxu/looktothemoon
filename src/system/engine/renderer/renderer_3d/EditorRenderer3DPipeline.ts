@@ -272,6 +272,44 @@ const SSAOProgramUniform = new Cacher((config: Config) => {
 
 // #endregion
 
+// #region fog
+
+const fog_frag_shader_code = `#version 300 es
+precision highp float;
+
+${RenderServerDevice.ConstantsCode}
+
+${RenderServerDevice.WorldUniformsCode}
+
+in vec2 v_uv;
+
+uniform sampler2D u_depth;
+uniform sampler2D u_normal;
+
+layout(location = 0) out vec4 o_color;
+
+void main() {
+    float depth = texture(u_depth, v_uv).r;
+    o_color = vec4(vec3(0.95, 0.95, 0.95), pow(depth, 10.0));
+}`;
+
+const FogProgramUniform = new Cacher((config: Config) => {
+    const fog_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, fog_frag_shader_code).expect();
+    const fog_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config), fog_frag_shader).expect();
+
+    const uniform_depth_location = config.render_server.render_state.get_ProgramUniformLocation(fog_program, 'u_depth');
+    const uniform_depth_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, fog_program, uniform_depth_location!, 0);
+    uniform_depth_slot.commit();
+
+    const uniform_normal_location = config.render_server.render_state.get_ProgramUniformLocation(fog_program, 'u_normal');
+    const uniform_normal_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, fog_program, uniform_normal_location!, 1);
+    uniform_normal_slot.commit();
+
+    return fog_program;
+});
+
+// #endregion
+
 // #region oit composite
 
 const oit_frag_shader_code = `#version 300 es
@@ -566,7 +604,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
     private screen_quad_solid_program = OnscreenProgramUniform.get(this.config).onscreen_program;
     private screen_quad_solid_colormap_uniform_slot = OnscreenProgramUniform.get(this.config).uniform_colormap_slot;
 
-    private ssao_quad_solid_program = SSAOProgramUniform.get(this.config);
+    private ssao_quad_solid_program = FogProgramUniform.get(this.config);
 
     private oit_screen_quad_solid_program = OiTPorgramUniform.get(this.config).oit_program;
     private oit_screen_quad_solid_colormap_uniform_slot = OiTPorgramUniform.get(this.config).uniform_oit_colormap_slot;
@@ -662,9 +700,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.screen_quad_solid_colormap_uniform_slot.value = color_map ? 1 : 0;
         this.screen_quad_solid_colormap_uniform_slot.commit();
         this.render_server.render_state.draw_Elements(this.screen_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
-        // ssao
+        // post process
         // this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true);
-        // this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.ONE, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
+        // this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.SRC_ALPHA, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
         // this.render_server.render_state.active_Texture(this.solid_depth_texture.expect, 0);
         // this.render_server.render_state.active_Texture(this.solid_normal_texture.expect, 1);
         // this.render_server.render_state.draw_Elements(this.ssao_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
