@@ -1,20 +1,17 @@
 <template>
     <SunResizeObserver @resized="onResized">
-        <div ref="div_ref" class="__sun-design-panel-resize-conatiner__"
-            :class="{ 'flip-direction': flipDirection, vertical, start, end }" :style="{ '--Offset': offset }"
-            v-bind="$attrs">
-            <div class="__sun-design-panel-resize-conatiner-first__" :class="{ bordered: !hideBorder }">
+        <div ref="div_ref" class="__sun-design-panel-resize-conatiner-remain-nob__"
+            :class="{ 'flip-direction': flipDirection, vertical, start, end }"
+            :style="{ '--NobSize': `${nobSize}px`, '--Offset': offset }" v-bind="$attrs">
+            <div class="__sun-design-panel-resize-conatiner-remain-nob-first__">
                 <slot name="first" />
             </div>
-            <div ref="second_container_ref" class="__sun-design-panel-resize-conatiner-second__">
+            <div ref="second_container_ref" class="__sun-design-panel-resize-conatiner-remain-nob-second__">
                 <slot name="second" />
             </div>
-            <div class="__sun-design-panel-resize-conatiner-split__" :style="{ '--NobSize': `${nobSize}px` }"
-                @mousedown="onDragMouseDown">
+            <div class="__sun-design-panel-resize-conatiner-remain-nob-split__" @mousedown="onDragMouseDown">
                 <slot name="nob" :start="start" :end="end" />
             </div>
-            <SunButton v-if="expandIndicator" class="__sun-design-panel-resize-button__" size="small"
-                @click="setSize(open_size)"></SunButton>
         </div>
     </SunResizeObserver>
 </template>
@@ -40,7 +37,6 @@ const props = withDefaults(
         min?: number,
         max?: number,
         expandIndicator?: boolean,
-        hideBorder?: boolean,
         nobSize?: number,
         firstSnap?: number,
         secondSnap?: number,
@@ -85,8 +81,8 @@ onMounted(() => {
     }
 });
 const calc_max_size = computed(() => props.max <= 0 ? (props.vertical ? container_rect.value.height : container_rect.value.width) + props.max : props.max);
-const max_size = computed(() => Math.max(0, Math.min(calc_max_size.value, props.vertical ? container_rect.value.height : container_rect.value.width)));
-const min_size = computed(() => Math.max(0, Math.min(props.min, props.vertical ? container_rect.value.height : container_rect.value.width)));
+const max_size = computed(() => Math.max(0, Math.min(calc_max_size.value, props.vertical ? container_rect.value.height : container_rect.value.width)) - props.nobSize / 2);
+const min_size = computed(() => Math.max(0, Math.min(props.min, props.vertical ? container_rect.value.height : container_rect.value.width)) + props.nobSize / 2);
 const safe_size = computed(() => Math.min(max_size.value, Math.max(min_size.value, size.value)));
 const start = computed(() => safe_size.value - min_size.value < 0.5);
 const end = computed(() => max_size.value - safe_size.value < 0.5);
@@ -174,41 +170,31 @@ split-size = var(--NobSize,  8px)
 split-size-half = calc(var(--NobSize,  8px) / 2)
 resize-button-margin = panel-padding * 2
 
-.__sun-design-panel-resize-conatiner__
+.__sun-design-panel-resize-conatiner-remain-nob__
     position: relative
-    // background-color: red
     overflow: hidden
 
-.__sun-design-panel-resize-conatiner-first__
+.__sun-design-panel-resize-conatiner-remain-nob-first__
     position: absolute
     left: 0
     top: 0
     bottom: 0
     height: unset
-    width: var(--Offset)
-    &.bordered
-        border-right: solid-border
-        border-bottom: none
+    width: 'calc(var(--Offset) - %s)' % (split-size-half)
     box-sizing: border-box
     overflow: hidden
-    // background-color: rgba(255, 0, 0, 0.1)
-    .__sun-design-panel-resize-conatiner__.flip-direction > &
-        width: calc(100% - var(--Offset))
-    .__sun-design-panel-resize-conatiner__.vertical.flip-direction > &
-        height: calc(100% - var(--Offset))
-    .__sun-design-panel-resize-conatiner__.vertical > &
+    .__sun-design-panel-resize-conatiner-remain-nob__.flip-direction > &
+        width: 'calc(100% - var(--Offset) - %s)' % (split-size-half)
+    .__sun-design-panel-resize-conatiner-remain-nob__.vertical.flip-direction > &
+        height: 'calc(100% - var(--Offset) - %s)' % (split-size-half)
+    .__sun-design-panel-resize-conatiner-remain-nob__.vertical > &
         left: 0
         top: 0
         right: 0
         width: unset
-        height: var(--Offset)
-        &.bordered
-            border-right: none
-            border-bottom: solid-border
-    .__sun-design-panel-resize-conatiner__.start > &, .__sun-design-panel-resize-conatiner__.end > &
-        border: none !important
+        height: 'calc(var(--Offset) - %s)' % (split-size-half)
 
-.__sun-design-panel-resize-conatiner-second__
+.__sun-design-panel-resize-conatiner-remain-nob-second__
     position: absolute
     left: unset
     right: 0
@@ -216,86 +202,39 @@ resize-button-margin = panel-padding * 2
     bottom: 0
     height: unset
     overflow: hidden
-    width: calc(100% - var(--Offset))
-    // background-color: rgba(0, 255, 0, 0.1)
-    .__sun-design-panel-resize-conatiner__.flip-direction > &
-        width: var(--Offset)
-    .__sun-design-panel-resize-conatiner__.vertical.flip-direction > &
-        height: var(--Offset)
-    .__sun-design-panel-resize-conatiner__.vertical > &
+    width: 'calc(100% - var(--Offset) - %s)' % (split-size-half)
+    .__sun-design-panel-resize-conatiner-remain-nob__.flip-direction > &
+        width: 'calc(var(--Offset) - %s)' % (split-size-half)
+    .__sun-design-panel-resize-conatiner-remain-nob__.vertical.flip-direction > &
+        height: 'calc(var(--Offset) - %s)' % (split-size-half)
+    .__sun-design-panel-resize-conatiner-remain-nob__.vertical > &
         bottom: 0
         left: 0
         right: 0
         top: unset
         width: unset
-        height: calc(100% - var(--Offset))
+        height: 'calc(100% - var(--Offset) - %s)' % (split-size-half)
 
-.__sun-design-panel-resize-conatiner-split__
+.__sun-design-panel-resize-conatiner-remain-nob-split__
     position: absolute
-    left: 'clamp(0%, calc(var(--Offset) - %s), calc(100% - %s))' % (split-size-half split-size)
-    .__sun-design-panel-resize-conatiner__.flip-direction > &
-        left: 'clamp(0%, calc(100% - var(--Offset) - %s), calc(100% - %s))' % (split-size-half split-size)
-    .__sun-design-panel-resize-conatiner__.vertical.flip-direction > &
-        top: 'clamp(0%, calc(100% - var(--Offset) - %s), calc(100% - %s))' % (split-size-half split-size)
     right: unset
     top: 0
     bottom: 0
     width: split-size
     height: unset
-    // background-color: rgba(255, 0, 0, 0.2)
     cursor: e-resize
-    .__sun-design-panel-resize-conatiner__.vertical > &
+    left: 'calc(var(--Offset) - %s)' % (split-size-half)
+    .__sun-design-panel-resize-conatiner-remain-nob__.flip-direction > &
+        left: 'calc(100% - var(--Offset) - %s)' % (split-size-half)
+    .__sun-design-panel-resize-conatiner-remain-nob__.vertical > &
         left: 0
         right: 0
-        top: 'clamp(0%, calc(var(--Offset) - %s), calc(100% - %s))' % (split-size-half split-size)
         bottom: unset
         height: split-size
         width: unset
         cursor: n-resize
-
-.__sun-design-panel-resize-button__
-    position: absolute
-    overflow: hidden
-    display: none !important
-
-    .__sun-design-panel-resize-conatiner__:not(.vertical).start > &
-        margin: resize-button-margin 0
-        min-width: (size-small / 2) !important
-        min-height: size-small !important
-        display: inline-block !important
-        border-left: none !important
-        border-top-left-radius: 0 !important
-        border-bottom-left-radius: 0 !important
-        padding: padding-extend-small padding-small !important
-    .__sun-design-panel-resize-conatiner__:not(.vertical).end > &
-        margin: resize-button-margin 0
-        min-width: (size-small / 2) !important
-        min-height: size-small !important
-        right: 0
-        display: inline-block !important
-        border-right: none !important
-        border-top-right-radius: 0 !important
-        border-bottom-right-radius: 0 !important
-        padding: padding-extend-small padding-small !important
-
-    .__sun-design-panel-resize-conatiner__.vertical.start > &
-        margin: 0 resize-button-margin
-        min-height: (size-small / 2) !important
-        min-width: size-small !important
-        right: 0
-        display: inline-block !important
-        border-top: none !important
-        border-top-left-radius: 0 !important
-        border-top-right-radius: 0 !important
-    .__sun-design-panel-resize-conatiner__.vertical.end > &
-        margin: 0 resize-button-margin
-        min-height: (size-small / 2) !important
-        min-width: size-small !important
-        right: 0
-        bottom: 0
-        display: inline-block !important
-        border-bottom: none !important
-        border-bottom-left-radius: 0 !important
-        border-bottom-right-radius: 0 !important
+        top: 'calc(var(--Offset) - %s)' % (split-size-half)
+    .__sun-design-panel-resize-conatiner-remain-nob__.vertical.flip-direction > &
+        top: 'calc(100% - var(--Offset) - %s)' % (split-size-half)
 
 </style>

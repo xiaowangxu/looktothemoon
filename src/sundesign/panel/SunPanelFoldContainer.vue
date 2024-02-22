@@ -1,9 +1,9 @@
 <template>
     <div class="__sun-design-panel-fold-container__" :style="!folded ? unfoldStyle : undefined">
-        <SunButtonLike class="__sun-design-panel-fold-container-button__" :class="{ append: $slots.append !== undefined, unfolded: !folded }"
-            no-hover-color no-pressed-color flat>
-            <SunButton flat class="__sun-design-panel-fold-container-fold-button__ no-hover-color no-pressed-color"
-                style="flex: 1;" @click="folded = !folded">
+        <SunButtonLike class="__sun-design-panel-fold-container-button__" :size="size"
+            :class="{ append: $slots.append !== undefined, unfolded: !folded }" no-hover-color no-pressed-color flat>
+            <SunButton class="__sun-design-panel-fold-container-fold-button__ no-hover-color no-pressed-color" :size="size"
+                flat style="flex: 1;" @click="folded = !folded">
                 <ChevronRight v-if="folded" />
                 <ChevronDown v-else />
                 <slot name="item">
@@ -27,14 +27,17 @@ import SunButtonLike from '../button/SunButtonLike.vue';
 import SunButton from '../button/SunButton.vue';
 import SunButtonItem from '../item/SunButtonItem.vue';
 import { ChevronDown, ChevronRight, FolderMinus } from 'lucide-vue-next';
+import type { Size } from '../SunDesignConstants';
 
 // props
 const props = withDefaults(
     defineProps<{
+        size?: Size,
         label?: string,
         unfoldStyle?: string,
     }>(),
     {
+        size: 'normal',
         label: '',
     }
 );
