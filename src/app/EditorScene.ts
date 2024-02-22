@@ -87,6 +87,7 @@ export function createEditor() {
     // const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
     // renderer0.render_pipeline = pipeline0;
     // EditorViewport0.renderer_3d = renderer0;
+    // EditorViewport0.transparent = true;
     // EditorViewportContainer0.add_Child(EditorViewport0);
     // const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
     // EditorViewport0.add_Child(EditorCamera0);
@@ -125,16 +126,6 @@ export function createEditor() {
         new MouseButtonInputEvent(DefaultConfig).set_Button(MouseButton.WheelDown, true, false, false).set_Compose(true),
         new MouseButtonInputEvent(DefaultConfig).set_Button(MouseButton.WheelDown, true, false, false),
     ]));
-
-    // viewport 0
-    // const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
-    // EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-    // const EditorViewport0 = new Viewport(DefaultConfig);
-    // EditorViewportContainer0.add_Child(EditorViewport0);
-    // const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
-    // // EditorCamera0.zoom_to_cursor = false;
-    // EditorViewport0.add_Child(EditorCamera0);
-    // EditorViewport.add_Child(EditorViewportContainer0);
 
     const geometry = new TorusGeometryResource(DefaultConfig);
     // geometry.phi_segments = 32;

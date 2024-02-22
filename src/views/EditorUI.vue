@@ -7,6 +7,8 @@
                 style="position: absolute; left: 10px; bottom: 10px; font-size: 10px; color: rgba(231, 13, 213, 0.848); pointer-events: none; font-family: consolas;">
             </div> -->
         </div>
+        <!-- <div id="viewport-1" style="position: absolute; overflow: hidden; left: 50%; top: 0%; right: 0%; bottom: 0%;">
+        </div> -->
     </div>
 
     <SunPanelResizeContainer id="editor-left-container" hide-border :nob-size="14" :expand-indicator="false"
