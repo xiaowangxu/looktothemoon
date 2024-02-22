@@ -81,7 +81,7 @@ export function createEditor() {
     const pipeline = DRenderPipeline.get(DefaultConfig).expect;
     renderer.render_pipeline = pipeline;
     EditorViewport.renderer_3d = renderer;
-    // EditorViewport.transparent = true;
+    EditorViewport.transparent = true;
     EditorViewportContainer.add_Child(EditorViewport);
     // camera
     const EditorCamera = new EditorOrbitCamera3D(DefaultConfig);
@@ -245,10 +245,10 @@ export function createEditor() {
     geo.build();
     ground.geometry = geo;
     const ground_material = new PlainColorMaterialResource(DefaultConfig);
-    ground_material.color = color(1, 1, 1, 0.01);
+    ground_material.color = color(0.8, 0.8, 0.8);
     ground.material = ground_material;
-    ground.local_scale = vec3(10000, 1, 10000);
-    ground.local_position = vec3(0, -50, 0);
+    ground.local_scale = vec3(1000, 1, 1000);
+    ground.local_position = vec3(0, -100, 0);
     World.add_Child(ground);
 
     EditorSceneTree.start_Loop();
