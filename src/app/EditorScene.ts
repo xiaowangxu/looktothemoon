@@ -53,7 +53,7 @@ const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
     } as Config;
 });
 
-const DInstanceCache = new Cacher((config: Config)=>{
+const DInstanceCache = new Cacher((config: Config) => {
     return new ResourceInstanceCache(config);
 });
 
@@ -81,7 +81,7 @@ export function createEditor() {
     const pipeline = DRenderPipeline.get(DefaultConfig).expect;
     renderer.render_pipeline = pipeline;
     EditorViewport.renderer_3d = renderer;
-    EditorViewport.transparent = true;
+    // EditorViewport.transparent = true;
     EditorViewportContainer.add_Child(EditorViewport);
     // camera
     const EditorCamera = new EditorOrbitCamera3D(DefaultConfig);
@@ -244,7 +244,9 @@ export function createEditor() {
     const geo = new BoxGeometryResource(DefaultConfig);
     geo.build();
     ground.geometry = geo;
-    ground.material = new UVMaterialResource(DefaultConfig);
+    const ground_material = new PlainColorMaterialResource(DefaultConfig);
+    ground_material.color = color(1, 1, 1, 0.01);
+    ground.material = ground_material;
     ground.local_scale = vec3(10000, 1, 10000);
     ground.local_position = vec3(0, -50, 0);
     World.add_Child(ground);

@@ -439,7 +439,6 @@ export class VisualWorld3D extends ConfiguredObject {
 
     private update_Sky(scene_tree: SceneTree) {
         if (this.sky_changed) {
-            this.sky_changed = false;
             this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false);
             this.render_server.render_state.set_ViewportProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
             this.render_server.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);

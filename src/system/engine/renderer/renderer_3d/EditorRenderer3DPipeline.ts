@@ -382,12 +382,12 @@ uniform sampler2D sky;
 ${RenderServerDevice.FrameOutputBufferCode}
 
 void main() {
-	vec4 dir = mat4(mat3(camera_world)) * inverse(camera_projection) * vec4((v_uv * 2.0 - 1.0), 1.0, 1.0);
-	vec3 R = normalize(dir.xyz);
-	float theta = atan(R.z, R.x);
-	float gamma = acos(R.y);
-	// o_color = texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
-    o_color = vec4(0.8, 0.8, 0.8, 1.0);
+	  vec4 dir = mat4(mat3(camera_world)) * inverse(camera_projection) * vec4((v_uv * 2.0 - 1.0), 1.0, 1.0);
+	  vec3 R = normalize(dir.xyz);
+	  float theta = atan(R.z, R.x);
+	  float gamma = acos(R.y);
+	  o_color = texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
+    // o_color = vec4(0.8, 0.8, 0.8, 1.0);
     o_normal = vec4(0.0, 0.0, 0.0, 1.0);
 }
 `;

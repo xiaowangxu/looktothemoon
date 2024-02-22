@@ -12,4 +12,12 @@ export class Cacher<Arg, Type> {
         this.cache_map.set(arg, t);
         return t;
     }
+
+    public forget(arg: Arg) {
+        this.cache_map.delete(arg);
+    }
+
+    public memorize(arg: Arg, item: Type) {
+        this.cache_map.set(arg, item);
+    }
 }
