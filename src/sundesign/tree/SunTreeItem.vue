@@ -401,7 +401,7 @@ defineExpose({
 relative-offset-small = padding-extend-small + (content-size-small / 2)
 relative-offset-normal = padding-extend-normal + (content-size-normal / 2)
 relative-offset-large = padding-extend-large + (content-size-large / 2)
-drop-indicator-width = 2px
+drop-indicator-width = 1.75px
 
 .__sun-design-tree-container__
     display: flex
@@ -496,6 +496,13 @@ drop-indicator-width = 2px
         left: 'calc(var(--Depth) * var(--Indent, %s))' % (content-size-normal + gap-normal)
     &[data-size="large"]
         left: 'calc(var(--Depth) * var(--Indent, %s))' % (content-size-large + gap-large)
+    &.indent
+        &[data-size="small"]
+            left: 'calc((var(--Depth) - 1) * var(--Indent, %s))' % (content-size-small + gap-small)
+        &[data-size="normal"]
+            left: 'calc((var(--Depth) - 1) * var(--Indent, %s))' % (content-size-normal + gap-normal)
+        &[data-size="large"]
+            left: 'calc((var(--Depth) - 1) * var(--Indent, %s))' % (content-size-large + gap-large)
     &.before
         top: - (panel-padding / 2)
     &.after
