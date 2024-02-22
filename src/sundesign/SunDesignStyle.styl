@@ -145,10 +145,10 @@
                 color: var(--font-color-active-disabled)
                 &::placeholder
                     color: var(--placeholder-color-disabled)
-
-    // disabled
-    &:disabled, &.disabled
-        cursor: not-allowed
+    
+    input, button, textarea
+        &:disabled, &.disabled
+            pointer-events: none
             
     &.bordered
         border: solid-border
