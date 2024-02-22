@@ -1,6 +1,6 @@
 <template>
     <div style="display: flex; align-items: flex-start; gap: 8px; pointer-events: none;">
-        <SunPanel>
+        <SunPanel :trap-focus="false">
             <SunPanelContainer>
                 <SunButtonMenuPopup ref="sys_option_ref" :options="system_options" squared flat>
                     <svg xmlns="http://www.w3.org/2000/svg" id="a" viewBox="7 7 34 34">
@@ -32,7 +32,7 @@
                 <SunButtonMenuPopup ref="view_option_ref" :options="options" flat>视图</SunButtonMenuPopup>
             </SunPanelContainer>
         </SunPanel>
-        <SunPanel size="small">
+        <SunPanel size="small" :trap-focus="false">
             <SunPanelContainer>
                 <SunButton size="small" flat squared>
                     <Save />

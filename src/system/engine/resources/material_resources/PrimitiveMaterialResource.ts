@@ -40,7 +40,7 @@ export const PrimitiveVertexShader = new Cacher((config: Config) => {
         v_uv = a_uv;
         v_world = world.xyz;
     }`;
-    return config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect();
+    return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect());
 });
 export const PrimitiveVertexShaderUniforms: UniformInitSet<WebGL2RenderState> = {
     model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.make_Identity() },
@@ -63,7 +63,7 @@ export const PrimitiveFragmentPreZShader = new Cacher((config: Config) => {
     void main() {
         o_normal = vec4(normalize(v_normal), 1.0);
     }`;
-    return config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect();
+    return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());
 });
 export const PrimitiveFragmentPreZShaderUniforms: UniformInitSet<WebGL2RenderState> = {};
 
@@ -155,8 +155,8 @@ export class PlainColorMaterialResource extends MaterialResource {
 
     public update_Material() {
         const shader = this.render_server.create_Shader();
-        const vertex_shader = PrimitiveVertexShader.get(this.config);
-        const fragment_prez_shader = PrimitiveFragmentPreZShader.get(this.config);
+        const vertex_shader = PrimitiveVertexShader.get(this.config).expect;
+        const fragment_prez_shader = PrimitiveFragmentPreZShader.get(this.config).expect;
         const fragment_shade_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_shade_shader).expect();
         const fragment_oit_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, PlainColorMaterialResource.#fragment_oit_shader).expect();
         shader.set_Shaders(
@@ -238,7 +238,7 @@ export class NormalMaterialResource extends MaterialResource {
 
     public update_Material() {
         const shader = this.render_server.create_Shader();
-        const vertex_shader = PrimitiveVertexShader.get(this.config);
+        const vertex_shader = PrimitiveVertexShader.get(this.config).expect;
         const fragment_shade_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, NormalMaterialResource.#fragment_shade_shader).expect();
         shader.set_Shaders(
             vertex_shader,
@@ -301,7 +301,7 @@ export class UVMaterialResource extends MaterialResource {
 
     public update_Material() {
         const shader = this.render_server.create_Shader();
-        const vertex_shader = PrimitiveVertexShader.get(this.config);
+        const vertex_shader = PrimitiveVertexShader.get(this.config).expect;
         const fragment_shade_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, UVMaterialResource.#fragment_shade_shader).expect();
         shader.set_Shaders(
             vertex_shader,
@@ -669,8 +669,8 @@ export class StandardMaterialResource extends MaterialResource {
 
     public update_Material() {
         const shader = this.render_server.create_Shader();
-        const vertex_shader = PrimitiveVertexShader.get(this.config);
-        const fragment_prez_shader = PrimitiveFragmentPreZShader.get(this.config);
+        const vertex_shader = PrimitiveVertexShader.get(this.config).expect;
+        const fragment_prez_shader = PrimitiveFragmentPreZShader.get(this.config).expect;
         const fragment_shade_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, StandardMaterialResource.#fragment_shade_shader).expect();
         const fragment_oit_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, StandardMaterialResource.#fragment_oit_shader).expect();
         shader.set_Shaders(

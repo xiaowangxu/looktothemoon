@@ -29,6 +29,8 @@ export abstract class GeometryResource extends Resource {
 export class MultiGeometryResource extends GeometryResource {
     private readonly _bbox: Box3 = new Box3();
 
+    private readonly override_geometry_ref: Ref<GeometryResource> = new Ref();
+
     private readonly instance_transform_attribute_buffer_ref: Ref<RenderDeviceMatrix4AttributeBuffer<WebGL2RenderState, WebGL2RenderStateBuffer>> = new Ref();
 
     constructor(config: Config) {
@@ -39,7 +41,9 @@ export class MultiGeometryResource extends GeometryResource {
     }
 
     public set_OverrideGeometry(geometry: GeometryResource) {
+        if (geometry instanceof MultiGeometryResource)  throw new Error('<MultiGeometryResource> set_OverrideGeometry: base geometry should not be another MultiGeometryResource');
         if (!geometry.geometry.has_geometry) throw new Error('<MultiGeometryResource> set_OverrideGeometry: base geometry does not have a geometry, maybe it is not properly initialized');
+        this.override_geometry_ref.value = geometry;
         const attributes = geometry.geometry.get_AttributeBuffers()!;
         const index = geometry.geometry.get_IndexAttributeBuffer()!;
         const vertex_count = geometry.geometry.vertex_count!;
@@ -85,6 +89,7 @@ export class MultiGeometryResource extends GeometryResource {
     protected dispose(): void {
         console.log(">>> dispose <MultiGeometryResource>", this.rid);
         this.instance_transform_attribute_buffer_ref.clear();
+        this.override_geometry_ref.clear();
         super.dispose();
     }
 }

@@ -10,47 +10,49 @@
         </div> -->
     </div>
 
-    <SunPanelResizeContainerRemainNob id="editor-left-container" :nob-size="14" :expand-indicator="false"
-        :first-snap="25" :initial-size="240" :max="-300" hide-border initial-collapse="first">
+    <SunPanelResizeContainerRemainNob id="editor-left-container" click-nob-action="toggle" :nob-size="14"
+        :expand-indicator="false" :first-snap="25" :initial-size="240" :max="-300" initial-collapse="first">
         <template #nob>
             <div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
-                <div class="editor-container-nob" style="width: 4px; height: clamp(30px, 6%, 50px);">
-                </div>
+                <button class="editor-container-nob" style="width: 4px; height: clamp(30px, 6%, 50px);">
+                </button>
             </div>
         </template>
         <template #first>
-            <SunPanel
+            <SunPanel :trap-focus="false"
                 style="width: max(150px, calc(100% - 14px)); position: absolute; right: 0px; margin: 14px 0px; height: calc(100% - 28px);">
+                <EditorOutline style="width: 100%; height: 100%;" />
             </SunPanel>
         </template>
         <template #second>
 
-            <SunPanelResizeContainerRemainNob id="editor-right-container" style="position: absolute; inset: 0;" hide-border
-                :nob-size="14" :expand-indicator="false" :first-snap="25" flip-direction :initial-size="240" :max="-80"
-                initial-collapse="second">
+            <SunPanelResizeContainerRemainNob id="editor-right-container" click-nob-action="toggle"
+                style="position: absolute; inset: 0;" :nob-size="14" :expand-indicator="false" :first-snap="25"
+                flip-direction :initial-size="240" :max="-80" initial-collapse="second">
                 <template #nob>
                     <div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
-                        <div class="editor-container-nob" style="width: 4px; height: clamp(30px, 6%, 50px);">
-                        </div>
+                        <button class="editor-container-nob" style="width: 4px; height: clamp(30px, 6%, 50px);">
+                        </button>
                     </div>
                 </template>
                 <template #first>
 
-                    <SunPanelResizeContainerRemainNob id="editor-bottom-container" style="position: absolute; inset: 0;" hide-border
-                        :nob-size="14" :expand-indicator="false" :first-snap="25" flip-direction :initial-size="240"
-                        vertical :max="-200" initial-collapse="second">
+                    <SunPanelResizeContainerRemainNob id="editor-bottom-container" click-nob-action="toggle"
+                        style="position: absolute; inset: 0;" :nob-size="14" :expand-indicator="false" :first-snap="25"
+                        flip-direction :initial-size="240" vertical initial-collapse="second">
                         <template #nob>
                             <div
-                                style="width: 100%; height: 100%;; display: flex; justify-content: center; align-items: center;">
-                                <div class="editor-container-nob" style="height: 4px; width: clamp(30px, 6%, 50px);">
-                                </div>
+                                style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
+                                <button class="editor-container-nob" style="height: 4px; width: clamp(30px, 6%, 50px);">
+                                </button>
                             </div>
                         </template>
                         <template #first>
-                            <EditorMenuBar id="top-left-panel" />
+                            <EditorMenuBar style="position: absolute; top: 14px; left: 0px;" />
+                            <EditorCameraControl style="position: absolute; top: 14px; right: 0px;" />
                         </template>
                         <template #second>
-                            <SunPanel
+                            <SunPanel :trap-focus="false"
                                 style="height: max(150px, calc(100% - 14px)); position: absolute; top: 0px; margin: 0px 0px; width: 100%;">
                                 <EditorFileSystem />
                             </SunPanel>
@@ -59,7 +61,7 @@
 
                 </template>
                 <template #second>
-                    <SunPanel
+                    <SunPanel :trap-focus="false"
                         style="width: max(150px, calc(100% - 14px)); position: absolute; left: 0px; margin: 14px 0px; height: calc(100% - 28px);">
                     </SunPanel>
                 </template>
@@ -74,20 +76,31 @@
 import SunPanel from '@/sundesign/panel/SunPanel.vue';
 import SunPanelResizeContainerRemainNob from '@/sundesign/panel/SunPanelResizeContainerRemainNob.vue';
 import EditorMenuBar from './EditorMenuBar.vue';
+import EditorOutline from './EditorOutline.vue';
 import EditorFileSystem from './EditorFileSystem.vue';
+import EditorCameraControl from './EditorCameraControl.vue';
 
 </script>
 
 <style lang="stylus">
-#editor-left-container {
-    position: fixed;
-    inset: 0;
-}
+@import '../sundesign/SunDesignStyleConstants.styl';
+
+#editor-left-container
+    position: fixed
+    inset: 0
 
 .editor-container-nob
+    border: none
+    padding: 0px
+    margin: 0px
+    cursor: inherit
     border-radius: 999px;
     background-color: var(--placeholder-color-disabled)
     opacity: 75%
+
+    &:focus-visible
+        outline: focus-width focus-color solid
+        outline-offset: focus-width
 
 #editor-left-container,
 #editor-bottom-container,
@@ -108,8 +121,5 @@ import EditorFileSystem from './EditorFileSystem.vue';
 }
 
 #top-left-panel {
-    position: absolute;
-    top: 14px;
-    left: 0px;
 }
 </style>

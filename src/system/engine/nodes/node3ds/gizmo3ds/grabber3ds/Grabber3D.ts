@@ -185,8 +185,8 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     public update_Material() {
         const render_server = this.config.render_server;
         const shader = render_server.create_Shader();
-        const vertex_shader = PrimitiveVertexShader.get(this.config);
-        const fragment_prez_shader = PrimitiveFragmentPreZShader.get(this.config);
+        const vertex_shader = PrimitiveVertexShader.get(this.config).expect;
+        const fragment_prez_shader = PrimitiveFragmentPreZShader.get(this.config).expect;
         const fragment_shade_shader = render_server.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_shade_shader).expect();
         const fragment_oit_shader = render_server.render_state.create_Shader(RenderStateShaderType.Fragment, GrabberPlainColorMaterialResource.#fragment_oit_shader).expect();
         shader.set_Shaders(

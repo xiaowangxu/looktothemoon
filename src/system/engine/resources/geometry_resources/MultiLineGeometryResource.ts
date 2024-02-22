@@ -11,7 +11,7 @@ import { box3 } from "@/system/fivepebble/geometries/Box3";
 import type { Config } from "../../ConfiguredObject";
 
 const PositionAttributeBuffer = new Cacher((config: Config) => {
-    return new RenderDeviceVector3AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
+    return new Ref(new RenderDeviceVector3AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
         vec3(- 1, 2, 0),
         vec3(1, 2, 0),
         vec3(- 1, 1, 0),
@@ -20,11 +20,11 @@ const PositionAttributeBuffer = new Cacher((config: Config) => {
         vec3(1, 0, 0),
         vec3(- 1, - 1, 0),
         vec3(1, - 1, 0),
-    ]);
+    ]));
 });
 
 const UVAttributeBuffer = new Cacher((config: Config) => {
-    return new RenderDeviceVector2AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
+    return new Ref(new RenderDeviceVector2AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
         vec2(- 1, 2),
         vec2(1, 2),
         vec2(- 1, 1),
@@ -33,11 +33,11 @@ const UVAttributeBuffer = new Cacher((config: Config) => {
         vec2(1, - 1),
         vec2(- 1, - 2),
         vec2(1, - 2),
-    ]);
+    ]));
 });
 
 const IndexAttributeBuffer = new Cacher((config: Config) => {
-    return new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 2, 1, 2, 3, 1, 2, 4, 3, 4, 5, 3, 4, 6, 5, 6, 7, 5]);
+    return new Ref(new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 2, 1, 2, 3, 1, 2, 4, 3, 4, 5, 3, 4, 6, 5, 6, 7, 5]));
 });
 
 export class MultiLineGeometryResource extends GeometryResource {
@@ -53,8 +53,8 @@ export class MultiLineGeometryResource extends GeometryResource {
         this.geometry.set_Geometry(
             RenderStatePrimitiveType.Triangles,
             {
-                position: PositionAttributeBuffer.get(this.config),
-                uv: UVAttributeBuffer.get(this.config),
+                position: PositionAttributeBuffer.get(this.config).expect,
+                uv: UVAttributeBuffer.get(this.config).expect,
                 start: {
                     attribute: this.start_attribute_buffer_ref.expect,
                     location: 10,
@@ -64,7 +64,7 @@ export class MultiLineGeometryResource extends GeometryResource {
                     location: 11,
                 }
             },
-            IndexAttributeBuffer.get(this.config),
+            IndexAttributeBuffer.get(this.config).expect,
             undefined,
             box3(vec3(0, 0, 0), vec3(3, 1, 3)),
             false

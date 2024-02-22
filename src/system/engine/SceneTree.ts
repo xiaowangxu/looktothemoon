@@ -5,10 +5,10 @@ import { Singletion } from "./singletions/Singletion";
 import { Node, Viewport } from "./nodes/Node";
 import type { World3D } from "./worlds/world3ds/World3D";
 import { ConfiguredObject, type Config } from "./ConfiguredObject";
-import { Vector2 } from "../fivepebble/linear_algebra/Vector2";
+import { Ref } from "../utils/RefCounted";
 
 export class SceneTree extends ConfiguredObject {
-    private readonly input_action_map: ShortCutActionMap = new ShortCutActionMap(this.config);
+    private readonly input_action_map: Ref<ShortCutActionMap> = new Ref(new ShortCutActionMap(this.config));
     private readonly root: Node;
     private readonly clock: Clock = new Clock();
     private readonly physics_fps: number;
@@ -41,8 +41,7 @@ export class SceneTree extends ConfiguredObject {
         this.physics_fps = this.config.physics_fps;
     }
 
-    public notify_TreeChange() {
-    }
+    public notify_TreeChange() { }
 
     private _loop_func = this.loop.bind(this);
     private loop() {
@@ -134,11 +133,21 @@ export class SceneTree extends ConfiguredObject {
 
     public unregister_Singleton(singletion: typeof Singletion) {
         const name = singletion.singleton_name;
-        if (this.singletions.has(name)) this.singletions.delete(name);
+        if (this.singletions.has(name)) {
+            this.singletions.get(name)!.dispose();
+            this.singletions.delete(name);
+        }
     }
 
     public get_Singleton<T extends typeof Singletion>(singletion: T): InstanceType<T> | undefined {
         return this.singletions.get(singletion.singleton_name) as InstanceType<T> | undefined;
+    }
+
+    public clear_Singletons() {
+        for (const [name, singletion] of [...this.singletions.entries()]) {
+            singletion.dispose();
+            this.singletions.delete(name);
+        }
     }
 
     public add_LinkedTree(tree: SceneTree) {
@@ -147,6 +156,10 @@ export class SceneTree extends ConfiguredObject {
 
     public remove_LinkedTree(tree: SceneTree) {
         this.linked_trees.delete(tree);
+    }
+
+    public clear_LinkedTree() {
+        this.linked_trees.clear();
     }
 
     public queue_Free(node: Node) {
@@ -160,7 +173,7 @@ export class SceneTree extends ConfiguredObject {
     }
 
     public get_InputActionMap() {
-        return this.input_action_map;
+        return this.input_action_map.expect;
     }
 
     public get_ActiveViewports(): Viewport[] {
@@ -216,5 +229,24 @@ export class SceneTree extends ConfiguredObject {
             tween.stop();
             this.tweens.delete(tween);
         }
+    }
+
+    public clear_Tweens() {
+        this.tweens.clear();
+    }
+
+    public dispose() {
+        this.stop_Loop();
+        this.clear_Tweens();
+        this.node_queued_free.clear();
+        for (const child of [...this.root.children]) {
+            this.root.remove_Child(child);
+            child.free();
+        }
+        this.root.set_SceneTree(undefined);
+        this.root.free();
+        this.clear_Singletons();
+        this.clear_LinkedTree();
+        this.input_action_map.clear();
     }
 }

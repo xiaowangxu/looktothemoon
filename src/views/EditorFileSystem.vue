@@ -17,59 +17,59 @@
         </SunPanelContainer>
 
         <SunPanelSeparator /> -->
-
-        <SunPanelResizeContainer style="width: 100%; height: 100%;">
-            <template #first>
-                <SunPanel container vertical style="width: 100%; height: 100%;">
-                    <SunPanelContainer gap>
-                        <SunLineEdit style="flex: 1;" :model-value="'test'" />
-                        <SunSelect :prefered-direction="1" icon-only selected-icon squared :model-value="2" :options="[[
-                            { uid: 0, label: '文件名顺序', icon: 'ArrowDownAZ' },
-                            { uid: 1, label: '文件名逆序', icon: 'ArrowUpZA' },
-                            { uid: 2, label: '类型', icon: 'ArrowDownWideNarrow' },
-                        ]]">
-                        </SunSelect>
-                    </SunPanelContainer>
-                    <SunPanelSeparator />
-                    <SunPanelFoldContainer unfold-style="flex: 1;" label="虚拟文件系统">
-                        <template #append>
-                            <SunButton size="small" flat squared @click="tree_ref?.toggle(true)">
-                                <FoldVertical />
-                            </SunButton>
-                        </template>
-                        <SunScrollContainer content-style="width: 100%;">
-                            <SunPanelContainer vertical style="width: 100%;">
-                                <!-- :indent="12" :leaf-indent="9" -->
-                                <SunTree ref="tree_ref" uid="vfs-tree" :options="fs_options" :filter-sort="(sort as any)"
-                                    @click="onClick" :click-folding="false" :allow-drag-reorder="false" @edit="onEdit"
-                                    @drop="onDrop" @contextmenu="onContextMenu">
-                                </SunTree>
-                            </SunPanelContainer>
-                        </SunScrollContainer>
-                    </SunPanelFoldContainer>
-                    <SunPanelSeparator />
-                    <!-- <SunPanelFoldContainer unfold-style="flex-basis: 100px; flex-grow: 0; flex-shrink: 1;">
+        
+    <SunPanelResizeContainer style="width: 100%; height: 100%;">
+        <template #first>
+            <SunPanel container vertical style="width: 100%; height: 100%;">
+                <SunPanelContainer gap>
+                    <SunLineEdit style="flex: 1;" :model-value="'test'" />
+                    <SunSelect :prefered-direction="1" icon-only selected-icon squared :model-value="2" :options="[[
+                        { uid: 0, label: '文件名顺序', icon: 'ArrowDownAZ' },
+                        { uid: 1, label: '文件名逆序', icon: 'ArrowUpZA' },
+                        { uid: 2, label: '类型', icon: 'ArrowDownWideNarrow' },
+                    ]]">
+                    </SunSelect>
+                </SunPanelContainer>
+                <SunPanelSeparator />
+                <SunPanelFoldContainer unfold-style="flex: 1;" label="虚拟文件系统">
+                    <template #append>
+                        <SunButton size="small" flat squared @click="tree_ref?.toggle(true)">
+                            <FoldVertical />
+                        </SunButton>
+                    </template>
+                    <SunScrollContainer content-style="width: 100%;">
+                        <SunPanelContainer vertical style="width: 100%;">
+                            <!-- :indent="12" :leaf-indent="9" -->
+                            <SunTree ref="tree_ref" uid="vfs-tree" :options="fs_options" :filter-sort="(sort as any)"
+                                @click="onClick" :click-folding="false" :allow-drag-reorder="false" @edit="onEdit"
+                                @drop="onDrop" @contextmenu="onContextMenu">
+                            </SunTree>
+                        </SunPanelContainer>
+                    </SunScrollContainer>
+                </SunPanelFoldContainer>
+                <SunPanelSeparator />
+                <!-- <SunPanelFoldContainer unfold-style="flex-basis: 100px; flex-grow: 0; flex-shrink: 1;">
                     </SunPanelFoldContainer> -->
-                </SunPanel>
-            </template>
-            <template #second>
-                <SunPanel container vertical style="height: 100%;">
-                    <SunScrollContainer style="width: 100%; height: unset;">
-                        <SunPanelContainer>
-                            <SunBreadcrumb :options="nav_options" :filter-sort="(sort as any)" />
-                        </SunPanelContainer>
-                    </SunScrollContainer>
-                    <SunPanelSeparator />
-                    <SunScrollContainer style="width: 100%; flex: 1; height: 0;">
-                        <SunPanelContainer>
-                            <div style="white-space: pre; font-size: 12px; padding: 10px; font-family: 'fira code';"
-                                v-text="data"></div>
-                        </SunPanelContainer>
-                    </SunScrollContainer>
-                </SunPanel>
-            </template>
-            <SunPanelSeparator />
-        </SunPanelResizeContainer>
+            </SunPanel>
+        </template>
+        <template #second>
+            <SunPanel container vertical style="height: 100%;">
+                <SunScrollContainer style="width: 100%; height: unset;">
+                    <SunPanelContainer>
+                        <SunBreadcrumb :options="nav_options" :filter-sort="(sort as any)" />
+                    </SunPanelContainer>
+                </SunScrollContainer>
+                <SunPanelSeparator />
+                <SunScrollContainer style="width: 100%; flex: 1; height: 0;">
+                    <SunPanelContainer>
+                        <div style="white-space: pre; font-size: 12px; padding: 10px; font-family: 'fira code';"
+                            v-text="data"></div>
+                    </SunPanelContainer>
+                </SunScrollContainer>
+            </SunPanel>
+        </template>
+        <SunPanelSeparator />
+    </SunPanelResizeContainer>
 
     <!-- </SunPanel> -->
 </template>
@@ -110,10 +110,6 @@ const props = defineProps<{
 const tree_ref = ref<InstanceType<typeof SunTree> | undefined>();
 const fs_options = VFSTreeOptionsRef.watch(fspath(props.root ?? '/'), props.containRoot ?? false) as SunTreeOptions;
 const nav_options = ref<BreadcrumbItem[]>([]);
-
-watch(fs_options.options, () => {
-    console.log('>>>>>>');
-}, { deep: true });
 
 function sort(options: FileSystemRefItem[]) {
     return [...options].sort((a, b) => {

@@ -41,24 +41,33 @@ import { ArrayGeometryResource } from "@/system/engine/resources/geometry_resour
 import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
 import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { observeResize } from "@/sundesign/SunDesignConstants";
+import { Cacher } from "@/system/utils/Cacher";
+import { Ref } from "@/system/utils/RefCounted";
 
-export function createEditor() {
-    const render_server_size = vec2(1024, 1024);
-    const render_server_canvas = document.getElementById('render-server-canvas') as HTMLCanvasElement;
-    const DefaultConfig: Config = {
-        render_server: new RenderServerDevice(render_server_canvas),
-        render_server_size: render_server_size,
+const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
+    return {
+        render_server: new RenderServerDevice(canvas),
         render_server_pixel_ratio: undefined,
         render_server_scale: 1,
         physics_fps: 60,
-    }
-    const DefaultInstanceCache = new ResourceInstanceCache(DefaultConfig);
+    } as Config;
+});
 
-    observeResize(render_server_canvas, (entry) => {
-        const w = Math.ceil(entry.contentRect.width);
-        const h = Math.ceil(entry.contentRect.height);
-        render_server_size.set(w, h);
-    });
+const DInstanceCache = new Cacher((config: Config)=>{
+    return new ResourceInstanceCache(config);
+});
+
+const DRenderer = new Cacher((config: Config) => {
+    return new Ref(new EditorRenderer3D(config));
+});
+
+const DRenderPipeline = new Cacher((config: Config) => {
+    return new Ref(new EditorRenderer3DPipeline(config));
+});
+
+export function createEditor() {
+    const render_server_canvas = document.getElementById('render-server-canvas') as HTMLCanvasElement;
+    const DefaultConfig: Config = DConfig.get(render_server_canvas);
 
     // viewport container
     const EditorViewportContainer = new ViewportDomContainer(DefaultConfig);
@@ -68,8 +77,8 @@ export function createEditor() {
     const EditorViewport = new Viewport(DefaultConfig);
     EditorViewport.debug = true;
     EditorViewport.world_3d = new World3D(DefaultConfig);
-    const renderer = new EditorRenderer3D(DefaultConfig);
-    const pipeline = new EditorRenderer3DPipeline(DefaultConfig);
+    const renderer = DRenderer.get(DefaultConfig).expect;
+    const pipeline = DRenderPipeline.get(DefaultConfig).expect;
     renderer.render_pipeline = pipeline;
     EditorViewport.renderer_3d = renderer;
     EditorViewport.transparent = true;
@@ -128,8 +137,6 @@ export function createEditor() {
     ]));
 
     const geometry = new TorusGeometryResource(DefaultConfig);
-    // geometry.phi_segments = 32;
-    // geometry.theta_segments = 64;
     geometry.build();
 
     const multi_geometry = new MultiGeometryResource(DefaultConfig);
@@ -147,23 +154,12 @@ export function createEditor() {
 
     multi_geometry.commit_InstanceTransforms();
 
-    const geometry2 = new BoxGeometryResource(DefaultConfig);
-    geometry2.build();
-
-    const material1 = new NormalMaterialResource(DefaultConfig);
-    material1.remap = true;
-
-    const material2 = new StandardMaterialResource(DefaultConfig);
-    material2.color = color(1, 1, 1, 1);
-
-    const material3 = new PlainColorMaterialResource(DefaultConfig);
-    // material3.color = color(1, 0, 1, 1);
-    material3.texture = new ImageTextureResource(DefaultConfig);
-
+    const material = new StandardMaterialResource(DefaultConfig);
+    material.color = color(1, 1, 1, 1);
 
     const Mesh1 = new MeshInstance3D(DefaultConfig);
     Mesh1.geometry = multi_geometry;
-    Mesh1.material = material2;
+    Mesh1.material = material;
     Mesh1.local_scale = vec3(100, 100, 100);
     Mesh1.local_position = vec3(0, 0, -100);
     Mesh1.local_visible = true;
@@ -222,18 +218,16 @@ export function createEditor() {
     // 	}
     // }
 
-    EditorViewport.signal_input.connect((evt, pro) => {
-        if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
-            EditorSceneTree.start_Tween(
-                tween_parallel(
-                    new PropertyTween(point_light, 'radius', Math.random() * 10, 0.4, TweenTransitionType.Linear, TweenEasingType.Out),
-                    new PropertyTween(point_light, 'color', vec3(Math.random(), Math.random(), Math.random()), 0.4, TweenTransitionType.Linear, TweenEasingType.Out)
-                )
-            );
-        }
-    });
-
-    const signal = new SignalEmitter<(...args: any[]) => void>();
+    // EditorViewport.signal_input.connect((evt, pro) => {
+    //     if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
+    //         EditorSceneTree.start_Tween(
+    //             tween_parallel(
+    //                 new PropertyTween(point_light, 'radius', Math.random() * 10, 0.4, TweenTransitionType.Linear, TweenEasingType.Out),
+    //                 new PropertyTween(point_light, 'color', vec3(Math.random(), Math.random(), Math.random()), 0.4, TweenTransitionType.Linear, TweenEasingType.Out)
+    //             )
+    //         );
+    //     }
+    // });
 
     const multi_line_geometry = new MultiLineGeometryResource(DefaultConfig);
     const multi_line_material = new MultiLineMaterialResource(DefaultConfig);
@@ -246,33 +240,6 @@ export function createEditor() {
     MeshLine.render_queue = 1;
     World.add_Child(MeshLine);
 
-    signal.connect((action) => {
-        if (action === 'orth') {
-            EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_CameraTypeOrth', true, false));
-        }
-        else if (action === 'persp') {
-            EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_CameraTypePersp', true, false));
-        }
-        else if (action === '顶视图') {
-            EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_TopView', true, false));
-        }
-        else if (action === '底视图') {
-            EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_BottomView', true, false));
-        }
-        else if (action === '左视图') {
-            EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_LeftView', true, false));
-        }
-        else if (action === '右视图') {
-            EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_RightView', true, false));
-        }
-        else if (action === '前视图') {
-            EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_FrontView', true, false));
-        }
-        else if (action === '后视图') {
-            EditorViewport.push_InputEvent(new ActionInputEvent(DefaultConfig).set_Action('switch_BackView', true, false));
-        }
-    });
-
     const ground = new MeshInstance3D(DefaultConfig);
     const geo = new BoxGeometryResource(DefaultConfig);
     geo.build();
@@ -282,99 +249,13 @@ export function createEditor() {
     ground.local_position = vec3(0, -50, 0);
     World.add_Child(ground);
 
-    // function create_CompassScene() {
-    // 	const CompassConfig: Config = {
-    // 		render_server: new RenderServerDevice(document.getElementById('compass-canvas')! as HTMLCanvasElement),
-    // 		render_server_size: vec2(50, 50),
-    // 		render_server_pixel_ratio: undefined,
-    // 		render_3d_pipeline: Renderer3DPipeline,
-    // 		render_queue_max_solid_count: 6,
-    // 		render_queue_max_transparent_count: 0,
-    // 		disabled_render_queue1: true,
-    // 		physics_fps: 0
-    // 	}
-
-    // 	const red = color8(0xd8, 0x2d, 0x4e);
-    // 	const green = color8(0x04, 0xa9, 0x73);
-    // 	const blue = color8(0x46, 0x6f, 0xd6);
-    // 	const neg_color = color8(128, 128, 128, 255);
-    // 	const sphere_radius = 0.4;
-    // 	const distance = 0.8;
-    // 	const camera_zoom = 0.55;
-
-    // 	const viewport = new Viewport(CompassConfig);
-    // 	viewport.transparent = true;
-    // 	viewport.world_3d = new World3D(CompassConfig);
-    // 	viewport.update_mode = ViewportUpdateMode.Always;
-    // 	viewport.color_map = false;
-    // 	viewport.position = vec2(0, 0);
-    // 	viewport.size = vec2(50, 50);
-
-    // 	const red_mat = new PlainColorMaterialResource(CompassConfig);
-    // 	red_mat.color = red;
-    // 	const green_mat = new PlainColorMaterialResource(CompassConfig);
-    // 	green_mat.color = green;
-    // 	const blue_mat = new PlainColorMaterialResource(CompassConfig);
-    // 	blue_mat.color = blue;
-    // 	const neg_mat = new PlainColorMaterialResource(CompassConfig);
-    // 	neg_mat.color = neg_color;
-
-    // 	const box = new BoxGeometryResource(CompassConfig);
-    // 	box.build();
-    // 	const box_mesh = new MeshInstance3D(CompassConfig);
-    // 	box_mesh.geometry = box;
-    // 	box_mesh.set_SurfaceMaterial(0, green_mat);
-    // 	box_mesh.set_SurfaceMaterial(1, neg_mat);
-    // 	box_mesh.set_SurfaceMaterial(2, blue_mat);
-    // 	box_mesh.set_SurfaceMaterial(3, neg_mat);
-    // 	box_mesh.set_SurfaceMaterial(4, red_mat);
-    // 	box_mesh.set_SurfaceMaterial(5, neg_mat);
-    // 	viewport.add_Child(box_mesh);
-
-    // 	const camera = new OrthographicCamera3D(CompassConfig);
-    // 	camera.zoom = camera_zoom;
-    // 	camera.local_position = vec3(0, 0, 5);
-    // 	viewport.add_Child(camera);
-
-    // 	const last_lookat = vec3(0, 0, 0);
-
-    // 	const CompassSceneTree = new SceneTree(CompassConfig, viewport);
-
-    // 	EditorSceneTree.add_LinkedTree(CompassSceneTree);
-
-    // 	viewport.signal_resized.connect((size) => {
-    // 		viewport.update_mode = ViewportUpdateMode.Once;
-    // 	});
-
-    // 	viewport.signal_notification.connect((what: NodeNotification) => {
-    // 		if (what === NodeNotification.InternalAfterProcess) {
-    // 			const active_camera = EditorViewport.get_Camera3D();
-    // 			if (active_camera === undefined) return;
-    // 			const lookat_global_position = active_camera.to_Global(vec3(0, 0, 1));
-    // 			const lookat = lookat_global_position.sub(active_camera.global_position).normalize();
-    // 			if (lookat.equal(last_lookat)) return;
-    // 			last_lookat.copy(lookat);
-    // 			camera.local_position = lookat.mult_Number(5);
-    // 			camera.local_rotation = active_camera.global_rotation;
-    // 			viewport.update_mode = ViewportUpdateMode.Once;
-    // 		}
-    // 	});
-    // }
-
     EditorSceneTree.start_Loop();
-    // create_CompassScene();
 
-    // const mesh0 = new ClassLoader(DefaultInstanceCache).fetch<MeshInstance3D>('sys://MonkeyMesh.lttmbin').expect();
-    // mesh0.local_position = vec3(-250, 0, -100);
-    // World.add_Child(mesh0);
-
-    // const mesh1 = new ClassLoader(DefaultInstanceCache).fetch<MeshInstance3D>('res://test.lttmbin').expect();
-    // World.add_Child(mesh1);
     fetch(huli).then(r => r.text()).then(t => {
         const class_saver = new ObjLoader().parse(t).expect();
         class_saver.save(undefined, 'sys://huli.geometry.lttmbin');
 
-        const huli_geo = new ClassLoader(DefaultInstanceCache).fetch<ArrayGeometryResource>('sys://huli.geometry.lttmbin').expect();
+        const huli_geo = new ClassLoader(DInstanceCache.get(DefaultConfig)).fetch<ArrayGeometryResource>('sys://huli.geometry.lttmbin').expect();
 
         const normal_material = new StandardMaterialResource(DefaultConfig);
         const override_material = new MaterialOverrideResource(DefaultConfig);
@@ -388,5 +269,7 @@ export function createEditor() {
         World.add_Child(mesh);
 
     });
+
+    return EditorSceneTree;
 }
 

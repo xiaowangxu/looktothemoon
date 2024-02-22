@@ -45,7 +45,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
 
     // buffer
     private buffer_state: (WebGLBuffer | null)[] = [null, null, null, null, null, null, null, null];
-    public bind_BufferProxy(target: number, buffer: WebGLBuffer | null) {
+    public bind_BufferProxy(target: number, buffer: WebGLBuffer | null, protect_vertex_array: boolean = true) {
         let buffer_state_index = 0;
         switch (target) {
             case this.gl.ARRAY_BUFFER: /*              */ buffer_state_index = 0; break;
@@ -59,7 +59,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             default: throw new Error('<WebGL2RenderState> bind_BufferProxy: bind target point is invalid');
         }
         if (this.buffer_state[buffer_state_index] !== buffer) {
-            if (buffer_state_index === 1) {
+            if (protect_vertex_array && buffer_state_index === 1) {
                 // index buffer
                 this.bind_VertexArrayProxy(null);
             }
@@ -694,7 +694,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public set_VertexArrayIndexBuffer(vertex_array: WebGL2RenderStateVertexArray, buffer: WebGL2RenderStateBuffer | WebGL2RenderStateBufferView): void {
         if (buffer.type !== this.gl.ELEMENT_ARRAY_BUFFER) return;
         this.bind_VertexArrayProxy(vertex_array.vertex_array);
-        if (!this.bind_BufferProxy(this.gl.ELEMENT_ARRAY_BUFFER, buffer.buffer)) {
+        if (!this.bind_BufferProxy(this.gl.ELEMENT_ARRAY_BUFFER, buffer.buffer, false)) {
             this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.buffer);
         }
     }

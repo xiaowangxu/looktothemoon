@@ -10,4 +10,6 @@ export class Singletion extends ConfiguredObject {
         super(config);
         this.scene_tree = scene_tree;
     }
+
+    public dispose(): void { }
 }

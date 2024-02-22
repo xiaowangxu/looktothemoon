@@ -16,4 +16,4 @@ await fetch(sys_vfs).then(res => res.arrayBuffer()).then(array_buffer => VFS.loa
 window.VFS = VFS;
 window.fspath = fspath;
 
-createEditor();
+window.scenetree = createEditor();

@@ -9,7 +9,8 @@
             <div ref="second_container_ref" class="__sun-design-panel-resize-conatiner-remain-nob-second__">
                 <slot name="second" />
             </div>
-            <div class="__sun-design-panel-resize-conatiner-remain-nob-split__" @mousedown="onDragMouseDown">
+            <div class="__sun-design-panel-resize-conatiner-remain-nob-split__" @mousedown="onDragMouseDown"
+                @click="onDragClick">
                 <slot name="nob" :start="start" :end="end" />
             </div>
         </div>
@@ -40,6 +41,7 @@ const props = withDefaults(
         nobSize?: number,
         firstSnap?: number,
         secondSnap?: number,
+        clickNobAction?: 'none' | 'open' | 'close' | 'toggle',
     }>(),
     {
         vertical: false,
@@ -50,6 +52,7 @@ const props = withDefaults(
         expandIndicator: true,
         hideBorder: false,
         nobSize: 8,
+        clickNobAction: 'none',
     }
 );
 
@@ -123,20 +126,21 @@ function onDragMouseMove(evt: MouseEvent) {
     }
 }
 function onDragMouseUp(evt: MouseEvent) {
-    const is_one_closed = start.value || end.value;
-    if (mouse_moved) {
-        if (last_size > min_size.value && is_one_closed) {
-            open_size = last_size;
-        }
-        else {
-            open_size = props.initialSize;
-        }
+    if (mouse_moved && !start.value && !end.value) {
+        open_size = safe_size.value;
     }
-    else if (is_one_closed) {
-        setSize(open_size);
-    }
-    mouse_moved = false;
     removeDraggingEvents();
+}
+function onDragClick(evt: MouseEvent) {
+    if (mouse_moved) return;
+    mouse_moved = false;
+    const is_one_closed = start.value || end.value;
+    switch (props.clickNobAction) {
+        case 'none': break;
+        case 'open': { if (is_one_closed) open(); break; }
+        case 'close': { if (!is_one_closed) close(); break; }
+        case 'toggle': { toggle(); break; }
+    }
 }
 function removeDraggingEvents() {
     window.removeEventListener('mousemove', onDragMouseMove, { capture: true });
@@ -151,6 +155,46 @@ function setSize(val: number) {
     }
     size.value = val;
 }
+function open() {
+    if (open_size <= min_size.value || open_size >= max_size.value) {
+        setSize(props.initialSize);
+    }
+    else {
+        setSize(open_size);
+    }
+}
+function close(part: 'first' | 'second' = props.flipDirection ? 'second' : 'first') {
+    if (!props.flipDirection) {
+        switch (part) {
+            case 'first': { setSize(min_size.value); return; }
+            case 'second': { setSize(max_size.value); return; }
+        }
+    }
+    else {
+        switch (part) {
+            case 'first': { setSize(max_size.value); return; }
+            case 'second': { setSize(min_size.value); return; }
+        }
+    }
+}
+function toggle(part: 'first' | 'second' = props.flipDirection ? 'second' : 'first') {
+    if (props.flipDirection) {
+        if (part === 'first' && end.value || part === 'second' && start.value) {
+            open();
+        }
+        else {
+            close(part);
+        }
+    }
+    else {
+        if (part === 'first' && start.value || part === 'second' && end.value) {
+            open();
+        }
+        else {
+            close(part);
+        }
+    }
+}
 
 onBeforeUnmount(() => {
     removeDraggingEvents();
@@ -159,6 +203,9 @@ onBeforeUnmount(() => {
 // exposes
 defineExpose({
     setSize: setSize,
+    open: open,
+    close: close,
+    toggle: toggle,
 });
 
 </script>

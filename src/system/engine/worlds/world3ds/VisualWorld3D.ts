@@ -685,5 +685,7 @@ export class VisualWorld3D extends ConfiguredObject {
         }
         this.meshes_map.clear();
         this.lights_map.clear();
+        this.sky_frame_buffer.clear();
+        this.sky_texture.clear();
     }
 }
