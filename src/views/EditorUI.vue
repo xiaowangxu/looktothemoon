@@ -114,6 +114,18 @@ import EditorCameraControl from './EditorCameraControl.vue';
     pointer-events: initial;
 }
 
+#editor-left-container,
+#editor-bottom-container,
+#editor-right-container,
+#editor-left-container>.__sun-design-panel-resize-conatiner-remain-nob-first__,
+#editor-left-container>.__sun-design-panel-resize-conatiner-remain-nob-second__,
+#editor-bottom-container>.__sun-design-panel-resize-conatiner-remain-nob-first__,
+#editor-bottom-container>.__sun-design-panel-resize-conatiner-remain-nob-second__,
+#editor-right-container>.__sun-design-panel-resize-conatiner-remain-nob-first__,
+#editor-right-container>.__sun-design-panel-resize-conatiner-remain-nob-second__ {
+    overflow: visible;
+}
+
 #editor-left-container>.__sun-design-panel-resize-conatiner-remain-nob-first__,
 #editor-bottom-container>.__sun-design-panel-resize-conatiner-remain-nob-second__,
 #editor-right-container>.__sun-design-panel-resize-conatiner-remain-nob-second__ {

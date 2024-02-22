@@ -84,6 +84,7 @@ function onClick(uid: UID, evt: MouseEvent) {
     flex-wrap: nowrap
 
 .__sun-design-tabs-container-gapper__
+    background-color: var(--color-normal)
     border-bottom: solid-border
     border-right: none
     flex-grow: 1

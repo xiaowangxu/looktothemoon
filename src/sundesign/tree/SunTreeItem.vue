@@ -401,6 +401,7 @@ defineExpose({
 relative-offset-small = padding-extend-small + (content-size-small / 2)
 relative-offset-normal = padding-extend-normal + (content-size-normal / 2)
 relative-offset-large = padding-extend-large + (content-size-large / 2)
+drop-indicator-width = 2px
 
 .__sun-design-tree-container__
     display: flex
@@ -499,7 +500,7 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
         top: - (panel-padding / 2)
     &.after
         bottom: - (panel-padding / 2)
-    border-top: border-width var(--placeholder-color) solid
+    border-top: drop-indicator-width var(--font-color-active) solid
     pointer-events: none
 
 .__sun-design-tree-item-dropin-indicator__
@@ -512,8 +513,8 @@ relative-offset-large = padding-extend-large + (content-size-large / 2)
     &[data-size="large"]
         left: 'calc(var(--Depth) * var(--Indent, %s))' % (content-size-large + gap-large)
     pointer-events: none
-    border-color: var(--placeholder-color) !important
-    border-width: border-width !important
+    border-color: var(--font-color-active) !important
+    border-width: drop-indicator-width !important
     border-radius: inherit
 
 </style>
