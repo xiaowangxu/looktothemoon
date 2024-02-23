@@ -408,7 +408,6 @@ treeitem-gap = (panel-padding / 2)
     display: flex
     flex-direction: column
     gap: treeitem-gap
-    pointer-events: none
 
 .__sun-design-tree-list-container__
     display: flex
@@ -417,7 +416,6 @@ treeitem-gap = (panel-padding / 2)
     position: relative
     align-items: center
     flex: 1
-    pointer-events: initial
 
 .__sun-design-tree-item-container__
     width: 100%

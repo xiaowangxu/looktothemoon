@@ -98,7 +98,7 @@ indicator-border-color = var(--border-color)
 .__sun-design__.__sun-design-switch__
     &::before
         content: ''
-        pointer-event: none
+        pointer-events: none
         border-radius: 50%
         aspect-ratio: 1
         align-self: stretch

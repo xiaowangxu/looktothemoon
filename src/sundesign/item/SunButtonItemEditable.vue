@@ -65,6 +65,7 @@ defineExpose({
 </script>
 
 <style lang="stylus">
+@import '../SunDesignStyleConstants.styl';
 
 .__sun-design-item-button-form__
     flex: 1
@@ -77,5 +78,10 @@ defineExpose({
     background-color: transparent
     outline: none
     text-decoration: none
+    margin-left: focus-width
+    padding-left: focus-width * 1.5
+    outline: focus-width var(--focus-color) solid
+    outline-offset: focus-width
+    border-radius: border-radius-size-small
 
 </style>

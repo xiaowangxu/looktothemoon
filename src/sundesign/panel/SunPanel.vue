@@ -135,7 +135,7 @@ defineExpose({
     flex-direction: row
     overflow: hidden
     position: relative
-    pointer-events: initial
+    // pointer-events: initial
 
     &.panel-bordered
         border: panel-border
