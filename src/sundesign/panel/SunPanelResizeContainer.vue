@@ -233,7 +233,7 @@ resize-button-margin = panel-padding * 2
     height: unset
     width: var(--Offset)
     &.bordered
-        border-right: solid-border
+        border-right: relation-border
         border-bottom: none
     box-sizing: border-box
     overflow: hidden
@@ -250,7 +250,7 @@ resize-button-margin = panel-padding * 2
         height: var(--Offset)
         &.bordered
             border-right: none
-            border-bottom: solid-border
+            border-bottom: relation-border
     .__sun-design-panel-resize-conatiner__.start > &, .__sun-design-panel-resize-conatiner__.end > &
         border: none !important
 

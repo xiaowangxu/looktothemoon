@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/vue3';
 import SunMenuPopup from '../../src/sundesign/menupopup/SunMenuPopup.vue';
 import SunButton from '@/sundesign/button/SunButton.vue';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
-import { ColorSchemeBlue, ColorSchemeGreen, ColorSchemeRed, calcButtonPopupRect, type UID } from '@/sundesign/SunDesignConstants';
+import { calcButtonPopupRect, type UID } from '@/sundesign/SunDesignConstants';
 import { ref } from 'vue';
 import SunButtonLike from '@/sundesign/button/SunButtonLike.vue';
 import SunLineEdit from '@/sundesign/lineedit/SunLineEdit.vue';
@@ -121,7 +121,6 @@ export const MenuPopup: Story = {
                       label: 'Test',
                       icon: 'Trash',
                       uid: 14,
-                      colorScheme: ColorSchemeRed,
                       shortcut: 'Ctrl B',
                     }
                   ],
@@ -131,7 +130,6 @@ export const MenuPopup: Story = {
                 label: 'Test',
                 icon: 'Trash',
                 uid: 15,
-                colorScheme: ColorSchemeRed,
                 shortcut: 'Ctrl B',
               }
             ],
@@ -150,7 +148,6 @@ export const MenuPopup: Story = {
           icon: 'Cog',
           description: 'Test',
           uid: 3,
-          colorScheme: ColorSchemeRed,
         },
         {
           label: 'Test',
@@ -163,7 +160,6 @@ export const MenuPopup: Story = {
                 label: 'A',
                 icon: 'Globe',
                 uid: 16,
-                colorScheme: ColorSchemeGreen,
               },
               {
                 label: 'B',
@@ -190,13 +186,11 @@ export const MenuPopup: Story = {
         {
           label: 'More',
           icon: 'MoreHorizontal',
-          colorScheme: ColorSchemeGreen,
           active: true,
           uid: 9,
         },
         {
           label: 'Test',
-          colorScheme: ColorSchemeBlue,
           icon: 'Trash',
           uid: 10,
           shortcut: 'del',

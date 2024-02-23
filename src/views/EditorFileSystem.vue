@@ -37,7 +37,7 @@
                             <FoldVertical />
                         </SunButton>
                     </template>
-                    <SunScrollContainer content-style="width: 100%;">
+                    <SunScrollContainer style="width: 100%; height: 100%;" content-style="width: 100%;">
                         <SunPanelContainer vertical style="width: 100%;">
                             <!-- :indent="12" :leaf-indent="9" -->
                             <SunTree ref="tree_ref" uid="vfs-tree" :options="fs_options" :filter-sort="(sort as any)"

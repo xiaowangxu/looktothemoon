@@ -6,7 +6,8 @@
                 'disabled-v': scrollable_disabled_v,
             }" @scroll="onScroll">
                 <SunResizeObserver @resized="onContentResized">
-                    <div ref="content_div_dom" class="__sun-design-scrollcontainer-content__" :style="contentStyle">
+                    <div ref="content_div_dom" class="__sun-design-scrollcontainer-content__" :style="contentStyle"
+                        :class="contentClass">
                         <slot />
                     </div>
                 </SunResizeObserver>
@@ -45,7 +46,7 @@
 
 <script setup lang="ts">
 
-import { type ComputedRef, type Ref, computed, ref, toRef, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { type BoxSize } from '../SunDesignConstants';
 import SunResizeObserver from './SunResizeObserver.vue';
 import SunScrollBar, { type ScrollBarVisibility } from './SunScrollBar.vue';
@@ -55,6 +56,7 @@ export type ScrollBarState = 'visible' | 'hidden' | 'adaptive' | 'disabled';
 const props = withDefaults(
     defineProps<{
         contentStyle?: string,
+        contentClass?: string | Record<string, boolean | undefined> | (string | undefined)[],
         scrollableIndicators?: boolean,
         scrollBarStateH?: ScrollBarState,
         scrollBarStateV?: ScrollBarState,
@@ -65,10 +67,15 @@ const props = withDefaults(
         scrollableIndicators: true,
         scrollBarStateH: 'adaptive',
         scrollBarStateV: 'adaptive',
-        scrollBarVisibility: 'hover-track',
+        scrollBarVisibility: 'hover',
         overscrollCascade: false,
     }
 );
+
+// slots
+defineSlots<{
+    default(props: {}): void,
+}>();
 
 // emits
 const emits = defineEmits<{
@@ -178,8 +185,6 @@ indicator-background-b = linear-gradient(-180deg, transparent, scroll-indicator-
 indicator-background-t = linear-gradient(0deg, transparent, scroll-indicator-color 120%)
 
 .__sun-design-scrollcontainer__
-    width: 100%
-    height: 100%
     overflow: hidden
     position: relative
 

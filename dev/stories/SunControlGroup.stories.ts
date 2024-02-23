@@ -10,7 +10,6 @@ import SunSelect from '@/sundesign/select/SunSelect.vue';
 import SunColorPicker from '@/sundesign/colorpicker/SunColorPicker.vue';
 import { Decorators } from './SunDesignArgs';
 import { StepBack, StepForward, SkipBack, SkipForward, Play } from 'lucide-vue-next';
-import { ColorSchemeBlue, ColorSchemeRed, ColorSchemeGreen } from '../../src/sundesign/SunDesignConstants';
 import { ref } from 'vue';
 
 const meta: Meta<typeof SunControlGroup> = {
@@ -32,7 +31,7 @@ export const ControlGroup: Story = {
         components: { SunControlGroup, SunControlGroupRow, SunColorPicker, SunNumberEdit, SunButton, SunButtonLike, SunSelect, SunLineEdit, StepBack, StepForward, SkipBack, SkipForward, Play },
         setup() {
             const progress = ref(0);
-            return { args, ColorSchemeBlue, ColorSchemeRed, ColorSchemeGreen, progress };
+            return { args, progress };
         },
         template: `
 			<!-- single -->

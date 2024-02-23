@@ -35,6 +35,7 @@ export interface ColorScheme extends CSSProperties {
     '--focus-color'?: string,
     '--border-color-normal'?: string,
     '--border-color-disabled'?: string,
+    '--border-color-active'?: string,
     '--border-color-active-disabled'?: string,
     '--placeholder-color'?: string,
     '--placeholder-color-disabled'?: string,
@@ -56,80 +57,80 @@ export interface ColorScheme extends CSSProperties {
     '--font-color-active-disabled'?: string,
 }
 
-export const ColorSchemeBlue = markRaw<ColorScheme>({
-    '--focus-color': 'rgba(70, 111, 214, 0.4)',
-    '--border-color-normal': 'rgb(145, 170, 232)',
-    '--border-color-disabled': 'rgb(220, 220, 220)',
-    '--border-color-active-disabled': 'rgb(205, 218, 253)',
-    '--placeholder-color': 'rgb(178 199 255)',
-    '--placeholder-color-disabled': 'rgb(220, 220, 220)',
-    '--color-normal': 'rgb(222, 231, 255)',
-    '--color-hover': 'rgb(205, 218, 253)',
-    '--color-pressed': 'rgb(70, 111, 214)',
-    '--color-disabled': 'rgb(249, 249, 249)',
-    '--color-active': 'rgb(70, 111, 214)',
-    '--color-active-hover': 'rgb(103, 137, 224)',
-    '--color-active-pressed': 'rgb(145, 170, 232)',
-    '--color-active-disabled': 'rgb(145, 170, 232)',
-    '--font-color-normal': 'rgb(70, 111, 214)',
-    '--font-color-hover': 'rgb(70, 111, 214)',
-    '--font-color-pressed': 'rgb(255, 255, 255)',
-    '--font-color-disabled': 'rgb(200, 200, 200)',
-    '--font-color-active': 'rgb(255, 255, 255)',
-    '--font-color-active-hover': 'rgb(255, 255, 255)',
-    '--font-color-active-pressed': 'rgb(255, 255, 255)',
-    '--font-color-active-disabled': 'rgb(255, 255, 255)',
-});
+// export const ColorSchemeBlue = markRaw<ColorScheme>({
+//     '--focus-color': 'rgba(70, 111, 214, 0.4)',
+//     '--border-color-normal': 'rgb(145, 170, 232)',
+//     '--border-color-disabled': 'rgb(220, 220, 220)',
+//     '--border-color-active-disabled': 'rgb(205, 218, 253)',
+//     '--placeholder-color': 'rgb(178 199 255)',
+//     '--placeholder-color-disabled': 'rgb(220, 220, 220)',
+//     '--color-normal': 'rgb(222, 231, 255)',
+//     '--color-hover': 'rgb(205, 218, 253)',
+//     '--color-pressed': 'rgb(70, 111, 214)',
+//     '--color-disabled': 'rgb(249, 249, 249)',
+//     '--color-active': 'rgb(70, 111, 214)',
+//     '--color-active-hover': 'rgb(103, 137, 224)',
+//     '--color-active-pressed': 'rgb(145, 170, 232)',
+//     '--color-active-disabled': 'rgb(145, 170, 232)',
+//     '--font-color-normal': 'rgb(70, 111, 214)',
+//     '--font-color-hover': 'rgb(70, 111, 214)',
+//     '--font-color-pressed': 'rgb(255, 255, 255)',
+//     '--font-color-disabled': 'rgb(200, 200, 200)',
+//     '--font-color-active': 'rgb(255, 255, 255)',
+//     '--font-color-active-hover': 'rgb(255, 255, 255)',
+//     '--font-color-active-pressed': 'rgb(255, 255, 255)',
+//     '--font-color-active-disabled': 'rgb(255, 255, 255)',
+// });
 
-export const ColorSchemeRed = markRaw<ColorScheme>({
-    '--focus-color': 'rgb(244, 64, 64, 0.4)',
-    '--border-color-normal': 'rgb(255 159 159)',
-    '--border-color-disabled': 'rgb(220, 220, 220)',
-    '--border-color-active-disabled': 'rgb(255, 220, 220)',
-    '--placeholder-color': 'rgb(255 200 200)',
-    '--placeholder-color-disabled': 'rgb(220, 220, 220)',
-    '--color-normal': 'rgb(255, 233, 233)',
-    '--color-hover': 'rgb(255, 220, 220)',
-    '--color-pressed': 'rgb(244, 64, 64)',
-    '--color-disabled': 'rgb(249, 249, 249)',
-    '--color-active': 'rgb(244, 64, 64)',
-    '--color-active-hover': 'rgb(250, 86, 86)',
-    '--color-active-pressed': 'rgb(245, 180, 180)',
-    '--color-active-disabled': 'rgb(245, 180, 180)',
-    '--font-color-normal': 'rgb(244, 64, 64)',
-    '--font-color-hover': 'rgb(244, 64, 64)',
-    '--font-color-pressed': 'rgb(255, 255, 255)',
-    '--font-color-disabled': 'rgb(200, 200, 200)',
-    '--font-color-active': 'rgb(255, 255, 255)',
-    '--font-color-active-hover': 'rgb(255, 255, 255)',
-    '--font-color-active-pressed': 'rgb(255, 255, 255)',
-    '--font-color-active-disabled': 'rgb(255, 255, 255)',
-});
+// export const ColorSchemeRed = markRaw<ColorScheme>({
+//     '--focus-color': 'rgb(244, 64, 64, 0.4)',
+//     '--border-color-normal': 'rgb(255 159 159)',
+//     '--border-color-disabled': 'rgb(220, 220, 220)',
+//     '--border-color-active-disabled': 'rgb(255, 220, 220)',
+//     '--placeholder-color': 'rgb(255 200 200)',
+//     '--placeholder-color-disabled': 'rgb(220, 220, 220)',
+//     '--color-normal': 'rgb(255, 233, 233)',
+//     '--color-hover': 'rgb(255, 220, 220)',
+//     '--color-pressed': 'rgb(244, 64, 64)',
+//     '--color-disabled': 'rgb(249, 249, 249)',
+//     '--color-active': 'rgb(244, 64, 64)',
+//     '--color-active-hover': 'rgb(250, 86, 86)',
+//     '--color-active-pressed': 'rgb(245, 180, 180)',
+//     '--color-active-disabled': 'rgb(245, 180, 180)',
+//     '--font-color-normal': 'rgb(244, 64, 64)',
+//     '--font-color-hover': 'rgb(244, 64, 64)',
+//     '--font-color-pressed': 'rgb(255, 255, 255)',
+//     '--font-color-disabled': 'rgb(200, 200, 200)',
+//     '--font-color-active': 'rgb(255, 255, 255)',
+//     '--font-color-active-hover': 'rgb(255, 255, 255)',
+//     '--font-color-active-pressed': 'rgb(255, 255, 255)',
+//     '--font-color-active-disabled': 'rgb(255, 255, 255)',
+// });
 
-export const ColorSchemeGreen = markRaw<ColorScheme>({
-    '--focus-color': 'rgb(36 177 57 / 40%)',
-    '--border-color-normal': 'rgb(136 208 180)',
-    '--border-color-disabled': 'rgb(220, 220, 220)',
-    '--border-color-active-disabled': 'rgb(194 239 222)',
-    '--placeholder-color': 'rgb(154 226 199)',
-    '--placeholder-color-disabled': 'rgb(220, 220, 220)',
-    '--color-normal': 'rgb(210 248 231)',
-    '--color-hover': 'rgb(194 239 222)',
-    '--color-pressed': 'rgb(4, 185, 115)',
-    '--color-disabled': 'rgb(249, 249, 249)',
-    '--color-active': 'rgb(4, 185, 115)',
-    '--color-active-hover': 'rgb(25 196 130)',
-    '--color-active-pressed': 'rgb(150 223 195)',
-    '--color-active-disabled': 'rgb(150 223 195)',
-    '--font-color-normal': 'rgb(4, 185, 115)',
-    '--font-color-hover': 'rgb(4, 185, 115)',
-    '--font-color-pressed': 'rgb(255, 255, 255)',
-    '--font-color-disabled': 'rgb(200, 200, 200)',
-    '--font-color-active': 'rgb(255, 255, 255)',
-    '--font-color-active-hover': 'rgb(255, 255, 255)',
-    '--font-color-active-pressed': 'rgb(255, 255, 255)',
-    '--font-color-active-disabled': 'rgb(255, 255, 255)',
-});
+// export const ColorSchemeGreen = markRaw<ColorScheme>({
+//     '--focus-color': 'rgb(36 177 57 / 40%)',
+//     '--border-color-normal': 'rgb(136 208 180)',
+//     '--border-color-disabled': 'rgb(220, 220, 220)',
+//     '--border-color-active-disabled': 'rgb(194 239 222)',
+//     '--placeholder-color': 'rgb(154 226 199)',
+//     '--placeholder-color-disabled': 'rgb(220, 220, 220)',
+//     '--color-normal': 'rgb(210 248 231)',
+//     '--color-hover': 'rgb(194 239 222)',
+//     '--color-pressed': 'rgb(4, 185, 115)',
+//     '--color-disabled': 'rgb(249, 249, 249)',
+//     '--color-active': 'rgb(4, 185, 115)',
+//     '--color-active-hover': 'rgb(25 196 130)',
+//     '--color-active-pressed': 'rgb(150 223 195)',
+//     '--color-active-disabled': 'rgb(150 223 195)',
+//     '--font-color-normal': 'rgb(4, 185, 115)',
+//     '--font-color-hover': 'rgb(4, 185, 115)',
+//     '--font-color-pressed': 'rgb(255, 255, 255)',
+//     '--font-color-disabled': 'rgb(200, 200, 200)',
+//     '--font-color-active': 'rgb(255, 255, 255)',
+//     '--font-color-active-hover': 'rgb(255, 255, 255)',
+//     '--font-color-active-pressed': 'rgb(255, 255, 255)',
+//     '--font-color-active-disabled': 'rgb(255, 255, 255)',
+// });
 
 const GlobalResizeObserver = new ResizeObserver(onGlobalResizeObserverCallback);
 export type ResizeObserverCallback = (entry: ResizeObserverEntry) => void;
@@ -297,6 +298,20 @@ export function timer(func: () => void, time_ms: number): TimerCanceller {
     // console.log('start timer');
     const timeout_id = setTimeout(func, time_ms);
     return clearTimeoutId.bind(undefined, timeout_id);
+}
+
+export function debounce(func: () => void, time_ms: number): () => void {
+    let timer_canceller: TimerCanceller | undefined = undefined;
+    const _func = () => { func(); timer_canceller = undefined; }
+    return () => {
+        if (timer_canceller === undefined) {
+            timer_canceller = timer(_func, time_ms);
+        }
+        else {
+            timer_canceller();
+            timer_canceller = timer(_func, time_ms);
+        }
+    };
 }
 
 // cacher

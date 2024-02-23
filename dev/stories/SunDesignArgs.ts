@@ -1,4 +1,4 @@
-import { ColorSchemeBlue, ColorSchemeGreen, ColorSchemeRed, type BorderMask, type Size, type ColorScheme } from "@/sundesign/SunDesignConstants";
+import { type BorderMask, type Size, type ColorScheme } from "@/sundesign/SunDesignConstants";
 import { useWindow } from '../../src/sundesign/window/SunWindowConstants';
 
 export const Decorators = [
@@ -23,13 +23,10 @@ export const SizeArgsTypes = {
 
 export const ColorSchemeArgsTypes = {
     colorScheme: {
-        options: ['normal', 'red', 'green', 'blue'],
+        options: ['normal'],
         control: { type: 'radio' },
         mapping: {
             normal: undefined,
-            red: ColorSchemeRed,
-            green: ColorSchemeGreen,
-            blue: ColorSchemeBlue,
         }
     },
 }

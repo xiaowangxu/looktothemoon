@@ -79,8 +79,7 @@ import SunButtonLike from '../button/SunButtonLike.vue';
 import SunItemButtonEditable from '../item/SunButtonItemEditable.vue';
 import { ChevronRight, ChevronDown } from 'lucide-vue-next';
 import { computed, inject, onBeforeUnmount, ref, watch, type Component, type Raw, toRef, onBeforeMount, getCurrentInstance } from 'vue';
-import { type Size, type Item, type UID, type TimerCanceller, timer, cachecall, setDragImage, setDragData, type ColorScheme, type PopupOpenMode, type DragData, getDragData as _getDragData, clearDragData } from '../SunDesignConstants';
-import { SunContextMenuEvent } from '../contextmenu/SunContextMenu';
+import { type Size, type Item, type UID, type TimerCanceller, timer, cachecall, setDragImage, setDragData, type ColorScheme, type PopupOpenMode, getDragData as _getDragData, clearDragData } from '../SunDesignConstants';
 import { SunTreeDroppable, SunTreeInjection, type SunTreeItemDragData } from './SunTreeConstants';
 
 // emits
@@ -401,12 +400,14 @@ defineExpose({
 relative-offset-small = padding-extend-small + (content-size-small / 2)
 relative-offset-normal = padding-extend-normal + (content-size-normal / 2)
 relative-offset-large = padding-extend-large + (content-size-large / 2)
-drop-indicator-width = 1.75px
+drop-indicator-width = focus-width
+drop-indicator-color = focus-color
+treeitem-gap = (panel-padding / 2)
 
 .__sun-design-tree-container__
     display: flex
     flex-direction: column
-    gap: (panel-padding / 2)
+    gap: treeitem-gap
     pointer-events: none
 
 .__sun-design-tree-list-container__
@@ -479,17 +480,18 @@ drop-indicator-width = 1.75px
         content: ''
         position: absolute
         height: 100%
-        border-left: border-width var(--border-color-normal) solid
+        border-left: relation-border
     &[data-size="small"]::after
-        left: 'calc((var(--Depth) - 1) * var(--Indent, %s) + %s)' % (content-size-small + gap-small  relative-offset-small - border-width / 2)
+        left: 'calc((var(--Depth) - 1) * var(--Indent, %s) + %s)' % (content-size-small + gap-small  relative-offset-small - relation-width / 2)
     &[data-size="normal"]::after
-        left: 'calc((var(--Depth) - 1) * var(--Indent, %s) + %s)' % (content-size-normal + gap-normal  relative-offset-normal - border-width / 2)
+        left: 'calc((var(--Depth) - 1) * var(--Indent, %s) + %s)' % (content-size-normal + gap-normal  relative-offset-normal - relation-width / 2)
     &[data-size="large"]::after
-        left: 'calc((var(--Depth) - 1) * var(--Indent, %s) + %s)' % (content-size-large + gap-large  relative-offset-large - border-width / 2)
+        left: 'calc((var(--Depth) - 1) * var(--Indent, %s) + %s)' % (content-size-large + gap-large  relative-offset-large - relation-width / 2)
 
 .__sun-design-tree-item-drop-indicator__
     position absolute
     right: 0
+    z-index: 1
     &[data-size="small"]
         left: 'calc(var(--Depth) * var(--Indent, %s))' % (content-size-small + gap-small)
     &[data-size="normal"]
@@ -504,10 +506,10 @@ drop-indicator-width = 1.75px
         &[data-size="large"]
             left: 'calc((var(--Depth) - 1) * var(--Indent, %s))' % (content-size-large + gap-large)
     &.before
-        top: - (panel-padding / 2)
+        top: - ((treeitem-gap + drop-indicator-width) / 2)
     &.after
-        bottom: - (panel-padding / 2)
-    border-top: drop-indicator-width var(--font-color-active) solid
+        bottom: - ((treeitem-gap + drop-indicator-width) / 2)
+    border-top: drop-indicator-width drop-indicator-color solid
     pointer-events: none
 
 .__sun-design-tree-item-dropin-indicator__
@@ -520,7 +522,7 @@ drop-indicator-width = 1.75px
     &[data-size="large"]
         left: 'calc(var(--Depth) * var(--Indent, %s))' % (content-size-large + gap-large)
     pointer-events: none
-    border-color: var(--font-color-active) !important
+    border-color: drop-indicator-color !important
     border-width: drop-indicator-width !important
     border-radius: inherit
 

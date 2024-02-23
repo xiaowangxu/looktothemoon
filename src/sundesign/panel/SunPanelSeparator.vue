@@ -29,13 +29,13 @@ const props = withDefaults(
             display: none
 
     .__sun-design__.__sun-design-panel__ &:not(.horizontal):not(.vertical), &.horizontal
-        border-left: panel-border
+        border-left: relation-border
         width: 0px
         min-height: 100%
         min-width: unset
 
     .__sun-design__.__sun-design-panel__.vertical &:not(.vertical):not(.horizontal), &.vertical
-        border-top: panel-border
+        border-top: relation-border
         height: 0px
         min-width: 100%
         min-height: unset

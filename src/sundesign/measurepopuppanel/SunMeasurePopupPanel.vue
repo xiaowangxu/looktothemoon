@@ -68,7 +68,7 @@ const props = withDefaults(
         scrollableIndicators: true,
         scrollBarStateH: 'adaptive',
         scrollBarStateV: 'adaptive',
-        scrollBarVisibility: 'hover-track',
+        scrollBarVisibility: 'hover',
     }
 );
 

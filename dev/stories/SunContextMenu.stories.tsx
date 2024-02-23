@@ -5,7 +5,7 @@ import SunContextMenu from '../../src/sundesign/contextmenu/SunContextMenu';
 import SunButton from '@/sundesign/button/SunButton.vue';
 import SunButtonLike from '@/sundesign/button/SunButtonLike.vue';
 import { Search, ChevronRight } from 'lucide-vue-next';
-import { ColorSchemeRed, UID } from '../../src/sundesign/SunDesignConstants';
+import { UID } from '../../src/sundesign/SunDesignConstants';
 
 const meta: Meta = {
     component: SunMenuPopup,
@@ -129,7 +129,6 @@ export const ContextMenu: Story = {
                             label: '登出',
                             icon: 'LogOut',
                             shortcut: 'Ctrl Shift Q',
-                            colorScheme: ColorSchemeRed,
                         }
                     ]
                 ], evt).signal_click.connect((a: any) => {

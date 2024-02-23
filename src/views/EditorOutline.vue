@@ -3,6 +3,9 @@
         { uid: 'outliner', label: '大纲', icon: 'ListTree' },
         { uid: 'component', label: '组件', icon: 'Component' },
     ]" initial-selected="outliner">
+        <!-- <template #append>
+            <SunButton size="small" squared><X/></SunButton>
+        </template> -->
         <template #default="{ tab }">
             <SunPanel v-show="tab === 'outliner'" container vertical style="flex: 1;">
 
@@ -57,7 +60,7 @@ import SunLineEdit from '@/sundesign/lineedit/SunLineEdit.vue';
 import SunSelect from '@/sundesign/select/SunSelect.vue';
 import SunButton from '@/sundesign/button/SunButton.vue';
 import SunIcon from '@/sundesign/icon/SunIcon.vue';
-import { Plus, Eye, Lock } from 'lucide-vue-next';
+import { Plus, Eye, Lock, X } from 'lucide-vue-next';
 import SunTree from '@/sundesign/tree/SunTree.vue';
 import type { SunTreeOptions } from '@/sundesign/tree/SunTreeConstants';
 import { fspath } from '@/system/filesystem/FileSystemPath';

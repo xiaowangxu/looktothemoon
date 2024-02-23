@@ -4,7 +4,6 @@ import SunButtonMenuPopup from '../../src/sundesign/buttonpopup/SunButtonMenuPop
 import SunButtonLike from '@/sundesign/button/SunButtonLike.vue';
 import { Search, ChevronRight } from 'lucide-vue-next';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
-import { ColorSchemeRed } from '../../src/sundesign/SunDesignConstants';
 import { ref, watch } from 'vue';
 
 const meta: Meta<typeof SunButtonMenuPopup> = {
@@ -129,7 +128,6 @@ export const ButtonMenuPopup: Story = {
                     label: '登出',
                     icon: 'LogOut',
                     shortcut: 'Ctrl Shift Q',
-                    colorScheme: ColorSchemeRed,
                 }
             ]
         ]

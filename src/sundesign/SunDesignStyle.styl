@@ -24,6 +24,7 @@
         --focus-color:  focus-color
         --border-color-normal: border-color-normal
         --border-color-disabled: border-color-disabled
+        --border-color-active: border-color-active
         --border-color-active-disabled: border-color-active-disabled
         --color-normal:  color-normal
         --color-hover:  color-hover
@@ -155,6 +156,7 @@
         &:disabled, &.disabled
             border: solid-border-disabled
         &.active, &:checked
+            border: solid-border-active
             &:disabled, &.disabled
                 border: solid-border-active-disabled
         

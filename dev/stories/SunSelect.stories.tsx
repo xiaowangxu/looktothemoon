@@ -3,7 +3,6 @@ import type { Meta, StoryObj } from '@storybook/vue3';
 import SunSelect, { type SelectItem } from '../../src/sundesign/select/SunSelect.vue';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
 import { ColorSchemeBlue, ColorSchemeGreen } from '../../src/sundesign/SunDesignConstants';
-import { ColorSchemeRed } from '../../src/sundesign/SunDesignConstants';
 import { ref } from 'vue';
 
 const meta: Meta<typeof SunSelect> = {
@@ -107,7 +106,6 @@ export const Select: Story = {
                     label: 'Test',
                     icon: 'Trash',
                     uid: 7,
-                    colorScheme: ColorSchemeRed,
                     shortcut: 'Ctrl B',
                 },
                 {

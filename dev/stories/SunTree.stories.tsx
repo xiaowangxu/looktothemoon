@@ -7,7 +7,7 @@ import SunControlGroup from '../../src/sundesign/controlgroup/SunControlGroup.vu
 import SunControlGroupRow from '../../src/sundesign/controlgroup/SunControlGroupRow.vue';
 import { SizeArgs, SizeArgsTypes, Args, ArgsTypes, Decorators } from './SunDesignArgs';
 import { ref, markRaw, type Raw, type Component, defineComponent, watch } from 'vue';
-import { ColorSchemeBlue, ColorSchemeRed, UID } from '../../src/sundesign/SunDesignConstants';
+import { UID } from '../../src/sundesign/SunDesignConstants';
 import SunIcon from '../../src/sundesign/icon/SunIcon.vue';
 import { Coins, Sun } from 'lucide-vue-next';
 

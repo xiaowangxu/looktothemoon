@@ -27,36 +27,41 @@ gap-small = 2px
 gap-normal = 5px
 gap-large = 7px
 
-border-width = 1px
-panel-border-width = 1px
-
 // for description
 major-opacity = 60%
 major-opacity-disabled = 50%
 // for shortcut
 minor-opacity = 40%
 
+// border
+border-width = 1px
+solid-border = border-width var(--border-color-normal) solid
+solid-border-disabled = border-width var(--border-color-disabled) solid
+solid-border-active = border-width var(--border-color-active) solid
+solid-border-active-disabled = border-width var(--border-color-active-disabled) solid
+
+relation-width = 1px
+relation-border = relation-width var(--border-color-normal) solid
+
+panel-border-width = 1px
+panel-padding = 4px
+panel-border-radius-small = border-radius-size-small + panel-padding
+panel-border-radius-normal = border-radius-size-normal + panel-padding
+panel-border-radius-large = border-radius-size-large + panel-padding
 panel-border = panel-border-width var(--border-color-normal) solid
 panel-drop-shadow = 0 3px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 10px 4px rgba(0, 0, 0, 0.01)
 
-solid-border = border-width var(--border-color-normal) solid
-solid-border-disabled = border-width var(--border-color-disabled) solid
-solid-border-active-disabled = border-width var(--border-color-active-disabled) solid
-
-focus-width = 2px
+focus-width = 1.75px
 focus-offset = - focus-width
 
 // colors
 scroll-indicator-color = rgba(0, 0, 0, 0.075)
 panel-color = #ffffff
-panel-padding = 4px
-panel-border-radius-small = border-radius-size-small + panel-padding
-panel-border-radius-normal = border-radius-size-normal + panel-padding
-panel-border-radius-large = border-radius-size-large + panel-padding
 
 focus-color = #a7d0ff
 border-color-normal = #d3d3d3
 border-color-disabled = #f4f4f4
+border-color-active = #d3d3d3
 border-color-active-disabled = #dcdcdc
 placeholder-color = #a3a3a3
 placeholder-color-disabled = #dcdcdc

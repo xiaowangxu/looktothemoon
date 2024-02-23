@@ -90,7 +90,7 @@ const props = withDefaults(
         scrollableIndicators: true,
         scrollBarStateH: 'adaptive',
         scrollBarStateV: 'adaptive',
-        scrollBarVisibility: 'hover-track',
+        scrollBarVisibility: 'hover',
         minWidth: 180,
         maxWidth: 460,
         showDelay: 150,

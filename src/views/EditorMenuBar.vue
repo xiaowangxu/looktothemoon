@@ -58,8 +58,7 @@ import SunPanel from '@/sundesign/panel/SunPanel.vue';
 import SunPanelContainer from '@/sundesign/panel/SunPanelContainer.vue';
 import SunPanelSeparator from '@/sundesign/panel/SunPanelSeparator.vue';
 import SunButton from '@/sundesign/button/SunButton.vue';
-import { Undo2, Redo2, Save, MoonStar } from 'lucide-vue-next';
-import { ColorSchemeRed } from '@/sundesign/SunDesignConstants';
+import { Undo2, Redo2, Save } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 const system_options = ref([
@@ -160,7 +159,6 @@ const options = ref([
             label: '登出',
             icon: 'LogOut',
             shortcut: 'Ctrl Shift Q',
-            colorScheme: ColorSchemeRed,
         }
     ]
 ]);
