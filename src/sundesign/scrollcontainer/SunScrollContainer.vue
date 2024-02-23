@@ -179,10 +179,10 @@ defineExpose({
 @import '../SunDesignStyleConstants.styl';
 
 indicator-size = 20px
-indicator-background-r = linear-gradient(90deg, transparent, scroll-indicator-color 120%)
-indicator-background-l = linear-gradient(-90deg, transparent, scroll-indicator-color 120%)
-indicator-background-b = linear-gradient(-180deg, transparent, scroll-indicator-color 120%)
-indicator-background-t = linear-gradient(0deg, transparent, scroll-indicator-color 120%)
+indicator-background-r = linear-gradient(90deg, transparent, scroll-indicator-color 100%)
+indicator-background-l = linear-gradient(-90deg, transparent, scroll-indicator-color 100%)
+indicator-background-b = linear-gradient(180deg, transparent, scroll-indicator-color 100%)
+indicator-background-t = linear-gradient(0deg, transparent, scroll-indicator-color 100%)
 
 .__sun-design-scrollcontainer__
     overflow: hidden

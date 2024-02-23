@@ -1,5 +1,5 @@
 <template>
-    <div style="position: fixed; inset: 0; background-color: rgb(245, 245, 245);">
+    <div style="position: fixed; inset: 0;">
         <canvas id="render-server-canvas" style="width: 100%; height: 100%;"></canvas>
         <div id="viewport-0" style="position: absolute; overflow: hidden; left: 0%; top: 0%; right: 0%; bottom: 0%;">
             <!-- <div id="render-server-debug"

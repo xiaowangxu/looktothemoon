@@ -1,5 +1,8 @@
 @import './SunDesignStyleConstants.styl';
 
+body 
+    background: var(--background)
+
 .__sun-design__
 
     appearance: none
@@ -20,8 +23,10 @@
             opacity: 1; /* Firefox */
 
     &.color-def
+        --background: background
         --panel-color:  panel-color
         --attachment-color:  attachment-color
+        --attachment-color-disabled:  attachment-color-disabled
         --focus-color:  focus-color
         --border-color-normal: border-color-normal
         --border-color-disabled: border-color-disabled

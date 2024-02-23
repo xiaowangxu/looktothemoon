@@ -134,7 +134,6 @@ defineExpose({
     gap: 0
     flex-direction: row
     overflow: hidden
-    background-color: var(--panel-color)
     position: relative
     pointer-events: initial
 
@@ -142,6 +141,7 @@ defineExpose({
         border: panel-border
 
     &.not-container
+        background-color: var(--panel-color)
         &.drop-shadow
             box-shadow: panel-drop-shadow
 
