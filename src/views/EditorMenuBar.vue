@@ -1,5 +1,5 @@
 <template>
-    <div style="display: flex; align-items: flex-start; gap: 8px; pointer-events: none;">
+    <div style="display: flex; align-items: flex-start; gap: 8px;">
         <SunPanel :trap-focus="false">
             <SunPanelContainer>
                 <SunButtonMenuPopup ref="sys_option_ref" :options="system_options" squared flat>

@@ -11,7 +11,7 @@
     </div>
 
     <SunPanelResizeContainerRemainNob id="editor-left-container" click-nob-action="toggle" :nob-size="14"
-        :expand-indicator="false" :first-snap="25" :initial-size="280" :max="-300" initial-collapse="first">
+        :expand-indicator="false" :first-snap="25" :initial-size="280" :max="-300">
         <template #nob>
             <div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
                 <button class="editor-container-nob" style="width: 4px; height: clamp(30px, 6%, 50px);">
@@ -28,7 +28,7 @@
 
             <SunPanelResizeContainerRemainNob id="editor-right-container" click-nob-action="toggle"
                 style="position: absolute; inset: 0;" :nob-size="14" :expand-indicator="false" :first-snap="25"
-                flip-direction :initial-size="280" :max="-80" initial-collapse="second">
+                flip-direction :initial-size="280" :max="-80">
                 <template #nob>
                     <div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
                         <button class="editor-container-nob" style="width: 4px; height: clamp(30px, 6%, 50px);">
@@ -39,7 +39,7 @@
 
                     <SunPanelResizeContainerRemainNob id="editor-bottom-container" click-nob-action="toggle"
                         style="position: absolute; inset: 0;" :nob-size="14" :expand-indicator="false" :first-snap="25"
-                        flip-direction :initial-size="300" vertical initial-collapse="second">
+                        flip-direction :initial-size="300" vertical>
                         <template #nob>
                             <div
                                 style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
@@ -48,8 +48,9 @@
                             </div>
                         </template>
                         <template #first>
-                            <EditorMenuBar style="position: absolute; top: 14px; left: 0px;" />
-                            <EditorCameraControl style="position: absolute; top: 14px; right: 0px;" />
+                            <EditorMenuBar id="editor-menu-bar" style="position: absolute; top: 14px; left: 0px;" />
+                            <EditorCameraControl id="editor-camera-control"
+                                style="position: absolute; top: 14px; right: 0px;" />
                         </template>
                         <template #second>
                             <SunPanel :trap-focus="false"
@@ -108,6 +109,8 @@ import EditorCameraControl from './EditorCameraControl.vue';
     pointer-events: none;
 }
 
+#editor-menu-bar,
+#editor-camera-control,
 #editor-left-container>.__sun-design-panel-resize-conatiner-remain-nob-split__,
 #editor-bottom-container>.__sun-design-panel-resize-conatiner-remain-nob-split__,
 #editor-right-container>.__sun-design-panel-resize-conatiner-remain-nob-split__ {
