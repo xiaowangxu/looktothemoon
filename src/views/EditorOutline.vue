@@ -18,6 +18,7 @@
                 <SunPanelSeparator /> -->
 
                 <SunPanelContainer gap style="flex-shrink: 0;">
+                    <SunSwitch :model-value="true" size="normal"/>
                     <SunButton squared>
                         <Plus />
                     </SunButton>
@@ -52,6 +53,7 @@
 
 import SunPanelTabsContainer from '@/sundesign/panel/SunPanelTabsContainer.vue';
 import SunPanel from '@/sundesign/panel/SunPanel.vue';
+import SunSwitch from '@/sundesign/checkbox/SunSwitch.vue';
 import SunPanelFoldContainer from '@/sundesign/panel/SunPanelFoldContainer.vue';
 import SunScrollContainer from '@/sundesign/scrollcontainer/SunScrollContainer.vue';
 import SunPanelSeparator from '@/sundesign/panel/SunPanelSeparator.vue';

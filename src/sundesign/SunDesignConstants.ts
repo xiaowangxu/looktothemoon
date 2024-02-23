@@ -33,6 +33,7 @@ export interface Item<T extends UID = UID> {
 
 export interface ColorScheme extends CSSProperties {
     '--focus-color'?: string,
+    '--attachment-color'?: string,
     '--border-color-normal'?: string,
     '--border-color-disabled'?: string,
     '--border-color-active'?: string,
