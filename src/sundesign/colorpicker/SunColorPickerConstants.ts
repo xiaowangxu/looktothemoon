@@ -4,7 +4,7 @@ import type { Item } from "../SunDesignConstants";
 type ColorEditFormat = 'RGB' | 'HSL';
 
 const EditFormat = ref<ColorEditFormat>('RGB');
-const CodeFormat = ref(true);
+const CodeFormat = ref(0);
 const Library = ref(20);
 
 const EditFormats: Item<ColorEditFormat>[][] = [[

@@ -20,10 +20,6 @@ export default class SunContextMenu<T extends UID = UID> {
     constructor(options: ContextMenuItem<T>[][], position: Position, offset?: BoxSize)
     constructor(options: ContextMenuItem<T>[][], evt: MouseEvent | Position, offset?: BoxSize) {
         this.offset = offset !== undefined ? { ...offset } : { width: 0, height: 0 };
-        this.promise = new Promise((resolve, reject) => {
-            this.resolve = resolve;
-            this.reject = reject;
-        });
         if (evt instanceof MouseEvent) {
             this.rect = { x: evt.clientX, y: evt.clientY, width: 0, height: 0 };
         }

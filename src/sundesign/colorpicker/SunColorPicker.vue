@@ -73,13 +73,13 @@
                     </SunControlGroup>
                     <SunControlGroup style="flex: 1;">
                         <SunControlGroupRow>
-                            <SunLineEdit style="flex: 1;" />
+                            <SunLineEdit model-value="123" style="flex: 1;" />
                             <SunButton squared>
                                 <ClipboardCopy />
                             </SunButton>
                             <SunSelect style="width: min-content; align-self: flex-end;" icon-only squared
                                 v-model="code_format"
-                                :options="[[{ label: 'Hex', uid: true }, { label: 'Color String', uid: false }]]">
+                                :options="[[{ label: 'Hex', uid: 0 }, { label: 'Color String', uid: 1 }]]">
                                 <template #closed>
                                     <Hash />
                                 </template>

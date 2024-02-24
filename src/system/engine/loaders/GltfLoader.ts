@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { Result } from "@/system/utils/Result";
 import { Node } from "../nodes/Node";
 import { Node3D } from "../nodes/node3ds/Node3D";

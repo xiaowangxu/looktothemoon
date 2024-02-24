@@ -13,7 +13,7 @@ VFS.touch(fspath('user://'));
 
 await fetch(sys_vfs).then(res => res.arrayBuffer()).then(array_buffer => VFS.load(array_buffer, fspath('sys://')));
 
-window.VFS = VFS;
-window.fspath = fspath;
+(window as any).VFS = VFS;
+(window as any).fspath = fspath;
 
-window.scenetree = createEditor();
+(window as any).scenetree = createEditor();

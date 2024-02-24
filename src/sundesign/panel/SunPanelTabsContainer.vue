@@ -150,7 +150,6 @@ function onClick(uid: UID, evt: MouseEvent) {
     flex-wrap: nowrap
 
     > .__sun-design-panel-tabs-container-tab-container__ > .__sun-design-panel-tabs-container-tab__
-        border-radius: 0 !important
         flex-shrink: 0
         border: none !important
         align-self: stretch

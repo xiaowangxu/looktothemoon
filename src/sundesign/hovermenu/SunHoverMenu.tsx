@@ -75,12 +75,16 @@ function removeSunHoverMenuGroup(hover_menu: SunHoverMenuBase<any, any>) {
         }
     }
 }
+function hasSunHoverMenuGroup(group: string) {
+    return SunHoverMenuGroups.has(group);
+}
 
 export interface SunHoverMenuOption {
-    open_delay?: number,
-    close_delay?: number,
-    menu_hover?: boolean,
+    openDelay?: number,
+    closeDelay?: number,
+    menuHover?: boolean,
     group?: string,
+    syncGroup?: boolean,
 }
 
 type Required<Type, Key extends keyof Type> = Type & { [Property in Key]-?: Type[Property]; };
@@ -91,7 +95,7 @@ class SunHoverMenuBase<D extends Record<string, unknown>, T extends Component> {
     private readonly binding: D;
     private readonly panel_props: SunMeasurePopupPanelPropsType | undefined;
     private readonly get_popup_rect: (contentMinSize: BoxSize, windowSize: BoxSize) => Rect;
-    private readonly option: Required<SunHoverMenuOption, 'close_delay' | 'open_delay' | 'menu_hover'>;
+    private readonly option: Required<SunHoverMenuOption, 'closeDelay' | 'openDelay' | 'menuHover' | 'syncGroup'>;
     protected readonly mouse_position = { x: 0, y: 0 };
     public get group() { return this.option.group; }
 
@@ -105,9 +109,10 @@ class SunHoverMenuBase<D extends Record<string, unknown>, T extends Component> {
         this.get_popup_rect = (contentMinSize: BoxSize, windowSize: BoxSize) => get_popup_rect(contentMinSize, windowSize, this.mouse_position);
         this.option = {
             ...option,
-            open_delay: option?.open_delay ?? 500,
-            close_delay: option?.close_delay ?? 750,
-            menu_hover: option?.menu_hover ?? true,
+            openDelay: option?.openDelay ?? 500,
+            closeDelay: option?.closeDelay ?? 750,
+            menuHover: option?.menuHover ?? true,
+            syncGroup: option?.syncGroup ?? true,
         };
     }
 
@@ -115,9 +120,14 @@ class SunHoverMenuBase<D extends Record<string, unknown>, T extends Component> {
         this.close_timer?.();
         this.close_timer = undefined;
         if (this.open_timer === undefined && this.vue === undefined) {
-            this.open_timer = timer(this.open.bind(this), this.option.open_delay);
             this.mouse_position.x = evt.clientX;
             this.mouse_position.y = evt.clientY;
+            if (this.option.syncGroup && this.group !== undefined && hasSunHoverMenuGroup(this.group)) {
+                this.open();
+            }
+            else {
+                this.open_timer = timer(this.open.bind(this), this.option.openDelay);
+            }
         }
     }
 
@@ -125,7 +135,7 @@ class SunHoverMenuBase<D extends Record<string, unknown>, T extends Component> {
         this.open_timer?.();
         this.open_timer = undefined;
         if (this.close_timer === undefined) {
-            this.close_timer = timer(this.close.bind(this), this.option.close_delay);
+            this.close_timer = timer(this.close.bind(this), this.option.closeDelay);
         }
     }
 
@@ -139,8 +149,8 @@ class SunHoverMenuBase<D extends Record<string, unknown>, T extends Component> {
                 binding: this.binding,
                 panelProps: this.panel_props,
                 getPopupRect: this.get_popup_rect,
-                onMouseenter: (evt: MouseEvent) => { if (this.option.menu_hover) this.onMouseenter(evt) },
-                onMouseleave: (evt: MouseEvent) => { if (this.option.menu_hover) this.onMouseleave(evt) },
+                onMouseenter: (evt: MouseEvent) => { if (this.option.menuHover) this.onMouseenter(evt) },
+                onMouseleave: (evt: MouseEvent) => { if (this.option.menuHover) this.onMouseleave(evt) },
             });
             this.vue.mount(this.root);
         }
@@ -174,8 +184,8 @@ const HtmlStringElement: FunctionalComponent<{ html: string, label: boolean }> =
     return <>
         {
             props.label ?
-                <SunLabel noHorizontalPadding={false} vHtml={props.html} ></SunLabel> :
-                <div vHtml={props.html} />
+                <SunLabel noHorizontalPadding={false} v-html={props.html} ></SunLabel> :
+                <div v-html={props.html} />
         }
     </>;
 };
@@ -224,7 +234,7 @@ export const vHoverMenu: ObjectDirective<HTMLElement & { [vHoverMenuId]?: SunHov
 } | string> = {
     mounted(el, binding) {
         if (el[vHoverMenuId] === undefined) {
-            const option: SunHoverMenuOption = { group: binding.arg, menu_hover: binding.modifiers.nohover === true ? false : true };
+            const option: SunHoverMenuOption = { group: binding.arg, menuHover: binding.modifiers.nohover === true ? false : true };
             if (typeof binding.value === 'string') {
                 if (binding.modifiers.html === true) {
                     el[vHoverMenuId] = new SunHoverMenu(el, HtmlStringElement, { html: binding.value, label: binding.modifiers.label === true }, undefined, option);

@@ -2,11 +2,11 @@
     <div class="__sun-design__ __sun-design-hslider-container__ sized" :data-size="size">
         <div ref="track_container_ref" class="__sun-design-hslider-track-container__"
             @mousedown.self="onContainerMouseDown">
-            <div class="__sun-design__ __sun-design-hslider-track__ colored no-pressed-color no-hover-color"
-                :class="{ bordered: !flat, flat, disabled }" :style="colorScheme"></div>
+            <div class="__sun-design__ __sun-design-hslider-track__ colored" :class="{ bordered: !flat, flat, disabled }"
+                :style="colorScheme"></div>
         </div>
-        <div ref="container_ref" class="__sun-design-hslider-nob-container__">
-            <button class="__sun-design__ __sun-design-hslider-nob__ colored active" :class="{ bordered: !flat, flat }"
+        <div ref="container_ref" class="__sun-design-hslider-nob-container__" @mousedown.self="onContainerMouseDown">
+            <button class="__sun-design__ __sun-design-hslider-nob__ colored" :class="{ bordered: !flat, flat }"
                 :disabled="disabled" :style="{ '--Percentage': display_percentage, ...colorScheme }"
                 @mousedown="onMouseDown" @keydown.arrow-left="decrease" @keydown.arrow-right="increase" />
         </div>
@@ -210,7 +210,6 @@ nob-border-radius-large = 6px
     justify-content: flex-start
 
 .__sun-design-hslider-nob-container__
-    pointer-events: none
     .__sun-design-hslider-container__[data-size="small"] > &
         margin-left: nob-width-small
     .__sun-design-hslider-container__[data-size="normal"] > &
@@ -234,7 +233,10 @@ nob-border-radius-large = 6px
 
 .__sun-design-hslider-nob__
     padding: 0px
-    pointer-events: initial
+    background-color: var(--attachment-color) !important
+
+    &:disabled
+        background-color: var(--attachment-color-disabled) !important
 
     .__sun-design-hslider-container__[data-size="small"] > .__sun-design-hslider-nob-container__ > &
         width: nob-width-small

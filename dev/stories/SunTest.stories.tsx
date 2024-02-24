@@ -35,7 +35,7 @@ export const Select: Story = {
             return { args, onClick, a };
         },
         template: `
-			<SunButton @click="onClick" v-hover-menu:test.nohover="{ content: a }">HoverMenu0</SunButton>
+			<SunButton @click="onClick" v-hover-menu:test="{ content: a }">HoverMenu0</SunButton>
 			<SunButton @click="onClick" v-hover-menu:test.html.label="'<a>更多信息</a></br>Lorem ipsum dolor sit amet consectetur adipisicing elit.</br>Accusantium officiis minus, tempore pariatur hic et nam consequatur fugit, dolorum debitis maiores quam repellat commodi aspernatur sequi quidem ratione cumque eveniet.'">HoverMenu1</SunButton>
 		`,
     }),

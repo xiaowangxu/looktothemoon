@@ -1,5 +1,5 @@
 import './SunDesignStyle.styl';
-import { type CSSProperties, markRaw, toRef, type Ref, readonly } from 'vue';
+import { type CSSProperties, markRaw, toRef, type Ref, readonly, type DeepReadonly } from 'vue';
 
 export type Size = 'small' | 'normal' | 'large';
 
@@ -472,8 +472,12 @@ interface UseInputModelOptions<T> {
     emitChange?: string,
 };
 
-export function useInputModel<P extends object, ValKey extends keyof P & string, ModifiersKey extends keyof P & string & ModifiersKeyNameString<ValKey>, Name extends string>(props: P, val_key: ValKey, modifiers_key: ModifiersKey, emit: (name: Name, ...args: any[]) => void, options?: UseInputModelOptions<P[ValKey]>) {
-    const value = readonly(toRef(props, val_key));
+export function useInputModel<P extends object, ValKey extends keyof P & string, ModifiersKey extends keyof P & string & ModifiersKeyNameString<ValKey>, Name extends string>(props: P, val_key: ValKey, modifiers_key: ModifiersKey, emit: (name: Name, ...args: any[]) => void, options?: UseInputModelOptions<P[ValKey]>): {
+    value: Readonly<Ref<DeepReadonly<P[ValKey]>>>,
+    setValueOnInput: (val: P[ValKey]) => void,
+    setValueOnChange: (val: P[ValKey]) => void,
+} {
+    const value = readonly(toRef(props, val_key) as Ref<P[ValKey]>);
     const set = options?.set;
     const emitInput = options?.emitInput;
     const emitChange = options?.emitChange;

@@ -318,7 +318,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             canvas_preserve_drawing_buffer = false,
         } = option;
 
-        const gl = this.render_device.canvas.getContext('webgl2', { antialias: canvas_antialias, preserveDrawingBuffer: canvas_preserve_drawing_buffer });
+        const gl = this.render_device.canvas.getContext('webgl2', { antialias: canvas_antialias, preserveDrawingBuffer: canvas_preserve_drawing_buffer }) as WebGL2RenderingContext | null;
 
         if (gl === null) throw new Error('<WebGL2RenderState> constructor: failed to get webgl2 context');
         this.gl = gl as WebGL2RenderingContext;

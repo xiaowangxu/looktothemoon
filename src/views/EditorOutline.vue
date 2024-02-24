@@ -18,11 +18,11 @@
                 <SunPanelSeparator /> -->
 
                 <SunPanelContainer gap style="flex-shrink: 0;">
-                    <SunSwitch :model-value="true" size="normal"/>
+                    <SunSwitch :model-value="true" size="normal" />
                     <SunButton squared>
                         <Plus />
                     </SunButton>
-                    <SunLineEdit style="flex: 1;" :model-value="''" placeholder="查找"/>
+                    <SunLineEdit style="flex: 1;" :model-value="''" placeholder="查找" />
                     <SunSelect :prefered-direction="1" icon-only selected-icon squared :model-value="2" :options="[[
                         { uid: 0, label: '文件名顺序', icon: 'ArrowDownAZ' },
                         { uid: 1, label: '文件名逆序', icon: 'ArrowUpZA' },

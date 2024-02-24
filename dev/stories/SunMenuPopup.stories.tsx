@@ -1,12 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
 import SunMenuPopup from '../../src/sundesign/menupopup/SunMenuPopup.vue';
-import SunButton from '@/sundesign/button/SunButton.vue';
-import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
-import { calcButtonPopupRect, type UID } from '@/sundesign/SunDesignConstants';
+import SunButton from '../../src/sundesign/button/SunButton.vue';
+import { Decorators } from './SunDesignArgs';
+import { calcButtonPopupRect } from '../../src/sundesign/SunDesignConstants';
 import { ref } from 'vue';
-import SunButtonLike from '@/sundesign/button/SunButtonLike.vue';
-import SunLineEdit from '@/sundesign/lineedit/SunLineEdit.vue';
+import SunButtonLike from '../../src/sundesign/button/SunButtonLike.vue';
 import { Search, X } from 'lucide-vue-next';
 
 const meta: Meta<typeof SunMenuPopup> = {
