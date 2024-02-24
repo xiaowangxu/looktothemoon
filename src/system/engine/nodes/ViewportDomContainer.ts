@@ -97,8 +97,9 @@ export class ViewportDomContainer extends Node {
                     this.viewport_node.size = this._size;
                     this.viewport_node.position = this._position;
                 }
-                return;
+                break;
             }
         }
+        super._notification(what);
     }
 }

@@ -61,14 +61,9 @@ export class Node extends ClassBase {
     public block_physics_process: boolean = false;
 
     // signals
-    public readonly signal_exiting_tree: SignalEmitter<() => void> = new SignalEmitter();
-    public readonly signal_entered_tree: SignalEmitter<() => void> = new SignalEmitter();
-    public readonly signal_exited_tree: SignalEmitter<() => void> = new SignalEmitter();
-
     public readonly signal_child_added: SignalEmitter<(node: Node) => void> = new SignalEmitter();
     public readonly signal_child_removing: SignalEmitter<(node: Node) => void> = new SignalEmitter();
 
-    public readonly signal_notification: SignalEmitter<(what: NodeNotification) => void> = new SignalEmitter();
     public readonly signal_ready: SignalEmitter<() => void> = new SignalEmitter();
     public readonly signal_input: SignalEmitter<(event: InputEvent, propagate: boolean) => void> = new SignalEmitter();
     public readonly signal_process: SignalEmitter<(delta: number) => void> = new SignalEmitter();
@@ -79,18 +74,12 @@ export class Node extends ClassBase {
     };
 
     // scene tree
-    protected nofity(what: NodeNotification) {
-        this._notification(what);
-        this.signal_notification.trigger(what);
-    }
-
     private propagate_SceneTreeExiting() {
         for (const child of this.children) {
             child.propagate_SceneTreeExiting();
         }
         // before exit tree
-        this.nofity(NodeNotification.ExitingTree);
-        this.signal_exiting_tree.trigger();
+        this._notification(NodeNotification.ExitingTree);
         this.viewport = undefined;
         this.inside_tree = false;
         this.is_ready = false;
@@ -109,8 +98,7 @@ export class Node extends ClassBase {
         }
         this.inside_tree = true;
         // entered tree
-        this.nofity(NodeNotification.EnteredTree);
-        this.signal_entered_tree.trigger();
+        this._notification(NodeNotification.EnteredTree);
         for (const child of this.children) {
             if (!child.inside_tree) {
                 child.propagate_SceneTreeEntering();
@@ -123,8 +111,7 @@ export class Node extends ClassBase {
             child.propagate_SceneTreeExited();
         }
         // exited tree
-        this.nofity(NodeNotification.ExitedTree);
-        this.signal_exited_tree.trigger();
+        this._notification(NodeNotification.ExitedTree);
     }
 
     public propagate_Ready() {
@@ -132,11 +119,11 @@ export class Node extends ClassBase {
         for (const child of this.children) {
             child.propagate_Ready();
         }
-        this.nofity(NodeNotification.EnteredReady);
+        this._notification(NodeNotification.EnteredReady);
         if (this.first_time_ready) {
             this.first_time_ready = false;
             // ready
-            this.nofity(NodeNotification.Ready);
+            this._notification(NodeNotification.Ready);
             this._ready();
             this.signal_ready.trigger();
         }
@@ -147,8 +134,8 @@ export class Node extends ClassBase {
             child.propagate_Process(delta);
         }
         // process
+        this._notification(NodeNotification.Process);
         if (!this.block_process) {
-            this.nofity(NodeNotification.Process);
             this._process(delta);
             this.signal_process.trigger(delta);
         }
@@ -159,7 +146,7 @@ export class Node extends ClassBase {
             child.propagate_InternalAfterProcess(delta);
         }
         // internal before process
-        this.nofity(NodeNotification.InternalAfterProcess);
+        this._notification(NodeNotification.InternalAfterProcess);
     }
 
     public propagate_PhysicsProcess(delta: number) {
@@ -167,8 +154,8 @@ export class Node extends ClassBase {
             child.propagate_PhysicsProcess(delta);
         }
         // physics process
+        this._notification(NodeNotification.PhysicsProcess);
         if (!this.block_physics_process) {
-            this.nofity(NodeNotification.PhysicsProcess);
             this._physics_process(delta);
             this.signal_physics_process.trigger(delta);
         }
@@ -179,12 +166,12 @@ export class Node extends ClassBase {
             child.propagate_InternalAfterPhysicsProcess(delta);
         }
         // internal before process
-        this.nofity(NodeNotification.InternalAfterPhysicsProcess);
+        this._notification(NodeNotification.InternalAfterPhysicsProcess);
     }
 
     public propagate_InternalBeforeRender(delta: number) {
         // internal after process
-        this.nofity(NodeNotification.InternalBeforeRender);
+        this._notification(NodeNotification.InternalBeforeRender);
         for (const child of this.children) {
             child.propagate_InternalBeforeRender(delta);
         }
@@ -218,14 +205,14 @@ export class Node extends ClassBase {
         this.children.unshift(node);
         node.parent = this;
         // node parent
-        node.nofity(NodeNotification.Parented);
-        this.nofity(NodeNotification.ChildAdded);
+        node._notification(NodeNotification.Parented);
+        this._notification(NodeNotification.ChildAdded);
         this.signal_child_added.trigger(node);
         if (this.scenetree !== undefined) {
             node.set_SceneTree(this.scenetree);
         }
         // children changed
-        this.nofity(NodeNotification.ChildrenChanged);
+        this._notification(NodeNotification.ChildrenChanged);
     }
 
     private remove_ChildInternal(node: Node) {
@@ -233,16 +220,16 @@ export class Node extends ClassBase {
         if (idx < 0) return;
         node.set_SceneTree(undefined);
         this.children.splice(idx, 1);
-        this.nofity(NodeNotification.ChildRemoving);
+        this._notification(NodeNotification.ChildRemoving);
         this.signal_child_removing.trigger(node);
         node.parent = undefined;
         // node unparent
-        node.nofity(NodeNotification.Unparented);
+        node._notification(NodeNotification.Unparented);
         if (this.inside_tree) {
             node.propagate_SceneTreeExited();
         }
         // children changed siganl
-        this.nofity(NodeNotification.ChildrenChanged);
+        this._notification(NodeNotification.ChildrenChanged);
     }
 
     private propagate_Dispose() {
@@ -250,7 +237,7 @@ export class Node extends ClassBase {
             child.propagate_Dispose();
         }
         // dispose
-        this.nofity(NodeNotification.Dispose);
+        this._notification(NodeNotification.Dispose);
         this._dispose();
     }
 
@@ -273,7 +260,7 @@ export class Node extends ClassBase {
         if (idx < 0) return;
         this.children.splice(idx, 1);
         this.children.splice(to, 0, node);
-        this.nofity(NodeNotification.ChildrenChanged);
+        this._notification(NodeNotification.ChildrenChanged);
     }
 
     public has_Child(node: Node): boolean {
@@ -318,12 +305,8 @@ export class Node extends ClassBase {
     public _notification(what: NodeNotification) {
         switch (what) {
             case NodeNotification.Dispose: {
-                this.signal_exiting_tree.clear();
-                this.signal_entered_tree.clear();
-                this.signal_exited_tree.clear();
                 this.signal_child_added.clear();
                 this.signal_child_removing.clear();
-                this.signal_notification.clear();
                 this.signal_ready.clear();
                 this.signal_input.clear();
                 this.signal_process.clear();
