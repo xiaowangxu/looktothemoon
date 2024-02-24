@@ -206,6 +206,7 @@ export class OrbitCamera3D extends Node3D {
 
         if (this.zoom_tween !== undefined) {
             this.get_SceneTree()?.stop_Tween(this.zoom_tween);
+            this.camera.zoom = this.target_zoom;
         }
 
         const target = this.target_zoom;
@@ -215,7 +216,7 @@ export class OrbitCamera3D extends Node3D {
 
         const current_zoom = this.camera.zoom;
 
-        const zoom_tween = zoom_to_cursor && this.zoom_to_cursor ?
+        const zoom_tween = false && zoom_to_cursor && this.zoom_to_cursor ?
             new MethodTween(v => {
                 const zoom = current_zoom + (new_target - current_zoom) * v;
                 const mouse_inside = this.get_Viewport()?.get_Input().is_mouse_inside ?? false;
@@ -249,6 +250,7 @@ export class OrbitCamera3D extends Node3D {
 
         if (this.zoom_tween !== undefined) {
             this.get_SceneTree()?.stop_Tween(this.zoom_tween);
+            this.camera.zoom = this.target_zoom;
         }
 
         this.target_zoom = zoom;
