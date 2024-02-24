@@ -77,7 +77,7 @@ export class Node3D extends Node {
     }
     public set local_transform(transform: Matrix4) {
         this._local_transform.copy(transform);
-        this._local_transform.gets_Basis(Node3D.#basis).decomposes_RotationScale(Node3D.#euler, Node3D.#vector3);
+        this._local_transform.get_Basis(Node3D.#basis).decomposes_RotationScale(Node3D.#euler, Node3D.#vector3);
         this._local_position.copy(this._local_transform.position);
         this._local_rotation.copy(Node3D.#euler);
         this._local_scale.copy(Node3D.#vector3);
@@ -100,7 +100,7 @@ export class Node3D extends Node {
         return this._global_position.clone();
     }
     public set global_position(position: Vector3) {
-        this.global_transform = Node3D.#matrix4_0.set_BasisPosition(this.global_transform.gets_Basis(Node3D.#basis), position);
+        this.global_transform = Node3D.#matrix4_0.set_BasisPosition(this.global_transform.get_Basis(Node3D.#basis), position);
     }
     public get global_rotation(): Euler {
         if (this.is_global_transform_dirty) {
@@ -109,7 +109,7 @@ export class Node3D extends Node {
         return this._global_rotation.clone();
     }
     public set global_rotation(rotation: Euler) {
-        this.global_transform = Node3D.#matrix4_0.set_BasisPosition(Node3D.#basis.set_Euler(rotation), this.global_transform.gets_Position(Node3D.#vector3));
+        this.global_transform = Node3D.#matrix4_0.set_BasisPosition(Node3D.#basis.set_Euler(rotation), this.global_transform.get_Position(Node3D.#vector3));
     }
 
     public get global_transform(): Matrix4 {
@@ -118,8 +118,8 @@ export class Node3D extends Node {
             if (!this.top_level && parent !== undefined && parent instanceof Node3D) {
                 this._global_transform.composes(this.local_transform, parent.global_transform!);
                 // setup global position / rotation
-                this._global_transform.gets_Basis(Node3D.#basis).decomposes_RotationScale(Node3D.#euler, Node3D.#vector3);
-                this._global_position.copy(this._global_transform.gets_Position(Node3D.#vector3));
+                this._global_transform.get_Basis(Node3D.#basis).decomposes_RotationScale(Node3D.#euler, Node3D.#vector3);
+                this._global_position.copy(this._global_transform.get_Position(Node3D.#vector3));
                 this._global_rotation.copy(Node3D.#euler);
             }
             else {

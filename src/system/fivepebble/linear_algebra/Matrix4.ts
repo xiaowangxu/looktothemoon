@@ -73,7 +73,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         );
     }
 
-    public gets_Basis(target: Matrix3): Matrix3 {
+    public get_Basis(target: Matrix3): Matrix3 {
         target.n11 = this.n11; target.n12 = this.n12; target.n13 = this.n13;
         target.n21 = this.n21; target.n22 = this.n22; target.n23 = this.n23;
         target.n31 = this.n31; target.n32 = this.n32; target.n33 = this.n33;
@@ -88,7 +88,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         );
     }
 
-    public gets_Position(target: Vector3): Vector3 {
+    public get_Position(target: Vector3): Vector3 {
         target.x = this.n14;
         target.y = this.n24;
         target.z = this.n34;
@@ -170,12 +170,34 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         );
     }
 
+    public set_PrespectiveProjection(left: number, right: number, top: number, bottom: number, near: number, far: number) {
+        const x = 2 * near / (right - left);
+        const y = 2 * near / (top - bottom);
+        const a = (right + left) / (right - left);
+        const b = (top + bottom) / (top - bottom);
+        const c = - (far + near) / (far - near);
+        const d = (- 2 * far * near) / (far - near);
+        this.n11 = x; this.n12 = 0; this.n13 = a; this.n14 = 0;
+        this.n21 = 0; this.n22 = y; this.n23 = b; this.n24 = 0;
+        this.n31 = 0; this.n32 = 0; this.n33 = c; this.n34 = d;
+        this.n41 = 0; this.n42 = 0; this.n43 = -1; this.n44 = 0;
+        return this;
+    }
+
     public static make_PerspectiveFovProjection(fov: number, aspect: number, near: number, far: number) {
         const top = near * Math.tan(fov / 2);
         const height = 2 * top;
         const width = aspect * height;
         const left = - 0.5 * width;
         return Matrix4.make_PrespectiveProjection(left, left + width, top, top - height, near, far);
+    }
+
+    public set_PerspectiveFovProjection(fov: number, aspect: number, near: number, far: number) {
+        const top = near * Math.tan(fov / 2);
+        const height = 2 * top;
+        const width = aspect * height;
+        const left = - 0.5 * width;
+        return this.set_PrespectiveProjection(left, left + width, top, top - height, near, far);
     }
 
     public static make_OrthogonalProjection(left: number, right: number, top: number, bottom: number, near: number, far: number) {
@@ -192,6 +214,21 @@ export class Matrix4 implements MatrixLike<Matrix4> {
             0, 0, z_inverse, - z,
             0, 0, 0, 1,
         );
+    }
+
+    public set_OrthogonalProjection(left: number, right: number, top: number, bottom: number, near: number, far: number) {
+        const w = 1.0 / (right - left);
+        const h = 1.0 / (top - bottom);
+        const p = 1.0 / (far - near);
+        const x = (right + left) * w;
+        const y = (top + bottom) * h;
+        const z = (far + near) * p;
+        const z_inverse = - 2 * p;
+        this.n11 = 2 * w; this.n12 = 0; /**/this.n13 = 0; /*   */ this.n14 = - x;
+        this.n21 = 0; /**/this.n22 = 2 * h; this.n23 = 0; /*   */ this.n24 = - y;
+        this.n31 = 0; /**/this.n32 = 0; /**/this.n33 = z_inverse; this.n34 = - z;
+        this.n41 = 0; /**/this.n42 = 0; /**/this.n43 = 0; /*   */ this.n44 = 1;
+        return this;
     }
 
     index(row: number, col: number): number {

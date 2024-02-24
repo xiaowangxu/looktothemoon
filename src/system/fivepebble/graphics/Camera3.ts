@@ -9,14 +9,16 @@ import { Frustum3 } from "./Frustum3";
 
 export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     protected _projection: Matrix4 = Matrix4.make_Identity();
-    get projection() { return this._projection; }
+    get projection() { return this._projection.clone(); }
 
     protected _global_transform: Matrix4 = Matrix4.make_Identity();
+    protected _global_transform_inverse: Matrix4 = Matrix4.make_Identity();
     get global_transform() { return this._global_transform.clone(); }
     set global_transform(transform: Matrix4) {
         const position = transform.position;
         const [rotation, _] = transform.basis.decompose_RotationScale();
-        this._global_transform = Matrix4.from_BasisPosition(Matrix3.from_Euler(rotation), position);
+        this._global_transform.set_BasisPosition(Matrix3.from_Euler(rotation), position);
+        this._global_transform_inverse.inverses(this._global_transform)
     }
 
     protected _mask: number = 0xffffffff;
@@ -31,7 +33,8 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     public abstract get is_orthogonal(): boolean;
 
     project_Point(point: Vector3): Vector2 {
-        const p = point.apply_Matrix4(this.global_transform.inverse()).apply_Matrix4(this.projection);
+        const p = point.apply_Matrix4(this._global_transform_inverse);
+        p.applys_Matrix4(p, this._projection);
         return new Vector2(p.x, p.y);
     }
 
@@ -44,7 +47,7 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     }
 
     get_Frustum(): Frustum3 {
-        return Frustum3.from_Projection(this.global_transform.inverse().compose(this.projection));
+        return Frustum3.from_Projection(this._global_transform_inverse.compose(this._projection));
     }
 
     abstract clone(): Camera3;
@@ -111,29 +114,34 @@ export class OrthographicCamera3 extends Camera3 {
     protected update() {
         const half_width = this.width / (2 * this.zoom);
         const half_height = this.height / (2 * this.zoom);
-        this._projection = Matrix4.make_OrthogonalProjection(-half_width, half_width, half_height, -half_height, this.near, this.far);
+        this._projection.set_OrthogonalProjection(-half_width, half_width, half_height, -half_height, this.near, this.far);
     }
 
     unproject_Point(point: Vector2, depth: number = this.near): Vector3 {
         const half_width = this.width / (2 * this.zoom);
         const half_height = this.height / (2 * this.zoom);
-        return new Vector3(point.x * half_width, point.y * half_height, -depth).apply_Matrix4(this.global_transform);
+        const p = new Vector3(point.x * half_width, point.y * half_height, -depth);
+        return p.applys_Matrix4(p, this._global_transform);
     }
 
     unproject_Normal(point: Vector2): Vector3 {
-        return new Vector3(0, 0, -1).transform(this.global_transform.basis).normalize();
+        const n = new Vector3(0, 0, -1);
+        n.transforms(n, this._global_transform.basis);
+        n.normalizes(n);
+        return n;
     }
 
     clone(): OrthographicCamera3 {
         const orth = new OrthographicCamera3();
         orth.mask = this.mask;
-        orth._global_transform.copy(this._global_transform.clone());
+        orth._global_transform.copy(this._global_transform);
+        orth._global_transform_inverse.copy(this._global_transform_inverse);
         orth._width = this.width;
         orth._height = this.height;
         orth._near = this.near;
         orth._far = this.far;
         orth._zoom = this.zoom;
-        orth.update();
+        orth._projection.copy(this._projection);
         return orth;
     }
 }
@@ -191,31 +199,33 @@ export class PerspectiveCamera3 extends Camera3 {
     }
 
     protected update() {
-        this._projection = Matrix4.make_PerspectiveFovProjection(this.fov, this.aspect, this.near, this.far);
+        this._projection.set_PerspectiveFovProjection(this.fov, this.aspect, this.near, this.far);
     }
 
     unproject_Point(ndc: Vector2, depth: number = this.near): Vector3 {
-        if (depth === 0) return this.global_transform.position;
+        if (depth === 0) return this._global_transform.position;
         const half_height = this.near * Math.tan(this.fov / 2);
         const half_width = this.aspect * half_height;
         const p = new Vector3(ndc.x * half_width, ndc.y * half_height, -depth);
-        return p.apply_Matrix4(this.global_transform);
+        p.applys_Matrix4(p, this.global_transform);
+        return p;
     }
 
     unproject_Normal(ndc: Vector2): Vector3 {
         const p = this.unproject_Point(ndc, this.near);
-        return this.global_transform.position.direction_to(p);
+        return p.get_DirectionTo(this._global_transform.position, p);
     }
 
     clone(): PerspectiveCamera3 {
         const persp = new PerspectiveCamera3();
         persp.mask = this.mask;
-        persp._global_transform.copy(this._global_transform.clone());
+        persp._global_transform.copy(this._global_transform);
+        persp._global_transform_inverse.copy(this._global_transform_inverse);
         persp._fov = this.fov;
         persp._aspect = this.aspect;
         persp._near = this.near;
         persp._far = this.far;
-        persp.update();
+        persp._projection.copy(this._projection)
         return persp;
     }
 }

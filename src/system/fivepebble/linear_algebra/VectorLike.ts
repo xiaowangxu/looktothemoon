@@ -61,9 +61,13 @@ export interface VectorLike<Vec extends VectorLike<Vec, Mat>, Mat extends Matrix
     maxs(a: Vec, b: Vec): Vec;
 
     abs(): Vec;
+    get_Abs(a: Vec): Vec;
+
     distance_to(b: Vec): number;
     squared_distance_to(b: Vec): number;
+
     direction_to(b: Vec): Vec;
+    get_DirectionTo(a: Vec, b: Vec): Vec;
 
     equal(b: Vec): boolean;
     set(...args: number[]): Vec;

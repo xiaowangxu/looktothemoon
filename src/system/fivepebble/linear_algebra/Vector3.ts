@@ -157,8 +157,8 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         const n13 = matrix.n13, n23 = matrix.n23, n33 = matrix.n33;
         const x = a.x, y = a.y, z = a.z;
         this.x = n11 * x + n12 * y + n13 * z;
-        this.x = n21 * x + n22 * y + n23 * z;
-        this.x = n31 * x + n32 * y + n33 * z;
+        this.y = n21 * x + n22 * y + n23 * z;
+        this.z = n31 * x + n32 * y + n33 * z;
         return this;
     }
 
@@ -210,6 +210,12 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
     abs(): Vector3 {
         return new Vector3(Math.abs(this.x), Math.abs(this.y), Math.abs(this.z));
     }
+    get_Abs(a: Vector3): Vector3 {
+        this.x = Math.abs(a.x);
+        this.y = Math.abs(a.y);
+        this.z = Math.abs(a.z);
+        return this;
+    }
     distance_to(b: Vector3) {
         const x = this.x - b.x;
         const y = this.y - b.y;
@@ -222,11 +228,10 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         const z = this.z - b.z;
         return x * x + y * y + z * z;
     }
-    
     direction_to(b: Vector3) {
         return b.sub(this).normalize();
     }
-    gets_DirectionTo(a: Vector3, b: Vector3) {
+    get_DirectionTo(a: Vector3, b: Vector3) {
         return this.subs(b, a).normalizes(this);
     }
 

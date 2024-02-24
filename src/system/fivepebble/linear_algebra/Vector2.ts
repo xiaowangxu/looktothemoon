@@ -189,6 +189,11 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
     abs(): Vector2 {
         return new Vector2(Math.abs(this.x), Math.abs(this.y));
     }
+    get_Abs(a: Vector2): Vector2 {
+        this.x = Math.abs(a.x);
+        this.y = Math.abs(a.y);
+        return this;
+    }
     distance_to(b: Vector2) {
         const x = this.x - b.x;
         const y = this.y - b.y;
@@ -201,6 +206,9 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
     }
     direction_to(b: Vector2) {
         return b.sub(this).normalize();
+    }
+    get_DirectionTo(a: Vector2, b: Vector2): Vector2 {
+        return this.subs(b, a).normalizes(this);
     }
 
     equal(b: Vector2): boolean {

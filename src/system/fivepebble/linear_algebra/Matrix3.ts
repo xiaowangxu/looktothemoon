@@ -42,11 +42,23 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         );
     }
 
+    public get_Basis(target: Matrix2) {
+        target.n11 = this.n11; target.n12 = this.n12;
+        target.n21 = this.n21; target.n22 = this.n22;
+        return target;
+    }
+
     public get position() {
         return new Vector2(
             this.n13,
             this.n23,
         );
+    }
+
+    public get_Position(target: Vector2) {
+        target.x = this.n13;
+        target.y = this.n23;
+        return target;
     }
 
     constructor(n11: number, n12: number, n13: number, n21: number, n22: number, n23: number, n31: number, n32: number, n33: number) {
@@ -76,6 +88,13 @@ export class Matrix3 implements MatrixLike<Matrix3> {
             x.y, y.y, z.y,
             x.z, y.z, z.z,
         );
+    }
+
+    public set_Axis(x: Vector3, y: Vector3, z: Vector3) {
+        this.n11 = x.x; this.n21 = y.x; this.n31 = z.x;
+        this.n12 = x.y; this.n22 = y.y; this.n32 = z.y;
+        this.n13 = x.z; this.n23 = y.z; this.n33 = z.z;
+        return this;
     }
 
     public static make_RotateX(angle: number) {
