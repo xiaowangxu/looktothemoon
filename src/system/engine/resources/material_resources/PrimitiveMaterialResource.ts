@@ -132,7 +132,7 @@ export class PlainColorMaterialResource extends MaterialResource {
     public get color() { return this._color; }
     public set color(color: Color) {
         if (!this._color.equal(color)) {
-            this._color = color;
+            this._color.copy(color);
             this.material.set_UniformOverride('u_color', this._color);
             this.material.transparent = this._color.a < (1.0 - Epsilon);
         }
@@ -655,7 +655,7 @@ export class StandardMaterialResource extends MaterialResource {
     public get color() { return this._color; }
     public set color(color: Color) {
         if (!this._color.equal(color)) {
-            this._color = color;
+            this._color.copy(color);
             this.material.set_UniformOverride('u_color', this._color);
             this.material.transparent = this._color.a < (1.0 - Epsilon);
         }

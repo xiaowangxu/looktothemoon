@@ -7,17 +7,14 @@ import { KeyInputEvent } from "@/system/engine/inputs/events/KeyInputEvent";
 import { MouseButton, MouseButtonInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseButtonInputEvent";
 import { ShortCut } from "@/system/engine/inputs/ShortCut";
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
-import { DependencyGraph } from "./singletons/DependencyGraph";
 import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
 import { BoxGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
-import { NormalMaterialResource, PlainColorMaterialResource, UVMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
+import { PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { color, color8 } from "@/system/fivepebble/graphics/Color";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
-import { SignalEmitter } from "@/system/utils/SignalEmitter";
-import { ActionInputEvent } from "@/system/engine/inputs/events/ActionInputEvent";
 import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineGeometryResource";
 import { MultiLineMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
 import type { Config } from "@/system/engine/ConfiguredObject";
@@ -25,24 +22,22 @@ import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
 import { StandardMaterialResource } from "../system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { ClassLoader } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
 import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
-import { ImageTextureResource } from "@/system/engine/resources/texture_resources/ImageTextureResource";
 import huli from 'res://huli.obj?url';
 import { MaterialOverrideResource } from "@/system/engine/resources/material_resources/MaterialResource";
 import { EditorRenderer3DPipeline } from "@/system/engine/renderer/renderer_3d/EditorRenderer3DPipeline";
 import { EditorRenderer3D } from "@/system/engine/renderer/renderer_3d/EditorRenderer3D";
 import { TranslateGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/TranslateGrabber3D";
 import { PointLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/PointLight3D";
-import { PropertyTween, TweenEasingType, TweenTransitionType, tween_parallel } from "@/system/engine/Tween";
 import { AmbientLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/AmbientLight3D";
 import { DirectionalLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/DirectionalLight3D";
 import { SpotLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/SpotLight3D";
 import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { ArrayGeometryResource } from "@/system/engine/resources/geometry_resources/ArrayGeometryResource";
 import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
-import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
-import { observeResize } from "@/sundesign/SunDesignConstants";
 import { Cacher } from "@/system/utils/Cacher";
 import { Ref } from "@/system/utils/RefCounted";
+import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
+import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType } from "@/system/engine/Tween";
 
 const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
     return {
@@ -120,7 +115,7 @@ export function createEditor() {
     World.add_Child(directional_light1);
 
     const EditorSceneTree = new SceneTree(DefaultConfig, EditorViewportContainer);
-    EditorSceneTree.register_Singleton(DependencyGraph);
+    EditorSceneTree.register_Singleton(GrabbingSingleton);
     EditorViewport.add_Child(World);
 
     EditorSceneTree.get_InputActionMap().add_Action('switch_FrontView', new ShortCut(DefaultConfig).set([new KeyInputEvent(DefaultConfig).set_Key('1', '1', true, false)]));
@@ -218,16 +213,16 @@ export function createEditor() {
     // 	}
     // }
 
-    // EditorViewport.signal_input.connect((evt, pro) => {
-    //     if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
-    //         EditorSceneTree.start_Tween(
-    //             tween_parallel(
-    //                 new PropertyTween(point_light, 'radius', Math.random() * 10, 0.4, TweenTransitionType.Linear, TweenEasingType.Out),
-    //                 new PropertyTween(point_light, 'color', vec3(Math.random(), Math.random(), Math.random()), 0.4, TweenTransitionType.Linear, TweenEasingType.Out)
-    //             )
-    //         );
-    //     }
-    // });
+    EditorViewport.signal_input.connect((evt, pro) => {
+        if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
+            EditorSceneTree.start_Tween(
+                tween_parallel(
+                    new PropertyTween(point_light, 'radius', Math.random() * 10, 0.4, TweenTransitionType.Linear, TweenEasingType.Out),
+                    new PropertyTween(point_light, 'color', vec3(Math.random(), Math.random(), Math.random()), 0.4, TweenTransitionType.Linear, TweenEasingType.Out)
+                )
+            );
+        }
+    });
 
     const multi_line_geometry = new MultiLineGeometryResource(DefaultConfig);
     const multi_line_material = new MultiLineMaterialResource(DefaultConfig);

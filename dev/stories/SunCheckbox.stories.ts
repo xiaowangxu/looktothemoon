@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/vue3';
 
 import SunCheckbox from '../../src/sundesign/checkbox/SunCheckbox.vue';
 import SunRadiobox from '../../src/sundesign/checkbox/SunRadiobox.vue';
+import SunSwitch from '../../src/sundesign/checkbox/SunSwitch.vue';
 import SunRadioGroup from '../../src/sundesign/checkbox/SunRadioGroup.vue';
 import SunLabel from '../../src/sundesign/label/SunLabel.vue';
 import { SizeArgs, SizeArgsTypes, ColorSchemeArgs, ColorSchemeArgsTypes, Decorators } from './SunDesignArgs';
@@ -15,6 +16,7 @@ const meta: Meta<typeof SunCheckbox> = {
 export default meta;
 type StoryCheckbox = StoryObj<typeof SunCheckbox>;
 type StoryRadiobox = StoryObj<typeof SunRadiobox>;
+type StorySwitch = StoryObj<typeof SunSwitch>;
 
 /*
  *👇 Render functions are a framework specific feature to allow you control on how the component renders.
@@ -31,18 +33,48 @@ export const Checkbox: StoryCheckbox = {
             return { args, checked };
         },
         template: `
-			  <SunCheckbox v-bind="args" v-model.lazy="checked"/>
-			  <SunCheckbox v-bind="args" disabled v-model="checked"/>
-			  <SunCheckbox v-bind="args" disabled v-model="checked"/>
-			  <label style="display: flex; flex-wrap: nowrap; gap: 4px;">
-			  	  <SunCheckbox v-bind="args" v-model="checked">
+              <SunCheckbox v-bind="args" v-model.lazy="checked"/>
+              <SunCheckbox v-bind="args" disabled v-model="checked"/>
+              <SunCheckbox v-bind="args" disabled v-model="checked"/>
+              <label style="display: flex; flex-wrap: nowrap; gap: 4px;">
+                    <SunCheckbox v-bind="args" v-model="checked">
                 <template #icon>
                     <Cog />
                 </template>
             </SunCheckbox>
-			  	<SunLabel :size="args.size">Label</SunLabel>
-			  </label>
-		`,
+                  <SunLabel :size="args.size">Label</SunLabel>
+              </label>
+        `,
+    }),
+    argTypes: {
+        ...SizeArgsTypes,
+        ...ColorSchemeArgsTypes,
+    },
+    args: {
+        ...SizeArgs,
+        ...ColorSchemeArgs,
+    },
+};
+
+export const Switch: StorySwitch = {
+    decorators: Decorators,
+    tags: ['autodocs'],
+    render: (args) => ({
+        components: { SunSwitch, SunLabel, Cog },
+        setup() {
+            const checked = ref(false);
+            return { args, checked };
+        },
+        template: `
+            <SunSwitch v-bind="args" v-model.lazy="checked"/>
+            <SunSwitch v-bind="args" disabled v-model="checked"/>
+            <SunSwitch v-bind="args" disabled v-model="checked"/>
+            <label style="display: flex; flex-wrap: nowrap; gap: 4px;">
+                <SunSwitch v-bind="args" v-model="checked">
+                </SunSwitch>
+                <SunLabel :size="args.size">Label</SunLabel>
+            </label>
+        `,
     }),
     argTypes: {
         ...SizeArgsTypes,
@@ -64,15 +96,15 @@ export const Radiobox: StoryRadiobox = {
             return { args, checked };
         },
         template: `
-			  <SunRadiobox v-bind="args" v-model.lazy="checked"/>
-			  <SunRadiobox v-bind="args" disabled v-model="checked"/>
-			  <SunRadiobox v-bind="args" disabled v-model="checked"/>
-			  <label style="display: flex; flex-wrap: nowrap; gap: 4px;">
-			  	  <SunRadiobox v-bind="args" v-model="checked">
-			  	  </SunRadiobox>
-			  	<SunLabel :size="args.size">Label</SunLabel>
-			  </label>
-		`,
+              <SunRadiobox v-bind="args" v-model.lazy="checked"/>
+              <SunRadiobox v-bind="args" disabled v-model="checked"/>
+              <SunRadiobox v-bind="args" disabled v-model="checked"/>
+              <label style="display: flex; flex-wrap: nowrap; gap: 4px;">
+                    <SunRadiobox v-bind="args" v-model="checked">
+                    </SunRadiobox>
+                  <SunLabel :size="args.size">Label</SunLabel>
+              </label>
+        `,
     }),
     argTypes: {
         ...SizeArgsTypes,
@@ -108,15 +140,15 @@ export const RadioGroup: StoryRadiobox = {
                     <SunRadiobox v-bind="args" uid="Option C" :disabled="checked === 'Option B'"/>
                     <SunLabel :size="args.size">选项 C</SunLabel>
                 </label>
-			          <label style="display: flex; flex-wrap: nowrap; gap: 6px;">
-			      	      <SunRadiobox v-bind="args" uid="Option D"/>
-			      	      <SunLabel :size="args.size">选项 D</SunLabel>
-			          </label>
+                      <label style="display: flex; flex-wrap: nowrap; gap: 6px;">
+                            <SunRadiobox v-bind="args" uid="Option D"/>
+                            <SunLabel :size="args.size">选项 D</SunLabel>
+                      </label>
             </SunRadioGroup>
             <button @click="checked = undefined">clear</button>
             {{ checked }}
         </div>
-		`,
+        `,
     }),
     argTypes: {
         ...SizeArgsTypes,

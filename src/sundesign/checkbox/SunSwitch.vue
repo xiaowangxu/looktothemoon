@@ -104,11 +104,11 @@ indicator-border-color = var(--border-color)
         align-self: stretch
         margin-left: 0
         outline: none
-        border: indicator-border-width solid var(--attachment-color)
+        border: indicator-border-width + border-width solid var(--attachment-color)
         background-color: var(--attachment-color)
     
     &:disabled::before
-        border: indicator-border-width solid var(--attachment-color-disabled)
+        border: indicator-border-width + border-width solid var(--attachment-color-disabled)
         background-color: var(--attachment-color-disabled)
 
     &.bordered::before
@@ -125,7 +125,7 @@ indicator-border-color = var(--border-color)
         outline: solid-border-disabled
     
     &.bordered:disabled:checked::before
-        border: indicator-border-width solid var(--attachment-color)
+        border: indicator-border-width solid var(--attachment-color-disabled)
         background-color: var(--font-color-active-disabled)
         outline: solid-border-active-disabled
 

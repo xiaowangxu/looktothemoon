@@ -14,6 +14,7 @@ import type { Color } from "@/system/fivepebble/graphics/Color";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { Node3D } from "../../Node3D";
 import { PrimitiveFragmentPreZShader, PrimitiveFragmentPreZShaderUniforms, PrimitiveVertexShader, PrimitiveVertexShaderUniforms } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
+import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
 
 export class GrabberElement3D<T> extends FixSizeNode3D {
     // signals

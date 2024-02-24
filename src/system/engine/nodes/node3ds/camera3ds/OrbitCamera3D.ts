@@ -12,6 +12,7 @@ import { Vector2, vec2 } from '@/system/fivepebble/linear_algebra/Vector2';
 import { euler } from '@/system/fivepebble/linear_algebra/Euler';
 import { Plane3 } from '@/system/fivepebble/geometries/Plane3';
 import type { Config } from "../../../ConfiguredObject";
+import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
 
 export class OrbitCamera3D extends Node3D {
     public static readonly class_name: string = "OrbitCamera3D";
@@ -78,33 +79,44 @@ export class OrbitCamera3D extends Node3D {
     }
 
     // drag
-    private _is_dragging: boolean = false;
-    public get is_dragging() { return this._is_dragging; }
+    private _is_grabbing: boolean = false;
+    private set is_grabbing(is_grabbing: boolean) {
+        if (this._is_grabbing !== is_grabbing) {
+            this._is_grabbing = is_grabbing;
+            if (this._is_grabbing) {
+                this.get_SceneTree()?.get_Singleton(GrabbingSingleton)?.on_GrabStart();
+            }
+            else {
+                this.get_SceneTree()?.get_Singleton(GrabbingSingleton)?.on_GrabEnd();
+            }
+        }
+    }
+    public get is_grabbing() { return this._is_grabbing; }
 
     public _input(event: InputEvent, propagate: boolean): void {
         if (!propagate && event instanceof MouseButtonInputEvent) {
             // drag
             if (event.button === MouseButton.Middle) {
-                if (!this._is_dragging) {
+                if (!this._is_grabbing) {
                     if (event.pressed) {
-                        this._is_dragging = true;
+                        this.is_grabbing = true;
                         event.mark_Canceled();
                     }
                 }
                 else if (event.pressed === false) {
-                    this._is_dragging = false;
+                    this.is_grabbing = false;
                 }
             }
         }
         // mouse exit
         if (!propagate && event instanceof MouseEnterLeaveInputEvent) {
-            if (this.is_dragging && !event.inside) {
-                this._is_dragging = false;
+            if (this.is_grabbing && !event.inside) {
+                this.is_grabbing = false;
             }
         }
         // drag
         if (!propagate && event instanceof MouseMotionInputEvent) {
-            if (this._is_dragging) {
+            if (this._is_grabbing) {
                 if (event.ctrl) {
                     this.pan(event.relative_normalized);
                 }
@@ -127,37 +139,37 @@ export class OrbitCamera3D extends Node3D {
             else if (event.action === 'switch_TopView') {
                 this.set_Rotation(0, -Math.PI / 2, true);
                 this.set_Fov(0, true);
-                this._is_dragging = false;
+                this.is_grabbing = false;
                 event.mark_Canceled();
             }
             else if (event.action === 'switch_BottomView') {
                 this.set_Rotation(0, Math.PI / 2, true);
                 this.set_Fov(0, true);
-                this._is_dragging = false;
+                this.is_grabbing = false;
                 event.mark_Canceled();
             }
             else if (event.action === 'switch_LeftView') {
                 this.set_Rotation(-Math.PI / 2, 0, true);
                 this.set_Fov(0, true);
-                this._is_dragging = false;
+                this.is_grabbing = false;
                 event.mark_Canceled();
             }
             else if (event.action === 'switch_RightView') {
                 this.set_Rotation(Math.PI / 2, 0, true);
                 this.set_Fov(0, true);
-                this._is_dragging = false;
+                this.is_grabbing = false;
                 event.mark_Canceled();
             }
             else if (event.action === 'switch_FrontView') {
                 this.set_Rotation(0, 0, true);
                 this.set_Fov(0, true);
-                this._is_dragging = false;
+                this.is_grabbing = false;
                 event.mark_Canceled();
             }
             else if (event.action === 'switch_BackView') {
                 this.set_Rotation(Math.PI, 0, true);
                 this.set_Fov(0, true);
-                this._is_dragging = false;
+                this.is_grabbing = false;
                 event.mark_Canceled();
             }
             else if (event.action === 'switch_CameraType') {
