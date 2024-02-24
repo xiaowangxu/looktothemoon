@@ -3,7 +3,8 @@
     <div class="__sun-design-tree-list-container__">
         <SunButtonLike class="__sun-design-tree-item-container__ no-pressed-color"
             :class="{ 'no-append': $slots.append === undefined, 'leaf': option.leaf ?? false }" :size="size"
-            :disabled="option.disabled" :active="option_active" :color-scheme="option.colorScheme" flat no-pressed-color>
+            :disabled="option.disabled" :active="option_active" :color-scheme="option.colorScheme" flat no-pressed-color
+            :hover="option.hover">
 
             <slot name="prepand" :option="option" />
 
@@ -115,12 +116,13 @@ const {
     filterSort: ref(undefined),
 }), true);
 
-export type ItemTreeItem<T extends UID = UID> = Omit<Item<T>, 'shortcut' | 'active' | 'sub' | 'iconOnly'> & { unfoldIcon?: string, leaf?: boolean, subs?: TreeItem<T>[], defaultFold?: boolean };
+export type ItemTreeItem<T extends UID = UID> = Omit<Item<T>, 'shortcut' | 'active' | 'sub' | 'iconOnly'> & { unfoldIcon?: string, hover?: boolean, leaf?: boolean, subs?: TreeItem<T>[], defaultFold?: boolean };
 export type RenderTreeItem<T extends UID = UID> = {
     uid: T,
     label?: string,
     colorScheme?: ColorScheme,
     disabled?: boolean,
+    hover?: boolean,
     leaf?: boolean,
     subs?: TreeItem<T>[],
     defaultFold?: boolean,
