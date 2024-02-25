@@ -3,6 +3,8 @@ import { type CSSProperties, markRaw, toRef, type Ref, readonly, type DeepReadon
 
 export type Size = 'small' | 'normal' | 'large';
 
+export type Animation = 'rotate' | 'slide-r' | 'blink' | 'ring' | 'shake';
+
 export type Align = 'start' | 'center' | 'end';
 
 export type BorderMask = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
