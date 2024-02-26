@@ -47,6 +47,7 @@
                                 U
                             </template>
                         </SunTree>
+                        <SunColorPicker></SunColorPicker>
                     </SunPanelContainer>
                 </SunScrollContainer>
 
@@ -77,6 +78,7 @@ import { VFSTreeOptionsRef } from '@/system/filesystem/FileSystemTreeOptionsRef'
 import SunButtonLike from '@/sundesign/button/SunButtonLike.vue';
 import SunControlGroup from '@/sundesign/controlgroup/SunControlGroup.vue';
 import SunControlGroupRow from '@/sundesign/controlgroup/SunControlGroupRow.vue';
+import SunColorPicker from '@/sundesign/colorpicker/SunColorPicker.vue';
 import { vHoverMenu } from '@/sundesign/hovermenu/SunHoverMenu';
 
 const fs_options = VFSTreeOptionsRef.watch(fspath('/'), false) as SunTreeOptions;

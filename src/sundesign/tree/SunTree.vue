@@ -41,7 +41,7 @@ const props = withDefaults(
         filterSort?: (options: TreeItem[]) => TreeItem[],
         canDrop?: (drag_uid: UID, drop_uid: UID) => SunTreeDroppable,
         getDragData?: (drag_uid: UID | UID[]) => DragData[] | undefined,
-        defaultFold?: boolean,
+        initialFold?: boolean,
         initialDepth?: number,
         allowDragReorder?: boolean,
         allowDragInLeaf?: boolean,
@@ -55,7 +55,7 @@ const props = withDefaults(
         draggable: true,
         unfoldDelay: 500,
         clickFolding: true,
-        defaultFold: false,
+        initialFold: false,
         initialDepth: 0,
         allowDragReorder: false,
         allowDragInLeaf: false,
@@ -109,7 +109,7 @@ function setUIDFoldedCache(uid: UID, folded: boolean | undefined) {
     }
 }
 function getUIDFoldedCache(uid: UID) {
-    return uid_folded_map.get(uid) ?? props.defaultFold;
+    return uid_folded_map.get(uid) ?? props.initialFold;
 }
 function onDragStart(uid: UID, evt: DragEvent) {
     if (isActive(uid)) {

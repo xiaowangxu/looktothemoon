@@ -116,7 +116,7 @@ const {
     filterSort: ref(undefined),
 }), true);
 
-export type ItemTreeItem<T extends UID = UID> = Omit<Item<T>, 'shortcut' | 'active' | 'sub' | 'iconOnly'> & { unfoldIcon?: string, hover?: boolean, leaf?: boolean, subs?: TreeItem<T>[], defaultFold?: boolean };
+export type ItemTreeItem<T extends UID = UID> = Omit<Item<T>, 'shortcut' | 'active' | 'sub' | 'iconOnly'> & { unfoldIcon?: string, hover?: boolean, leaf?: boolean, subs?: TreeItem<T>[], initialFold?: boolean };
 export type RenderTreeItem<T extends UID = UID> = {
     uid: T,
     label?: string,
@@ -125,7 +125,7 @@ export type RenderTreeItem<T extends UID = UID> = {
     hover?: boolean,
     leaf?: boolean,
     subs?: TreeItem<T>[],
-    defaultFold?: boolean,
+    initialFold?: boolean,
     render: Raw<Component<{}>>,
 };
 export type TreeItem<T extends UID = UID> = ItemTreeItem<T> | RenderTreeItem<T>;

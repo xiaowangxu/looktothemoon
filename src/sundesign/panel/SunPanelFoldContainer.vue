@@ -1,7 +1,8 @@
 <template>
     <div class="__sun-design-panel-fold-container__" :style="!folded ? unfoldStyle : undefined">
         <SunButtonLike class="__sun-design-panel-fold-container-button__" :size="size"
-            :class="{ append: $slots.append !== undefined, unfolded: !folded }" no-hover-color no-pressed-color flat>
+            :class="{ append: $slots.append !== undefined, unfolded: !folded, 'hover-show': hoverShowAppend }"
+            no-hover-color no-pressed-color flat>
             <SunButton class="__sun-design-panel-fold-container-fold-button__ no-hover-color no-pressed-color" :size="size"
                 flat style="flex: 1;" @click="folded = !folded">
                 <ChevronRight v-if="folded" />
@@ -10,7 +11,8 @@
                     <SunButtonItem :label="label" />
                 </slot>
             </SunButton>
-            <div v-show="!folded" v-if="$slots.append !== undefined" class="__sun-design-panel-fold-container-append__">
+            <div v-show="hoverShowAppend || !folded" v-if="$slots.append !== undefined"
+                class="__sun-design-panel-fold-container-append__" :class="{ 'hover-show': hoverShowAppend && folded }">
                 <slot name="append" />
             </div>
         </SunButtonLike>
@@ -26,7 +28,7 @@ import { ref, watch } from 'vue';
 import SunButtonLike from '../button/SunButtonLike.vue';
 import SunButton from '../button/SunButton.vue';
 import SunButtonItem from '../item/SunButtonItem.vue';
-import { ChevronDown, ChevronRight, FolderMinus } from 'lucide-vue-next';
+import { ChevronDown, ChevronRight } from 'lucide-vue-next';
 import type { Size } from '../SunDesignConstants';
 
 // props
@@ -35,10 +37,14 @@ const props = withDefaults(
         size?: Size,
         label?: string,
         unfoldStyle?: string,
+        initialFold?: boolean,
+        hoverShowAppend?: boolean,
     }>(),
     {
         size: 'normal',
         label: '',
+        initialFold: false,
+        hoverShowAppend: false,
     }
 );
 
@@ -50,7 +56,7 @@ const emits = defineEmits<{
 }>();
 
 // datas
-const folded = ref(false);
+const folded = ref(props.initialFold);
 watch(folded, folded => {
     if (folded) emits('close');
     else emits('open');
@@ -80,6 +86,10 @@ watch(folded, folded => {
 
     &.append.unfolded
         padding-right : padding-extend-normal !important
+    
+    &.append.hover-show:not(.unfolded):hover,
+    &.append.hover-show:not(.unfolded):focus-within
+        padding-right : padding-extend-normal !important
 
     &:has(> .__sun-design-panel-fold-container-fold-button__:hover)
         background-color: var(--color-normal) !important
@@ -97,8 +107,11 @@ watch(folded, folded => {
     flex-direction: row
     flex-wrap: nowrap
     display: flex
+    &.hover-show
+        display: none
 
-    // .__sun-design-panel-fold-container-button__:hover > &
-    //     display: flex
+    .__sun-design-panel-fold-container-button__:hover > &.hover-show,
+    .__sun-design-panel-fold-container-button__:focus-within > &.hover-show
+        display: flex
 
 </style>

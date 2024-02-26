@@ -1,14 +1,15 @@
 <template>
     <SunButtonPopup ref="buttonpopup_ref" style="position: relative; background-color: transparent;" v-bind="$attrs"
-        :size="size" :flat="flat" :bordered="bordered" :borderMask="borderMask" :rounded="rounded" :squared="squared"
-        :disabled="disabled" drop-shadow mode="instance" vertical content-style="width: 100%; max-width: 180px;"
-        :getPopupRect="getPopupRect" scrollable-indicators>
+        :size="size" popup-size="normal" :flat="flat" :bordered="bordered" :borderMask="borderMask" :rounded="rounded"
+        :squared="squared" :disabled="disabled" drop-shadow mode="instance" vertical
+        content-style="width: 100%; max-width: 180px;" :getPopupRect="getPopupRect" scrollable-indicators>
         <template #button>
             <div class="__sun-design-transparent-bg__" style="position: absolute; inset: 0; z-index: -1;">
                 <div style="position: absolute; inset: 0;" :style="{ background: color_str }" />
             </div>
         </template>
         <template #popup>
+
             <!-- Previewer -->
             <SunPanelContainer gap style="flex-shrink: 0;">
                 <div class="__sun-design__ __sun-design-transparent-bg__  bordered"
@@ -21,11 +22,17 @@
                 </SunButton>
             </SunPanelContainer>
             <SunPanelSeparator override-vertical />
+
             <!-- Picker -->
-            <SunPanelContainer gap vertical style="min-height: 120px; flex-shrink: 0;">
-                <SunPanelContainer gap no-padding style="flex: 1;"
-                    :style="{ '--HueColor': hue_color, '--Color': color_str_without_alpha }">
-                    <SunRange v-memo="[hue]" v-model="hue" :active="false"
+            <SunPanelContainer gap vertical style="min-height: 120px; aspect-ratio: 1; flex-shrink: 0;">
+                <SunPanelContainer gap no-padding style="flex: 1;">
+                    <div class="__sun-design-color-picker-wheel__">
+                        <button class="__sun-design-color-picker-hue-nob__"></button>
+                        <div class="__sun-design-color-picker-field__" :data-size="size">
+                            <button class="__sun-design-color-picker-shade-nob__" :style="{ '--Color': color_str }"></button>
+                        </div>
+                    </div>
+                    <!-- <SunRange v-memo="[hue]" v-model="hue" :active="false"
                         style="background: linear-gradient(0deg,red 0,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,red);"
                         vertical :min="0" :max="360" :progress="false"
                         :ticks="[0, 360 * 0.17, 360 * 0.33, 180, 360 * 0.67, 360 * 0.83, 360]" />
@@ -37,104 +44,82 @@
                         <SunRange v-memo="[alpha]" v-model="alpha" :active="false"
                             style="background: linear-gradient(180deg, var(--Color), transparent); height: 100%;" vertical
                             :min="0" :max="1" :progress="false" />
-                    </div>
-                    <!-- <div v-else-if="edit_format === 'HSL'"
-                    style="flex: 1; border-radius: 6px;	background: linear-gradient(0deg, black, transparent, white), linear-gradient(90deg,red 0,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,red);" /> -->
+                    </div> -->
                 </SunPanelContainer>
             </SunPanelContainer>
             <SunPanelSeparator override-vertical />
+            <!-- <div v-else-if="edit_format === 'HSL'"
+                    style="flex: 1; border-radius: 6px;	background: linear-gradient(0deg, black, transparent, white), linear-gradient(90deg,red 0,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,red);" /> -->
+
             <!-- Input -->
-            <SunPanelContainer gap style="flex-shrink: 0;">
-                <SunPanelContainer gap no-padding vertical style="flex: 1;">
-                    <SunControlGroup>
+            <SunPanelContainer gap style="flex-shrink: 0;" vertical>
+                <SunPanelContainer gap no-padding style="flex: 1;">
+                    <SunControlGroup style="flex: 1;">
                         <SunControlGroupRow>
-                            <SunNumberEdit :model-value="255" :min="0" :max="255" :step="1" progress
-                                progress-color="var(--border-color-disabled)" style="flex: 1;">
+                            <SunNumberEdit v-model="red" :min="0" :max="255" :step="1" :value-snap-gap="1" :drag-factor="2"
+                                style="flex: 1;">
                                 <template #suffix> {{ edit_label_r }} </template>
                             </SunNumberEdit>
                         </SunControlGroupRow>
                         <SunControlGroupRow>
-                            <SunNumberEdit :model-value="255" :min="0" :max="255" :step="1" progress
-                                progress-color="var(--border-color-disabled)" style="flex: 1;">
+                            <SunNumberEdit v-model="green" :min="0" :max="255" :step="1" :value-snap-gap="1"
+                                :drag-factor="2" style="flex: 1;">
                                 <template #suffix> {{ edit_label_g }} </template>
                             </SunNumberEdit>
                         </SunControlGroupRow>
                         <SunControlGroupRow>
-                            <SunNumberEdit :model-value="255" :min="0" :max="255" :step="1" progress
-                                progress-color="var(--border-color-disabled)" style="flex: 1;">
+                            <SunNumberEdit v-model="blue" :min="0" :max="255" :step="1" :value-snap-gap="1" :drag-factor="2"
+                                style="flex: 1;">
                                 <template #suffix> {{ edit_label_b }} </template>
                             </SunNumberEdit>
                         </SunControlGroupRow>
                         <SunControlGroupRow>
-                            <SunNumberEdit :model-value="255" :min="0" :max="255" :step="1" style="flex: 1;">
+                            <SunNumberEdit v-model="alpha" :min="0" :max="255" :step="1" :value-snap-gap="1"
+                                :drag-factor="2" style="flex: 1;">
                                 <template #suffix> {{ edit_label_a }} </template>
                             </SunNumberEdit>
                         </SunControlGroupRow>
                     </SunControlGroup>
-                    <SunControlGroup style="flex: 1;">
-                        <SunControlGroupRow>
-                            <SunLineEdit model-value="123" style="flex: 1;" />
-                            <SunButton squared>
-                                <ClipboardCopy />
-                            </SunButton>
-                            <SunSelect style="width: min-content; align-self: flex-end;" icon-only squared
-                                v-model="code_format"
-                                :options="[[{ label: 'Hex', uid: 0 }, { label: 'Color String', uid: 1 }]]">
-                                <template #closed>
-                                    <Hash />
-                                </template>
-                                <template #opened>
-                                    <Hash />
-                                </template>
-                            </SunSelect>
-                        </SunControlGroupRow>
-                    </SunControlGroup>
+                    <SunPanelContainer gap no-padding vertical>
+                        <SunControlGroup>
+                            <SunControlGroupRow>
+                                <SunButton squared @click="onEyeDropper">
+                                    <Pipette />
+                                </SunButton>
+                            </SunControlGroupRow>
+                            <SunControlGroupRow>
+                                <SunSelect icon-only squared v-model="edit_format" :options="edit_formats">
+                                    <template #closed>
+                                        <Palette />
+                                    </template>
+                                    <template #opened>
+                                        <Palette />
+                                    </template>
+                                </SunSelect>
+                            </SunControlGroupRow>
+                        </SunControlGroup>
+                    </SunPanelContainer>
                 </SunPanelContainer>
-                <SunPanelContainer gap no-padding vertical>
-                    <SunControlGroup>
-                        <SunControlGroupRow>
-                            <SunSelect icon-only squared v-model="edit_format" :options="edit_formats">
-                                <template #closed>
-                                    <Palette />
-                                </template>
-                                <template #opened>
-                                    <Palette />
-                                </template>
-                            </SunSelect>
-                        </SunControlGroupRow>
-                        <SunControlGroupRow>
-                            <SunButton squared @click="onEyeDropper">
-                                <Pipette />
-                            </SunButton>
-                        </SunControlGroupRow>
-                    </SunControlGroup>
-                    <SunControlGroup style="margin-top: auto;">
-                        <SunControlGroupRow>
-                            <SunSelect icon-only squared v-model="library"
-                                :options="[[{ label: '最近使用', uid: 8 }, { label: 'Color String', uid: 200 }]]">
-                                <template #closed>
-                                    <Bookmark />
-                                </template>
-                                <template #opened>
-                                    <Bookmark />
-                                </template>
-                            </SunSelect>
-                        </SunControlGroupRow>
-                        <SunControlGroupRow>
-                            <SunButton squared>
-                                <Plus />
-                            </SunButton>
-                        </SunControlGroupRow>
-                    </SunControlGroup>
-                </SunPanelContainer>
+                <SunControlGroup style="flex: 1;">
+                    <SunControlGroupRow>
+                        <SunLineEdit v-model.lazy="color_str" style="flex: 1;" />
+                        <SunSelect style="width: min-content; align-self: flex-end;" icon-only squared v-model="code_format"
+                            :options="[[{ label: 'Hex', uid: 0 }, { label: 'Color String', uid: 1 }]]">
+                            <template #closed>
+                                <Hash />
+                            </template>
+                            <template #opened>
+                                <Hash />
+                            </template>
+                        </SunSelect>
+                    </SunControlGroupRow>
+                </SunControlGroup>
             </SunPanelContainer>
             <SunPanelSeparator override-vertical />
+
             <!-- Library -->
-            <SunPanelFoldContainer label="收藏"
+            <SunPanelFoldContainer label="最近使用" initial-fold
                 @toggle="() => $nextTick(() => buttonpopup_ref?.refreshPopupContentMinSize())">
-                <!-- <template #append>
-                    <SunButton squared flat size="small">+</SunButton>
-                </template> -->
                 <SunPanelContainer gap style="flex-wrap: wrap;">
                     <SunButton v-for="i in library" class="__sun-design-transparent-bg__" size="small" squared
                         style="position: relative;">
@@ -143,6 +128,21 @@
                 </SunPanelContainer>
             </SunPanelFoldContainer>
             <SunPanelSeparator />
+            <SunPanelFoldContainer label="收藏" initial-fold hover-show-append
+                @toggle="() => $nextTick(() => buttonpopup_ref?.refreshPopupContentMinSize())">
+                <template #append>
+                    <SunButton squared flat size="small" title="将颜色添加到收藏">
+                        <Plus />
+                    </SunButton>
+                </template>
+                <SunPanelContainer gap style="flex-wrap: wrap;">
+                    <SunButton v-for="i in library" class="__sun-design-transparent-bg__" size="small" squared
+                        style="position: relative;">
+                        <div style="position: absolute; inset: 0; background: rgba(123, 233, 12, 0.5);" />
+                    </SunButton>
+                </SunPanelContainer>
+            </SunPanelFoldContainer>
+
         </template>
     </SunButtonPopup>
 </template>
@@ -168,6 +168,7 @@ import { useColorPickerData } from './SunColorPickerConstants';
 import SunRange from '../range/SunRange.vue';
 import SunRange2D from '../range/SunRange2D.vue';
 import { useEyeDropper } from '@vueuse/core';
+import { vHoverMenu } from '../hovermenu/SunHoverMenu';
 
 // props
 const props = withDefaults(
@@ -193,12 +194,18 @@ const props = withDefaults(
 );
 
 // datas
-const hue = ref(0);
-const hue_color = computed(() => `hsl(${hue.value}deg, 100%, 50%)`);
-const alpha = ref(1);
-const lum_sat = ref<[number, number]>([100, 100]);
-const color_str_without_alpha = computed(() => `hsl(${hue.value}deg, ${lum_sat.value[0]}%, ${lum_sat.value[1]}%)`);
-const color_str = computed(() => `hsl(${hue.value}deg, ${lum_sat.value[0]}%, ${lum_sat.value[1]}%, ${alpha.value})`);
+const red = ref(255);
+const green = ref(255);
+const blue = ref(255);
+const alpha = ref(255);
+
+const color_str_without_alpha = computed(() => `rgb(${red.value}, ${green.value}, ${blue.value})`);
+const color_str = computed({
+    get: () => `#${red.value.toString(16).padStart(2, '0').toUpperCase()}${green.value.toString(16).padStart(2, '0').toUpperCase()}${blue.value.toString(16).padStart(2, '0').toUpperCase()}${alpha.value === 255 ? '' : alpha.value.toString(16).padStart(2, '0').toUpperCase()}`,//`rgba(${red.value}, ${green.value}, ${blue.value}, ${alpha.value / 255})`,
+    set: (str) => {
+
+    },
+});
 
 const {
     edit_formats, edit_format,
@@ -213,12 +220,7 @@ watch([library], () => {
 }, { flush: 'post' });
 
 function getPopupRect(buttonRect: Rect, contentMinSize: BoxSize, windowSize: BoxSize): Rect {
-    const btn_rect = { ...buttonRect };
-    if (btn_rect.width > contentMinSize.width) {
-        btn_rect.x += (btn_rect.width - contentMinSize.width) / 2;
-        btn_rect.width = contentMinSize.width;
-    }
-    return calcButtonPopupRect(btn_rect, contentMinSize, windowSize, 0);
+    return calcButtonPopupRect(buttonRect, contentMinSize, windowSize, buttonRect.width > contentMinSize.width ? 1 : 0, 0, undefined, undefined, false);
 }
 
 function onEyeDropper() {
@@ -228,11 +230,101 @@ function onEyeDropper() {
 </script>
 
 <style lang="stylus">
+@import '../SunDesignStyleConstants.styl';
 
 .__sun-design-transparent-bg__ {
     background-color: transparent !important;
     background-image: linear-gradient(45deg,#ccc 25%,transparent 0), linear-gradient(-45deg,#ccc 25%,transparent 0), linear-gradient(45deg,transparent 75%,#ccc 0), linear-gradient(-45deg,transparent 75%,#ccc 0);
-	background-size: 10px 10px;
-	background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+	  background-size: 10px 10px;
+	  background-position: 0 0, 0 5px, 5px -5px, -5px 0;
 }
+
+wheel-width = 20px
+nob-size = 16px
+nob-width = 3px
+
+.__sun-design-color-picker-wheel__
+    --HueDegree: -90deg
+    --ShadeX: 100%
+    --ShadeY: 100%
+    position: relative
+    width: 100%
+    height: 100%
+    border-radius: 50%
+    background: conic-gradient(from 90deg, rgb(255, 0, 0), rgb(255, 128, 0), rgb(255, 255, 0), rgb(128, 255, 0), rgb(0, 255, 0), rgb(0, 255, 128), rgb(0, 255, 255), rgb(0, 128, 255), rgb(0, 0, 255), rgb(128, 0, 255), rgb(255, 0, 255), rgb(255, 0, 128), rgb(255, 0, 0))
+    border: solid-border
+    box-sizing: border-box
+
+    &::before
+        content: ''
+        box-sizing: border-box
+        position: absolute
+        inset: wheel-width
+        background-color: var(--panel-color)
+        border-radius: 50%
+        border: solid-border
+    
+    .__sun-design-color-picker-hue-nob__
+        box-sizing: border-box
+        width: nob-size
+        padding: 0
+        margin: 0
+        aspect-ratio: 1
+        position: absolute
+        border-radius: 50%
+        left: 'calc(50% + (100% - %s) / 2 * cos(var(--HueDegree)) - %s)' % (wheel-width nob-size / 2)
+        top: 'calc(50% + (100% - %s) / 2 * sin(var(--HueDegree)) - %s)' % (wheel-width nob-size / 2)
+        box-shadow: panel-drop-shadow
+        border: solid-border
+
+        &::before
+            content: ''
+            position: absolute
+            inset: 0
+            background-color: 'hsl(var(--HueDegree), 100%, 50%)' % ('')
+            border: var(--panel-color) nob-width solid
+            border-radius: inherit
+
+        &:focus-visible
+            outline: focus-width var(--focus-color) solid
+            outline-offset: focus-offset
+
+    .__sun-design-color-picker-field__
+        box-sizing: border-box
+        position: absolute
+        inset: 'calc(50% - (50% - %s) / 1.414)' % (wheel-width)
+        background: 'linear-gradient(0deg, black, transparent), linear-gradient(90deg, white, hsl(var(--HueDegree), 100%, 50%))' % ('')
+        border: solid-border
+        &[data-size="small"]
+            border-radius: border-radius-size-small
+        &[data-size="normal"]
+            border-radius: border-radius-size-normal
+        &[data-size="large"]
+            border-radius: border-radius-size-large
+
+        .__sun-design-color-picker-shade-nob__
+            box-sizing: border-box
+            width: nob-size
+            padding: 0
+            margin: 0
+            aspect-ratio: 1
+            position: absolute
+            border-radius: 50%
+            left: 'calc(var(--ShadeX) - %s)' % (wheel-width / 2)
+            top: 'calc(var(--ShadeY) - %s)' % (wheel-width / 2)
+            box-shadow: panel-drop-shadow
+            border: solid-border
+
+            &::before
+                content: ''
+                position: absolute
+                inset: 0
+                background-color: var(--Color)
+                border: var(--panel-color) nob-width solid
+                border-radius: inherit
+
+            &:focus-visible
+                outline: focus-width var(--focus-color) solid
+                outline-offset: focus-offset
+
 </style>

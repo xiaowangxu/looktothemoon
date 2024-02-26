@@ -5,13 +5,14 @@
         @keydown.tab="onFocusChange">
         <slot name="button" :opened="opened" :toggle="toggle" />
     </SunButton>
-    <SunMeasurePopupPanel ref="measurepopuppanel_ref" :mode="mode" :visible="opened" :style="panelStyle"
+    <SunMeasurePopupPanel ref="measurepopuppanel_ref" :mode="mode" :visible="opened" :style="panelStyle" :size="popupSize ?? size"
         :content-style="contentStyle" :vertical="vertical" :dropShadow="dropShadow" :container="container"
         :scrollableIndicators="scrollableIndicators" :scrollBarStateH="scrollBarStateH" :scrollBarStateV="scrollBarStateV"
-        :scrollBarVisibility="scrollBarVisibility" :get-popup-rect="getPopupPanelRect" @cover-click="onCoverClick"  @cover-contextmenu="onCoverClick"
-        :measureIgnoreMaxHeight="measureIgnoreMaxHeight" :measureIgnoreMinHeight="measureIgnoreMinHeight"
-        :measureIgnoreMaxWidth="measureIgnoreMaxWidth" :measureIgnoreMinWidth="measureIgnoreMinWidth"
-        @before-measure="emits('beforeMeasure')" @after-measure="emits('afterMeasure')" @trap-focus-out="onTrapFocusOut">
+        :scrollBarVisibility="scrollBarVisibility" :get-popup-rect="getPopupPanelRect" @cover-click="onCoverClick"
+        @cover-contextmenu="onCoverClick" :measureIgnoreMaxHeight="measureIgnoreMaxHeight"
+        :measureIgnoreMinHeight="measureIgnoreMinHeight" :measureIgnoreMaxWidth="measureIgnoreMaxWidth"
+        :measureIgnoreMinWidth="measureIgnoreMinWidth" @before-measure="emits('beforeMeasure')"
+        @after-measure="emits('afterMeasure')" @trap-focus-out="onTrapFocusOut">
         <slot name="popup" :opened="opened" :toggle="toggle" />
     </SunMeasurePopupPanel>
 </template>
@@ -35,6 +36,7 @@ const props = withDefaults(
     defineProps<{
         mode?: PopupOpenMode,
         size?: Size,
+        popupSize?: Size,
         flat?: boolean,
         hover?: boolean,
         active?: boolean,
