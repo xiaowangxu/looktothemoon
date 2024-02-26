@@ -39,8 +39,24 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         return new Vector4(0, 0, 0, 0);
     }
 
+    public set_Zero() {
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+        this.w = 0;
+        return this;
+    }
+
     public static make_One(): Vector4 {
         return new Vector4(1, 1, 1, 1);
+    }
+
+    public set_One() {
+        this.x = 1;
+        this.y = 1;
+        this.z = 1;
+        this.w = 1;
+        return this;
     }
 
     index(index: number): number {

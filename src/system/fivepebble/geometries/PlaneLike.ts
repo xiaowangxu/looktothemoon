@@ -6,4 +6,6 @@ export interface PlaneLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixL
     extends GeometryLike<Vec, Mat>, GeometryLikeBounded<Vec, Mat> {
     get normal(): Vec;
     get distance(): number;
+    get center(): Vec;
+    get_Center(target: Vec): Vec;
 }

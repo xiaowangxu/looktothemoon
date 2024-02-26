@@ -36,11 +36,23 @@ export class Matrix2 implements MatrixLike<Matrix2> {
         );
     }
 
-    public static from_Axis(x: Vector2, y: Vector2, z: Vector2) {
+    public set_Identity() {
+        this.n11 = 1; this.n12 = 0;
+        this.n21 = 0; this.n22 = 1;
+        return this;
+    }
+
+    public static from_Axis(x: Vector2, y: Vector2) {
         return new Matrix2(
             x.x, y.x,
             x.y, y.y,
         );
+    }
+
+    public set_Axis(x: Vector2, y: Vector2) {
+        this.n11 = x.x; this.n21 = y.x;
+        this.n12 = x.y; this.n22 = y.y;
+        return this;
     }
 
     public static make_Rotate(angle: number) {
@@ -49,11 +61,25 @@ export class Matrix2 implements MatrixLike<Matrix2> {
         return new Matrix2(cr, -sr, sr, cr);
     }
 
+    public set_Rotate(angle: number) {
+        const cr = Math.cos(angle);
+        const sr = Math.sin(angle);
+        this.n11 = cr; this.n12 = -sr;
+        this.n21 = sr; this.n22 = cr;
+        return this;
+    }
+
     public static make_Scale(x: number, y: number) {
         return new Matrix2(
             x, 0,
             0, y,
         );
+    }
+
+    public set_Scale(x: number, y: number) {
+        this.n11 = x; this.n12 = 0;
+        this.n21 = 0; this.n22 = y;
+        return this;
     }
 
     index(row: number, col: number): number {

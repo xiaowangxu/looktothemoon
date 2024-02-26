@@ -1,9 +1,10 @@
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import type { Matrix4 } from "../linear_algebra/Matrix4";
-import type { Vector3 } from "../linear_algebra/Vector3";
+import { Vector3 } from "../linear_algebra/Vector3";
 import type { RayLike } from "./RayLike";
 import { Line3 } from "./Line3";
 import { Epsilon } from "../Scalar";
+import type { LineLike } from "./LineLike";
 
 export class Ray3 implements RayLike<Vector3, Matrix3> {
     public readonly origin: Vector3;
@@ -14,12 +15,20 @@ export class Ray3 implements RayLike<Vector3, Matrix3> {
         this.direction = direction;
     }
 
-    public get_Point(distance: number): Vector3 {
+    get_Point(distance: number): Vector3 {
         return this.origin.add_Scaled(distance, this.direction);
     }
+    gets_Point(distance: number, target: Vector3): Vector3 {
+        return target.adds_Scaled(this.origin, distance, this.direction);
+    }
 
-    public get_Line(start: number, end: number): Line3 {
+    get_Line(start: number, end: number): Line3 {
         return new Line3(this.get_Point(start), this.get_Point(end));
+    }
+    gets_Line(start: number, end: number, target: LineLike<Vector3, Matrix3>): LineLike<Vector3, Matrix3> {
+        this.gets_Point(start, target.start);
+        this.gets_Point(end, target.end);
+        return target;
     }
 
     public apply_Matrix4(mat: Matrix4, non_uniform_scale: boolean = false) {

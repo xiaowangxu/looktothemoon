@@ -6,19 +6,27 @@ import { Matrix4 } from "../linear_algebra/Matrix4";
 import { Vector2 } from "../linear_algebra/Vector2";
 import { Vector3 } from "../linear_algebra/Vector3";
 import { Frustum3 } from "./Frustum3";
+import { Euler, euler } from "../linear_algebra/Euler";
 
 export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     protected _projection: Matrix4 = Matrix4.make_Identity();
     get projection() { return this._projection.clone(); }
 
+    static #matrix3: Matrix3 = Matrix3.make_Identity();
+    static #vector3: Vector3 = Vector3.make_Zero();
+    static #euler: Euler = euler();
+
     protected _global_transform: Matrix4 = Matrix4.make_Identity();
     protected _global_transform_inverse: Matrix4 = Matrix4.make_Identity();
     get global_transform() { return this._global_transform.clone(); }
     set global_transform(transform: Matrix4) {
-        const position = transform.position;
-        const [rotation, _] = transform.basis.decompose_RotationScale();
-        this._global_transform.set_BasisPosition(Matrix3.from_Euler(rotation), position);
-        this._global_transform_inverse.inverses(this._global_transform)
+        const euler = Camera3.#euler;
+        const matrix3 = Camera3.#matrix3;
+        const vector3 = Camera3.#vector3;
+        transform.basis.decomposes_RotationScale(euler, vector3);
+        transform.get_Position(vector3);
+        this._global_transform.set_BasisPosition(matrix3.set_Euler(euler), vector3);
+        this._global_transform_inverse.inverses(this._global_transform);
     }
 
     protected _mask: number = 0xffffffff;
@@ -33,7 +41,8 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     public abstract get is_orthogonal(): boolean;
 
     project_Point(point: Vector3): Vector2 {
-        const p = point.apply_Matrix4(this._global_transform_inverse);
+        const p = Camera3.#vector3;
+        p.applys_Matrix4(point, this._global_transform_inverse);
         p.applys_Matrix4(p, this._projection);
         return new Vector2(p.x, p.y);
     }

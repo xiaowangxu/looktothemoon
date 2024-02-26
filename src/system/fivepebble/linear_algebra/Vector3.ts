@@ -27,8 +27,22 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         return new Vector3(0, 0, 0);
     }
 
+    public set_Zero() {
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+        return this;
+    }
+
     public static make_One(): Vector3 {
         return new Vector3(1, 1, 1);
+    }
+
+    public set_One() {
+        this.x = 1;
+        this.y = 1;
+        this.z = 1;
+        return this;
     }
 
     index(index: number): number {
@@ -188,6 +202,12 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
     }
     cross(b: Vector3): Vector3 {
         return new Vector3(this.y * b.z - this.z * b.y, this.z * b.x - this.x * b.z, this.x * b.y - this.y * b.x);
+    }
+    crosses(a: Vector3, b: Vector3): Vector3 {
+        this.x = a.y * b.z - a.z * b.y;
+        this.y = a.z * b.x - a.x * b.z;
+        this.z = a.x * b.y - a.y * b.x;
+        return this;
     }
     min(b: Vector3): Vector3 {
         return new Vector3(Math.min(this.x, b.x), Math.min(this.y, b.y), Math.min(this.z, b.z));

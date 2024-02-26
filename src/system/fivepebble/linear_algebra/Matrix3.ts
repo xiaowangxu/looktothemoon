@@ -107,6 +107,15 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         );
     }
 
+    public set_RotateX(angle: number) {
+        const cr = Math.cos(angle);
+        const sr = Math.sin(angle);
+        this.n11 = 1; this.n12 = 0; this.n13 = 0;
+        this.n21 = 0; this.n22 = cr; this.n23 = -sr;
+        this.n31 = 0; this.n32 = sr; this.n33 = cr;
+        return this;
+    }
+
     public static make_RotateY(angle: number) {
         const cr = Math.cos(angle);
         const sr = Math.sin(angle);
@@ -117,6 +126,15 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         );
     }
 
+    public set_RotateY(angle: number) {
+        const cr = Math.cos(angle);
+        const sr = Math.sin(angle);
+        this.n11 = cr; this.n11 = 0; this.n13 = sr;
+        this.n21 = 0; this.n22 = 1; this.n23 = 0;
+        this.n31 = -sr; this.n32 = 0; this.n33 = cr;
+        return this;
+    }
+
     public static make_RotateZ(angle: number) {
         const cr = Math.cos(angle);
         const sr = Math.sin(angle);
@@ -125,6 +143,15 @@ export class Matrix3 implements MatrixLike<Matrix3> {
             sr, cr, 0,
             0, 0, 1,
         );
+    }
+
+    public set_RotateZ(angle: number) {
+        const cr = Math.cos(angle);
+        const sr = Math.sin(angle);
+        this.n11 = cr; this.n12 = -sr; this.n13 = 0;
+        this.n21 = sr; this.n22 = cr; this.n23 = 0;
+        this.n31 = 0; this.n32 = 0; this.n33 = 1;
+        return this;
     }
 
     public static from_Euler(euler: Euler) {
@@ -220,6 +247,18 @@ export class Matrix3 implements MatrixLike<Matrix3> {
             xy + wz, 1 - xx - zz, yz - wx,
             xz - wy, yz + wx, 1 - xx - yy,
         );
+    }
+
+    public set_Quaternion(quat: Quaternion) {
+        const { x, y, z, w } = quat;
+        const x2 = x + x, y2 = y + y, z2 = z + z;
+        const xx = x * x2, xy = x * y2, xz = x * z2;
+        const yy = y * y2, yz = y * z2, zz = z * z2;
+        const wx = w * x2, wy = w * y2, wz = w * z2;
+        this.n11 = 1 - yy - zz; this.n12 = xy - wz; this.n13 = xz + wy;
+        this.n21 = xy + wz; this.n22 = 1 - xx - zz; this.n23 = yz - wx;
+        this.n31 = xz - wy; this.n32 = yz + wx; this.n33 = 1 - xx - yy;
+        return this;
     }
 
     public static make_Scale(x: number, y: number, z: number) {
@@ -533,6 +572,9 @@ export class Matrix3 implements MatrixLike<Matrix3> {
             this.n33,
         );
     }
+
+    // used in Euler set_* to overcome ref init error
+    public static $euler_matrix3: Matrix3 = Matrix3.make_Identity();
 
     static #vector3: Vector3 = new Vector3();
     static #matrix3: Matrix3 = Matrix3.make_Identity();

@@ -20,7 +20,11 @@ export class Euler {
     }
 
     public static from_Quaternion(quat: Quaternion, order: EulerOrder = EulerOrder.XYZ) {
-        return Euler.from_RotateMatrix(Matrix3.from_Quaternion(quat), order);
+        return Euler.from_RotateMatrix(Matrix3.$euler_matrix3.set_Quaternion(quat), order);
+    }
+
+    public set_Quaternion(quat: Quaternion, order: EulerOrder = EulerOrder.XYZ) {
+        return this.set_RotateMatrix(Matrix3.$euler_matrix3.set_Quaternion(quat), order);
     }
 
     public static from_RotateMatrix(matrix: Matrix3, order: EulerOrder) {

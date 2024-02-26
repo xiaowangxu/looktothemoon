@@ -25,8 +25,20 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
         return new Vector2(0, 0);
     }
 
+    public set_Zero() {
+        this.x = 0;
+        this.y = 0;
+        return this;
+    }
+
     public static make_One(): Vector2 {
         return new Vector2(1, 1);
+    }
+    
+    public set_One() {
+        this.x = 1;
+        this.y = 1;
+        return this;
     }
 
     index(index: number): number {

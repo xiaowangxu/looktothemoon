@@ -15,7 +15,10 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     public normal: Vector3;
     public distance: number;
 
-    public get center() { return this.normal.mult_Number(this.distance); }
+    get center() { return this.normal.mult_Number(this.distance); }
+    get_Center(target: Vector3): Vector3 {
+        return target.mults_Number(this.normal, this.distance);
+    }
 
     constructor(normal: Vector3, distance: number) {
         this.normal = normal;
@@ -42,10 +45,37 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
         }
     }
 
+    static #vector3_0 = Vector3.make_Zero();
+    static #vector3_1 = Vector3.make_Zero();
+
+    public set_Points(a: Vector3, b: Vector3, c: Vector3, clockwise: boolean = false) {
+        const vetcor3_0 = Plane3.#vector3_0;
+        const vetcor3_1 = Plane3.#vector3_1;
+        const a_sub_c = vetcor3_0.subs(a, c);
+        const a_sub_b = vetcor3_1.subs(a, b);
+        if (clockwise) {
+            this.normal.crosses(a_sub_c, a_sub_b);
+            this.normal.normalizes(this.normal);
+        } else {
+            this.normal.crosses(a_sub_b, a_sub_c);
+            this.normal.normalizes(this.normal);
+        }
+        this.distance = this.normal.dot(a);
+        return this;
+    }
+
     public static from_Components(x: number, y: number, z: number, d: number) {
         const normal = new Vector3(x, y, z);
         const length = normal.length;
         return new Plane3(normal.div_Number(length), d / length);
+    }
+
+    public set_Components(x: number, y: number, z: number, d: number) {
+        this.normal.set(x, y, z);
+        const length = this.normal.length;
+        this.normal.normalizes(this.normal);
+        this.distance = d / length;
+        return this;
     }
 
     // #region Geometry Bounded
@@ -57,7 +87,7 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     distance_to_Point(point: Vector3) {
         return Math.abs(this.normal.dot(point) - this.distance);
     }
-    
+
     project_Point(point: Vector3) {
         return point.add_Scaled(-this.signed_distance_to_Point(point), this.normal);
     }
