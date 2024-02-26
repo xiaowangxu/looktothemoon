@@ -18,11 +18,17 @@
                 <SunPanelSeparator /> -->
 
                 <SunPanelContainer gap style="flex-shrink: 0;">
-                    <SunSwitch :model-value="true" size="normal" />
-                    <SunButton squared>
+                    <SunSwitch v-hover-menu:editor-outliner.nohover="{ uid: 0, label: '测试', description: 'Test' }"
+                        :model-value="true" size="normal" />
+                    <SunButton v-hover-menu:editor-outliner.nohover="{ uid: 0, label: '添加节点', description: '在场景中创建一个新节点' }"
+                        squared>
                         <Plus />
                     </SunButton>
-                    <SunLineEdit style="flex: 1;" :model-value="''" placeholder="查找" />
+                    <SunButton v-hover-menu:editor-outliner.nohover="{ uid: 0, label: '删除节点' }" squared>
+                        <Trash />
+                    </SunButton>
+                    <SunLineEdit v-hover-menu:editor-outliner.nohover="{ uid: 0, label: '查找节点' }" style="flex: 1;"
+                        :model-value="''" placeholder="查找" />
                     <SunSelect :prefered-direction="1" icon-only selected-icon squared :model-value="2" :options="[[
                         { uid: 0, label: '文件名顺序', icon: 'ArrowDownAZ' },
                         { uid: 1, label: '文件名逆序', icon: 'ArrowUpZA' },
@@ -51,6 +57,7 @@
 
 <script setup lang="ts">
 
+import SunHSlider from '@/sundesign/slider/SunHSlider.vue';
 import SunPanelTabsContainer from '@/sundesign/panel/SunPanelTabsContainer.vue';
 import SunPanel from '@/sundesign/panel/SunPanel.vue';
 import SunSwitch from '@/sundesign/checkbox/SunSwitch.vue';
@@ -62,7 +69,7 @@ import SunLineEdit from '@/sundesign/lineedit/SunLineEdit.vue';
 import SunSelect from '@/sundesign/select/SunSelect.vue';
 import SunButton from '@/sundesign/button/SunButton.vue';
 import SunIcon from '@/sundesign/icon/SunIcon.vue';
-import { Plus, Eye, Lock, X } from 'lucide-vue-next';
+import { Plus, Eye, Lock, X, Trash } from 'lucide-vue-next';
 import SunTree from '@/sundesign/tree/SunTree.vue';
 import type { SunTreeOptions } from '@/sundesign/tree/SunTreeConstants';
 import { fspath } from '@/system/filesystem/FileSystemPath';
@@ -70,6 +77,7 @@ import { VFSTreeOptionsRef } from '@/system/filesystem/FileSystemTreeOptionsRef'
 import SunButtonLike from '@/sundesign/button/SunButtonLike.vue';
 import SunControlGroup from '@/sundesign/controlgroup/SunControlGroup.vue';
 import SunControlGroupRow from '@/sundesign/controlgroup/SunControlGroupRow.vue';
+import { vHoverMenu } from '@/sundesign/hovermenu/SunHoverMenu';
 
 const fs_options = VFSTreeOptionsRef.watch(fspath('/'), false) as SunTreeOptions;
 

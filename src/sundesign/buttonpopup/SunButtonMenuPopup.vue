@@ -88,7 +88,7 @@ watch(opened, (opened) => {
 
 function getPopupPanelRect(contentMinSize: BoxSize, preferedDirection: PreferedDirection, windowSize: BoxSize): { rect: Rect, direction: PreferedDirection } {
     const { x, y, width, height } = (button_ref.value?.button as HTMLButtonElement)?.getBoundingClientRect() ?? { x: 0, y: 0, width: 0, height: 0 };
-    return { rect: calcButtonPopupRect({ x, y, width, height }, contentMinSize, windowSize, preferedDirection, props.offset), direction: preferedDirection };
+    return { rect: calcButtonPopupRect({ x, y, width, height }, contentMinSize, windowSize, preferedDirection, 0, props.offset), direction: preferedDirection };
 }
 
 function toggle(open: boolean) {

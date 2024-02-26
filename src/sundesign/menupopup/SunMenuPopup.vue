@@ -145,7 +145,7 @@ function getPopupRect(contentMinSize: BoxSize, preferedDirection: PreferedDirect
         width = expand_ref.width;
         height = expand_ref.height;
     }
-    return calcMenuPopupRect(contentMinSize, { x, y, width, height }, windowSize, preferedDirection,);
+    return calcMenuPopupRect(contentMinSize, { x, y, width, height }, windowSize, preferedDirection);
 }
 
 function clearState() {

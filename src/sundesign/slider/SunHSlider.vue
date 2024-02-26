@@ -2,7 +2,7 @@
     <div class="__sun-design__ __sun-design-hslider-container__ sized" :data-size="size">
         <div ref="track_container_ref" class="__sun-design-hslider-track-container__"
             @mousedown.self="onContainerMouseDown">
-            <div class="__sun-design__ __sun-design-hslider-track__ colored" :class="{ bordered: !flat, flat, disabled }"
+            <div class="__sun-design-hslider-track__" :class="{ bordered: !flat, disabled }"
                 :style="colorScheme"></div>
         </div>
         <div ref="container_ref" class="__sun-design-hslider-nob-container__" @mousedown.self="onContainerMouseDown">
@@ -182,9 +182,9 @@ onBeforeUnmount(() => {
 <style lang="stylus">
 @import '../SunDesignStyleConstants.styl';
 
-track-small = 4px
-track-normal = 5px
-track-large = 6px
+track-small = 3px
+track-normal = 4px
+track-large = 5px
 nob-width-small = content-size-small
 nob-width-normal = content-size-normal
 nob-width-large = content-size-large
@@ -220,23 +220,26 @@ nob-border-radius-large = 6px
 .__sun-design-hslider-track__
     width: 100%
     pointer-events: none
+    background-color: var(--attachment-color)
+    &.disabled
+        background-color: var(--attachment-color-disabled)
+    &.bordered
+        border: solid-border
+    &.bordered.disabled
+        border: solid-border-disabled
 
     .__sun-design-hslider-container__[data-size="small"] > .__sun-design-hslider-track-container__ > &
         height: track-small
-        border-radius: (track-small / 2)
+        border-radius: track-small
     .__sun-design-hslider-container__[data-size="normal"] > .__sun-design-hslider-track-container__ > &
         height: track-normal
-        border-radius: (track-normal / 2)
+        border-radius: track-normal
     .__sun-design-hslider-container__[data-size="large"] > .__sun-design-hslider-track-container__ > &
         height: track-large
-        border-radius: (track-large / 2)
+        border-radius: track-large
 
 .__sun-design-hslider-nob__
     padding: 0px
-    background-color: var(--attachment-color) !important
-
-    &:disabled
-        background-color: var(--attachment-color-disabled) !important
 
     .__sun-design-hslider-container__[data-size="small"] > .__sun-design-hslider-nob-container__ > &
         width: nob-width-small

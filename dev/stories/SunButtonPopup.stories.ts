@@ -128,11 +128,10 @@ export const ButtonPopup: Story = {
 	args: {
 		...Args,
 		mode: 'instance',
-		bordered: true,
 		dropShadow: true,
 		scrollableIndicators: true,
 		getPopupRect(buttonRect, contentMinSize, windowSize) {
-			return calcButtonPopupRect(buttonRect, contentMinSize, windowSize, 0, 3);
+			return calcButtonPopupRect(buttonRect, contentMinSize, windowSize, 0);
 		},
 	},
 };

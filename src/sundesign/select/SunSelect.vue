@@ -162,8 +162,7 @@ function onClick(uid: UID, event: InputEvent) {
 }
 
 function getPopupRect(buttonRect: Rect, contentMinSize: BoxSize, windowSize: BoxSize): Rect {
-    const offset = 3; // buttonRect.height * 0.1;
-    return calcButtonPopupRect(buttonRect, contentMinSize, windowSize, props.preferedDirection, offset);
+    return calcButtonPopupRect(buttonRect, contentMinSize, windowSize, props.preferedDirection);
 }
 
 const focus_selected_item = () => {

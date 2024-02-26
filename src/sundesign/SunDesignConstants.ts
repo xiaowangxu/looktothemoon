@@ -175,24 +175,36 @@ export const DefaultMenuPopupSubMenuOffsetY = -4;
 
 export type PreferedDirection = 0 | 1;
 
-export function calcButtonPopupRect(button_rect: Rect, content_size: BoxSize, window_size: BoxSize, prefered_direction: PreferedDirection, offset: number = DefaultOffset, gap: BoxSize = { width: DefualtWindowMargin, height: DefualtWindowMargin }): Rect {
+export function calcButtonPopupRect(button_rect: Rect, content_size: BoxSize, window_size: BoxSize, prefered_direction: PreferedDirection, vertical_prefered_direction: PreferedDirection = 0, offset: number = DefaultOffset, gap: BoxSize = { width: DefualtWindowMargin, height: DefualtWindowMargin }, fill_button_width: boolean = true): Rect {
     const { width: gap_width, height: gap_height } = gap;
     const min_window_width = window_size.width - gap_width * 2;
     const min_window_height = window_size.height - gap_height * 2;
-    const base_width = Math.max(content_size.width, button_rect.width);
+    const base_width = fill_button_width ? Math.max(content_size.width, button_rect.width) : content_size.width;
     const base_height = content_size.height;
     const top_space = Math.min(button_rect.y - gap_height, min_window_height) - offset;
     const bottom_space = window_size.height - gap_height - button_rect.y - button_rect.height - offset;
     const left_space = Math.min(button_rect.x + button_rect.width - gap_width, min_window_width);
     const right_space = window_size.width - gap_width - button_rect.x;
     let x: number, y: number, width: number, height: number;
-    if (bottom_space >= base_height || bottom_space >= top_space) {
-        height = Math.min(base_height, bottom_space);
-        y = button_rect.y + button_rect.height + offset;
+    if (vertical_prefered_direction === 0) {
+        if (bottom_space >= base_height || bottom_space >= top_space) {
+            height = Math.min(base_height, bottom_space);
+            y = button_rect.y + button_rect.height + offset;
+        }
+        else {
+            height = Math.min(base_height, top_space);
+            y = gap_height + top_space - height;
+        }
     }
     else {
-        height = Math.min(base_height, top_space);
-        y = gap_height + top_space - height;
+        if (top_space >= base_height || top_space >= top_space) {
+            height = Math.min(base_height, top_space);
+            y = gap_height + top_space - height;
+        }
+        else {
+            height = Math.min(base_height, bottom_space);
+            y = button_rect.y + button_rect.height + offset;
+        }
     }
     if (prefered_direction === 0) {
         if (right_space >= base_width || right_space >= left_space) {
@@ -212,6 +224,60 @@ export function calcButtonPopupRect(button_rect: Rect, content_size: BoxSize, wi
         else {
             width = Math.min(base_width, right_space);
             x = button_rect.x;
+        }
+    }
+    return { x, y, width, height };
+}
+
+export function calcButtonHorizontalPopupRect(button_rect: Rect, content_size: BoxSize, window_size: BoxSize, prefered_direction: PreferedDirection, horizontal_prefered_direction: PreferedDirection = 0, offset: number = DefaultOffset, gap: BoxSize = { width: DefualtWindowMargin, height: DefualtWindowMargin }, fill_button_height: boolean = false): Rect {
+    const { width: gap_width, height: gap_height } = gap;
+    const min_window_width = window_size.width - gap_width * 2;
+    const min_window_height = window_size.height - gap_height * 2;
+    const base_width = content_size.width;
+    const base_height = fill_button_height ? Math.max(content_size.height, button_rect.height) : content_size.height;
+    const top_space = Math.min(button_rect.y + button_rect.height - gap_height, min_window_height);
+    const bottom_space = window_size.height - gap_height - button_rect.y;
+    const left_space = Math.min(button_rect.x - gap_width, min_window_width) - offset;
+    const right_space = window_size.width - gap_width - button_rect.x - button_rect.width - offset;
+    let x: number, y: number, width: number, height: number;
+    if (horizontal_prefered_direction === 1) {
+        if (right_space >= base_width || right_space >= left_space) {
+            width = Math.min(base_width, right_space);
+            x = button_rect.x + button_rect.width + offset;
+        }
+        else {
+            width = Math.min(base_width, left_space);
+            x = button_rect.x - offset - width;
+        }
+    }
+    else {
+        if (left_space >= base_width || left_space >= right_space) {
+            width = Math.min(base_width, left_space);
+            x = button_rect.x - offset - width;
+        }
+        else {
+            width = Math.min(base_width, right_space);
+            x = button_rect.x + button_rect.width + offset;
+        }
+    }
+    if (prefered_direction === 0) {
+        if (bottom_space >= base_height || bottom_space >= top_space) {
+            height = Math.min(base_height, bottom_space);
+            y = button_rect.y;
+        }
+        else {
+            height = Math.min(base_height, top_space);
+            y = button_rect.y + button_rect.height - height;
+        }
+    }
+    else {
+        if (top_space >= base_height || top_space >= bottom_space) {
+            height = Math.min(base_height, top_space);
+            y = button_rect.y + button_rect.height - height;
+        }
+        else {
+            height = Math.min(base_height, bottom_space);
+            y = button_rect.y;
         }
     }
     return { x, y, width, height };

@@ -5,7 +5,10 @@
     <span v-if="has_description" class="__sun-design-button-item-description__"> {{
         description }} </span>
     <SunKeyboard v-if="!hideShortcut && shortcut !== undefined" :label="shortcut"></SunKeyboard>
-    <ChevronRight v-if="!hideSub && sub === true" />
+    <svg v-if="!hideSub && sub === true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-4 0 20 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right-icon">
+        <path d="m9 18 6-6-6-6"></path>
+    </svg>
 </template>
 
 <script setup lang="ts">
@@ -14,7 +17,6 @@ import '../SunDesignStyle.styl';
 import SunIcon from '../icon/SunIcon.vue';
 import SunKeyboard from '../keyboard/SunKeyboard.vue';
 import { computed } from 'vue';
-import { ChevronRight } from 'lucide-vue-next';
 
 // props
 const props = withDefaults(

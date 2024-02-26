@@ -408,7 +408,7 @@ const SkyDomeProgram = new Cacher((config: Config) => {
 export class EditorRenderer3DPipeline extends Renderer3DPipeline {
     private get render_server() { return this.config.render_server; }
 
-    private _msaa: 1 | 2 | 4 | 8 = 4;
+    private _msaa: 1 | 2 | 4 | 8 = 1;
     public get msaa() { return this._msaa; }
     public set msaa(msaa: 1 | 2 | 4 | 8) {
         if (this._msaa !== msaa) {

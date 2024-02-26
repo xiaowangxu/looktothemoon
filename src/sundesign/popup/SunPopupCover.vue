@@ -1,8 +1,7 @@
 <template>
-    <div ref="div_ref" class="__sun-design-popup-cover__">
-        <div v-if="stopEvents" class="__sun-design-popup-cover-stop-events__" @mousedown.self="onMouseDownSelf"
-            @click.stop.self="onClickSelf" @contextmenu.stop.self="onContextmenuSelf" @keydown.esc.stop="onEsc"
-            tabindex="-1"></div>
+    <div ref="div_ref" class="__sun-design-popup-cover__" @mousedown.self="onMouseDownSelf" @click.stop.self="onClickSelf"
+        @contextmenu.stop.self="onContextmenuSelf" @keydown.esc.stop="onEsc" tabindex="-1"
+        :class="{ 'stop-events': stopEvents }">
         <slot />
     </div>
 </template>
@@ -64,14 +63,16 @@ defineExpose({
 
 <style lang="stylus">
 
-.__sun-design-popup-cover-stop-events__
+.__sun-design-popup-cover__
     position: fixed
-    overscroll-behavior: auto
-    inset: 0
     outline: none
     border: none
     // background-color: rgba(255, 0, 0, 0.1)
-    pointer-events: all
-    overscroll-behavior: none
+    overscroll-behavior: auto
+
+    &.stop-events
+        inset: 0
+        pointer-events: all
+        overscroll-behavior: none
 
 </style>
