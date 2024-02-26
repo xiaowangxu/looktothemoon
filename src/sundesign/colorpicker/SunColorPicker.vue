@@ -246,7 +246,7 @@ field-radius-multiplier = 1.2
 .__sun-design-color-picker-wheel__
     --HueDegree: -90deg
     --ShadeX: 100%
-    --ShadeY: 100%
+    --ShadeY: 0%
     position: relative
     width: 100%
     height: 100%
@@ -274,21 +274,21 @@ field-radius-multiplier = 1.2
         border-radius: 50%
         left: 'calc(50% + (100% - %s) / 2 * cos(var(--HueDegree)) - %s)' % (wheel-width nob-size / 2)
         top: 'calc(50% + (100% - %s) / 2 * sin(var(--HueDegree)) - %s)' % (wheel-width nob-size / 2)
-        box-shadow: panel-drop-shadow
         border: solid-border
-        background-color: var(--panel-color)
+        background-color: var(--attachment-color)
+        outline: none
 
         &::before
             content: ''
             position: absolute
             inset: 0
             background-color: 'hsl(var(--HueDegree), 100%, 50%)' % ('')
-            border: var(--panel-color) nob-width solid
+            border: var(--attachment-color) nob-width solid
             border-radius: inherit
 
-        &:focus-visible
+        &:focus-visible::before
             outline: focus-width var(--focus-color) solid
-            outline-offset: focus-offset
+            outline-offset: focus-offset + border-width
 
     .__sun-design-color-picker-field__
         box-sizing: border-box
@@ -311,11 +311,11 @@ field-radius-multiplier = 1.2
             aspect-ratio: 1
             position: absolute
             border-radius: 50%
-            left: 'calc(var(--ShadeX) - %s)' % (wheel-width / 2)
-            top: 'calc(var(--ShadeY) - %s)' % (wheel-width / 2)
-            box-shadow: panel-drop-shadow
+            left: 'calc(var(--ShadeX) - %s)' % (nob-size / 2)
+            top: 'calc(var(--ShadeY) - %s)' % (nob-size / 2)
             border: solid-border
-            background-color: var(--panel-color)
+            background-color: var(--attachment-color)
+            outline: none
 
             &::before
                 content: ''
@@ -325,8 +325,8 @@ field-radius-multiplier = 1.2
                 border: var(--panel-color) nob-width solid
                 border-radius: inherit
 
-            &:focus-visible
+            &:focus-visible::before
                 outline: focus-width var(--focus-color) solid
-                outline-offset: focus-offset
+                outline-offset: focus-offset + border-width
 
 </style>
