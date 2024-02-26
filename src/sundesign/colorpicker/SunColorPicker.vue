@@ -1,8 +1,8 @@
 <template>
     <SunButtonPopup ref="buttonpopup_ref" style="position: relative; background-color: transparent;" v-bind="$attrs"
-        :size="size" popup-size="normal" :flat="flat" :bordered="bordered" :borderMask="borderMask" :rounded="rounded"
-        :squared="squared" :disabled="disabled" drop-shadow mode="instance" vertical
-        content-style="width: 100%; max-width: 180px;" :getPopupRect="getPopupRect" scrollable-indicators>
+        :size="size" popup-size="normal" :flat="flat" :borderMask="borderMask" :rounded="rounded" :squared="squared"
+        :disabled="disabled" drop-shadow mode="instance" vertical
+        content-style="width: 100%; min-width: 180px; max-width: 180px;" :getPopupRect="getPopupRect" scrollable-indicators>
         <template #button>
             <div class="__sun-design-transparent-bg__" style="position: absolute; inset: 0; z-index: -1;">
                 <div style="position: absolute; inset: 0;" :style="{ background: color_str }" />
@@ -29,7 +29,8 @@
                     <div class="__sun-design-color-picker-wheel__">
                         <button class="__sun-design-color-picker-hue-nob__"></button>
                         <div class="__sun-design-color-picker-field__" :data-size="size">
-                            <button class="__sun-design-color-picker-shade-nob__" :style="{ '--Color': color_str }"></button>
+                            <button class="__sun-design-color-picker-shade-nob__"
+                                :style="{ '--Color': color_str }"></button>
                         </div>
                     </div>
                     <!-- <SunRange v-memo="[hue]" v-model="hue" :active="false"
@@ -175,7 +176,6 @@ const props = withDefaults(
     defineProps<{
         size?: Size,
         flat?: boolean,
-        bordered?: boolean,
         borderMask?: BorderMask,
         // equalPadding?: boolean,
         rounded?: boolean,
@@ -185,7 +185,6 @@ const props = withDefaults(
     {
         size: 'normal',
         flat: false,
-        bordered: true,
         borderMask: 15,
         rounded: false,
         squared: false,
@@ -234,14 +233,15 @@ function onEyeDropper() {
 
 .__sun-design-transparent-bg__ {
     background-color: transparent !important;
-    background-image: linear-gradient(45deg,#ccc 25%,transparent 0), linear-gradient(-45deg,#ccc 25%,transparent 0), linear-gradient(45deg,transparent 75%,#ccc 0), linear-gradient(-45deg,transparent 75%,#ccc 0);
+    background-image: 'linear-gradient(45deg, var(--placeholder-color-disabled) 25%, transparent 0), linear-gradient(-45deg, var(--placeholder-color-disabled) 25%, transparent 0), linear-gradient(45deg, transparent 75%, var(--placeholder-color-disabled) 0), linear-gradient(-45deg, transparent 75%, var(--placeholder-color-disabled) 0)' % ('');
 	  background-size: 10px 10px;
 	  background-position: 0 0, 0 5px, 5px -5px, -5px 0;
 }
 
-wheel-width = 20px
+wheel-width = 19px
 nob-size = 16px
 nob-width = 3px
+field-radius-multiplier = 1.2
 
 .__sun-design-color-picker-wheel__
     --HueDegree: -90deg
@@ -276,6 +276,7 @@ nob-width = 3px
         top: 'calc(50% + (100% - %s) / 2 * sin(var(--HueDegree)) - %s)' % (wheel-width nob-size / 2)
         box-shadow: panel-drop-shadow
         border: solid-border
+        background-color: var(--panel-color)
 
         &::before
             content: ''
@@ -292,7 +293,7 @@ nob-width = 3px
     .__sun-design-color-picker-field__
         box-sizing: border-box
         position: absolute
-        inset: 'calc(50% - (50% - %s) / 1.414)' % (wheel-width)
+        inset: 'calc(50% - (50% - %s) / 1.414)' % (wheel-width * field-radius-multiplier)
         background: 'linear-gradient(0deg, black, transparent), linear-gradient(90deg, white, hsl(var(--HueDegree), 100%, 50%))' % ('')
         border: solid-border
         &[data-size="small"]
@@ -314,6 +315,7 @@ nob-width = 3px
             top: 'calc(var(--ShadeY) - %s)' % (wheel-width / 2)
             box-shadow: panel-drop-shadow
             border: solid-border
+            background-color: var(--panel-color)
 
             &::before
                 content: ''
