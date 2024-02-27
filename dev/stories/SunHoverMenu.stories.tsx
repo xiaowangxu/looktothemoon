@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
 
 import SunButton from '../../src/sundesign/button/SunButton.vue';
-import SunHoverMenu, { vHoverMenu } from '../../src/sundesign/hovermenu/SunHoverMenu.tsx';
+import { vHoverMenu } from '../../src/sundesign/hovermenu/SunHoverMenu.tsx';
 import { Args, ArgsTypes, Decorators } from './SunDesignArgs';
 import { ref, type Raw, type Component, type FunctionalComponent, defineComponent } from 'vue';
 import SunPanelContainer from '../../src/sundesign/panel/SunPanelContainer.vue';
@@ -35,8 +35,25 @@ export const Select: Story = {
             return { args, onClick, a };
         },
         template: `
-			<SunButton @click="onClick" v-hover-menu:test="{ content: a }">HoverMenu0</SunButton>
-			<SunButton @click="onClick" v-hover-menu:test.html.label="'<a>更多信息</a></br>Lorem ipsum dolor sit amet consectetur adipisicing elit.</br>Accusantium officiis minus, tempore pariatur hic et nam consequatur fugit, dolorum debitis maiores quam repellat commodi aspernatur sequi quidem ratione cumque eveniet.'">HoverMenu1</SunButton>
+			  <SunButton @click="onClick" v-hover-menu:test="{ content: a }">HoverMenu0</SunButton>
+			  <SunButton @click="onClick" v-hover-menu:test.html.label="'<a>更多信息</a></br>Lorem ipsum dolor sit amet consectetur adipisicing elit.</br>Accusantium officiis minus, tempore pariatur hic et nam consequatur fugit, dolorum debitis maiores quam repellat commodi aspernatur sequi quidem ratione cumque eveniet.'">HoverMenu1</SunButton>
+
+        <div style="padding: 30px 30px;">
+			      <SunButton @click="onClick" v-hover-menu:pos.label.no-hover.top-left="'TopLeft'">Top --- Left</SunButton>
+			      <SunButton @click="onClick" v-hover-menu:pos.label.no-hover.top-right="'TopRight'">Top --- Right</SunButton>
+			      <SunButton @click="onClick" v-hover-menu:pos.label.no-hover.bottom-left="'BottomLeft'">Bottom --- Left</SunButton>
+			      <SunButton @click="onClick" v-hover-menu:pos.label.no-hover.bottom-right="'BottomRight'">Bottom --- Right</SunButton>
+            <br/>  
+			      <SunButton @click="onClick" v-hover-menu:pos.label.no-hover.left-top="'LeftTop'">Left <br> - <br> Top</SunButton>
+            <br/>  
+			      <SunButton @click="onClick" v-hover-menu:pos.label.no-hover.left-bottom="'LeftBottom'">Left <br> - <br> Bottom</SunButton>
+            <br/>  
+			      <SunButton @click="onClick" v-hover-menu:pos.label.no-hover.right-top="'RightTop'">Right <br> - <br> Top</SunButton>
+            <br/>  
+			      <SunButton @click="onClick" v-hover-menu:pos.label.no-hover.right-bottom="'RightBottom'">Right <br> - <br> Bottom</SunButton>
+            <br/>  
+			      <SunButton @click="onClick" v-hover-menu:pos.label.no-hover.mouse="'Mouse'">Mouse</SunButton>
+        </div>
 		`,
     }),
 };

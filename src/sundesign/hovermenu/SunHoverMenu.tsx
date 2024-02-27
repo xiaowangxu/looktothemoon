@@ -328,7 +328,7 @@ function getHoverMenuGetPopupRect(binding: Record<string, boolean>): HoverMenuWi
 export const vHoverMenu: ObjectDirective<HTMLElement & { [vHoverMenuId]?: SunHoverMenu<any, any> }, BindingType | string | Item> = {
     mounted(el, binding) {
         if (el[vHoverMenuId] === undefined) {
-            const option: SunHoverMenuOption = { group: binding.arg, menuHover: binding.modifiers.nohover === true ? false : true };
+            const option: SunHoverMenuOption = { group: binding.arg, menuHover: binding.modifiers['no-hover'] === true ? false : true };
             const get_popup_rect: HoverMenuWithTargetGetPopupRect | undefined = getHoverMenuGetPopupRect(binding.modifiers);
             if (typeof binding.value === 'string') {
                 if (binding.modifiers.html === true) {

@@ -15,7 +15,7 @@
                     <component v-else :is="(tab as RenderTabItem).render" :selected="tab.uid === selected" />
                 </SunButton>
                 <div v-if="$slots.append !== undefined" class="__sun-design-panel-tabs-container-append__"
-                    :class="{ hide: hideAppendOnUnselected && tab.uid !== selected }">
+                    :class="{ hide: !showAppendOnUnselected && tab.uid !== selected }">
                     <slot name="append" :tab="tab.uid" :selected="tab.uid === selected" />
                 </div>
             </SunButtonLike>
@@ -53,7 +53,7 @@ const props = withDefaults(
         initialSelected?: UID,
         vertical?: boolean,
         hideBorder?: boolean,
-        hideAppendOnUnselected?: boolean,
+        showAppendOnUnselected?: boolean,
         scrollableIndicators?: boolean,
         scrollBarStateH?: ScrollBarState,
         scrollBarStateV?: ScrollBarState,
@@ -63,7 +63,7 @@ const props = withDefaults(
         size: 'normal',
         vertical: false,
         hideBorder: true,
-        hideAppendOnUnselected: true,
+        showAppendOnUnselected: false,
         scrollableIndicators: true,
         scrollBarStateH: 'adaptive',
         scrollBarStateV: 'adaptive',
