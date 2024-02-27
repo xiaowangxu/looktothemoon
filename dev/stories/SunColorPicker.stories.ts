@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/vue3';
 
 import SunColorPicker from '../../src/sundesign/colorpicker/SunColorPicker.vue';
 import { SizeArgs, SizeArgsTypes, BorderMaskArgs, BorderMaskArgsTypes, Decorators } from './SunDesignArgs';
+import { ref } from 'vue';
 
 const meta: Meta<typeof SunColorPicker> = {
     component: SunColorPicker,
@@ -21,10 +22,12 @@ export const ColorPicker: Story = {
     render: (args) => ({
         components: { SunColorPicker },
         setup() {
-            return { args };
+            const color = ref([1, 0, 0, 0.5]);
+            return { args, color };
         },
         template: `
-			<SunColorPicker v-bind="args" />
+			  <SunColorPicker v-bind="args" v-model="color" />
+			  <SunColorPicker v-bind="args" v-model.lazy="color" />
 		`,
     }),
     argTypes: {

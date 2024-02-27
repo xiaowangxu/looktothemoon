@@ -87,8 +87,7 @@ watch(folded, folded => {
     &.append.unfolded
         padding-right : padding-extend-normal !important
     
-    &.append.hover-show:not(.unfolded):hover,
-    &.append.hover-show:not(.unfolded):focus-within
+    &.append.hover-show:not(.unfolded):hover
         padding-right : padding-extend-normal !important
 
     &:has(> .__sun-design-panel-fold-container-fold-button__:hover)
@@ -110,8 +109,7 @@ watch(folded, folded => {
     &.hover-show
         display: none
 
-    .__sun-design-panel-fold-container-button__:hover > &.hover-show,
-    .__sun-design-panel-fold-container-button__:focus-within > &.hover-show
+    .__sun-design-panel-fold-container-button__:hover > &.hover-show
         display: flex
 
 </style>

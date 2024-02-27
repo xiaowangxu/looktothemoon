@@ -308,6 +308,7 @@ defineExpose({
     border: none
     outline: none
     background-color: transparent
+    text-decoration: none
     &.left
         text-align: start
     &.right

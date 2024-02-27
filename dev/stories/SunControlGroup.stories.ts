@@ -31,7 +31,8 @@ export const ControlGroup: Story = {
         components: { SunControlGroup, SunControlGroupRow, SunColorPicker, SunNumberEdit, SunButton, SunButtonLike, SunSelect, SunLineEdit, StepBack, StepForward, SkipBack, SkipForward, Play },
         setup() {
             const progress = ref(0);
-            return { args, progress };
+            const time = ref(0);
+            return { args, progress, time };
         },
         template: `
 			<!-- single -->
@@ -94,13 +95,15 @@ export const ControlGroup: Story = {
 							}
 						]
 					]" :preferedDirection="1"/>
-					<SunNumberEdit :value="256" v-bind="args" style="width: 140px;" progress :min="0" :max="224" :step="1" :display-percision="1" display-remove-tailing-zeros :display-formatter="v => \`\$\{Math.trunc(v / 60).toFixed(0).padStart(2, '0')\}:\$\{Math.trunc(v % 60).toFixed(0).padStart(2, '0')\}.\$\{(v % 1).toFixed(2).slice(2)\}\`" v-model="progress">
+					<SunNumberEdit v-model="time" v-bind="args" style="width: 140px;" progress :min="0" :max="224" :step="1" :value-snap-gap="0.01" :display-percision="2" display-remove-tailing-zeros :display-formatter="v => \`\$\{Math.trunc(v / 60).toFixed(0).padStart(2, '0')\}:\$\{Math.trunc(v % 60).toFixed(0).padStart(2, '0')\}.\$\{(v % 1).toFixed(2).slice(2)\}\`" v-model="progress">
 						<template #suffix>
 							/ 3:44
 						</template>
 					</SunNumberEdit>
 				</SunControlGroupRow>
 			</SunControlGroup>
+
+            {{time}}
 			
 			<SunControlGroup>
 				<SunControlGroupRow>
