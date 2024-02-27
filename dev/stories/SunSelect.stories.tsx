@@ -26,8 +26,8 @@ export const Select: Story = {
             return { args, value };
         },
         template: `
-        <SunSelect />
-			  <SunSelect style="min-width: 280px; max-width: 350px;" v-bind="args" v-model="value">
+        <SunSelect @change="v=>console.log(v)"/>
+			  <SunSelect style="min-width: 280px; max-width: 350px;" v-bind="args" v-model="value" @change="v=>console.log(v)">
 		    		<template #button-empty>
 		    			  <span class="__sun-design-select-empty__">没有选中的东西哦</span>
 		    		</template>

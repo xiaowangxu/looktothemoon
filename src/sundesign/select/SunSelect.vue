@@ -68,11 +68,11 @@
 import '../SunDesignStyle.styl';
 import SunIcon from '../icon/SunIcon.vue';
 import SunButtonPopup from '../buttonpopup/SunButtonPopup.vue';
-import { type Size, type Item, type BorderMask, type ColorScheme, type UID, type Rect, type BoxSize, type PopupOpenMode, calcButtonPopupRect, type PreferedDirection } from '../SunDesignConstants';
+import { type Size, type Item, type BorderMask, type ColorScheme, type UID, type Rect, type BoxSize, type PopupOpenMode, calcButtonPopupRect, type PreferedDirection, useInputModel } from '../SunDesignConstants';
 import SunButton from '../button/SunButton.vue';
 import SunButtonItem from '../item/SunButtonItem.vue';
 import { ChevronDown, ChevronUp } from 'lucide-vue-next';
-import { computed, ref, type Raw, type Component } from 'vue';
+import { computed, ref, type Raw, type Component, watch } from 'vue';
 import SunPanelSeparator from '../panel/SunPanelSeparator.vue';
 import SunPanelContainer from '../panel/SunPanelContainer.vue';
 import { useVModel } from '@vueuse/core';
@@ -100,6 +100,7 @@ const props = withDefaults(
         squared?: boolean,
         options?: SelectItem[][],
         modelValue: UID | undefined,
+        modelModifiers?: Record<string, boolean>,
         active?: boolean,
         disabled?: boolean,
         preferedDirection?: PreferedDirection,
@@ -133,10 +134,11 @@ defineSlots<{
 
 // emits
 const emits = defineEmits<{
-    (event: 'update:modelValue', uid: UID | undefined): void
+    (event: 'update:modelValue', data: UID | undefined): void,
+    (event: 'change', data: UID | undefined): void,
 }>();
 
-const value = useVModel(props, "modelValue", emits, { defaultValue: undefined });
+const { value, setValueOnChange } = useInputModel(props, 'modelValue', 'modelModifiers', emits, { emitChange: 'change', forceUpdate: true });
 
 // datas
 const buttonpopup_ref = ref<InstanceType<typeof SunButtonPopup> | undefined>();
@@ -152,11 +154,11 @@ const selected = computed(() => {
 function onClick(uid: UID, event: InputEvent) {
     if (value.value === uid) {
         if (props.allowDeselect) {
-            value.value = undefined;
+            setValueOnChange(undefined);
         }
     }
     else {
-        value.value = uid;
+        setValueOnChange(uid);
     }
     buttonpopup_ref.value?.toggle(false);
 }

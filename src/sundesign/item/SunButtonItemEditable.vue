@@ -4,7 +4,7 @@
     <template v-else>
         <SunIcon v-if="icon !== undefined" :name="icon"></SunIcon>
         <form class="__sun-design-item-button-form__" @submit.prevent="onSubmit(($event.target as any).label.value)">
-            <input ref="input_ref" class="__sun-design__ __sun-design-item-button-input__" name="label" placeholder="查找"
+            <input ref="input_ref" class="__sun-design__ __sun-design-item-button-input__" name="label"
                 @blur="onSubmit(($event.target as any).value)" :value="label ?? ''" />
         </form>
     </template>

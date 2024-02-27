@@ -17,7 +17,7 @@
         </SunPanelContainer>
 
         <SunPanelSeparator /> -->
-        
+
     <SunPanelResizeContainer style="width: 100%; height: 100%;">
         <template #first>
             <SunPanel container vertical style="width: 100%; height: 100%;">
@@ -56,7 +56,7 @@
             <SunPanel container vertical style="height: 100%;">
                 <SunScrollContainer style="width: 100%; height: unset;">
                     <SunPanelContainer>
-                        <SunBreadcrumb :options="nav_options" :filter-sort="(sort as any)" />
+                        <SunBreadcrumb :options="nav_options" :filter-sort="(sort as any)" @click="onBreadcrumbClick"/>
                     </SunPanelContainer>
                 </SunScrollContainer>
                 <SunPanelSeparator />
@@ -87,7 +87,7 @@ import SunScrollContainer from '@/sundesign/scrollcontainer/SunScrollContainer.v
 import SunButtonLike from '@/sundesign/button/SunButtonLike.vue';
 import SunButton from '@/sundesign/button/SunButton.vue';
 import SunButtonLabel from '@/sundesign/button/SunButtonLabel.vue';
-import { X, Maximize, Globe, FoldVertical } from 'lucide-vue-next';
+import { X, Maximize, Globe, FoldVertical, Network } from 'lucide-vue-next';
 import type { TreeItem } from '@/sundesign/tree/SunTreeItem.vue';
 import { FileSystemPath, fspath } from '@/system/filesystem/FileSystemPath';
 import { VFSTreeOptionsRef, type FileSystemRefItem } from '@/system/filesystem/FileSystemTreeOptionsRef';
@@ -110,6 +110,16 @@ const props = defineProps<{
 const tree_ref = ref<InstanceType<typeof SunTree> | undefined>();
 const fs_options = VFSTreeOptionsRef.watch(fspath(props.root ?? '/'), props.containRoot ?? false) as SunTreeOptions;
 const nav_options = ref<BreadcrumbItem[]>([]);
+watch(fs_options.options, _ => {
+    if (opened_vfsid !== undefined) {
+        if (VFS.lookup(opened_vfsid).succeed) {
+            onClick(opened_vfsid);
+        }
+        else {
+            onClick(undefined);
+        }
+    }
+}, { deep: true });
 
 function sort(options: FileSystemRefItem[]) {
     return [...options].sort((a, b) => {
@@ -121,18 +131,22 @@ function sort(options: FileSystemRefItem[]) {
 }
 
 const data = ref('');
-function onClick(vfsid: any, evt: Event) {
-    nav_options.value = VFSTreeOptionsRef.get_Breadcrumb(vfsid as VfsId);
-    // const p = VFS.abspath(vfsid as VfsId).expect();
-    // const file = new FileAccess(p, VfsMode.Read);
-    // if (file.is_opened) {
-    //     const str = file.read_String();
-    //     data.value = str ?? 'decode error';
-    // }
-    // else {
-    //     data.value = 'open error';
-    // }
-    // file.close();
+let opened_vfsid: VfsId | undefined;
+function onClick(vfsid: UID | undefined) {
+    console.log(">>>>>>");
+    opened_vfsid = vfsid as VfsId;
+    if (vfsid === undefined) {
+        nav_options.value = [];
+    }
+    else {
+        nav_options.value = VFSTreeOptionsRef.get_Breadcrumb(vfsid as VfsId)
+    }
+}
+
+function onBreadcrumbClick(uid: UID) {
+    tree_ref.value?.clearActive();
+    tree_ref.value?.addActive(uid);
+    onClick(uid);
 }
 
 function onContextMenu(data: UID, evt: Event) {
@@ -164,7 +178,6 @@ function onContextMenu(data: UID, evt: Event) {
         switch (action) {
             case 'new_folder': {
                 const vfsid = VFS.touch(FileSystemPath.merge(p, fspath('./新建文件夹'))).expect();
-                console.log('touch', vfsid);
                 setTimeout(() => {
                     // await nextTick();
                     tree_ref.value?.toggleOption(vfsid, false);

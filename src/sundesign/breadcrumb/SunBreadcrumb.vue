@@ -1,12 +1,14 @@
 <template>
     <div class="__sun-design-breadcrumb-container__">
-        <SunButton v-if="options.length <= 0" disabled squared flat>
-            <ChevronRight />
+        <SunButton v-if="showRoot" squared flat :disabled="rootDisabled" @click="$emit('clickRoot', $event)">
+            <slot name="root">
+                <ChevronRight />
+            </slot>
         </SunButton>
         <template v-for="option, idx in options" :key="option.item.uid">
-            <SunSelect :size="size" flat icon-only squared :model-value="option.item.uid"
+            <SunSelect v-if="idx !== 0" :size="size" flat icon-only squared :model-value="option.item.uid"
                 :disabled="disabled || option.item.disabled || sorted_options[idx] === undefined || sorted_options[idx]!.length <= 0"
-                :options="sorted_options[idx]">
+                :options="sorted_options[idx]" @change="onSelectChange">
                 <template #closed>
                     <slot name="separator">
                         <ChevronRight />
@@ -15,7 +17,8 @@
             </SunSelect>
             <SunButton :size="size" flat :active="active && idx === options.length - 1"
                 :disabled="disabled || option.item.disabled"
-                :squared="(option.item as RenderBreadcrumbItem).render === undefined ? ((option.item as ItemBreadcrumbItem).iconOnly ?? false) : ((option.item as RenderBreadcrumbItem).squared ?? false)">
+                :squared="(option.item as RenderBreadcrumbItem).render === undefined ? ((option.item as ItemBreadcrumbItem).iconOnly ?? false) : ((option.item as RenderBreadcrumbItem).squared ?? false)"
+                @click="$emit('click', option.item.uid)">
                 <SunButtonItem v-if="(option.item as RenderBreadcrumbItem).render === undefined"
                     :label="(option.item as ItemBreadcrumbItem).label" :icon="(option.item as ItemBreadcrumbItem).icon">
                 </SunButtonItem>
@@ -55,13 +58,23 @@ const props = withDefaults(
         active?: boolean,
         disabled?: boolean,
         filterSort?: (options: SelectItem[]) => SelectItem[],
+        showRoot?: boolean,
+        rootDisabled?: boolean,
     }>(),
     {
         size: 'normal',
         active: false,
         disabled: false,
+        showRoot: true,
+        rootDisabled: false,
     }
 );
+
+// emits
+const emits = defineEmits<{
+    (event: 'click', data: UID): void;
+    (event: 'clickRoot', evt: MouseEvent): void;
+}>();
 
 // datas
 const sorted_options = computed(() => {
@@ -73,6 +86,12 @@ const sorted_options = computed(() => {
         return [filter_sorted];
     });
 });
+
+function onSelectChange(uid: UID | undefined) {
+    if (uid !== undefined) {
+        emits('click', uid);
+    }
+}
 
 </script>
 
