@@ -200,6 +200,7 @@ indicator-background-t = linear-gradient(0deg, transparent, scroll-indicator-col
     overscroll-behavior: contain
 
 .__sun-design-scrollcontainer-container__
+    scrollbar-width: none; // firefox
     &::-webkit-scrollbar
         display: none
 

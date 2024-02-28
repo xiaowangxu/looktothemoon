@@ -1,7 +1,7 @@
 <template>
-    <SunButtonPopup ref="buttonpopup_ref" class="__sun-design-color-picker-button__ __sun-design-color-button__" :style="{ '--Color': color_str, '--PlainColor': plain_color_str }"
-        v-bind="$attrs" :size="size" popup-size="normal" :flat="flat" :borderMask="borderMask" :squared="squared"
-        :disabled="disabled" drop-shadow mode="instance" vertical
+    <SunButtonPopup ref="buttonpopup_ref" class="__sun-design-color-picker-button__ __sun-design-color-button__"
+        :style="{ '--Color': color_str, '--PlainColor': plain_color_str }" v-bind="$attrs" :size="size" popup-size="normal"
+        :flat="flat" :borderMask="borderMask" :squared="squared" :disabled="disabled" drop-shadow mode="instance" vertical
         content-style="width: 100%; min-width: 180px; max-width: 180px;" :getPopupRect="getPopupRect" scrollable-indicators
         @opened="onOpened" @closed="onClosed" :title="color_str">
         <template #popup>
@@ -189,7 +189,22 @@ const emits = defineEmits<{
 const buttonpopup_ref = ref<InstanceType<typeof SunButtonPopup> | undefined>();
 
 const _shade_hue = ref(0);
-const shade_hue = computed({ get: () => _shade_hue.value, set: (v) => _shade_hue.value = (v < 0 ? v + 360 : v) % 360 });
+const shade_hue = computed({
+    get: () => _shade_hue.value, set: (v) => {
+        const _v = (v < 0 ? v + 360 : v) % 360;
+        if (_v === 0) {
+            if (v >= 360) {
+                _shade_hue.value = 360;
+            }
+            else {
+                _shade_hue.value = 0;
+            }
+        }
+        else {
+            _shade_hue.value = _v;
+        }
+    }
+});
 const shade_sat = ref(0);
 const shade_brit = ref(0);
 const _alpha = ref(1);
