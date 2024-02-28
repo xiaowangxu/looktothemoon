@@ -1,7 +1,7 @@
 <template>
-    <input ref="input_ref" class="__sun-design__ __sun-design-lineedit__ colored sized border-masked no-pressed-color"
+    <textarea ref="input_ref" class="__sun-design__ __sun-design-lineedit__ colored sized border-masked no-pressed-color"
         :class="{ flat, bordered: !flat, hover }" :disabled="disabled" :data-size="size" :data-border-mask="borderMask"
-        :style="colorScheme" :value="value" @input="onInput" @change="onChange">
+        :style="colorScheme" :value="value" @input="onInput" @change="onChange" />
 </template>
 
 <script setup lang="ts">

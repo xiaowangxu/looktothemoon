@@ -26,10 +26,10 @@
         </template>
         <!-- scrollbar -->
         <SunScrollBar v-if="scrollable_visible_h" v-show="is_scrollable_h" :vertical="false"
-            :visibility="scrollBarVisibility" class="__s_scrollcontainer_hbar__" :percentage="percentage_h"
+            :visibility="scrollBarVisibility" class="__s_scrollcontainer_hbar__" :percentage="percentage_h" :nob-size-percentage="scroll_nob_size_h"
             @update:percentage="onHScrolled" @scroll="onHWheel" />
         <SunScrollBar v-if="scrollable_visible_v" v-show="is_scrollable_v" :vertical="true"
-            :visibility="scrollBarVisibility" class="__s_scrollcontainer_vbar__" :percentage="percentage_v"
+            :visibility="scrollBarVisibility" class="__s_scrollcontainer_vbar__" :percentage="percentage_v" :nob-size-percentage="scroll_nob_size_v"
             @update:percentage="onVScrolled" @scroll="onVWheel" />
         <!-- <div
             style="position: absolute; left: 0; top: 0; font-size: 8px; padding: 2px 4px; font-family: consolas; pointer-events: none;">
@@ -81,6 +81,7 @@ defineSlots<{
 const emits = defineEmits<{
     (event: 'containerResized', boxSize: BoxSize): void,
     (event: 'contentResized', boxSize: BoxSize): void,
+    (event: 'scroll', left: number, top: number, width: number, height: number): void,
 }>();
 
 // datas
@@ -113,6 +114,9 @@ const max_scrollable_v = computed(() => Math.max(0, content_height.value - conta
 const value_scrollable_h = ref(0);
 const value_scrollable_v = ref(0);
 
+const scroll_nob_size_h = computed(()=> Math.min(1, Math.max(0, container_width.value / content_width.value)));
+const scroll_nob_size_v = computed(()=> Math.min(1, Math.max(0, container_height.value / content_height.value)));
+
 const percentage_h = computed(() => value_scrollable_h.value / (max_scrollable_h.value - SCROLL_EPSILON));
 const percentage_v = computed(() => value_scrollable_v.value / (max_scrollable_v.value - SCROLL_EPSILON));
 const has_more_right = computed(() => value_scrollable_h.value + SCROLL_EPSILON < max_scrollable_h.value);
@@ -132,6 +136,7 @@ function onContentResized(border_size: BoxSize, content_size: BoxSize, target: E
 function onScroll(evt: UIEvent) {
     value_scrollable_h.value = (evt.target as HTMLDivElement).scrollLeft;
     value_scrollable_v.value = (evt.target as HTMLDivElement).scrollTop;
+    emits('scroll', value_scrollable_h.value, value_scrollable_v.value, max_scrollable_h.value, max_scrollable_v.value)
 }
 function scrollTo(left: number | undefined, top: number | undefined, behavior: ScrollBehavior = 'smooth') {
     container_div_dom.value?.scrollTo({ left, top, behavior });

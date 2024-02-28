@@ -1,7 +1,7 @@
 <template>
     <div ref="track_div_dom" class="__sun-design__ __sun-design-scrollbar__"
         :class="{ flat, vertical: vertical, hoverparent: visibility === 'hover', hovertrack: visibility === 'hover-track' }"
-        :style="{ '--Percentage': clamped_percent }">
+        :style="{ '--Percentage': clamped_percent, '--NobSizePercentage': nobSizePercentage }">
         <div ref="nob_div_dom" v-show="visibility !== 'hidden'"
             class="__sun-design__ __sun-design-scrollbar-nob__ colored bordered" :class="{ dragging: is_dragging }"
             @mousedown="onMouseDown"></div>
@@ -19,12 +19,14 @@ const props = withDefaults(
         flat?: boolean,
         vertical?: boolean,
         percentage?: number,
+        nobSizePercentage: number,
         visibility?: ScrollBarVisibility,
         dragFactor?: number,
     }>(),
     {
         vertical: true,
         percentage: 0,
+        nobSizePercentage: 0.2,
         visibility: 'hover-track',
         dragFactor: 1,
     }
@@ -113,18 +115,19 @@ scrollbar-track-offset = 7px
     pointer-events: all
     top: scrollbar-nob-offset
     bottom: 0
-    width: 30%
+    --NobSize: 'max(0.05, calc(var(--NobSizePercentage, 0.2)))' % ('')
+    width: calc(100% * var(--NobSize))
     height: scrollbar-nob-size
-    left: calc(70% * var(--Percentage))
+    left: calc((100% * (1 - var(--NobSize))) * var(--Percentage))
     border-radius: scrollbar-nob-border-radius
     opacity: scrollbar-nob-opacity
 
-    .__sun-design__.__sun-design-scrollbar__.vertical>&
+    .__sun-design__.__sun-design-scrollbar__.vertical > &
         left: scrollbar-nob-offset
         right: 0
-        height: 30%
+        height: calc(100% * var(--NobSize))
         width: scrollbar-nob-size
-        top: calc(70% * var(--Percentage))
+        top: calc((100% * (1 - var(--NobSize))) * var(--Percentage))
 
     :hover>.hoverparent>&.dragging,
     .hovertrack:hover>&.dragging,

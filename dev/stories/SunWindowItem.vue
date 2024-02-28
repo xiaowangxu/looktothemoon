@@ -26,7 +26,7 @@
                                 <SunButtonLabel style="margin-right: auto;">按钮 {{ i }}</SunButtonLabel>
                             </SunButton>
                         </template>
-                        <SunColorPicker></SunColorPicker>
+                        <SunColorPicker :model-value="[1, 0, 0, 1]"></SunColorPicker>
                     </SunPanelContainer>
                 </SunScrollContainer>
             </template>

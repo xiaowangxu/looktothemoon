@@ -1,5 +1,5 @@
 <template>
-    <SunButtonPopup ref="buttonpopup_ref" class="__sun-design-color-picker-button__" :style="{ '--Color': color_str }"
+    <SunButtonPopup ref="buttonpopup_ref" class="__sun-design-color-picker-button__ __sun-design-color-button__" :style="{ '--Color': color_str, '--PlainColor': plain_color_str }"
         v-bind="$attrs" :size="size" popup-size="normal" :flat="flat" :borderMask="borderMask" :squared="squared"
         :disabled="disabled" drop-shadow mode="instance" vertical
         content-style="width: 100%; min-width: 180px; max-width: 180px;" :getPopupRect="getPopupRect" scrollable-indicators
@@ -235,6 +235,7 @@ const field_y = computed({
 
 const { value, setValueOnInput, setValueOnChange } = useInputModel(props, 'modelValue', 'modelModifiers', emits, { emitInput: 'input', emitChange: 'change' });
 const color_str = computed(() => `#${toHex(value.value[0], 255)}${toHex(value.value[1], 255)}${toHex(value.value[2], 255)}${toHex(value.value[3], 255)}`);
+const plain_color_str = computed(() => `#${toHex(value.value[0], 255)}${toHex(value.value[1], 255)}${toHex(value.value[2], 255)}`);
 watch(value, val => setRGBA(val[0], val[1], val[2], val[3]), { immediate: true });
 watch(inner_color, color => setValueOnInput([...color]));
 const last_color = ref<ColorData>([0, 0, 0, 0]);
@@ -489,13 +490,8 @@ onBeforeUnmount(() => {
 <style lang="stylus">
 @import '../SunDesignStyleConstants.styl';
 
-.__sun-design-color-picker-button__ {
+.__sun-design-color-picker-button__
     position: relative;
-    background-color: transparent !important;
-	  background-size: 10px 10px;
-	  background-position: 0 0, 0 0, 0 5px, 5px -5px, -5px 0;
-    background-image: 'linear-gradient(0deg, var(--Color) 0%, var(--Color) 100%), linear-gradient(45deg, var(--placeholder-color-disabled) 25%, transparent 0), linear-gradient(-45deg, var(--placeholder-color-disabled) 25%, transparent 0), linear-gradient(45deg, transparent 75%, var(--placeholder-color-disabled) 0), linear-gradient(-45deg, transparent 75%, var(--placeholder-color-disabled) 0)' % ('');
-}
 
 wheel-width = 19px
 nob-size = 16px
