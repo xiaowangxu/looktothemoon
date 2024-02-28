@@ -27,20 +27,27 @@
             <template v-if="allowInputWheel">
                 <SunPanelContainer gap vertical style="min-height: 120px; aspect-ratio: 1; flex-shrink: 0;">
                     <SunPanelContainer gap no-padding style="flex: 1;">
+                        <!-- :class="[wheel_format]" -->
                         <div ref="wheel_ref" class="__sun-design-color-picker-wheel__"
-                            :style="{ '--HueDegree': `${shade_hue}deg`, '--ShadeX': `${shade_x * 100}%`, '--ShadeY': `${shade_y * 100}%`, '--PlainColorEdit': plain_color_edit_str }"
+                            :style="{ '--HueDegree': `${wheel_deg}deg`, '--ShadeX': `${field_x * 100}%`, '--ShadeY': `${field_y * 100}%`, '--PlainColorEdit': plain_color_edit_str }"
                             @mousedown.self="onWheelMouseDown">
+                            <!-- <SunSelect class="__sun-design-color-picker-wheel-format__" icon-only size="small" squared flat
+                                :options="wheel_formats" v-model="wheel_format">
+                                <template #closed>
+                                    <MoreVertical />
+                                </template>
+                            </SunSelect> -->
                             <div class="__sun-design-color-picker-wheel-cover__" />
                             <button class="__sun-design-color-picker-hue-nob__" @mousedown="onHueNobMouseDown"
-                                @keydown.arrow-left="shade_hue -= 1" @keydown.arrow-right="shade_hue += 1"
-                                @keydown.arrow-up="shade_hue -= 1" @keydown.arrow-down="shade_hue += 1"></button>
+                                @keydown.arrow-left="wheel_deg -= 1" @keydown.arrow-right="wheel_deg += 1"
+                                @keydown.arrow-up="wheel_deg -= 1" @keydown.arrow-down="wheel_deg += 1"></button>
                             <div ref="shade_ref" class="__sun-design-color-picker-field__" :data-size="size"
                                 @mousedown.self="onShadeMouseDown">
                                 <button class="__sun-design-color-picker-shade-nob__" @mousedown="onShadeNobMouseDown"
-                                    @keydown.arrow-left="shade_x = Math.max(0, shade_x - 0.01)"
-                                    @keydown.arrow-right="shade_x = Math.min(1, shade_x + 0.01)"
-                                    @keydown.arrow-up="shade_y = Math.max(0, shade_y - 0.01)"
-                                    @keydown.arrow-down="shade_y = Math.min(1, shade_y + 0.01)"></button>
+                                    @keydown.arrow-left="field_x = Math.max(0, field_x - 0.01)"
+                                    @keydown.arrow-right="field_x = Math.min(1, field_x + 0.01)"
+                                    @keydown.arrow-up="field_y = Math.max(0, field_y - 0.01)"
+                                    @keydown.arrow-down="field_y = Math.min(1, field_y + 0.01)"></button>
                             </div>
                         </div>
                     </SunPanelContainer>
@@ -55,23 +62,23 @@
                         <SunControlGroup>
                             <SunControlGroupRow>
                                 <SunNumberEdit v-model="input_r" v-bind="edit_props_r" :drag-factor="2" style="flex: 1;">
-                                    <template #suffix> {{ edit_label_r }} </template>
+                                    <template #suffix> {{ edit_props_r.suffix }} </template>
                                 </SunNumberEdit>
                             </SunControlGroupRow>
                             <SunControlGroupRow>
-                                <SunNumberEdit v-model="input_g" v-bind="edit_props_g" :drag-factor="2" style="flex: 1;">
-                                    <template #suffix> {{ edit_label_g }} </template>
+                                <SunNumberEdit v-model="input_g" v-bind="edit_props_g" :drag-factor="2" style="flex: 1;"
+                                    :disabled="input_g_disabeld">
+                                    <template #suffix> {{ edit_props_g.suffix }} </template>
                                 </SunNumberEdit>
                             </SunControlGroupRow>
                             <SunControlGroupRow>
                                 <SunNumberEdit v-model="input_b" v-bind="edit_props_b" :drag-factor="2" style="flex: 1;">
-                                    <template #suffix> {{ edit_label_b }} </template>
+                                    <template #suffix> {{ edit_props_b.suffix }} </template>
                                 </SunNumberEdit>
                             </SunControlGroupRow>
                         </SunControlGroup>
-                        <SunNumberEdit v-if="allowInputAlpha" v-model="alpha" :min="0" :max="255" :step="1"
-                            :value-snap-gap="1" :drag-factor="2">
-                            <template #suffix> {{ edit_label_a }} </template>
+                        <SunNumberEdit v-if="allowInputAlpha" v-model="alpha" v-bind="edit_props_a" :drag-factor="2">
+                            <template #suffix> {{ edit_props_a.suffix }} </template>
                         </SunNumberEdit>
                     </SunPanelContainer>
                     <SunPanelContainer gap no-padding vertical>
@@ -134,7 +141,7 @@ import SunControlGroup from '../controlgroup/SunControlGroup.vue';
 import SunControlGroupRow from '../controlgroup/SunControlGroupRow.vue';
 import SunNumberEdit from '../numberedit/SunNumberEdit.vue';
 import SunLineEdit from '../lineedit/SunLineEdit.vue';
-import { RotateCcw, Pipette, Plus, Hash, Palette } from 'lucide-vue-next';
+import { RotateCcw, Pipette, Plus, Hash, Palette, MoreVertical } from 'lucide-vue-next';
 import { calcButtonPopupRect, type Rect, type BoxSize, type Size, type BorderMask, useInputModel } from '../SunDesignConstants';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useColorPickerData, type ColorData, type PlainColorData } from './SunColorPickerConstants';
@@ -182,15 +189,15 @@ const emits = defineEmits<{
 const buttonpopup_ref = ref<InstanceType<typeof SunButtonPopup> | undefined>();
 
 const _shade_hue = ref(0);
-const shade_hue = computed({ get: () => _shade_hue.value, set: (v) => _shade_hue.value = (v < 0 ? v + 360 : v) % 360 });  // hsb - h
-const shade_x = ref(0); // hsb - s
-const shade_y = ref(0); // hsb - b
+const shade_hue = computed({ get: () => _shade_hue.value, set: (v) => _shade_hue.value = (v < 0 ? v + 360 : v) % 360 });
+const shade_sat = ref(0);
+const shade_brit = ref(0);
 const _alpha = ref(1);
 const alpha = computed({ get: () => Math.round(_alpha.value * 255), set: (v) => _alpha.value = v / 255 });  // a
 const inner_color = computed(() => {
     const h = shade_hue.value;
-    const s = shade_x.value;
-    const b = 1 - shade_y.value;
+    const s = shade_sat.value;
+    const b = 1 - shade_brit.value;
     return [hsb2rgb_f(5, h, s, b), hsb2rgb_f(3, h, s, b), hsb2rgb_f(1, h, s, b), _alpha.value] as ColorData;
 });
 function setRGBA(r: number, g: number, b: number, a?: number) {
@@ -199,13 +206,32 @@ function setRGBA(r: number, g: number, b: number, a?: number) {
         const v = Math.max(r, g, b), n = v - Math.min(r, g, b);
         const h = n === 0 ? 0 : n && v === r ? (g - b) / n : v === g ? 2 + (b - r) / n : 4 + (r - g) / n;
         shade_hue.value = 60 * (h < 0 ? h + 6 : h);
-        shade_x.value = v && (n / v);
-        shade_y.value = 1 - v;
+        shade_sat.value = v && (n / v);
+        shade_brit.value = 1 - v;
     }
     if (a !== undefined && inner_color_a !== a) {
         _alpha.value = a;
     }
 }
+
+const wheel_deg = computed({
+    get: () => shade_hue.value,
+    set: (v) => {
+        shade_hue.value = v;
+    },
+});
+const field_x = computed({
+    get: () => shade_sat.value,
+    set: (v) => {
+        shade_sat.value = v;
+    },
+});
+const field_y = computed({
+    get: () => shade_brit.value,
+    set: (v) => {
+        shade_brit.value = v;
+    },
+});
 
 const { value, setValueOnInput, setValueOnChange } = useInputModel(props, 'modelValue', 'modelModifiers', emits, { emitInput: 'input', emitChange: 'change' });
 const color_str = computed(() => `#${toHex(value.value[0], 255)}${toHex(value.value[1], 255)}${toHex(value.value[2], 255)}${toHex(value.value[3], 255)}`);
@@ -245,9 +271,25 @@ const color_edit = computed<PlainColorData>({
             case 'RGB':
                 {
                     const h = shade_hue.value;
-                    const s = shade_x.value;
-                    const b = 1 - shade_y.value;
+                    const s = shade_sat.value;
+                    const b = 1 - shade_brit.value;
                     return [Math.round(hsb2rgb_f(5, h, s, b) * 255), Math.round(hsb2rgb_f(3, h, s, b) * 255), Math.round(hsb2rgb_f(1, h, s, b) * 255)] as PlainColorData;
+                }
+            case 'HSL':
+                {
+                    const h = shade_hue.value;
+                    const s = shade_sat.value;
+                    const b = 1 - shade_brit.value;
+                    const l = b - b * s / 2;
+                    const hsls = l === 0 || l === 1 ? 0 : (b - l) / Math.min(l, 1 - l);
+                    return [h, hsls * 100, l * 100] as PlainColorData;
+                }
+            case 'HSV':
+                {
+                    const h = shade_hue.value;
+                    const s = shade_sat.value;
+                    const b = 1 - shade_brit.value;
+                    return [h, s * 100, b * 100] as PlainColorData;
                 }
         }
         return [0, 0, 0] as PlainColorData;
@@ -259,6 +301,27 @@ const color_edit = computed<PlainColorData>({
                     setRGBA(r /= 255, g /= 255, b /= 255);
                     return;
                 }
+            case 'HSL':
+                {
+                    const h = r;
+                    const s = g / 100;
+                    const l = b / 100;
+                    const _b = (l + s * Math.min(l, 1 - l));
+                    shade_hue.value = h;
+                    shade_sat.value = b === 0 ? 0 : 2 - 2 * l / _b;
+                    shade_brit.value = 1 - _b;
+                    return;
+                }
+            case 'HSV':
+                {
+                    const h = r;
+                    const s = g / 100;
+                    const _b = b / 100;
+                    shade_hue.value = h;
+                    shade_sat.value = s;
+                    shade_brit.value = 1 - _b;
+                    return;
+                }
         }
     },
 });
@@ -268,18 +331,18 @@ const input_r = computed({
     set: (r) => { color_edit.value = [r, input_g.value, input_b.value] },
 });
 const input_g = computed({
-    get: () => Math.round(color_edit.value[1]),
+    get: () => color_edit.value[1],
     set: (g) => { color_edit.value = [input_r.value, g, input_b.value] },
 });
+const input_g_disabeld = computed(() => edit_format.value === 'HSL' ? (input_b.value === 0 || input_b.value === 100) : false);
 const input_b = computed({
-    get: () => Math.round(color_edit.value[2]),
+    get: () => color_edit.value[2],
     set: (b) => { color_edit.value = [input_r.value, input_g.value, b] },
 });
 
 const {
     edit_formats, edit_format,
-    edit_label_r, edit_label_g, edit_label_b, edit_label_a,
-    edit_props_r, edit_props_g, edit_props_b,
+    edit_props_r, edit_props_g, edit_props_b, edit_props_a,
     code_format,
     recent_colors, addRecentColor, recent_folded,
 } = useColorPickerData();
@@ -291,7 +354,7 @@ function toHex(num: number, mult: number = 1) {
 const plain_color_edit_str = computed(() => `#${toHex(inner_color.value[0], 255)}${toHex(inner_color.value[1], 255)}${toHex(inner_color.value[2], 255)}`);
 const color_edit_str = computed({
     get: () => `#${toHex(inner_color.value[0], 255)}${toHex(inner_color.value[1], 255)}${toHex(inner_color.value[2], 255)}${inner_color.value[3] === 1 ? '' : toHex(inner_color.value[3], 255)}`,
-    set: (str) => {
+    set: () => {
 
     },
 });
@@ -375,8 +438,8 @@ function onShadeNobMouseMove(evt: MouseEvent) {
     const new_pos_x = evt.clientX - last_shade_x, new_pos_y = evt.clientY - last_shade_y;
     const x = Math.min(1, Math.max(0, new_pos_x / last_shade_width));
     const y = Math.min(1, Math.max(0, new_pos_y / last_shade_height));
-    shade_x.value = x;
-    shade_y.value = y;
+    shade_sat.value = x;
+    shade_brit.value = y;
 }
 function onShadeNobMouseUp(evt: MouseEvent) {
     removeShadeNobDraggingEvents();
@@ -405,8 +468,8 @@ function onShadeClick(evt: MouseEvent) {
     const new_pos_x = evt.clientX - shade_rect.x, new_pos_y = evt.clientY - shade_rect.y;
     const x = Math.min(1, Math.max(0, new_pos_x / shade_rect.width));
     const y = Math.min(1, Math.max(0, new_pos_y / shade_rect.height));
-    shade_x.value = x;
-    shade_y.value = y;
+    shade_sat.value = x;
+    shade_brit.value = y;
 }
 function removeShadeEvents() {
     window.removeEventListener('mousemove', onShadeMouseMove, { capture: true });
@@ -444,6 +507,10 @@ field-radius-multiplier = 1.2
     &.invalid
         text-decoration: underline red
 
+.__sun-design-color-picker-wheel-format__
+    position: absolute
+    right: 0
+
 .__sun-design-color-picker-wheel__
     --HueDegree: -90deg
     --ShadeX: 100%
@@ -453,6 +520,8 @@ field-radius-multiplier = 1.2
     height: 100%
     border-radius: 50%
     background: conic-gradient(from 90deg, rgb(255, 0, 0), rgb(255, 128, 0), rgb(255, 255, 0), rgb(128, 255, 0), rgb(0, 255, 0), rgb(0, 255, 128), rgb(0, 255, 255), rgb(0, 128, 255), rgb(0, 0, 255), rgb(128, 0, 255), rgb(255, 0, 255), rgb(255, 0, 128), rgb(255, 0, 0))
+    // &.OKHSV
+    //     background: conic-gradient(from 90deg, #ff0088, #ff0031, #ff7300, #ffa800, #ffd900, #d9ff00, #00ff39, #00ffc3, #00fffa, #00daff, #00aeff, #023dff, #6e00ff, #bc01ff, #ff00dd, #ff0088)
     border: solid-border
     box-sizing: border-box
 

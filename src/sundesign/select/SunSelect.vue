@@ -38,7 +38,7 @@
             <template v-if="options !== undefined && options.length > 0" v-for="   option, idx    in    options   ">
                 <SunPanelContainer vertical style="width: 100%;">
                     <template v-for="item in option" :key="item.uid">
-                        <SunButton class="__sun-design-select-item__" :size="size"
+                        <SunButton class="__sun-design-select-item__"
                             :ref="(value !== undefined && item.uid === value) ? 'item_refs' : undefined"
                             :active="(value !== undefined && item.uid === value)" flat :disabled="item?.disabled"
                             :color-scheme="item?.colorScheme" @click="onClick(item.uid, $event)">
