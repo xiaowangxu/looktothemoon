@@ -1,27 +1,9 @@
 <template>
-    <!-- <SunPanel style="width: 100%; height: 100%;" vertical>
-
-        <SunPanelContainer gap
-            style="align-items: center; padding-right: 10px; background-color: var(--color-normal); flex-shrink: 0;"
-            @mousedown="onDragMouseDown($event)" @dblclick="emits('maximize', true)">
-            <SunButtonLike no-vertical-padding no-hover-color no-pressed-color flat style="flex: 1; min-height: unset;">
-                <Globe />
-                <SunButtonLabel style="margin-right: auto;">测试窗体 </SunButtonLabel>
-            </SunButtonLike>
-            <SunButton size="small" squared @mousedown.stop @click="emits('maximize', true)">
-                <Maximize />
-            </SunButton>
-            <SunButton size="small" squared @mousedown.stop>
-                <X />
-            </SunButton>
-        </SunPanelContainer>
-
-        <SunPanelSeparator /> -->
-
     <SunPanelResizeContainer style="width: 100%; height: 100%;">
+        
         <template #first>
             <SunPanel container vertical style="width: 100%; height: 100%;">
-                <SunPanelContainer gap>
+                <SunPanelContainer gap style="flex-shrink: 0;">
                     <SunLineEdit style="flex: 1;" :model-value="'test'" />
                     <SunSelect :prefered-direction="1" icon-only selected-icon squared :model-value="2" :options="[[
                         { uid: 0, label: '文件名顺序', icon: 'ArrowDownAZ' },
@@ -30,8 +12,10 @@
                     ]]">
                     </SunSelect>
                 </SunPanelContainer>
+
                 <SunPanelSeparator />
-                <SunPanelFoldContainer unfold-style="flex: 1;" label="虚拟文件系统">
+
+                <SunPanelFoldContainer style="flex: 1; flex-basis: auto;" label="虚拟文件系统">
                     <template #append>
                         <SunButton size="small" flat squared @click="tree_ref?.toggle(true)">
                             <FoldVertical />
@@ -47,16 +31,18 @@
                         </SunPanelContainer>
                     </SunScrollContainer>
                 </SunPanelFoldContainer>
-                <SunPanelSeparator />
+
+                <!-- <SunPanelSeparator /> -->
                 <!-- <SunPanelFoldContainer unfold-style="flex-basis: 100px; flex-grow: 0; flex-shrink: 1;">
                     </SunPanelFoldContainer> -->
             </SunPanel>
         </template>
+        
         <template #second>
             <SunPanel container vertical style="height: 100%;">
                 <SunScrollContainer style="width: 100%; height: unset;">
                     <SunPanelContainer>
-                        <SunBreadcrumb :options="nav_options" :filter-sort="(sort as any)" @click="onBreadcrumbClick"/>
+                        <SunBreadcrumb :options="nav_options" :filter-sort="(sort as any)" @click="onBreadcrumbClick" />
                     </SunPanelContainer>
                 </SunScrollContainer>
                 <SunPanelSeparator />
@@ -68,10 +54,8 @@
                 </SunScrollContainer>
             </SunPanel>
         </template>
-        <SunPanelSeparator />
-    </SunPanelResizeContainer>
 
-    <!-- </SunPanel> -->
+    </SunPanelResizeContainer>
 </template>
 
 <script setup lang="ts">
@@ -101,6 +85,7 @@ import SunContextMenu from '@/sundesign/contextmenu/SunContextMenu';
 import SunSelect from '@/sundesign/select/SunSelect.vue';
 import SunButtonItem from '@/sundesign/item/SunButtonItem.vue';
 import SunPanelFoldContainer from '@/sundesign/panel/SunPanelFoldContainer.vue';
+import SunPanelFoldContainerGroup from '@/sundesign/panel/SunPanelFoldContainerGroup.vue';
 
 const props = defineProps<{
     root?: string,

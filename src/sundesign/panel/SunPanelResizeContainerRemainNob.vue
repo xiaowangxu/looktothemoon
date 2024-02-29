@@ -20,7 +20,6 @@
 <script setup lang="ts">
 
 import SunResizeObserver from '../scrollcontainer/SunResizeObserver.vue';
-import SunButton from '../button/SunButton.vue';
 import { type BoxSize } from '../SunDesignConstants';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 

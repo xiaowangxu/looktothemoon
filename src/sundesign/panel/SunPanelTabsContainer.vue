@@ -50,7 +50,7 @@ const props = withDefaults(
     defineProps<{
         size?: Size,
         tabs: TabItem[],
-        initialSelected?: UID,
+        initialTab?: UID,
         vertical?: boolean,
         hideBorder?: boolean,
         showAppendOnUnselected?: boolean,
@@ -83,7 +83,7 @@ const emits = defineEmits<{
 }>();
 
 // datas
-const selected = ref(props.initialSelected);
+const selected = ref(props.initialTab);
 watch(selected, tab => emits('switch', tab));
 
 function onClick(uid: UID, evt: MouseEvent) {
@@ -125,10 +125,17 @@ function onClick(uid: UID, evt: MouseEvent) {
     &[data-size="large"]
         height: size-large + panel-padding * 2 + border-width
 
-.__sun-design-panel-tabs-container-append__.hide
-    visibility: hidden
-    .__sun-design-panel-tabs-container-tab-container__:hover > &
-        visibility: unset
+.__sun-design-panel-tabs-container-append__
+    display: flex
+    align-items: center
+    flex-direction: row
+    flex-wrap: nowrap
+    justify-content: center
+
+    &.hide
+        visibility: hidden
+        .__sun-design-panel-tabs-container-tab-container__:hover > &
+            visibility: unset
 
 .__sun-design-tabs-container-gapper__
     background-color: var(--color-normal)

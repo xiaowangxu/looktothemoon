@@ -22,7 +22,8 @@
                 <SunButtonItem v-if="(option.item as RenderBreadcrumbItem).render === undefined"
                     :label="(option.item as ItemBreadcrumbItem).label" :icon="(option.item as ItemBreadcrumbItem).icon">
                 </SunButtonItem>
-                <component v-else :is="(option.item as RenderBreadcrumbItem).render" />
+                <component v-else :is="(option.item as RenderBreadcrumbItem).render"
+                    :item="(option.item as RenderBreadcrumbItem)" />
             </SunButton>
         </template>
     </div>
@@ -44,9 +45,7 @@ type RenderBreadcrumbItem<T extends UID = UID> = {
     squared?: boolean,
     disabled?: boolean,
     colorScheme?: ColorScheme,
-    render: Raw<Component<{
-        uid: T,
-    }>>,
+    render: Raw<Component<{ item: RenderBreadcrumbItem<T> }>>,
 };
 export type BreadcrumbItem<T extends UID = UID> = { item: ItemBreadcrumbItem<T> | RenderBreadcrumbItem<T>, siblings?: SelectItem[] };
 

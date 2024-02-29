@@ -46,8 +46,7 @@
                                 :label="(item as ItemSelectItem).label" :icon="(item as ItemSelectItem).icon"
                                 :description="(item as ItemSelectItem).description"
                                 :shortcut="(item as ItemSelectItem).shortcut" always-show-label />
-                            <component v-else :is="(item as RenderSelectItem).render"
-                                :selected="(value !== undefined && item.uid === value)" />
+                            <component v-else :is="(item as RenderSelectItem).render" :item="(item as RenderSelectItem)" />
                         </SunButton>
                     </template>
                 </SunPanelContainer>
@@ -72,10 +71,9 @@ import { type Size, type Item, type BorderMask, type ColorScheme, type UID, type
 import SunButton from '../button/SunButton.vue';
 import SunButtonItem from '../item/SunButtonItem.vue';
 import { ChevronDown, ChevronUp } from 'lucide-vue-next';
-import { computed, ref, type Raw, type Component, watch } from 'vue';
+import { computed, ref, type Raw, type Component } from 'vue';
 import SunPanelSeparator from '../panel/SunPanelSeparator.vue';
 import SunPanelContainer from '../panel/SunPanelContainer.vue';
-import { useVModel } from '@vueuse/core';
 import SunButtonLike from '../button/SunButtonLike.vue';
 
 type ItemSelectItem<T extends UID = UID> = Omit<Item<T>, 'sub' | 'active' | 'iconOnly'>;
@@ -84,7 +82,7 @@ type RenderSelectItem<T extends UID = UID> = {
     disabled?: boolean,
     colorScheme?: ColorScheme,
     renderButtonContent: Raw<Component<{ iconOnly: boolean }>>,
-    render: Raw<Component<{ selected: boolean }>>,
+    render: Raw<Component<{ item: RenderSelectItem<T> }>>,
 };
 export type SelectItem<T extends UID = UID> = ItemSelectItem<T> | RenderSelectItem<T>;
 
@@ -126,10 +124,10 @@ const props = withDefaults(
 
 // slots
 defineSlots<{
-    'button-empty'(props: {}): void;
-    'popup-empty'(props: {}): void;
-    'opened'(props: {}): void;
-    'closed'(props: {}): void;
+    'button-empty'(props: {}): void,
+    'popup-empty'(props: {}): void,
+    opened(props: {}): void,
+    closed(props: {}): void,
 }>();
 
 // emits

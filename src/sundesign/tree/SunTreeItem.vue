@@ -33,7 +33,7 @@
                     :label="(option as ItemTreeItem).label"
                     :icon="folded ? (option as ItemTreeItem).icon : ((option as ItemTreeItem).unfoldIcon ?? (option as ItemTreeItem).icon)"
                     :description="(option as ItemTreeItem).description" @edit="onEdit" />
-                <component v-else :is="(option as RenderTreeItem).render" />
+                <component v-else :is="(option as RenderTreeItem).render" :item="(option as RenderTreeItem)" />
             </SunButton>
 
             <!-- append -->
@@ -126,7 +126,7 @@ export type RenderTreeItem<T extends UID = UID> = {
     leaf?: boolean,
     subs?: TreeItem<T>[],
     initialFold?: boolean,
-    render: Raw<Component<{}>>,
+    render: Raw<Component<{ item: RenderTreeItem<T> }>>,
 };
 export type TreeItem<T extends UID = UID> = ItemTreeItem<T> | RenderTreeItem<T>;
 

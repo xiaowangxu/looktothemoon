@@ -2,7 +2,7 @@
     <SunPanelTabsContainer :tabs="[
         { uid: 'outliner', label: '大纲', icon: 'ListTree' },
         { uid: 'component', label: '组件', icon: 'Component' },
-    ]" initial-selected="outliner">
+    ]" initial-tab="outliner">
         <template #default="{ tab }">
             <SunPanel v-show="tab === 'outliner'" container vertical style="flex: 1;">
 
@@ -49,8 +49,9 @@
 
             </SunPanel>
             <SunPanel v-show="tab === 'component'" container vertical style="flex: 1;">
-                <SunPanelContainer>
+                <SunPanelContainer vertical gap>
                     <SunColorPicker v-model.lazy="color" squared></SunColorPicker>
+                    <SunExpressionEdit style="width: 100%;" :model-value="''" />
                 </SunPanelContainer>
             </SunPanel>
         </template>
@@ -75,6 +76,7 @@ import { fspath } from '@/system/filesystem/FileSystemPath';
 import { VFSTreeOptionsRef } from '@/system/filesystem/FileSystemTreeOptionsRef';
 import SunColorPicker from '@/sundesign/colorpicker/SunColorPicker.vue';
 import { vHoverMenu } from '@/sundesign/hovermenu/SunHoverMenu';
+import SunExpressionEdit from '@/sundesign/expedit/SunExpressionEdit.vue';
 import type { ColorData } from '@/sundesign/colorpicker/SunColorPickerConstants';
 import { ref } from 'vue';
 

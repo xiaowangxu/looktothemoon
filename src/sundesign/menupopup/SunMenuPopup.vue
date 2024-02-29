@@ -22,7 +22,7 @@
                         </SunButton>
                     </template>
                     <template v-else>
-                        <component :is="(item as RenderMenuItem).render" :uid="item.uid" :hover="onMouseEnter"
+                        <component :is="(item as RenderMenuItem).render" :item="(item as RenderMenuItem)" :hover="onMouseEnter"
                             :expand="expandSubMenu" :click="onClick" :key="item.uid"
                             :hovered="sub_menu_uid === item.uid && hover_uid === item.uid" />
                     </template>
@@ -53,7 +53,7 @@ type ItemMenuItem<T extends UID = UID> = Omit<Item<T>, 'sub'> & { subs?: MenuIte
 type RenderMenuItem<T extends UID = UID> = {
     uid: T,
     render: Raw<Component<{
-        uid: T,
+        item: RenderMenuItem<T>,
         hovered: boolean,
         hover: (uid: T, subs: MenuItem<T>[][] | undefined, expand_target: HTMLElement | Rect, focus_target: HTMLElement | undefined) => void,
         expand: (uid: T, subs: MenuItem<T>[][] | undefined, expand_target: HTMLElement | Rect, focus_target: HTMLElement | undefined) => void,
