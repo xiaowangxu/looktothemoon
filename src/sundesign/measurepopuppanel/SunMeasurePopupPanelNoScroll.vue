@@ -5,12 +5,7 @@
             :vertical="vertical" :dropShadow="dropShadow" :container="container" :trap-focus="trapFocus"
             @trap-focus-out="emits('trapFocusOut', $event)" @mouseenter="emits('mouseenter', $event)"
             @mouseleave="emits('mouseleave', $event)">
-            <SunScrollContainer :scrollableIndicators="scrollableIndicators" :scrollBarStateH="scrollBarStateH"
-                :scrollBarStateV="scrollBarStateV" :scrollBarVisibility="scrollBarVisibility" :contentStyle="contentStyle">
-                <SunPanel class="__sun-design-measurepopuppanel-container__" container :vertical="vertical">
-                    <slot :opened="opened" />
-                </SunPanel>
-            </SunScrollContainer>
+            <slot :opened="opened" />
         </SunPanel>
     </SunPopup>
 </template>
@@ -21,8 +16,6 @@ import '../SunDesignStyle.styl';
 import { type Size, type Rect, type BoxSize, type PopupOpenMode, TrapFocusOutEvent } from '../SunDesignConstants';
 import SunPopup from '../popup/SunPopup.vue';
 import SunPanel from '../panel/SunPanel.vue';
-import SunScrollContainer, { type ScrollBarState } from '../scrollcontainer/SunScrollContainer.vue';
-import { type ScrollBarVisibility } from '../scrollcontainer/SunScrollBar.vue';
 import { useWindowSize } from '@vueuse/core';
 import { computed, nextTick, ref, watch } from 'vue';
 
@@ -42,11 +35,6 @@ const props = withDefaults(
         container?: boolean,
         trapFocus?: boolean,
         stopEvents?: boolean,
-        contentStyle?: string,
-        scrollableIndicators?: boolean,
-        scrollBarStateH?: ScrollBarState,
-        scrollBarStateV?: ScrollBarState,
-        scrollBarVisibility?: ScrollBarVisibility,
         getPopupRect: (contentMinSize: BoxSize, windowSize: BoxSize) => Rect,
         measureIgnoreMaxHeight?: boolean,
         measureIgnoreMinHeight?: boolean,
@@ -66,10 +54,6 @@ const props = withDefaults(
         measureIgnoreMinHeight: false,
         measureIgnoreMaxWidth: false,
         measureIgnoreMinWidth: false,
-        scrollableIndicators: true,
-        scrollBarStateH: 'adaptive',
-        scrollBarStateV: 'adaptive',
-        scrollBarVisibility: 'hover',
     }
 );
 

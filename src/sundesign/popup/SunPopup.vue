@@ -12,9 +12,10 @@
 
 <script setup lang="ts">
 
+import { CopySlash } from 'lucide-vue-next';
 import type { Rect } from '../SunDesignConstants';
 import SunPopupCover from './SunPopupCover.vue';
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, ref, toRef, watch } from 'vue';
 
 defineOptions({
     inheritAttrs: false,
@@ -28,6 +29,7 @@ const props = withDefaults(
         teleportTarget?: string,
         teleportDisabled?: boolean,
         stopEvents?: boolean,
+        checkPassiveClickOutside?: boolean,
     }>(),
     {
         visible: true,
@@ -35,6 +37,7 @@ const props = withDefaults(
         teleportTarget: 'body',
         teleportDisabled: false,
         stopEvents: true,
+        checkPassiveClickOutside: false,
     }
 );
 
@@ -50,7 +53,7 @@ const emits = defineEmits<{
 }>();
 
 // datas
-const container_div_dom = ref<HTMLDivElement>();
+const container_div_dom = ref<HTMLDivElement | null>(null);
 const cover_ref = ref<InstanceType<typeof SunPopupCover> | UnderlyingByteSource>();
 const position_style = computed(() => {
     if (props.rect === undefined) return undefined;
@@ -63,6 +66,28 @@ const position_style = computed(() => {
     result.top = `${y}px`;
     // else result.bottom = `${y}px`;
     return result;
+});
+
+watch(toRef(props, 'checkPassiveClickOutside'), c => {
+    if (c) {
+        window.addEventListener('click', onWindowClick, { capture: true });
+    }
+    else {
+        window.removeEventListener('click', onWindowClick, { capture: true });
+    }
+}, { immediate: true });
+
+function onWindowClick(evt: MouseEvent) {
+    if (container_div_dom.value === null) return;
+    if (!evt.composedPath().includes(container_div_dom.value)) {
+        emits('coverClick', evt);
+    }
+}
+
+onBeforeUnmount(() => {
+    if (props.checkPassiveClickOutside) {
+        window.removeEventListener('click', onWindowClick, { capture: true });
+    }
 });
 
 // exposes

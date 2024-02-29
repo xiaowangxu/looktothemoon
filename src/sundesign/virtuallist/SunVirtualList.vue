@@ -1,6 +1,6 @@
 <template>
     <SunScrollContainer class="__sun-design-virtual-list-scroll-container__" @scroll="onScroll"
-        @container-resized="onContainerResized">
+        @container-resized="onContainerResized" :content-style="contentStyle">
         <div class="__sun-design-virtual-list-total-height__" :style="{ height: `${total_height}px` }">
             <div class="__sun-design-virtual-list-container__"
                 :style="{ height: `${wrap_height}px`, 'margin-top': `${top_height}px` }">
@@ -24,6 +24,7 @@ const props = withDefaults(
         gap?: number,
         paddingTop?: number,
         paddingBottom?: number,
+        contentStyle?: string,
     }>(),
     {
         gap: 0,

@@ -3,7 +3,8 @@
         class="__sun-design-menupopup-panel__" content-style="width: 100%;" :style="panelStyle" :stop-events="stopEvents"
         :get-popup-rect="getPopupPanelRect" @cover-click="onClickOutside" @cover-contextmenu="onClickOutside"
         :scrollableIndicators="scrollableIndicators" :scrollBarStateH="scrollBarStateH" :scrollBarStateV="scrollBarStateV"
-        :scrollBarVisibility="scrollBarVisibility" @trap-focus-out="onTrapFocusOut">
+        :scrollBarVisibility="scrollBarVisibility" @trap-focus-out="onTrapFocusOut"
+        :check-passive-click-outside="checkPassiveClickOutside">
         <template v-for="option, idx in  options ">
             <SunPanelContainer vertical style="width: 100%;">
                 <template v-for="item in  option ">
@@ -22,8 +23,8 @@
                         </SunButton>
                     </template>
                     <template v-else>
-                        <component :is="(item as RenderMenuItem).render" :item="(item as RenderMenuItem)" :hover="onMouseEnter"
-                            :expand="expandSubMenu" :click="onClick" :key="item.uid"
+                        <component :is="(item as RenderMenuItem).render" :item="(item as RenderMenuItem)"
+                            :hover="onMouseEnter" :expand="expandSubMenu" :click="onClick" :key="item.uid"
                             :hovered="sub_menu_uid === item.uid && hover_uid === item.uid" />
                     </template>
                 </template>
@@ -71,6 +72,7 @@ const props = withDefaults(
         options: MenuItem[][],
         preferedDirection?: PreferedDirection,
         stopEvents?: boolean,
+        checkPassiveClickOutside?: boolean,
         panelStyle?: string,
         getPopupRect: (contentMinSize: BoxSize, preferedDirection: PreferedDirection, windowSize: BoxSize) => { rect: Rect, direction?: PreferedDirection },
         minWidth?: number,
