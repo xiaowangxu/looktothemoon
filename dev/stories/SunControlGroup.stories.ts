@@ -6,14 +6,14 @@ import SunButton from '../../src/sundesign/button/SunButton.vue';
 import SunButtonLike from '../../src/sundesign/button/SunButtonLike.vue';
 import SunLineEdit from '../../src/sundesign/lineedit/SunLineEdit.vue';
 import SunNumberEdit from '../../src/sundesign/numberedit/SunNumberEdit.vue'
-import SunSelect from '@/sundesign/select/SunSelect.vue';
-import SunColorPicker from '@/sundesign/colorpicker/SunColorPicker.vue';
+import SunSelect from '../../src/sundesign/select/SunSelect.vue';
+import SunColorPicker from '../../src/sundesign/colorpicker/SunColorPicker.vue';
 import { Decorators } from './SunDesignArgs';
 import { StepBack, StepForward, SkipBack, SkipForward, Play } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 const meta: Meta<typeof SunControlGroup> = {
-    component: SunControlGroup,
+	component: SunControlGroup,
 };
 
 export default meta;
@@ -25,16 +25,16 @@ type Story = StoryObj<typeof SunControlGroup>;
  * to learn how to use render functions.
  */
 export const ControlGroup: Story = {
-    decorators: Decorators,
-    tags: ['autodocs'],
-    render: (args) => ({
-        components: { SunControlGroup, SunControlGroupRow, SunColorPicker, SunNumberEdit, SunButton, SunButtonLike, SunSelect, SunLineEdit, StepBack, StepForward, SkipBack, SkipForward, Play },
-        setup() {
-            const progress = ref(0);
-            const time = ref(0);
-            return { args, progress, time };
-        },
-        template: `
+	decorators: Decorators,
+	tags: ['autodocs'],
+	render: (args) => ({
+		components: { SunControlGroup, SunControlGroupRow, SunColorPicker, SunNumberEdit, SunButton, SunButtonLike, SunSelect, SunLineEdit, StepBack, StepForward, SkipBack, SkipForward, Play },
+		setup() {
+			const progress = ref(0);
+			const time = ref(0);
+			return { args, progress, time };
+		},
+		template: `
 			<!-- single -->
 			<SunControlGroup>
 				<SunControlGroupRow>
@@ -75,8 +75,8 @@ export const ControlGroup: Story = {
 					<SunButton squared><Play/></SunButton>
 					<SunButton squared><StepForward/></SunButton>
 					<SunButton squared><SkipForward/></SunButton>
-					<SunColorPicker squared />
-					<SunSelect style="max-width: 100px; min-width: 50px;" :options="[
+					<SunColorPicker squared :model-value="[1, 1, 0, 0.75]"/>
+					<SunSelect style="max-width: 100px; min-width: 50px;" :model-value="0" :options="[
 						[
 							{
 								label: '循环',
@@ -132,9 +132,9 @@ export const ControlGroup: Story = {
 				</SunControlGroupRow>
 			</SunControlGroup>
 		`,
-    }),
-    argTypes: {
-    },
-    args: {
-    },
+	}),
+	argTypes: {
+	},
+	args: {
+	},
 };
