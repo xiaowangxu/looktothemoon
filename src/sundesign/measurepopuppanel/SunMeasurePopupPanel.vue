@@ -152,6 +152,10 @@ function refreshPopupContentMinSize() {
     get_panel_content_min_size();
 }
 
+function refreshPopupRect() {
+    calcuPopupRect();
+}
+
 function focusTop() {
     panel_ref.value?.focusTop();
 }
@@ -167,6 +171,7 @@ function focusLast() {
 // exposes
 defineExpose({
     refreshPopupContentMinSize,
+    refreshPopupRect,
     focusTop,
     focusFirst,
     focusLast,
