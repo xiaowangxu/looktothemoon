@@ -138,7 +138,7 @@ export const Select: Story = {
     },
 };
 
-const images = new Array(6).fill(0).map(
+const images = new Array(20).fill(0).map(
     _ => {
         const i = Math.round(Math.random() * 200);
         return {

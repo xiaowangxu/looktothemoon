@@ -1,18 +1,16 @@
 <template>
     <div ref="div_ref" class="__sun-design-scrollcontainer__">
-        <SunResizeObserver @resized="onContainerResized">
-            <div ref="container_div_dom" class="__sun-design-scrollcontainer-container__" :class="{
+        <div ref="container_div_dom" v-resize-observe="onContainerResized"
+            v-memo="[scrollable_disabled_h, scrollable_disabled_v, contentStyle, contentClass]"
+            class="__sun-design-scrollcontainer-container__" :class="{
                 'disabled-h': scrollable_disabled_h,
                 'disabled-v': scrollable_disabled_v,
             }" @scroll="onScroll">
-                <SunResizeObserver @resized="onContentResized">
-                    <div ref="content_div_dom" class="__sun-design-scrollcontainer-content__" :style="contentStyle"
-                        :class="contentClass">
-                        <slot />
-                    </div>
-                </SunResizeObserver>
+            <div ref="content_div_dom" v-resize-observe="onContentResized" v-memo="[contentStyle, contentClass]"
+                class="__sun-design-scrollcontainer-content__" :style="contentStyle" :class="contentClass">
+                <slot />
             </div>
-        </SunResizeObserver>
+        </div>
         <!-- indicators -->
         <template v-if="scrollableIndicators">
             <template v-if="!scrollable_disabled_h">
@@ -26,11 +24,11 @@
         </template>
         <!-- scrollbar -->
         <SunScrollBar v-if="scrollable_visible_h" v-show="is_scrollable_h" :vertical="false"
-            :visibility="scrollBarVisibility" class="__s_scrollcontainer_hbar__" :percentage="percentage_h" :nob-size-percentage="scroll_nob_size_h"
-            @update:percentage="onHScrolled" @scroll="onHWheel" />
+            :visibility="scrollBarVisibility" class="__s_scrollcontainer_hbar__" :percentage="percentage_h"
+            :nob-size-percentage="scroll_nob_size_h" @update:percentage="onHScrolled" @scroll="onHWheel" />
         <SunScrollBar v-if="scrollable_visible_v" v-show="is_scrollable_v" :vertical="true"
-            :visibility="scrollBarVisibility" class="__s_scrollcontainer_vbar__" :percentage="percentage_v" :nob-size-percentage="scroll_nob_size_v"
-            @update:percentage="onVScrolled" @scroll="onVWheel" />
+            :visibility="scrollBarVisibility" class="__s_scrollcontainer_vbar__" :percentage="percentage_v"
+            :nob-size-percentage="scroll_nob_size_v" @update:percentage="onVScrolled" @scroll="onVWheel" />
         <!-- <div
             style="position: absolute; left: 0; top: 0; font-size: 8px; padding: 2px 4px; font-family: consolas; pointer-events: none;">
             h {{ is_scrollable_h ? '*' : '~' }} {{ has_more_left ? '[' : '&nbsp;' }}{{ has_more_right ? ']' : '&nbsp;' }} {{
@@ -47,8 +45,7 @@
 <script setup lang="ts">
 
 import { computed, ref, watch } from 'vue';
-import { type BoxSize } from '../SunDesignConstants';
-import SunResizeObserver from './SunResizeObserver.vue';
+import { type BoxSize, vResizeObserve } from '../SunDesignConstants';
 import SunScrollBar, { type ScrollBarVisibility } from './SunScrollBar.vue';
 
 // props
@@ -114,8 +111,8 @@ const max_scrollable_v = computed(() => Math.max(0, content_height.value - conta
 const value_scrollable_h = ref(0);
 const value_scrollable_v = ref(0);
 
-const scroll_nob_size_h = computed(()=> Math.min(1, Math.max(0, container_width.value / content_width.value)));
-const scroll_nob_size_v = computed(()=> Math.min(1, Math.max(0, container_height.value / content_height.value)));
+const scroll_nob_size_h = computed(() => Math.min(1, Math.max(0, container_width.value / content_width.value)));
+const scroll_nob_size_v = computed(() => Math.min(1, Math.max(0, container_height.value / content_height.value)));
 
 const percentage_h = computed(() => value_scrollable_h.value / (max_scrollable_h.value - SCROLL_EPSILON));
 const percentage_v = computed(() => value_scrollable_v.value / (max_scrollable_v.value - SCROLL_EPSILON));

@@ -1,5 +1,5 @@
 import './SunDesignStyle.styl';
-import { type CSSProperties, markRaw, toRef, type Ref, readonly, type DeepReadonly, ref, computed, watch } from 'vue';
+import { type CSSProperties, markRaw, toRef, type Ref, readonly, type DeepReadonly, ref, computed, watch, type Directive } from 'vue';
 
 export type Size = 'small' | 'normal' | 'large';
 
@@ -530,6 +530,33 @@ export function setDragImage(evt: DragEvent, message: string | string[] = 'æ”¾ç½
         document.body.removeChild(container);
     }, 0);
 }
+
+// directives
+
+const vResizeObservers: WeakMap<HTMLElement, ResizeObserverCallback> = new WeakMap();
+
+export const vResizeObserve: Directive<HTMLElement, (border_size: BoxSize, content_size: BoxSize, target: Element) => void> = {
+    mounted(el, binding) {
+        const ob: ResizeObserverCallback = (entry) => {
+            const { inlineSize: border_width, blockSize: border_height } = entry.borderBoxSize[0];
+            const { inlineSize: content_width, blockSize: content_height } = entry.contentBoxSize[0];
+            const { width: content_rect_width, height: content_rect_height } = entry.contentRect;
+            binding.value(
+                { width: border_width, height: border_height },
+                { width: content_width ?? content_rect_width, height: content_height ?? content_rect_height },
+                entry.target
+            );
+        }
+        vResizeObservers.set(el, ob);
+        observeResize(el, ob);
+    },
+    unmounted(el) {
+        if (vResizeObservers.has(el)) {
+            unobserveResize(el, vResizeObservers.get(el)!);
+            vResizeObservers.delete(el);
+        }
+    }
+};
 
 // composables
 

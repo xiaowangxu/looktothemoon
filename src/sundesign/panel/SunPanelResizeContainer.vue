@@ -1,29 +1,25 @@
 <template>
-    <SunResizeObserver @resized="onResized">
-        <div ref="div_ref" class="__sun-design-panel-resize-conatiner__"
-            :class="{ 'flip-direction': flipDirection, vertical, start, end }" :style="{ '--Offset': offset }"
-            v-bind="$attrs">
-            <div class="__sun-design-panel-resize-conatiner-first__" :class="{ bordered: !hideBorder }">
-                <slot name="first" />
-            </div>
-            <div ref="second_container_ref" class="__sun-design-panel-resize-conatiner-second__">
-                <slot name="second" />
-            </div>
-            <div class="__sun-design-panel-resize-conatiner-split__" :style="{ '--NobSize': `${nobSize}px` }"
-                @mousedown="onDragMouseDown" @click="onDragClick">
-                <slot name="nob" :start="start" :end="end" />
-            </div>
-            <SunButton v-if="expandIndicator" class="__sun-design-panel-resize-button__" size="small"
-                @click="setSize(open_size)"></SunButton>
+    <div ref="div_ref" v-resize-observe="onResized" class="__sun-design-panel-resize-conatiner__"
+        :class="{ 'flip-direction': flipDirection, vertical, start, end }" :style="{ '--Offset': offset }" v-bind="$attrs">
+        <div class="__sun-design-panel-resize-conatiner-first__" :class="{ bordered: !hideBorder }">
+            <slot name="first" />
         </div>
-    </SunResizeObserver>
+        <div ref="second_container_ref" class="__sun-design-panel-resize-conatiner-second__">
+            <slot name="second" />
+        </div>
+        <div class="__sun-design-panel-resize-conatiner-split__" :style="{ '--NobSize': `${nobSize}px` }"
+            @mousedown="onDragMouseDown" @click="onDragClick">
+            <slot name="nob" :start="start" :end="end" />
+        </div>
+        <SunButton v-if="expandIndicator" class="__sun-design-panel-resize-button__" size="small"
+            @click="setSize(open_size)"></SunButton>
+    </div>
 </template>
 
 <script setup lang="ts">
 
-import SunResizeObserver from '../scrollcontainer/SunResizeObserver.vue';
 import SunButton from '../button/SunButton.vue';
-import { type BoxSize } from '../SunDesignConstants';
+import { type BoxSize, vResizeObserve } from '../SunDesignConstants';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 defineOptions({

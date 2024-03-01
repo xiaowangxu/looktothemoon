@@ -28,10 +28,10 @@ export const VirtualList: Story = {
         },
         template: `
         <SunPanel style="height: 600px; width: 400px;" >
-            <SunVirtualList :count="30" :item-height="24" :gap="4" :padding-top="4" :padding-bottom="4" style="width: 100%; height: 100%;" content-style="width: 100%;">
+            <SunVirtualList :count="1000" :item-height="24" :gap="4" :padding-top="4" :padding-bottom="4" style="width: 100%; height: 100%;" content-style="width: 100%;">
                 <template #default="{ start, length }">
                     <div style="display: flex; flex-direction: column; gap: 4px; padding: 0px 4px;">
-                        <SunButton v-for="i in length" style="width: 100%; border: none;">{{ start + i - 1 }}</SunButton>
+                        <SunButton v-for="i in length" style="width: 100%;">{{ start + i - 1 }}</SunButton>
                     </div>
                 </template>
             </SunVirtualList>

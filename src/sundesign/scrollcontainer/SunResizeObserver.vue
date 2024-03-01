@@ -4,8 +4,12 @@
 
 <script setup lang="ts">
 
+/**
+ * @deprecated
+ */
+
 import { type BoxSize, observeResize, unobserveResize } from '../SunDesignConstants';
-import { getCurrentInstance, onMounted, onBeforeUnmount } from 'vue';
+import { getCurrentInstance, onMounted, onBeforeUnmount, onUpdated } from 'vue';
 
 // emits
 const emits = defineEmits<{
@@ -14,7 +18,8 @@ const emits = defineEmits<{
 
 // datas
 let dom: Element | undefined = undefined;
-onMounted(() => {
+
+function onDomChange() {
     const proxy = getCurrentInstance()!.proxy!;
     const el = proxy.$el as Element | undefined;
     if (el === undefined) {
@@ -26,10 +31,18 @@ onMounted(() => {
         }
     }
     if (el.nextElementSibling !== null) {
-        dom = el.nextElementSibling;
-        observeResize(dom, onResized);
+        const new_dom = el.nextElementSibling;
+        // console.log(">>>>>>")
+        if (new_dom !== dom) {
+            if (dom !== undefined) unobserveResize(dom, onResized);
+            dom = new_dom;
+            if (dom !== undefined) observeResize(dom, onResized);
+        }
     }
-});
+}
+
+onUpdated(() => onDomChange());
+onMounted(() => onDomChange());
 onBeforeUnmount(() => {
     if (dom !== undefined) {
         unobserveResize(dom, onResized);
