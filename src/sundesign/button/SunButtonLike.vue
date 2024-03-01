@@ -1,6 +1,6 @@
 <template>
-    <div class="__sun-design__ __sun-design-button-like__ sized border-masked " :class="{
-        colored, 'no-pressed-color': noPressedColor, 'no-hover-color': noHoverColor, 'equal-padding': squared, squared, disabled, active, flat, bordered: !flat, hover, 'no-vertical-padding': noVerticalPadding
+    <div class="__sun-design__ __sun-design-button-like__ sized colored border-masked" :class="{
+        'no-pressed-color': noPressedColor, 'no-hover-color': noHoverColor, 'equal-padding': squared, squared, disabled, active, flat, bordered: !flat, hover, 'no-vertical-padding': noVerticalPadding
     }" :data-size="size" :data-border-mask="borderMask" :style="colorScheme">
         <slot></slot>
     </div>
@@ -21,7 +21,6 @@ const props = withDefaults(
         hover?: boolean,
         colorScheme?: ColorScheme,
         squared?: boolean,
-        colored?: boolean,
         disabled?: boolean,
         noVerticalPadding?: boolean,
         noPressedColor?: boolean,
@@ -30,7 +29,6 @@ const props = withDefaults(
     {
         size: 'normal',
         borderMask: 15,
-        colored: true,
         disabled: false,
         noVerticalPadding: false,
         noPressedColor: false,
@@ -54,11 +52,6 @@ const props = withDefaults(
     &.no-vertical-padding
         padding-top: 0
         padding-bottom: 0
-    
-    &.no-pressed-color
-        &:active
-            background-color: var(--color-hover)
-            color: var(--font-color-normal)
     
     &[data-size="small"]
         > svg, > .__sun-design-icon__

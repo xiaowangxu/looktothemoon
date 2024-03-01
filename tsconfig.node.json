@@ -1,21 +1,21 @@
 {
-  "extends": "@tsconfig/node18/tsconfig.json",
-  "include": [
-    "vite.config.*",
-    "vitest.config.*",
-    "cypress.config.*",
-    "nightwatch.conf.*",
-    "playwright.config.*",
-    "dev/**/*",
-  ],
-  "compilerOptions": {
-    "jsx": "preserve",
-    "composite": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "types": [
-      "node"
+    "extends": "@tsconfig/node18/tsconfig.json",
+    "include": [
+        "vite.config.*",
+        "vitest.config.*",
+        "cypress.config.*",
+        "nightwatch.conf.*",
+        "playwright.config.*",
+        "dev/**/*",
     ],
-    "moduleDetection": "force",
-  }
+    "compilerOptions": {
+        "jsx": "preserve",
+        "composite": true,
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "types": [
+            "node"
+        ],
+        "moduleDetection": "force",
+    }
 }

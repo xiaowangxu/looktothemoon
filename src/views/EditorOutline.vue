@@ -52,6 +52,28 @@
                 <SunPanelContainer vertical gap>
                     <SunColorPicker v-model.lazy="color" squared></SunColorPicker>
                     <SunExpressionEdit style="width: 100%;" :model-value="''" />
+                    <SunAutoCompletionLineEdit v-model="code" :options="options">
+                        <!-- <template #info>
+                            <SunPanelSeparator />
+                            <SunPanelContainer minor no-padding>
+                                <SunButtonLike no-hover-color no-pressed-color flat style="width: 100%;">
+                                    <SunButtonItem label="快捷操作" description="使用上下键切换 / Enter 确认" />
+                                </SunButtonLike>
+                            </SunPanelContainer>
+                        </template> -->
+                        <!-- <template #append="{ selected }">
+                            <SunPanelSeparator v-show="selected !== undefined" />
+                            <SunScrollContainer v-show="selected !== undefined" content-style="width: 100%;"
+                                style="flex: 0.6;">
+                                <SunPanelContainer>
+                                    <div v-if="selected">
+                                        <h3 style="margin: 4px 0px;">{{ selected?.label ?? '???' }}</h3>
+                                        <p style="margin: 0px;">{{ selected?.description }}</p>
+                                    </div>
+                                </SunPanelContainer>
+                            </SunScrollContainer>
+                        </template> -->
+                    </SunAutoCompletionLineEdit>
                 </SunPanelContainer>
             </SunPanel>
         </template>
@@ -79,9 +101,62 @@ import { vHoverMenu } from '@/sundesign/hovermenu/SunHoverMenu';
 import SunExpressionEdit from '@/sundesign/expedit/SunExpressionEdit.vue';
 import type { ColorData } from '@/sundesign/colorpicker/SunColorPickerConstants';
 import { ref } from 'vue';
+import type { CompletionItem } from '@/sundesign/completion/SunCompletion.vue';
+import SunAutoCompletionLineEdit from '@/sundesign/lineedit/SunAutoCompletionLineEdit.vue';
+import SunButtonLike from '@/sundesign/button/SunButtonLike.vue';
+import SunButtonItem from '@/sundesign/item/SunButtonItem.vue';
 
 const fs_options = VFSTreeOptionsRef.watch(fspath('/'), false) as SunTreeOptions;
 const color = ref<ColorData>([1, 0, 0, 1]);
+const options = ref<CompletionItem[]>([
+    {
+        uid: 'AAA',
+        label: 'AAAA AAA AA A ab',
+        description: '(property) String.length: number',
+        icon: 'Cuboid',
+    },
+    {
+        uid: 'length',
+        label: '长度',
+        description: '(property) String.length: number',
+        icon: 'Cuboid',
+    },
+    {
+        uid: 'id',
+        label: 'id',
+        icon: 'Cuboid',
+    },
+    {
+        uid: 'toString',
+        label: '转文本',
+        description: '(method) String.toString(): string',
+        icon: 'FunctionSquare',
+    },
+    {
+        uid: 'toLowerCase',
+        label: 'toLowerCase',
+        description: '(method) String.toLowerCase(): string',
+        icon: 'FunctionSquare',
+    },
+    {
+        uid: 'toFix',
+        label: 'toFix',
+        description: '(method) String.toFix(): string',
+        icon: 'FunctionSquare',
+    },
+    {
+        uid: 'trim',
+        label: 'trim',
+        description: '(method) String.trim(): string',
+        icon: 'FunctionSquare',
+    },
+    {
+        uid: 'split',
+        label: 'split',
+        icon: 'FunctionSquare',
+    },
+]);
+const code = ref('');
 
 </script>
 

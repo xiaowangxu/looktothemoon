@@ -1,5 +1,5 @@
 import './SunDesignStyle.styl';
-import { type CSSProperties, markRaw, toRef, type Ref, readonly, type DeepReadonly } from 'vue';
+import { type CSSProperties, markRaw, toRef, type Ref, readonly, type DeepReadonly, ref, computed, watch } from 'vue';
 
 export type Size = 'small' | 'normal' | 'large';
 
@@ -20,7 +20,7 @@ export type PopupOpenMode = 'instance' | 'visibility';
 export type UID = string | number | symbol;
 
 export interface Item<T extends UID = UID> {
-    uid: T,
+    readonly uid: T,
     label?: string,
     colorScheme?: ColorScheme,
     icon?: string,
@@ -32,6 +32,10 @@ export interface Item<T extends UID = UID> {
     disabled?: boolean,
     sub?: boolean,
 }
+
+export interface ItemLike<T extends UID = UID> {
+    readonly uid: T,
+};
 
 export interface ColorScheme extends CSSProperties {
     '--focus-color'?: string,
@@ -575,5 +579,91 @@ export function useInputModel<P extends object, ValKey extends keyof P & string,
                 emit(emitChange as any, v);
             }
         }
+    }
+}
+
+export function useHighlightList<U extends UID, T extends ItemLike<U>>(list: Ref<T[]>, filter_sort: Ref<((list: T[], keyword?: string) => T[]) | undefined>, keyword: Ref<string | undefined>, find_select: Ref<((list: T[], keyword?: string, selected?: U) => number) | undefined>) {
+    const filter_sorted_list = computed(() => filter_sort.value === undefined ? list.value : filter_sort.value(list.value, keyword.value));
+    const length = computed(() => filter_sorted_list.value.length);
+
+    const _index = ref<number>(length.value === 0 ? -1 : 0);
+    const index = computed({
+        get: () => _index.value,
+        set: (v) => {
+            if (length.value === 0) {
+                _index.value = -1;
+                _selected.value = undefined;
+            }
+            else {
+                _index.value = Math.min(length.value - 1, Math.max(0, v));
+                _selected.value = filter_sorted_list.value[_index.value];
+            }
+        }
+    });
+    const _selected = ref<T | undefined>(length.value === 0 ? undefined : filter_sorted_list.value[0]) as Ref<T | undefined>;
+    const selected = computed({
+        get: () => _selected.value,
+        set: (s) => {
+            if (s === undefined) {
+                _index.value = length.value === 0 ? -1 : 0;
+                _selected.value = length.value === 0 ? undefined : filter_sorted_list.value[0];
+            }
+            else {
+                const idx = filter_sorted_list.value.findIndex(i => i.uid === s.uid);
+                if (idx < 0) {
+                    // not found
+                    _index.value = length.value === 0 ? -1 : 0;
+                    _selected.value = length.value === 0 ? undefined : filter_sorted_list.value[0];
+                }
+                else {
+                    _index.value = idx;
+                    _selected.value = s;
+                }
+            }
+        }
+    });
+
+    watch(keyword, keyword => {
+        if (keyword !== undefined && find_select.value !== undefined) {
+            const idx = find_select.value(filter_sorted_list.value, keyword, selected.value?.uid);
+            if (idx >= 0 && idx < length.value) {
+                _index.value = idx;
+                _selected.value = filter_sorted_list.value[idx];
+            }
+        }
+    });
+
+    watch(filter_sorted_list, l => {
+        if (selected.value === undefined) {
+            if (l.length === 0) {
+                _index.value = -1;
+                _selected.value = undefined;
+            }
+            else {
+                _index.value = 0;
+                _selected.value = filter_sorted_list.value[0];
+            }
+        }
+        else {
+            const s = selected.value;
+            const u = s.uid;
+            const idx = l.findIndex(i => i.uid === u);
+            if (idx < 0) {
+                // not found
+                _index.value = length.value === 0 ? -1 : 0;
+                _selected.value = length.value === 0 ? undefined : filter_sorted_list.value[0];
+            }
+            else {
+                _index.value = idx;
+                _selected.value = s;
+            }
+        }
+    });
+
+    return {
+        selected: selected,
+        index: index,
+        list: filter_sorted_list,
+        length: length,
     }
 }

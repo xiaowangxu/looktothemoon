@@ -1,9 +1,9 @@
 <template>
     <!-- item -->
     <div class="__sun-design-tree-list-container__">
-        <SunButtonLike class="__sun-design-tree-item-container__ no-pressed-color"
+        <SunButtonLike class="__sun-design-tree-item-container__"
             :class="{ 'no-append': $slots.append === undefined, 'leaf': option.leaf ?? false }" :size="size"
-            :disabled="option.disabled" :active="option_active" :color-scheme="option.colorScheme" flat no-pressed-color
+            :disabled="option.disabled" :active="option_active" :color-scheme="option.colorScheme" flat
             :hover="option.hover">
 
             <slot name="prepand" :option="option" />

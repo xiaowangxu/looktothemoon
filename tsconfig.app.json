@@ -1,26 +1,30 @@
 {
-  "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": [
-    "env.d.ts",
-    "src/**/*",
-    "src/**/*.vue",
-    "res/**/*",
-    "res/**/*.lttm",
-  ],
-  "exclude": [
-    "src/**/__tests__/*",
-  ],
-  "compilerOptions": {
-    "moduleDetection": "force",
-    "composite": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "res://*": [
-        "./res/*"
-      ]
+    "extends": "@vue/tsconfig/tsconfig.dom.json",
+    "include": [
+        "env.d.ts",
+        "src/**/*",
+        "src/**/*.vue",
+        "res/**/*",
+        "res/**/*.lttm",
+    ],
+    "exclude": [
+        "src/**/__tests__/*",
+    ],
+    "compilerOptions": {
+        "lib": [
+            "ES2021",
+            "DOM"
+        ],
+        "moduleDetection": "force",
+        "composite": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "./src/*"
+            ],
+            "res://*": [
+                "./res/*"
+            ]
+        }
     }
-  }
 }

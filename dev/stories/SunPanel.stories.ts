@@ -99,7 +99,7 @@ export const Panel: Story = {
 				</SunPanelContainer>
 				<SunPanelSeparator />
 				<SunPanelContainer vertical>
-					<SunButtonLike size="small" :colored="false" flat style="margin-right: auto; overflow: hidden; white-space: nowrap;text-overflow: ellipsis">Test
+					<SunButtonLike size="small" flat style="margin-right: auto; overflow: hidden; white-space: nowrap;text-overflow: ellipsis">Test
                     </SunButtonLike>
 					<SunButton flat><MoreHorizontal /><span style="margin-right: auto;">更多</span><ChevronRight /></SunButton>
 				</SunPanelContainer>

@@ -27,7 +27,8 @@ const props = withDefaults(
 <style lang="stylus">
 @import '../SunDesignStyleConstants.styl';
 
-.__sun-design__.__sun-design-panel-container__
+.__sun-design-panel-container__
+    box-sizing: border-box
     padding: panel-padding
     display: flex
     gap: (panel-padding / 2)

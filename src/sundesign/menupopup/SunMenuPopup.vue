@@ -48,7 +48,7 @@ import SunPanelSeparator from '../panel/SunPanelSeparator.vue';
 import { type ScrollBarState } from '../scrollcontainer/SunScrollContainer.vue';
 import { type ScrollBarVisibility } from '../scrollcontainer/SunScrollBar.vue';
 import { type Item, type Rect, type BoxSize, type PopupOpenMode, type Size, calcMenuPopupRect, type UID, type TimerCanceller, type PreferedDirection, timer, TrapFocusOutEvent } from '../SunDesignConstants';
-import { onBeforeUnmount, ref, type Component, type Raw, toRef, watch } from 'vue';
+import { onBeforeUnmount, ref, type Component, type Raw, toRef, watch, nextTick } from 'vue';
 
 type ItemMenuItem<T extends UID = UID> = Omit<Item<T>, 'sub'> & { subs?: MenuItem<T>[][], clickable?: boolean };
 type RenderMenuItem<T extends UID = UID> = {
@@ -114,7 +114,9 @@ const refresh_content_min_size = () => {
 };
 watch(toRef(props, 'options'), () => {
     clearState();
-    refresh_content_min_size();
+    nextTick(() => {
+        refresh_content_min_size();
+    });
 }, { flush: 'post' });
 
 const popup_direction = ref<PreferedDirection>(0);

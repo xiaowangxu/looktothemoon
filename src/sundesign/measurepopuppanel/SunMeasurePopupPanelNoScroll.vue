@@ -1,5 +1,5 @@
 <template>
-    <SunPopup v-if="instance" :visible="opened" :rect="popup_rect" :stop-events="stopEvents" @cover-click="onCoverClick"
+    <SunPopup v-if="instance" ref="popup_ref" :visible="opened" :rect="popup_rect" :stop-events="stopEvents" @cover-click="onCoverClick"
         :check-passive-click-outside="checkPassiveClickOutside" @cover-contextmenu="onCoverContextmenu">
         <SunPanel ref="panel_ref" class="__sun-design-measurepopuppanel-panel__" v-bind="$attrs" :size="size" bordered
             :vertical="vertical" :dropShadow="dropShadow" :container="container" :trap-focus="trapFocus"
@@ -77,6 +77,7 @@ const emits = defineEmits<{
 const instance = computed(() => props.mode === 'visibility' || props.visible);
 const opened = computed(() => instance.value && props.visible === true);
 const panel_ref = ref<InstanceType<typeof SunPanel> | undefined>();
+const popup_ref = ref<InstanceType<typeof SunPopup> | undefined>();
 
 const content_min_size = ref<BoxSize>({ width: 0, height: 0 });
 const { width: windowWidth, height: windowHeight } = useWindowSize();
@@ -152,10 +153,15 @@ function focusLast() {
     panel_ref.value?.focusLast();
 }
 
+function isContainedEvent(evt: Event | Node) {
+    return popup_ref.value?.isContainedEvent(evt) ?? false;
+}
+
 // exposes
 defineExpose({
     refreshPopupContentMinSize,
     refreshPopupRect,
+    isContainedEvent,
     focusTop,
     focusFirst,
     focusLast,

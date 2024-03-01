@@ -22,8 +22,7 @@
 import { setDragData, type DragData, type PopupOpenMode, type Size, type UID, setDragImage } from '../SunDesignConstants';
 import SunTreeItem, { type TreeItem } from './SunTreeItem.vue';
 import { SunTreeDroppable, SunTreeInjection, type SunTreeItemDragData, type SunTreeOptions } from './SunTreeConstants';
-import { computed, provide, onBeforeUnmount, type ComponentInternalInstance } from 'vue';
-import { toRef } from '@vueuse/core';
+import { computed, provide, onBeforeUnmount, type ComponentInternalInstance, toRef } from 'vue';
 
 //props
 const props = withDefaults(

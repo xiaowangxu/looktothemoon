@@ -90,9 +90,20 @@ onBeforeUnmount(() => {
     }
 });
 
+function isContainedEvent(evt: Event | Node) {
+    if (container_div_dom.value === null) return false;
+    if (evt instanceof Event) {
+        return evt.composedPath().includes(container_div_dom.value);
+    }
+    else {
+        return container_div_dom.value.contains(evt);
+    }
+}
+
 // exposes
 defineExpose({
     cover: cover_ref,
+    isContainedEvent,
 });
 
 </script>

@@ -55,7 +55,7 @@
             <SunPanelContainer v-else vertical>
                 <slot name="popup-empty">
                     <SunButtonLike flat no-hover-color no-pressed-color><span
-                            style="color: var(--placeholder-color);">无内容</span></SunButtonLike>
+                            style="color: var(--placeholder-color);">无项目</span></SunButtonLike>
                 </slot>
             </SunPanelContainer>
         </template>
