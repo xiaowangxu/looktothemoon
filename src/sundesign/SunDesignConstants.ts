@@ -24,7 +24,6 @@ export interface Item<T extends UID = UID> {
     label?: string,
     colorScheme?: ColorScheme,
     icon?: string,
-    iconOnly?: boolean,
     title?: string,
     description?: string,
     shortcut?: string,

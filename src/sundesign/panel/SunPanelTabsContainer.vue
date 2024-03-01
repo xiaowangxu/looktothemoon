@@ -35,7 +35,7 @@ import SunScrollContainer, { type ScrollBarState } from '../scrollcontainer/SunS
 import type { Item, Size, UID } from '../SunDesignConstants';
 import type { ScrollBarVisibility } from '../scrollcontainer/SunScrollBar.vue';
 
-type ItemTabItem<T extends UID = UID> = Omit<Item<T>, 'sub' | 'active' | 'colorScheme'>;
+type ItemTabItem<T extends UID = UID> = Omit<Item<T>, 'sub' | 'active' | 'colorScheme'> & { iconOnly?: boolean };
 type RenderTabItem<T extends UID = UID> = {
     uid: T,
     title?: string,

@@ -6,17 +6,17 @@
             <SunScrollContainer style="flex: 1;" content-style="width: 100%;" :scroll-bar-visibility="scrollBarVisibility">
                 <div ref="button_container_ref" tabindex="-1" class="__sun-design-panel-container__ vertical"
                     style="width: 100%;">
-                    <SunButton v-if="length !== 0" v-for="item in list"
-                        v-memo="[item, item.uid === selected?.uid, highlight, keyword]" style="width: 100%;" flat
-                        class="no-hover-color" :key="item.uid" :hover="item.uid === selected?.uid"
-                        :color-scheme="item.colorScheme" @mouseenter="selected = item" @focus="selected = item"
-                        @click="onConfirm(item)">
-                        <slot name="item" v-memo="[highlight, keyword]" :item="item">
+                    <!-- v-memo="[item, item.uid === selected?.uid, keyword]" -->
+                    <SunButton v-if="length !== 0" v-for="item in list" style="width: 100%;" flat class="no-hover-color"
+                        :key="item.uid" :hover="item.uid === selected?.uid" :color-scheme="item.colorScheme"
+                        @mouseenter="selected = item" @focus="selected = item" @click="onConfirm(item)">
+                        <!-- v-memo="[keyword]" -->
+                        <slot name="item" :item="item">
                             <SunIcon v-if="item.icon !== undefined" :name="item.icon" :color="item.iconColor" />
                             <span v-if="item.label !== undefined"
                                 class="__sun-design-button-item-label__ __sun-design-completion-label__"
                                 :class="{ 'has-description': item.description !== undefined }"
-                                v-html="highlight === undefined ? item.label : highlight(item.label, keyword)"></span>
+                                v-html="DefaultHighlight(item.label, keyword)"></span>
                             <span v-if="item.description !== undefined" class="__sun-design-button-item-description__">{{
                                 item.description }}</span>
                         </slot>
@@ -62,7 +62,6 @@ const props = withDefaults(
         keyword?: string,
         filterSort?: ((list: CompletionItem[], keyword?: string) => CompletionItem[]) | null,
         findSelect?: ((list: CompletionItem[], keyword?: string, selected?: UID) => number) | null,
-        highlight?: (label: string, keyword?: string) => string,
         scrollBarVisibility?: ScrollBarVisibility,
         appendScrollContainerStyle?: string,
         checkPassiveClickOutside?: boolean,
@@ -94,7 +93,6 @@ const button_container_ref = ref<HTMLDivElement | null>(null);
 const popup_ref = ref<InstanceType<typeof SunMeasurePopupPanelNoScroll>>();
 const filterSort = computed(() => props.filterSort === null ? undefined : (props.filterSort ?? DefaultCodeFilterSort));
 const findSelect = computed(() => props.findSelect === null ? undefined : (props.findSelect ?? DefaultCodeFindSelect));
-const highlight = computed(() => props.highlight === null ? undefined : (props.highlight ?? DefaultHighlight));
 const { selected, index, list, length } = useHighlightList(toRef(props, 'options'), filterSort, toRef(props, 'keyword'), findSelect);
 
 watch(selected, s => {

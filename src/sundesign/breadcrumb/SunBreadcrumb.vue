@@ -16,8 +16,7 @@
                 </template>
             </SunSelect>
             <SunButton :size="size" flat :active="active && idx === options.length - 1"
-                :disabled="disabled || option.item.disabled"
-                :squared="(option.item as RenderBreadcrumbItem).render === undefined ? ((option.item as ItemBreadcrumbItem).iconOnly ?? false) : ((option.item as RenderBreadcrumbItem).squared ?? false)"
+                :disabled="disabled || option.item.disabled" :squared="option.item.iconOnly"
                 @click="$emit('click', option.item.uid)">
                 <SunButtonItem v-if="(option.item as RenderBreadcrumbItem).render === undefined"
                     :label="(option.item as ItemBreadcrumbItem).label" :icon="(option.item as ItemBreadcrumbItem).icon">
@@ -39,12 +38,12 @@ import { ChevronRight } from 'lucide-vue-next';
 import type { ColorScheme, Item, Size, UID } from '../SunDesignConstants';
 import { computed, type Component, type Raw } from 'vue';
 
-type ItemBreadcrumbItem<T extends UID = UID> = Item<T>;
+type ItemBreadcrumbItem<T extends UID = UID> = Item<T> & { iconOnly?: boolean };
 type RenderBreadcrumbItem<T extends UID = UID> = {
     uid: T,
-    squared?: boolean,
     disabled?: boolean,
     colorScheme?: ColorScheme,
+    iconOnly?: boolean,
     render: Raw<Component<{ item: RenderBreadcrumbItem<T> }>>,
 };
 export type BreadcrumbItem<T extends UID = UID> = { item: ItemBreadcrumbItem<T> | RenderBreadcrumbItem<T>, siblings?: SelectItem[] };

@@ -89,7 +89,7 @@ export const Completion: Story = {
                     </SunButtonLike>
                 </SunPanelContainer>
             </template>
-            <template #append={selected}>
+            <template #append="{selected}">
                 <SunPanelSeparator v-show="selected !== undefined" />
                 <SunScrollContainer v-show="selected !== undefined" content-style="width: 100%;" style="flex: 0.6;">
                     <SunPanelContainer>
@@ -100,7 +100,7 @@ export const Completion: Story = {
                     </SunPanelContainer>
                 </SunScrollContainer>
             </template>
-			  </SunCompletion>
+		</SunCompletion>
 		`,
     }),
     argTypes: {
