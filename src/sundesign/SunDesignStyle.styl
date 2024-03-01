@@ -18,10 +18,6 @@ body
         color: inherit
         font-size: inherit
 
-        &::placeholder
-            color: var(--placeholder-color)
-            opacity: 1; /* Firefox */
-
     &.color-def
         --background: background
         --panel-color:  panel-color
@@ -53,106 +49,75 @@ body
 
     // colors
     &.colored
-        background-color: var(--color-normal)
-        color: var(--font-color-normal)
-        
-        &::placeholder
-            color: var(--placeholder-color)
-            opacity: 1; /* Firefox */
 
         &:focus-visible
             outline: focus-width var(--focus-color) solid
             outline-offset: focus-offset
 
-        &:hover, &.hover
-            background-color: var(--color-hover)
-            color: var(--font-color-hover)
-
-        &:active
-            background-color: var(--color-pressed)
-            color: var(--font-color-pressed)
-
-        &:disabled, &.disabled
-            background-color: var(--color-disabled)
-            color: var(--font-color-disabled)
-            &::placeholder
-                color: var(--placeholder-color-disabled)
-
-        &.active, &:checked
-            background-color: var(--color-active)
-            color: var(--font-color-active)
-            &:hover, &.hover
-                background-color: var(--color-active-hover)
-                color: var(--font-color-active-hover)
-            &:active
-                background-color: var(--color-active-pressed)
-                color: var(--font-color-active-pressed)
-            &:disabled, &.disabled
-                background-color: var(--color-active-disabled)
-                color: var(--font-color-active-disabled)
-                &::placeholder
-                    color: var(--placeholder-color-disabled)
-
-        &.flat
-            background-color: transparent
-            &:hover, &.hover
-                background-color: var(--color-normal)
-                color: var(--font-color-normal)
-            &:active
-                background-color: var(--color-pressed)
-                color: var(--font-color-pressed)
-            &:disabled, &.disabled
-                background-color: transparent
-                color: var(--font-color-disabled)
-                &::placeholder
-                    color: var(--placeholder-color-disabled)
-
-        &.no-pressed-color, &.flat.no-pressed-color
-            &:active
-                background-color: var(--color-hover)
-                color: var(--font-color-hover)
-                &.active
-                    background-color: var(--color-active-pressed)
-                    color: var(--font-color-active-pressed)
-
-            &:disabled, &.disabled
-                background-color: var(--color-disabled)
-                color: var(--font-color-disabled)
-
-                &.flat
-                    background-color: transparent
-
-            &.no-hover-color
-                &:active
-                    background-color: var(--color-normal)
-                    color: var(--font-color-normal)
-
-                &:disabled, &.disabled
-                    background-color: var(--color-disabled)
-                    color: var(--font-color-disabled)
-
-                &.flat
-                    background-color: transparent
-        
-        &.no-hover-color
+        &:not(.flat)
             background-color: var(--color-normal)
             color: var(--font-color-normal)
-    
-        &.active, &:checked
-            background-color: var(--color-active)
-            color: var(--font-color-active)
-            &:hover, &.hover
-                background-color: var(--color-active-hover)
-                color: var(--font-color-active-hover)
-            &:active
-                background-color: var(--color-active-pressed)
-                color: var(--font-color-active-pressed)
-            &:disabled, &.disabled
-                background-color: var(--color-active-disabled)
-                color: var(--font-color-active-disabled)
-                &::placeholder
+            &::placeholder, ::placeholder
+                color: var(--placeholder-color)
+            &:hover:not(.no-hover-color), &.hover
+                background-color: var(--color-hover)
+                color: var(--font-color-hover)
+            &:active:not(.no-pressed-color)
+                background-color: var(--color-pressed)
+                color: var(--font-color-pressed)
+            &:disabled, &.disabled, &:disabled:hover, &.disabled:hover, &:disabled:active, &.disabled:active
+                background-color: var(--color-disabled)
+                color: var(--font-color-disabled)
+                &::placeholder, ::placeholder
                     color: var(--placeholder-color-disabled)
-    
+            &.active, &:checked
+                background-color: var(--color-active)
+                color: var(--font-color-active)
+                &:hover:not(.no-hover-color), &.hover
+                    background-color: var(--color-active-hover)
+                    color: var(--font-color-active-hover)
+                &:active:not(.no-pressed-color)
+                    background-color: var(--color-active-pressed)
+                    color: var(--font-color-active-pressed)
+                &:disabled, &.disabled, &:disabled:hover, &.disabled:hover, &:disabled:active, &.disabled:active
+                    background-color: var(--color-active-disabled)
+                    color: var(--font-color-active-disabled)
+                    &::placeholder, ::placeholder
+                        color: var(--placeholder-color-disabled)
+        
+        &.flat
+            background-color: transparent
+            color: var(--font-color-normal)
+            &::placeholder, ::placeholder
+                color: var(--placeholder-color)
+            &:hover:not(.no-hover-color), &.hover
+                background-color: var(--color-hover)
+                color: var(--font-color-hover)
+            &:active:not(.no-pressed-color)
+                background-color: var(--color-pressed)
+                color: var(--font-color-pressed)
+            &:disabled, &.disabled, &:disabled:hover, &.disabled:hover, &:disabled:active, &.disabled:active
+                background-color: transparent
+                color: var(--font-color-disabled)
+                &::placeholder, ::placeholder
+                    color: var(--placeholder-color-disabled)
+            &.active, &:checked
+                background-color: var(--color-active)
+                color: var(--font-color-active)
+                &:hover:not(.no-hover-color), &.hover
+                    background-color: var(--color-active-hover)
+                    color: var(--font-color-active-hover)
+                &:active:not(.no-pressed-color)
+                    background-color: var(--color-active-pressed)
+                    color: var(--font-color-active-pressed)
+                &:disabled, &.disabled, &:disabled:hover, &.disabled:hover, &:disabled:active, &.disabled:active
+                    background-color: var(--color-active-disabled)
+                    color: var(--font-color-active-disabled)
+                    &::placeholder, ::placeholder
+                        color: var(--placeholder-color-disabled)
+
+    // color end
+
     input, button, textarea
         &:disabled, &.disabled
             pointer-events: none
