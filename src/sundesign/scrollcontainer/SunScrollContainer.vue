@@ -1,13 +1,12 @@
 <template>
     <div ref="div_ref" class="__sun-design-scrollcontainer__">
-        <div ref="container_div_dom" v-resize-observe="onContainerResized"
-            v-memo="[scrollable_disabled_h, scrollable_disabled_v, contentStyle, contentClass]"
-            class="__sun-design-scrollcontainer-container__" :class="{
+        <div ref="container_div_dom" v-resize-observe="onContainerResized" class="__sun-design-scrollcontainer-container__"
+            :class="{
                 'disabled-h': scrollable_disabled_h,
                 'disabled-v': scrollable_disabled_v,
             }" @scroll="onScroll">
-            <div ref="content_div_dom" v-resize-observe="onContentResized" v-memo="[contentStyle, contentClass]"
-                class="__sun-design-scrollcontainer-content__" :style="contentStyle" :class="contentClass">
+            <div ref="content_div_dom" v-resize-observe="onContentResized" class="__sun-design-scrollcontainer-content__"
+                :style="contentStyle" :class="contentClass">
                 <slot />
             </div>
         </div>
