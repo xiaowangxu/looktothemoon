@@ -41,7 +41,7 @@ export class MultiGeometryResource extends GeometryResource {
     }
 
     public set_OverrideGeometry(geometry: GeometryResource) {
-        if (geometry instanceof MultiGeometryResource)  throw new Error('<MultiGeometryResource> set_OverrideGeometry: base geometry should not be another MultiGeometryResource');
+        if (geometry instanceof MultiGeometryResource) throw new Error('<MultiGeometryResource> set_OverrideGeometry: base geometry should not be another MultiGeometryResource');
         if (!geometry.geometry.has_geometry) throw new Error('<MultiGeometryResource> set_OverrideGeometry: base geometry does not have a geometry, maybe it is not properly initialized');
         this.override_geometry_ref.value = geometry;
         const attributes = geometry.geometry.get_AttributeBuffers()!;
@@ -64,6 +64,7 @@ export class MultiGeometryResource extends GeometryResource {
 
     public set_InstanceCount(count: number, fill_default: boolean = true, commit: boolean = true) {
         count = Math.max(0, Math.floor(count));
+        if (this.geometry.instance_count === count) return;
         this.geometry.instance_count = count;
         this.instance_transform_attribute_buffer_ref.expect.alloc_Data(count);
         if (fill_default) {

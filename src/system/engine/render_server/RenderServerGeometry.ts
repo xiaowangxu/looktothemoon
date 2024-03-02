@@ -22,7 +22,11 @@ export const RenderServerGeometryAttributeLoctions = {
     instance_transform1: 7,
     instance_transform2: 8,
     instance_transform3: 9,
-    Max: 10,
+    InternalMax: 10,
+    custom0: 10,
+    custom1: 11,
+    custom2: 12,
+    custom3: 13,
 };
 
 export type RenderServerGeometryArray<RS extends RenderState<RS>, Buffer extends RenderStateBuffer<RS> = RenderStateBuffer<RS>> = {

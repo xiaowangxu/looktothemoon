@@ -37,7 +37,7 @@ import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
 import { Cacher } from "@/system/utils/Cacher";
 import { Ref } from "@/system/utils/RefCounted";
 import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
-import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType } from "@/system/engine/Tween";
+import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType, MethodTween } from "@/system/engine/Tween";
 
 const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
     return {
@@ -213,17 +213,6 @@ export function createEditor() {
     // 	}
     // }
 
-    EditorViewport.signal_input.connect((evt, pro) => {
-        if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
-            EditorSceneTree.start_Tween(
-                tween_parallel(
-                    new PropertyTween(point_light, 'radius', Math.random() * 10, 0.4, TweenTransitionType.Linear, TweenEasingType.Out),
-                    new PropertyTween(point_light, 'color', vec3(Math.random(), Math.random(), Math.random()), 0.4, TweenTransitionType.Linear, TweenEasingType.Out)
-                )
-            );
-        }
-    });
-
     const multi_line_geometry = new MultiLineGeometryResource(DefaultConfig);
     const multi_line_material = new MultiLineMaterialResource(DefaultConfig);
     multi_line_material.color = color8(0xd8, 0x2d, 0x4e);
@@ -234,6 +223,21 @@ export function createEditor() {
     MeshLine.local_position = vec3(0, 0, -100);
     MeshLine.render_queue = 1;
     World.add_Child(MeshLine);
+
+    EditorViewport.signal_input.connect((evt, pro) => {
+        if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
+            EditorSceneTree.start_Tween(
+                tween_parallel(
+                    new MethodTween((v) => {
+                        multi_line_geometry.set_Point(1, vec3(1, v, 1));
+                    }, 0.4, TweenTransitionType.Linear, TweenEasingType.Out),
+                    new PropertyTween(point_light, 'radius', Math.random() * 10, 0.4, TweenTransitionType.Linear, TweenEasingType.Out),
+                    new PropertyTween(point_light, 'color', vec3(Math.random(), Math.random(), Math.random()), 0.4, TweenTransitionType.Linear, TweenEasingType.Out)
+                )
+            );
+        }
+    });
+
 
     const ground = new MeshInstance3D(DefaultConfig);
     const geo = new BoxGeometryResource(DefaultConfig);
