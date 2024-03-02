@@ -5,6 +5,7 @@ import type { RayLike } from "./RayLike";
 import { Line3 } from "./Line3";
 import { Epsilon } from "../Scalar";
 import type { LineLike } from "./LineLike";
+import type { GeometryLike } from "./GeometryLike";
 
 export class Ray3 implements RayLike<Vector3, Matrix3> {
     public readonly origin: Vector3;
@@ -70,6 +71,19 @@ export class Ray3 implements RayLike<Vector3, Matrix3> {
         const t2 = e1.cross(n).dot(r) / (n_length_sq);
 
         return [r1.add_Scaled(t1, e1), r2.add_Scaled(t2, e2)];
+    }
+
+    equal(b: Ray3): boolean {
+        return this.origin.equal(b.origin) && this.direction.equal(b.direction);
+    }
+
+    copy(b: Ray3): Ray3 {
+        this.origin.copy(b.origin);
+        this.direction.copy(b.direction);
+        return this;
+    }
+    clone(): Ray3 {
+        return new Ray3(this.origin.clone(), this.direction.clone());
     }
 }
 

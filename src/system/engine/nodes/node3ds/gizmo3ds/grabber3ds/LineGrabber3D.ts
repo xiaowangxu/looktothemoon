@@ -133,7 +133,7 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         this.area.local_position = vec3(0, this.offset_length + this.area_offset_length, 0);
         this.area.local_scale = vec3(1, this.length + 0.2 - this.area_offset_length, 1);
     }
-    
+
     private readonly visual_color: Color = color8(0xf8, 0x2d, 0x4e);
     private visual_opacity: number = 1.0;
 
@@ -153,8 +153,8 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
     }
 
     private update_Opacity() {
-        const viewport = this.get_SceneTree()?.get_ActiveViewports()[0];
-        const camera = viewport?.get_Camera3D();
+        const viewport = this.get_RelativeViewport();
+        const camera = this.get_RelativeCamera3D();
         if (viewport === undefined || camera === undefined || this.is_grabbing) {
             this.visual_opacity = 1;
             this.visual_color.set(this.visual_color.r, this.visual_color.g, this.visual_color.b, this.visual_opacity);

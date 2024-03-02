@@ -11,7 +11,7 @@ import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
 import { BoxGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
 import { PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
-import { color, color8 } from "@/system/fivepebble/graphics/Color";
+import { color, color8, color8code } from "@/system/fivepebble/graphics/Color";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
@@ -38,6 +38,8 @@ import { Cacher } from "@/system/utils/Cacher";
 import { Ref } from "@/system/utils/RefCounted";
 import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
 import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType, MethodTween } from "@/system/engine/Tween";
+import { InfiniteLine3D } from "@/system/engine/nodes/node3ds/gizmo3ds/InfiniteLine3D";
+import { ray3 } from "@/system/fivepebble/geometries/Ray3";
 
 const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
     return {
@@ -220,9 +222,33 @@ export function createEditor() {
     MeshLine.geometry = multi_line_geometry;
     MeshLine.material = multi_line_material;
     MeshLine.local_scale = vec3(100, 100, 100);
-    MeshLine.local_position = vec3(0, 0, -100);
+    MeshLine.local_position = vec3(0, 0, -50);
     MeshLine.render_queue = 1;
     World.add_Child(MeshLine);
+
+    const infinite_line_x = new InfiniteLine3D(DefaultConfig);
+    const multi_line_material_x = new MultiLineMaterialResource(DefaultConfig);
+    multi_line_material_x.color = color8(0xd8, 0x2d, 0x4e);
+    multi_line_material_x.line_width = 1;
+    infinite_line_x.material = multi_line_material_x;
+    infinite_line_x.render_queue = 1;
+    // World.add_Child(infinite_line_x);
+    const infinite_line_y = new InfiniteLine3D(DefaultConfig);
+    const multi_line_material_y = new MultiLineMaterialResource(DefaultConfig);
+    multi_line_material_y.line_width = 1;
+    multi_line_material_y.color = color8code(0x04b973ff);
+    infinite_line_y.material = multi_line_material_y;
+    infinite_line_y.render_queue = 1;
+    infinite_line_y.ray = ray3(vec3(), vec3(0, 1, 0));
+    // World.add_Child(infinite_line_y);
+    const infinite_line_z = new InfiniteLine3D(DefaultConfig);
+    const multi_line_material_z = new MultiLineMaterialResource(DefaultConfig);
+    multi_line_material_z.line_width = 1;
+    multi_line_material_z.color = color8code(0x466fd6ff);
+    infinite_line_z.material = multi_line_material_z;
+    infinite_line_z.render_queue = 1;
+    infinite_line_z.ray = ray3(vec3(), vec3(0, 0, 1));
+    // World.add_Child(infinite_line_z);
 
     EditorViewport.signal_input.connect((evt, pro) => {
         if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {

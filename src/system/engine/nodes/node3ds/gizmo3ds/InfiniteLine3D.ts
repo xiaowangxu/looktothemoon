@@ -1,0 +1,78 @@
+import type { Config } from "@/system/engine/ConfiguredObject";
+import { ray3, type Ray3 } from "@/system/fivepebble/geometries/Ray3";
+import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { Cacher } from "@/system/utils/Cacher";
+import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineGeometryResource";
+import { Ref } from "@/system/utils/RefCounted";
+import { MeshInstance3D } from "../visual_instance3ds/geometry3ds/MeshInstance3D";
+import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
+import { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
+import { plane3 } from "@/system/fivepebble/geometries/Plane3";
+import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
+import { NodeNotification } from "../../Node";
+import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
+import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
+
+const LineGeometry = new Cacher((config: Config) => {
+    const line = new MultiLineGeometryResource(config);
+    return new Ref(line);
+});
+
+export class InfiniteLine3D extends MeshInstance3D {
+
+    private readonly _ray: Ray3 = ray3(vec3(), vec3(1, 0, 0));
+    public get ray() { return this._ray.clone(); }
+    public set ray(ray: Ray3) {
+        this._ray.copy(ray);
+    }
+
+    constructor(config: Config) {
+        super(config);
+        this.top_level = true;
+        this.geometry = LineGeometry.get(this.config).expect;
+        this.block_redundant_before_render = false;
+    }
+
+    public _notification(what: NodeNotification): void {
+        switch (what) {
+            case NodeNotification.InternalBeforeRender: {
+                this.update_Visual();
+                break;
+            }
+        }
+        super._notification(what);
+    }
+
+    // static #frustum: Frustum3 = new Frustum3(plane3(vec3(1, 0, 0), 0), plane3(vec3(1, 0, 0), 0), plane3(vec3(1, 0, 0), 0), plane3(vec3(1, 0, 0), 0), plane3(vec3(1, 0, 0), 0), plane3(vec3(1, 0, 0), 0));
+    // static #matrix4: Matrix4 = Matrix4.make_Identity();
+
+    private update_Visual() {
+        const camera = this.get_SceneTree()?.get_RenderCamera3D();
+        if (camera === undefined) {
+            // this.local_visible = false;
+            return;
+        }
+        const frustum = camera.get_Camera().get_Frustum();
+        const planes = [frustum.near, frustum.far, frustum.left, frustum.top, frustum.right, frustum.bottom];
+        const points = planes.map((p, i) => {
+            const point = p.intersect_UncappedRay(this._ray);
+            // return point;
+            if (point === undefined) return undefined;
+            for (let j = 0; j < 6; j++) {
+                if (j === i) continue;
+                if (!planes[j].is_PointOver(point, true)) return undefined;
+            }
+            return point;
+        }).filter(p => p !== undefined);
+        if (points.length < 2) {
+            this.local_visible = false;
+        }
+        else {
+            this.local_visible = true;
+            this.local_position = points[0]!;
+            const s = points[0]!.distance_to(points[1]!);
+            this.local_scale = vec3(s, s, s);
+            this.local_rotation = Euler.from_Quaternion(Quaternion.make_Rotate(vec3(1, 0, 0), points[0]!.direction_to(points[1]!)))
+        }
+    }
+}

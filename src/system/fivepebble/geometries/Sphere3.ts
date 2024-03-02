@@ -1,12 +1,12 @@
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import type { SphereLike } from "./SphereLike";
 import { Vector3 } from "../linear_algebra/Vector3";
-import { GeometryContainType } from "./GeometryLike";
+import { GeometryContainType, type GeometryLike } from "./GeometryLike";
 import { Box3 } from "./Box3";
 
 export class Sphere3 implements SphereLike<Vector3, Matrix3> {
     public readonly center: Vector3;
-    public readonly radius: number;
+    public radius: number;
 
     constructor(center: Vector3, radius: number) {
         this.center = center;
@@ -51,6 +51,19 @@ export class Sphere3 implements SphereLike<Vector3, Matrix3> {
     }
 
     // #endregion
+
+    equal(b: Sphere3): boolean {
+        return this.radius === b.radius && this.center.equal(b.center);
+    }
+
+    copy(b: Sphere3): Sphere3 {
+        this.center.copy(b.center);
+        this.radius = b.radius;
+        return this;
+    }
+    clone(): Sphere3 {
+        return new Sphere3(this.center.clone(), this.radius);
+    }
 }
 
 export function sphere3(center: Vector3, radius: number) {

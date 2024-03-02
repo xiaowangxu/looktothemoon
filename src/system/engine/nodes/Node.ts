@@ -56,6 +56,8 @@ export class Node extends ClassBase {
     public get ready() { return this.is_ready; }
     private first_time_ready: boolean = true;
 
+    protected block_redundant_before_render: boolean = true;
+    protected propergate_redundant_before_render: boolean = false;
     public block_input: boolean = false;
     public block_process: boolean = false;
     public block_physics_process: boolean = false;
@@ -169,11 +171,13 @@ export class Node extends ClassBase {
         this._notification(NodeNotification.InternalAfterPhysicsProcess);
     }
 
-    public propagate_InternalBeforeRender(delta: number) {
+    public propagate_InternalBeforeRender(delta: number, redundant: boolean) {
         // internal after process
-        this._notification(NodeNotification.InternalBeforeRender);
+        if (!redundant || !(this.block_redundant_before_render)) {
+            this._notification(NodeNotification.InternalBeforeRender);
+        }
         for (const child of this.children) {
-            child.propagate_InternalBeforeRender(delta);
+            child.propagate_InternalBeforeRender(delta, redundant && !this.propergate_redundant_before_render);
         }
     }
 

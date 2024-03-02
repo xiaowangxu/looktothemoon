@@ -124,6 +124,10 @@ export class Box3 implements BoxLike<Vector3, Matrix3> {
         return this;
     }
 
+    equal(b: Box3): boolean {
+        return this.min.equal(b.min) && this.max.equal(b.max);
+    }
+
     set(min: Vector3, max: Vector3) {
         this.min.x = min.x;
         this.min.y = min.y;
@@ -142,7 +146,7 @@ export class Box3 implements BoxLike<Vector3, Matrix3> {
         this.max.z = b.max.z;
         return this;
     }
-    clone(): BoxLike<Vector3, Matrix3> {
+    clone(): Box3 {
         return new Box3(this.min.clone(), this.max.clone());
     }
 }

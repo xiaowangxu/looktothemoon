@@ -6,6 +6,7 @@ import { Node, Viewport } from "./nodes/Node";
 import type { World3D } from "./worlds/world3ds/World3D";
 import { ConfiguredObject, type Config } from "./ConfiguredObject";
 import { Ref } from "../utils/RefCounted";
+import type { Camera3D } from "./nodes/node3ds/camera3ds/Camera3D";
 
 export class SceneTree extends ConfiguredObject {
     private readonly input_action_map: Ref<ShortCutActionMap> = new Ref(new ShortCutActionMap(this.config));
@@ -51,6 +52,7 @@ export class SceneTree extends ConfiguredObject {
         this.animation_requested = requestAnimationFrame(this._loop_func);
     }
 
+    private current_camera_3d: Camera3D | undefined = undefined;
     private process_Loop(time: number, delta: number, frame_id: number) {
         this.time = time;
         this.delta = delta;
@@ -62,7 +64,6 @@ export class SceneTree extends ConfiguredObject {
         for (const viewport of this.viewports) {
             viewport.before_InternalBeforeRender();
         }
-        this.root.propagate_InternalBeforeRender(this.delta);
         // render server resize
         this.config.render_server.set_PixelRatio(this.config.render_server_pixel_ratio ?? window.devicePixelRatio * (this.config.render_server_scale ?? 1));
         if (this.config.render_server_size) {
@@ -79,8 +80,20 @@ export class SceneTree extends ConfiguredObject {
         for (const world of worlds) {
             world.trigger_BeforeRender(this);
         }
-        for (const viewport of [...this.viewports].sort((a, b) => a.render_priority - b.render_priority)) {
+        let redundant_before_render = false;
+        for (const viewport of [...this.viewports].sort((a, b) => {
+            const a_p = a.render_priority, b_p = b.render_priority;
+            if (a_p < b_p) return -1;
+            if (a_p > b_p) return 1;
+            const a_m = a.get_Input().is_mouse_inside, b_m = b.get_Input().is_mouse_inside;
+            if (a_m) return 1;
+            if (b_m) return -1;
+            return 0;
+        })) {
+            this.current_camera_3d = viewport.get_Camera3D();
+            this.root.propagate_InternalBeforeRender(this.delta, redundant_before_render);
             viewport.render();
+            redundant_before_render = true;
         }
         // queue free
         for (const node of this.node_queued_free) {
@@ -174,6 +187,10 @@ export class SceneTree extends ConfiguredObject {
 
     public get_InputActionMap() {
         return this.input_action_map.expect;
+    }
+
+    public get_RenderCamera3D() {
+        return this.current_camera_3d;
     }
 
     public get_ActiveViewports(): Viewport[] {

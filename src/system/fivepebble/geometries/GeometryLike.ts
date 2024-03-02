@@ -1,7 +1,12 @@
 import type { MatrixLike } from "../linear_algebra/MatrixLike";
 import type { VectorLike } from "../linear_algebra/VectorLike";
 
-export interface GeometryLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> { }
+export interface GeometryLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
+    equal(b: GeometryLike<Vec, Mat>): boolean;
+
+    copy(b: GeometryLike<Vec, Mat>): GeometryLike<Vec, Mat>;
+    clone(): GeometryLike<Vec, Mat>;
+}
 
 export interface GeometryLikeBounded<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
     signed_distance_to_Point(point: Vec): number; // outside is positive , inside is negative , boundary is 0

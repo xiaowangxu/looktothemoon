@@ -6,6 +6,8 @@ import type { Sphere3 } from "./Sphere3";
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import { Epsilon, is_ApproxZero } from "../Scalar";
 import { Vector3 } from "../linear_algebra/Vector3";
+import type { GeometryLike } from "./GeometryLike";
+import type { Plane } from "three";
 
 export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     // ax + by + cz = d
@@ -188,6 +190,19 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
             return undefined;
         }
         return line.start.add_Scaled(-dist, segment);
+    }
+
+    equal(b: Plane3): boolean {
+        return this.distance === b.distance && this.normal.equal(b.normal);
+    }
+
+    copy(b: Plane3): Plane3 {
+        this.normal.copy(b.normal);
+        this.distance = b.distance;
+        return this;
+    }
+    clone(): Plane3 {
+        return new Plane3(this.normal.clone(), this.distance);
     }
 }
 

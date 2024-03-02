@@ -18,12 +18,10 @@ export interface BoxLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLik
     enlarges(a: BoxLike<Vec, Mat>, amount: number): BoxLike<Vec, Mat>;
 
     merge(b: BoxLike<Vec, Mat>): BoxLike<Vec, Mat>;
-    merges(a: BoxLike<Vec, Mat>,b: BoxLike<Vec, Mat>): BoxLike<Vec, Mat>;
-    
+    merges(a: BoxLike<Vec, Mat>, b: BoxLike<Vec, Mat>): BoxLike<Vec, Mat>;
+
     grow(b: Vec): BoxLike<Vec, Mat>;
-    grows(a: BoxLike<Vec, Mat>,b: Vec): BoxLike<Vec, Mat>;
+    grows(a: BoxLike<Vec, Mat>, b: Vec): BoxLike<Vec, Mat>;
 
     set(min: Vec, max: Vec): BoxLike<Vec, Mat>;
-    copy(b: BoxLike<Vec, Mat>): BoxLike<Vec, Mat>;
-    clone(): BoxLike<Vec, Mat>;
 }
