@@ -3,7 +3,7 @@
         :class="{ append: $slots.append !== undefined, unfolded: !folded, 'hover-show': hoverShowAppend }" no-hover-color
         no-pressed-color flat>
         <SunButton class="__sun-design-panel-fold-container-fold-button__ no-hover-color no-pressed-color" :size="size" flat
-            style="flex: 1;" @click="folded = !folded">
+            align="start" style="flex: 1;" @click="folded = !folded">
             <ChevronRight v-if="folded" />
             <ChevronDown v-else />
             <slot name="item">

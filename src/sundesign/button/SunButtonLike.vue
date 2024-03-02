@@ -1,6 +1,6 @@
 <template>
     <div class="__sun-design__ __sun-design-button-like__ sized colored border-masked" :class="{
-        'no-pressed-color': noPressedColor, 'no-hover-color': noHoverColor, 'equal-padding': squared, squared, disabled, active, flat, bordered: !flat, hover, 'no-vertical-padding': noVerticalPadding
+        'no-pressed-color': noPressedColor, 'no-hover-color': noHoverColor, 'equal-padding': squared, squared, disabled, active, flat, bordered: !flat, hover, 'no-vertical-padding': noVerticalPadding, [align]: true
     }" :data-size="size" :data-border-mask="borderMask" :style="colorScheme">
         <slot></slot>
     </div>
@@ -9,7 +9,7 @@
 <script setup lang="ts">
 
 import '../SunDesignStyle.styl';
-import type { Size, BorderMask, ColorScheme } from '../SunDesignConstants';
+import type { Size, BorderMask, ColorScheme, Align } from '../SunDesignConstants';
 
 // props
 const props = withDefaults(
@@ -25,6 +25,7 @@ const props = withDefaults(
         noVerticalPadding?: boolean,
         noPressedColor?: boolean,
         noHoverColor?: boolean,
+        align?: Align,
     }>(),
     {
         size: 'normal',
@@ -33,6 +34,7 @@ const props = withDefaults(
         noVerticalPadding: false,
         noPressedColor: false,
         noHoverColor: false,
+        align: 'center',
     }
 );
 
@@ -48,6 +50,12 @@ const props = withDefaults(
     align-items: center
     text-wrap: nowrap
     color: var(--font-color-normal)
+
+    &.start
+        justify-content: flex-start
+
+    &.end
+        justify-content: flex-end
 
     &.no-vertical-padding
         padding-top: 0

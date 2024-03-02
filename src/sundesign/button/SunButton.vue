@@ -1,7 +1,7 @@
 <template>
     <button ref="button_ref" class="__sun-design__ __sun-design-button__ colored sized border-masked"
-        :class="{ 'equal-padding': squared, squared, active, flat, bordered: !flat, hover }" :data-size="size"
-        :data-border-mask="borderMask" :style="colorScheme" :disabled="disabled">
+        :class="{ 'equal-padding': squared, squared, active, flat, bordered: !flat, hover, [align]: true }"
+        :data-size="size" :data-border-mask="borderMask" :style="colorScheme" :disabled="disabled">
         <slot />
     </button>
 </template>
@@ -9,7 +9,7 @@
 <script setup lang="ts">
 
 import '../SunDesignStyle.styl';
-import type { Size, BorderMask, ColorScheme } from '../SunDesignConstants';
+import type { Size, BorderMask, ColorScheme, Align } from '../SunDesignConstants';
 import { ref } from 'vue';
 
 // props
@@ -23,10 +23,12 @@ const props = withDefaults(
         hover?: boolean,
         colorScheme?: ColorScheme,
         squared?: boolean,
+        align?: Align,
     }>(),
     {
         size: 'normal',
         borderMask: 15,
+        align: 'center',
     }
 );
 
@@ -49,6 +51,12 @@ defineExpose({
     justify-content: center
     align-items: center
     text-wrap: nowrap
+
+    &.start
+        justify-content: flex-start
+    
+    &.end
+        justify-content: flex-end
 
     &[data-size="small"]
         > svg, > .__sun-design-icon__
