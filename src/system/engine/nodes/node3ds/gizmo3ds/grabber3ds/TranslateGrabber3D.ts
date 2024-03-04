@@ -26,6 +26,20 @@ export class TranslateGrabber3D extends Grabber3D<Vector3> {
         this.center_grabber.visible = this.visible;
     }
 
+    protected on_LayerChanged(): void {
+        this.axis_x_grabber.layer = this._layer;
+        this.axis_z_grabber.layer = this._layer;
+        this.axis_z_grabber.layer = this._layer;
+        this.center_grabber.layer = this._layer;
+    }
+
+    protected on_RenderQueueChanged(): void {
+        this.axis_x_grabber.render_queue = this._render_queue;
+        this.axis_y_grabber.render_queue = this._render_queue;
+        this.axis_z_grabber.render_queue = this._render_queue;
+        this.center_grabber.render_queue = this._render_queue;
+    }
+
     constructor(config: Config) {
         super(config);
 
@@ -33,6 +47,8 @@ export class TranslateGrabber3D extends Grabber3D<Vector3> {
         const green = 0x04b973ff;
         const blue = 0x466fd6ff;
         const grey = 0x606060ff;
+
+        this.on_RenderQueueChanged();
 
         this.axis_x_grabber.local_rotation = euler(0, 0, - Math.PI / 2);
         this.axis_x_grabber.color = color8code(red);

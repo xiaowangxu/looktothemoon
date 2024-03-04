@@ -1,9 +1,8 @@
 import type { Box3 } from "../geometries/Box3";
-import type { BoxLike } from "../geometries/BoxLike";
-import { Plane3 } from "../geometries/Plane3";
+import { Plane3, plane3 } from "../geometries/Plane3";
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import type { Matrix4 } from "../linear_algebra/Matrix4";
-import { Vector3 } from "../linear_algebra/Vector3";
+import { Vector3, vec3 } from "../linear_algebra/Vector3";
 import type { FrustumLike } from "./FrustumLike";
 
 export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
@@ -114,4 +113,15 @@ export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
             this.far.apply_Matrix4(mat, non_uniform_scale),
         );
     }
+}
+
+export function frustum3(
+    top: Plane3 = plane3(vec3(0, -1, 0), -1),
+    right: Plane3 = plane3(vec3(-1, 0, 0), -1),
+    bottom: Plane3 = plane3(vec3(0, 1, 0), -1),
+    left: Plane3 = plane3(vec3(1, 0, 0), -1),
+    near: Plane3 = plane3(vec3(0, 0, 1), -1),
+    far: Plane3 = plane3(vec3(0, 0, -1), -1),
+) {
+    return new Frustum3(top, right, bottom, left, near, far);
 }

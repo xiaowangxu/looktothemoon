@@ -1,16 +1,17 @@
 import type { MatrixLike } from "../linear_algebra/MatrixLike";
 import type { VectorLike } from "../linear_algebra/VectorLike";
 import type { GeometryLike } from "./GeometryLike";
+import type { RayLike } from "./RayLike";
 
 export interface BoxLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> extends GeometryLike<Vec, Mat> {
     get min(): Vec;
     get max(): Vec;
 
     get size(): Vec;
-    gets_Size(target: Vec): Vec;
+    get_Size(target: Vec): Vec;
 
     get center(): Vec;
-    gets_Center(target: Vec): Vec;
+    get_Center(target: Vec): Vec;
 
     get is_empty(): boolean;
 

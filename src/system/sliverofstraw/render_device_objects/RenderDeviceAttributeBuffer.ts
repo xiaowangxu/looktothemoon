@@ -85,7 +85,7 @@ export class RenderDeviceAttributeBufferView<T extends RenderState<T>, Buffer ex
     private _element_count: number = 0;
     public get element_count(): number { return this._element_count; }
 
-    public get data(): ArrayBufferView { return this.attribute_buffer.data; }
+    public get data(): ArrayBufferView { throw new Error('<RenderDeviceAttributeBufferView> data: can not get data of an buffer view'); }
 
     constructor(render_device: RenderDevice<T>, attribute_buffer: AttriBuffer, stride_count: number, offset_count: number) {
         super(render_device, attribute_buffer.per_instance_count);

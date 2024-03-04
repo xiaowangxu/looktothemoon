@@ -1,21 +1,23 @@
+import type { AABB, BvhShape } from "../bvh/BvhLike";
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import type { Matrix4 } from "../linear_algebra/Matrix4";
 import { Vector3 } from "../linear_algebra/Vector3";
 import type { BoxLike } from "./BoxLike";
+import type { RaycastResult, RaycastSide } from "./GeometryLike";
 
-export class Box3 implements BoxLike<Vector3, Matrix3> {
+export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix3> {
     public readonly min: Vector3;
     public readonly max: Vector3;
 
     get size() { return this.max.sub(this.min); }
-    gets_Size(target: Vector3): Vector3 {
+    get_Size(target: Vector3): Vector3 {
         target.x = this.max.x - this.min.x;
         target.y = this.max.y - this.min.y;
         target.z = this.max.z - this.min.z;
         return target;
     }
     get center(): Vector3 { return new Vector3((this.min.x + this.max.x) / 2, (this.min.y + this.max.y) / 2, (this.min.z + this.max.z) / 2); }
-    gets_Center(target: Vector3): Vector3 {
+    get_Center(target: Vector3): Vector3 {
         target.x = (this.min.x + this.max.x) / 2;
         target.y = (this.min.y + this.max.y) / 2;
         target.z = (this.min.z + this.max.z) / 2;
@@ -49,7 +51,7 @@ export class Box3 implements BoxLike<Vector3, Matrix3> {
     }
     enlarges(a: BoxLike<Vector3, Matrix3>, amount: number): BoxLike<Vector3, Matrix3> {
         this.min.subs_Number(a.min, amount);
-        this.max.subs_Number(a.max, amount);
+        this.max.adds_Number(a.max, amount);
         return this;
     }
 
@@ -149,6 +151,17 @@ export class Box3 implements BoxLike<Vector3, Matrix3> {
     clone(): Box3 {
         return new Box3(this.min.clone(), this.max.clone());
     }
+
+    //#region Bvh
+
+    get aabb(): Box3 {
+        return this.clone();
+    }
+    get_AABB(target: Box3): Box3 {
+        return target.copy(this);
+    }
+    
+    //#endregion
 }
 
 export function box3(min: Vector3 = new Vector3(), max: Vector3 = new Vector3()) {

@@ -117,6 +117,16 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         this.area.enabled = this.enabled && this.visual_enabled && this.visible;
     }
 
+    protected on_LayerChanged(): void {
+        this.arrow_tail.layer = this._layer;
+        this.arrow_head.layer = this._layer;
+    }
+
+    protected on_RenderQueueChanged(): void {
+        this.arrow_tail.render_queue = this._render_queue;
+        this.arrow_head.render_queue = this._render_queue;
+    }
+
     private _visual_enabled: boolean = true;
     public get visual_enabled() { return this._visual_enabled; }
     private set visual_enabled(enabled: boolean) {
@@ -188,15 +198,11 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
     constructor(config: Config) {
         super(config);
 
-        this.arrow_tail.render_queue = 1;
-        this.arrow_head.render_queue = 1;
-        this.arrow_tail.layer = 1;
-        this.arrow_head.layer = 1;
-
         this.arrow_tail.geometry = ArrowTailGeometry.get(this.config).expect;
         this.arrow_material.expect.set_OverrideMaterial(LineGrabberMaterial.get(this.config).expect);
         this.arrow_head.geometry = ArrowHeadGeometry.get(this.config).expect;
         this.arrow_tail.material = this.arrow_head.material = this.arrow_material.expect;
+        this.on_RenderQueueChanged();
 
         this.shape.shape = LineGrabberPickingShape.get(this.config).expect;
         this.shape.local_position = vec3(0, 0.5, 0);

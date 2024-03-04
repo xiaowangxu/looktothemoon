@@ -11,7 +11,7 @@
     </div>
 
     <SunPanelResizeContainerRemainNob id="editor-left-container" click-nob-action="toggle" :nob-size="14"
-        :expand-indicator="false" :first-snap="25" :initial-size="280" :max="-300">
+        :expand-indicator="false" :first-snap="25" :initial-size="280" :max="-300" initial-collapse="first">
         <template #nob>
             <div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
                 <button class="editor-container-nob" style="width: 4px; height: clamp(30px, 6%, 50px);">
@@ -28,7 +28,7 @@
 
             <SunPanelResizeContainerRemainNob id="editor-right-container" click-nob-action="toggle"
                 style="position: absolute; inset: 0;" :nob-size="14" :expand-indicator="false" :first-snap="25"
-                flip-direction :initial-size="280" :max="-80">
+                flip-direction :initial-size="280" :max="-80" initial-collapse="second">
                 <template #nob>
                     <div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
                         <button class="editor-container-nob" style="width: 4px; height: clamp(30px, 6%, 50px);">
@@ -39,7 +39,7 @@
 
                     <SunPanelResizeContainerRemainNob id="editor-bottom-container" click-nob-action="toggle"
                         style="position: absolute; inset: 0;" :nob-size="14" :expand-indicator="false" :first-snap="25"
-                        flip-direction :initial-size="300" vertical>
+                        flip-direction :initial-size="300" vertical initial-collapse="second">
                         <template #nob>
                             <div
                                 style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">

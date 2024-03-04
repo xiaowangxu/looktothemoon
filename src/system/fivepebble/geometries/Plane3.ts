@@ -5,7 +5,7 @@ import type { Ray3 } from "./Ray3";
 import type { Sphere3 } from "./Sphere3";
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import { Epsilon, is_ApproxZero } from "../Scalar";
-import { Vector3 } from "../linear_algebra/Vector3";
+import { Vector3, vec3 } from "../linear_algebra/Vector3";
 import type { GeometryLike } from "./GeometryLike";
 import type { Plane } from "three";
 
@@ -115,8 +115,8 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
 
     public is_PointBelow(point: Vector3, touching: boolean = false) {
         return touching ?
-            (-this.normal.dot(point) > (this.distance - Epsilon)) :
-            (-this.normal.dot(point) > this.distance);
+            (this.normal.dot(point) < (this.distance + Epsilon)) :
+            (this.normal.dot(point) < this.distance);
     }
 
     public is_SphereOver(sphere: Sphere3, touching: boolean = false) {
@@ -206,6 +206,6 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     }
 }
 
-export function plane3(normal: Vector3, distance: number) {
+export function plane3(normal: Vector3 = vec3(1, 0, 0), distance: number = 0) {
     return new Plane3(normal, distance);
 }

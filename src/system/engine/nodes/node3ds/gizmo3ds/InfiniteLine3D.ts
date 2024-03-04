@@ -5,13 +5,12 @@ import { Cacher } from "@/system/utils/Cacher";
 import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineGeometryResource";
 import { Ref } from "@/system/utils/RefCounted";
 import { MeshInstance3D } from "../visual_instance3ds/geometry3ds/MeshInstance3D";
-import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
-import { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
-import { plane3 } from "@/system/fivepebble/geometries/Plane3";
-import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { NodeNotification } from "../../Node";
 import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
+import { Plane3, plane3 } from "@/system/fivepebble/geometries/Plane3";
+import { frustum3, Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
+import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 
 const LineGeometry = new Cacher((config: Config) => {
     const line = new MultiLineGeometryResource(config);
@@ -43,20 +42,20 @@ export class InfiniteLine3D extends MeshInstance3D {
         super._notification(what);
     }
 
-    // static #frustum: Frustum3 = new Frustum3(plane3(vec3(1, 0, 0), 0), plane3(vec3(1, 0, 0), 0), plane3(vec3(1, 0, 0), 0), plane3(vec3(1, 0, 0), 0), plane3(vec3(1, 0, 0), 0), plane3(vec3(1, 0, 0), 0));
-    // static #matrix4: Matrix4 = Matrix4.make_Identity();
+    static #frustum: Frustum3 = frustum3();
+    static #matrix4: Matrix4 = Matrix4.make_Identity();
+    static #planes : [Plane3, Plane3, Plane3, Plane3, Plane3, Plane3] = [InfiniteLine3D.#frustum.near, InfiniteLine3D.#frustum.far, InfiniteLine3D.#frustum.left, InfiniteLine3D.#frustum.top, InfiniteLine3D.#frustum.right, InfiniteLine3D.#frustum.bottom]
 
     private update_Visual() {
         const camera = this.get_SceneTree()?.get_RenderCamera3D();
         if (camera === undefined) {
-            // this.local_visible = false;
+            this.local_visible = false;
             return;
         }
-        const frustum = camera.get_Camera().get_Frustum();
-        const planes = [frustum.near, frustum.far, frustum.left, frustum.top, frustum.right, frustum.bottom];
+        camera.get_Camera().get_Frustum(InfiniteLine3D.#frustum);
+        const planes = InfiniteLine3D.#planes;
         const points = planes.map((p, i) => {
             const point = p.intersect_UncappedRay(this._ray);
-            // return point;
             if (point === undefined) return undefined;
             for (let j = 0; j < 6; j++) {
                 if (j === i) continue;

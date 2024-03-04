@@ -9,8 +9,8 @@ import { ShortCut } from "@/system/engine/inputs/ShortCut";
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
-import { BoxGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
-import { PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
+import { BoxGeometryResource, CylinderGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
+import { NormalMaterialResource, PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { color, color8, color8code } from "@/system/fivepebble/graphics/Color";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
@@ -22,7 +22,6 @@ import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
 import { StandardMaterialResource } from "../system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { ClassLoader } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
 import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
-import huli from 'res://huli.obj?url';
 import { MaterialOverrideResource } from "@/system/engine/resources/material_resources/MaterialResource";
 import { EditorRenderer3DPipeline } from "@/system/engine/renderer/renderer_3d/EditorRenderer3DPipeline";
 import { EditorRenderer3D } from "@/system/engine/renderer/renderer_3d/EditorRenderer3D";
@@ -40,6 +39,14 @@ import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletio
 import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType, MethodTween } from "@/system/engine/Tween";
 import { InfiniteLine3D } from "@/system/engine/nodes/node3ds/gizmo3ds/InfiniteLine3D";
 import { ray3 } from "@/system/fivepebble/geometries/Ray3";
+import { Bvh3 } from "@/system/fivepebble/bvh/Bvh3";
+import { box3 } from "@/system/fivepebble/geometries/Box3";
+import { Bvh3Visualization } from './nodes/Bvh3Visualization';
+
+import huli from 'res://huli.obj?url';
+import stanford_bunny from 'res://stanford-bunny.obj?url';
+import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import { Pi, Tau } from "@/system/fivepebble/Scalar";
 
 const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
     return {
@@ -145,7 +152,7 @@ export function createEditor() {
 
     for (let i = 0; i < count; i++) {
         for (let j = 0; j < count; j++) {
-            multi_geometry.set_InstanceTransform(i * count + j, Matrix4.from_BasisPosition(undefined, vec3(i * 2, j * 2, 0)), false);
+            multi_geometry.set_InstanceTransform(i * count + j, Matrix4.from_BasisPosition(Matrix3.make_RotateX(Pi / 2), vec3(i * 2, j * 2, 0)), false);
         }
     }
 
@@ -228,27 +235,27 @@ export function createEditor() {
 
     const infinite_line_x = new InfiniteLine3D(DefaultConfig);
     const multi_line_material_x = new MultiLineMaterialResource(DefaultConfig);
-    multi_line_material_x.color = color8(0xd8, 0x2d, 0x4e);
-    multi_line_material_x.line_width = 1;
+    multi_line_material_x.color = color8code(0xd82d4e33);
+    // multi_line_material_x.line_width = 1;
     infinite_line_x.material = multi_line_material_x;
     infinite_line_x.render_queue = 1;
-    // World.add_Child(infinite_line_x);
+    World.add_Child(infinite_line_x);
     const infinite_line_y = new InfiniteLine3D(DefaultConfig);
     const multi_line_material_y = new MultiLineMaterialResource(DefaultConfig);
-    multi_line_material_y.line_width = 1;
-    multi_line_material_y.color = color8code(0x04b973ff);
+    // multi_line_material_y.line_width = 1;
+    multi_line_material_y.color = color8code(0x04b97344);
     infinite_line_y.material = multi_line_material_y;
     infinite_line_y.render_queue = 1;
     infinite_line_y.ray = ray3(vec3(), vec3(0, 1, 0));
-    // World.add_Child(infinite_line_y);
+    World.add_Child(infinite_line_y);
     const infinite_line_z = new InfiniteLine3D(DefaultConfig);
     const multi_line_material_z = new MultiLineMaterialResource(DefaultConfig);
-    multi_line_material_z.line_width = 1;
-    multi_line_material_z.color = color8code(0x466fd6ff);
+    // multi_line_material_z.line_width = 1;
+    multi_line_material_z.color = color8code(0x466fd644);
     infinite_line_z.material = multi_line_material_z;
     infinite_line_z.render_queue = 1;
     infinite_line_z.ray = ray3(vec3(), vec3(0, 0, 1));
-    // World.add_Child(infinite_line_z);
+    World.add_Child(infinite_line_z);
 
     EditorViewport.signal_input.connect((evt, pro) => {
         if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
@@ -296,6 +303,36 @@ export function createEditor() {
         World.add_Child(mesh);
 
     });
+
+    // bvh
+
+    const box = new TorusGeometryResource(DefaultConfig);
+    box.build();
+    
+    const mesh_ = new MeshInstance3D(DefaultConfig);
+    mesh_.geometry = box;
+    mesh_.material = new NormalMaterialResource(DefaultConfig);
+    mesh_.top_level = true;
+    World.add_Child(mesh_);
+    const tris = box.get_TriFaces();
+    console.log(tris);
+
+    const bvh = new Bvh3(Infinity);
+    bvh.build(tris!);
+    console.log(bvh);
+    const bvh_viz = new Bvh3Visualization(DefaultConfig);
+    bvh_viz.visualize_Bvh3(bvh, 6);
+    bvh_viz.top_level = true;
+    let depth = 0;
+    bvh_viz.signal_input.connect((evt, prop) => {
+        if (!prop) {
+            if (evt instanceof KeyInputEvent && evt.pressed && evt.key === 'a' && !evt.echo) {
+                depth = (depth + 1) % 20;
+                bvh_viz.visualize_Bvh3(bvh, depth);
+            }
+        }
+    });
+    mesh_.add_Child(bvh_viz);
 
     return EditorSceneTree;
 }

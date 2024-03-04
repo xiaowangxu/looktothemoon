@@ -85,7 +85,6 @@ export class MultiLineGeometryResource extends GeometryResource {
         );
         this.geometry.instance_count = 1;
         this.update_BBox();
-        console.log(this._bbox);
     }
 
     public set_PointCount(count: number) {

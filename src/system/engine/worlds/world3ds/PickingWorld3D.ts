@@ -4,12 +4,15 @@ import { RID, type Rid } from "../../Rid";
 import type { Viewport } from "../../nodes/Node";
 import type { Camera3D } from "../../nodes/node3ds/camera3ds/Camera3D";
 import type { PickingArea3D } from "../../nodes/node3ds/physics3ds/PickingArea3D";
-import { type RaycastResult } from "./PhysicsWorld3D";
+import { RaycastSide, type RaycastResult } from "@/system/fivepebble/geometries/GeometryLike";
 import { ConfiguredObject, type Config } from "../../ConfiguredObject";
+import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+
+type RaycastResult3 = RaycastResult<Vector3, Matrix3>;
 
 export interface PickingShape3D {
     preserve_global_transform: boolean;
-    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: PickingSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult | undefined;
+    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined;
 }
 
 class PickingArea extends ConfiguredObject {
@@ -36,10 +39,6 @@ export enum PickingOrder {
     Ordered, OffsetOrdered, Unordered
 }
 
-export enum PickingSide {
-    Front, Back, Double
-}
-
 export class RayPickingOption {
     public readonly from: Vector3;
     public readonly to: Vector3;
@@ -47,9 +46,9 @@ export class RayPickingOption {
     public readonly camera: Camera3D | undefined;
     public readonly viewport: Viewport | undefined;
     public readonly order: PickingOrder;
-    public readonly side: PickingSide;
+    public readonly side: RaycastSide;
 
-    constructor(from: Vector3, to: Vector3, mask: number, camera: Camera3D | undefined, viewport: Viewport | undefined, order: PickingOrder = PickingOrder.Ordered, side: PickingSide = PickingSide.Front) {
+    constructor(from: Vector3, to: Vector3, mask: number, camera: Camera3D | undefined, viewport: Viewport | undefined, order: PickingOrder = PickingOrder.Ordered, side: RaycastSide = RaycastSide.Front) {
         this.from = from.clone();
         this.to = to.clone();
         this.mask = mask & 0xffffffff;

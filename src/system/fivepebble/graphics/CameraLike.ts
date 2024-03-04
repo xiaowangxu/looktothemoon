@@ -16,7 +16,8 @@ export interface CameraLike<Proj extends MatrixLike<Proj>, Vec extends VectorLik
 
     project_Ray(ndc: Vector2): RayLike<Vec, Mat>;
 
-    get_Frustum(): FrustumLike<Vec, Mat>;
+    get frustum(): FrustumLike<Vec, Mat>;
+    get_Frustum(target: FrustumLike<Vec, Mat>): FrustumLike<Vec, Mat>;
 
     clone(): CameraLike<Proj, Vec, Mat>;
 }

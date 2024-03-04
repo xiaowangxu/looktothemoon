@@ -1,7 +1,6 @@
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import type { Matrix4 } from "../linear_algebra/Matrix4";
 import type { Vector3 } from "../linear_algebra/Vector3";
-import type { GeometryLike } from "./GeometryLike";
 import type { LineLike } from "./LineLike";
 
 export class Line3 implements LineLike<Vector3, Matrix3> {

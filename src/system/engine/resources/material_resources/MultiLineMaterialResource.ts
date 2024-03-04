@@ -9,6 +9,7 @@ import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { Vector4, vec4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { Color } from "@/system/fivepebble/graphics/Color";
 import type { Config } from "../../ConfiguredObject";
+import { Cacher } from "@/system/utils/Cacher";
 
 export class MultiLineMaterialResource extends MaterialResource {
 

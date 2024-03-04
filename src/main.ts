@@ -17,3 +17,5 @@ await fetch(sys_vfs).then(res => res.arrayBuffer()).then(array_buffer => VFS.loa
 (window as any).fspath = fspath;
 
 (window as any).scenetree = createEditor();
+
+import './system/fivepebble/bvh/Bvh3';

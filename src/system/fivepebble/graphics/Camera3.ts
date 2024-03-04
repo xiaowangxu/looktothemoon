@@ -13,6 +13,7 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     get projection() { return this._projection.clone(); }
 
     static #matrix3: Matrix3 = Matrix3.make_Identity();
+    static #matrix4: Matrix4 = Matrix4.make_Identity();
     static #vector3: Vector3 = Vector3.make_Zero();
     static #euler: Euler = euler();
 
@@ -55,8 +56,11 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
         return new Ray3(this.unproject_Point(ndc, depth), this.unproject_Normal(ndc));
     }
 
-    get_Frustum(): Frustum3 {
-        return Frustum3.from_Projection(this._global_transform_inverse.compose(this._projection));
+    get frustum() {
+        return Frustum3.from_Projection(Camera3.#matrix4.composes(this._global_transform_inverse, this._projection));
+    }
+    get_Frustum(target: Frustum3): Frustum3 {
+        return target.set_Projection(Camera3.#matrix4.composes(this._global_transform_inverse, this._projection));
     }
 
     abstract clone(): Camera3;

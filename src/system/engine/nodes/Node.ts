@@ -6,7 +6,7 @@ import { Vector2, vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { SignalEmitter } from "../../utils/SignalEmitter";
 import { EditorRenderer3D } from "../renderer/renderer_3d/EditorRenderer3D";
 import { World3D } from "../worlds/world3ds/World3D";
-import { PickingOrder, PickingSide, RayPickingOption } from "../worlds/world3ds/PickingWorld3D";
+import { PickingOrder, RayPickingOption } from "../worlds/world3ds/PickingWorld3D";
 import { MouseEnterLeaveInputEvent } from "../inputs/events/mouse_events/MouseEnterLeaveInputEvent";
 import { MouseInputEvent } from "../inputs/events/mouse_events/MouseInputEvent";
 import { InputEvent } from "../inputs/InputEvent";
@@ -18,6 +18,7 @@ import { ClassBase } from "../classes/class_database/ClassBase";
 import type { Config } from "../ConfiguredObject";
 import { Ref } from "@/system/utils/RefCounted";
 import type { Renderer3D } from "../renderer/renderer_3d/Renderer3D";
+import { RaycastSide } from "@/system/fivepebble/geometries/GeometryLike";
 
 export enum NodeNotification {
     ExitingTree,
@@ -674,7 +675,7 @@ export class Viewport extends Node {
                 camera_3d,
                 this,
                 PickingOrder.OffsetOrdered,
-                PickingSide.Front
+                RaycastSide.Front
             );
             const ray_picking_results = picking_world.perform_RayPicking(ray_picking_option);
             if (ray_picking_results.length > 0) {

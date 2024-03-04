@@ -1,21 +1,27 @@
-
 import { Resource } from "../Resource";
 import type { Viewport } from "../../nodes/Node";
 import type { Camera3D } from "../../nodes/node3ds/camera3ds/Camera3D";
-import { type RaycastResult } from "../../worlds/world3ds/PhysicsWorld3D";
-import { PickingSide, type PickingShape3D } from "../../worlds/world3ds/PickingWorld3D";
+import { RaycastSide, type RaycastResult, type Raycastable } from "@/system/fivepebble/geometries/GeometryLike";
+import { type PickingShape3D } from "../../worlds/world3ds/PickingWorld3D";
 import { Epsilon } from '../../../fivepebble/Scalar';
 import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import { Box3, box3 } from "@/system/fivepebble/geometries/Box3";
+import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import type { Ray3 } from "@/system/fivepebble/geometries/Ray3";
+import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
+
+type RaycastResult3 = RaycastResult<Vector3, Matrix3>;
 
 export abstract class PickingShape3DResource extends Resource implements PickingShape3D {
     public static readonly class_name: string = "PickingShape3DResource";
 
     public readonly preserve_global_transform: boolean = false;
 
-    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: PickingSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult | undefined {
+    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
         throw new Error("abstract method");
     }
 }
@@ -52,7 +58,7 @@ export class PickingBoxResource extends PickingShape3DResource {
         }
     }
 
-    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: PickingSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult | undefined {
+    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
         let min = 0, max = 1;
         let axis = 0;
         let sign = 0;
@@ -100,7 +106,7 @@ export class PickingBoxResource extends PickingShape3DResource {
             }
         }
 
-        const rel = to.clone().sub(from);
+        const rel = to.sub(from);
 
         const normal = new Vector3();
         switch (axis) {
@@ -146,7 +152,7 @@ export class PickingSphereResource extends PickingShape3DResource {
         }
     }
 
-    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: PickingSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult | undefined {
+    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
         if (this.radius < Epsilon) return undefined;
 
         const sphere_pos = from.clone().negate();
@@ -221,7 +227,7 @@ export class PickingCylinderResource extends PickingShape3DResource {
         }
     }
 
-    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: PickingSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult | undefined {
+    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
         const rel = to.clone().sub(from);
         const rel_l = rel.length;
         if (rel_l < Epsilon) {
@@ -333,6 +339,17 @@ export class PickingCylinderResource extends PickingShape3DResource {
     }
 }
 
+export class PickingRaycastableResource<T extends Raycastable<Vector3, Matrix3>> extends PickingShape3DResource {
+    public raycastable: T | undefined;
+
+    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
+        if (this.raycastable === undefined) return undefined;
+        return this.raycastable.raycast(from, to, side);
+    }
+  
+    protected dispose(): void {  }  
+}
+
 // export class PickingBVHResource extends PickingShape3DResource {
 //     public static readonly class_name: string = "PickingBVHResource";
 
@@ -344,11 +361,11 @@ export class PickingCylinderResource extends PickingShape3DResource {
 //         this.bvh = new MeshBVH(geometry.get_BufferGeometry());
 //     }
 
-//     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: PickingSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult | undefined {
+//     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult | undefined {
 //         if (this.bvh === undefined) return undefined;
 //         const results = this.bvh.raycast(
 //             new Ray(from, to.sub(from).normalize()),
-//             side === PickingSide.Front ? FrontSide : (side === PickingSide.Back ? BackSide : DoubleSide)
+//             side === RaycastSide.Front ? FrontSide : (side === RaycastSide.Back ? BackSide : DoubleSide)
 //         );
 //         if (results.length === 0) return undefined;
 //         const min: RaycastResult = {
@@ -385,7 +402,7 @@ export class PickingCylinderResource extends PickingShape3DResource {
 //         }
 //     }
 
-//     private bbox: Box3 = new Box3();
+//     private bbox: Box3 = box3();
 
 //     private _points: Vector3[] = [];
 //     public get points() { return this._points.map(i => i); }
@@ -406,21 +423,20 @@ export class PickingCylinderResource extends PickingShape3DResource {
 //         }
 //     }
 
-//     private get_WorldSpaceHalfWidth(camera: Camera, distance: number, resolution: Vector2) {
+//     private get_WorldSpaceHalfWidth(camera: Camera3, distance: number, resolution: Vector2) {
 //         // transform into clip space, adjust the x and y values by the pixel width offset, then
 //         // transform back into world space to get world offset. Note clip space is [-1, 1] so full
 //         // width does not need to be halved.
-//         const _clipToWorldVector = new Vector4().set(0, 0, - distance, 1.0).applyMatrix4(camera.projectionMatrix);
-//         _clipToWorldVector.multiplyScalar(1.0 / _clipToWorldVector.w);
-//         _clipToWorldVector.x = this.width / resolution.width;
-//         _clipToWorldVector.y = this.width / resolution.height;
-//         _clipToWorldVector.applyMatrix4(camera.projectionMatrixInverse);
-//         _clipToWorldVector.multiplyScalar(1.0 / _clipToWorldVector.w);
-
+//         const _clipToWorldVector = new Vector4().set(0, 0, - distance, 1.0).transform(camera.projection);
+//         _clipToWorldVector.mult_Number(1.0 / _clipToWorldVector.w);
+//         _clipToWorldVector.x = this.width / resolution.x;
+//         _clipToWorldVector.y = this.width / resolution.y;
+//         _clipToWorldVector.transform(camera.projectionMatrixInverse);
+//         _clipToWorldVector.mult_Number(1.0 / _clipToWorldVector.w);
 //         return Math.abs(Math.max(_clipToWorldVector.x, _clipToWorldVector.y));
 //     }
 
-//     private raycast_ScreenSpace(ray: Ray, global_transform: Matrix4, camera: Camera, resolution: Vector2): RaycastResult | undefined {
+//     private raycast_ScreenSpace(ray: Ray3, global_transform: Matrix4, camera: Camera, resolution: Vector2): RaycastResult | undefined {
 
 //         const projectionMatrix = camera.projectionMatrix;
 //         const matrixWorldInverse = camera.matrixWorldInverse;
@@ -529,7 +545,7 @@ export class PickingCylinderResource extends PickingShape3DResource {
 //         return min_point;
 //     }
 
-//     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: PickingSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult | undefined {
+//     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult | undefined {
 //         if (camera === undefined || viewport === undefined || this.points.length <= 0) return undefined;
 
 //         const resolution = viewport.size;

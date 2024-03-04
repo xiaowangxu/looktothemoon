@@ -3,18 +3,15 @@ import type { Viewport, CursorStyle } from "../../../Node";
 import { FixSizeNode3D } from "../FixSizeNode3D";
 import { MaterialResource, type MaterialReadOnlyUniforms } from "@/system/engine/resources/material_resources/MaterialResource";
 import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
-import { RenderServerGeometry } from "@/system/engine/render_server/RenderServerGeometry";
 import type { UniformInitSet } from "@/system/engine/render_server/RenderServerShader";
 import { Epsilon } from "@/system/fivepebble/Scalar";
 import { RenderStateUniformType, RenderStateShaderType } from "@/system/sliverofstraw/RenderState";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
-import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { vec4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { Color } from "@/system/fivepebble/graphics/Color";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { Node3D } from "../../Node3D";
 import { PrimitiveFragmentPreZShader, PrimitiveFragmentPreZShaderUniforms, PrimitiveVertexShader, PrimitiveVertexShaderUniforms } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
-import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
 
 export class GrabberElement3D<T> extends FixSizeNode3D {
     // signals
@@ -31,6 +28,10 @@ export class GrabberElement3D<T> extends FixSizeNode3D {
         }
     }
 
+    protected on_EnabledChanged() {
+        throw new Error('abstract method');
+    }
+
     private _visible: boolean = true;
     public get visible() { return this._visible; }
     public set visible(visible: boolean) {
@@ -40,16 +41,39 @@ export class GrabberElement3D<T> extends FixSizeNode3D {
         }
     }
 
-    protected set_ViewportCursorStyle(viewport: Viewport, cursor_style: CursorStyle) {
-        viewport.cursor_style = cursor_style;
-    }
-
-    protected on_EnabledChanged() {
-        throw new Error('abstract method');
-    }
-
     protected on_VisibleChanged() {
         throw new Error('abstract method');
+    }
+
+    protected _layer: number = 0xffffffff;
+    public get layer() { return this._layer; }
+    public set layer(layer: number) {
+        layer = layer & 0xffffffff;
+        if (this._layer !== layer) {
+            this._layer = layer;
+            this.on_LayerChanged();
+        }
+    }
+
+    protected on_LayerChanged() {
+        throw new Error('abstract method');
+    }
+
+    protected _render_queue: number = 1;
+    public get render_queue() { return this._render_queue; }
+    public set render_queue(render_queue: number) {
+        if (this._render_queue !== render_queue) {
+            this._render_queue = render_queue;
+            this.on_RenderQueueChanged();
+        }
+    }
+
+    protected on_RenderQueueChanged() {
+        throw new Error('abstract method');
+    }
+
+    protected set_ViewportCursorStyle(viewport: Viewport, cursor_style: CursorStyle) {
+        viewport.cursor_style = cursor_style;
     }
 
     constructor(config: Config) {
@@ -73,6 +97,10 @@ export class Grabber3D<T> extends Node3D {
         }
     }
 
+    protected on_EnabledChanged() {
+        throw new Error('abstract method');
+    }
+
     private _visible: boolean = true;
     public get visible() { return this._visible; }
     public set visible(visible: boolean) {
@@ -82,11 +110,34 @@ export class Grabber3D<T> extends Node3D {
         }
     }
 
-    protected on_EnabledChanged() {
+    protected on_VisibleChanged() {
         throw new Error('abstract method');
     }
 
-    protected on_VisibleChanged() {
+    protected _layer: number = 0xffffffff;
+    public get layer() { return this._layer; }
+    public set layer(layer: number) {
+        layer = layer & 0xffffffff;
+        if (this._layer !== layer) {
+            this._layer = layer;
+            this.on_LayerChanged();
+        }
+    }
+
+    protected on_LayerChanged() {
+        throw new Error('abstract method');
+    }
+
+    protected _render_queue: number = 1;
+    public get render_queue() { return this._render_queue; }
+    public set render_queue(render_queue: number) {
+        if (this._render_queue !== render_queue) {
+            this._render_queue = render_queue;
+            this.on_RenderQueueChanged();
+        }
+    }
+
+    protected on_RenderQueueChanged() {
         throw new Error('abstract method');
     }
 

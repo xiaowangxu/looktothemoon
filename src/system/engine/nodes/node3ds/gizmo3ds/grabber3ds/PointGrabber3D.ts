@@ -87,6 +87,14 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
         this.area.enabled = this.enabled && this.visual_enabled && this.visible;
     }
 
+    protected on_LayerChanged(): void {
+        this.point.layer = this._layer;
+    }
+
+    protected on_RenderQueueChanged(): void {
+        this.point.render_queue = this._render_queue;
+    }
+
     private _visual_enabled: boolean = true;
     public get visual_enabled() { return this._visual_enabled; }
     private set visual_enabled(enabled: boolean) {
@@ -116,8 +124,7 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
     constructor(config: Config) {
         super(config);
 
-        this.point.render_queue = 1;
-        this.point.layer = 1;
+        this.on_RenderQueueChanged();
 
         this.point.geometry = PointGeometry.get(this.config).expect;
         this.material.expect.set_OverrideMaterial(PointMaterial.get(this.config).expect);
@@ -125,21 +132,13 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
 
         this.shape.shape = PointPickingShape.get(this.config).expect;
 
-        // const test_shape = new MeshInstance3D(this.config);
-        // const test_geometry = new SphereGeometryResource(this.config);
-        // test_geometry.radius = 1.5;
-        // test_geometry.build();
-        // test_shape.geometry = test_geometry;
-        // test_shape.material = new PlainColorMaterialResource(this.config);
-        // this.shape.add_Child(test_shape);
-
         this.area.signal_mouse_entered.connect((evt) => {
             this.is_hovering = true;
-            // this.set_ViewportCursorStyle(evt.viewport!, 'move');
+            this.set_ViewportCursorStyle(evt.viewport!, 'move');
         });
         this.area.signal_mouse_exited.connect((evt) => {
             this.is_hovering = false;
-            // this.set_ViewportCursorStyle(evt.viewport!, 'default');
+            this.set_ViewportCursorStyle(evt.viewport!, 'default');
         });
 
         this.area.signal_input.connect((evt, prop) => {

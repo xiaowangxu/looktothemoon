@@ -25,3 +25,16 @@ export interface GeometryLikeContainPoint<Vec extends VectorLike<Vec, Mat>, Mat 
     extends GeometryLikeBounded<Vec, Mat> {
     contain_Point(point: Vec, type: GeometryContainType): boolean;
 }
+
+export enum RaycastSide {
+    Front, Back, Double
+}
+
+export interface Raycastable<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
+    raycast(from: Vec, to: Vec, side: RaycastSide): RaycastResult<Vec, Mat> | undefined;
+}
+
+export interface RaycastResult<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
+    position: Vec;
+    normal: Vec;
+}
