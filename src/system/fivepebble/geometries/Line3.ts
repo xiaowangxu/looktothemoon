@@ -41,6 +41,6 @@ export class Line3 implements LineLike<Vector3, Matrix3> {
         return this;
     }
     clone(): Line3 {
-        return new Line3(this.start.clone(), this.end.clone());
+        return new Line3(this.start, this.end);
     }
 }

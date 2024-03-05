@@ -132,7 +132,7 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
         return this;
     }
     clone(): Box3 {
-        return new Box3(this.min.clone(), this.max.clone());
+        return new Box3(this.min, this.max);
     }
 
     //#region Bvh

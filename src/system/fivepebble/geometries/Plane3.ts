@@ -185,6 +185,6 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
         return this;
     }
     clone(): Plane3 {
-        return new Plane3(this.normal.clone(), this.distance);
+        return new Plane3(this.normal, this.distance);
     }
 }

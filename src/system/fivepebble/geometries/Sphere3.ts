@@ -1,25 +1,26 @@
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import type { SphereLike } from "./SphereLike";
 import { Vector3 } from "../linear_algebra/Vector3";
-import { GeometryContainType, type GeometryLike } from "./GeometryLike";
-import { Box3 } from "./Box3";
+import { GeometryContainType } from "./GeometryLike";
 
 export class Sphere3 implements SphereLike<Vector3, Matrix3> {
+
+    //#region init
+
+    static get new() { return new Sphere3(Sphere3.#const_vector3_zero, 0); }
+    static create(center: Vector3, radius: number) { return new Sphere3(center, radius); }
+
+    //#endregion
+
+    static readonly #const_vector3_zero = new Vector3(0, 0, 0);
+
     public readonly center: Vector3;
     public radius: number;
 
     constructor(center: Vector3, radius: number) {
-        this.center = center;
+        this.center = center.clone();
         this.radius = radius;
     }
-
-    // #region BvhShape
-
-    get bbox(): Box3 {
-        return new Box3(this.center.sub_Number(this.radius), this.center.add_Number(this.radius));
-    }
-
-    // #endregion BvhShape
 
     // #region Geometry Bounded
 
@@ -32,9 +33,9 @@ export class Sphere3 implements SphereLike<Vector3, Matrix3> {
     }
 
     project_Point(point: Vector3, target: Vector3): Vector3 {
-        const normal = this.center.direction_to(point);
-        if (normal.squared_length === 0) return this.center.add_Scaled(this.radius, new Vector3(1, 0, 0));
-        return this.center.add_Scaled(this.radius, normal);
+        const normal = target.direction_to(this.center, point);
+        if (normal.squared_length === 0) return target.add_Scaled(this.center, this.radius, new Vector3(1, 0, 0));
+        return target.add_Scaled(this.center, this.radius, normal);
     }
 
     // #endregion
@@ -56,16 +57,17 @@ export class Sphere3 implements SphereLike<Vector3, Matrix3> {
         return this.radius === b.radius && this.center.equal(b.center);
     }
 
+    set(center: Vector3, radius: number): Sphere3 {
+        this.center.copy(center);
+        this.radius = radius;
+        return this;
+    }
     copy(b: Sphere3): Sphere3 {
         this.center.copy(b.center);
         this.radius = b.radius;
         return this;
     }
     clone(): Sphere3 {
-        return new Sphere3(this.center.clone(), this.radius);
+        return new Sphere3(this.center, this.radius);
     }
-}
-
-export function sphere3(center: Vector3, radius: number) {
-    return new Sphere3(center, radius);
 }

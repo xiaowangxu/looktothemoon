@@ -6,4 +6,6 @@ export interface SphereLike<Vec extends VectorLike<Vec, Mat>, Mat extends Matrix
     extends GeometryLike<Vec, Mat>, GeometryLikeBounded<Vec, Mat>, GeometryLikeContainPoint<Vec, Mat> {
     get center(): Vec;
     get radius(): number;
+
+    set(center: Vec, radius: number): SphereLike<Vec, Mat>;
 }

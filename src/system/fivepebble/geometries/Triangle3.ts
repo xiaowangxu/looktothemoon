@@ -76,7 +76,7 @@ export class Triangle3 implements TriangleLike<Vector3, Matrix3>, BvhShape<Vecto
         return this;
     }
     clone(): Triangle3 {
-        return new Triangle3(this.p0.clone(), this.p1.clone(), this.p2.clone());
+        return new Triangle3(this.p0, this.p1, this.p2);
     }
 
     public intersect_Ray(ray: Ray3, target: Vector3): Vector3 | undefined {

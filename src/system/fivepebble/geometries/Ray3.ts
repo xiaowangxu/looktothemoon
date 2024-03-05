@@ -89,6 +89,6 @@ export class Ray3 implements RayLike<Vector3, Matrix3> {
         return this;
     }
     clone(): Ray3 {
-        return new Ray3(this.origin.clone(), this.direction.clone());
+        return new Ray3(this.origin, this.direction);
     }
 }
