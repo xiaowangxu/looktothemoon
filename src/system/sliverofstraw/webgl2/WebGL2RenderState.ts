@@ -1100,8 +1100,8 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     }
 
     // Uniform
-    static #matrix3_array: number[] = new Array(9);
-    static #matrix4_array: number[] = new Array(16);
+    static readonly #matrix3_array: number[] = new Array(9);
+    static readonly #matrix4_array: number[] = new Array(16);
     public set_ProgramUniform<Val extends RenderStateUniformType>(program: WebGL2RenderStateProgram, uniform_location: WebGLUniformLocation, uniform_type: Val, data: RenderStateUniformSlotTypeMap<WebGL2RenderState, Val>): void {
         this.use_ProgramProxy(program.program);
         switch (uniform_type) {

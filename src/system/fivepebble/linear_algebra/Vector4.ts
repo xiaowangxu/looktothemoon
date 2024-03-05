@@ -60,7 +60,6 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         this.w = a.w + b.w;
         return this;
     }
-
     add_Number(a: Vector4, b: number): Vector4 {
         this.x = a.x + b;
         this.y = a.y + b;
@@ -68,7 +67,6 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         this.w = a.w + b;
         return this;
     }
-
     sub(a: Vector4, b: Vector4): Vector4 {
         this.x = a.x - b.x;
         this.y = a.y - b.y;
@@ -76,7 +74,6 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         this.w = a.w - b.w;
         return this;
     }
-
     sub_Number(a: Vector4, b: number): Vector4 {
         this.x = a.x - b;
         this.y = a.y - b;
@@ -84,7 +81,6 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         this.w = a.w - b;
         return this;
     }
-
     mult(a: Vector4, b: Vector4): Vector4 {
         this.x = a.x * b.x;
         this.y = a.y * b.y;
@@ -92,7 +88,6 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         this.w = a.w * b.w;
         return this;
     }
-
     mult_Number(a: Vector4, b: number): Vector4 {
         this.x = a.x * b;
         this.y = a.y * b;
@@ -100,7 +95,6 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         this.w = a.w * b;
         return this;
     }
-
     div(a: Vector4, b: Vector4): Vector4 {
         this.x = a.x / b.x;
         this.y = a.y / b.y;
@@ -108,7 +102,6 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         this.w = a.w / b.w;
         return this;
     }
-
     div_Number(a: Vector4, b: number): Vector4 {
         this.x = a.x / b;
         this.y = a.y / b;
@@ -116,7 +109,6 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         this.w = a.w / b;
         return this;
     }
-
     add_Scaled(a: Vector4, num: number, b: Vector4): Vector4 {
         this.x = a.x + num * b.x;
         this.y = a.y + num * b.y;
@@ -124,7 +116,6 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         this.w = a.w + num * b.w;
         return this;
     }
-
     lerp(a: Vector4, b: Vector4, weight: number): Vector4 {
         this.x = lerp(a.x, b.x, weight);
         this.y = lerp(a.y, b.y, weight);
@@ -132,7 +123,6 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         this.w = lerp(a.w, b.w, weight);
         return this;
     }
-
     transform(a: Vector4, matrix: Matrix4): Vector4 {
         const n11 = matrix.n11, n12 = matrix.n12, n13 = matrix.n13, n14 = matrix.n14;
         const n21 = matrix.n21, n22 = matrix.n22, n23 = matrix.n23, n24 = matrix.n24;
@@ -145,7 +135,6 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         this.w = n41 * x + n42 * y + n43 * z + n44 * w;
         return this;
     }
-
     normalize(a: Vector4): Vector4 {
         const length = a.length;
         this.x = a.x / length;
@@ -154,7 +143,6 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         this.w = a.w / length;
         return this;
     }
-
     negate(a: Vector4): Vector4 {
         this.x = -a.x;
         this.y = -a.y;
@@ -162,7 +150,6 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         this.w = -a.w;
         return this;
     }
-
     dot(b: Vector4): number {
         return this.x * b.x + this.y * b.y + this.z * b.z + this.w * b.w;
     }
@@ -226,8 +213,4 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
     clone(): Vector4 {
         return new Vector4(this.x, this.y, this.z, this.w);
     }
-}
-
-export function vec4(x: number = 0, y: number = 0, z: number = 0, w: number = 0) {
-    return new Vector4(x, y, z, w);
 }

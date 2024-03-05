@@ -42,7 +42,7 @@ export class Renderer3DQueue {
             this.solid_indexed_queue[i] = false;
             this.solid_instance_count_queue[i] = 1;
             this.solid_material_queue[i] = undefined;
-            this.solid_transform_queue[i] = Matrix4.make_Identity();
+            this.solid_transform_queue[i] = Matrix4.new;
             this.solid_layer_queue[i] = 4294967295;
         }
         this.transparent_max_count = transparent_preserved;
@@ -57,7 +57,7 @@ export class Renderer3DQueue {
             this.transparent_indexed_queue[i] = false;
             this.transparent_instance_count_queue[i] = 1;
             this.transparent_material_queue[i] = undefined;
-            this.transparent_transform_queue[i] = Matrix4.make_Identity();
+            this.transparent_transform_queue[i] = Matrix4.new;
             this.transparent_layer_queue[i] = 4294967295;
         }
     }

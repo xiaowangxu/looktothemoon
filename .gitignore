@@ -28,3 +28,4 @@ coverage
 *.sw?
 
 res/*.vfs
+src/system/fivepebble/ok-list.txt

@@ -4,7 +4,7 @@ import { InputEvent } from "./InputEvent";
 export class ShortCut extends Resource {
     public static readonly class_name: string = "ShortCut";
 
-    static #empty_events = [];
+    static readonly #empty_events = [];
     public events: InputEvent[] = ShortCut.#empty_events;
 
     public set(events: InputEvent[]) {

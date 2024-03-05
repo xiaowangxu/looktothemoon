@@ -4,9 +4,9 @@ import { RenderServerDevice, RenderServerPlainColorTexture } from "../../render_
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import type { UniformInitSet } from "../../render_server/RenderServerShader";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
-import { Vector4, vec4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
-import type { Color } from "@/system/fivepebble/graphics/Color";
+import { Color } from "@/system/fivepebble/graphics/Color";
 import { Epsilon } from "@/system/fivepebble/Scalar";
 import type { Config } from "../../ConfiguredObject";
 import type { ClassWriter, ClassReader } from "../../classes/saver_loader/ClassWriterReader";
@@ -43,7 +43,7 @@ export const PrimitiveVertexShader = new Cacher((config: Config) => {
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect());
 });
 export const PrimitiveVertexShaderUniforms: UniformInitSet<WebGL2RenderState> = {
-    model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.make_Identity() },
+    model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.new },
 };
 
 export const PrimitiveFragmentPreZShader = new Cacher((config: Config) => {
@@ -69,13 +69,13 @@ export const PrimitiveFragmentPreZShaderUniforms: UniformInitSet<WebGL2RenderSta
 
 export class PlainColorMaterialResource extends MaterialResource {
 
-    static #uniforms: MaterialReadOnlyUniforms = {
+    static readonly #uniforms: MaterialReadOnlyUniforms = {
         model_world: RenderStateUniformType.Mat4,
         u_color: RenderStateUniformType.Vec4,
         u_texture: RenderStateUniformType.Tex2D,
     };
 
-    static #fragment_shade_shader = `#version 300 es
+    static readonly #fragment_shade_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -96,10 +96,10 @@ export class PlainColorMaterialResource extends MaterialResource {
         o_normal = vec4(normalize(v_normal), 1.0);
     }`;
     private fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
-        u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
+        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
         u_texture: { type: RenderStateUniformType.Tex2D, default: { texture: this.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.White) } },
     };
-    static #fragment_oit_shader = `#version 300 es
+    static readonly #fragment_oit_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -122,7 +122,7 @@ export class PlainColorMaterialResource extends MaterialResource {
         ${RenderServerDevice.OitOutputCode}
     }`;
     private fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
-        u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
+        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
         u_texture: { type: RenderStateUniformType.Tex2D, default: { texture: this.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.White) } },
     };
 
@@ -190,12 +190,12 @@ export class PlainColorMaterialResource extends MaterialResource {
 export class NormalMaterialResource extends MaterialResource {
     public static class_name: string = 'NormalMaterialResource';
 
-    static #uniforms: MaterialReadOnlyUniforms = {
+    static readonly #uniforms: MaterialReadOnlyUniforms = {
         model_world: RenderStateUniformType.Mat4,
         u_remap: RenderStateUniformType.Int,
     };
 
-    static #fragment_shade_shader = `#version 300 es
+    static readonly #fragment_shade_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -215,7 +215,7 @@ export class NormalMaterialResource extends MaterialResource {
         o_color = vec4(u_remap ? ((normal + 1.0) / 2.0) : normal, 1.0);
         o_normal = vec4(normal, 1.0);
     }`;
-    static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
+    static readonly #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
         u_remap: { type: RenderStateUniformType.Int, default: 1 }
     };
 
@@ -268,11 +268,11 @@ export class NormalMaterialResource extends MaterialResource {
 export class UVMaterialResource extends MaterialResource {
     public static class_name: string = 'UVMaterialResource';
 
-    static #uniforms: MaterialReadOnlyUniforms = {
+    static readonly #uniforms: MaterialReadOnlyUniforms = {
         model_world: RenderStateUniformType.Mat4,
     };
 
-    static #fragment_shade_shader = `#version 300 es
+    static readonly #fragment_shade_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -289,7 +289,7 @@ export class UVMaterialResource extends MaterialResource {
         o_color = vec4(v_uv, 0.0, 1.0);
         o_normal = vec4(normalize(v_normal), 1.0);
     }`;
-    static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {};
+    static readonly #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {};
 
     public get uniforms() { return UVMaterialResource.#uniforms; }
 
@@ -327,13 +327,13 @@ export class UVMaterialResource extends MaterialResource {
 export class StandardMaterialResource extends MaterialResource {
     public static class_name: string = 'StandardMaterialResource';
 
-    static #uniforms: MaterialReadOnlyUniforms = {
+    static readonly #uniforms: MaterialReadOnlyUniforms = {
         model_world: RenderStateUniformType.Mat4,
         layer: RenderStateUniformType.Uint,
         u_color: RenderStateUniformType.Vec4,
     };
 
-    static #fragment_shade_shader = `#version 300 es
+    static readonly #fragment_shade_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -487,13 +487,13 @@ export class StandardMaterialResource extends MaterialResource {
         o_color = albedo * vec4(diffuse, 1.0) + vec4(specular, 0.0);
         o_normal = vec4(normal, 1.0);
     }`;
-    static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
+    static readonly #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
         layer: { type: RenderStateUniformType.Uint, default: 0xffffffff },
         lights: { type: RenderStateUniformType.Int, default: RenderServerDevice.LightsTextureUnit },
         sky: { type: RenderStateUniformType.Int, default: RenderServerDevice.SkyTextureUnit },
-        u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
+        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
     };
-    static #fragment_oit_shader = `#version 300 es
+    static readonly #fragment_oit_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -643,10 +643,10 @@ export class StandardMaterialResource extends MaterialResource {
 
         ${RenderServerDevice.OitOutputCode}
     }`;
-    static #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
+    static readonly #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
         layer: { type: RenderStateUniformType.Uint, default: 0xffffffff },
         lights: { type: RenderStateUniformType.Int, default: RenderServerDevice.LightsTextureUnit },
-        u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
+        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
     };
 
     public get uniforms() { return StandardMaterialResource.#uniforms; }

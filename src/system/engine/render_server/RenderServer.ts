@@ -166,7 +166,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     // Setup
 
     private setup_IdentityTransformAttributeBuffer() {
-        this.identity_transform_attribute_buffer_ref.value = new RenderDeviceMatrix4AttributeBuffer(this, RenderStateBufferUsage.StaticDraw, [Matrix4.make_Identity()], 1);
+        this.identity_transform_attribute_buffer_ref.value = new RenderDeviceMatrix4AttributeBuffer(this, RenderStateBufferUsage.StaticDraw, [Matrix4.new], 1);
     }
 
     private setup_WorldUniformsBuffer() {
@@ -220,7 +220,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         }
     }
 
-    static #matrix: Matrix4 = Matrix4.make_Identity();
+    static readonly #matrix: Matrix4 = Matrix4.new;
 
     public set_WorldUniforms(camera_world: Matrix4, camera_projection: Matrix4, camera_is_orthogonal: boolean, screen_width: number, screen_height: number, time: number) {
         // camera world

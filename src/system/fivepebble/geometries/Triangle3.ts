@@ -1,7 +1,7 @@
 import { Epsilon, is_ApproxZero } from "../Scalar";
 import type { AABB, BvhShape } from "../bvh/BvhLike";
 import type { Matrix3 } from "../linear_algebra/Matrix3";
-import { vec3, type Vector3 } from "../linear_algebra/Vector3";
+import { Vector3 } from "../linear_algebra/Vector3";
 import { Box3, box3 } from "./Box3";
 import { Line3 } from "./Line3";
 import type { Ray3 } from "./Ray3";
@@ -17,9 +17,8 @@ export class Triangle3 implements TriangleLike<Vector3, Matrix3>, BvhShape<Vecto
         return (this.p1.sub(this.p0)).cross(this.p2.sub(this.p0));
     }
 
-
     get center(): Vector3 {
-        return vec3(
+        return Vector3.create(
             (this.p0.x, this.p1.x, this.p2.x) / 3,
             (this.p0.y, this.p1.y, this.p2.y) / 3,
             (this.p0.z, this.p1.z, this.p2.z) / 3,
@@ -34,9 +33,9 @@ export class Triangle3 implements TriangleLike<Vector3, Matrix3>, BvhShape<Vecto
     }
 
     constructor(p0: Vector3, p1: Vector3, p2: Vector3) {
-        this.p0 = p0;
-        this.p1 = p1;
-        this.p2 = p2;
+        this.p0 = p0.clone();
+        this.p1 = p1.clone();
+        this.p2 = p2.clone();
     }
 
     equal(b: Triangle3): boolean {
@@ -126,12 +125,12 @@ export class Triangle3 implements TriangleLike<Vector3, Matrix3>, BvhShape<Vecto
 
     get aabb(): Box3 {
         return box3(
-            vec3(
+            Vector3.create(
                 Math.min(this.p0.x, this.p1.x, this.p2.x),
                 Math.min(this.p0.y, this.p1.y, this.p2.y),
                 Math.min(this.p0.z, this.p1.z, this.p2.z),
             ),
-            vec3(
+            Vector3.create(
                 Math.max(this.p0.x, this.p1.x, this.p2.x),
                 Math.max(this.p0.y, this.p1.y, this.p2.y),
                 Math.max(this.p0.z, this.p1.z, this.p2.z),

@@ -6,7 +6,7 @@ import { PlainColorMaterialResource } from "@/system/engine/resources/material_r
 import type { Bvh3, BvhNode3 } from "@/system/fivepebble/bvh/Bvh3";
 import type { AABB } from "@/system/fivepebble/bvh/BvhLike";
 import type { Box3 } from "@/system/fivepebble/geometries/Box3";
-import { color } from "@/system/fivepebble/graphics/Color";
+import { Color } from "@/system/fivepebble/graphics/Color";
 import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { type Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
@@ -15,7 +15,7 @@ export class Bvh3Visualization extends MeshInstance3D {
     constructor(config: Config) {
         super(config);
         this.material = new PlainColorMaterialResource(config);
-        (this.material as PlainColorMaterialResource).color = color(1, 0, 0, 1);
+        (this.material as PlainColorMaterialResource).color = Color.create(1, 0, 0, 1);
     }
 
     private append_AABB(aabb: AABB<Vector3, Matrix3>, points: number[], index: number[]) {

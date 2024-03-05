@@ -23,7 +23,7 @@ export class ObjLoader {
         this.indices = [];
     }
 
-    static #face_vertex: [string, string, string] = ['', '', ''];
+    static readonly #face_vertex: [string, string, string] = ['', '', ''];
 
     private *triangulate(elements: string[]) {
         if (elements.length <= 3) {
@@ -47,7 +47,7 @@ export class ObjLoader {
         }
     }
 
-    static #vector3: Vector3 = new Vector3();
+    static readonly #vector3: Vector3 = new Vector3();
 
     public parse(data: string): Result<ClassSaver, Error> {
         this.init();

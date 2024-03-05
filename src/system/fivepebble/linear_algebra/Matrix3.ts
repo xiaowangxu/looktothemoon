@@ -7,18 +7,23 @@ import { Vector2 } from "./Vector2";
 import { Vector3 } from "./Vector3";
 
 export class Matrix3 implements MatrixLike<Matrix3> {
-    
+
     //#region init
 
     static get new() { return new Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1); }
-    static create(n11: number, n12: number, n13: number, n21: number, n22: number, n23: number, n31: number, n32: number, n33: number) {
+    static create(n11: number = 0, n12: number = 0, n13: number = 0,
+        n21: number = 0, n22: number = 0, n23: number = 0,
+        n31: number = 0, n32: number = 0, n33: number = 0) {
         return new Matrix3(n11, n12, n13, n21, n22, n23, n31, n32, n33);
     }
 
     //#endregion
 
     // used in Euler set_* to overcome ref init error
-    public static $tmp_matrix3_for_euler_0: Matrix3 = Matrix3.new;
+    public static $tmp_matrix3_for_euler_0: Matrix3 = new Matrix3();
+    static readonly #tmp_vector3_0: Vector3 = new Vector3();
+    static readonly #tmp_matrix3_1: Matrix3 = new Matrix3();
+    static readonly #tmp_euler_0: Euler = new Euler();
 
     // [ n11 n12 n13 ]
     // [ n21 n22 n23 ]
@@ -62,7 +67,7 @@ export class Matrix3 implements MatrixLike<Matrix3> {
     }
 
     public get position() {
-        return Vector2.create(
+        return new Vector2(
             this.n13,
             this.n23,
         );
@@ -74,18 +79,12 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         return target;
     }
 
-    constructor(n11: number, n12: number, n13: number, n21: number, n22: number, n23: number, n31: number, n32: number, n33: number) {
+    constructor(n11: number = 1, n12: number = 0, n13: number = 0,
+        n21: number = 0, n22: number = 1, n23: number = 0,
+        n31: number = 0, n32: number = 0, n33: number = 1) {
         this.n11 = n11; this.n12 = n12; this.n13 = n13;
         this.n21 = n21; this.n22 = n22; this.n23 = n23;
         this.n31 = n31; this.n32 = n32; this.n33 = n33;
-    }
-
-    public static make_Identity(): Matrix3 {
-        return new Matrix3(
-            1, 0, 0,
-            0, 1, 0,
-            0, 0, 1,
-        );
     }
 
     public set_Identity() {
@@ -95,29 +94,11 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         return this;
     }
 
-    public static from_Axis(x: Vector3, y: Vector3, z: Vector3) {
-        return new Matrix3(
-            x.x, y.x, z.x,
-            x.y, y.y, z.y,
-            x.z, y.z, z.z,
-        );
-    }
-
     public set_Axis(x: Vector3, y: Vector3, z: Vector3) {
         this.n11 = x.x; this.n21 = y.x; this.n31 = z.x;
         this.n12 = x.y; this.n22 = y.y; this.n32 = z.y;
         this.n13 = x.z; this.n23 = y.z; this.n33 = z.z;
         return this;
-    }
-
-    public static make_RotateX(angle: number) {
-        const cr = Math.cos(angle);
-        const sr = Math.sin(angle);
-        return new Matrix3(
-            1, 0, 0,
-            0, cr, -sr,
-            0, sr, cr,
-        );
     }
 
     public set_RotateX(angle: number) {
@@ -129,16 +110,6 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         return this;
     }
 
-    public static make_RotateY(angle: number) {
-        const cr = Math.cos(angle);
-        const sr = Math.sin(angle);
-        return new Matrix3(
-            cr, 0, sr,
-            0, 1, 0,
-            -sr, 0, cr,
-        );
-    }
-
     public set_RotateY(angle: number) {
         const cr = Math.cos(angle);
         const sr = Math.sin(angle);
@@ -148,16 +119,6 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         return this;
     }
 
-    public static make_RotateZ(angle: number) {
-        const cr = Math.cos(angle);
-        const sr = Math.sin(angle);
-        return new Matrix3(
-            cr, -sr, 0,
-            sr, cr, 0,
-            0, 0, 1,
-        );
-    }
-
     public set_RotateZ(angle: number) {
         const cr = Math.cos(angle);
         const sr = Math.sin(angle);
@@ -165,10 +126,6 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         this.n21 = sr; this.n22 = cr; this.n23 = 0;
         this.n31 = 0; this.n32 = 0; this.n33 = 1;
         return this;
-    }
-
-    public static from_Euler(euler: Euler) {
-        return new Matrix3(0, 0, 0, 0, 0, 0, 0, 0, 0).set_Euler(euler);
     }
 
     public set_Euler(euler: Euler) {
@@ -244,22 +201,9 @@ export class Matrix3 implements MatrixLike<Matrix3> {
             this.n33 = bd * f + ac;
         } else {
             const n: never = order;
-            return Matrix3.make_Identity();
+            return this.set_Identity();
         }
         return this;
-    }
-
-    public static from_Quaternion(quat: Quaternion) {
-        const { x, y, z, w } = quat;
-        const x2 = x + x, y2 = y + y, z2 = z + z;
-        const xx = x * x2, xy = x * y2, xz = x * z2;
-        const yy = y * y2, yz = y * z2, zz = z * z2;
-        const wx = w * x2, wy = w * y2, wz = w * z2;
-        return new Matrix3(
-            1 - yy - zz, xy - wz, xz + wy,
-            xy + wz, 1 - xx - zz, yz - wx,
-            xz - wy, yz + wx, 1 - xx - yy,
-        );
     }
 
     public set_Quaternion(quat: Quaternion) {
@@ -272,14 +216,6 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         this.n21 = xy + wz; this.n22 = 1 - xx - zz; this.n23 = yz - wx;
         this.n31 = xz - wy; this.n32 = yz + wx; this.n33 = 1 - xx - yy;
         return this;
-    }
-
-    public static make_Scale(x: number, y: number, z: number) {
-        return new Matrix3(
-            x, 0, 0,
-            0, y, 0,
-            0, 0, z,
-        );
     }
 
     public set_Scale(x: number, y: number, z: number) {
@@ -452,47 +388,19 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         );
     }
 
-
-    static #vector3: Vector3 = new Vector3();
-    static #matrix3: Matrix3 = Matrix3.make_Identity();
-    static #rotation_scale_decompose: [Euler, Vector3] = [new Euler(), new Vector3()];
-
-    public decompose_RotationScale(order: EulerOrder = EulerOrder.XYZ): [Euler, Vector3] {
+    public decompose_RotationScale(target_rotation: Euler, target_scale: Vector3) {
         const n11 = this.n11, n21 = this.n21, n31 = this.n31;
         const n12 = this.n12, n22 = this.n22, n32 = this.n32;
         const n13 = this.n13, n23 = this.n23, n33 = this.n33;
-        const vec = Matrix3.#vector3;
-        const scale = new Vector3(
-            vec.set(n11, n21, n31).length,
-            vec.set(n12, n22, n32).length,
-            vec.set(n13, n23, n33).length,
-        );
-        const euler = Euler.new.set_RotateMatrix(
-            Matrix3.#matrix3.set(
-                n11 / scale.x, n12 / scale.y, n13 / scale.z,
-                n21 / scale.x, n22 / scale.y, n23 / scale.z,
-                n31 / scale.x, n32 / scale.y, n33 / scale.z,
-            ),
-            order
-        );
-        Matrix3.#rotation_scale_decompose[0] = euler;
-        Matrix3.#rotation_scale_decompose[1] = scale;
-        return Matrix3.#rotation_scale_decompose;
-    }
-
-    public decomposes_RotationScale(target_rotation: Euler, target_scale: Vector3) {
-        const n11 = this.n11, n21 = this.n21, n31 = this.n31;
-        const n12 = this.n12, n22 = this.n22, n32 = this.n32;
-        const n13 = this.n13, n23 = this.n23, n33 = this.n33;
-        const vec = Matrix3.#vector3;
+        const vec = Matrix3.#tmp_vector3_0;
         target_scale.set(
             vec.set(n11, n21, n31).length,
             vec.set(n12, n22, n32).length,
             vec.set(n13, n23, n33).length,
         );
         target_rotation.copy(
-            Euler.new.set_RotateMatrix(
-                Matrix3.#matrix3.set(
+            Matrix3.#tmp_euler_0.set_RotateMatrix(
+                Matrix3.#tmp_matrix3_1.set(
                     n11 / target_scale.x, n12 / target_scale.y, n13 / target_scale.z,
                     n21 / target_scale.x, n22 / target_scale.y, n23 / target_scale.z,
                     n31 / target_scale.x, n32 / target_scale.y, n33 / target_scale.z,
@@ -500,12 +408,5 @@ export class Matrix3 implements MatrixLike<Matrix3> {
                 target_rotation.order
             )
         );
-        Matrix3.#rotation_scale_decompose[0] = target_rotation;
-        Matrix3.#rotation_scale_decompose[1] = target_scale;
-        return Matrix3.#rotation_scale_decompose;
     }
-}
-
-export function mat3(n11: number, n12: number, n13: number, n21: number, n22: number, n23: number, n31: number, n32: number, n33: number) {
-    return new Matrix3(n11, n12, n13, n21, n22, n23, n31, n32, n33);
 }

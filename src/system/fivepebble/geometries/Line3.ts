@@ -16,7 +16,7 @@ export class Line3 implements LineLike<Vector3, Matrix3> {
     }
 
     public apply_Matrix4(mat: Matrix4) {
-        return new Line3(Vector3.new._apply_Matrix4(this.start, mat), Vector3.new._apply_Matrix4(this.end, mat));
+        return new Line3(Vector3.new.apply_Matrix4(this.start, mat), Vector3.new.apply_Matrix4(this.end, mat));
     }
 
     equal(b: Line3): boolean {

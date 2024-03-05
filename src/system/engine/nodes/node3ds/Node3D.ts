@@ -1,6 +1,6 @@
 import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
-import { Vector3, vec3 } from "../../../fivepebble/linear_algebra/Vector3";
-import { Euler, euler } from "../../../fivepebble/linear_algebra/Euler";
+import { Vector3 } from "../../../fivepebble/linear_algebra/Vector3";
+import { Euler } from "../../../fivepebble/linear_algebra/Euler";
 import { Matrix4 } from "../../../fivepebble/linear_algebra/Matrix4";
 import { Matrix3 } from "../../../fivepebble/linear_algebra/Matrix3";
 import { Node, NodeNotification } from "../Node";
@@ -8,17 +8,17 @@ import { Node, NodeNotification } from "../Node";
 export class Node3D extends Node {
     public static readonly class_name: string = "Node3D";
 
-    static #tmp_matrix3_0: Matrix3 = Matrix3.new;
-    static #tmp_matrix3_1: Matrix3 = Matrix3.new;
-    static #tmp_vector3_0: Vector3 = Vector3.new;
-    static #tmp_matrix4_0: Matrix4 = Matrix4.new;
-    static #tmp_matrix4_1: Matrix4 = Matrix4.new;
-    static #tmp_euler_0: Euler = Euler.new;
+    static readonly #tmp_matrix3_0: Matrix3 = Matrix3.new;
+    static readonly #tmp_matrix3_1: Matrix3 = Matrix3.new;
+    static readonly #tmp_vector3_0: Vector3 = Vector3.new;
+    static readonly #tmp_matrix4_0: Matrix4 = Matrix4.new;
+    static readonly #tmp_matrix4_1: Matrix4 = Matrix4.new;
+    static readonly #tmp_euler_0: Euler = Euler.new;
 
     // local
-    protected readonly _local_position: Vector3 = vec3();
-    protected readonly _local_rotation: Euler = euler();
-    protected readonly _local_scale: Vector3 = vec3(1, 1, 1);
+    protected readonly _local_position: Vector3 = Vector3.new;
+    protected readonly _local_rotation: Euler = Euler.new;
+    protected readonly _local_scale: Vector3 = Vector3.create(1, 1, 1);
 
     public get local_position() {
         return this._local_position.clone();
@@ -60,7 +60,7 @@ export class Node3D extends Node {
         }
     }
 
-    protected readonly _local_transform: Matrix4 = Matrix4.make_Identity();
+    protected readonly _local_transform: Matrix4 = Matrix4.new;
     protected is_local_transform_dirty: boolean = false;
 
     public get local_transform(): Matrix4 {
@@ -77,7 +77,7 @@ export class Node3D extends Node {
     }
     public set local_transform(transform: Matrix4) {
         this._local_transform.copy(transform);
-        this._local_transform.get_Basis(Node3D.#tmp_matrix3_0).decomposes_RotationScale(Node3D.#tmp_euler_0, Node3D.#tmp_vector3_0);
+        this._local_transform.get_Basis(Node3D.#tmp_matrix3_0).decompose_RotationScale(Node3D.#tmp_euler_0, Node3D.#tmp_vector3_0);
         this._local_position.copy(this._local_transform.position);
         this._local_rotation.copy(Node3D.#tmp_euler_0);
         this._local_scale.copy(Node3D.#tmp_vector3_0);
@@ -86,10 +86,10 @@ export class Node3D extends Node {
     }
 
     // global
-    protected readonly _global_position: Vector3 = vec3();
-    protected readonly _global_rotation: Euler = euler();
+    protected readonly _global_position: Vector3 = Vector3.new;
+    protected readonly _global_rotation: Euler = Euler.new;
 
-    protected readonly _global_transform: Matrix4 = Matrix4.make_Identity();
+    protected readonly _global_transform: Matrix4 = Matrix4.new;
     private is_global_transform_dirty: boolean = false;
     protected is_global_transform_changed: boolean = false;
 
@@ -118,7 +118,7 @@ export class Node3D extends Node {
             if (!this.top_level && parent !== undefined && parent instanceof Node3D) {
                 this._global_transform.compose(this.local_transform, parent.global_transform!);
                 // setup global position / rotation
-                this._global_transform.get_Basis(Node3D.#tmp_matrix3_0).decomposes_RotationScale(Node3D.#tmp_euler_0, Node3D.#tmp_vector3_0);
+                this._global_transform.get_Basis(Node3D.#tmp_matrix3_0).decompose_RotationScale(Node3D.#tmp_euler_0, Node3D.#tmp_vector3_0);
                 this._global_position.copy(this._global_transform.get_Position(Node3D.#tmp_vector3_0));
                 this._global_rotation.copy(Node3D.#tmp_euler_0);
             }
@@ -190,12 +190,12 @@ export class Node3D extends Node {
 
     // apis
     public to_Global(local_position: Vector3) {
-        return Vector3.new._apply_Matrix4(local_position, this.global_transform);
+        return Vector3.new.apply_Matrix4(local_position, this.global_transform);
     }
 
     public to_Local(global_position: Vector3) {
         const invert = this.global_transform;
-        return Vector3.new._apply_Matrix4(global_position, invert.inverse(invert));
+        return Vector3.new.apply_Matrix4(global_position, invert.inverse(invert));
     }
 
     // save / load
@@ -208,6 +208,6 @@ export class Node3D extends Node {
     public load(reader: ClassReader): void {
         super.load(reader);
         this.top_level = reader.get<boolean>('top_level') ?? false;
-        this.local_transform = reader.get<Matrix4>('local_transform') ?? Matrix4.make_Identity();
+        this.local_transform = reader.get<Matrix4>('local_transform') ?? Matrix4.new;
     }
 }

@@ -1,6 +1,6 @@
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { ray3, type Ray3 } from "@/system/fivepebble/geometries/Ray3";
-import { vec3, Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Cacher } from "@/system/utils/Cacher";
 import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineGeometryResource";
 import { Ref } from "@/system/utils/RefCounted";
@@ -8,9 +8,8 @@ import { MeshInstance3D } from "../visual_instance3ds/geometry3ds/MeshInstance3D
 import { NodeNotification } from "../../Node";
 import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
-import { Plane3, plane3 } from "@/system/fivepebble/geometries/Plane3";
-import { frustum3, Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
-import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
+import { Plane3 } from "@/system/fivepebble/geometries/Plane3";
+import { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
 
 const LineGeometry = new Cacher((config: Config) => {
     const line = new MultiLineGeometryResource(config);
@@ -19,11 +18,11 @@ const LineGeometry = new Cacher((config: Config) => {
 
 export class InfiniteLine3D extends MeshInstance3D {
 
-    static #tmp_vector3_0 = Vector3.new;
-    static #frustum: Frustum3 = frustum3();
-    static #planes: [Plane3, Plane3, Plane3, Plane3, Plane3, Plane3] = [InfiniteLine3D.#frustum.near, InfiniteLine3D.#frustum.far, InfiniteLine3D.#frustum.left, InfiniteLine3D.#frustum.top, InfiniteLine3D.#frustum.right, InfiniteLine3D.#frustum.bottom]
+    static readonly #tmp_vector3_0 = Vector3.new;
+    static readonly #frustum: Frustum3 = Frustum3.new;
+    static readonly #planes: [Plane3, Plane3, Plane3, Plane3, Plane3, Plane3] = [InfiniteLine3D.#frustum.near, InfiniteLine3D.#frustum.far, InfiniteLine3D.#frustum.left, InfiniteLine3D.#frustum.top, InfiniteLine3D.#frustum.right, InfiniteLine3D.#frustum.bottom]
 
-    private readonly _ray: Ray3 = ray3(vec3(), vec3(1, 0, 0));
+    private readonly _ray: Ray3 = ray3(Vector3.new, Vector3.create(1, 0, 0));
     public get ray() { return this._ray.clone(); }
     public set ray(ray: Ray3) {
         this._ray.copy(ray);
@@ -71,8 +70,8 @@ export class InfiniteLine3D extends MeshInstance3D {
             this.local_visible = true;
             this.local_position = points[0]!;
             const s = points[0]!.distance_to(points[1]!);
-            this.local_scale = vec3(s, s, s);
-            this.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(vec3(1, 0, 0), InfiniteLine3D.#tmp_vector3_0.direction_to(points[0]!, points[1]!)));
+            this.local_scale = Vector3.create(s, s, s);
+            this.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(1, 0, 0), InfiniteLine3D.#tmp_vector3_0.direction_to(points[0]!, points[1]!)));
         }
     }
 }

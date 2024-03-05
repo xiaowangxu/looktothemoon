@@ -1,7 +1,7 @@
 import type { AABB, BvhShape } from "../bvh/BvhLike";
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import type { Matrix4 } from "../linear_algebra/Matrix4";
-import { Vector3, vec3 } from "../linear_algebra/Vector3";
+import { Vector3 } from "../linear_algebra/Vector3";
 import type { BoxLike } from "./BoxLike";
 import type { RaycastResult, RaycastSide } from "./GeometryLike";
 
@@ -73,7 +73,7 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
         return this;
     }
 
-    static #points: [Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3] = [new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
+    static readonly #points: [Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3] = [new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 
     public apply_Matrix4(mat: Matrix4): Box3 {
         if (this.min.x >= this.max.x && this.min.y >= this.max.y && this.min.z >= this.max.z) return new Box3();
@@ -85,14 +85,14 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
         const p5 = Box3.#points[5];
         const p6 = Box3.#points[6];
         const p7 = Box3.#points[7];
-        p0.set(this.min.x, this.min.y, this.min.z)._apply_Matrix4(p0, mat); // 000
-        p1.set(this.min.x, this.min.y, this.max.z)._apply_Matrix4(p1, mat); // 001
-        p2.set(this.min.x, this.max.y, this.min.z)._apply_Matrix4(p2, mat); // 010
-        p3.set(this.min.x, this.max.y, this.max.z)._apply_Matrix4(p3, mat); // 011
-        p4.set(this.max.x, this.min.y, this.min.z)._apply_Matrix4(p4, mat); // 100
-        p5.set(this.max.x, this.min.y, this.max.z)._apply_Matrix4(p5, mat); // 101
-        p6.set(this.max.x, this.max.y, this.min.z)._apply_Matrix4(p6, mat); // 110
-        p7.set(this.max.x, this.max.y, this.max.z)._apply_Matrix4(p7, mat); // 111
+        p0.set(this.min.x, this.min.y, this.min.z).apply_Matrix4(p0, mat); // 000
+        p1.set(this.min.x, this.min.y, this.max.z).apply_Matrix4(p1, mat); // 001
+        p2.set(this.min.x, this.max.y, this.min.z).apply_Matrix4(p2, mat); // 010
+        p3.set(this.min.x, this.max.y, this.max.z).apply_Matrix4(p3, mat); // 011
+        p4.set(this.max.x, this.min.y, this.min.z).apply_Matrix4(p4, mat); // 100
+        p5.set(this.max.x, this.min.y, this.max.z).apply_Matrix4(p5, mat); // 101
+        p6.set(this.max.x, this.max.y, this.min.z).apply_Matrix4(p6, mat); // 110
+        p7.set(this.max.x, this.max.y, this.max.z).apply_Matrix4(p7, mat); // 111
         return Box3.from_Points(Box3.#points);
     }
     public applys_Matrix4(a: Box3, mat: Matrix4): Box3 {
@@ -109,14 +109,14 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
         const p5 = Box3.#points[5];
         const p6 = Box3.#points[6];
         const p7 = Box3.#points[7];
-        p0.set(a.min.x, a.min.y, a.min.z)._apply_Matrix4(p0, mat); // 000
-        p1.set(a.min.x, a.min.y, a.max.z)._apply_Matrix4(p1, mat); // 001
-        p2.set(a.min.x, a.max.y, a.min.z)._apply_Matrix4(p2, mat); // 010
-        p3.set(a.min.x, a.max.y, a.max.z)._apply_Matrix4(p3, mat); // 011
-        p4.set(a.max.x, a.min.y, a.min.z)._apply_Matrix4(p4, mat); // 100
-        p5.set(a.max.x, a.min.y, a.max.z)._apply_Matrix4(p5, mat); // 101
-        p6.set(a.max.x, a.max.y, a.min.z)._apply_Matrix4(p6, mat); // 110
-        p7.set(a.max.x, a.max.y, a.max.z)._apply_Matrix4(p7, mat); // 111
+        p0.set(a.min.x, a.min.y, a.min.z).apply_Matrix4(p0, mat); // 000
+        p1.set(a.min.x, a.min.y, a.max.z).apply_Matrix4(p1, mat); // 001
+        p2.set(a.min.x, a.max.y, a.min.z).apply_Matrix4(p2, mat); // 010
+        p3.set(a.min.x, a.max.y, a.max.z).apply_Matrix4(p3, mat); // 011
+        p4.set(a.max.x, a.min.y, a.min.z).apply_Matrix4(p4, mat); // 100
+        p5.set(a.max.x, a.min.y, a.max.z).apply_Matrix4(p5, mat); // 101
+        p6.set(a.max.x, a.max.y, a.min.z).apply_Matrix4(p6, mat); // 110
+        p7.set(a.max.x, a.max.y, a.max.z).apply_Matrix4(p7, mat); // 111
         this.min.x = Math.min(p0.x, p1.x, p2.x, p3.x, p4.x, p5.x, p6.x, p7.x);
         this.min.y = Math.min(p0.y, p1.y, p2.y, p3.y, p4.y, p5.y, p6.y, p7.y);
         this.min.z = Math.min(p0.z, p1.z, p2.z, p3.z, p4.z, p5.z, p6.z, p7.z);

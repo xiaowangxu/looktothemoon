@@ -162,7 +162,7 @@ export class VisualWorld3DMesh extends WorldObject {
 
     private is_surface_materials_empty: boolean = false;
 
-    public readonly global_transform: Matrix4 = Matrix4.make_Identity();
+    public readonly global_transform: Matrix4 = Matrix4.new;
     public _visible: boolean = true;
     public layer: number = 0xffffffff;
     public cast_shadow: boolean = false;
@@ -188,7 +188,7 @@ export class VisualWorld3DMesh extends WorldObject {
         this.update_BBox();
     }
 
-    static #zero_vec3: Vector3 = new Vector3(0, 0, 0);
+    static readonly #zero_vec3: Vector3 = new Vector3(0, 0, 0);
 
     private update_BBox() {
         if (!this.has_geometry) {
@@ -384,7 +384,7 @@ export class VisualWorld3DLight extends WorldObject {
 
     // fill light data
 
-    static #color: Vector3 = new Vector3();
+    static readonly #color: Vector3 = new Vector3();
 
     public fill_LightData(lights_data: RenderServerLightsData, idx: number, lid: number): number {
         if (idx >= lights_data.max_light_count) return idx;

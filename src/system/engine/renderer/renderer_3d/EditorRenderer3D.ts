@@ -12,8 +12,7 @@ import { Cacher } from "@/system/utils/Cacher";
 import { type RenderServerLightsData } from "../../render_server/RenderServerLightData";
 import { Renderer3D } from "./Renderer3D";
 import { Renderer3DQueue } from "./Renderer3DQueue";
-import { Frustum3, frustum3 } from "@/system/fivepebble/graphics/Frustum3";
-import { plane3 } from "@/system/fivepebble/geometries/Plane3";
+import { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
 
 // #region quad surface
 const QuadGeometry = new Cacher((config: Config) => {
@@ -130,8 +129,8 @@ export class EditorRenderer3D extends Renderer3D {
         }
     }
 
-    static #size: Vector2 = Vector2.new;
-    static #frustum: Frustum3 = frustum3();
+    static readonly #size: Vector2 = Vector2.new;
+    static readonly #frustum: Frustum3 = Frustum3.new;
 
     public render(world: World3D, viewport: Viewport, once: boolean): void {
         if (this._render_pipeline.is_empty) return;

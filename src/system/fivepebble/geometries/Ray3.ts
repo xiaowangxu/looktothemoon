@@ -8,16 +8,25 @@ import type { LineLike } from "./LineLike";
 
 export class Ray3 implements RayLike<Vector3, Matrix3> {
 
-    static #tmp_vector3_0 = Vector3.new;
-    static #tmp_vector3_1 = Vector3.new;
-    static #tmp_vector3_2 = Vector3.new;
+    //#region init
+
+    static get new() { return new Ray3(new Vector3(), new Vector3(1, 0, 0)); }
+    static create(origin: Vector3, direction: Vector3) {
+        return new Ray3(origin, direction);
+    }
+
+    //#endregion
+
+    static readonly #tmp_vector3_0 = Vector3.new;
+    static readonly #tmp_vector3_1 = Vector3.new;
+    static readonly #tmp_vector3_2 = Vector3.new;
 
     public readonly origin: Vector3;
     public readonly direction: Vector3;
 
     constructor(origin: Vector3, direction: Vector3) {
-        this.origin = origin;
-        this.direction = direction;
+        this.origin = origin.clone();
+        this.direction = direction.clone();
     }
 
     get_Point(distance: number): Vector3 {
@@ -38,7 +47,7 @@ export class Ray3 implements RayLike<Vector3, Matrix3> {
 
     public apply_Matrix4(mat: Matrix4, non_uniform_scale: boolean = false) {
         return new Ray3(
-            Vector3.new._apply_Matrix4(this.origin, mat),
+            Vector3.new.apply_Matrix4(this.origin, mat),
             non_uniform_scale ?
                 Vector3.new.normalize(Ray3.#tmp_vector3_0.transform(this.direction, mat.basis)) :
                 Vector3.new.normalize(Ray3.#tmp_vector3_0.transform(this.direction, mat.basis.inverse().transpose()))
@@ -62,7 +71,7 @@ export class Ray3 implements RayLike<Vector3, Matrix3> {
         const e1 = this.direction.clone();
         const e2 = l1.direction.clone();
 
-        const n = Ray3.#tmp_vector3_0._cross(e1, e2);
+        const n = Ray3.#tmp_vector3_0.cross(e1, e2);
 
         if (n.length < Epsilon) {
             return [r1, l1.get_ClosestPointUncapped(r1)];
@@ -71,8 +80,8 @@ export class Ray3 implements RayLike<Vector3, Matrix3> {
         const n_length_sq = n.squared_length;
         const r = Ray3.#tmp_vector3_1.sub(r2, r1);
 
-        const t1 = Ray3.#tmp_vector3_2._cross(e2, n).dot(r) / (n_length_sq);
-        const t2 = Ray3.#tmp_vector3_2._cross(e1, n).dot(r) / (n_length_sq);
+        const t1 = Ray3.#tmp_vector3_2.cross(e2, n).dot(r) / (n_length_sq);
+        const t2 = Ray3.#tmp_vector3_2.cross(e1, n).dot(r) / (n_length_sq);
 
         return [Vector3.new.add_Scaled(r1, t1, e1), Vector3.new.add_Scaled(r2, t2, e2)];
     }
@@ -81,6 +90,11 @@ export class Ray3 implements RayLike<Vector3, Matrix3> {
         return this.origin.equal(b.origin) && this.direction.equal(b.direction);
     }
 
+    set(origin: Vector3, direction: Vector3): Ray3 {
+        this.origin.copy(origin);
+        this.direction.copy(direction);
+        return this;
+    }
     copy(b: Ray3): Ray3 {
         this.origin.copy(b.origin);
         this.direction.copy(b.direction);

@@ -1,16 +1,17 @@
 import { NodeNotification } from "../../Node";
 import { Node3D } from "../Node3D";
 import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
-import { Vector3, vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Plane3 } from "@/system/fivepebble/geometries/Plane3";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 
 export class FixSizeNode3D extends Node3D {
     public static readonly class_name: string = "FixSizeNode3D";
 
-    static #tmp_vector3_0 = Vector3.new;
-    static #tmp_vector3_1 = Vector3.new;
+    static readonly #tmp_vector3_0 = Vector3.new;
+    static readonly #tmp_vector3_1 = Vector3.new;
 
     public unit_pixel_count: number = 50;
     private _use_active_viewport: boolean = false;
@@ -36,7 +37,7 @@ export class FixSizeNode3D extends Node3D {
         this.propergate_redundant_before_render = true;
     }
 
-    static #plane: Plane3 = new Plane3(vec3(0, 0, 0), 0);
+    static readonly #plane: Plane3 = new Plane3(Vector3.create(0, 0, 0), 0);
 
     protected get_RelativeViewport() {
         return this._use_active_viewport ? this.get_SceneTree()?.get_ActiveViewports()[0] : this.get_Viewport();
@@ -53,8 +54,8 @@ export class FixSizeNode3D extends Node3D {
         let { y: height } = viewport!.size;
         if (height === 0) return;
         if (this.consider_pixel_ratio) height *= this.config.render_server.pixel_ratio;
-        const center_ray = camera.project_Ray(Vector2.create(0, 0), 0);
-        const top_ray = camera.project_Ray(Vector2.create(0, 1));
+        const center_ray = camera.project_Ray(Vector2.create(0, 0), 0, Ray3.new);
+        const top_ray = camera.project_Ray(Vector2.create(0, 1), 0, Ray3.new);
         const center = center_ray.get_Point(1);
         const plane = FixSizeNode3D.#plane.set_PointAndNormal(center, center_ray.direction);
         const top = plane.intersect_UncappedRay(top_ray);

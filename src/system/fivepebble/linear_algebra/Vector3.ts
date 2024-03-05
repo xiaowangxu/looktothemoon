@@ -46,70 +46,60 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         this.z = a.z + b.z;
         return this;
     }
-
     add_Number(a: Vector3, b: number): Vector3 {
         this.x = a.x + b;
         this.y = a.y + b;
         this.z = a.z + b;
         return this;
     }
-
     sub(a: Vector3, b: Vector3): Vector3 {
         this.x = a.x - b.x;
         this.y = a.y - b.y;
         this.z = a.z - b.z;
         return this;
     }
-
     sub_Number(a: Vector3, b: number): Vector3 {
         this.x = a.x - b;
         this.y = a.y - b;
         this.z = a.z - b;
         return this;
     }
-
     mult(a: Vector3, b: Vector3): Vector3 {
         this.x = a.x * b.x;
         this.y = a.y * b.y;
         this.z = a.z * b.z;
         return this;
     }
-
     mult_Number(a: Vector3, b: number): Vector3 {
         this.x = a.x * b;
         this.y = a.y * b;
         this.z = a.z * b;
         return this;
     }
-
     div(a: Vector3, b: Vector3): Vector3 {
         this.x = a.x / b.x;
         this.y = a.y / b.y;
         this.z = a.z / b.z;
         return this;
     }
-
     div_Number(a: Vector3, b: number): Vector3 {
         this.x = a.x / b;
         this.y = a.y / b;
         this.z = a.z / b;
         return this;
     }
-
     add_Scaled(a: Vector3, num: number, b: Vector3): Vector3 {
         this.x = a.x + num * b.x;
         this.y = a.y + num * b.y;
         this.z = a.z + num * b.z;
         return this;
     }
-
     lerp(a: Vector3, b: Vector3, weight: number): Vector3 {
         this.x = lerp(a.x, b.x, weight);
         this.y = lerp(a.y, b.y, weight);
         this.z = lerp(a.z, b.z, weight);
         return this;
     }
-
     transform(a: Vector3, matrix: Matrix3): Vector3 {
         const n11 = matrix.n11, n21 = matrix.n21, n31 = matrix.n31;
         const n12 = matrix.n12, n22 = matrix.n22, n32 = matrix.n32;
@@ -120,7 +110,6 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         this.z = n31 * x + n32 * y + n33 * z;
         return this;
     }
-
     normalize(a: Vector3): Vector3 {
         const length = a.length;
         this.x = a.x / length;
@@ -128,18 +117,16 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         this.z = a.z / length;
         return this;
     }
-
     negate(a: Vector3): Vector3 {
         this.x = -a.x;
         this.y = -a.y;
         this.z = -a.z;
         return this;
     }
-
     dot(b: Vector3): number {
         return this.x * b.x + this.y * b.y + this.z * b.z;
     }
-    _cross(a: Vector3, b: Vector3): Vector3 {
+    cross(a: Vector3, b: Vector3): Vector3 {
         this.x = a.y * b.z - a.z * b.y;
         this.y = a.z * b.x - a.x * b.z;
         this.z = a.x * b.y - a.y * b.x;
@@ -200,7 +187,7 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         return new Vector3(this.x, this.y, this.z);
     }
 
-    public _apply_Matrix4(a: Vector3, mat: Matrix4) {
+    public apply_Matrix4(a: Vector3, mat: Matrix4) {
         const n11 = mat.n11, n12 = mat.n12, n13 = mat.n13, n14 = mat.n14;
         const n21 = mat.n21, n22 = mat.n22, n23 = mat.n23, n24 = mat.n24;
         const n31 = mat.n31, n32 = mat.n32, n33 = mat.n33, n34 = mat.n34;
@@ -212,8 +199,4 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         this.z = (n31 * x + n32 * y + n33 * z + n34) * w;
         return this;
     }
-}
-
-export function vec3(x: number = 0, y: number = 0, z: number = 0) {
-    return new Vector3(x, y, z);
 }

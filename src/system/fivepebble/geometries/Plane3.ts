@@ -5,7 +5,7 @@ import type { Ray3 } from "./Ray3";
 import type { Sphere3 } from "./Sphere3";
 import { Matrix3 } from "../linear_algebra/Matrix3";
 import { Epsilon, is_ApproxZero } from "../Scalar";
-import { Vector3, vec3 } from "../linear_algebra/Vector3";
+import { Vector3 } from "../linear_algebra/Vector3";
 import type { GeometryLike } from "./GeometryLike";
 import type { Plane } from "three";
 
@@ -37,15 +37,15 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
         return this;
     }
 
-    static #tmp_vector3_0 = Vector3.new;
-    static #tmp_vector3_1 = Vector3.new;
-    static #tmp_vector3_2 = Vector3.new;
-    static #tmp_matrix3_0 = Matrix3.new;
+    static readonly #tmp_vector3_0 = Vector3.new;
+    static readonly #tmp_vector3_1 = Vector3.new;
+    static readonly #tmp_vector3_2 = Vector3.new;
+    static readonly #tmp_matrix3_0 = Matrix3.new;
 
     public static from_Points(a: Vector3, b: Vector3, c: Vector3, clockwise: boolean = false) {
         if (clockwise) {
             const normal = Vector3.new.normalize(
-                Plane3.#tmp_vector3_2._cross(
+                Plane3.#tmp_vector3_2.cross(
                     Plane3.#tmp_vector3_0.sub(a, c),
                     Plane3.#tmp_vector3_1.sub(a, b),
                 )
@@ -53,7 +53,7 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
             return new Plane3(normal, normal.dot(a));
         } else {
             const normal = Vector3.new.normalize(
-                Plane3.#tmp_vector3_2._cross(
+                Plane3.#tmp_vector3_2.cross(
                     Plane3.#tmp_vector3_0.sub(a, b),
                     Plane3.#tmp_vector3_1.sub(a, c),
                 )
@@ -62,8 +62,8 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
         }
     }
 
-    static #vector3_0 = Vector3.new;
-    static #vector3_1 = Vector3.new;
+    static readonly #vector3_0 = Vector3.new;
+    static readonly #vector3_1 = Vector3.new;
 
     public set_Points(a: Vector3, b: Vector3, c: Vector3, clockwise: boolean = false) {
         const vetcor3_0 = Plane3.#vector3_0;
@@ -71,10 +71,10 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
         const a_sub_c = vetcor3_0.sub(a, c);
         const a_sub_b = vetcor3_1.sub(a, b);
         if (clockwise) {
-            this.normal._cross(a_sub_c, a_sub_b);
+            this.normal.cross(a_sub_c, a_sub_b);
             this.normal.normalize(this.normal);
         } else {
-            this.normal._cross(a_sub_b, a_sub_c);
+            this.normal.cross(a_sub_b, a_sub_c);
             this.normal.normalize(this.normal);
         }
         this.distance = this.normal.dot(a);
@@ -210,6 +210,6 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     }
 }
 
-export function plane3(normal: Vector3 = vec3(1, 0, 0), distance: number = 0) {
+export function plane3(normal: Vector3 = Vector3.create(1, 0, 0), distance: number = 0) {
     return new Plane3(normal, distance);
 }

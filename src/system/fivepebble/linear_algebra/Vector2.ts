@@ -24,7 +24,7 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
     get min_component(): number { return Math.min(this.x, this.y); }
     get max_component(): number { return Math.max(this.x, this.y); }
 
-    private constructor(x: number, y: number) {
+    constructor(x: number = 0, y: number = 0) {
         this.x = x;
         this.y = y;
     }

@@ -7,19 +7,20 @@ import { MouseMotionInputEvent } from "../../../inputs/events/mouse_events/Mouse
 import { MouseEnterLeaveInputEvent } from "../../../inputs/events/mouse_events/MouseEnterLeaveInputEvent";
 import { type InputEvent } from "../../../inputs/InputEvent";
 import { TweenEasingType, MethodTween, PropertyTween, TweenTransitionType, TweenBase, TweenParallel } from '@/system/engine/Tween';
-import { Vector3, vec3 } from '@/system/fivepebble/linear_algebra/Vector3';
+import { Vector3 } from '@/system/fivepebble/linear_algebra/Vector3';
 import { Vector2 } from '@/system/fivepebble/linear_algebra/Vector2';
-import { euler } from '@/system/fivepebble/linear_algebra/Euler';
+import { Euler } from '@/system/fivepebble/linear_algebra/Euler';
 import { Plane3 } from '@/system/fivepebble/geometries/Plane3';
 import type { Config } from "../../../ConfiguredObject";
 import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
+import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 
 export class OrbitCamera3D extends Node3D {
     public static readonly class_name: string = "OrbitCamera3D";
 
-    static #tmp_vector2_0 = Vector2.new;
-    static #tmp_vector3_0 = Vector3.new;
-    static #tmp_vector3_1 = Vector3.new;
+    static readonly #tmp_vector2_0 = Vector2.new;
+    static readonly #tmp_vector3_0 = Vector3.new;
+    static readonly #tmp_vector3_1 = Vector3.new;
 
     private readonly camera_arm: Node3D = new Node3D(this.config);
     private readonly camera: InterpolateCamera3D = new InterpolateCamera3D(this.config);
@@ -58,7 +59,7 @@ export class OrbitCamera3D extends Node3D {
     public set direction(direction: number) {
         if (this._direction !== direction) {
             this._direction = direction % Tau;
-            this.local_rotation = euler(0, this._direction, 0);
+            this.local_rotation = Euler.create(0, this._direction, 0);
         }
     }
 
@@ -67,7 +68,7 @@ export class OrbitCamera3D extends Node3D {
     public set yaw(yaw: number) {
         if (this._yaw !== yaw) {
             this._yaw = yaw % Tau;
-            this.camera_arm.local_rotation = euler(this._yaw, 0, 0);
+            this.camera_arm.local_rotation = Euler.create(this._yaw, 0, 0);
         }
     }
 
@@ -229,13 +230,13 @@ export class OrbitCamera3D extends Node3D {
                     const camera = this.get_Viewport()?.get_Camera3D();
                     if (camera !== undefined) {
                         const cam = camera.get_Camera();
-                        const dir = this.camera_arm.to_Global(vec3(0, 0, 1))
+                        const dir = this.camera_arm.to_Global(Vector3.create(0, 0, 1))
                         dir.sub(dir, this.global_position)
                         dir.normalize(dir);
                         const plane = Plane3.from_PointAndNormal(this.global_position, dir);
-                        const ray = cam.project_Ray(Vector2.create(0, 0));
+                        const ray = cam.project_Ray(Vector2.create(0, 0), undefined, Ray3.new);
                         const center = plane.intersect_UncappedRay(ray);
-                        const ray_mouse = cam.project_Ray(mouse_position_normalized);
+                        const ray_mouse = cam.project_Ray(mouse_position_normalized, undefined, Ray3.new);
                         const mouse = plane.intersect_UncappedRay(ray_mouse);
                         if (center !== undefined && mouse !== undefined) {
                             const delta = Vector3.new.sub(mouse, center)
@@ -288,11 +289,11 @@ export class OrbitCamera3D extends Node3D {
         const camera = viewport.get_Camera3D();
         if (camera === undefined) return;
 
-        const dir = this.camera_arm.to_Global(vec3(0, 0, 1));
+        const dir = this.camera_arm.to_Global(Vector3.create(0, 0, 1));
         dir.sub(dir, this.global_position);
         dir.normalize(dir);
         const plane = Plane3.from_PointAndNormal(this.global_position, dir);
-        const ray = camera.get_Camera().project_Ray(OrbitCamera3D.#tmp_vector2_0.negate(relative_normalized));
+        const ray = camera.get_Camera().project_Ray(OrbitCamera3D.#tmp_vector2_0.negate(relative_normalized), undefined, Ray3.new);
         const result = plane.intersect_UncappedRay(ray);
 
         if (result !== undefined) {

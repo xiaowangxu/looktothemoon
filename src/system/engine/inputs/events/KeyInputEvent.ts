@@ -6,7 +6,7 @@ import { ComposeInputEvent } from "./ComposeInputEvent";
 export class KeyInputEvent extends ComposeInputEvent {
     public static readonly class_name: string = "KeyInputEvent";
 
-    static #empty_key = '';
+    static readonly #empty_key = '';
 
     public key: string = KeyInputEvent.#empty_key;
     public keycode: string = KeyInputEvent.#empty_key;

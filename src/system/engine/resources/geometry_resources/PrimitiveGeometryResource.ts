@@ -1,11 +1,11 @@
 import { GeometryResource } from "./GeometryResource";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceVector3AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
-import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { box3 } from "@/system/fivepebble/geometries/Box3";
 import { Pi, Tau, clamp } from '@/system/fivepebble/Scalar';
 import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
 import type { Config } from "../../ConfiguredObject";
+import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 
 export abstract class PrimitiveGeometryResource extends GeometryResource {
     constructor(config: Config) {
@@ -173,7 +173,7 @@ export class BoxGeometryResource extends PrimitiveGeometryResource {
             },
             index_buffer,
             36,
-            box3(vec3(-half_w, -half_h, -half_d), vec3(half_w, half_h, half_d))
+            box3(Vector3.create(-half_w, -half_h, -half_d), Vector3.create(half_w, half_h, half_d))
         );
         this.geometry.add_Surface(0 * index_buffer.per_element_byte_count, 6);
         this.geometry.add_Surface(6 * index_buffer.per_element_byte_count, 6);
@@ -264,7 +264,7 @@ export class TorusGeometryResource extends PrimitiveGeometryResource {
                 const u = i / tube_segments * theta;
                 const v = j / segments * Pi * 2;
                 // vertex
-                const vertex = vec3(
+                const vertex = Vector3.create(
                     (radius + tube_radius * Math.cos(v)) * Math.cos(u),
                     -tube_radius * Math.sin(v),
                     (radius + tube_radius * Math.cos(v)) * Math.sin(u),
@@ -273,7 +273,7 @@ export class TorusGeometryResource extends PrimitiveGeometryResource {
                 position_buffer.data[idx * 3 + 1] = vertex.y;
                 position_buffer.data[idx * 3 + 2] = vertex.z;
                 // normal
-                const center = vec3(radius * Math.cos(u), 0, radius * Math.sin(u));
+                const center = Vector3.create(radius * Math.cos(u), 0, radius * Math.sin(u));
                 const normal = center.direction_to(center, vertex);
                 normal_buffer.data[idx * 3 + 0] = normal.x;
                 normal_buffer.data[idx * 3 + 1] = normal.y;
@@ -326,8 +326,8 @@ export class TorusGeometryResource extends PrimitiveGeometryResource {
             index_buffer,
             index_count,
             box3(
-                vec3(-outer_radius, -outer_radius, -tube_radius),
-                vec3(outer_radius, outer_radius, tube_radius),
+                Vector3.create(-outer_radius, -outer_radius, -tube_radius),
+                Vector3.create(outer_radius, outer_radius, tube_radius),
             )
         );
     }
@@ -564,8 +564,8 @@ export class CylinderGeometryResource extends PrimitiveGeometryResource {
             index_buffer,
             index_count,
             box3(
-                vec3(-max_radius, -half_height, -max_radius),
-                vec3(max_radius, half_height, max_radius),
+                Vector3.create(-max_radius, -half_height, -max_radius),
+                Vector3.create(max_radius, half_height, max_radius),
             )
         );
         this.geometry.add_Surface(0, segments * 6);
@@ -713,8 +713,8 @@ export class SphereGeometryResource extends PrimitiveGeometryResource {
             index_buffer,
             index_buffer.item_count,
             box3(
-                vec3(-radius, -radius, -radius),
-                vec3(radius, radius, radius),
+                Vector3.create(-radius, -radius, -radius),
+                Vector3.create(radius, radius, radius),
             )
         );
     }

@@ -3,7 +3,7 @@ export class FileSystemPath {
     public static Current = '.';
     public static Parent = '..';
 
-    static #empty_routers = [];
+    static readonly #empty_routers = [];
 
     public readonly routers: string[] = [];
 
@@ -92,7 +92,7 @@ export class FileSystemPath {
         }
     }
 
-    static #path_regax = /^((?<dir>([^\/^\s^\.]+:\/\/|\/)))?(?<parent>(([^\/^\s^\.]+|\.{1,2})\/)*)((?<file>[^\/^\s^\.]*(\.[^\/^\s^\.]+)*)|(?<folder>\.{1,2}))?$/;
+    static readonly #path_regax = /^((?<dir>([^\/^\s^\.]+:\/\/|\/)))?(?<parent>(([^\/^\s^\.]+|\.{1,2})\/)*)((?<file>[^\/^\s^\.]*(\.[^\/^\s^\.]+)*)|(?<folder>\.{1,2}))?$/;
 
     public static from_Path(path: string) {
         const result = FileSystemPath.#path_regax.exec(path);

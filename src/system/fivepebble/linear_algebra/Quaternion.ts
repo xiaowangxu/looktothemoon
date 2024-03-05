@@ -9,13 +9,13 @@ export class Quaternion {
     //#region init
 
     static get new() { return new Quaternion(0, 0, 0, 1); }
-    static create(x: number, y: number, z: number, w: number) {
+    static create(x: number = 0, y: number = 0, z: number = 0, w: number = 0) {
         return new Quaternion(x, y, z, w);
     }
 
     //#endregion
 
-    static #tmp_vector3_0 = Vector3.new;
+    static readonly #tmp_vector3_0 = new Vector3();
 
     public x: number;
     public y: number;
@@ -24,14 +24,17 @@ export class Quaternion {
 
     get length(): number { return Math.sqrt(this.squared_length); }
     get squared_length(): number { return this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w; }
-    public get axis() {
+   
+    public get axis() { return this.get_Axis(new Vector3()); }
+    public get_Axis(target: Vector3) {
         const x = this.x, y = this.y, z = this.z, w = this.w;
         if (Math.abs(w) > 1 - Epsilon) {
-            return new Vector3(x, y, z);
+            return target.set(x, y, z);
         }
         const r = 1 / Math.sqrt(1 - w * w);
-        return new Vector3(x * r, y * r, z * r);
+        return target.set(x * r, y * r, z * r);
     }
+
     public get angle() { return 2 * Math.acos(this.w); }
 
     constructor(x: number = 0, y: number = 0, z: number = 0, w: number = 1) {
@@ -155,7 +158,7 @@ export class Quaternion {
     }
 
     public set_Rotate(v0: Vector3, v1: Vector3) {
-        const c = Quaternion.#tmp_vector3_0._cross(v0, v1);
+        const c = Quaternion.#tmp_vector3_0.cross(v0, v1);
         const d = v0.dot(v1);
         if (d < Epsilon - 1) {
             this.x = 0;
@@ -178,11 +181,7 @@ export class Quaternion {
         return this.x * b.x + this.y * b.y + this.z * b.z + this.w * b.w;
     }
 
-    public normalize() {
-        const length = this.length;
-        return new Quaternion(this.x / length, this.y / length, this.z / length, this.w / length);
-    }
-    public normalizes(a: Quaternion): Quaternion {
+    public normalize(a: Quaternion): Quaternion {
         const length = a.length;
         this.x = a.x / length;
         this.y = a.y / length;
@@ -191,10 +190,7 @@ export class Quaternion {
         return this;
     }
 
-    public inverse() {
-        return new Quaternion(-this.x, -this.y, -this.z, this.w);
-    }
-    public inverses(a: Quaternion): Quaternion {
+    public inverse(a: Quaternion): Quaternion {
         this.x = -a.x;
         this.y = -a.y;
         this.z = -a.z;
@@ -202,61 +198,16 @@ export class Quaternion {
         return this;
     }
 
-    public angle_To(b: Quaternion) {
+    public angle_to(b: Quaternion) {
         const dot = this.dot(b);
         return Math.acos(dot * dot * 2 - 1);
     }
 
-    public slerp(b: Quaternion, weight: number) {
-        let ax = this.x,
-            ay = this.y,
-            az = this.z,
-            aw = this.w;
-        let bx = b.x,
-            by = b.y,
-            bz = b.z,
-            bw = b.w;
-
-        let scale0, scale1;
-
-        // calc cosine
-        let cosom = ax * bx + ay * by + az * bz + aw * bw;
-
-        // adjust signs (if necessary)
-        if (cosom < 0) {
-            cosom = -cosom;
-            bx = -bx;
-            by = -by;
-            bz = -bz;
-            bw = -bw;
-        }
-        // calculate coefficients
-        if (1 - cosom > Epsilon) {
-            // standard case (slerp)
-            const omega = Math.acos(cosom);
-            const sinom = Math.sin(omega);
-            scale0 = Math.sin((1.0 - weight) * omega) / sinom;
-            scale1 = Math.sin(weight * omega) / sinom;
-        }
-        else {
-            // "from" and "to" quaternions are very close
-            //  ... so we can do a linear interpolation
-            scale0 = 1.0 - weight;
-            scale1 = weight;
-        }
-
-        return new Quaternion(
-            scale0 * ax + scale1 * bx,
-            scale0 * ay + scale1 * by,
-            scale0 * az + scale1 * bz,
-            scale0 * aw + scale1 * bw
-        );
-    }
-    public slerps(a: Quaternion, b: Quaternion, weight: number): Quaternion {
-        let ax = this.x,
-            ay = this.y,
-            az = this.z,
-            aw = this.w;
+    public slerp(a: Quaternion, b: Quaternion, weight: number): Quaternion {
+        let ax = a.x,
+            ay = a.y,
+            az = a.z,
+            aw = a.w;
         let bx = b.x,
             by = b.y,
             bz = b.z,
@@ -317,8 +268,4 @@ export class Quaternion {
     public clone(): Quaternion {
         return new Quaternion(this.x, this.y, this.z, this.w);
     }
-}
-
-export function quat(x: number = 0, y: number = 0, z: number = 0, w: number = 0) {
-    return new Quaternion(x, y, z, w);
 }

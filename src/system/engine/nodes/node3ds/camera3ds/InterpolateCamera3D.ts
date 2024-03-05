@@ -2,10 +2,10 @@ import { Deg2Rad, Epsilon } from '../../../../fivepebble/Scalar';
 import { NodeNotification } from "../../Node";
 import { Camera3D } from "./Camera3D";
 import { Matrix4 } from '@/system/fivepebble/linear_algebra/Matrix4';
-import { vec3 } from '@/system/fivepebble/linear_algebra/Vector3';
 import { Camera3, OrthographicCamera3, PerspectiveCamera3 } from '@/system/fivepebble/graphics/Camera3';
 import type { Vector2 } from '@/system/fivepebble/linear_algebra/Vector2';
 import type { Config } from '../../../ConfiguredObject';
+import { Vector3 } from '@/system/fivepebble/linear_algebra/Vector3';
 
 export class InterpolateCamera3D extends Camera3D {
     public static readonly class_name: string = "InterpolateCamera3D";
@@ -118,7 +118,7 @@ export class InterpolateCamera3D extends Camera3D {
 
     private update_CameraTransform() {
         const offset_distance = this.use_orth ? InterpolateCamera3D.OrthographicMaxOffsetDistance : this.offset_distance;
-        const _global_transform = Matrix4.from_BasisPosition(undefined, vec3(0, 0, offset_distance))
+        const _global_transform = Matrix4.new.set_BasisPosition(undefined, Vector3.create(0, 0, offset_distance))
         _global_transform.compose(_global_transform, this.global_transform);
         this.persp_camera.global_transform = _global_transform;
         this.orth_camera.global_transform = _global_transform;

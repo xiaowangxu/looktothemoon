@@ -29,7 +29,7 @@ export abstract class PickingShape3DResource extends Resource implements Picking
 export class PickingBoxResource extends PickingShape3DResource {
     public static readonly class_name: string = "PickingBoxResource";
 
-    static #tmp_vector3_0 = Vector3.new;
+    static readonly #tmp_vector3_0 = Vector3.new;
 
     public readonly preserve_global_transform: boolean = false;
 
@@ -143,9 +143,9 @@ export class PickingBoxResource extends PickingShape3DResource {
 export class PickingSphereResource extends PickingShape3DResource {
     public static readonly class_name: string = "PickingSphereResource";
 
-    static #tmp_vector3_0 = Vector3.new;
-    static #tmp_vector3_1 = Vector3.new;
-    static #tmp_vector3_2 = Vector3.new;
+    static readonly #tmp_vector3_0 = Vector3.new;
+    static readonly #tmp_vector3_1 = Vector3.new;
+    static readonly #tmp_vector3_2 = Vector3.new;
 
     public readonly preserve_global_transform: boolean = false;
 
@@ -212,10 +212,10 @@ export class PickingSphereResource extends PickingShape3DResource {
 export class PickingCylinderResource extends PickingShape3DResource {
     public static readonly class_name: string = "PickingCylinderResource";
 
-    static #tmp_vector3_0 = Vector3.new;
-    static #tmp_vector3_1 = Vector3.new;
-    static #tmp_vector3_2 = Vector3.new;
-    static #tmp_vector3_3 = Vector3.new;
+    static readonly #tmp_vector3_0 = Vector3.new;
+    static readonly #tmp_vector3_1 = Vector3.new;
+    static readonly #tmp_vector3_2 = Vector3.new;
+    static readonly #tmp_vector3_3 = Vector3.new;
 
     public readonly preserve_global_transform: boolean = false;
 
@@ -238,7 +238,7 @@ export class PickingCylinderResource extends PickingShape3DResource {
     }
 
     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
-        const rel =  PickingCylinderResource.#tmp_vector3_0.sub(to, from);
+        const rel = Vector3.new.sub(to, from);
         const rel_l = rel.length;
         if (rel_l < Epsilon) {
             return undefined;
@@ -247,16 +247,16 @@ export class PickingCylinderResource extends PickingShape3DResource {
         const cylinder_axis = new Vector3(0, 1, 0);
 
         // First check if they are parallel.
-        const normal = PickingCylinderResource.#tmp_vector3_1.div_Number(rel, rel_l);
-        const crs = PickingCylinderResource.#tmp_vector3_2._cross(normal, cylinder_axis);
+        const normal = Vector3.new.div_Number(rel, rel_l);
+        const crs = Vector3.new.cross(normal, cylinder_axis);
         const crs_l = crs.length;
 
         let axis_dir: Vector3;
 
         if (crs_l < Epsilon) {
-            axis_dir = PickingCylinderResource.#tmp_vector3_3.set(0, 0, 1); // Any side axis OK.
+            axis_dir = new Vector3(0, 0, 1); // Any side axis OK.
         } else {
-            axis_dir = PickingCylinderResource.#tmp_vector3_3.div_Number(crs, crs_l);
+            axis_dir = Vector3.new.div_Number(crs, crs_l);
         }
 
         const dist = axis_dir.dot(from);
@@ -273,9 +273,7 @@ export class PickingCylinderResource extends PickingShape3DResource {
 
         const size = new Vector2(Math.sqrt(w2), this.height / 2);
 
-        const side_dir = axis_dir.clone()
-        side_dir._cross(side_dir, cylinder_axis)
-        side_dir.normalize(side_dir);
+        const side_dir = Vector3.new.normalize(Vector3.new.cross(axis_dir, cylinder_axis));
 
         const from2D = new Vector2(side_dir.dot(from), from.y);
         const to2D = new Vector2(side_dir.dot(to), to.y);

@@ -31,8 +31,8 @@ class PickingShapeInstance extends ConfiguredObject {
     public shape: PickingShape3D | undefined;
     public area: PickingArea | undefined;
     public distance_offset: number = 0;
-    public readonly global_transform: Matrix4 = Matrix4.make_Identity();
-    public readonly global_transform_inverse: Matrix4 = Matrix4.make_Identity();
+    public readonly global_transform: Matrix4 = Matrix4.new;
+    public readonly global_transform_inverse: Matrix4 = Matrix4.new;
 }
 
 export enum PickingOrder {
@@ -98,14 +98,14 @@ export class PickingWorld3D extends ConfiguredObject {
             const { shape, distance_offset, area, global_transform, global_transform_inverse } = shape_instance;
             if (shape !== undefined && area !== undefined && area.enabled && (area.layer & mask) !== 0) {
                 const preserve_global_transform = shape.preserve_global_transform;
-                const local_from = preserve_global_transform ? _from : _from._apply_Matrix4(_from, global_transform_inverse);
-                const local_to = preserve_global_transform ? _to : _to._apply_Matrix4(_to, global_transform_inverse);
+                const local_from = preserve_global_transform ? _from : _from.apply_Matrix4(_from, global_transform_inverse);
+                const local_to = preserve_global_transform ? _to : _to.apply_Matrix4(_to, global_transform_inverse);
                 const res = shape.perform_Raycast(local_from, local_to, global_transform, side, camera, viewport);
                 if (res !== undefined) {
                     const _res_position = res.position.clone();
                     const _res_normal = res.normal.clone();
-                    const position = preserve_global_transform ? _res_position : _res_position._apply_Matrix4(_res_position, global_transform);
-                    const normal = preserve_global_transform ? _res_normal : _res_normal._apply_Matrix4(_res_normal, global_transform).normalize(_res_normal);
+                    const position = preserve_global_transform ? _res_position : _res_position.apply_Matrix4(_res_position, global_transform);
+                    const normal = preserve_global_transform ? _res_normal : _res_normal.apply_Matrix4(_res_normal, global_transform).normalize(_res_normal);
                     const distance = position.distance_to(from);
                     result.push(new RayPickingResult(area.area, position, normal, distance, distance + distance_offset, area.priority));
                 }

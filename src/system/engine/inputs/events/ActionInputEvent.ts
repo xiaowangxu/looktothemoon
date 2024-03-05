@@ -3,7 +3,7 @@ import { InputEvent } from "../InputEvent";
 export class ActionInputEvent extends InputEvent {
     public static readonly class_name: string = "ActionInputEvent";
 
-    static #empty_action = '';
+    static readonly #empty_action = '';
 
     public action: string = ActionInputEvent.#empty_action;
     public pressed: boolean = false;

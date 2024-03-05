@@ -6,28 +6,39 @@ import { Matrix4 } from "../linear_algebra/Matrix4";
 import { Vector2 } from "../linear_algebra/Vector2";
 import { Vector3 } from "../linear_algebra/Vector3";
 import { Frustum3 } from "./Frustum3";
-import { Euler, euler } from "../linear_algebra/Euler";
+import { Euler } from "../linear_algebra/Euler";
 
 export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
-    protected _projection: Matrix4 = Matrix4.make_Identity();
+
+    static readonly #tmp_matrix3_0: Matrix3 = Matrix3.new;
+    static readonly #tmp_matrix4_0: Matrix4 = Matrix4.new;
+    static readonly #tmp_vector3_0: Vector3 = Vector3.new;
+    static readonly #tmp_vector3_1: Vector3 = Vector3.new;
+    static readonly #tmp_euler_0: Euler = Euler.new;
+
+    protected _projection: Matrix4 = Matrix4.new;
     get projection() { return this._projection.clone(); }
+    public get_Projection(target: Matrix4) { return target.copy(this._projection); }
 
-    static #tmp_matrix3_0: Matrix3 = Matrix3.new;
-    static #tmp_matrix4_0: Matrix4 = Matrix4.new;
-    static #tmp_vector3_0: Vector3 = Vector3.new;
-    static #tmp_euler_0: Euler = euler();
-
-    protected _global_transform: Matrix4 = Matrix4.make_Identity();
-    protected _global_transform_inverse: Matrix4 = Matrix4.make_Identity();
+    protected _global_transform: Matrix4 = Matrix4.new;
+    protected _global_transform_inverse: Matrix4 = Matrix4.new;
     get global_transform() { return this._global_transform.clone(); }
     set global_transform(transform: Matrix4) {
         const euler = Camera3.#tmp_euler_0;
         const matrix3 = Camera3.#tmp_matrix3_0;
         const vector3 = Camera3.#tmp_vector3_0;
-        transform.basis.decomposes_RotationScale(euler, vector3);
+        transform.basis.decompose_RotationScale(euler, vector3);
         transform.get_Position(vector3);
         this._global_transform.set_BasisPosition(matrix3.set_Euler(euler), vector3);
         this._global_transform_inverse.inverse(this._global_transform);
+    }
+    public get_GlobalTransform(target: Matrix4) { return target.copy(this._global_transform); }
+
+    get frustum() {
+        return this.get_Frustum(Frustum3.new);
+    }
+    get_Frustum(target: Frustum3): Frustum3 {
+        return target.set_Projection(Camera3.#tmp_matrix4_0.compose(this._global_transform_inverse, this._projection));
     }
 
     protected _mask: number = 0xffffffff;
@@ -41,26 +52,19 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
 
     public abstract get is_orthogonal(): boolean;
 
-    project_Point(point: Vector3): Vector2 {
+    project_Point(point: Vector3, target: Vector2): Vector2 {
         const p = Camera3.#tmp_vector3_0;
-        p._apply_Matrix4(point, this._global_transform_inverse);
-        p._apply_Matrix4(p, this._projection);
-        return Vector2.create(p.x, p.y);
+        p.apply_Matrix4(point, this._global_transform_inverse);
+        p.apply_Matrix4(p, this._projection);
+        return target.set(p.x, p.y);
     }
 
-    abstract unproject_Point(ndc: Vector2, depth?: number): Vector3;
+    abstract unproject_Point(ndc: Vector2, depth: number | undefined, target: Vector3): Vector3;
 
-    abstract unproject_Normal(ndc: Vector2): Vector3;
+    abstract unproject_Normal(ndc: Vector2, target: Vector3): Vector3;
 
-    project_Ray(ndc: Vector2, depth?: number): Ray3 {
-        return new Ray3(this.unproject_Point(ndc, depth), this.unproject_Normal(ndc));
-    }
-
-    get frustum() {
-        return Frustum3.from_Projection(Camera3.#tmp_matrix4_0.compose(this._global_transform_inverse, this._projection));
-    }
-    get_Frustum(target: Frustum3): Frustum3 {
-        return target.set_Projection(Camera3.#tmp_matrix4_0.compose(this._global_transform_inverse, this._projection));
+    project_Ray(ndc: Vector2, depth: number | undefined, target: Ray3): Ray3 {
+        return target.set(this.unproject_Point(ndc, depth, Camera3.#tmp_vector3_0), this.unproject_Normal(ndc, Camera3.#tmp_vector3_1))
     }
 
     abstract clone(): Camera3;
@@ -130,15 +134,15 @@ export class OrthographicCamera3 extends Camera3 {
         this._projection.set_OrthogonalProjection(-half_width, half_width, half_height, -half_height, this.near, this.far);
     }
 
-    unproject_Point(point: Vector2, depth: number = this.near): Vector3 {
+    unproject_Point(point: Vector2, depth: number = this.near, target: Vector3): Vector3 {
         const half_width = this.width / (2 * this.zoom);
         const half_height = this.height / (2 * this.zoom);
-        const p = new Vector3(point.x * half_width, point.y * half_height, -depth);
-        return p._apply_Matrix4(p, this._global_transform);
+        const p = target.set(point.x * half_width, point.y * half_height, -depth);
+        return p.apply_Matrix4(p, this._global_transform);
     }
 
-    unproject_Normal(point: Vector2): Vector3 {
-        const n = new Vector3(0, 0, -1);
+    unproject_Normal(point: Vector2, target: Vector3): Vector3 {
+        const n = target.set(0, 0, -1);
         n.transform(n, this._global_transform.basis);
         n.normalize(n);
         return n;
@@ -215,17 +219,17 @@ export class PerspectiveCamera3 extends Camera3 {
         this._projection.set_PerspectiveFovProjection(this.fov, this.aspect, this.near, this.far);
     }
 
-    unproject_Point(ndc: Vector2, depth: number = this.near): Vector3 {
-        if (depth === 0) return this._global_transform.position;
+    unproject_Point(ndc: Vector2, depth: number = this.near, target: Vector3): Vector3 {
+        if (depth === 0) return this._global_transform.get_Position(target);
         const half_height = this.near * Math.tan(this.fov / 2);
         const half_width = this.aspect * half_height;
-        const p = new Vector3(ndc.x * half_width, ndc.y * half_height, -depth);
-        p._apply_Matrix4(p, this.global_transform);
+        const p = target.set(ndc.x * half_width, ndc.y * half_height, -depth);
+        p.apply_Matrix4(p, this.global_transform);
         return p;
     }
 
-    unproject_Normal(ndc: Vector2): Vector3 {
-        const p = this.unproject_Point(ndc, this.near);
+    unproject_Normal(ndc: Vector2, target: Vector3): Vector3 {
+        const p = this.unproject_Point(ndc, this.near, target);
         return p.direction_to(this._global_transform.position, p);
     }
 

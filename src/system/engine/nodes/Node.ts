@@ -19,6 +19,7 @@ import type { Config } from "../ConfiguredObject";
 import { Ref } from "@/system/utils/RefCounted";
 import type { Renderer3D } from "../renderer/renderer_3d/Renderer3D";
 import { RaycastSide } from "@/system/fivepebble/geometries/GeometryLike";
+import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 
 export enum NodeNotification {
     ExitingTree,
@@ -667,7 +668,7 @@ export class Viewport extends Node {
                 return;
             };
             this.input_manager.mouse_position_normalized;
-            const ray = camera_3d.get_Camera().project_Ray(this.input_manager.mouse_position_normalized);
+            const ray = camera_3d.get_Camera().project_Ray(this.input_manager.mouse_position_normalized, undefined, Ray3.new);
             const ray_picking_option = new RayPickingOption(
                 ray.origin,
                 ray.get_Point(10000),

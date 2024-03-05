@@ -66,7 +66,7 @@ export class DirectionalLight3D extends LightInstance3D {
         }
     }
 
-    static #vector3: Vector3 = new Vector3();
+    static readonly #vector3: Vector3 = new Vector3();
 
     public _notification(what: NodeNotification): void {
         switch (what) {
@@ -102,7 +102,7 @@ export class DirectionalLight3D extends LightInstance3D {
                     if (this.is_global_transform_changed) {
                         const vec = DirectionalLight3D.#vector3;
                         vec.set(0, 0, -1);
-                        vec._apply_Matrix4(vec, this.global_transform);
+                        vec.apply_Matrix4(vec, this.global_transform);
                         vec.direction_to(this._global_position, vec);
                         vec.negate(vec);
                         visual_world.set_LightGlobalPosition(this.light_rid, vec);

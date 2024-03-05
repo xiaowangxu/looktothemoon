@@ -1,10 +1,10 @@
-import { vec3, type Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { type Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { GrabberElement3D, Grabber3D } from "./Grabber3D";
 import { LineGrabber3D } from "./LineGrabber3D";
 import { PointGrabber3D } from "./PointGrabber3D";
 import type { Config } from "@/system/engine/ConfiguredObject";
-import { euler } from "@/system/fivepebble/linear_algebra/Euler";
-import { color, color8code } from "@/system/fivepebble/graphics/Color";
+import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
+import { Color } from "@/system/fivepebble/graphics/Color";
 
 export class TranslateGrabber3D extends Grabber3D<Vector3> {
     private readonly axis_x_grabber: LineGrabber3D = new LineGrabber3D(this.config);
@@ -50,22 +50,22 @@ export class TranslateGrabber3D extends Grabber3D<Vector3> {
 
         this.on_RenderQueueChanged();
 
-        this.axis_x_grabber.local_rotation = euler(0, 0, - Math.PI / 2);
-        this.axis_x_grabber.color = color8code(red);
+        this.axis_x_grabber.local_rotation = Euler.create(0, 0, - Math.PI / 2);
+        this.axis_x_grabber.color = Color.color8code(red);
         this.axis_x_grabber.length = 0.8;
         this.axis_x_grabber.offset_length = 0.175;
 
-        this.axis_y_grabber.color = color8code(green);
+        this.axis_y_grabber.color = Color.color8code(green);
         this.axis_y_grabber.length = 0.8;
         this.axis_y_grabber.offset_length = 0.175;
 
-        this.axis_z_grabber.local_rotation = euler(Math.PI / 2, 0, 0);
-        this.axis_z_grabber.color = color8code(blue);
+        this.axis_z_grabber.local_rotation = Euler.create(Math.PI / 2, 0, 0);
+        this.axis_z_grabber.color = Color.color8code(blue);
         this.axis_z_grabber.length = 0.8;
         this.axis_z_grabber.offset_length = 0.175;
 
         this.center_grabber.radius = 0.075;
-        this.center_grabber.color = color8code(grey);
+        this.center_grabber.color = Color.color8code(grey);
 
         this.add_Child(this.axis_x_grabber);
         this.add_Child(this.axis_y_grabber);

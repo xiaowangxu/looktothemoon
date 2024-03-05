@@ -86,7 +86,7 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
         this.light_mask.fill(0xffffffff);
     }
 
-    static #index_array: [number, number] = [0, 0];
+    static readonly #index_array: [number, number] = [0, 0];
 
     private get_Index(id: number): [number, number] {
         RenderServerLightsData.#index_array[0] = id % this.texture_width;

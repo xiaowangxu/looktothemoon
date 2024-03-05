@@ -8,10 +8,10 @@ export class Matrix4 implements MatrixLike<Matrix4> {
     //#region init
 
     static get new() { return new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1); }
-    static create(n11: number, n12: number, n13: number, n14: number,
-        n21: number, n22: number, n23: number, n24: number,
-        n31: number, n32: number, n33: number, n34: number,
-        n41: number, n42: number, n43: number, n44: number,
+    static create(n11: number = 0, n12: number = 0, n13: number = 0, n14: number = 0,
+        n21: number = 0, n22: number = 0, n23: number = 0, n24: number = 0,
+        n31: number = 0, n32: number = 0, n33: number = 0, n34: number = 0,
+        n41: number = 0, n42: number = 0, n43: number = 0, n44: number = 0,
     ) {
         return new Matrix4(
             n11, n12, n13, n14,
@@ -22,6 +22,9 @@ export class Matrix4 implements MatrixLike<Matrix4> {
     }
 
     //#endregion
+
+    static readonly #const_matrix3_identity = new Matrix3();
+    static readonly #const_vector3_zero = new Vector3();
 
     // [ n11 n12 n13 n14 ]
     // [ n21 n22 n23 n24 ]
@@ -91,7 +94,6 @@ export class Matrix4 implements MatrixLike<Matrix4> {
             this.n31, this.n32, this.n33,
         );
     }
-
     public get_Basis(target: Matrix3): Matrix3 {
         target.n11 = this.n11; target.n12 = this.n12; target.n13 = this.n13;
         target.n21 = this.n21; target.n22 = this.n22; target.n23 = this.n23;
@@ -106,7 +108,6 @@ export class Matrix4 implements MatrixLike<Matrix4> {
             this.n34,
         );
     }
-
     public get_Position(target: Vector3): Vector3 {
         target.x = this.n14;
         target.y = this.n24;
@@ -114,10 +115,10 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         return target;
     }
 
-    constructor(n11: number, n12: number, n13: number, n14: number,
-        n21: number, n22: number, n23: number, n24: number,
-        n31: number, n32: number, n33: number, n34: number,
-        n41: number, n42: number, n43: number, n44: number,
+    constructor(n11: number = 1, n12: number = 0, n13: number = 0, n14: number = 0,
+        n21: number = 0, n22: number = 1, n23: number = 0, n24: number = 0,
+        n31: number = 0, n32: number = 0, n33: number = 1, n34: number = 0,
+        n41: number = 0, n42: number = 0, n43: number = 0, n44: number = 1,
     ) {
         this.n11 = n11;
         this.n12 = n12;
@@ -137,15 +138,6 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = n44;
     }
 
-    public static make_Identity(): Matrix4 {
-        return new Matrix4(
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1,
-        );
-    }
-
     public set_Identity() {
         this.n11 = 1; this.n12 = 0; this.n13 = 0; this.n14 = 0;
         this.n21 = 0; this.n22 = 1; this.n23 = 0; this.n24 = 0;
@@ -154,39 +146,12 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         return this;
     }
 
-    static #matrix3_identity = Matrix3.make_Identity();
-    static #vector3_zero = Vector3.create(0, 0, 0);
-
-    public static from_BasisPosition(basis: Matrix3 = Matrix4.#matrix3_identity, position: Vector3 = Matrix4.#vector3_zero): Matrix4 {
-        return new Matrix4(
-            basis.n11, basis.n12, basis.n13, position.x,
-            basis.n21, basis.n22, basis.n23, position.y,
-            basis.n31, basis.n32, basis.n33, position.z,
-            0 /*   */, 0 /*   */, 0 /*   */, 1 /*    */,
-        );
-    }
-
-    public set_BasisPosition(basis: Matrix3 = Matrix4.#matrix3_identity, position: Vector3 = Matrix4.#vector3_zero) {
+    public set_BasisPosition(basis: Matrix3 = Matrix4.#const_matrix3_identity, position: Vector3 = Matrix4.#const_vector3_zero) {
         this.n11 = basis.n11; this.n12 = basis.n12; this.n13 = basis.n13; this.n14 = position.x;
         this.n21 = basis.n21; this.n22 = basis.n22; this.n23 = basis.n23; this.n24 = position.y;
         this.n31 = basis.n31; this.n32 = basis.n32; this.n33 = basis.n33; this.n34 = position.z;
         this.n41 = 0 /*   */; this.n42 = 0 /*   */; this.n43 = 0 /*   */; this.n44 = 1 /*    */;
         return this;
-    }
-
-    public static make_PrespectiveProjection(left: number, right: number, top: number, bottom: number, near: number, far: number) {
-        const x = 2 * near / (right - left);
-        const y = 2 * near / (top - bottom);
-        const a = (right + left) / (right - left);
-        const b = (top + bottom) / (top - bottom);
-        const c = - (far + near) / (far - near);
-        const d = (- 2 * far * near) / (far - near);
-        return new Matrix4(
-            x, 0, a, 0,
-            0, y, b, 0,
-            0, 0, c, d,
-            0, 0, -1, 0,
-        );
     }
 
     public set_PrespectiveProjection(left: number, right: number, top: number, bottom: number, near: number, far: number) {
@@ -203,36 +168,12 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         return this;
     }
 
-    public static make_PerspectiveFovProjection(fov: number, aspect: number, near: number, far: number) {
-        const top = near * Math.tan(fov / 2);
-        const height = 2 * top;
-        const width = aspect * height;
-        const left = - 0.5 * width;
-        return Matrix4.make_PrespectiveProjection(left, left + width, top, top - height, near, far);
-    }
-
     public set_PerspectiveFovProjection(fov: number, aspect: number, near: number, far: number) {
         const top = near * Math.tan(fov / 2);
         const height = 2 * top;
         const width = aspect * height;
         const left = - 0.5 * width;
         return this.set_PrespectiveProjection(left, left + width, top, top - height, near, far);
-    }
-
-    public static make_OrthogonalProjection(left: number, right: number, top: number, bottom: number, near: number, far: number) {
-        const w = 1.0 / (right - left);
-        const h = 1.0 / (top - bottom);
-        const p = 1.0 / (far - near);
-        const x = (right + left) * w;
-        const y = (top + bottom) * h;
-        const z = (far + near) * p;
-        const z_inverse = - 2 * p;
-        return new Matrix4(
-            2 * w, 0, 0, - x,
-            0, 2 * h, 0, - y,
-            0, 0, z_inverse, - z,
-            0, 0, 0, 1,
-        );
     }
 
     public set_OrthogonalProjection(left: number, right: number, top: number, bottom: number, near: number, far: number) {
@@ -622,17 +563,4 @@ export class Matrix4 implements MatrixLike<Matrix4> {
             this.n44,
         );
     }
-}
-
-export function mat4(n11: number, n12: number, n13: number, n14: number,
-    n21: number, n22: number, n23: number, n24: number,
-    n31: number, n32: number, n33: number, n34: number,
-    n41: number, n42: number, n43: number, n44: number,
-) {
-    return new Matrix4(
-        n11, n12, n13, n14,
-        n21, n22, n23, n24,
-        n31, n32, n33, n34,
-        n41, n42, n43, n44,
-    );
 }

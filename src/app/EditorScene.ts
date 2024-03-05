@@ -7,11 +7,10 @@ import { KeyInputEvent } from "@/system/engine/inputs/events/KeyInputEvent";
 import { MouseButton, MouseButtonInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseButtonInputEvent";
 import { ShortCut } from "@/system/engine/inputs/ShortCut";
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
-import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
 import { BoxGeometryResource, CylinderGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
 import { NormalMaterialResource, PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
-import { color, color8, color8code } from "@/system/fivepebble/graphics/Color";
+import { Color } from "@/system/fivepebble/graphics/Color";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
@@ -47,6 +46,7 @@ import huli from 'res://huli.obj?url';
 import stanford_bunny from 'res://stanford-bunny.obj?url';
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { Pi, Tau } from "@/system/fivepebble/Scalar";
+import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 
 const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
     return {
@@ -108,19 +108,19 @@ export function createEditor() {
 
     // World 
     const World = new Node3D(DefaultConfig);
-    World.local_scale = vec3(0.01, 0.01, 0.01);
+    World.local_scale = Vector3.create(0.01, 0.01, 0.01);
     const ambient_light = new AmbientLight3D(DefaultConfig);
     ambient_light.intensity = 0.05;
     World.add_Child(ambient_light);
     const directional_light0 = new DirectionalLight3D(DefaultConfig);
-    directional_light0.color = vec3(0.9, 0.9, 1);
+    directional_light0.color = Vector3.create(0.9, 0.9, 1);
     directional_light0.intensity = 0.2;
-    directional_light0.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(vec3(0, 0, -1), vec3().normalize(vec3(-1, -1, 1))));
+    directional_light0.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 0, -1), Vector3.new.normalize(Vector3.create(-1, -1, 1))));
     World.add_Child(directional_light0);
     const directional_light1 = new DirectionalLight3D(DefaultConfig);
-    directional_light1.color = vec3(1, 0.9, 0.8);
+    directional_light1.color = Vector3.create(1, 0.9, 0.8);
     directional_light1.intensity = 0.1;
-    directional_light1.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(vec3(0, 0, -1), vec3().normalize(vec3(1, 1, -1))));
+    directional_light1.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 0, -1), Vector3.new.normalize(Vector3.create(1, 1, -1))));
     World.add_Child(directional_light1);
 
     const EditorSceneTree = new SceneTree(DefaultConfig, EditorViewportContainer);
@@ -152,20 +152,20 @@ export function createEditor() {
 
     for (let i = 0; i < count; i++) {
         for (let j = 0; j < count; j++) {
-            multi_geometry.set_InstanceTransform(i * count + j, Matrix4.from_BasisPosition(Matrix3.make_RotateX(Pi / 2), vec3(i * 2, j * 2, 0)), false);
+            multi_geometry.set_InstanceTransform(i * count + j, Matrix4.new.set_BasisPosition(Matrix3.new.set_RotateX(Pi / 2), Vector3.create(i * 2, j * 2, 0)), false);
         }
     }
 
     multi_geometry.commit_InstanceTransforms();
 
     const material = new StandardMaterialResource(DefaultConfig);
-    material.color = color(1, 1, 1, 1);
+    material.color = Color.create(1, 1, 1, 1);
 
     const Mesh1 = new MeshInstance3D(DefaultConfig);
     Mesh1.geometry = multi_geometry;
     Mesh1.material = material;
-    Mesh1.local_scale = vec3(100, 100, 100);
-    Mesh1.local_position = vec3(0, 0, -100);
+    Mesh1.local_scale = Vector3.create(100, 100, 100);
+    Mesh1.local_position = Vector3.create(0, 0, -100);
     Mesh1.local_visible = true;
 
     World.add_Child(Mesh1);
@@ -174,7 +174,7 @@ export function createEditor() {
     World.add_Child(TranslateGrabber);
 
     const point_light = new PointLight3D(DefaultConfig);
-    point_light.color = vec3(0, 1, 0);
+    point_light.color = Vector3.create(0, 1, 0);
     point_light.radius = 100.0;
     World.add_Child(point_light);
 
@@ -188,7 +188,7 @@ export function createEditor() {
     World.add_Child(TranslateGrabber2);
 
     const spot_light = new SpotLight3D(DefaultConfig);
-    spot_light.color = vec3(1, 0, 0);
+    spot_light.color = Vector3.create(1, 0, 0);
     World.add_Child(spot_light);
 
     TranslateGrabber2.signal_grabbing.connect(pos => {
@@ -206,8 +206,8 @@ export function createEditor() {
     // 	m.set_UniformOverride('u_color', color(0, 0, 0, 0.25));
     // 	m.material.transparent = true;
     // 	Mesh2.material = m;
-    // 	Mesh2.local_scale = vec3(1, 100, 100);
-    // 	Mesh2.local_position = vec3(i * 50, 0, 0);
+    // 	Mesh2.local_scale = Vector3.create(1, 100, 100);
+    // 	Mesh2.local_position = Vector3.create(i * 50, 0, 0);
     // 	World.add_Child(Mesh2);
     // }
 
@@ -216,26 +216,26 @@ export function createEditor() {
     // 		const Mesh2 = new MeshInstance3D();
     // 		Mesh2.geometry = geometry2;
     // 		Mesh2.material = material1;
-    // 		Mesh2.local_scale = vec3(10, 10, 10);
-    // 		Mesh2.local_position = vec3((i / 100 * 2 - 1) * 2000, (j / 100 * 2 - 1) * 2000, 0);
+    // 		Mesh2.local_scale = Vector3.create(10, 10, 10);
+    // 		Mesh2.local_position = Vector3.create((i / 100 * 2 - 1) * 2000, (j / 100 * 2 - 1) * 2000, 0);
     // 		World.add_Child(Mesh2);
     // 	}
     // }
 
     const multi_line_geometry = new MultiLineGeometryResource(DefaultConfig);
     const multi_line_material = new MultiLineMaterialResource(DefaultConfig);
-    multi_line_material.color = color8(0xd8, 0x2d, 0x4e);
+    multi_line_material.color = Color.color8(0xd8, 0x2d, 0x4e);
     const MeshLine = new MeshInstance3D(DefaultConfig);
     MeshLine.geometry = multi_line_geometry;
     MeshLine.material = multi_line_material;
-    MeshLine.local_scale = vec3(100, 100, 100);
-    MeshLine.local_position = vec3(0, 0, -50);
+    MeshLine.local_scale = Vector3.create(100, 100, 100);
+    MeshLine.local_position = Vector3.create(0, 0, -50);
     MeshLine.render_queue = 1;
     World.add_Child(MeshLine);
 
     const infinite_line_x = new InfiniteLine3D(DefaultConfig);
     const multi_line_material_x = new MultiLineMaterialResource(DefaultConfig);
-    multi_line_material_x.color = color8code(0xd82d4e33);
+    multi_line_material_x.color = Color.color8code(0xd82d4e33);
     // multi_line_material_x.line_width = 1;
     infinite_line_x.material = multi_line_material_x;
     infinite_line_x.render_queue = 1;
@@ -243,18 +243,18 @@ export function createEditor() {
     const infinite_line_y = new InfiniteLine3D(DefaultConfig);
     const multi_line_material_y = new MultiLineMaterialResource(DefaultConfig);
     // multi_line_material_y.line_width = 1;
-    multi_line_material_y.color = color8code(0x04b97344);
+    multi_line_material_y.color = Color.color8code(0x04b97344);
     infinite_line_y.material = multi_line_material_y;
     infinite_line_y.render_queue = 1;
-    infinite_line_y.ray = ray3(vec3(), vec3(0, 1, 0));
+    infinite_line_y.ray = ray3(Vector3.new, Vector3.create(0, 1, 0));
     World.add_Child(infinite_line_y);
     const infinite_line_z = new InfiniteLine3D(DefaultConfig);
     const multi_line_material_z = new MultiLineMaterialResource(DefaultConfig);
     // multi_line_material_z.line_width = 1;
-    multi_line_material_z.color = color8code(0x466fd644);
+    multi_line_material_z.color = Color.color8code(0x466fd644);
     infinite_line_z.material = multi_line_material_z;
     infinite_line_z.render_queue = 1;
-    infinite_line_z.ray = ray3(vec3(), vec3(0, 0, 1));
+    infinite_line_z.ray = ray3(Vector3.new, Vector3.create(0, 0, 1));
     World.add_Child(infinite_line_z);
 
     EditorViewport.signal_input.connect((evt, pro) => {
@@ -262,10 +262,10 @@ export function createEditor() {
             EditorSceneTree.start_Tween(
                 tween_parallel(
                     new MethodTween((v) => {
-                        multi_line_geometry.set_Point(1, vec3(1, v, 1));
+                        multi_line_geometry.set_Point(1, Vector3.create(1, v, 1));
                     }, 0.4, TweenTransitionType.Linear, TweenEasingType.Out),
                     new PropertyTween(point_light, 'radius', Math.random() * 10, 0.4, TweenTransitionType.Linear, TweenEasingType.Out),
-                    new PropertyTween(point_light, 'color', vec3(Math.random(), Math.random(), Math.random()), 0.4, TweenTransitionType.Linear, TweenEasingType.Out)
+                    new PropertyTween(point_light, 'color', Vector3.create(Math.random(), Math.random(), Math.random()), 0.4, TweenTransitionType.Linear, TweenEasingType.Out)
                 )
             );
         }
@@ -277,10 +277,10 @@ export function createEditor() {
     geo.build();
     ground.geometry = geo;
     const ground_material = new PlainColorMaterialResource(DefaultConfig);
-    ground_material.color = color(0.8, 0.8, 0.8);
+    ground_material.color = Color.create(0.8, 0.8, 0.8);
     ground.material = ground_material;
-    ground.local_scale = vec3(1000, 1, 1000);
-    ground.local_position = vec3(0, -100, 0);
+    ground.local_scale = Vector3.create(1000, 1, 1000);
+    ground.local_position = Vector3.create(0, -100, 0);
     World.add_Child(ground);
 
     EditorSceneTree.start_Loop();
@@ -298,8 +298,8 @@ export function createEditor() {
         const mesh = new MeshInstance3D(DefaultConfig);
         mesh.geometry = huli_geo;
         mesh.material = override_material;
-        mesh.local_scale = vec3(100, 100, 100);
-        mesh.local_position = vec3(-500, -100, 250);
+        mesh.local_scale = Vector3.create(100, 100, 100);
+        mesh.local_position = Vector3.create(-500, -100, 250);
         World.add_Child(mesh);
 
     });

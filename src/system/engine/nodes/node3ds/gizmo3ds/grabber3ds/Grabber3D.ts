@@ -7,8 +7,7 @@ import type { UniformInitSet } from "@/system/engine/render_server/RenderServerS
 import { Epsilon } from "@/system/fivepebble/Scalar";
 import { RenderStateUniformType, RenderStateShaderType } from "@/system/sliverofstraw/RenderState";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
-import { vec4 } from "@/system/fivepebble/linear_algebra/Vector4";
-import type { Color } from "@/system/fivepebble/graphics/Color";
+import { Color } from "@/system/fivepebble/graphics/Color";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { Node3D } from "../../Node3D";
 import { PrimitiveFragmentPreZShader, PrimitiveFragmentPreZShaderUniforms, PrimitiveVertexShader, PrimitiveVertexShaderUniforms } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
@@ -149,13 +148,13 @@ export class Grabber3D<T> extends Node3D {
 
 export class GrabberPlainColorMaterialResource extends MaterialResource {
 
-    static #uniforms: MaterialReadOnlyUniforms = {
+    static readonly #uniforms: MaterialReadOnlyUniforms = {
         model_world: RenderStateUniformType.Mat4,
         u_color: RenderStateUniformType.Vec4,
         u_hidden: RenderStateUniformType.Int,
     };
 
-    static #fragment_shade_shader = `#version 300 es
+    static readonly #fragment_shade_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -179,12 +178,12 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
         o_color = !(u_hidden == 1) || not_hidden ? u_color : hidden_color;
         o_normal = vec4(normalize(v_normal), 1.0);
     }`;
-    static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
-        u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
+    static readonly #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
+        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
         u_hidden: { type: RenderStateUniformType.Int, default: 1 },
         u_scene_depth: { type: RenderStateUniformType.Int, default: 0 },
     };
-    static #fragment_oit_shader = `#version 300 es
+    static readonly #fragment_oit_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -210,15 +209,15 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
         o_normal = vec4(v_normal, 1.0);
         ${RenderServerDevice.OitOutputCode}
     }`;
-    static #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
-        u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
+    static readonly #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
+        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
         u_hidden: { type: RenderStateUniformType.Int, default: 1 },
         u_scene_depth: { type: RenderStateUniformType.Int, default: 0 },
     };
 
     public get uniforms() { return GrabberPlainColorMaterialResource.#uniforms; }
 
-    private _color: Color = vec4(1, 1, 1, 1);
+    private _color: Color = Color.new;
     public get color() { return this._color; }
     public set color(color: Color) {
         if (!this._color.equal(color)) {

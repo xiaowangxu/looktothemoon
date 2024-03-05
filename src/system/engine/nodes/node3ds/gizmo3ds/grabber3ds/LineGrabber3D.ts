@@ -1,7 +1,7 @@
-import { Vector3, vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { GrabberElement3D, GrabberPlainColorMaterialResource } from "./Grabber3D";
 import { MeshInstance3D } from "../../visual_instance3ds/geometry3ds/MeshInstance3D";
-import { color8, type Color } from "@/system/fivepebble/graphics/Color";
+import { Color } from "@/system/fivepebble/graphics/Color";
 import { Epsilon, clamp, is_ApproxEqual } from "@/system/fivepebble/Scalar";
 import { Cacher } from "@/system/utils/Cacher";
 import { CylinderGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
@@ -19,6 +19,7 @@ import { PickingCylinderResource } from "@/system/engine/resources/picking_shape
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
+import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
 const ArrowTailGeometry = new Cacher((config: Config) => {
     const geometry = new CylinderGeometryResource(config);
@@ -49,7 +50,7 @@ const LineGrabberPickingShape = new Cacher((config: Config) => {
 
 export class LineGrabber3D extends GrabberElement3D<Vector3> {
 
-    static #tmp_vector3_0 = Vector3.new;
+    static readonly #tmp_vector3_0 = Vector3.new;
 
     private readonly arrow_tail: MeshInstance3D = new MeshInstance3D(this.config);
     private readonly arrow_head: MeshInstance3D = new MeshInstance3D(this.config);
@@ -102,7 +103,7 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         }
     }
 
-    private readonly _color: Color = color8(0xf8, 0x2d, 0x4e);
+    private readonly _color: Color = Color.color8(0xf8, 0x2d, 0x4e);
     public get color() { return this._color.clone(); }
     public set color(color: Color) {
         this._color.copy(color);
@@ -140,14 +141,14 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
     }
 
     private update_Transform() {
-        this.arrow_tail.local_scale = vec3(1, this.length, 1);
-        this.arrow_tail.local_position = vec3(0, this.length / 2 + this.offset_length, 0);
-        this.arrow_head.local_position = vec3(0, this.length + this.offset_length + 0.1, 0);
-        this.area.local_position = vec3(0, this.offset_length + this.area_offset_length, 0);
-        this.area.local_scale = vec3(1, this.length + 0.2 - this.area_offset_length, 1);
+        this.arrow_tail.local_scale = Vector3.create(1, this.length, 1);
+        this.arrow_tail.local_position = Vector3.create(0, this.length / 2 + this.offset_length, 0);
+        this.arrow_head.local_position = Vector3.create(0, this.length + this.offset_length + 0.1, 0);
+        this.area.local_position = Vector3.create(0, this.offset_length + this.area_offset_length, 0);
+        this.area.local_scale = Vector3.create(1, this.length + 0.2 - this.area_offset_length, 1);
     }
 
-    private readonly visual_color: Color = color8(0xf8, 0x2d, 0x4e);
+    private readonly visual_color: Color = Color.color8(0xf8, 0x2d, 0x4e);
     private visual_opacity: number = 1.0;
 
     private update_Visual() {
@@ -180,9 +181,9 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         else {
             const cam = camera.get_Camera();
             const size = viewport.size;
-            const a = cam.project_Point(this.arrow_head.global_position)
+            const a = cam.project_Point(this.arrow_head.global_position, Vector2.new);
             a.mult(a, size); // new Vector3().fromArray(this.arrow_head.global_position.array).project(cam);
-            const b = cam.project_Point(this.global_position);
+            const b = cam.project_Point(this.global_position, Vector2.new);
             b.mult(b, size); //new Vector3().fromArray(this.global_position.array).project(cam);
             const distance = a.distance_to(b) / 150;
             const opactiy = (clamp(distance, 0.1, 0.35) - 0.1) * 4;
@@ -210,7 +211,7 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         this.on_RenderQueueChanged();
 
         this.shape.shape = LineGrabberPickingShape.get(this.config).expect;
-        this.shape.local_position = vec3(0, 0.5, 0);
+        this.shape.local_position = Vector3.create(0, 0.5, 0);
 
         this.area.signal_mouse_entered.connect(() => {
             this.is_hovering = true;
@@ -300,7 +301,7 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         dir.sub(dir, this.global_position);
         dir.normalize(dir);
         const r0 = new Ray3(this.global_position, dir);
-        const r1 = camera.project_Ray(evt.position_normalized);
+        const r1 = camera.project_Ray(evt.position_normalized, undefined, Ray3.new);
         const [p0, _] = r0.get_ClosestPointsUncapped(r1);
         return p0;
     }

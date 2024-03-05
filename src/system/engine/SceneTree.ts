@@ -94,6 +94,7 @@ export class SceneTree extends ConfiguredObject {
             this.root.propagate_InternalBeforeRender(this.delta, redundant_before_render);
             viewport.render();
             redundant_before_render = true;
+            this.current_camera_3d = undefined;
         }
         // queue free
         for (const node of this.node_queued_free) {

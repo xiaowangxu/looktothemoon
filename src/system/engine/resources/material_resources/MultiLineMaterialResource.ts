@@ -6,21 +6,21 @@ import { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
 import type { UniformInitSet } from "../../render_server/RenderServerShader";
 import { MaterialResource, type MaterialReadOnlyUniforms } from "./MaterialResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
-import { Vector4, vec4 } from "@/system/fivepebble/linear_algebra/Vector4";
-import type { Color } from "@/system/fivepebble/graphics/Color";
+import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import { Color } from "@/system/fivepebble/graphics/Color";
 import type { Config } from "../../ConfiguredObject";
 import { Cacher } from "@/system/utils/Cacher";
 
 export class MultiLineMaterialResource extends MaterialResource {
 
-    static #uniforms: MaterialReadOnlyUniforms = {
+    static readonly #uniforms: MaterialReadOnlyUniforms = {
         model_world: RenderStateUniformType.Mat4,
         u_color: RenderStateUniformType.Vec4,
         u_linewidth: RenderStateUniformType.Float,
         u_consider_pixel_ratio: RenderStateUniformType.Int,
     };
 
-    static #vertex_shader = `#version 300 es
+    static readonly #vertex_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -128,12 +128,12 @@ export class MultiLineMaterialResource extends MaterialResource {
     
         // vec4 mvPosition = (a_position.y < 0.5) ? start : end; // this is an approximation
     }`;
-    static #vertex_uniforms: UniformInitSet<WebGL2RenderState> = {
-        model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.make_Identity() },
+    static readonly #vertex_uniforms: UniformInitSet<WebGL2RenderState> = {
+        model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.new },
         u_linewidth: { type: RenderStateUniformType.Float, default: 2 },
         u_consider_pixel_ratio: { type: RenderStateUniformType.Int, default: 1 },
     };
-    static #fragment_prez_shader = `#version 300 es
+    static readonly #fragment_prez_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -147,8 +147,8 @@ export class MultiLineMaterialResource extends MaterialResource {
     void main() {
         o_normal = vec4(0.0, 0.0, 1.0, 1.0);
     }`;
-    static #fragment_prez_uniforms: UniformInitSet<WebGL2RenderState> = {};
-    static #fragment_shade_shader = `#version 300 es
+    static readonly #fragment_prez_uniforms: UniformInitSet<WebGL2RenderState> = {};
+    static readonly #fragment_shade_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -172,10 +172,10 @@ export class MultiLineMaterialResource extends MaterialResource {
         o_color = u_color;
         o_normal = vec4(0.0, 0.0, 1.0, 1.0);
     }`;
-    static #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
-        u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
+    static readonly #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
+        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
     };
-    static #fragment_oit_shader = `#version 300 es
+    static readonly #fragment_oit_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -201,8 +201,8 @@ export class MultiLineMaterialResource extends MaterialResource {
         o_normal = vec4(0.0, 0.0, 1.0, 1.0);
         ${RenderServerDevice.OitOutputCode}
     }`;
-    static #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
-        u_color: { type: RenderStateUniformType.Vec4, default: vec4(1, 1, 1, 1) },
+    static readonly #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
+        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
     };
 
     public get uniforms() { return MultiLineMaterialResource.#uniforms; }

@@ -7,6 +7,10 @@ import { InputEventFromViewport } from "../events/InputEventFromViewport";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
 export class ViewportMouseInputEventManager {
+
+    static #tmp_vector2_0 = Vector2.new;
+    static #tmp_vector2_1 = Vector2.new;
+
     private readonly viewport: Viewport;
 
     private get config() { return this.viewport.config; }
@@ -32,8 +36,12 @@ export class ViewportMouseInputEventManager {
 
     private _mouse_position: Vector2 = Vector2.new;
     private _mouse_position_normalized: Vector2 = Vector2.new;
-    public get mouse_position() { return this._mouse_position; }
-    public get mouse_position_normalized() { return this._mouse_position_normalized; }
+
+    public get mouse_position() { return this._mouse_position.clone(); }
+    public get_MousePosition(target: Vector2) { return target.copy(this._mouse_position); }
+
+    public get mouse_position_normalized() { return this._mouse_position_normalized.clone(); }
+    public get_MousePositionNormalized(target: Vector2) { return target.copy(this._mouse_position_normalized); }
 
     private readonly mouse_button_map: Map<MouseButton, boolean> = new Map([
         [MouseButton.Left, false],
@@ -85,8 +93,8 @@ export class ViewportMouseInputEventManager {
     private update_MousePosition(event: MouseEvent) {
         const { x, y } = this.canvas_size;
         const { offsetX, offsetY } = event;
-        this._mouse_position = Vector2.create(offsetX, offsetY);
-        this._mouse_position_normalized = Vector2.create(
+        this._mouse_position.set(offsetX, offsetY);
+        this._mouse_position_normalized.set(
             x === 0 ? 0 : (offsetX / x * 2 - 1),
             y === 0 ? 0 : (1 - offsetY / y * 2)
         );
@@ -115,18 +123,16 @@ export class ViewportMouseInputEventManager {
 
     private _on_MouseMoved = this.on_MouseMoved.bind(this);
     private on_MouseMoved(event: MouseEvent) {
-        const last_mouse_position = this.mouse_position;
-        const last_mouse_position_normalized = this.mouse_position_normalized;
+        const last_mouse_position = ViewportMouseInputEventManager.#tmp_vector2_0.copy(this._mouse_position);
+        const last_mouse_position_normalized = ViewportMouseInputEventManager.#tmp_vector2_1.copy(this._mouse_position_normalized);
         this.update_MousePosition(event);
-        const new_mouse_position = this.mouse_position;
-        const new_mouse_position_normalized = this.mouse_position_normalized;
-        const relative = Vector2.new.sub(new_mouse_position, last_mouse_position);
-        const relative_normalized = Vector2.new.sub(new_mouse_position_normalized, last_mouse_position_normalized);
+        const relative = last_mouse_position.sub(this._mouse_position, last_mouse_position);
+        const relative_normalized = last_mouse_position_normalized.sub(this._mouse_position_normalized, last_mouse_position_normalized);
         this.trigger_MouseEvent(
             new MouseMotionInputEvent(this.config)
                 .set_Viewport(this.viewport)
                 .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
-                .set_Position(this.mouse_position, this.mouse_position_normalized)
+                .set_Position(this._mouse_position, this._mouse_position_normalized)
                 .set_Motion(relative, relative_normalized)
         );
     }
@@ -138,7 +144,7 @@ export class ViewportMouseInputEventManager {
             new MouseButtonInputEvent(this.config)
                 .set_Viewport(this.viewport)
                 .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
-                .set_Position(this.mouse_position, this.mouse_position_normalized)
+                .set_Position(this._mouse_position, this._mouse_position_normalized)
                 .set_Button(this.get_MouseButton(event), true, false, false)
         );
     }
@@ -150,7 +156,7 @@ export class ViewportMouseInputEventManager {
             new MouseButtonInputEvent(this.config)
                 .set_Viewport(this.viewport)
                 .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
-                .set_Position(this.mouse_position, this.mouse_position_normalized)
+                .set_Position(this._mouse_position, this._mouse_position_normalized)
                 .set_Button(this.get_MouseButton(event), false, false, false)
         );
     }
@@ -161,7 +167,7 @@ export class ViewportMouseInputEventManager {
             new MouseButtonInputEvent(this.config)
                 .set_Viewport(this.viewport)
                 .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
-                .set_Position(this.mouse_position, this.mouse_position_normalized)
+                .set_Position(this._mouse_position, this._mouse_position_normalized)
                 .set_Button(MouseButton.Left, false, true, false)
         );
     }
@@ -172,7 +178,7 @@ export class ViewportMouseInputEventManager {
             new MouseButtonInputEvent(this.config)
                 .set_Viewport(this.viewport)
                 .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
-                .set_Position(this.mouse_position, this.mouse_position_normalized)
+                .set_Position(this._mouse_position, this._mouse_position_normalized)
                 .set_Button(MouseButton.Left, false, false, true)
         );
     }
@@ -184,7 +190,7 @@ export class ViewportMouseInputEventManager {
             new MouseButtonInputEvent(this.config)
                 .set_Viewport(this.viewport)
                 .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
-                .set_Position(this.mouse_position, this.mouse_position_normalized)
+                .set_Position(this._mouse_position, this._mouse_position_normalized)
                 .set_Button(MouseButton.Right, false, true, false)
         );
     }
@@ -197,7 +203,7 @@ export class ViewportMouseInputEventManager {
             new MouseButtonInputEvent(this.config)
                 .set_Viewport(this.viewport)
                 .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
-                .set_Position(this.mouse_position, this.mouse_position_normalized)
+                .set_Position(this._mouse_position, this._mouse_position_normalized)
                 .set_Button(button, true, false, false)
         );
     }

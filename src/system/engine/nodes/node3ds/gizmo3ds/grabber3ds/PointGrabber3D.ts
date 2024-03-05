@@ -7,16 +7,17 @@ import { PickingArea3D } from "../../physics3ds/PickingArea3D";
 import { PickingShape3D } from "../../physics3ds/PickingShape3D";
 import { MeshInstance3D } from "../../visual_instance3ds/geometry3ds/MeshInstance3D";
 import { GrabberElement3D, GrabberPlainColorMaterialResource } from "./Grabber3D";
-import { Vector3, vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { MaterialOverrideResource } from "@/system/engine/resources/material_resources/MaterialResource";
 import { Ref } from "@/system/utils/RefCounted";
 import { Cacher } from "@/system/utils/Cacher";
 import type { Config } from "@/system/engine/ConfiguredObject";
-import { color8, type Color } from "@/system/fivepebble/graphics/Color";
+import { Color } from "@/system/fivepebble/graphics/Color";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { SphereGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
 import type { InputEvent } from "@/system/engine/inputs/InputEvent";
 import { Plane3 } from "@/system/fivepebble/geometries/Plane3";
+import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 
 const PointGeometry = new Cacher((config: Config) => {
     const geometry = new SphereGeometryResource(config);
@@ -35,7 +36,7 @@ const PointPickingShape = new Cacher((config: Config) => {
 
 export class PointGrabber3D extends GrabberElement3D<Vector3> {
 
-    static #tmp_vector3_0 = Vector3.new;
+    static readonly #tmp_vector3_0 = Vector3.new;
 
     private readonly point: MeshInstance3D = new MeshInstance3D(this.config);
     private readonly area: PickingArea3D = new PickingArea3D(this.config);
@@ -70,7 +71,7 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
     }
 
     private update_Transform() {
-        this.point.local_scale = vec3(this.radius, this.radius, this.radius);
+        this.point.local_scale = Vector3.create(this.radius, this.radius, this.radius);
     }
 
     private readonly _color: Color = new Vector4(0.5, 0.5, 0.5, 1.0);
@@ -107,7 +108,7 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
         }
     }
 
-    private readonly visual_color: Color = color8(0xf8, 0x2d, 0x4e);
+    private readonly visual_color: Color = Color.color8(0xf8, 0x2d, 0x4e);
 
     private update_Visual() {
         if (this.is_hovering) {
@@ -223,7 +224,7 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
         const camera = camera_3d?.get_Camera();
         if (camera_3d === undefined || camera === undefined) return undefined;
         const plane = Plane3.from_PointAndNormal(this.global_position, Vector3.new.normalize(PointGrabber3D.#tmp_vector3_0.sub(camera_3d.global_position, camera_3d.to_Global(new Vector3(0, 0, -1)))));
-        const ray = camera.project_Ray(evt.position_normalized);
+        const ray = camera.project_Ray(evt.position_normalized, undefined, Ray3.new);
         const point = plane.intersect_Ray(ray);
         if (point === undefined) return undefined;
         return point;

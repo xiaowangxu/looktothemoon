@@ -1,7 +1,7 @@
 import { RenderDeviceAttributeBufferView, RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceVector3AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { Cacher } from "@/system/utils/Cacher";
 import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
-import { Vector3, vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { GeometryResource } from "./GeometryResource";
 import { Ref } from "@/system/utils/RefCounted";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
@@ -13,14 +13,14 @@ import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
 const PositionAttributeBuffer = new Cacher((config: Config) => {
     return new Ref(new RenderDeviceVector3AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
-        vec3(- 1, 2, 0),
-        vec3(1, 2, 0),
-        vec3(- 1, 1, 0),
-        vec3(1, 1, 0),
-        vec3(- 1, 0, 0),
-        vec3(1, 0, 0),
-        vec3(- 1, - 1, 0),
-        vec3(1, - 1, 0),
+        Vector3.create(- 1, 2, 0),
+        Vector3.create(1, 2, 0),
+        Vector3.create(- 1, 1, 0),
+        Vector3.create(1, 1, 0),
+        Vector3.create(- 1, 0, 0),
+        Vector3.create(1, 0, 0),
+        Vector3.create(- 1, - 1, 0),
+        Vector3.create(1, - 1, 0),
     ]));
 });
 
@@ -47,7 +47,7 @@ export class MultiLineGeometryResource extends GeometryResource {
     private readonly start_attribute_buffer_ref: Ref<RenderDeviceAttributeBufferView<WebGL2RenderState, WebGL2RenderStateBuffer>> = new Ref();
     private readonly end_attribute_buffer_ref: Ref<RenderDeviceAttributeBufferView<WebGL2RenderState, WebGL2RenderStateBuffer>> = new Ref();
 
-    private readonly _base_bbox: Box3 = box3(vec3(0, 0, 0), vec3(1, 0, 0));
+    private readonly _base_bbox: Box3 = box3(Vector3.create(0, 0, 0), Vector3.create(1, 0, 0));
     private readonly _bbox: Box3 = box3();
     private _bbox_margin: number = 0.1;
     public get bbox_margin() { return this._bbox_margin; }
@@ -61,7 +61,7 @@ export class MultiLineGeometryResource extends GeometryResource {
     constructor(config: Config) {
         super(config);
         this.geometry_ref.value = this.render_server.create_Geometry();
-        this.points_attribute_buffer_ref.value = new RenderDeviceVector3AttributeBuffer(this.render_server, RenderStateBufferUsage.DynamicDraw, [vec3(0, 0, 0), vec3(1, 0, 0)], 1);
+        this.points_attribute_buffer_ref.value = new RenderDeviceVector3AttributeBuffer(this.render_server, RenderStateBufferUsage.DynamicDraw, [Vector3.create(0, 0, 0), Vector3.create(1, 0, 0)], 1);
         this.start_attribute_buffer_ref.value = new RenderDeviceAttributeBufferView(this.render_server, this.points_attribute_buffer_ref.expect, 1, 0);
         this.end_attribute_buffer_ref.value = new RenderDeviceAttributeBufferView(this.render_server, this.points_attribute_buffer_ref.expect, 1, 1);
         this.geometry.set_Geometry(

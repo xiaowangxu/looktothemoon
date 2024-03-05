@@ -8,7 +8,10 @@ export class MouseMotionInputEvent extends MouseInputEvent {
     private readonly _relative_normalized: Vector2 = new Vector2();
 
     public get relative() { return this._relative.clone(); }
+    public get_Relative(target: Vector2) { return target.copy(this._relative); }
+    
     public get relative_normalized() { return this._relative_normalized.clone(); }
+    public get_RelativeNormalized(target: Vector2) { return target.copy(this.relative_normalized); }
 
     public set_Motion(relative: Vector2, relative_normalized: Vector2) {
         this._relative.copy(relative);

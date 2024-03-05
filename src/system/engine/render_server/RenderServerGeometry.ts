@@ -132,7 +132,7 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
         this.vertex_array_index_ref.clear();
     }
 
-    static #zero_vec3: Vector3 = new Vector3(0, 0, 0);
+    static readonly #zero_vec3: Vector3 = new Vector3(0, 0, 0);
 
     public clear_Geometry() {
         this.clear_GeometryInternal();

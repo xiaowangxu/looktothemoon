@@ -169,7 +169,3 @@ export class Euler {
         return new Euler(this.x, this.y, this.z, this.order);
     }
 }
-
-export function euler(x: number = 0, y: number = 0, z: number = 0, order: EulerOrder = EulerOrder.XYZ) {
-    return new Euler(x, y, z, order);
-}
