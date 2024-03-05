@@ -2,7 +2,6 @@ import { RenderDeviceAttributeBufferView, RenderDeviceIndexAttributeBuffer, Rend
 import { Cacher } from "@/system/utils/Cacher";
 import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
 import { Vector3, vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { GeometryResource } from "./GeometryResource";
 import { Ref } from "@/system/utils/RefCounted";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
@@ -10,6 +9,7 @@ import type { WebGL2RenderStateBuffer } from "@/system/sliverofstraw/webgl2/webg
 import { Box3, box3 } from "@/system/fivepebble/geometries/Box3";
 import type { Config } from "../../ConfiguredObject";
 import { RenderServerGeometryAttributeLoctions } from "../../render_server/RenderServerGeometry";
+import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
 const PositionAttributeBuffer = new Cacher((config: Config) => {
     return new Ref(new RenderDeviceVector3AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
@@ -26,14 +26,14 @@ const PositionAttributeBuffer = new Cacher((config: Config) => {
 
 const UVAttributeBuffer = new Cacher((config: Config) => {
     return new Ref(new RenderDeviceVector2AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
-        vec2(- 1, 2),
-        vec2(1, 2),
-        vec2(- 1, 1),
-        vec2(1, 1),
-        vec2(- 1, - 1),
-        vec2(1, - 1),
-        vec2(- 1, - 2),
-        vec2(1, - 2),
+        Vector2.create(- 1, 2),
+        Vector2.create(1, 2),
+        Vector2.create(- 1, 1),
+        Vector2.create(1, 1),
+        Vector2.create(- 1, - 1),
+        Vector2.create(1, - 1),
+        Vector2.create(- 1, - 2),
+        Vector2.create(1, - 2),
     ]));
 });
 

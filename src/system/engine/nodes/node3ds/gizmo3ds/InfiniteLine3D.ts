@@ -72,7 +72,7 @@ export class InfiniteLine3D extends MeshInstance3D {
             this.local_position = points[0]!;
             const s = points[0]!.distance_to(points[1]!);
             this.local_scale = vec3(s, s, s);
-            this.local_rotation = Euler.from_Quaternion(Quaternion.make_Rotate(vec3(1, 0, 0), InfiniteLine3D.#tmp_vector3_0._direction_to(points[0]!, points[1]!)));
+            this.local_rotation = Euler.from_Quaternion(Quaternion.make_Rotate(vec3(1, 0, 0), InfiniteLine3D.#tmp_vector3_0.direction_to(points[0]!, points[1]!)));
         }
     }
 }

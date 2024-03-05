@@ -17,9 +17,9 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     public normal: Vector3;
     public distance: number;
 
-    get center() { return Vector3.new._mult_Number(this.normal, this.distance); }
+    get center() { return Vector3.new.mult_Number(this.normal, this.distance); }
     get_Center(target: Vector3): Vector3 {
-        return target._mult_Number(this.normal, this.distance);
+        return target.mult_Number(this.normal, this.distance);
     }
 
     constructor(normal: Vector3, distance: number) {
@@ -43,18 +43,18 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
 
     public static from_Points(a: Vector3, b: Vector3, c: Vector3, clockwise: boolean = false) {
         if (clockwise) {
-            const normal = Vector3.new._normalize(
+            const normal = Vector3.new.normalize(
                 Plane3.#tmp_vector3_2._cross(
-                    Plane3.#tmp_vector3_0._sub(a, c),
-                    Plane3.#tmp_vector3_1._sub(a, b),
+                    Plane3.#tmp_vector3_0.sub(a, c),
+                    Plane3.#tmp_vector3_1.sub(a, b),
                 )
             );
             return new Plane3(normal, normal.dot(a));
         } else {
-            const normal = Vector3.new._normalize(
+            const normal = Vector3.new.normalize(
                 Plane3.#tmp_vector3_2._cross(
-                    Plane3.#tmp_vector3_0._sub(a, b),
-                    Plane3.#tmp_vector3_1._sub(a, c),
+                    Plane3.#tmp_vector3_0.sub(a, b),
+                    Plane3.#tmp_vector3_1.sub(a, c),
                 )
             );
             return new Plane3(normal, normal.dot(a));
@@ -67,14 +67,14 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     public set_Points(a: Vector3, b: Vector3, c: Vector3, clockwise: boolean = false) {
         const vetcor3_0 = Plane3.#vector3_0;
         const vetcor3_1 = Plane3.#vector3_1;
-        const a_sub_c = vetcor3_0._sub(a, c);
-        const a_sub_b = vetcor3_1._sub(a, b);
+        const a_sub_c = vetcor3_0.sub(a, c);
+        const a_sub_b = vetcor3_1.sub(a, b);
         if (clockwise) {
             this.normal._cross(a_sub_c, a_sub_b);
-            this.normal._normalize(this.normal);
+            this.normal.normalize(this.normal);
         } else {
             this.normal._cross(a_sub_b, a_sub_c);
-            this.normal._normalize(this.normal);
+            this.normal.normalize(this.normal);
         }
         this.distance = this.normal.dot(a);
         return this;
@@ -83,13 +83,13 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     public static from_Components(x: number, y: number, z: number, d: number) {
         const normal = new Vector3(x, y, z);
         const length = normal.length;
-        return new Plane3(normal._div_Number(normal, length), d / length);
+        return new Plane3(normal.div_Number(normal, length), d / length);
     }
 
     public set_Components(x: number, y: number, z: number, d: number) {
         this.normal.set(x, y, z);
         const length = this.normal.length;
-        this.normal._normalize(this.normal);
+        this.normal.normalize(this.normal);
         this.distance = d / length;
         return this;
     }
@@ -105,21 +105,21 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     }
 
     project_Point(point: Vector3) {
-        return Vector3.new._add_Scaled(point, -this.signed_distance_to_Point(point), this.normal);
+        return Vector3.new.add_Scaled(point, -this.signed_distance_to_Point(point), this.normal);
     }
 
     // #endregion
 
     public apply_Matrix4(mat: Matrix4, non_uniform_scale: boolean = false) {
-        const point = Vector3.new._mult_Number(this.normal, this.distance);
+        const point = Vector3.new.mult_Number(this.normal, this.distance);
         point._apply_Matrix4(point, mat);
-        const normal = Vector3.new._transform(
+        const normal = Vector3.new.transform(
             this.normal,
             non_uniform_scale ?
                 mat.basis :
                 mat.basis.inverse().transpose()
         )
-        normal._normalize(normal);
+        normal.normalize(normal);
         const distance = normal.dot(point);
         return new Plane3(normal, distance);
     }
@@ -183,7 +183,7 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
         if (dist > Epsilon) { //this is a ray, before the emitting pos (p_from) doesn't exist
             return undefined;
         }
-        return Vector3.new._add_Scaled(ray.origin, -dist, segment);
+        return Vector3.new.add_Scaled(ray.origin, -dist, segment);
     }
 
     public intersect_UncappedRay(ray: Ray3): Vector3 | undefined {
@@ -193,11 +193,11 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
             return undefined;
         }
         const dist = (this.normal.dot(ray.origin) - this.distance) / den;
-        return Vector3.new._add_Scaled(ray.origin, -dist, segment);
+        return Vector3.new.add_Scaled(ray.origin, -dist, segment);
     }
 
     public intersect_Line(line: Line3): Vector3 | undefined {
-        const segment = Vector3.new._sub(line.start, line.end);
+        const segment = Vector3.new.sub(line.start, line.end);
         const den = this.normal.dot(segment);
         if (is_ApproxZero(den)) {
             return undefined;
@@ -206,7 +206,7 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
         if (dist < -Epsilon || dist > (1 + Epsilon)) {
             return undefined;
         }
-        return Vector3.new._add_Scaled(line.start, -dist, segment);
+        return Vector3.new.add_Scaled(line.start, -dist, segment);
     }
 
     equal(b: Plane3): boolean {

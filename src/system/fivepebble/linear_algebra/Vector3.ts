@@ -8,6 +8,7 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
     //#region tmp
 
     public static get new() { return new Vector3(); }
+    public static create(x: number = 0, y: number = 0, z: number = 0) { return new Vector3(x, y, z); }
 
     //#endregion
 
@@ -61,77 +62,77 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         }
     }
 
-    _add(a: Vector3, b: Vector3): Vector3 {
+    add(a: Vector3, b: Vector3): Vector3 {
         this.x = a.x + b.x;
         this.y = a.y + b.y;
         this.z = a.z + b.z;
         return this;
     }
 
-    _add_Number(a: Vector3, b: number): Vector3 {
+    add_Number(a: Vector3, b: number): Vector3 {
         this.x = a.x + b;
         this.y = a.y + b;
         this.z = a.z + b;
         return this;
     }
 
-    _sub(a: Vector3, b: Vector3): Vector3 {
+    sub(a: Vector3, b: Vector3): Vector3 {
         this.x = a.x - b.x;
         this.y = a.y - b.y;
         this.z = a.z - b.z;
         return this;
     }
 
-    _sub_Number(a: Vector3, b: number): Vector3 {
+    sub_Number(a: Vector3, b: number): Vector3 {
         this.x = a.x - b;
         this.y = a.y - b;
         this.z = a.z - b;
         return this;
     }
 
-    _mult(a: Vector3, b: Vector3): Vector3 {
+    mult(a: Vector3, b: Vector3): Vector3 {
         this.x = a.x * b.x;
         this.y = a.y * b.y;
         this.z = a.z * b.z;
         return this;
     }
 
-    _mult_Number(a: Vector3, b: number): Vector3 {
+    mult_Number(a: Vector3, b: number): Vector3 {
         this.x = a.x * b;
         this.y = a.y * b;
         this.z = a.z * b;
         return this;
     }
 
-    _div(a: Vector3, b: Vector3): Vector3 {
+    div(a: Vector3, b: Vector3): Vector3 {
         this.x = a.x / b.x;
         this.y = a.y / b.y;
         this.z = a.z / b.z;
         return this;
     }
 
-    _div_Number(a: Vector3, b: number): Vector3 {
+    div_Number(a: Vector3, b: number): Vector3 {
         this.x = a.x / b;
         this.y = a.y / b;
         this.z = a.z / b;
         return this;
     }
 
-    _add_Scaled(a: Vector3, num: number, b: Vector3): Vector3 {
+    add_Scaled(a: Vector3, num: number, b: Vector3): Vector3 {
         this.x = a.x + num * b.x;
         this.y = a.y + num * b.y;
         this.z = a.z + num * b.z;
         return this;
     }
 
-    _lerp(a: Vector3, b: Vector3, weight: number): Vector3 {
+    lerp(a: Vector3, b: Vector3, weight: number): Vector3 {
         this.x = lerp(a.x, b.x, weight);
         this.y = lerp(a.y, b.y, weight);
         this.z = lerp(a.z, b.z, weight);
         return this;
     }
 
-    _transform(a: Vector3, matrix: Matrix3): Vector3 {
+    transform(a: Vector3, matrix: Matrix3): Vector3 {
         const n11 = matrix.n11, n21 = matrix.n21, n31 = matrix.n31;
         const n12 = matrix.n12, n22 = matrix.n22, n32 = matrix.n32;
         const n13 = matrix.n13, n23 = matrix.n23, n33 = matrix.n33;
@@ -142,7 +143,7 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         return this;
     }
 
-    _normalize(a: Vector3): Vector3 {
+    normalize(a: Vector3): Vector3 {
         const length = a.length;
         this.x = a.x / length;
         this.y = a.y / length;
@@ -150,7 +151,7 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         return this;
     }
 
-    _negate(a: Vector3): Vector3 {
+    negate(a: Vector3): Vector3 {
         this.x = -a.x;
         this.y = -a.y;
         this.z = -a.z;
@@ -166,19 +167,19 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         this.z = a.x * b.y - a.y * b.x;
         return this;
     }
-    _min(a: Vector3, b: Vector3): Vector3 {
+    min(a: Vector3, b: Vector3): Vector3 {
         this.x = Math.min(a.x, b.x);
         this.y = Math.min(a.y, b.y);
         this.z = Math.min(a.z, b.z);
         return this;
     }
-    _max(a: Vector3, b: Vector3): Vector3 {
+    max(a: Vector3, b: Vector3): Vector3 {
         this.x = Math.max(a.x, b.x);
         this.y = Math.max(a.y, b.y);
         this.z = Math.max(a.z, b.z);
         return this;
     }
-    _abs(a: Vector3): Vector3 {
+    abs(a: Vector3): Vector3 {
         this.x = Math.abs(a.x);
         this.y = Math.abs(a.y);
         this.z = Math.abs(a.z);
@@ -196,9 +197,9 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         const z = this.z - b.z;
         return x * x + y * y + z * z;
     }
-    _direction_to(a: Vector3, b: Vector3) {
-        this._sub(b, a);
-        this._normalize(this);
+    direction_to(a: Vector3, b: Vector3) {
+        this.sub(b, a);
+        this.normalize(this);
         return this;
     }
 

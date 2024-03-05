@@ -7,7 +7,8 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
 
     //#region tmp
 
-    public static get new() { return new Vector2(); }
+    public static get new() { return new Vector2(0, 0); }
+    public static create(x: number = 0, y: number = 0) { return new Vector2(x, y); }
 
     //#endregion
 
@@ -23,7 +24,7 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
     get min_component(): number { return Math.min(this.x, this.y); }
     get max_component(): number { return Math.max(this.x, this.y); }
 
-    constructor(x: number = 0, y: number = 0) {
+    private constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
     }
@@ -56,67 +57,67 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
         }
     }
 
-    _add(a: Vector2, b: Vector2): Vector2 {
+    add(a: Vector2, b: Vector2): Vector2 {
         this.x = a.x + b.x;
         this.y = a.y + b.y;
         return this;
     }
 
-    _add_Number(a: Vector2, b: number): Vector2 {
+    add_Number(a: Vector2, b: number): Vector2 {
         this.x = a.x + b;
         this.y = a.y + b;
         return this;
     }
 
-    _sub(a: Vector2, b: Vector2): Vector2 {
+    sub(a: Vector2, b: Vector2): Vector2 {
         this.x = a.x - b.x;
         this.y = a.y - b.y;
         return this;
     }
 
-    _sub_Number(a: Vector2, b: number): Vector2 {
+    sub_Number(a: Vector2, b: number): Vector2 {
         this.x = a.x - b;
         this.y = a.y - b;
         return this;
     }
 
-    _mult(a: Vector2, b: Vector2): Vector2 {
+    mult(a: Vector2, b: Vector2): Vector2 {
         this.x = a.x * b.x;
         this.y = a.y * b.y;
         return this;
     }
 
-    _mult_Number(a: Vector2, b: number): Vector2 {
+    mult_Number(a: Vector2, b: number): Vector2 {
         this.x = a.x * b;
         this.y = a.y * b;
         return this;
     }
 
-    _div(a: Vector2, b: Vector2): Vector2 {
+    div(a: Vector2, b: Vector2): Vector2 {
         this.x = a.x / b.x;
         this.y = a.y / b.y;
         return this;
     }
 
-    _div_Number(a: Vector2, b: number): Vector2 {
+    div_Number(a: Vector2, b: number): Vector2 {
         this.x = a.x / b;
         this.y = a.y / b;
         return this;
     }
 
-    _add_Scaled(a: Vector2, num: number, b: Vector2): Vector2 {
+    add_Scaled(a: Vector2, num: number, b: Vector2): Vector2 {
         this.x = a.x + num * b.x;
         this.y = a.y + num * b.y;
         return this;
     }
 
-    _lerp(a: Vector2, b: Vector2, weight: number): Vector2 {
+    lerp(a: Vector2, b: Vector2, weight: number): Vector2 {
         this.x = lerp(a.x, b.x, weight);
         this.y = lerp(a.y, b.y, weight);
         return this;
     }
 
-    _transform(a: Vector2, matrix: Matrix2): Vector2 {
+    transform(a: Vector2, matrix: Matrix2): Vector2 {
         const n11 = matrix.n11, n12 = matrix.n12;
         const n21 = matrix.n21, n22 = matrix.n22;
         const x = a.x, y = a.y;
@@ -125,14 +126,14 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
         return this;
     }
 
-    _normalize(a: Vector2): Vector2 {
+    normalize(a: Vector2): Vector2 {
         const length = a.length;
         this.x = a.x / length;
         this.y = a.y / length;
         return this;
     }
 
-    _negate(a: Vector2): Vector2 {
+    negate(a: Vector2): Vector2 {
         this.x = -a.x;
         this.y = -a.y;
         return this;
@@ -144,17 +145,17 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
     cross(b: Vector2): number {
         return this.x * b.y - b.x * this.y;
     }
-    _min(a: Vector2, b: Vector2): Vector2 {
+    min(a: Vector2, b: Vector2): Vector2 {
         this.x = Math.min(a.x, b.x);
         this.y = Math.min(a.y, b.y);
         return this;
     }
-    _max(a: Vector2, b: Vector2): Vector2 {
+    max(a: Vector2, b: Vector2): Vector2 {
         this.x = Math.max(a.x, b.x);
         this.y = Math.max(a.y, b.y);
         return this;
     }
-    _abs(a: Vector2): Vector2 {
+    abs(a: Vector2): Vector2 {
         this.x = Math.abs(a.x);
         this.y = Math.abs(a.y);
         return this;
@@ -169,9 +170,9 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
         const y = this.y - b.y;
         return x * x + y * y;
     }
-    _direction_to(a: Vector2, b: Vector2): Vector2 {
-        this._sub(b, a);
-        return this._normalize(this);
+    direction_to(a: Vector2, b: Vector2): Vector2 {
+        this.sub(b, a);
+        return this.normalize(this);
     }
 
     equal(b: Vector2): boolean {
@@ -190,8 +191,4 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
     clone(): Vector2 {
         return new Vector2(this.x, this.y);
     }
-}
-
-export function vec2(x: number = 0, y: number = 0) {
-    return new Vector2(x, y);
 }

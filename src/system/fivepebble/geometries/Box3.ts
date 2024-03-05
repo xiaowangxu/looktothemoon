@@ -9,7 +9,7 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
     public readonly min: Vector3;
     public readonly max: Vector3;
 
-    get size() { return Vector3.new._sub(this.max, this.min); }
+    get size() { return Vector3.new.sub(this.max, this.min); }
     get_Size(target: Vector3): Vector3 {
         target.x = this.max.x - this.min.x;
         target.y = this.max.y - this.min.y;
@@ -40,36 +40,36 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
         let max = point0.clone();
         for (let i = 1; i < length; i++) {
             const point = points[i];
-            min._min(min, point);
-            max._max(max, point);
+            min.min(min, point);
+            max.max(max, point);
         }
         return new Box3(min, max);
     }
 
     enlarge(amount: number): BoxLike<Vector3, Matrix3> {
-        return new Box3(Vector3.new._sub_Number(this.min, amount), Vector3.new._add_Number(this.max, amount));
+        return new Box3(Vector3.new.sub_Number(this.min, amount), Vector3.new.add_Number(this.max, amount));
     }
     enlarges(a: BoxLike<Vector3, Matrix3>, amount: number): BoxLike<Vector3, Matrix3> {
-        this.min._sub_Number(a.min, amount);
-        this.max._add_Number(a.max, amount);
+        this.min.sub_Number(a.min, amount);
+        this.max.add_Number(a.max, amount);
         return this;
     }
 
     merge(b: BoxLike<Vector3, Matrix3>): BoxLike<Vector3, Matrix3> {
-        return new Box3(Vector3.new._min(this.min, b.min), Vector3.new._max(this.max, b.max));
+        return new Box3(Vector3.new.min(this.min, b.min), Vector3.new.max(this.max, b.max));
     }
     merges(a: BoxLike<Vector3, Matrix3>, b: BoxLike<Vector3, Matrix3>): BoxLike<Vector3, Matrix3> {
-        this.min._min(a.min, b.min);
-        this.max._max(a.max, b.max);
+        this.min.min(a.min, b.min);
+        this.max.max(a.max, b.max);
         return this;
     }
 
     grow(b: Vector3): Box3 {
-        return new Box3(Vector3.new._min(this.min, b), Vector3.new._max(this.max, b));
+        return new Box3(Vector3.new.min(this.min, b), Vector3.new.max(this.max, b));
     }
     grows(a: Box3, b: Vector3): Box3 {
-        this.min._min(a.min, b);
-        this.max._max(a.max, b);
+        this.min.min(a.min, b);
+        this.max.max(a.max, b);
         return this;
     }
 

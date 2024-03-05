@@ -108,7 +108,7 @@ export class PickingBoxResource extends PickingShape3DResource {
             }
         }
 
-        const rel = PickingBoxResource.#tmp_vector3_0._sub(to, from);
+        const rel = PickingBoxResource.#tmp_vector3_0.sub(to, from);
 
         const normal = new Vector3();
         switch (axis) {
@@ -118,7 +118,7 @@ export class PickingBoxResource extends PickingShape3DResource {
         }
 
         const result = from.clone();
-        result._add_Scaled(result, min, rel);
+        result.add_Scaled(result, min, rel);
 
         return { position: result, normal: normal };
     }
@@ -161,17 +161,17 @@ export class PickingSphereResource extends PickingShape3DResource {
     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
         if (this.radius < Epsilon) return undefined;
 
-        const sphere_pos = PickingSphereResource.#tmp_vector3_0._negate(from);
-        const rel =  PickingSphereResource.#tmp_vector3_1._sub(to, from);
+        const sphere_pos = PickingSphereResource.#tmp_vector3_0.negate(from);
+        const rel =  PickingSphereResource.#tmp_vector3_1.sub(to, from);
         const rel_l = rel.length;
 
         if (rel_l < Epsilon) {
             return undefined;
         }
-        const normal = rel._div_Number(rel, rel_l);
+        const normal = rel.div_Number(rel, rel_l);
 
         const sphere_d = sphere_pos.dot(normal);
-        const ray_distance = sphere_pos.distance_to( PickingSphereResource.#tmp_vector3_2._mult_Number(normal, sphere_d));
+        const ray_distance = sphere_pos.distance_to( PickingSphereResource.#tmp_vector3_2.mult_Number(normal, sphere_d));
 
         if (ray_distance >= this.radius) {
             return undefined;
@@ -190,8 +190,8 @@ export class PickingSphereResource extends PickingShape3DResource {
         }
 
         const result_position = from.clone();
-        result_position._add_Scaled(result_position, inters_d, normal);
-        const result_normal = result_position.clone()._normalize(result_position);
+        result_position.add_Scaled(result_position, inters_d, normal);
+        const result_normal = result_position.clone().normalize(result_position);
 
         return { position: result_position, normal: result_normal };
     }
@@ -238,7 +238,7 @@ export class PickingCylinderResource extends PickingShape3DResource {
     }
 
     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
-        const rel =  PickingCylinderResource.#tmp_vector3_0._sub(to, from);
+        const rel =  PickingCylinderResource.#tmp_vector3_0.sub(to, from);
         const rel_l = rel.length;
         if (rel_l < Epsilon) {
             return undefined;
@@ -247,7 +247,7 @@ export class PickingCylinderResource extends PickingShape3DResource {
         const cylinder_axis = new Vector3(0, 1, 0);
 
         // First check if they are parallel.
-        const normal = PickingCylinderResource.#tmp_vector3_1._div_Number(rel, rel_l);
+        const normal = PickingCylinderResource.#tmp_vector3_1.div_Number(rel, rel_l);
         const crs = PickingCylinderResource.#tmp_vector3_2._cross(normal, cylinder_axis);
         const crs_l = crs.length;
 
@@ -256,7 +256,7 @@ export class PickingCylinderResource extends PickingShape3DResource {
         if (crs_l < Epsilon) {
             axis_dir = PickingCylinderResource.#tmp_vector3_3.set(0, 0, 1); // Any side axis OK.
         } else {
-            axis_dir = PickingCylinderResource.#tmp_vector3_3._div_Number(crs, crs_l);
+            axis_dir = PickingCylinderResource.#tmp_vector3_3.div_Number(crs, crs_l);
         }
 
         const dist = axis_dir.dot(from);
@@ -275,7 +275,7 @@ export class PickingCylinderResource extends PickingShape3DResource {
 
         const side_dir = axis_dir.clone()
         side_dir._cross(side_dir, cylinder_axis)
-        side_dir._normalize(side_dir);
+        side_dir.normalize(side_dir);
 
         const from2D = new Vector2(side_dir.dot(from), from.y);
         const to2D = new Vector2(side_dir.dot(to), to.y);
@@ -321,7 +321,7 @@ export class PickingCylinderResource extends PickingShape3DResource {
         }
 
         // Convert to 3D again.
-        const result = Vector3.new._add_Scaled(from, min, rel);
+        const result = Vector3.new.add_Scaled(from, min, rel);
         const res_normal = result.clone();
 
         if (axis == 0) {
@@ -331,7 +331,7 @@ export class PickingCylinderResource extends PickingShape3DResource {
             res_normal.z = 0;
         }
 
-        res_normal._normalize(res_normal);
+        res_normal.normalize(res_normal);
 
         return { position: result, normal: res_normal };
     }

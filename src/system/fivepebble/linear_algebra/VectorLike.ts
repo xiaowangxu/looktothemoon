@@ -13,44 +13,26 @@ export interface VectorLike<Vec extends VectorLike<Vec, Mat>, Mat extends Matrix
 
     index(index: number): number;
 
-    _add(a: Vec, b: Vec): Vec;
-
-    _add_Number(a: Vec, b: number): Vec;
-
-    _sub(a: Vec, b: Vec): Vec;
-
-    _sub_Number(a: Vec, b: number): Vec;
-
-    _mult(a: Vec, b: Vec): Vec;
-
-    _mult_Number(a: Vec, b: number): Vec;
-
-    _div(a: Vec, b: Vec): Vec;
-
-    _div_Number(a: Vec, b: number): Vec;
-
-    _add_Scaled(a: Vec, num: number, b: Vec): Vec;
-
-    _lerp(a: Vec, b: Vec, weight: number): Vec;
-
-    _transform(a: Vec, matrix: Mat): Vec;
-
-    _normalize(a: Vec): Vec;
-
-    _negate(a: Vec): Vec;
-
+    add(a: Vec, b: Vec): Vec;
+    add_Number(a: Vec, b: number): Vec;
+    sub(a: Vec, b: Vec): Vec;
+    sub_Number(a: Vec, b: number): Vec;
+    mult(a: Vec, b: Vec): Vec;
+    mult_Number(a: Vec, b: number): Vec;
+    div(a: Vec, b: Vec): Vec;
+    div_Number(a: Vec, b: number): Vec;
+    add_Scaled(a: Vec, num: number, b: Vec): Vec;
+    lerp(a: Vec, b: Vec, weight: number): Vec;
+    transform(a: Vec, matrix: Mat): Vec;
+    normalize(a: Vec): Vec;
+    negate(a: Vec): Vec;
     dot(b: Vec): number;
-
-    _min(a: Vec, b: Vec): Vec;
-
-    _max(a: Vec, b: Vec): Vec;
-
-    _abs(a: Vec): Vec;
-
+    min(a: Vec, b: Vec): Vec;
+    max(a: Vec, b: Vec): Vec;
+    abs(a: Vec): Vec;
     distance_to(b: Vec): number;
     squared_distance_to(b: Vec): number;
-
-    _direction_to(a: Vec, b: Vec): Vec;
+    direction_to(a: Vec, b: Vec): Vec;
 
     equal(b: Vec): boolean;
     set(...args: number[]): Vec;

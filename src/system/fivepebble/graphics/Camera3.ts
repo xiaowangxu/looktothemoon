@@ -139,8 +139,8 @@ export class OrthographicCamera3 extends Camera3 {
 
     unproject_Normal(point: Vector2): Vector3 {
         const n = new Vector3(0, 0, -1);
-        n._transform(n, this._global_transform.basis);
-        n._normalize(n);
+        n.transform(n, this._global_transform.basis);
+        n.normalize(n);
         return n;
     }
 
@@ -226,7 +226,7 @@ export class PerspectiveCamera3 extends Camera3 {
 
     unproject_Normal(ndc: Vector2): Vector3 {
         const p = this.unproject_Point(ndc, this.near);
-        return p._direction_to(this._global_transform.position, p);
+        return p.direction_to(this._global_transform.position, p);
     }
 
     clone(): PerspectiveCamera3 {

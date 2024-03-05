@@ -103,8 +103,8 @@ export class DirectionalLight3D extends LightInstance3D {
                         const vec = DirectionalLight3D.#vector3;
                         vec.set(0, 0, -1);
                         vec._apply_Matrix4(vec, this.global_transform);
-                        vec._direction_to(this._global_position, vec);
-                        vec._negate(vec);
+                        vec.direction_to(this._global_position, vec);
+                        vec.negate(vec);
                         visual_world.set_LightGlobalPosition(this.light_rid, vec);
                     }
                     if (this.is_global_visible_changed) {

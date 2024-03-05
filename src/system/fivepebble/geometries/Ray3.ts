@@ -21,10 +21,10 @@ export class Ray3 implements RayLike<Vector3, Matrix3> {
     }
 
     get_Point(distance: number): Vector3 {
-        return Vector3.new._add_Scaled(this.origin, distance, this.direction);
+        return Vector3.new.add_Scaled(this.origin, distance, this.direction);
     }
     gets_Point(distance: number, target: Vector3): Vector3 {
-        return target._add_Scaled(this.origin, distance, this.direction);
+        return target.add_Scaled(this.origin, distance, this.direction);
     }
 
     get_Line(start: number, end: number): Line3 {
@@ -40,20 +40,20 @@ export class Ray3 implements RayLike<Vector3, Matrix3> {
         return new Ray3(
             Vector3.new._apply_Matrix4(this.origin, mat),
             non_uniform_scale ?
-                Vector3.new._normalize(Ray3.#tmp_vector3_0._transform(this.direction, mat.basis)) :
-                Vector3.new._normalize(Ray3.#tmp_vector3_0._transform(this.direction, mat.basis.inverse().transpose()))
+                Vector3.new.normalize(Ray3.#tmp_vector3_0.transform(this.direction, mat.basis)) :
+                Vector3.new.normalize(Ray3.#tmp_vector3_0.transform(this.direction, mat.basis.inverse().transpose()))
         );
     }
 
     public get_ClosestPointUncapped(p: Vector3): Vector3 {
-        const _p = Vector3.new._sub(p, this.origin);
+        const _p = Vector3.new.sub(p, this.origin);
         const n = this.direction;
         const l2 = n.squared_length;
         if (l2 < Epsilon) {
             return this.origin.clone(); // Both points are the same, just give any.
         }
         const d = n.dot(_p) / l2;
-        return Vector3.new._add_Scaled(this.origin, d, n); // Inside.
+        return Vector3.new.add_Scaled(this.origin, d, n); // Inside.
     }
 
     public get_ClosestPointsUncapped(l1: Ray3): [p0: Vector3, p1: Vector3] {
@@ -69,12 +69,12 @@ export class Ray3 implements RayLike<Vector3, Matrix3> {
         }
 
         const n_length_sq = n.squared_length;
-        const r = Ray3.#tmp_vector3_1._sub(r2, r1);
+        const r = Ray3.#tmp_vector3_1.sub(r2, r1);
 
         const t1 = Ray3.#tmp_vector3_2._cross(e2, n).dot(r) / (n_length_sq);
         const t2 = Ray3.#tmp_vector3_2._cross(e1, n).dot(r) / (n_length_sq);
 
-        return [Vector3.new._add_Scaled(r1, t1, e1), Vector3.new._add_Scaled(r2, t2, e2)];
+        return [Vector3.new.add_Scaled(r1, t1, e1), Vector3.new.add_Scaled(r2, t2, e2)];
     }
 
     equal(b: Ray3): boolean {

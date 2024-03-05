@@ -2,7 +2,7 @@ import type { Camera3D } from "./node3ds/camera3ds/Camera3D";
 import type { ClassReader, ClassWriter } from "../classes/saver_loader/ClassWriterReader";
 import type { PickingArea3D } from "./node3ds/physics3ds/PickingArea3D";
 import { SceneTree } from "../SceneTree";
-import { Vector2, vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { SignalEmitter } from "../../utils/SignalEmitter";
 import { EditorRenderer3D } from "../renderer/renderer_3d/EditorRenderer3D";
 import { World3D } from "../worlds/world3ds/World3D";
@@ -397,7 +397,7 @@ export class Viewport extends Node {
         }
     }
 
-    private readonly _size: Vector2 = vec2(0, 0);
+    private readonly _size: Vector2 = Vector2.new;
     private is_size_dirty: boolean = false;
     public get size(): Vector2 {
         return this._size.clone();
@@ -411,7 +411,7 @@ export class Viewport extends Node {
         }
     }
 
-    private readonly _position: Vector2 = vec2(0, 0);
+    private readonly _position: Vector2 = Vector2.new;
     private is_position_changed: boolean = false;
     public get position(): Vector2 {
         return this._position.clone();

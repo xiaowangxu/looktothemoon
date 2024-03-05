@@ -134,8 +134,8 @@ export class ObjLoader {
                                 }
                                 else {
                                     ObjLoader.#vector3.set(x, y, z);
-                                    this.bbox.min.mins(this.bbox.min, ObjLoader.#vector3);
-                                    this.bbox.max.maxs(this.bbox.max, ObjLoader.#vector3);
+                                    this.bbox.min.min(this.bbox.min, ObjLoader.#vector3);
+                                    this.bbox.max.max(this.bbox.max, ObjLoader.#vector3);
                                 }
                             }
                             // Vertex textures

@@ -105,7 +105,7 @@ export class PickingWorld3D extends ConfiguredObject {
                     const _res_position = res.position.clone();
                     const _res_normal = res.normal.clone();
                     const position = preserve_global_transform ? _res_position : _res_position._apply_Matrix4(_res_position, global_transform);
-                    const normal = preserve_global_transform ? _res_normal : _res_normal._apply_Matrix4(_res_normal, global_transform)._normalize(_res_normal);
+                    const normal = preserve_global_transform ? _res_normal : _res_normal._apply_Matrix4(_res_normal, global_transform).normalize(_res_normal);
                     const distance = position.distance_to(from);
                     result.push(new RayPickingResult(area.area, position, normal, distance, distance + distance_offset, area.priority));
                 }

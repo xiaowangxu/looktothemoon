@@ -11,20 +11,20 @@ import { Cacher } from "@/system/utils/Cacher";
 import { RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { WebGL2RenderStateIntUniformSlot, WebGL2RenderStateUintUniformSlot } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 import { RenderServerDevice } from "../../render_server/RenderServer";
-import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { RenderServerShaderPass } from "../../render_server/RenderServerShader";
 import { RenderServerMaterialCullFace } from "../../render_server/RenderServerMaterial";
 import type { Viewport } from "../../nodes/Node";
 import type { World3D } from "../../worlds/world3ds/World3D";
+import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
 // #region quad surface
 
 const QuadGeometry = new Cacher((config: Config) => {
     const quad_position = new RenderDeviceVector2AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
-		/* 0 */vec2(-1, 1),			//   1  0 ------ 2
-		/* 1 */vec2(-1, -1),		//   |  |        |
-		/* 2 */vec2(1, 1),			//   |  |        |
-		/* 3 */vec2(1, -1),			//  -1  1 ------ 3
+		/* 0 */Vector2.create(-1, 1),			//   1  0 ------ 2
+		/* 1 */Vector2.create(-1, -1),		//   |  |        |
+		/* 2 */Vector2.create(1, 1),			//   |  |        |
+		/* 3 */Vector2.create(1, -1),			//  -1  1 ------ 3
         /*                        *///     -1 ------ 1
     ]);
     const quad_index = new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 1, 2, 3]);

@@ -8,7 +8,6 @@ import { RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer } 
 import type { SceneTree } from "../../SceneTree";
 import { Ref, RefArray } from "@/system/utils/RefCounted";
 import type { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
-import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import type { RenderServerMaterial } from "../../render_server/RenderServerMaterial";
@@ -23,15 +22,16 @@ import { Cacher } from "@/system/utils/Cacher";
 import type { WebGL2RenderStateProgram } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateProgram";
 import { RenderServerLightType, RenderServerLightsData } from "../../render_server/RenderServerLightData";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
 // #region sky
 
 const SkyQuadGeometry = new Cacher((config: Config) => {
     const quad_position = new RenderDeviceVector2AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
-	      /* 0 */vec2(-1, 1),			//   1  0 ------ 2
-	      /* 1 */vec2(-1, -1),		//   |  |        |
-	      /* 2 */vec2(1, 1),			//   |  |        |
-	      /* 3 */vec2(1, -1),			//  -1  1 ------ 3
+	      /* 0 */Vector2.create(-1, 1),			//   1  0 ------ 2
+	      /* 1 */Vector2.create(-1, -1),		//   |  |        |
+	      /* 2 */Vector2.create(1, 1),			//   |  |        |
+	      /* 3 */Vector2.create(1, -1),			//  -1  1 ------ 3
         /*                    *///     -1 ------ 1
     ]);
     const quad_index = new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 1, 2, 3]);
@@ -389,7 +389,7 @@ export class VisualWorld3DLight extends WorldObject {
     public fill_LightData(lights_data: RenderServerLightsData, idx: number, lid: number): number {
         if (idx >= lights_data.max_light_count) return idx;
         const color = VisualWorld3DLight.#color;
-        color._mult_Number(this.color, this.intensity);
+        color.mult_Number(this.color, this.intensity);
         lights_data.set_Light(idx, this.type, lid, this.position, this.direction, color, this.attenuation, this.layer, this.param_0, this.param_1, this.param_2, this.param_3, this.shadow_bias, this.shadow_normal_bias, this.shadow_opacity, undefined);
         return idx;
     }

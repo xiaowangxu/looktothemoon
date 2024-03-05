@@ -8,7 +8,7 @@ export class Line3 implements LineLike<Vector3, Matrix3> {
     public readonly end: Vector3;
 
     public get length() { return this.start.distance_to(this.end); }
-    public get direction() { return Vector3.new._direction_to(this.start, this.end); }
+    public get direction() { return Vector3.new.direction_to(this.start, this.end); }
 
     constructor(start: Vector3, end: Vector3) {
         this.start = start;

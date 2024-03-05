@@ -4,8 +4,7 @@ import { MouseButton, MouseButtonInputEvent } from "../events/mouse_events/Mouse
 import { MouseMotionInputEvent } from "../events/mouse_events/MouseMotionInputEvent";
 import { MouseEnterLeaveInputEvent } from "../events/mouse_events/MouseEnterLeaveInputEvent";
 import { InputEventFromViewport } from "../events/InputEventFromViewport";
-import { Vector2, vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
-import type { MouseInputEvent } from "../events/mouse_events/MouseInputEvent";
+import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
 export class ViewportMouseInputEventManager {
     private readonly viewport: Viewport;
@@ -31,8 +30,8 @@ export class ViewportMouseInputEventManager {
     }
     public get is_mouse_inside() { return this._is_mouse_inside; }
 
-    private _mouse_position: Vector2 = vec2(0, 0);
-    private _mouse_position_normalized: Vector2 = vec2(0, 0);
+    private _mouse_position: Vector2 = Vector2.new;
+    private _mouse_position_normalized: Vector2 = Vector2.new;
     public get mouse_position() { return this._mouse_position; }
     public get mouse_position_normalized() { return this._mouse_position_normalized; }
 
@@ -86,8 +85,8 @@ export class ViewportMouseInputEventManager {
     private update_MousePosition(event: MouseEvent) {
         const { x, y } = this.canvas_size;
         const { offsetX, offsetY } = event;
-        this._mouse_position = vec2(offsetX, offsetY);
-        this._mouse_position_normalized = vec2(
+        this._mouse_position = Vector2.create(offsetX, offsetY);
+        this._mouse_position_normalized = Vector2.create(
             x === 0 ? 0 : (offsetX / x * 2 - 1),
             y === 0 ? 0 : (1 - offsetY / y * 2)
         );
@@ -121,8 +120,8 @@ export class ViewportMouseInputEventManager {
         this.update_MousePosition(event);
         const new_mouse_position = this.mouse_position;
         const new_mouse_position_normalized = this.mouse_position_normalized;
-        const relative = Vector2.new._sub(new_mouse_position, last_mouse_position);
-        const relative_normalized = Vector2.new._sub(new_mouse_position_normalized, last_mouse_position_normalized);
+        const relative = Vector2.new.sub(new_mouse_position, last_mouse_position);
+        const relative_normalized = Vector2.new.sub(new_mouse_position_normalized, last_mouse_position_normalized);
         this.trigger_MouseEvent(
             new MouseMotionInputEvent(this.config)
                 .set_Viewport(this.viewport)

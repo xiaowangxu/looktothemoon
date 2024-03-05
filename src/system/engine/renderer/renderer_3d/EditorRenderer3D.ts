@@ -3,7 +3,7 @@ import { World3D } from "../../worlds/world3ds/World3D";
 import { RenderServerDevice } from "../../render_server/RenderServer";
 import { RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType } from "../../../sliverofstraw/RenderState";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer } from "../../../sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
-import { Vector2, vec2 } from "../../../fivepebble/linear_algebra/Vector2";
+import { Vector2 } from "../../../fivepebble/linear_algebra/Vector2";
 import { WebGL2RenderStateIntUniformSlot, WebGL2RenderStateUintUniformSlot } from "../../../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 import { Ref } from "../../../utils/RefCounted";
 import type { WebGL2RenderStateTexture } from "../../../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
@@ -18,10 +18,10 @@ import { plane3 } from "@/system/fivepebble/geometries/Plane3";
 // #region quad surface
 const QuadGeometry = new Cacher((config: Config) => {
     const quad_position = new RenderDeviceVector2AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
-        /* 0 */ vec2(-1, 1),
-        /* 1 */ vec2(-1, -1),
-        /* 2 */ vec2(1, 1),
-        /* 3 */ vec2(1, -1), //  -1  1 ------ 3
+        /* 0 */ Vector2.create(-1, 1),
+        /* 1 */ Vector2.create(-1, -1),
+        /* 2 */ Vector2.create(1, 1),
+        /* 3 */ Vector2.create(1, -1), //  -1  1 ------ 3
         /*                        */ //     -1 ------ 1
     ]);
     const quad_index = new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 1, 2, 3]);
@@ -130,7 +130,7 @@ export class EditorRenderer3D extends Renderer3D {
         }
     }
 
-    static #size: Vector2 = vec2();
+    static #size: Vector2 = Vector2.new;
     static #frustum: Frustum3 = frustum3();
 
     public render(world: World3D, viewport: Viewport, once: boolean): void {
