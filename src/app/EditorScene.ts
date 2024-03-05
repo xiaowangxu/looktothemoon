@@ -53,7 +53,7 @@ const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
         render_server: new RenderServerDevice(canvas),
         render_server_pixel_ratio: undefined,
         render_server_scale: 1,
-        physics_fps: 60,
+        physics_fps: 30,
     } as Config;
 });
 

@@ -33,9 +33,7 @@ export class IncTopoGraph<T> implements Iterable<IncTopoGraphNode<T>>{
         return this.sorted[Symbol.iterator]();
     }
 
-    constructor() {
-
-    }
+    constructor() { }
 
     public add(item: T) {
         const node = this.nodes_map.get(item);
