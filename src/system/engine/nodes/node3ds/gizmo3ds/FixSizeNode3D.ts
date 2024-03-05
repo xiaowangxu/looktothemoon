@@ -56,9 +56,9 @@ export class FixSizeNode3D extends Node3D {
         if (this.consider_pixel_ratio) height *= this.config.render_server.pixel_ratio;
         const center_ray = camera.project_Ray(Vector2.create(0, 0), 0, Ray3.new);
         const top_ray = camera.project_Ray(Vector2.create(0, 1), 0, Ray3.new);
-        const center = center_ray.get_Point(1);
+        const center = center_ray.get_Point(1, Vector3.new);
         const plane = FixSizeNode3D.#plane.set_PointAndNormal(center, center_ray.direction);
-        const top = plane.intersect_UncappedRay(top_ray);
+        const top = plane.intersect_UncappedRay(top_ray, Vector3.new);
         if (top === undefined) return;
         const distance = center.distance_to(top);
         const is_persp = !camera.is_orthogonal;

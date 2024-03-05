@@ -1,7 +1,7 @@
 import { type BvhLike, type BvhShape } from "./BvhLike";
 import { Vector3 } from "../linear_algebra/Vector3";
 import type { Matrix3 } from "../linear_algebra/Matrix3";
-import { Box3, box3 } from "../geometries/Box3";
+import { Box3 } from "../geometries/Box3";
 import { Epsilon } from "../Scalar";
 import type { Ray3 } from "../geometries/Ray3";
 
@@ -60,13 +60,13 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
             const aabb = shape.aabb as AABB3;
             this.shape_aabbs.push(aabb);
             this.shape_aabbs_map.set(shape, aabb);
-            root_aabb.merges(root_aabb, aabb);
+            root_aabb.merge(root_aabb, aabb);
         }
         this.root = this.build_Internal(this.root, root_aabb, shapes, 0);
     }
 
     static readonly #vector3: Vector3 = Vector3.new;
-    static readonly #centroid: AABB3 = box3();
+    static readonly #centroid: AABB3 = Box3.new;
 
     private get_CentriodAABB(shapes: BvhShape<Vector3, Matrix3>[], target: AABB3) {
         let cminx = Infinity;
@@ -478,8 +478,8 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
                 }
             }
             const node = new BvhNode3(parent, depth, parent_aabb, shapes, undefined, undefined);
-            node.left = this.build_Internal(node, box3(Vector3.create(left_minx, left_miny, left_minz), Vector3.create(left_maxx, left_maxy, left_maxz)), left, depth + 1);
-            node.right = this.build_Internal(node, box3(Vector3.create(right_minx, right_miny, right_minz), Vector3.create(right_maxx, right_maxy, right_maxz)), right, depth + 1);
+            node.left = this.build_Internal(node, Box3.create(Vector3.create(left_minx, left_miny, left_minz), Vector3.create(left_maxx, left_maxy, left_maxz)), left, depth + 1);
+            node.right = this.build_Internal(node, Box3.create(Vector3.create(right_minx, right_miny, right_minz), Vector3.create(right_maxx, right_maxy, right_maxz)), right, depth + 1);
             return node;
         }
     }

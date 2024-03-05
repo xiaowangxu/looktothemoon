@@ -1,11 +1,11 @@
 import { GeometryResource } from "./GeometryResource";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceVector3AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
-import { box3 } from "@/system/fivepebble/geometries/Box3";
 import { Pi, Tau, clamp } from '@/system/fivepebble/Scalar';
 import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
 import type { Config } from "../../ConfiguredObject";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { Box3 } from "@/system/fivepebble/geometries/Box3";
 
 export abstract class PrimitiveGeometryResource extends GeometryResource {
     constructor(config: Config) {
@@ -173,7 +173,7 @@ export class BoxGeometryResource extends PrimitiveGeometryResource {
             },
             index_buffer,
             36,
-            box3(Vector3.create(-half_w, -half_h, -half_d), Vector3.create(half_w, half_h, half_d))
+            Box3.create(Vector3.create(-half_w, -half_h, -half_d), Vector3.create(half_w, half_h, half_d))
         );
         this.geometry.add_Surface(0 * index_buffer.per_element_byte_count, 6);
         this.geometry.add_Surface(6 * index_buffer.per_element_byte_count, 6);
@@ -325,7 +325,7 @@ export class TorusGeometryResource extends PrimitiveGeometryResource {
             },
             index_buffer,
             index_count,
-            box3(
+            Box3.create(
                 Vector3.create(-outer_radius, -outer_radius, -tube_radius),
                 Vector3.create(outer_radius, outer_radius, tube_radius),
             )
@@ -563,7 +563,7 @@ export class CylinderGeometryResource extends PrimitiveGeometryResource {
             },
             index_buffer,
             index_count,
-            box3(
+            Box3.create(
                 Vector3.create(-max_radius, -half_height, -max_radius),
                 Vector3.create(max_radius, half_height, max_radius),
             )
@@ -712,7 +712,7 @@ export class SphereGeometryResource extends PrimitiveGeometryResource {
             },
             index_buffer,
             index_buffer.item_count,
-            box3(
+            Box3.create(
                 Vector3.create(-radius, -radius, -radius),
                 Vector3.create(radius, radius, radius),
             )

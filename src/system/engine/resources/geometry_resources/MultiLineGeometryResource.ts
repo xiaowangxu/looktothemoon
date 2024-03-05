@@ -6,7 +6,7 @@ import { GeometryResource } from "./GeometryResource";
 import { Ref } from "@/system/utils/RefCounted";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import type { WebGL2RenderStateBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateBuffer";
-import { Box3, box3 } from "@/system/fivepebble/geometries/Box3";
+import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import type { Config } from "../../ConfiguredObject";
 import { RenderServerGeometryAttributeLoctions } from "../../render_server/RenderServerGeometry";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
@@ -47,8 +47,8 @@ export class MultiLineGeometryResource extends GeometryResource {
     private readonly start_attribute_buffer_ref: Ref<RenderDeviceAttributeBufferView<WebGL2RenderState, WebGL2RenderStateBuffer>> = new Ref();
     private readonly end_attribute_buffer_ref: Ref<RenderDeviceAttributeBufferView<WebGL2RenderState, WebGL2RenderStateBuffer>> = new Ref();
 
-    private readonly _base_bbox: Box3 = box3(Vector3.create(0, 0, 0), Vector3.create(1, 0, 0));
-    private readonly _bbox: Box3 = box3();
+    private readonly _base_bbox: Box3 = Box3.create(Vector3.create(0, 0, 0), Vector3.create(1, 0, 0));
+    private readonly _bbox: Box3 = Box3.new;
     private _bbox_margin: number = 0.1;
     public get bbox_margin() { return this._bbox_margin; }
     public set bbox_margin(bbox_margin: number) {
@@ -125,7 +125,7 @@ export class MultiLineGeometryResource extends GeometryResource {
     }
 
     private update_EnlargedBBox() {
-        this._bbox.enlarges(this._base_bbox, this._bbox_margin);
+        this._bbox.enlarge(this._base_bbox, this._bbox_margin);
         this.geometry.set_BBox(this._bbox);
     }
 

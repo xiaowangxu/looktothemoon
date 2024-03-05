@@ -178,7 +178,7 @@ export class VisualWorld3DMesh extends WorldObject {
 
     public get bbox() { return this._bbox; }
     private is_bbox_empty: boolean = true;
-    private _bbox: Box3 = new Box3();
+    private _bbox: Box3 = Box3.new;
 
     constructor(config: Config, rid: Rid) {
         super(config, rid);
@@ -195,7 +195,7 @@ export class VisualWorld3DMesh extends WorldObject {
             this._bbox.set(VisualWorld3DMesh.#zero_vec3, VisualWorld3DMesh.#zero_vec3);
         }
         else {
-            this._bbox.applys_Matrix4(this.geometry_ref.expect.bbox, this.global_transform);
+            this._bbox.apply_Matrix4(this.geometry_ref.expect.bbox, this.global_transform);
         }
         this.is_bbox_empty = this._bbox.is_empty;
     }

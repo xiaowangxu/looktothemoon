@@ -1,10 +1,14 @@
+import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { Viewport } from "../../nodes/Node";
 
 export class ViewportInputManager {
     private readonly viewport: Viewport;
     public get is_mouse_inside() { return this.viewport.mouse_event_manager.is_mouse_inside; }
     public get mouse_position() { return this.viewport.mouse_event_manager.mouse_position; }
+    public get_MousePosition(target: Vector2) { return this.viewport.mouse_event_manager.get_MousePosition(target); }
+
     public get mouse_position_normalized() { return this.viewport.mouse_event_manager.mouse_position_normalized; }
+    public get_MousePositionNormalized(target: Vector2) { return this.viewport.mouse_event_manager.get_MousePositionNormalized(target); }
 
     // signals
     public get signal_mouse_entered() { return this.viewport.mouse_event_manager.signal_mouse_enetered; }

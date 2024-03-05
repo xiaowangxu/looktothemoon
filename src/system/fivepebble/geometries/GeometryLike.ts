@@ -12,7 +12,7 @@ export interface GeometryLikeBounded<Vec extends VectorLike<Vec, Mat>, Mat exten
     signed_distance_to_Point(point: Vec): number; // outside is positive , inside is negative , boundary is 0
     distance_to_Point(point: Vec): number;
 
-    project_Point(point: Vec): Vec;
+    project_Point(point: Vec, target: Vec): Vec;
 }
 
 export enum GeometryContainType {
@@ -21,8 +21,7 @@ export enum GeometryContainType {
     Outside = 0b100,
 }
 
-export interface GeometryLikeContainPoint<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>>
-    extends GeometryLikeBounded<Vec, Mat> {
+export interface GeometryLikeContainPoint<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> extends GeometryLikeBounded<Vec, Mat> {
     contain_Point(point: Vec, type: GeometryContainType): boolean;
 }
 

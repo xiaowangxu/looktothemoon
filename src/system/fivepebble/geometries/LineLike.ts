@@ -8,4 +8,7 @@ export interface LineLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLi
 
     get length(): number;
     get direction(): Vec;
+    get_Direction(target: Vec): Vec;
+
+    set(start: Vec, end: Vec): LineLike<Vec, Mat>;
 }

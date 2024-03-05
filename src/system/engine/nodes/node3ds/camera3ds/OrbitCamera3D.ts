@@ -230,14 +230,14 @@ export class OrbitCamera3D extends Node3D {
                     const camera = this.get_Viewport()?.get_Camera3D();
                     if (camera !== undefined) {
                         const cam = camera.get_Camera();
-                        const dir = this.camera_arm.to_Global(Vector3.create(0, 0, 1))
-                        dir.sub(dir, this.global_position)
+                        const dir = this.camera_arm.to_Global(Vector3.create(0, 0, 1), Vector3.new);
+                        dir.sub(dir, this.global_position);
                         dir.normalize(dir);
-                        const plane = Plane3.from_PointAndNormal(this.global_position, dir);
+                        const plane = Plane3.new.set_PointAndNormal(this.global_position, dir);
                         const ray = cam.project_Ray(Vector2.create(0, 0), undefined, Ray3.new);
-                        const center = plane.intersect_UncappedRay(ray);
+                        const center = plane.intersect_UncappedRay(ray, Vector3.new);
                         const ray_mouse = cam.project_Ray(mouse_position_normalized, undefined, Ray3.new);
-                        const mouse = plane.intersect_UncappedRay(ray_mouse);
+                        const mouse = plane.intersect_UncappedRay(ray_mouse, Vector3.new);
                         if (center !== undefined && mouse !== undefined) {
                             const delta = Vector3.new.sub(mouse, center)
                             delta.mult_Number(delta, 1 - this.camera.zoom / zoom);
@@ -289,12 +289,12 @@ export class OrbitCamera3D extends Node3D {
         const camera = viewport.get_Camera3D();
         if (camera === undefined) return;
 
-        const dir = this.camera_arm.to_Global(Vector3.create(0, 0, 1));
+        const dir = this.camera_arm.to_Global(Vector3.create(0, 0, 1), Vector3.new);
         dir.sub(dir, this.global_position);
         dir.normalize(dir);
-        const plane = Plane3.from_PointAndNormal(this.global_position, dir);
+        const plane = Plane3.new.set_PointAndNormal(this.global_position, dir);
         const ray = camera.get_Camera().project_Ray(OrbitCamera3D.#tmp_vector2_0.negate(relative_normalized), undefined, Ray3.new);
-        const result = plane.intersect_UncappedRay(ray);
+        const result = plane.intersect_UncappedRay(ray, Vector3.new);
 
         if (result !== undefined) {
             this.set_Position(result, false);

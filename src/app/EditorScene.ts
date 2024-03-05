@@ -37,9 +37,7 @@ import { Ref } from "@/system/utils/RefCounted";
 import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
 import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType, MethodTween } from "@/system/engine/Tween";
 import { InfiniteLine3D } from "@/system/engine/nodes/node3ds/gizmo3ds/InfiniteLine3D";
-import { ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { Bvh3 } from "@/system/fivepebble/bvh/Bvh3";
-import { box3 } from "@/system/fivepebble/geometries/Box3";
 import { Bvh3Visualization } from './nodes/Bvh3Visualization';
 
 import huli from 'res://huli.obj?url';
@@ -47,6 +45,7 @@ import stanford_bunny from 'res://stanford-bunny.obj?url';
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { Pi, Tau } from "@/system/fivepebble/Scalar";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 
 const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
     return {
@@ -93,18 +92,18 @@ export function createEditor() {
     EditorCamera.set_Zoom(0.3);
 
     // // viewport 0
-    // const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
-    // EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-    // const EditorViewport0 = new Viewport(DefaultConfig);
-    // const renderer0 = new EditorRenderer3D(DefaultConfig);
-    // const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
-    // renderer0.render_pipeline = pipeline0;
-    // EditorViewport0.renderer_3d = renderer0;
-    // EditorViewport0.transparent = true;
-    // EditorViewportContainer0.add_Child(EditorViewport0);
-    // const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
-    // EditorViewport0.add_Child(EditorCamera0);
-    // EditorViewport.add_Child(EditorViewportContainer0);
+    const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
+    EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+    const EditorViewport0 = new Viewport(DefaultConfig);
+    const renderer0 = new EditorRenderer3D(DefaultConfig);
+    const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
+    renderer0.render_pipeline = pipeline0;
+    EditorViewport0.renderer_3d = renderer0;
+    EditorViewport0.transparent = true;
+    EditorViewportContainer0.add_Child(EditorViewport0);
+    const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
+    EditorViewport0.add_Child(EditorCamera0);
+    EditorViewport.add_Child(EditorViewportContainer0);
 
     // World 
     const World = new Node3D(DefaultConfig);
@@ -246,7 +245,7 @@ export function createEditor() {
     multi_line_material_y.color = Color.color8code(0x04b97344);
     infinite_line_y.material = multi_line_material_y;
     infinite_line_y.render_queue = 1;
-    infinite_line_y.ray = ray3(Vector3.new, Vector3.create(0, 1, 0));
+    infinite_line_y.ray = Ray3.create(Vector3.new, Vector3.create(0, 1, 0));
     World.add_Child(infinite_line_y);
     const infinite_line_z = new InfiniteLine3D(DefaultConfig);
     const multi_line_material_z = new MultiLineMaterialResource(DefaultConfig);
@@ -254,7 +253,7 @@ export function createEditor() {
     multi_line_material_z.color = Color.color8code(0x466fd644);
     infinite_line_z.material = multi_line_material_z;
     infinite_line_z.render_queue = 1;
-    infinite_line_z.ray = ray3(Vector3.new, Vector3.create(0, 0, 1));
+    infinite_line_z.ray = Ray3.create(Vector3.new, Vector3.create(0, 0, 1));
     World.add_Child(infinite_line_z);
 
     EditorViewport.signal_input.connect((evt, pro) => {

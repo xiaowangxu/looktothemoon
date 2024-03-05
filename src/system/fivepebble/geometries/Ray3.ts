@@ -1,25 +1,25 @@
 import type { Matrix3 } from "../linear_algebra/Matrix3";
-import type { Matrix4 } from "../linear_algebra/Matrix4";
 import { Vector3 } from "../linear_algebra/Vector3";
 import type { RayLike } from "./RayLike";
 import { Line3 } from "./Line3";
 import { Epsilon } from "../Scalar";
-import type { LineLike } from "./LineLike";
 
 export class Ray3 implements RayLike<Vector3, Matrix3> {
 
     //#region init
 
-    static get new() { return new Ray3(new Vector3(), new Vector3(1, 0, 0)); }
+    static get new() { return new Ray3(Ray3.#const_vector3_zero, Ray3.#const_vector3_right); }
     static create(origin: Vector3, direction: Vector3) {
         return new Ray3(origin, direction);
     }
 
     //#endregion
 
-    static readonly #tmp_vector3_0 = Vector3.new;
-    static readonly #tmp_vector3_1 = Vector3.new;
-    static readonly #tmp_vector3_2 = Vector3.new;
+    static readonly #const_vector3_zero = new Vector3(0, 0, 0);
+    static readonly #const_vector3_right = new Vector3(1, 0, 0);
+    static readonly #tmp_vector3_0 = new Vector3();
+    static readonly #tmp_vector3_1 = new Vector3();
+    static readonly #tmp_vector3_2 = new Vector3();
 
     public readonly origin: Vector3;
     public readonly direction: Vector3;
@@ -29,52 +29,39 @@ export class Ray3 implements RayLike<Vector3, Matrix3> {
         this.direction = direction.clone();
     }
 
-    get_Point(distance: number): Vector3 {
-        return Vector3.new.add_Scaled(this.origin, distance, this.direction);
-    }
-    gets_Point(distance: number, target: Vector3): Vector3 {
+    get_Point(distance: number, target: Vector3): Vector3 {
         return target.add_Scaled(this.origin, distance, this.direction);
     }
 
-    get_Line(start: number, end: number): Line3 {
-        return new Line3(this.get_Point(start), this.get_Point(end));
-    }
-    gets_Line(start: number, end: number, target: LineLike<Vector3, Matrix3>): LineLike<Vector3, Matrix3> {
-        this.gets_Point(start, target.start);
-        this.gets_Point(end, target.end);
+    get_Line(start: number, end: number, target: Line3): Line3 {
+        this.get_Point(start, target.start);
+        this.get_Point(end, target.end);
         return target;
     }
 
-    public apply_Matrix4(mat: Matrix4, non_uniform_scale: boolean = false) {
-        return new Ray3(
-            Vector3.new.apply_Matrix4(this.origin, mat),
-            non_uniform_scale ?
-                Vector3.new.normalize(Ray3.#tmp_vector3_0.transform(this.direction, mat.basis)) :
-                Vector3.new.normalize(Ray3.#tmp_vector3_0.transform(this.direction, mat.basis.inverse().transpose()))
-        );
-    }
-
-    public get_ClosestPointUncapped(p: Vector3): Vector3 {
-        const _p = Vector3.new.sub(p, this.origin);
+    public get_ClosestPointUncapped(p: Vector3, target: Vector3): Vector3 {
+        const _p = Ray3.#tmp_vector3_0.sub(p, this.origin);
         const n = this.direction;
         const l2 = n.squared_length;
         if (l2 < Epsilon) {
-            return this.origin.clone(); // Both points are the same, just give any.
+            return target.copy(this.origin); // Both points are the same, just give any.
         }
         const d = n.dot(_p) / l2;
-        return Vector3.new.add_Scaled(this.origin, d, n); // Inside.
+        return target.add_Scaled(this.origin, d, n); // Inside.
     }
 
-    public get_ClosestPointsUncapped(l1: Ray3): [p0: Vector3, p1: Vector3] {
-        const r1 = this.origin.clone();
-        const r2 = l1.origin.clone();
-        const e1 = this.direction.clone();
-        const e2 = l1.direction.clone();
+    public get_ClosestPointsUncapped(l1: Ray3, target_0: Vector3, target_1: Vector3) {
+        const r1 = this.origin;
+        const r2 = l1.origin;
+        const e1 = this.direction;
+        const e2 = l1.direction;
 
         const n = Ray3.#tmp_vector3_0.cross(e1, e2);
 
         if (n.length < Epsilon) {
-            return [r1, l1.get_ClosestPointUncapped(r1)];
+            target_0.copy(r1);
+            l1.get_ClosestPointUncapped(r1, target_1);
+            return;
         }
 
         const n_length_sq = n.squared_length;
@@ -83,7 +70,8 @@ export class Ray3 implements RayLike<Vector3, Matrix3> {
         const t1 = Ray3.#tmp_vector3_2.cross(e2, n).dot(r) / (n_length_sq);
         const t2 = Ray3.#tmp_vector3_2.cross(e1, n).dot(r) / (n_length_sq);
 
-        return [Vector3.new.add_Scaled(r1, t1, e1), Vector3.new.add_Scaled(r2, t2, e2)];
+        target_0.add_Scaled(r1, t1, e1);
+        target_1.add_Scaled(r2, t2, e2);
     }
 
     equal(b: Ray3): boolean {
@@ -103,8 +91,4 @@ export class Ray3 implements RayLike<Vector3, Matrix3> {
     clone(): Ray3 {
         return new Ray3(this.origin.clone(), this.direction.clone());
     }
-}
-
-export function ray3(origin: Vector3, direction: Vector3) {
-    return new Ray3(origin, direction);
 }

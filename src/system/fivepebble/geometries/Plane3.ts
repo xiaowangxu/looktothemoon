@@ -10,6 +10,18 @@ import type { GeometryLike } from "./GeometryLike";
 import type { Plane } from "three";
 
 export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
+
+    //#region init
+
+    static get new() { return new Plane3(Plane3.#const_vector3_zero, 0); }
+    static create(normal: Vector3, distance: number) { return new Plane3(normal, distance); }
+
+    //#endregion
+
+    static readonly #const_vector3_zero = new Vector3(0, 0, 0);
+    static readonly #tmp_vector3_0 = Vector3.new;
+    static readonly #tmp_vector3_1 = Vector3.new;
+
     // ax + by + cz = d
     // where point = (x, y, z)
     //       normal = (a, b, c)
@@ -23,12 +35,8 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     }
 
     constructor(normal: Vector3, distance: number) {
-        this.normal = normal;
+        this.normal = normal.clone();
         this.distance = distance;
-    }
-
-    public static from_PointAndNormal(point: Vector3, normal: Vector3) {
-        return new Plane3(normal, normal.dot(point));
     }
 
     public set_PointAndNormal(point: Vector3, normal: Vector3) {
@@ -37,37 +45,9 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
         return this;
     }
 
-    static readonly #tmp_vector3_0 = Vector3.new;
-    static readonly #tmp_vector3_1 = Vector3.new;
-    static readonly #tmp_vector3_2 = Vector3.new;
-    static readonly #tmp_matrix3_0 = Matrix3.new;
-
-    public static from_Points(a: Vector3, b: Vector3, c: Vector3, clockwise: boolean = false) {
-        if (clockwise) {
-            const normal = Vector3.new.normalize(
-                Plane3.#tmp_vector3_2.cross(
-                    Plane3.#tmp_vector3_0.sub(a, c),
-                    Plane3.#tmp_vector3_1.sub(a, b),
-                )
-            );
-            return new Plane3(normal, normal.dot(a));
-        } else {
-            const normal = Vector3.new.normalize(
-                Plane3.#tmp_vector3_2.cross(
-                    Plane3.#tmp_vector3_0.sub(a, b),
-                    Plane3.#tmp_vector3_1.sub(a, c),
-                )
-            );
-            return new Plane3(normal, normal.dot(a));
-        }
-    }
-
-    static readonly #vector3_0 = Vector3.new;
-    static readonly #vector3_1 = Vector3.new;
-
     public set_Points(a: Vector3, b: Vector3, c: Vector3, clockwise: boolean = false) {
-        const vetcor3_0 = Plane3.#vector3_0;
-        const vetcor3_1 = Plane3.#vector3_1;
+        const vetcor3_0 = Plane3.#tmp_vector3_0;
+        const vetcor3_1 = Plane3.#tmp_vector3_1;
         const a_sub_c = vetcor3_0.sub(a, c);
         const a_sub_b = vetcor3_1.sub(a, b);
         if (clockwise) {
@@ -79,12 +59,6 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
         }
         this.distance = this.normal.dot(a);
         return this;
-    }
-
-    public static from_Components(x: number, y: number, z: number, d: number) {
-        const normal = new Vector3(x, y, z);
-        const length = normal.length;
-        return new Plane3(normal.div_Number(normal, length), d / length);
     }
 
     public set_Components(x: number, y: number, z: number, d: number) {
@@ -105,8 +79,8 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
         return Math.abs(this.normal.dot(point) - this.distance);
     }
 
-    project_Point(point: Vector3) {
-        return Vector3.new.add_Scaled(point, -this.signed_distance_to_Point(point), this.normal);
+    project_Point(point: Vector3, target: Vector3) {
+        return target.add_Scaled(point, -this.signed_distance_to_Point(point), this.normal);
     }
 
     // #endregion
@@ -160,7 +134,7 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     //     return r_result;
     // }
 
-    public intersect_Ray(ray: Ray3): Vector3 | undefined {
+    public intersect_Ray(ray: Ray3, target: Vector3): Vector3 | undefined {
         const segment = ray.direction;
         const den = this.normal.dot(segment);
         if (is_ApproxZero(den)) {
@@ -170,21 +144,21 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
         if (dist > Epsilon) { //this is a ray, before the emitting pos (p_from) doesn't exist
             return undefined;
         }
-        return Vector3.new.add_Scaled(ray.origin, -dist, segment);
+        return target.add_Scaled(ray.origin, -dist, segment);
     }
 
-    public intersect_UncappedRay(ray: Ray3): Vector3 | undefined {
+    public intersect_UncappedRay(ray: Ray3, target: Vector3): Vector3 | undefined {
         const segment = ray.direction;
         const den = this.normal.dot(segment);
         if (is_ApproxZero(den)) {
             return undefined;
         }
         const dist = (this.normal.dot(ray.origin) - this.distance) / den;
-        return Vector3.new.add_Scaled(ray.origin, -dist, segment);
+        return target.add_Scaled(ray.origin, -dist, segment);
     }
 
-    public intersect_Line(line: Line3): Vector3 | undefined {
-        const segment = Vector3.new.sub(line.start, line.end);
+    public intersect_Line(line: Line3, target: Vector3): Vector3 | undefined {
+        const segment = Plane3.#tmp_vector3_0.sub(line.start, line.end);
         const den = this.normal.dot(segment);
         if (is_ApproxZero(den)) {
             return undefined;
@@ -193,13 +167,18 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
         if (dist < -Epsilon || dist > (1 + Epsilon)) {
             return undefined;
         }
-        return Vector3.new.add_Scaled(line.start, -dist, segment);
+        return target.add_Scaled(line.start, -dist, segment);
     }
 
     equal(b: Plane3): boolean {
         return this.distance === b.distance && this.normal.equal(b.normal);
     }
 
+    set(normal: Vector3, distance: number): Plane3 {
+        this.normal.copy(normal);
+        this.distance = distance;
+        return this;
+    }
     copy(b: Plane3): Plane3 {
         this.normal.copy(b.normal);
         this.distance = b.distance;
@@ -208,8 +187,4 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     clone(): Plane3 {
         return new Plane3(this.normal.clone(), this.distance);
     }
-}
-
-export function plane3(normal: Vector3 = Vector3.create(1, 0, 0), distance: number = 0) {
-    return new Plane3(normal, distance);
 }

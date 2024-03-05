@@ -297,12 +297,13 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
     private get_MousePositionOnLine(evt: MouseInputEvent) {
         const camera = evt.viewport?.get_Camera3D()?.get_Camera();
         if (camera === undefined) return undefined;
-        const dir = this.to_Global(new Vector3(0, 1, 0))
+        const dir = this.to_Global(new Vector3(0, 1, 0), Vector3.new);
         dir.sub(dir, this.global_position);
         dir.normalize(dir);
         const r0 = new Ray3(this.global_position, dir);
         const r1 = camera.project_Ray(evt.position_normalized, undefined, Ray3.new);
-        const [p0, _] = r0.get_ClosestPointsUncapped(r1);
+        const p0 = Vector3.new, p1 = Vector3.new;
+        r0.get_ClosestPointsUncapped(r1, p0, p1);
         return p0;
     }
 

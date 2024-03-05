@@ -63,7 +63,7 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
     public get has_surface() { return this.vertex_array_groups_ref.length > 0; }
     public get surface_count() { return this.vertex_array_groups_ref.length; }
 
-    protected _bbox: Box3 = new Box3();
+    protected _bbox: Box3 = Box3.new;
     public get bbox() { return this._bbox; }
 
     private _vertex_count: number | undefined;

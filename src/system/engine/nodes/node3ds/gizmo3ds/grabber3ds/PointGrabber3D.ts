@@ -223,9 +223,9 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
         const camera_3d = evt.viewport?.get_Camera3D();
         const camera = camera_3d?.get_Camera();
         if (camera_3d === undefined || camera === undefined) return undefined;
-        const plane = Plane3.from_PointAndNormal(this.global_position, Vector3.new.normalize(PointGrabber3D.#tmp_vector3_0.sub(camera_3d.global_position, camera_3d.to_Global(new Vector3(0, 0, -1)))));
+        const plane = Plane3.new.set_PointAndNormal(this.global_position, Vector3.new.normalize(PointGrabber3D.#tmp_vector3_0.sub(camera_3d.global_position, camera_3d.to_Global(Vector3.create(0, 0, -1), Vector3.new))));
         const ray = camera.project_Ray(evt.position_normalized, undefined, Ray3.new);
-        const point = plane.intersect_Ray(ray);
+        const point = plane.intersect_Ray(ray, Vector3.new);
         if (point === undefined) return undefined;
         return point;
     }

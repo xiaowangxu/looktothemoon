@@ -7,11 +7,9 @@ export interface RayLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLik
     get origin(): Vec;
     get direction(): Vec;
 
-    get_Point(distance: number): Vec;
-    gets_Point(distance: number, target: Vec): Vec;
+    get_Point(distance: number, target: Vec): Vec;
 
-    get_Line(start: number, end: number): LineLike<Vec, Mat>;
-    gets_Line(start: number, end: number, target: LineLike<Vec, Mat>): LineLike<Vec, Mat>;
+    get_Line(start: number, end: number, target: LineLike<Vec, Mat>): LineLike<Vec, Mat>;
 
     set(origin: Vec, direction: Vec): RayLike<Vec, Mat>;
 }

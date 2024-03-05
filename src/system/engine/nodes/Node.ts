@@ -20,6 +20,7 @@ import { Ref } from "@/system/utils/RefCounted";
 import type { Renderer3D } from "../renderer/renderer_3d/Renderer3D";
 import { RaycastSide } from "@/system/fivepebble/geometries/GeometryLike";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
+import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 
 export enum NodeNotification {
     ExitingTree,
@@ -364,6 +365,10 @@ export type CursorStyle = 'default' | 'none' | 'context-menu' | 'help' | 'pointe
 export class Viewport extends Node {
     public static readonly class_name: string = "Viewport";
 
+    static readonly #tmp_ray_0 = Ray3.new;
+    static readonly #tmp_vector2_0 = Vector2.new;
+    static readonly #tmp_vector3_0 = Vector3.new;
+
     // input manager
     public readonly mouse_event_manager: ViewportMouseInputEventManager;
     public readonly key_event_manager: ViewportKeyInputEventManager;
@@ -403,6 +408,9 @@ export class Viewport extends Node {
     public get size(): Vector2 {
         return this._size.clone();
     }
+    public get_Size(target: Vector2) {
+        return target.copy(this._size);
+    }
     public set size(size: Vector2) {
         if (!this._size.equal(size)) {
             this._size.copy(size);
@@ -416,6 +424,9 @@ export class Viewport extends Node {
     private is_position_changed: boolean = false;
     public get position(): Vector2 {
         return this._position.clone();
+    }
+    public get_Position(target: Vector2) {
+        return target.copy(this._position);
     }
     public set position(position: Vector2) {
         if (!this._position.equal(position)) {
@@ -668,10 +679,10 @@ export class Viewport extends Node {
                 return;
             };
             this.input_manager.mouse_position_normalized;
-            const ray = camera_3d.get_Camera().project_Ray(this.input_manager.mouse_position_normalized, undefined, Ray3.new);
+            const ray = camera_3d.get_Camera().project_Ray(this.input_manager.get_MousePositionNormalized(Viewport.#tmp_vector2_0), undefined, Viewport.#tmp_ray_0);
             const ray_picking_option = new RayPickingOption(
                 ray.origin,
-                ray.get_Point(10000),
+                ray.get_Point(10000, Viewport.#tmp_vector3_0),
                 this.physics_picking_mask,
                 camera_3d,
                 this,

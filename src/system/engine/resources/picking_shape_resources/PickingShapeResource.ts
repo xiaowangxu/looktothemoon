@@ -9,10 +9,6 @@ import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
-import { Box3, box3 } from "@/system/fivepebble/geometries/Box3";
-import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
-import type { Ray3 } from "@/system/fivepebble/geometries/Ray3";
-import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
 
 type RaycastResult3 = RaycastResult<Vector3, Matrix3>;
 

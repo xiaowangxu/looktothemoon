@@ -1,5 +1,5 @@
 import type { Config } from "@/system/engine/ConfiguredObject";
-import { ray3, type Ray3 } from "@/system/fivepebble/geometries/Ray3";
+import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Cacher } from "@/system/utils/Cacher";
 import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineGeometryResource";
@@ -20,9 +20,10 @@ export class InfiniteLine3D extends MeshInstance3D {
 
     static readonly #tmp_vector3_0 = Vector3.new;
     static readonly #frustum: Frustum3 = Frustum3.new;
-    static readonly #planes: [Plane3, Plane3, Plane3, Plane3, Plane3, Plane3] = [InfiniteLine3D.#frustum.near, InfiniteLine3D.#frustum.far, InfiniteLine3D.#frustum.left, InfiniteLine3D.#frustum.top, InfiniteLine3D.#frustum.right, InfiniteLine3D.#frustum.bottom]
+    static readonly #planes: [Plane3, Plane3, Plane3, Plane3, Plane3, Plane3] = [InfiniteLine3D.#frustum.near, InfiniteLine3D.#frustum.far, InfiniteLine3D.#frustum.left, InfiniteLine3D.#frustum.top, InfiniteLine3D.#frustum.right, InfiniteLine3D.#frustum.bottom];
+    static readonly #intersect_points: [Vector3, Vector3, Vector3, Vector3, Vector3, Vector3] = [Vector3.new, Vector3.new, Vector3.new, Vector3.new, Vector3.new, Vector3.new];
 
-    private readonly _ray: Ray3 = ray3(Vector3.new, Vector3.create(1, 0, 0));
+    private readonly _ray: Ray3 =  Ray3.create(Vector3.new, Vector3.create(1, 0, 0));
     public get ray() { return this._ray.clone(); }
     public set ray(ray: Ray3) {
         this._ray.copy(ray);
@@ -55,7 +56,7 @@ export class InfiniteLine3D extends MeshInstance3D {
         camera.get_Camera().get_Frustum(InfiniteLine3D.#frustum);
         const planes = InfiniteLine3D.#planes;
         const points = planes.map((p, i) => {
-            const point = p.intersect_UncappedRay(this._ray);
+            const point = p.intersect_UncappedRay(this._ray, InfiniteLine3D.#intersect_points[i]);
             if (point === undefined) return undefined;
             for (let j = 0; j < 6; j++) {
                 if (j === i) continue;

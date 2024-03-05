@@ -31,7 +31,7 @@ export class Sphere3 implements SphereLike<Vector3, Matrix3> {
         return Math.abs(this.signed_distance_to_Point(point));
     }
 
-    project_Point(point: Vector3): Vector3 {
+    project_Point(point: Vector3, target: Vector3): Vector3 {
         const normal = this.center.direction_to(point);
         if (normal.squared_length === 0) return this.center.add_Scaled(this.radius, new Vector3(1, 0, 0));
         return this.center.add_Scaled(this.radius, normal);

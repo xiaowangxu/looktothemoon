@@ -8,7 +8,7 @@ import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2Rend
 import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Config } from "../../ConfiguredObject";
-import { triangle3, type Triangle3 } from "@/system/fivepebble/geometries/Triangle3";
+import { Triangle3 } from "@/system/fivepebble/geometries/Triangle3";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 
 export abstract class GeometryResource extends Resource {
@@ -39,7 +39,7 @@ export abstract class GeometryResource extends Resource {
                 const x0 = point[base0 + 0], y0 = point[base0 + 1], z0 = point[base0 + 2];
                 const x1 = point[base1 + 0], y1 = point[base1 + 1], z1 = point[base1 + 2];
                 const x2 = point[base2 + 0], y2 = point[base2 + 1], z2 = point[base2 + 2];
-                tri.push(triangle3(Vector3.create(x0, y0, z0), Vector3.create(x1, y1, z1), Vector3.create(x2, y2, z2)));
+                tri.push(Triangle3.create(Vector3.create(x0, y0, z0), Vector3.create(x1, y1, z1), Vector3.create(x2, y2, z2)));
             }
             return tri;
         }
@@ -53,7 +53,7 @@ export abstract class GeometryResource extends Resource {
                 const x0 = point[base0 + 0], y0 = point[base0 + 1], z0 = point[base0 + 2];
                 const x1 = point[base1 + 0], y1 = point[base1 + 1], z1 = point[base1 + 2];
                 const x2 = point[base2 + 0], y2 = point[base2 + 1], z2 = point[base2 + 2];
-                tri.push(triangle3(Vector3.create(x0, y0, z0), Vector3.create(x1, y1, z1), Vector3.create(x2, y2, z2)));
+                tri.push(Triangle3.create(Vector3.create(x0, y0, z0), Vector3.create(x1, y1, z1), Vector3.create(x2, y2, z2)));
             }
             return tri;
         }
@@ -66,7 +66,7 @@ export abstract class GeometryResource extends Resource {
 }
 
 export class MultiGeometryResource extends GeometryResource {
-    private readonly _bbox: Box3 = new Box3();
+    private readonly _bbox: Box3 = Box3.new;
 
     private readonly override_geometry_ref: Ref<GeometryResource> = new Ref();
 

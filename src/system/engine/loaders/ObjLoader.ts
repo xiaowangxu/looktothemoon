@@ -14,7 +14,7 @@ export class ObjLoader {
     public uvs: number[] = [];
     public indices: number[] = [];
 
-    public bbox: Box3 = new Box3();
+    public bbox: Box3 = Box3.new;
 
     private init() {
         this.positions = [];
