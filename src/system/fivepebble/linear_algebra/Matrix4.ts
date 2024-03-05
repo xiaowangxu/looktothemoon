@@ -155,7 +155,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
     }
 
     static #matrix3_identity = Matrix3.make_Identity();
-    static #vector3_zero = Vector3.make_Zero();
+    static #vector3_zero = Vector3.create(0, 0, 0);
 
     public static from_BasisPosition(basis: Matrix3 = Matrix4.#matrix3_identity, position: Vector3 = Matrix4.#vector3_zero): Matrix4 {
         return new Matrix4(
@@ -255,7 +255,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         return this.array[row * 4 + col];
     }
 
-    _add(a: Matrix4, b: Matrix4): Matrix4 {
+    add(a: Matrix4, b: Matrix4): Matrix4 {
         this.n11 = a.n11 + b.n11;
         this.n12 = a.n12 + b.n12;
         this.n13 = a.n13 + b.n13;
@@ -274,7 +274,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 + b.n44;
         return this;
     }
-    _add_Number(a: Matrix4, b: number): Matrix4 {
+    add_Number(a: Matrix4, b: number): Matrix4 {
         this.n11 = a.n11 + b;
         this.n12 = a.n12 + b;
         this.n13 = a.n13 + b;
@@ -293,7 +293,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 + b;
         return this;
     }
-    _sub(a: Matrix4, b: Matrix4): Matrix4 {
+    sub(a: Matrix4, b: Matrix4): Matrix4 {
         this.n11 = a.n11 - b.n11;
         this.n12 = a.n12 - b.n12;
         this.n13 = a.n13 - b.n13;
@@ -312,7 +312,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 - b.n44;
         return this;
     }
-    _sub_Number(a: Matrix4, b: number): Matrix4 {
+    sub_Number(a: Matrix4, b: number): Matrix4 {
         this.n11 = a.n11 - b;
         this.n12 = a.n12 - b;
         this.n13 = a.n13 - b;
@@ -331,7 +331,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 - b;
         return this;
     }
-    _mult(a: Matrix4, b: Matrix4): Matrix4 {
+    mult(a: Matrix4, b: Matrix4): Matrix4 {
         this.n11 = a.n11 * b.n11;
         this.n12 = a.n12 * b.n12;
         this.n13 = a.n13 * b.n13;
@@ -350,7 +350,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 * b.n44;
         return this;
     }
-    _mult_Number(a: Matrix4, b: number): Matrix4 {
+    mult_Number(a: Matrix4, b: number): Matrix4 {
         this.n11 = a.n11 * b;
         this.n12 = a.n12 * b;
         this.n13 = a.n13 * b;
@@ -369,7 +369,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 * b;
         return this;
     }
-    _div(a: Matrix4, b: Matrix4): Matrix4 {
+    div(a: Matrix4, b: Matrix4): Matrix4 {
         this.n11 = a.n11 / b.n11;
         this.n12 = a.n12 / b.n12;
         this.n13 = a.n13 / b.n13;
@@ -388,7 +388,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 / b.n44;
         return this;
     }
-    _div_Number(a: Matrix4, b: number): Matrix4 {
+    div_Number(a: Matrix4, b: number): Matrix4 {
         this.n11 = a.n11 / b;
         this.n12 = a.n12 / b;
         this.n13 = a.n13 / b;
@@ -407,7 +407,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 / b;
         return this;
     }
-    _add_Scaled(a: Matrix4, num: number, b: Matrix4): Matrix4 {
+    add_Scaled(a: Matrix4, num: number, b: Matrix4): Matrix4 {
         this.n11 = a.n11 + b.n11 * num;
         this.n12 = a.n12 + b.n12 * num;
         this.n13 = a.n13 + b.n13 * num;
@@ -426,7 +426,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 + b.n44 * num;
         return this;
     }
-    _lerp(a: Matrix4, b: Matrix4, weight: number): Matrix4 {
+    lerp(a: Matrix4, b: Matrix4, weight: number): Matrix4 {
         this.n11 = lerp(a.n11, b.n11, weight);
         this.n12 = lerp(a.n12, b.n12, weight);
         this.n13 = lerp(a.n13, b.n13, weight);
@@ -445,7 +445,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = lerp(a.n44, b.n44, weight);
         return this;
     }
-    _transpose(a: Matrix4): Matrix4 {
+    transpose(a: Matrix4): Matrix4 {
         this.n11 = a.n11;
         this.n12 = a.n21;
         this.n13 = a.n31;
@@ -464,7 +464,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44;
         return this;
     }
-    _inverse(a: Matrix4): Matrix4 {
+    inverse(a: Matrix4): Matrix4 {
         const det = a.determinant;
         if (det === 0) {
             this.n11 = 0;
@@ -510,7 +510,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
     /**
      * b * a
      */
-    _compose(a: Matrix4, b: Matrix4): Matrix4 {
+    compose(a: Matrix4, b: Matrix4): Matrix4 {
         // [ b11 b12 b13 b14 ]   [ n11 n12 n13 n14 ]
         // [ b21 b22 b23 b24 ] * [ n21 n22 n23 n24 ]
         // [ b31 b32 b33 b34 ]   [ n31 n32 n33 n34 ]

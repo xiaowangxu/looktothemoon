@@ -97,62 +97,62 @@ export class Matrix2 implements MatrixLike<Matrix2> {
         return this.array[row * 2 + col];
     }
 
-    _add(b: Matrix2): Matrix2 {
+    add(b: Matrix2): Matrix2 {
         this.n11 = this.n11 + b.n11; this.n12 = this.n12 + b.n12;
         this.n21 = this.n21 + b.n21; this.n22 = this.n22 + b.n22;
         return this;
     }
-    _add_Number(a: Matrix2, b: number): Matrix2 {
+    add_Number(a: Matrix2, b: number): Matrix2 {
         this.n11 = a.n11 + b; this.n12 = a.n12 + b;
         this.n21 = a.n21 + b; this.n22 = a.n22 + b;
         return this;
     }
-    _sub(b: Matrix2): Matrix2 {
+    sub(b: Matrix2): Matrix2 {
         this.n11 = this.n11 - b.n11; this.n12 = this.n12 - b.n12;
         this.n21 = this.n21 - b.n21; this.n22 = this.n22 - b.n22;
         return this;
     }
-    _sub_Number(a: Matrix2, b: number): Matrix2 {
+    sub_Number(a: Matrix2, b: number): Matrix2 {
         this.n11 = a.n11 - b; this.n12 = a.n12 - b;
         this.n21 = a.n21 - b; this.n22 = a.n22 - b;
         return this;
     }
-    _mult(b: Matrix2): Matrix2 {
+    mult(b: Matrix2): Matrix2 {
         this.n11 = this.n11 * b.n11; this.n12 = this.n12 * b.n12;
         this.n21 = this.n21 * b.n21; this.n22 = this.n22 * b.n22;
         return this;
     }
-    _mult_Number(a: Matrix2, b: number): Matrix2 {
+    mult_Number(a: Matrix2, b: number): Matrix2 {
         this.n11 = a.n11 * b; this.n12 = a.n12 * b;
         this.n21 = a.n21 * b; this.n22 = a.n22 * b;
         return this;
     }
-    _div(b: Matrix2): Matrix2 {
+    div(b: Matrix2): Matrix2 {
         this.n11 = this.n11 / b.n11; this.n12 = this.n12 / b.n12;
         this.n21 = this.n21 / b.n21; this.n22 = this.n22 / b.n22;
         return this;
     }
-    _div_Number(a: Matrix2, b: number): Matrix2 {
+    div_Number(a: Matrix2, b: number): Matrix2 {
         this.n11 = a.n11 / b; this.n12 = a.n12 / b;
         this.n21 = a.n21 / b; this.n22 = a.n22 / b;
         return this;
     }
-    _add_Scaled(a: Matrix2, num: number, b: Matrix2): Matrix2 {
+    add_Scaled(a: Matrix2, num: number, b: Matrix2): Matrix2 {
         this.n11 = a.n11 + b.n11 * num; this.n12 = a.n12 + b.n12 * num;
         this.n21 = a.n21 + b.n21 * num; this.n22 = a.n22 + b.n22 * num;
         return this;
     }
-    _lerp(a: Matrix2, b: Matrix2, weight: number): Matrix2 {
+    lerp(a: Matrix2, b: Matrix2, weight: number): Matrix2 {
         this.n11 = lerp(a.n11, b.n11, weight); this.n12 = lerp(a.n12, b.n12, weight);
         this.n21 = lerp(a.n21, b.n21, weight); this.n22 = lerp(a.n22, b.n22, weight);
         return this;
     }
-    _transpose(a: Matrix2): Matrix2 {
+    transpose(a: Matrix2): Matrix2 {
         this.n11 = a.n11; this.n12 = a.n21;
         this.n21 = a.n12; this.n22 = a.n22;
         return this;
     }
-    _inverse(a: Matrix2): Matrix2 {
+    inverse(a: Matrix2): Matrix2 {
         const det = a.determinant;
         if (det === 0) {
             this.n11 = 0;
@@ -174,7 +174,7 @@ export class Matrix2 implements MatrixLike<Matrix2> {
     /**
      * b * this
      */
-    _compose(a: Matrix2, b: Matrix2): Matrix2 {
+    compose(a: Matrix2, b: Matrix2): Matrix2 {
         const n11 = a.n11, n12 = a.n12;
         const n21 = a.n21, n22 = a.n22;
         const b11 = b.n11, b12 = b.n12;

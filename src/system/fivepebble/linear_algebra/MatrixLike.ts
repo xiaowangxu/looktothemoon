@@ -7,19 +7,19 @@ export interface MatrixLike<Mat extends MatrixLike<Mat>> {
 
     index(row: number, col: number): number;
 
-    _add(a: Mat, b: Mat): Mat;
-    _add_Number(a: Mat, b: number): Mat;
-    _sub(a: Mat, b: Mat): Mat;
-    _sub_Number(a: Mat, b: number): Mat;
-    _mult(a: Mat, b: Mat): Mat;
-    _mult_Number(a: Mat, b: number): Mat;
-    _div(a: Mat, b: Mat): Mat;
-    _div_Number(a: Mat, b: number): Mat;
-    _add_Scaled(a: Mat, num: number, b: Mat): Mat;
-    _lerp(a: Mat, b: Mat, weight: number): Mat;
-    _transpose(a: Mat): Mat;
-    _inverse(a: Mat): Mat;
-    _compose(a: Mat, b: Mat): Mat;
+    add(a: Mat, b: Mat): Mat;
+    add_Number(a: Mat, b: number): Mat;
+    sub(a: Mat, b: Mat): Mat;
+    sub_Number(a: Mat, b: number): Mat;
+    mult(a: Mat, b: Mat): Mat;
+    mult_Number(a: Mat, b: number): Mat;
+    div(a: Mat, b: Mat): Mat;
+    div_Number(a: Mat, b: number): Mat;
+    add_Scaled(a: Mat, num: number, b: Mat): Mat;
+    lerp(a: Mat, b: Mat, weight: number): Mat;
+    transpose(a: Mat): Mat;
+    inverse(a: Mat): Mat;
+    compose(a: Mat, b: Mat): Mat;
 
     equal(b: Mat): boolean;
     set(...args: number[]): Mat;

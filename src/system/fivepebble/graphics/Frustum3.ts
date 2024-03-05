@@ -102,17 +102,6 @@ export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
         }
         return true;
     }
-
-    public apply_Matrix4(mat: Matrix4, non_uniform_scale: boolean = false) {
-        return new Frustum3(
-            this.top.apply_Matrix4(mat, non_uniform_scale),
-            this.right.apply_Matrix4(mat, non_uniform_scale),
-            this.bottom.apply_Matrix4(mat, non_uniform_scale),
-            this.left.apply_Matrix4(mat, non_uniform_scale),
-            this.near.apply_Matrix4(mat, non_uniform_scale),
-            this.far.apply_Matrix4(mat, non_uniform_scale),
-        );
-    }
 }
 
 export function frustum3(

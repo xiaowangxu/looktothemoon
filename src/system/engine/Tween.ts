@@ -501,9 +501,9 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
         Boolean: (a: boolean, b: boolean, v: number) => v < 1 ? a : b,
         Quaternion: (a: Quaternion, b: Quaternion, v: number) => a.slerp(b, v),
         Euler: (a: Euler, b: Euler, v: number) => {
-            const quat_a = Quaternion.from_Euler(a);
-            const quat_b = Quaternion.from_Euler(b);
-            return Euler.from_Quaternion(quat_a.slerp(quat_b, v), a.order);
+            const quat_a = Quaternion.new.set_Euler(a);
+            const quat_b = Quaternion.new.set_Euler(b);
+            return Euler.new.set_Quaternion(quat_a.slerp(quat_b, v), a.order);
         },
         Vector2: (a: Vector2, b: Vector2, v: number) => Vector2.new.lerp(a, b, v),
         Vector3: (a: Vector3, b: Vector3, v: number) => Vector3.new.lerp(a, b, v),

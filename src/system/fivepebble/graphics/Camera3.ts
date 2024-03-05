@@ -12,9 +12,9 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     protected _projection: Matrix4 = Matrix4.make_Identity();
     get projection() { return this._projection.clone(); }
 
-    static #tmp_matrix3_0: Matrix3 = Matrix3.make_Identity();
-    static #tmp_matrix4_0: Matrix4 = Matrix4.make_Identity();
-    static #tmp_vector3_0: Vector3 = Vector3.make_Zero();
+    static #tmp_matrix3_0: Matrix3 = Matrix3.new;
+    static #tmp_matrix4_0: Matrix4 = Matrix4.new;
+    static #tmp_vector3_0: Vector3 = Vector3.new;
     static #tmp_euler_0: Euler = euler();
 
     protected _global_transform: Matrix4 = Matrix4.make_Identity();
@@ -27,7 +27,7 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
         transform.basis.decomposes_RotationScale(euler, vector3);
         transform.get_Position(vector3);
         this._global_transform.set_BasisPosition(matrix3.set_Euler(euler), vector3);
-        this._global_transform_inverse._inverse(this._global_transform);
+        this._global_transform_inverse.inverse(this._global_transform);
     }
 
     protected _mask: number = 0xffffffff;
@@ -57,10 +57,10 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     }
 
     get frustum() {
-        return Frustum3.from_Projection(Camera3.#tmp_matrix4_0._compose(this._global_transform_inverse, this._projection));
+        return Frustum3.from_Projection(Camera3.#tmp_matrix4_0.compose(this._global_transform_inverse, this._projection));
     }
     get_Frustum(target: Frustum3): Frustum3 {
-        return target.set_Projection(Camera3.#tmp_matrix4_0._compose(this._global_transform_inverse, this._projection));
+        return target.set_Projection(Camera3.#tmp_matrix4_0.compose(this._global_transform_inverse, this._projection));
     }
 
     abstract clone(): Camera3;

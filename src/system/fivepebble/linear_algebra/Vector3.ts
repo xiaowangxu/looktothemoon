@@ -31,28 +31,6 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         this.z = z;
     }
 
-    public static make_Zero(): Vector3 {
-        return new Vector3(0, 0, 0);
-    }
-
-    public set_Zero() {
-        this.x = 0;
-        this.y = 0;
-        this.z = 0;
-        return this;
-    }
-
-    public static make_One(): Vector3 {
-        return new Vector3(1, 1, 1);
-    }
-
-    public set_One() {
-        this.x = 1;
-        this.y = 1;
-        this.z = 1;
-        return this;
-    }
-
     index(index: number): number {
         switch (index) {
             case 0: return this.x;

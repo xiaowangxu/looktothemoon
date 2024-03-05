@@ -7,6 +7,16 @@ export enum EulerOrder {
 }
 
 export class Euler {
+
+    //#region init
+
+    static get new() { return new Euler(); }
+    static create(x: number = 0, y: number = 0, z: number = 0, order: EulerOrder = EulerOrder.XYZ) {
+        return new Euler(x, y, z, order);
+    }
+
+    //#endregion
+
     public x: number;
     public y: number;
     public z: number;
@@ -19,16 +29,8 @@ export class Euler {
         this.order = order;
     }
 
-    public static from_Quaternion(quat: Quaternion, order: EulerOrder = EulerOrder.XYZ) {
-        return Euler.from_RotateMatrix(Matrix3.$euler_matrix3.set_Quaternion(quat), order);
-    }
-
     public set_Quaternion(quat: Quaternion, order: EulerOrder = EulerOrder.XYZ) {
-        return this.set_RotateMatrix(Matrix3.$euler_matrix3.set_Quaternion(quat), order);
-    }
-
-    public static from_RotateMatrix(matrix: Matrix3, order: EulerOrder) {
-        return new Euler().set_RotateMatrix(matrix, order);
+        return this.set_RotateMatrix(Matrix3.$tmp_matrix3_for_euler_0.set_Quaternion(quat), order);
     }
 
     public set_RotateMatrix(matrix: Matrix3, order: EulerOrder) {

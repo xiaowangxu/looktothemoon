@@ -7,7 +7,7 @@ import { Vector2 } from "./Vector2";
 import { Vector3 } from "./Vector3";
 
 export class Matrix3 implements MatrixLike<Matrix3> {
-
+    
     //#region init
 
     static get new() { return new Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1); }
@@ -16,6 +16,9 @@ export class Matrix3 implements MatrixLike<Matrix3> {
     }
 
     //#endregion
+
+    // used in Euler set_* to overcome ref init error
+    public static $tmp_matrix3_for_euler_0: Matrix3 = Matrix3.new;
 
     // [ n11 n12 n13 ]
     // [ n21 n22 n23 ]
@@ -291,73 +294,73 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         return this.array[row * 3 + col];
     }
 
-    _add(a: Matrix3, b: Matrix3): Matrix3 {
+    add(a: Matrix3, b: Matrix3): Matrix3 {
         this.n11 = a.n11 + b.n11; this.n12 = a.n12 + b.n12; this.n13 = a.n13 + b.n13;
         this.n21 = a.n21 + b.n21; this.n22 = a.n22 + b.n22; this.n23 = a.n23 + b.n23;
         this.n31 = a.n31 + b.n31; this.n32 = a.n32 + b.n32; this.n33 = a.n33 + b.n33;
         return this;
     }
-    _add_Number(a: Matrix3, b: number): Matrix3 {
+    add_Number(a: Matrix3, b: number): Matrix3 {
         this.n11 = a.n11 + b; this.n12 = a.n12 + b; this.n13 = a.n13 + b;
         this.n21 = a.n21 + b; this.n22 = a.n22 + b; this.n23 = a.n23 + b;
         this.n31 = a.n31 + b; this.n32 = a.n32 + b; this.n33 = a.n33 + b;
         return this;
     }
-    _sub(a: Matrix3, b: Matrix3): Matrix3 {
+    sub(a: Matrix3, b: Matrix3): Matrix3 {
         this.n11 = a.n11 - b.n11; this.n12 = a.n12 - b.n12; this.n13 = a.n13 - b.n13;
         this.n21 = a.n21 - b.n21; this.n22 = a.n22 - b.n22; this.n23 = a.n23 - b.n23;
         this.n31 = a.n31 - b.n31; this.n32 = a.n32 - b.n32; this.n33 = a.n33 - b.n33;
         return this;
     }
-    _sub_Number(a: Matrix3, b: number): Matrix3 {
+    sub_Number(a: Matrix3, b: number): Matrix3 {
         this.n11 = a.n11 - b; this.n12 = a.n12 - b; this.n13 = a.n13 - b;
         this.n21 = a.n21 - b; this.n22 = a.n22 - b; this.n23 = a.n23 - b;
         this.n31 = a.n31 - b; this.n32 = a.n32 - b; this.n33 = a.n33 - b;
         return this;
     }
-    _mult(a: Matrix3, b: Matrix3): Matrix3 {
+    mult(a: Matrix3, b: Matrix3): Matrix3 {
         this.n11 = a.n11 * b.n11; this.n12 = a.n12 * b.n12; this.n13 = a.n13 * b.n13;
         this.n21 = a.n21 * b.n21; this.n22 = a.n22 * b.n22; this.n23 = a.n23 * b.n23;
         this.n31 = a.n31 * b.n31; this.n32 = a.n32 * b.n32; this.n33 = a.n33 * b.n33;
         return this;
     }
-    _mult_Number(a: Matrix3, b: number): Matrix3 {
+    mult_Number(a: Matrix3, b: number): Matrix3 {
         this.n11 = a.n11 * b; this.n12 = a.n12 * b; this.n13 = a.n13 * b;
         this.n21 = a.n21 * b; this.n22 = a.n22 * b; this.n23 = a.n23 * b;
         this.n31 = a.n31 * b; this.n32 = a.n32 * b; this.n33 = a.n33 * b;
         return this;
     }
-    _div(a: Matrix3, b: Matrix3): Matrix3 {
+    div(a: Matrix3, b: Matrix3): Matrix3 {
         this.n11 = a.n11 / b.n11; this.n12 = a.n12 / b.n12; this.n13 = a.n13 / b.n13;
         this.n21 = a.n21 / b.n21; this.n22 = a.n22 / b.n22; this.n23 = a.n23 / b.n23;
         this.n31 = a.n31 / b.n31; this.n32 = a.n32 / b.n32; this.n33 = a.n33 / b.n33;
         return this;
     }
-    _div_Number(a: Matrix3, b: number): Matrix3 {
+    div_Number(a: Matrix3, b: number): Matrix3 {
         this.n11 = a.n11 / b; this.n12 = a.n12 / b; this.n13 = a.n13 / b;
         this.n21 = a.n21 / b; this.n22 = a.n22 / b; this.n23 = a.n23 / b;
         this.n31 = a.n31 / b; this.n32 = a.n32 / b; this.n33 = a.n33 / b;
         return this;
     }
-    _add_Scaled(a: Matrix3, num: number, b: Matrix3): Matrix3 {
+    add_Scaled(a: Matrix3, num: number, b: Matrix3): Matrix3 {
         this.n11 = a.n11 + b.n11 * num; this.n12 = a.n12 + b.n12 * num; this.n13 = a.n13 + b.n13 * num;
         this.n21 = a.n21 + b.n21 * num; this.n22 = a.n22 + b.n22 * num; this.n23 = a.n23 + b.n23 * num;
         this.n31 = a.n31 + b.n31 * num; this.n32 = a.n32 + b.n32 * num; this.n33 = a.n33 + b.n33 * num;
         return this;
     }
-    _lerp(a: Matrix3, b: Matrix3, weight: number): Matrix3 {
+    lerp(a: Matrix3, b: Matrix3, weight: number): Matrix3 {
         this.n11 = lerp(a.n11, b.n11, weight); this.n12 = lerp(a.n12, b.n12, weight), this.n13 = lerp(a.n13, b.n13, weight);
         this.n21 = lerp(a.n21, b.n21, weight); this.n22 = lerp(a.n22, b.n22, weight), this.n23 = lerp(a.n23, b.n23, weight);
         this.n31 = lerp(a.n31, b.n31, weight); this.n32 = lerp(a.n32, b.n32, weight), this.n33 = lerp(a.n33, b.n33, weight);
         return this;
     }
-    _transpose(a: Matrix3): Matrix3 {
+    transpose(a: Matrix3): Matrix3 {
         this.n11 = a.n11; this.n12 = a.n21; this.n13 = a.n31;
         this.n21 = a.n12; this.n22 = a.n22; this.n23 = a.n32;
         this.n31 = a.n13; this.n32 = a.n23; this.n33 = a.n33;
         return this;
     }
-    _inverse(a: Matrix3): Matrix3 {
+    inverse(a: Matrix3): Matrix3 {
         const n11 = a.n11, n21 = a.n21, n31 = a.n31;
         const n12 = a.n12, n22 = a.n22, n32 = a.n32;
         const n13 = a.n13, n23 = a.n23, n33 = a.n33;
@@ -392,7 +395,7 @@ export class Matrix3 implements MatrixLike<Matrix3> {
     /**
      * b * a
      */
-    _compose(a: Matrix3, b: Matrix3): Matrix3 {
+    compose(a: Matrix3, b: Matrix3): Matrix3 {
         const n11 = a.n11, n21 = a.n21, n31 = a.n31;
         const n12 = a.n12, n22 = a.n22, n32 = a.n32;
         const n13 = a.n13, n23 = a.n23, n33 = a.n33;
@@ -449,8 +452,6 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         );
     }
 
-    // used in Euler set_* to overcome ref init error
-    public static $euler_matrix3: Matrix3 = Matrix3.make_Identity();
 
     static #vector3: Vector3 = new Vector3();
     static #matrix3: Matrix3 = Matrix3.make_Identity();
@@ -466,7 +467,7 @@ export class Matrix3 implements MatrixLike<Matrix3> {
             vec.set(n12, n22, n32).length,
             vec.set(n13, n23, n33).length,
         );
-        const euler = Euler.from_RotateMatrix(
+        const euler = Euler.new.set_RotateMatrix(
             Matrix3.#matrix3.set(
                 n11 / scale.x, n12 / scale.y, n13 / scale.z,
                 n21 / scale.x, n22 / scale.y, n23 / scale.z,
@@ -490,7 +491,7 @@ export class Matrix3 implements MatrixLike<Matrix3> {
             vec.set(n13, n23, n33).length,
         );
         target_rotation.copy(
-            Euler.from_RotateMatrix(
+            Euler.new.set_RotateMatrix(
                 Matrix3.#matrix3.set(
                     n11 / target_scale.x, n12 / target_scale.y, n13 / target_scale.z,
                     n21 / target_scale.x, n22 / target_scale.y, n23 / target_scale.z,

@@ -5,6 +5,18 @@ import { Vector3 } from "./Vector3";
 import type { Vector4 } from "./Vector4";
 
 export class Quaternion {
+
+    //#region init
+
+    static get new() { return new Quaternion(0, 0, 0, 1); }
+    static create(x: number, y: number, z: number, w: number) {
+        return new Quaternion(x, y, z, w);
+    }
+
+    //#endregion
+
+    static #tmp_vector3_0 = Vector3.new;
+
     public x: number;
     public y: number;
     public z: number;
@@ -29,85 +41,12 @@ export class Quaternion {
         this.w = w;
     }
 
-    public static from_Vector4(vec: Vector4) {
-        return new Quaternion(vec.x, vec.y, vec.z, vec.w);
-    }
-
     public set_Vector4(vec: Vector4) {
         this.x = vec.x;
         this.y = vec.y;
         this.z = vec.z;
         this.w = vec.w;
         return this;
-    }
-
-    public static from_Euler(euler: Euler) {
-        const { x, y, z, order } = euler;
-        // http://www.mathworks.com/matlabcentral/fileexchange/
-        // 	20696-function-to-convert-between-dcm-euler-angles-quaternions-and-euler-vectors/
-        //	content/SpinCalc.m
-        const cos = Math.cos, sin = Math.sin;
-        const c1 = cos(x / 2), c2 = cos(y / 2), c3 = cos(z / 2);
-        const s1 = sin(x / 2), s2 = sin(y / 2), s3 = sin(z / 2);
-        switch (order) {
-            case EulerOrder.XYZ:
-                {
-                    return new Quaternion(
-                        s1 * c2 * c3 + c1 * s2 * s3,
-                        c1 * s2 * c3 - s1 * c2 * s3,
-                        c1 * c2 * s3 + s1 * s2 * c3,
-                        c1 * c2 * c3 - s1 * s2 * s3,
-                    );
-                }
-            case EulerOrder.YXZ:
-                {
-                    return new Quaternion(
-                        s1 * c2 * c3 + c1 * s2 * s3,
-                        c1 * s2 * c3 - s1 * c2 * s3,
-                        c1 * c2 * s3 - s1 * s2 * c3,
-                        c1 * c2 * c3 + s1 * s2 * s3,
-                    );
-                }
-            case EulerOrder.ZXY:
-                {
-                    return new Quaternion(
-                        s1 * c2 * c3 - c1 * s2 * s3,
-                        c1 * s2 * c3 + s1 * c2 * s3,
-                        c1 * c2 * s3 + s1 * s2 * c3,
-                        c1 * c2 * c3 - s1 * s2 * s3,
-                    );
-                }
-            case EulerOrder.ZYX:
-                {
-                    return new Quaternion(
-                        s1 * c2 * c3 - c1 * s2 * s3,
-                        c1 * s2 * c3 + s1 * c2 * s3,
-                        c1 * c2 * s3 - s1 * s2 * c3,
-                        c1 * c2 * c3 + s1 * s2 * s3,
-                    );
-                }
-            case EulerOrder.YZX:
-                {
-                    return new Quaternion(
-                        s1 * c2 * c3 + c1 * s2 * s3,
-                        c1 * s2 * c3 + s1 * c2 * s3,
-                        c1 * c2 * s3 - s1 * s2 * c3,
-                        c1 * c2 * c3 - s1 * s2 * s3,
-                    );
-                }
-            case EulerOrder.XZY:
-                {
-                    return new Quaternion(
-                        s1 * c2 * c3 - c1 * s2 * s3,
-                        c1 * s2 * c3 - s1 * c2 * s3,
-                        c1 * c2 * s3 + s1 * s2 * c3,
-                        c1 * c2 * c3 + s1 * s2 * s3,
-                    );
-                }
-            default:
-                const n: never = order;
-                return new Quaternion();
-        }
     }
 
     public set_Euler(euler: Euler) {
@@ -179,49 +118,6 @@ export class Quaternion {
         return this;
     }
 
-    public static from_RotateMatrix(matrix: Matrix3) {
-        const m11 = matrix.n11, m12 = matrix.n12, m13 = matrix.n13;
-        const m21 = matrix.n21, m22 = matrix.n22, m23 = matrix.n23;
-        const m31 = matrix.n31, m32 = matrix.n32, m33 = matrix.n33;
-        const trace = m11 + m22 + m33;
-        if (trace > 0) {
-            const s = 0.5 / Math.sqrt(trace + 1.0);
-            return new Quaternion(
-                (m32 - m23) * s,
-                (m13 - m31) * s,
-                (m21 - m12) * s,
-                0.25 / s,
-            );
-        }
-        else if (m11 > m22 && m11 > m33) {
-            const s = 2.0 * Math.sqrt(1.0 + m11 - m22 - m33);
-            return new Quaternion(
-                0.25 * s,
-                (m12 + m21) / s,
-                (m13 + m31) / s,
-                (m32 - m23) / s,
-            );
-        }
-        else if (m22 > m33) {
-            const s = 2.0 * Math.sqrt(1.0 + m22 - m11 - m33);
-            return new Quaternion(
-                (m12 + m21) / s,
-                0.25 * s,
-                (m23 + m32) / s,
-                (m13 - m31) / s,
-            );
-        }
-        else {
-            const s = 2.0 * Math.sqrt(1.0 + m33 - m11 - m22);
-            return new Quaternion(
-                (m13 + m31) / s,
-                (m23 + m32) / s,
-                0.25 * s,
-                (m21 - m12) / s,
-            );
-        }
-    }
-
     public set_RotateMatrix(matrix: Matrix3) {
         const m11 = matrix.n11, m12 = matrix.n12, m13 = matrix.n13;
         const m21 = matrix.n21, m22 = matrix.n22, m23 = matrix.n23;
@@ -256,21 +152,6 @@ export class Quaternion {
             this.w = (m21 - m12) / s;
         }
         return this;
-    }
-
-    static #tmp_vector3_0 = Vector3.new;
-
-    public static make_Rotate(v0: Vector3, v1: Vector3) {
-        const c = Quaternion.#tmp_vector3_0._cross(v0, v1);
-        const d = v0.dot(v1);
-        if (d < Epsilon - 1) {
-            return new Quaternion(0, 1, 0, 0);
-        }
-        else {
-            const s = Math.sqrt((1 + d) * 2);
-            const rs = 1 / s;
-            return new Quaternion(c.x * rs, c.y * rs, c.z * rs, s * 0.5);
-        }
     }
 
     public set_Rotate(v0: Vector3, v1: Vector3) {

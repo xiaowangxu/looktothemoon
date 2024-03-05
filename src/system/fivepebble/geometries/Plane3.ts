@@ -3,7 +3,7 @@ import type { Matrix4 } from "../linear_algebra/Matrix4";
 import type { Line3 } from "./Line3";
 import type { Ray3 } from "./Ray3";
 import type { Sphere3 } from "./Sphere3";
-import type { Matrix3 } from "../linear_algebra/Matrix3";
+import { Matrix3 } from "../linear_algebra/Matrix3";
 import { Epsilon, is_ApproxZero } from "../Scalar";
 import { Vector3, vec3 } from "../linear_algebra/Vector3";
 import type { GeometryLike } from "./GeometryLike";
@@ -40,6 +40,7 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     static #tmp_vector3_0 = Vector3.new;
     static #tmp_vector3_1 = Vector3.new;
     static #tmp_vector3_2 = Vector3.new;
+    static #tmp_matrix3_0 = Matrix3.new;
 
     public static from_Points(a: Vector3, b: Vector3, c: Vector3, clockwise: boolean = false) {
         if (clockwise) {
@@ -61,8 +62,8 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
         }
     }
 
-    static #vector3_0 = Vector3.make_Zero();
-    static #vector3_1 = Vector3.make_Zero();
+    static #vector3_0 = Vector3.new;
+    static #vector3_1 = Vector3.new;
 
     public set_Points(a: Vector3, b: Vector3, c: Vector3, clockwise: boolean = false) {
         const vetcor3_0 = Plane3.#vector3_0;
@@ -109,20 +110,6 @@ export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
     }
 
     // #endregion
-
-    public apply_Matrix4(mat: Matrix4, non_uniform_scale: boolean = false) {
-        const point = Vector3.new.mult_Number(this.normal, this.distance);
-        point._apply_Matrix4(point, mat);
-        const normal = Vector3.new.transform(
-            this.normal,
-            non_uniform_scale ?
-                mat.basis :
-                mat.basis.inverse().transpose()
-        )
-        normal.normalize(normal);
-        const distance = normal.dot(point);
-        return new Plane3(normal, distance);
-    }
 
     public is_PointOver(point: Vector3, touching: boolean = false) {
         return touching ?

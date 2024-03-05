@@ -180,7 +180,7 @@ export class PickingWorld3D extends ConfiguredObject {
         const shape = this.get_Shape(rid);
         if (shape === undefined) return;
         shape.global_transform.copy(global_transform);
-        shape.global_transform_inverse._inverse(global_transform);
+        shape.global_transform_inverse.inverse(global_transform);
     }
 
     public set_PickingShapeInstanceArea(rid: Rid, area_rid: Rid) {
