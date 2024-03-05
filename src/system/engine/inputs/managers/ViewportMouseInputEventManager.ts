@@ -121,8 +121,8 @@ export class ViewportMouseInputEventManager {
         this.update_MousePosition(event);
         const new_mouse_position = this.mouse_position;
         const new_mouse_position_normalized = this.mouse_position_normalized;
-        const relative = new_mouse_position.sub(last_mouse_position);
-        const relative_normalized = new_mouse_position_normalized.sub(last_mouse_position_normalized);
+        const relative = Vector2.new._sub(new_mouse_position, last_mouse_position);
+        const relative_normalized = Vector2.new._sub(new_mouse_position_normalized, last_mouse_position_normalized);
         this.trigger_MouseEvent(
             new MouseMotionInputEvent(this.config)
                 .set_Viewport(this.viewport)

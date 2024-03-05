@@ -5,9 +5,13 @@ import type { RayLike } from "./RayLike";
 import { Line3 } from "./Line3";
 import { Epsilon } from "../Scalar";
 import type { LineLike } from "./LineLike";
-import type { GeometryLike } from "./GeometryLike";
 
 export class Ray3 implements RayLike<Vector3, Matrix3> {
+
+    static #tmp_vector3_0 = Vector3.new;
+    static #tmp_vector3_1 = Vector3.new;
+    static #tmp_vector3_2 = Vector3.new;
+
     public readonly origin: Vector3;
     public readonly direction: Vector3;
 
@@ -17,10 +21,10 @@ export class Ray3 implements RayLike<Vector3, Matrix3> {
     }
 
     get_Point(distance: number): Vector3 {
-        return this.origin.add_Scaled(distance, this.direction);
+        return Vector3.new._add_Scaled(this.origin, distance, this.direction);
     }
     gets_Point(distance: number, target: Vector3): Vector3 {
-        return target.adds_Scaled(this.origin, distance, this.direction);
+        return target._add_Scaled(this.origin, distance, this.direction);
     }
 
     get_Line(start: number, end: number): Line3 {
@@ -34,22 +38,22 @@ export class Ray3 implements RayLike<Vector3, Matrix3> {
 
     public apply_Matrix4(mat: Matrix4, non_uniform_scale: boolean = false) {
         return new Ray3(
-            this.origin.apply_Matrix4(mat),
+            Vector3.new._apply_Matrix4(this.origin, mat),
             non_uniform_scale ?
-                this.direction.transform(mat.basis).normalize() :
-                this.direction.transform(mat.basis.inverse().transpose()).normalize()
+                Vector3.new._normalize(Ray3.#tmp_vector3_0._transform(this.direction, mat.basis)) :
+                Vector3.new._normalize(Ray3.#tmp_vector3_0._transform(this.direction, mat.basis.inverse().transpose()))
         );
     }
 
     public get_ClosestPointUncapped(p: Vector3): Vector3 {
-        const _p = p.sub(this.origin);
+        const _p = Vector3.new._sub(p, this.origin);
         const n = this.direction;
         const l2 = n.squared_length;
         if (l2 < Epsilon) {
             return this.origin.clone(); // Both points are the same, just give any.
         }
         const d = n.dot(_p) / l2;
-        return this.origin.add_Scaled(d, n); // Inside.
+        return Vector3.new._add_Scaled(this.origin, d, n); // Inside.
     }
 
     public get_ClosestPointsUncapped(l1: Ray3): [p0: Vector3, p1: Vector3] {
@@ -58,19 +62,19 @@ export class Ray3 implements RayLike<Vector3, Matrix3> {
         const e1 = this.direction.clone();
         const e2 = l1.direction.clone();
 
-        const n = e1.cross(e2);
+        const n = Ray3.#tmp_vector3_0._cross(e1, e2);
 
         if (n.length < Epsilon) {
             return [r1, l1.get_ClosestPointUncapped(r1)];
         }
 
         const n_length_sq = n.squared_length;
-        const r = r2.sub(r1);
+        const r = Ray3.#tmp_vector3_1._sub(r2, r1);
 
-        const t1 = e2.cross(n).dot(r) / (n_length_sq);
-        const t2 = e1.cross(n).dot(r) / (n_length_sq);
+        const t1 = Ray3.#tmp_vector3_2._cross(e2, n).dot(r) / (n_length_sq);
+        const t2 = Ray3.#tmp_vector3_2._cross(e1, n).dot(r) / (n_length_sq);
 
-        return [r1.add_Scaled(t1, e1), r2.add_Scaled(t2, e2)];
+        return [Vector3.new._add_Scaled(r1, t1, e1), Vector3.new._add_Scaled(r2, t2, e2)];
     }
 
     equal(b: Ray3): boolean {

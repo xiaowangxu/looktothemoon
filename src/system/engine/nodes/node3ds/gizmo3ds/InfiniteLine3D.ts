@@ -1,6 +1,6 @@
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { ray3, type Ray3 } from "@/system/fivepebble/geometries/Ray3";
-import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { vec3, Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Cacher } from "@/system/utils/Cacher";
 import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineGeometryResource";
 import { Ref } from "@/system/utils/RefCounted";
@@ -18,6 +18,10 @@ const LineGeometry = new Cacher((config: Config) => {
 });
 
 export class InfiniteLine3D extends MeshInstance3D {
+
+    static #tmp_vector3_0 = Vector3.new;
+    static #frustum: Frustum3 = frustum3();
+    static #planes: [Plane3, Plane3, Plane3, Plane3, Plane3, Plane3] = [InfiniteLine3D.#frustum.near, InfiniteLine3D.#frustum.far, InfiniteLine3D.#frustum.left, InfiniteLine3D.#frustum.top, InfiniteLine3D.#frustum.right, InfiniteLine3D.#frustum.bottom]
 
     private readonly _ray: Ray3 = ray3(vec3(), vec3(1, 0, 0));
     public get ray() { return this._ray.clone(); }
@@ -42,9 +46,6 @@ export class InfiniteLine3D extends MeshInstance3D {
         super._notification(what);
     }
 
-    static #frustum: Frustum3 = frustum3();
-    static #matrix4: Matrix4 = Matrix4.make_Identity();
-    static #planes : [Plane3, Plane3, Plane3, Plane3, Plane3, Plane3] = [InfiniteLine3D.#frustum.near, InfiniteLine3D.#frustum.far, InfiniteLine3D.#frustum.left, InfiniteLine3D.#frustum.top, InfiniteLine3D.#frustum.right, InfiniteLine3D.#frustum.bottom]
 
     private update_Visual() {
         const camera = this.get_SceneTree()?.get_RenderCamera3D();
@@ -71,7 +72,7 @@ export class InfiniteLine3D extends MeshInstance3D {
             this.local_position = points[0]!;
             const s = points[0]!.distance_to(points[1]!);
             this.local_scale = vec3(s, s, s);
-            this.local_rotation = Euler.from_Quaternion(Quaternion.make_Rotate(vec3(1, 0, 0), points[0]!.direction_to(points[1]!)))
+            this.local_rotation = Euler.from_Quaternion(Quaternion.make_Rotate(vec3(1, 0, 0), InfiniteLine3D.#tmp_vector3_0._direction_to(points[0]!, points[1]!)));
         }
     }
 }

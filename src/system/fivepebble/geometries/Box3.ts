@@ -1,7 +1,7 @@
 import type { AABB, BvhShape } from "../bvh/BvhLike";
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import type { Matrix4 } from "../linear_algebra/Matrix4";
-import { Vector3 } from "../linear_algebra/Vector3";
+import { Vector3, vec3 } from "../linear_algebra/Vector3";
 import type { BoxLike } from "./BoxLike";
 import type { RaycastResult, RaycastSide } from "./GeometryLike";
 
@@ -9,7 +9,7 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
     public readonly min: Vector3;
     public readonly max: Vector3;
 
-    get size() { return this.max.sub(this.min); }
+    get size() { return Vector3.new._sub(this.max, this.min); }
     get_Size(target: Vector3): Vector3 {
         target.x = this.max.x - this.min.x;
         target.y = this.max.y - this.min.y;
@@ -36,40 +36,40 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
         if (length === 0) return new Box3(new Vector3(0, 0, 0), new Vector3(0, 0, 0));
         const point0 = points[0];
         if (length === 1) return new Box3(point0, point0);
-        let min = point0;
-        let max = point0;
+        let min = point0.clone();
+        let max = point0.clone();
         for (let i = 1; i < length; i++) {
             const point = points[i];
-            min = min.min(point);
-            max = max.max(point);
+            min._min(min, point);
+            max._max(max, point);
         }
         return new Box3(min, max);
     }
 
     enlarge(amount: number): BoxLike<Vector3, Matrix3> {
-        return new Box3(this.min.sub_Number(amount), this.max.add_Number(amount));
+        return new Box3(Vector3.new._sub_Number(this.min, amount), Vector3.new._add_Number(this.max, amount));
     }
     enlarges(a: BoxLike<Vector3, Matrix3>, amount: number): BoxLike<Vector3, Matrix3> {
-        this.min.subs_Number(a.min, amount);
-        this.max.adds_Number(a.max, amount);
+        this.min._sub_Number(a.min, amount);
+        this.max._add_Number(a.max, amount);
         return this;
     }
 
     merge(b: BoxLike<Vector3, Matrix3>): BoxLike<Vector3, Matrix3> {
-        return new Box3(this.min.min(b.min), this.max.max(b.max));
+        return new Box3(Vector3.new._min(this.min, b.min), Vector3.new._max(this.max, b.max));
     }
     merges(a: BoxLike<Vector3, Matrix3>, b: BoxLike<Vector3, Matrix3>): BoxLike<Vector3, Matrix3> {
-        this.min.mins(a.min, b.min);
-        this.max.maxs(a.max, b.max);
+        this.min._min(a.min, b.min);
+        this.max._max(a.max, b.max);
         return this;
     }
 
     grow(b: Vector3): Box3 {
-        return new Box3(this.min.min(b), this.max.max(b));
+        return new Box3(Vector3.new._min(this.min, b), Vector3.new._max(this.max, b));
     }
     grows(a: Box3, b: Vector3): Box3 {
-        this.min.mins(a.min, b);
-        this.max.maxs(a.max, b);
+        this.min._min(a.min, b);
+        this.max._max(a.max, b);
         return this;
     }
 
@@ -85,14 +85,14 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
         const p5 = Box3.#points[5];
         const p6 = Box3.#points[6];
         const p7 = Box3.#points[7];
-        p0.set(this.min.x, this.min.y, this.min.z).applys_Matrix4(p0, mat); // 000
-        p1.set(this.min.x, this.min.y, this.max.z).applys_Matrix4(p1, mat); // 001
-        p2.set(this.min.x, this.max.y, this.min.z).applys_Matrix4(p2, mat); // 010
-        p3.set(this.min.x, this.max.y, this.max.z).applys_Matrix4(p3, mat); // 011
-        p4.set(this.max.x, this.min.y, this.min.z).applys_Matrix4(p4, mat); // 100
-        p5.set(this.max.x, this.min.y, this.max.z).applys_Matrix4(p5, mat); // 101
-        p6.set(this.max.x, this.max.y, this.min.z).applys_Matrix4(p6, mat); // 110
-        p7.set(this.max.x, this.max.y, this.max.z).applys_Matrix4(p7, mat); // 111
+        p0.set(this.min.x, this.min.y, this.min.z)._apply_Matrix4(p0, mat); // 000
+        p1.set(this.min.x, this.min.y, this.max.z)._apply_Matrix4(p1, mat); // 001
+        p2.set(this.min.x, this.max.y, this.min.z)._apply_Matrix4(p2, mat); // 010
+        p3.set(this.min.x, this.max.y, this.max.z)._apply_Matrix4(p3, mat); // 011
+        p4.set(this.max.x, this.min.y, this.min.z)._apply_Matrix4(p4, mat); // 100
+        p5.set(this.max.x, this.min.y, this.max.z)._apply_Matrix4(p5, mat); // 101
+        p6.set(this.max.x, this.max.y, this.min.z)._apply_Matrix4(p6, mat); // 110
+        p7.set(this.max.x, this.max.y, this.max.z)._apply_Matrix4(p7, mat); // 111
         return Box3.from_Points(Box3.#points);
     }
     public applys_Matrix4(a: Box3, mat: Matrix4): Box3 {
@@ -109,14 +109,14 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
         const p5 = Box3.#points[5];
         const p6 = Box3.#points[6];
         const p7 = Box3.#points[7];
-        p0.set(a.min.x, a.min.y, a.min.z).applys_Matrix4(p0, mat); // 000
-        p1.set(a.min.x, a.min.y, a.max.z).applys_Matrix4(p1, mat); // 001
-        p2.set(a.min.x, a.max.y, a.min.z).applys_Matrix4(p2, mat); // 010
-        p3.set(a.min.x, a.max.y, a.max.z).applys_Matrix4(p3, mat); // 011
-        p4.set(a.max.x, a.min.y, a.min.z).applys_Matrix4(p4, mat); // 100
-        p5.set(a.max.x, a.min.y, a.max.z).applys_Matrix4(p5, mat); // 101
-        p6.set(a.max.x, a.max.y, a.min.z).applys_Matrix4(p6, mat); // 110
-        p7.set(a.max.x, a.max.y, a.max.z).applys_Matrix4(p7, mat); // 111
+        p0.set(a.min.x, a.min.y, a.min.z)._apply_Matrix4(p0, mat); // 000
+        p1.set(a.min.x, a.min.y, a.max.z)._apply_Matrix4(p1, mat); // 001
+        p2.set(a.min.x, a.max.y, a.min.z)._apply_Matrix4(p2, mat); // 010
+        p3.set(a.min.x, a.max.y, a.max.z)._apply_Matrix4(p3, mat); // 011
+        p4.set(a.max.x, a.min.y, a.min.z)._apply_Matrix4(p4, mat); // 100
+        p5.set(a.max.x, a.min.y, a.max.z)._apply_Matrix4(p5, mat); // 101
+        p6.set(a.max.x, a.max.y, a.min.z)._apply_Matrix4(p6, mat); // 110
+        p7.set(a.max.x, a.max.y, a.max.z)._apply_Matrix4(p7, mat); // 111
         this.min.x = Math.min(p0.x, p1.x, p2.x, p3.x, p4.x, p5.x, p6.x, p7.x);
         this.min.y = Math.min(p0.y, p1.y, p2.y, p3.y, p4.y, p5.y, p6.y, p7.y);
         this.min.z = Math.min(p0.z, p1.z, p2.z, p3.z, p4.z, p5.z, p6.z, p7.z);
@@ -160,7 +160,7 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
     get_AABB(target: Box3): Box3 {
         return target.copy(this);
     }
-    
+
     //#endregion
 }
 

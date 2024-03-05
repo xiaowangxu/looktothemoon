@@ -4,6 +4,13 @@ import type { MatrixLike } from "./MatrixLike";
 import type { VectorLike } from "./VectorLike";
 
 export class Vector4 implements VectorLike<Vector4, Matrix4> {
+
+    //#region tmp
+
+    public static get new() { return new Vector4(); }
+
+    //#endregion
+
     public x: number;
     public y: number;
     public z: number;
@@ -69,10 +76,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         }
     }
 
-    add(b: Vector4): Vector4 {
-        return new Vector4(this.x + b.x, this.y + b.y, this.z + b.z, this.w + b.w);
-    }
-    adds(a: Vector4, b: Vector4): Vector4 {
+    _add(a: Vector4, b: Vector4): Vector4 {
         this.x = a.x + b.x;
         this.y = a.y + b.y;
         this.z = a.z + b.z;
@@ -80,10 +84,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         return this;
     }
 
-    add_Number(b: number): Vector4 {
-        return new Vector4(this.x + b, this.y + b, this.z + b, this.w + b);
-    }
-    adds_Number(a: Vector4, b: number): Vector4 {
+    _add_Number(a: Vector4, b: number): Vector4 {
         this.x = a.x + b;
         this.y = a.y + b;
         this.z = a.z + b;
@@ -91,10 +92,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         return this;
     }
 
-    sub(b: Vector4): Vector4 {
-        return new Vector4(this.x - b.x, this.y - b.y, this.z - b.z, this.w - b.w);
-    }
-    subs(a: Vector4, b: Vector4): Vector4 {
+    _sub(a: Vector4, b: Vector4): Vector4 {
         this.x = a.x - b.x;
         this.y = a.y - b.y;
         this.z = a.z - b.z;
@@ -102,10 +100,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         return this;
     }
 
-    sub_Number(b: number): Vector4 {
-        return new Vector4(this.x - b, this.y - b, this.z - b, this.w - b);
-    }
-    subs_Number(a: Vector4, b: number): Vector4 {
+    _sub_Number(a: Vector4, b: number): Vector4 {
         this.x = a.x - b;
         this.y = a.y - b;
         this.z = a.z - b;
@@ -113,10 +108,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         return this;
     }
 
-    mult(b: Vector4): Vector4 {
-        return new Vector4(this.x * b.x, this.y * b.y, this.z * b.z, this.w * b.w);
-    }
-    mults(a: Vector4, b: Vector4): Vector4 {
+    _mult(a: Vector4, b: Vector4): Vector4 {
         this.x = a.x * b.x;
         this.y = a.y * b.y;
         this.z = a.z * b.z;
@@ -124,10 +116,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         return this;
     }
 
-    mult_Number(b: number): Vector4 {
-        return new Vector4(this.x * b, this.y * b, this.z * b, this.w * b);
-    }
-    mults_Number(a: Vector4, b: number): Vector4 {
+    _mult_Number(a: Vector4, b: number): Vector4 {
         this.x = a.x * b;
         this.y = a.y * b;
         this.z = a.z * b;
@@ -135,10 +124,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         return this;
     }
 
-    div(b: Vector4): Vector4 {
-        return new Vector4(this.x / b.x, this.y / b.y, this.z / b.z, this.w / b.w);
-    }
-    divs(a: Vector4, b: Vector4): Vector4 {
+    _div(a: Vector4, b: Vector4): Vector4 {
         this.x = a.x / b.x;
         this.y = a.y / b.y;
         this.z = a.z / b.z;
@@ -146,10 +132,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         return this;
     }
 
-    div_Number(b: number): Vector4 {
-        return new Vector4(this.x / b, this.y / b, this.z / b, this.w / b);
-    }
-    divs_Number(a: Vector4, b: number): Vector4 {
+    _div_Number(a: Vector4, b: number): Vector4 {
         this.x = a.x / b;
         this.y = a.y / b;
         this.z = a.z / b;
@@ -157,10 +140,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         return this;
     }
 
-    add_Scaled(num: number, b: Vector4): Vector4 {
-        return new Vector4(this.x + b.x * num, this.y + b.y * num, this.z + b.z * num, this.w + b.w * num);
-    }
-    adds_Scaled(a: Vector4, num: number, b: Vector4): Vector4 {
+    _add_Scaled(a: Vector4, num: number, b: Vector4): Vector4 {
         this.x = a.x + num * b.x;
         this.y = a.y + num * b.y;
         this.z = a.z + num * b.z;
@@ -168,10 +148,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         return this;
     }
 
-    lerp(b: Vector4, weight: number): Vector4 {
-        return new Vector4(lerp(this.x, b.x, weight), lerp(this.y, b.y, weight), lerp(this.z, b.z, weight), lerp(this.w, b.w, weight));
-    }
-    lerps(a: Vector4, b: Vector4, weight: number): Vector4 {
+    _lerp(a: Vector4, b: Vector4, weight: number): Vector4 {
         this.x = lerp(a.x, b.x, weight);
         this.y = lerp(a.y, b.y, weight);
         this.z = lerp(a.z, b.z, weight);
@@ -179,20 +156,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         return this;
     }
 
-    transform(matrix: Matrix4): Vector4 {
-        const n11 = matrix.n11, n12 = matrix.n12, n13 = matrix.n13, n14 = matrix.n14;
-        const n21 = matrix.n21, n22 = matrix.n22, n23 = matrix.n23, n24 = matrix.n24;
-        const n31 = matrix.n31, n32 = matrix.n32, n33 = matrix.n33, n34 = matrix.n34;
-        const n41 = matrix.n41, n42 = matrix.n42, n43 = matrix.n43, n44 = matrix.n44;
-        const x = this.x, y = this.y, z = this.z, w = this.w;
-        return new Vector4(
-            n11 * x + n12 * y + n13 * z + n14 * w,
-            n21 * x + n22 * y + n23 * z + n24 * w,
-            n31 * x + n32 * y + n33 * z + n34 * w,
-            n41 * x + n42 * y + n43 * z + n44 * w,
-        );
-    }
-    transforms(a: Vector4, matrix: Matrix4): Vector4 {
+    _transform(a: Vector4, matrix: Matrix4): Vector4 {
         const n11 = matrix.n11, n12 = matrix.n12, n13 = matrix.n13, n14 = matrix.n14;
         const n21 = matrix.n21, n22 = matrix.n22, n23 = matrix.n23, n24 = matrix.n24;
         const n31 = matrix.n31, n32 = matrix.n32, n33 = matrix.n33, n34 = matrix.n34;
@@ -205,10 +169,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         return this;
     }
 
-    normalize(): Vector4 {
-        return this.div_Number(this.length);
-    }
-    normalizes(a: Vector4): Vector4 {
+   _normalize(a: Vector4): Vector4 {
         const length = a.length;
         this.x = a.x / length;
         this.y = a.y / length;
@@ -217,10 +178,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         return this;
     }
 
-    negate(): Vector4 {
-        return new Vector4(-this.x, -this.y, -this.z, -this.w);
-    }
-    negates(a: Vector4): Vector4 {
+    _negate(a: Vector4): Vector4 {
         this.x = -a.x;
         this.y = -a.y;
         this.z = -a.z;
@@ -231,30 +189,21 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
     dot(b: Vector4): number {
         return this.x * b.x + this.y * b.y + this.z * b.z + this.w * b.w;
     }
-    min(b: Vector4): Vector4 {
-        return new Vector4(Math.min(this.x, b.x), Math.min(this.y, b.y), Math.min(this.z, b.z), Math.min(this.w, b.w));
-    }
-    mins(a: Vector4, b: Vector4): Vector4 {
+    _min(a: Vector4, b: Vector4): Vector4 {
         this.x = Math.min(a.x, b.x);
         this.y = Math.min(a.y, b.y);
         this.z = Math.min(a.z, b.z);
         this.w = Math.min(a.w, b.w);
         return this;
     }
-    max(b: Vector4): Vector4 {
-        return new Vector4(Math.max(this.x, b.x), Math.max(this.y, b.y), Math.max(this.z, b.z), Math.max(this.w, b.w));
-    }
-    maxs(a: Vector4, b: Vector4): Vector4 {
+    _max(a: Vector4, b: Vector4): Vector4 {
         this.x = Math.max(a.x, b.x);
         this.y = Math.max(a.y, b.y);
         this.z = Math.max(a.z, b.z);
         this.w = Math.max(a.w, b.w);
         return this;
     }
-    abs(): Vector4 {
-        return new Vector4(Math.abs(this.x), Math.abs(this.y), Math.abs(this.z), Math.abs(this.w));
-    }
-    get_Abs(a: Vector4): Vector4 {
+    _abs(a: Vector4): Vector4 {
         this.x = Math.abs(a.x);
         this.y = Math.abs(a.y);
         this.z = Math.abs(a.z);
@@ -275,11 +224,9 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         const w = this.w - b.w;
         return x * x + y * y + z * z + w * w;
     }
-    direction_to(b: Vector4) {
-        return b.sub(this).normalize();
-    }
-    get_DirectionTo(a: Vector4, b: Vector4) {
-        return this.subs(b, a).normalizes(this);
+    _direction_to(a: Vector4, b: Vector4) {
+        this._sub(b, a);
+        return this._normalize(this);
     }
 
     equal(b: Vector4): boolean {

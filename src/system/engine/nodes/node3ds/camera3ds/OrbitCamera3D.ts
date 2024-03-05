@@ -17,6 +17,10 @@ import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletio
 export class OrbitCamera3D extends Node3D {
     public static readonly class_name: string = "OrbitCamera3D";
 
+    static #tmp_vector2_0 = Vector2.new;
+    static #tmp_vector3_0 = Vector3.new;
+    static #tmp_vector3_1 = Vector3.new;
+
     private readonly camera_arm: Node3D = new Node3D(this.config);
     private readonly camera: InterpolateCamera3D = new InterpolateCamera3D(this.config);
 
@@ -121,7 +125,7 @@ export class OrbitCamera3D extends Node3D {
                     this.pan(event.relative_normalized);
                 }
                 else {
-                    this.rotate(event.relative.mult_Number(this.config.render_server.pixel_ratio));
+                    this.rotate(OrbitCamera3D.#tmp_vector2_0._mult_Number(event.relative, (this.config.render_server.pixel_ratio)));
                 }
                 event.mark_Canceled();
             }
@@ -225,15 +229,18 @@ export class OrbitCamera3D extends Node3D {
                     const camera = this.get_Viewport()?.get_Camera3D();
                     if (camera !== undefined) {
                         const cam = camera.get_Camera();
-                        const dir = this.camera_arm.to_Global(vec3(0, 0, 1)).sub(this.global_position).normalize();
+                        const dir = this.camera_arm.to_Global(vec3(0, 0, 1))
+                        dir._sub(dir, this.global_position)
+                        dir._normalize(dir);
                         const plane = Plane3.from_PointAndNormal(this.global_position, dir);
                         const ray = cam.project_Ray(vec2(0, 0));
                         const center = plane.intersect_UncappedRay(ray);
                         const ray_mouse = cam.project_Ray(mouse_position_normalized);
                         const mouse = plane.intersect_UncappedRay(ray_mouse);
                         if (center !== undefined && mouse !== undefined) {
-                            const delta = mouse.sub(center).mult_Number(1 - this.camera.zoom / zoom);
-                            this.set_Position(this.local_position.add(vec3(delta.x, delta.y, delta.z)), false);
+                            const delta = Vector3.new._sub(mouse, center)
+                            delta._mult_Number(delta, 1 - this.camera.zoom / zoom);
+                            this.set_Position(OrbitCamera3D.#tmp_vector3_0._add(this.local_position, OrbitCamera3D.#tmp_vector3_1.set(delta.x, delta.y, delta.z)), false);
                         }
                     }
                 }
@@ -281,9 +288,11 @@ export class OrbitCamera3D extends Node3D {
         const camera = viewport.get_Camera3D();
         if (camera === undefined) return;
 
-        const dir = this.camera_arm.to_Global(vec3(0, 0, 1)).sub(this.global_position).normalize();
+        const dir = this.camera_arm.to_Global(vec3(0, 0, 1));
+        dir._sub(dir, this.global_position);
+        dir._normalize(dir);
         const plane = Plane3.from_PointAndNormal(this.global_position, dir);
-        const ray = camera.get_Camera().project_Ray(relative_normalized.negate());
+        const ray = camera.get_Camera().project_Ray(OrbitCamera3D.#tmp_vector2_0._negate(relative_normalized));
         const result = plane.intersect_UncappedRay(ray);
 
         if (result !== undefined) {
@@ -338,7 +347,7 @@ export class OrbitCamera3D extends Node3D {
     public set_Position(position: Vector3, animate: boolean = false) {
         const pos = position;
         if (!animate) {
-            this.local_position = vec3(position.x, position.y, position.z);
+            this.local_position = position;
         }
         else {
             if (this.position_tween !== undefined) {

@@ -389,7 +389,7 @@ export class VisualWorld3DLight extends WorldObject {
     public fill_LightData(lights_data: RenderServerLightsData, idx: number, lid: number): number {
         if (idx >= lights_data.max_light_count) return idx;
         const color = VisualWorld3DLight.#color;
-        color.mults_Number(this.color, this.intensity);
+        color._mult_Number(this.color, this.intensity);
         lights_data.set_Light(idx, this.type, lid, this.position, this.direction, color, this.attenuation, this.layer, this.param_0, this.param_1, this.param_2, this.param_3, this.shadow_bias, this.shadow_normal_bias, this.shadow_opacity, undefined);
         return idx;
     }

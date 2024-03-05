@@ -1,13 +1,16 @@
 import { NodeNotification } from "../../Node";
 import { Node3D } from "../Node3D";
 import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
-import { vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { Vector3, vec3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { vec2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { Plane3 } from "@/system/fivepebble/geometries/Plane3";
 import type { Config } from "@/system/engine/ConfiguredObject";
 
 export class FixSizeNode3D extends Node3D {
     public static readonly class_name: string = "FixSizeNode3D";
+
+    static #tmp_vector3_0 = Vector3.new;
+    static #tmp_vector3_1 = Vector3.new;
 
     public unit_pixel_count: number = 50;
     private _use_active_viewport: boolean = false;
@@ -61,10 +64,10 @@ export class FixSizeNode3D extends Node3D {
         if (is_persp) {
             const self_distance = this.global_position.distance_to(center_ray.origin);
             const h = self_distance * distance;
-            this.local_scale = vec3(h, h, h).mult_Number(this.unit_pixel_count / (height / 2));
+            this.local_scale = FixSizeNode3D.#tmp_vector3_0._mult_Number(FixSizeNode3D.#tmp_vector3_1.set(h, h, h), this.unit_pixel_count / (height / 2));
         }
         else {
-            this.local_scale = vec3(distance, distance, distance).mult_Number(this.unit_pixel_count / (height / 2));
+            this.local_scale = FixSizeNode3D.#tmp_vector3_0._mult_Number(FixSizeNode3D.#tmp_vector3_1.set(distance, distance, distance), this.unit_pixel_count / (height / 2));
         }
     }
 

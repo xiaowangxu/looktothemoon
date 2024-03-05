@@ -29,6 +29,8 @@ export abstract class PickingShape3DResource extends Resource implements Picking
 export class PickingBoxResource extends PickingShape3DResource {
     public static readonly class_name: string = "PickingBoxResource";
 
+    static #tmp_vector3_0 = Vector3.new;
+
     public readonly preserve_global_transform: boolean = false;
 
     private _width: number = 1;
@@ -106,7 +108,7 @@ export class PickingBoxResource extends PickingShape3DResource {
             }
         }
 
-        const rel = to.sub(from);
+        const rel = PickingBoxResource.#tmp_vector3_0._sub(to, from);
 
         const normal = new Vector3();
         switch (axis) {
@@ -116,7 +118,7 @@ export class PickingBoxResource extends PickingShape3DResource {
         }
 
         const result = from.clone();
-        result.adds_Scaled(result, min, rel);
+        result._add_Scaled(result, min, rel);
 
         return { position: result, normal: normal };
     }
@@ -141,6 +143,10 @@ export class PickingBoxResource extends PickingShape3DResource {
 export class PickingSphereResource extends PickingShape3DResource {
     public static readonly class_name: string = "PickingSphereResource";
 
+    static #tmp_vector3_0 = Vector3.new;
+    static #tmp_vector3_1 = Vector3.new;
+    static #tmp_vector3_2 = Vector3.new;
+
     public readonly preserve_global_transform: boolean = false;
 
     private _radius: number = 0.5;
@@ -155,17 +161,17 @@ export class PickingSphereResource extends PickingShape3DResource {
     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
         if (this.radius < Epsilon) return undefined;
 
-        const sphere_pos = from.clone().negate();
-        const rel = to.clone().sub(from);
+        const sphere_pos = PickingSphereResource.#tmp_vector3_0._negate(from);
+        const rel =  PickingSphereResource.#tmp_vector3_1._sub(to, from);
         const rel_l = rel.length;
 
         if (rel_l < Epsilon) {
             return undefined;
         }
-        const normal = rel.divs_Number(rel, rel_l);
+        const normal = rel._div_Number(rel, rel_l);
 
         const sphere_d = sphere_pos.dot(normal);
-        const ray_distance = sphere_pos.distance_to(normal.clone().mult_Number(sphere_d));
+        const ray_distance = sphere_pos.distance_to( PickingSphereResource.#tmp_vector3_2._mult_Number(normal, sphere_d));
 
         if (ray_distance >= this.radius) {
             return undefined;
@@ -183,10 +189,9 @@ export class PickingSphereResource extends PickingShape3DResource {
             return undefined;
         }
 
-
         const result_position = from.clone();
-        result_position.adds_Scaled(result_position, inters_d, normal);
-        const result_normal = result_position.normalize();
+        result_position._add_Scaled(result_position, inters_d, normal);
+        const result_normal = result_position.clone()._normalize(result_position);
 
         return { position: result_position, normal: result_normal };
     }
@@ -206,6 +211,11 @@ export class PickingSphereResource extends PickingShape3DResource {
 
 export class PickingCylinderResource extends PickingShape3DResource {
     public static readonly class_name: string = "PickingCylinderResource";
+
+    static #tmp_vector3_0 = Vector3.new;
+    static #tmp_vector3_1 = Vector3.new;
+    static #tmp_vector3_2 = Vector3.new;
+    static #tmp_vector3_3 = Vector3.new;
 
     public readonly preserve_global_transform: boolean = false;
 
@@ -228,7 +238,7 @@ export class PickingCylinderResource extends PickingShape3DResource {
     }
 
     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
-        const rel = to.clone().sub(from);
+        const rel =  PickingCylinderResource.#tmp_vector3_0._sub(to, from);
         const rel_l = rel.length;
         if (rel_l < Epsilon) {
             return undefined;
@@ -237,16 +247,16 @@ export class PickingCylinderResource extends PickingShape3DResource {
         const cylinder_axis = new Vector3(0, 1, 0);
 
         // First check if they are parallel.
-        const normal = rel.clone().div_Number(rel_l);
-        const crs = normal.cross(cylinder_axis);
+        const normal = PickingCylinderResource.#tmp_vector3_1._div_Number(rel, rel_l);
+        const crs = PickingCylinderResource.#tmp_vector3_2._cross(normal, cylinder_axis);
         const crs_l = crs.length;
 
         let axis_dir: Vector3;
 
         if (crs_l < Epsilon) {
-            axis_dir = new Vector3(0, 0, 1); // Any side axis OK.
+            axis_dir = PickingCylinderResource.#tmp_vector3_3.set(0, 0, 1); // Any side axis OK.
         } else {
-            axis_dir = crs.clone().div_Number(crs_l);
+            axis_dir = PickingCylinderResource.#tmp_vector3_3._div_Number(crs, crs_l);
         }
 
         const dist = axis_dir.dot(from);
@@ -263,7 +273,9 @@ export class PickingCylinderResource extends PickingShape3DResource {
 
         const size = new Vector2(Math.sqrt(w2), this.height / 2);
 
-        const side_dir = axis_dir.clone().cross(cylinder_axis).normalize();
+        const side_dir = axis_dir.clone()
+        side_dir._cross(side_dir, cylinder_axis)
+        side_dir._normalize(side_dir);
 
         const from2D = new Vector2(side_dir.dot(from), from.y);
         const to2D = new Vector2(side_dir.dot(to), to.y);
@@ -309,7 +321,7 @@ export class PickingCylinderResource extends PickingShape3DResource {
         }
 
         // Convert to 3D again.
-        const result = from.clone().add_Scaled(min, rel);
+        const result = Vector3.new._add_Scaled(from, min, rel);
         const res_normal = result.clone();
 
         if (axis == 0) {
@@ -319,7 +331,7 @@ export class PickingCylinderResource extends PickingShape3DResource {
             res_normal.z = 0;
         }
 
-        res_normal.normalize();
+        res_normal._normalize(res_normal);
 
         return { position: result, normal: res_normal };
     }

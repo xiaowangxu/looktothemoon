@@ -258,8 +258,10 @@ export class Quaternion {
         return this;
     }
 
+    static #tmp_vector3_0 = Vector3.new;
+
     public static make_Rotate(v0: Vector3, v1: Vector3) {
-        const c = v0.cross(v1);
+        const c = Quaternion.#tmp_vector3_0._cross(v0, v1);
         const d = v0.dot(v1);
         if (d < Epsilon - 1) {
             return new Quaternion(0, 1, 0, 0);
@@ -272,7 +274,7 @@ export class Quaternion {
     }
 
     public set_Rotate(v0: Vector3, v1: Vector3) {
-        const c = v0.cross(v1);
+        const c = Quaternion.#tmp_vector3_0._cross(v0, v1);
         const d = v0.dot(v1);
         if (d < Epsilon - 1) {
             this.x = 0;

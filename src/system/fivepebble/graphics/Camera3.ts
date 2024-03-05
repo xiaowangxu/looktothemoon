@@ -43,8 +43,8 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
 
     project_Point(point: Vector3): Vector2 {
         const p = Camera3.#vector3;
-        p.applys_Matrix4(point, this._global_transform_inverse);
-        p.applys_Matrix4(p, this._projection);
+        p._apply_Matrix4(point, this._global_transform_inverse);
+        p._apply_Matrix4(p, this._projection);
         return new Vector2(p.x, p.y);
     }
 
@@ -134,13 +134,13 @@ export class OrthographicCamera3 extends Camera3 {
         const half_width = this.width / (2 * this.zoom);
         const half_height = this.height / (2 * this.zoom);
         const p = new Vector3(point.x * half_width, point.y * half_height, -depth);
-        return p.applys_Matrix4(p, this._global_transform);
+        return p._apply_Matrix4(p, this._global_transform);
     }
 
     unproject_Normal(point: Vector2): Vector3 {
         const n = new Vector3(0, 0, -1);
-        n.transforms(n, this._global_transform.basis);
-        n.normalizes(n);
+        n._transform(n, this._global_transform.basis);
+        n._normalize(n);
         return n;
     }
 
@@ -220,13 +220,13 @@ export class PerspectiveCamera3 extends Camera3 {
         const half_height = this.near * Math.tan(this.fov / 2);
         const half_width = this.aspect * half_height;
         const p = new Vector3(ndc.x * half_width, ndc.y * half_height, -depth);
-        p.applys_Matrix4(p, this.global_transform);
+        p._apply_Matrix4(p, this.global_transform);
         return p;
     }
 
     unproject_Normal(ndc: Vector2): Vector3 {
         const p = this.unproject_Point(ndc, this.near);
-        return p.get_DirectionTo(this._global_transform.position, p);
+        return p._direction_to(this._global_transform.position, p);
     }
 
     clone(): PerspectiveCamera3 {

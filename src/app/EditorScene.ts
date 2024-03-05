@@ -115,12 +115,12 @@ export function createEditor() {
     const directional_light0 = new DirectionalLight3D(DefaultConfig);
     directional_light0.color = vec3(0.9, 0.9, 1);
     directional_light0.intensity = 0.2;
-    directional_light0.local_rotation = Euler.from_Quaternion(Quaternion.make_Rotate(vec3(0, 0, -1), vec3(-1, -1, 1).normalize()));
+    directional_light0.local_rotation = Euler.from_Quaternion(Quaternion.make_Rotate(vec3(0, 0, -1), vec3()._normalize(vec3(-1, -1, 1))));
     World.add_Child(directional_light0);
     const directional_light1 = new DirectionalLight3D(DefaultConfig);
     directional_light1.color = vec3(1, 0.9, 0.8);
     directional_light1.intensity = 0.1;
-    directional_light1.local_rotation = Euler.from_Quaternion(Quaternion.make_Rotate(vec3(0, 0, -1), vec3(1, 1, -1).normalize()));
+    directional_light1.local_rotation = Euler.from_Quaternion(Quaternion.make_Rotate(vec3(0, 0, -1), vec3()._normalize(vec3(1, 1, -1))));
     World.add_Child(directional_light1);
 
     const EditorSceneTree = new SceneTree(DefaultConfig, EditorViewportContainer);
@@ -308,7 +308,7 @@ export function createEditor() {
 
     const box = new TorusGeometryResource(DefaultConfig);
     box.build();
-    
+
     const mesh_ = new MeshInstance3D(DefaultConfig);
     mesh_.geometry = box;
     mesh_.material = new NormalMaterialResource(DefaultConfig);

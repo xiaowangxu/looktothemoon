@@ -34,6 +34,9 @@ const PointPickingShape = new Cacher((config: Config) => {
 });
 
 export class PointGrabber3D extends GrabberElement3D<Vector3> {
+
+    static #tmp_vector3_0 = Vector3.new;
+
     private readonly point: MeshInstance3D = new MeshInstance3D(this.config);
     private readonly area: PickingArea3D = new PickingArea3D(this.config);
     private readonly shape: PickingShape3D = new PickingShape3D(this.config);
@@ -194,7 +197,7 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
         if (position === undefined) return;
         this.is_grabbing = true;
         this.drag_global_position.copy(this.global_position);
-        this.drag_offset_position.copy(this.global_position.sub(position));
+        this.drag_offset_position.copy(PointGrabber3D.#tmp_vector3_0._sub(this.global_position, position));
         this.drag_offset_scale = this.local_scale.y;
         evt.mark_Canceled();
         this.signal_grab_start.trigger(this.global_position, this);
@@ -204,7 +207,7 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
         const position = this.get_MousePositionOnPlane(evt);
         if (position === undefined) return;
         const scale = this.local_scale.y;
-        const new_global_position = position.add_Scaled(scale / this.drag_offset_scale, this.drag_offset_position);
+        const new_global_position = PointGrabber3D.#tmp_vector3_0._add_Scaled(position, scale / this.drag_offset_scale, this.drag_offset_position);
         this.global_position = new_global_position;
         evt.mark_Canceled();
         this.signal_grabbing.trigger(this.global_position, this);
@@ -219,7 +222,7 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
         const camera_3d = evt.viewport?.get_Camera3D();
         const camera = camera_3d?.get_Camera();
         if (camera_3d === undefined || camera === undefined) return undefined;
-        const plane = Plane3.from_PointAndNormal(this.global_position, camera_3d.global_position.sub(camera_3d.to_Global(new Vector3(0, 0, -1))).normalize());
+        const plane = Plane3.from_PointAndNormal(this.global_position, Vector3.new._normalize(PointGrabber3D.#tmp_vector3_0._sub(camera_3d.global_position, camera_3d.to_Global(new Vector3(0, 0, -1)))));
         const ray = camera.project_Ray(evt.position_normalized);
         const point = plane.intersect_Ray(ray);
         if (point === undefined) return undefined;

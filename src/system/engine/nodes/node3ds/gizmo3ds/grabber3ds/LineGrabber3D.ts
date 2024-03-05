@@ -48,6 +48,9 @@ const LineGrabberPickingShape = new Cacher((config: Config) => {
 });
 
 export class LineGrabber3D extends GrabberElement3D<Vector3> {
+
+    static #tmp_vector3_0 = Vector3.new;
+
     private readonly arrow_tail: MeshInstance3D = new MeshInstance3D(this.config);
     private readonly arrow_head: MeshInstance3D = new MeshInstance3D(this.config);
     private readonly arrow_material: Ref<MaterialOverrideResource> = new Ref(new MaterialOverrideResource(this.config));
@@ -177,8 +180,10 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         else {
             const cam = camera.get_Camera();
             const size = viewport.size;
-            const a = cam.project_Point(this.arrow_head.global_position).mult(size); // new Vector3().fromArray(this.arrow_head.global_position.array).project(cam);
-            const b = cam.project_Point(this.global_position).mult(size); //new Vector3().fromArray(this.global_position.array).project(cam);
+            const a = cam.project_Point(this.arrow_head.global_position)
+            a._mult(a, size); // new Vector3().fromArray(this.arrow_head.global_position.array).project(cam);
+            const b = cam.project_Point(this.global_position);
+            b._mult(b, size); //new Vector3().fromArray(this.global_position.array).project(cam);
             const distance = a.distance_to(b) / 150;
             const opactiy = (clamp(distance, 0.1, 0.35) - 0.1) * 4;
             this.visual_opacity = opactiy;
@@ -267,7 +272,7 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         if (position === undefined) return;
         this.is_grabbing = true;
         this.drag_global_position.copy(this.global_position);
-        this.drag_offset_position.copy(this.global_position.sub(position));
+        this.drag_offset_position.copy(LineGrabber3D.#tmp_vector3_0._sub(this.global_position, position));
         this.drag_offset_scale = this.local_scale.y;
         evt.mark_Canceled();
         this.signal_grab_start.trigger(this.global_position.clone(), this);
@@ -277,7 +282,7 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         const position = this.get_MousePositionOnLine(evt);
         if (position === undefined) return;
         const scale = this.local_scale.y;
-        const new_global_position = position.add_Scaled(scale / this.drag_offset_scale, this.drag_offset_position);
+        const new_global_position = LineGrabber3D.#tmp_vector3_0._add_Scaled(position, scale / this.drag_offset_scale, this.drag_offset_position);
         this.global_position = new_global_position;
         evt.mark_Canceled();
         this.signal_grabbing.trigger(this.global_position.clone(), this);
@@ -291,7 +296,9 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
     private get_MousePositionOnLine(evt: MouseInputEvent) {
         const camera = evt.viewport?.get_Camera3D()?.get_Camera();
         if (camera === undefined) return undefined;
-        const dir = this.to_Global(new Vector3(0, 1, 0)).sub(this.global_position).normalize();
+        const dir = this.to_Global(new Vector3(0, 1, 0))
+        dir._sub(dir, this.global_position);
+        dir._normalize(dir);
         const r0 = new Ray3(this.global_position, dir);
         const r1 = camera.project_Ray(evt.position_normalized);
         const [p0, _] = r0.get_ClosestPointsUncapped(r1);

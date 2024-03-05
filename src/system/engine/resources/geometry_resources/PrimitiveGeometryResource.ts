@@ -274,7 +274,7 @@ export class TorusGeometryResource extends PrimitiveGeometryResource {
                 position_buffer.data[idx * 3 + 2] = vertex.z;
                 // normal
                 const center = vec3(radius * Math.cos(u), 0, radius * Math.sin(u));
-                const normal = center.get_DirectionTo(center, vertex);
+                const normal = center._direction_to(center, vertex);
                 normal_buffer.data[idx * 3 + 0] = normal.x;
                 normal_buffer.data[idx * 3 + 1] = normal.y;
                 normal_buffer.data[idx * 3 + 2] = normal.z;
