@@ -133,7 +133,8 @@ export class MeshInstance3D extends GeometryInstance3D {
                     const visual_world = this.get_Viewport()?.world_3d?.visual_world;
                     if (visual_world === undefined) throw new Error('<MeshInstance3D> _notification@InternalBeforeRender: cannot find visual world, fail to update mesh instance');
                     if (this.is_global_transform_changed) {
-                        visual_world.set_MeshGlobalTransform(this.mesh_rid, this.global_transform);
+                        this.update_GlobalTransform();
+                        visual_world.set_MeshGlobalTransform(this.mesh_rid, this._global_transform);
                     }
                     if (this.is_global_visible_changed) {
                         visual_world.set_MeshVisibility(this.mesh_rid, this.global_visible);

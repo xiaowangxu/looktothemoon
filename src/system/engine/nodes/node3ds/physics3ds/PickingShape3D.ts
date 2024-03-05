@@ -80,7 +80,8 @@ export class PickingShape3D extends Node3D {
                     const picking_world = this.get_Viewport()?.world_3d?.picking_world;
                     if (picking_world === undefined) throw new Error('cannot find picking world, fail to update shape instance');
                     if (this.is_global_transform_changed) {
-                        picking_world.set_PickingShapeInstanceGlobalTransform(this.shape_rid, this.global_transform);
+                        this.update_GlobalTransform();
+                        picking_world.set_PickingShapeInstanceGlobalTransform(this.shape_rid, this._global_transform);
                         this.is_global_transform_changed = false;
                     }
                 }

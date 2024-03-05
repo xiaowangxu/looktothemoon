@@ -6,6 +6,8 @@ import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 
 export class DirectionalLight3D extends LightInstance3D {
 
+    static readonly #tmp_vector3_0: Vector3 = Vector3.new;
+
     private light_rid: Rid | undefined = undefined;
 
     protected on_LayerChanged(): void {
@@ -66,8 +68,6 @@ export class DirectionalLight3D extends LightInstance3D {
         }
     }
 
-    static readonly #vector3: Vector3 = new Vector3();
-
     public _notification(what: NodeNotification): void {
         switch (what) {
             case NodeNotification.EnteredTree: {
@@ -100,9 +100,9 @@ export class DirectionalLight3D extends LightInstance3D {
                     const visual_world = this.get_Viewport()?.world_3d?.visual_world;
                     if (visual_world === undefined) throw new Error('<DirectionalLight3D> _notification@InternalBeforeRender: cannot find visual world, fail to update mesh instance');
                     if (this.is_global_transform_changed) {
-                        const vec = DirectionalLight3D.#vector3;
-                        vec.set(0, 0, -1);
-                        vec.apply_Matrix4(vec, this.global_transform);
+                        this.update_GlobalTransform();
+                        const vec = DirectionalLight3D.#tmp_vector3_0.set(0, 0, -1);
+                        vec.apply_Matrix4(vec, this._global_transform);
                         vec.direction_to(this._global_position, vec);
                         vec.negate(vec);
                         visual_world.set_LightGlobalPosition(this.light_rid, vec);

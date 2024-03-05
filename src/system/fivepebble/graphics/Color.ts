@@ -1,6 +1,8 @@
+import type { Vector3 } from "../linear_algebra/Vector3";
 import { Vector4 } from "../linear_algebra/Vector4";
 
 export type Color = Vector4;
+export type PlainColor = Vector3;
 
 export const Color = {
     get new() { return new Vector4(1, 1, 1, 1); },

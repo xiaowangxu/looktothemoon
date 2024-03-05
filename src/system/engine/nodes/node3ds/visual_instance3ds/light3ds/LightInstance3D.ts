@@ -1,3 +1,4 @@
+import type { PlainColor } from "@/system/fivepebble/graphics/Color";
 import type { ClassReader, ClassWriter } from "../../../../classes/saver_loader/ClassWriterReader";
 import { VisualInstance3D } from "../VisualInstance3D";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
@@ -5,9 +6,10 @@ import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 export abstract class LightInstance3D extends VisualInstance3D {
     public static readonly class_name: string = "LightInstance3D";
 
-    protected readonly _color: Vector3 = new Vector3(1, 1, 1);
+    protected readonly _color: PlainColor = new Vector3(1, 1, 1);
     public get color() { return this._color.clone(); }
-    public set color(color: Vector3) {
+    public get_Color(target: PlainColor) { return target.copy(this._color); }
+    public set color(color: PlainColor) {
         if (!this._color.equal(color)) {
             this._color.copy(color);
             this.on_ColorChanged();

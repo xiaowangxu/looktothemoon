@@ -117,9 +117,10 @@ export class InterpolateCamera3D extends Camera3D {
     }
 
     private update_CameraTransform() {
+        this.update_GlobalTransform();
         const offset_distance = this.use_orth ? InterpolateCamera3D.OrthographicMaxOffsetDistance : this.offset_distance;
         const _global_transform = Matrix4.new.set_BasisPosition(undefined, Vector3.create(0, 0, offset_distance))
-        _global_transform.compose(_global_transform, this.global_transform);
+        _global_transform.compose(_global_transform, this._global_transform);
         this.persp_camera.global_transform = _global_transform;
         this.orth_camera.global_transform = _global_transform;
     }
