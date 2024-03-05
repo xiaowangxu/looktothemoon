@@ -4,6 +4,25 @@ import { Vector3 } from "./Vector3";
 import { lerp } from "../Scalar";
 
 export class Matrix4 implements MatrixLike<Matrix4> {
+
+    //#region init
+
+    static get new() { return new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1); }
+    static create(n11: number, n12: number, n13: number, n14: number,
+        n21: number, n22: number, n23: number, n24: number,
+        n31: number, n32: number, n33: number, n34: number,
+        n41: number, n42: number, n43: number, n44: number,
+    ) {
+        return new Matrix4(
+            n11, n12, n13, n14,
+            n21, n22, n23, n24,
+            n31, n32, n33, n34,
+            n41, n42, n43, n44,
+        );
+    }
+
+    //#endregion
+
     // [ n11 n12 n13 n14 ]
     // [ n21 n22 n23 n24 ]
     // [ n31 n32 n33 n34 ]
@@ -236,15 +255,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         return this.array[row * 4 + col];
     }
 
-    add(b: Matrix4): Matrix4 {
-        return new Matrix4(
-            this.n11 + b.n11, this.n12 + b.n12, this.n13 + b.n13, this.n14 + b.n14,
-            this.n21 + b.n21, this.n22 + b.n22, this.n23 + b.n23, this.n24 + b.n24,
-            this.n31 + b.n31, this.n32 + b.n32, this.n33 + b.n33, this.n34 + b.n34,
-            this.n41 + b.n41, this.n42 + b.n42, this.n43 + b.n43, this.n44 + b.n44,
-        );
-    }
-    adds(a: Matrix4, b: Matrix4): Matrix4 {
+    _add(a: Matrix4, b: Matrix4): Matrix4 {
         this.n11 = a.n11 + b.n11;
         this.n12 = a.n12 + b.n12;
         this.n13 = a.n13 + b.n13;
@@ -263,16 +274,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 + b.n44;
         return this;
     }
-
-    add_Number(b: number): Matrix4 {
-        return new Matrix4(
-            this.n11 + b, this.n12 + b, this.n13 + b, this.n14 + b,
-            this.n21 + b, this.n22 + b, this.n23 + b, this.n24 + b,
-            this.n31 + b, this.n32 + b, this.n33 + b, this.n34 + b,
-            this.n41 + b, this.n42 + b, this.n43 + b, this.n44 + b,
-        );
-    }
-    adds_Number(a: Matrix4, b: number): Matrix4 {
+    _add_Number(a: Matrix4, b: number): Matrix4 {
         this.n11 = a.n11 + b;
         this.n12 = a.n12 + b;
         this.n13 = a.n13 + b;
@@ -291,16 +293,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 + b;
         return this;
     }
-
-    sub(b: Matrix4): Matrix4 {
-        return new Matrix4(
-            this.n11 - b.n11, this.n12 - b.n12, this.n13 - b.n13, this.n14 - b.n14,
-            this.n21 - b.n21, this.n22 - b.n22, this.n23 - b.n23, this.n24 - b.n24,
-            this.n31 - b.n31, this.n32 - b.n32, this.n33 - b.n33, this.n34 - b.n34,
-            this.n41 - b.n41, this.n42 - b.n42, this.n43 - b.n43, this.n44 - b.n44,
-        );
-    }
-    subs(a: Matrix4, b: Matrix4): Matrix4 {
+    _sub(a: Matrix4, b: Matrix4): Matrix4 {
         this.n11 = a.n11 - b.n11;
         this.n12 = a.n12 - b.n12;
         this.n13 = a.n13 - b.n13;
@@ -319,16 +312,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 - b.n44;
         return this;
     }
-
-    sub_Number(b: number): Matrix4 {
-        return new Matrix4(
-            this.n11 - b, this.n12 - b, this.n13 - b, this.n14 - b,
-            this.n21 - b, this.n22 - b, this.n23 - b, this.n24 - b,
-            this.n31 - b, this.n32 - b, this.n33 - b, this.n34 - b,
-            this.n41 - b, this.n42 - b, this.n43 - b, this.n44 - b,
-        );
-    }
-    subs_Number(a: Matrix4, b: number): Matrix4 {
+    _sub_Number(a: Matrix4, b: number): Matrix4 {
         this.n11 = a.n11 - b;
         this.n12 = a.n12 - b;
         this.n13 = a.n13 - b;
@@ -347,16 +331,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 - b;
         return this;
     }
-
-    mult(b: Matrix4): Matrix4 {
-        return new Matrix4(
-            this.n11 * b.n11, this.n12 * b.n12, this.n13 * b.n13, this.n14 * b.n14,
-            this.n21 * b.n21, this.n22 * b.n22, this.n23 * b.n23, this.n24 * b.n24,
-            this.n31 * b.n31, this.n32 * b.n32, this.n33 * b.n33, this.n34 * b.n34,
-            this.n41 * b.n41, this.n42 * b.n42, this.n43 * b.n43, this.n44 * b.n44,
-        );
-    }
-    mults(a: Matrix4, b: Matrix4): Matrix4 {
+    _mult(a: Matrix4, b: Matrix4): Matrix4 {
         this.n11 = a.n11 * b.n11;
         this.n12 = a.n12 * b.n12;
         this.n13 = a.n13 * b.n13;
@@ -375,16 +350,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 * b.n44;
         return this;
     }
-
-    mult_Number(b: number): Matrix4 {
-        return new Matrix4(
-            this.n11 * b, this.n12 * b, this.n13 * b, this.n14 * b,
-            this.n21 * b, this.n22 * b, this.n23 * b, this.n24 * b,
-            this.n31 * b, this.n32 * b, this.n33 * b, this.n34 * b,
-            this.n41 * b, this.n42 * b, this.n43 * b, this.n44 * b,
-        );
-    }
-    mults_Number(a: Matrix4, b: number): Matrix4 {
+    _mult_Number(a: Matrix4, b: number): Matrix4 {
         this.n11 = a.n11 * b;
         this.n12 = a.n12 * b;
         this.n13 = a.n13 * b;
@@ -403,16 +369,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 * b;
         return this;
     }
-
-    div(b: Matrix4): Matrix4 {
-        return new Matrix4(
-            this.n11 / b.n11, this.n12 / b.n12, this.n13 / b.n13, this.n14 / b.n14,
-            this.n21 / b.n21, this.n22 / b.n22, this.n23 / b.n23, this.n24 / b.n24,
-            this.n31 / b.n31, this.n32 / b.n32, this.n33 / b.n33, this.n34 / b.n34,
-            this.n41 / b.n41, this.n42 / b.n42, this.n43 / b.n43, this.n44 / b.n44,
-        );
-    }
-    divs(a: Matrix4, b: Matrix4): Matrix4 {
+    _div(a: Matrix4, b: Matrix4): Matrix4 {
         this.n11 = a.n11 / b.n11;
         this.n12 = a.n12 / b.n12;
         this.n13 = a.n13 / b.n13;
@@ -431,16 +388,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 / b.n44;
         return this;
     }
-
-    div_Number(b: number): Matrix4 {
-        return new Matrix4(
-            this.n11 / b, this.n12 / b, this.n13 / b, this.n14 / b,
-            this.n21 / b, this.n22 / b, this.n23 / b, this.n24 / b,
-            this.n31 / b, this.n32 / b, this.n33 / b, this.n34 / b,
-            this.n41 / b, this.n42 / b, this.n43 / b, this.n44 / b,
-        );
-    }
-    divs_Number(a: Matrix4, b: number): Matrix4 {
+    _div_Number(a: Matrix4, b: number): Matrix4 {
         this.n11 = a.n11 / b;
         this.n12 = a.n12 / b;
         this.n13 = a.n13 / b;
@@ -459,16 +407,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 / b;
         return this;
     }
-
-    add_Scaled(num: number, b: Matrix4): Matrix4 {
-        return new Matrix4(
-            this.n11 + b.n11 * num, this.n12 + b.n12 * num, this.n13 + b.n13 * num, this.n14 + b.n14 * num,
-            this.n21 + b.n21 * num, this.n22 + b.n22 * num, this.n23 + b.n23 * num, this.n24 + b.n24 * num,
-            this.n31 + b.n31 * num, this.n32 + b.n32 * num, this.n33 + b.n33 * num, this.n34 + b.n34 * num,
-            this.n41 + b.n41 * num, this.n42 + b.n42 * num, this.n43 + b.n43 * num, this.n44 + b.n44 * num,
-        );
-    }
-    adds_Scaled(a: Matrix4, num: number, b: Matrix4): Matrix4 {
+    _add_Scaled(a: Matrix4, num: number, b: Matrix4): Matrix4 {
         this.n11 = a.n11 + b.n11 * num;
         this.n12 = a.n12 + b.n12 * num;
         this.n13 = a.n13 + b.n13 * num;
@@ -487,28 +426,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44 + b.n44 * num;
         return this;
     }
-
-    lerp(b: Matrix4, weight: number): Matrix4 {
-        return new Matrix4(
-            lerp(this.n11, b.n11, weight),
-            lerp(this.n12, b.n12, weight),
-            lerp(this.n13, b.n13, weight),
-            lerp(this.n14, b.n14, weight),
-            lerp(this.n21, b.n21, weight),
-            lerp(this.n22, b.n22, weight),
-            lerp(this.n23, b.n23, weight),
-            lerp(this.n24, b.n24, weight),
-            lerp(this.n31, b.n31, weight),
-            lerp(this.n32, b.n32, weight),
-            lerp(this.n33, b.n33, weight),
-            lerp(this.n34, b.n34, weight),
-            lerp(this.n41, b.n41, weight),
-            lerp(this.n42, b.n42, weight),
-            lerp(this.n43, b.n43, weight),
-            lerp(this.n44, b.n44, weight),
-        );
-    }
-    lerps(a: Matrix4, b: Matrix4, weight: number): Matrix4 {
+    _lerp(a: Matrix4, b: Matrix4, weight: number): Matrix4 {
         this.n11 = lerp(a.n11, b.n11, weight);
         this.n12 = lerp(a.n12, b.n12, weight);
         this.n13 = lerp(a.n13, b.n13, weight);
@@ -527,16 +445,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = lerp(a.n44, b.n44, weight);
         return this;
     }
-
-    transpose(): Matrix4 {
-        return new Matrix4(
-            this.n11, this.n21, this.n31, this.n41,
-            this.n12, this.n22, this.n32, this.n42,
-            this.n13, this.n23, this.n33, this.n43,
-            this.n14, this.n24, this.n34, this.n44,
-        );
-    }
-    transposes(a: Matrix4): Matrix4 {
+    _transpose(a: Matrix4): Matrix4 {
         this.n11 = a.n11;
         this.n12 = a.n21;
         this.n13 = a.n31;
@@ -555,34 +464,7 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = a.n44;
         return this;
     }
-
-    inverse(): Matrix4 {
-        const det = this.determinant;
-        if (det === 0) return new Matrix4(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-        const m00 = this.n11, m01 = this.n12, m02 = this.n13, m03 = this.n14;
-        const m10 = this.n21, m11 = this.n22, m12 = this.n23, m13 = this.n24;
-        const m20 = this.n31, m21 = this.n32, m22 = this.n33, m23 = this.n34;
-        const m30 = this.n41, m31 = this.n42, m32 = this.n43, m33 = this.n44;
-        return new Matrix4(
-            (m12 * m23 * m31 - m13 * m22 * m31 + m13 * m21 * m32 - m11 * m23 * m32 - m12 * m21 * m33 + m11 * m22 * m33) / det,
-            (m03 * m22 * m31 - m02 * m23 * m31 - m03 * m21 * m32 + m01 * m23 * m32 + m02 * m21 * m33 - m01 * m22 * m33) / det,
-            (m02 * m13 * m31 - m03 * m12 * m31 + m03 * m11 * m32 - m01 * m13 * m32 - m02 * m11 * m33 + m01 * m12 * m33) / det,
-            (m03 * m12 * m21 - m02 * m13 * m21 - m03 * m11 * m22 + m01 * m13 * m22 + m02 * m11 * m23 - m01 * m12 * m23) / det,
-            (m13 * m22 * m30 - m12 * m23 * m30 - m13 * m20 * m32 + m10 * m23 * m32 + m12 * m20 * m33 - m10 * m22 * m33) / det,
-            (m02 * m23 * m30 - m03 * m22 * m30 + m03 * m20 * m32 - m00 * m23 * m32 - m02 * m20 * m33 + m00 * m22 * m33) / det,
-            (m03 * m12 * m30 - m02 * m13 * m30 - m03 * m10 * m32 + m00 * m13 * m32 + m02 * m10 * m33 - m00 * m12 * m33) / det,
-            (m02 * m13 * m20 - m03 * m12 * m20 + m03 * m10 * m22 - m00 * m13 * m22 - m02 * m10 * m23 + m00 * m12 * m23) / det,
-            (m11 * m23 * m30 - m13 * m21 * m30 + m13 * m20 * m31 - m10 * m23 * m31 - m11 * m20 * m33 + m10 * m21 * m33) / det,
-            (m03 * m21 * m30 - m01 * m23 * m30 - m03 * m20 * m31 + m00 * m23 * m31 + m01 * m20 * m33 - m00 * m21 * m33) / det,
-            (m01 * m13 * m30 - m03 * m11 * m30 + m03 * m10 * m31 - m00 * m13 * m31 - m01 * m10 * m33 + m00 * m11 * m33) / det,
-            (m03 * m11 * m20 - m01 * m13 * m20 - m03 * m10 * m21 + m00 * m13 * m21 + m01 * m10 * m23 - m00 * m11 * m23) / det,
-            (m12 * m21 * m30 - m11 * m22 * m30 - m12 * m20 * m31 + m10 * m22 * m31 + m11 * m20 * m32 - m10 * m21 * m32) / det,
-            (m01 * m22 * m30 - m02 * m21 * m30 + m02 * m20 * m31 - m00 * m22 * m31 - m01 * m20 * m32 + m00 * m21 * m32) / det,
-            (m02 * m11 * m30 - m01 * m12 * m30 - m02 * m10 * m31 + m00 * m12 * m31 + m01 * m10 * m32 - m00 * m11 * m32) / det,
-            (m01 * m12 * m20 - m02 * m11 * m20 + m02 * m10 * m21 - m00 * m12 * m21 - m01 * m10 * m22 + m00 * m11 * m22) / det,
-        );
-    }
-    inverses(a: Matrix4): Matrix4 {
+    _inverse(a: Matrix4): Matrix4 {
         const det = a.determinant;
         if (det === 0) {
             this.n11 = 0;
@@ -625,35 +507,10 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         this.n44 = (m01 * m12 * m20 - m02 * m11 * m20 + m02 * m10 * m21 - m00 * m12 * m21 - m01 * m10 * m22 + m00 * m11 * m22) / det;
         return this;
     }
-
-    /**
-     * b * this
-     */
-    compose(b: Matrix4): Matrix4 {
-        // [ b11 b12 b13 b14 ]   [ n11 n12 n13 n14 ]
-        // [ b21 b22 b23 b24 ] * [ n21 n22 n23 n24 ]
-        // [ b31 b32 b33 b34 ]   [ n31 n32 n33 n34 ]
-        // [ b41 b42 b43 b44 ]   [ n41 n42 n43 n44 ]
-        const n11 = this.n11, n12 = this.n12, n13 = this.n13, n14 = this.n14;
-        const n21 = this.n21, n22 = this.n22, n23 = this.n23, n24 = this.n24;
-        const n31 = this.n31, n32 = this.n32, n33 = this.n33, n34 = this.n34;
-        const n41 = this.n41, n42 = this.n42, n43 = this.n43, n44 = this.n44;
-        const b11 = b.n11, b12 = b.n12, b13 = b.n13, b14 = b.n14;
-        const b21 = b.n21, b22 = b.n22, b23 = b.n23, b24 = b.n24;
-        const b31 = b.n31, b32 = b.n32, b33 = b.n33, b34 = b.n34;
-        const b41 = b.n41, b42 = b.n42, b43 = b.n43, b44 = b.n44;
-        return new Matrix4(
-            b11 * n11 + b12 * n21 + b13 * n31 + b14 * n41, b11 * n12 + b12 * n22 + b13 * n32 + b14 * n42, b11 * n13 + b12 * n23 + b13 * n33 + b14 * n43, b11 * n14 + b12 * n24 + b13 * n34 + b14 * n44,
-            b21 * n11 + b22 * n21 + b23 * n31 + b24 * n41, b21 * n12 + b22 * n22 + b23 * n32 + b24 * n42, b21 * n13 + b22 * n23 + b23 * n33 + b24 * n43, b21 * n14 + b22 * n24 + b23 * n34 + b24 * n44,
-            b31 * n11 + b32 * n21 + b33 * n31 + b34 * n41, b31 * n12 + b32 * n22 + b33 * n32 + b34 * n42, b31 * n13 + b32 * n23 + b33 * n33 + b34 * n43, b31 * n14 + b32 * n24 + b33 * n34 + b34 * n44,
-            b41 * n11 + b42 * n21 + b43 * n31 + b44 * n41, b41 * n12 + b42 * n22 + b43 * n32 + b44 * n42, b41 * n13 + b42 * n23 + b43 * n33 + b44 * n43, b41 * n14 + b42 * n24 + b43 * n34 + b44 * n44,
-        );
-    }
-
     /**
      * b * a
      */
-    composes(a: Matrix4, b: Matrix4): Matrix4 {
+    _compose(a: Matrix4, b: Matrix4): Matrix4 {
         // [ b11 b12 b13 b14 ]   [ n11 n12 n13 n14 ]
         // [ b21 b22 b23 b24 ] * [ n21 n22 n23 n24 ]
         // [ b31 b32 b33 b34 ]   [ n31 n32 n33 n34 ]

@@ -244,7 +244,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         }
         // camera view
         {
-            const matrix = RenderServerDevice.#matrix.inverses(camera_world);
+            const matrix = RenderServerDevice.#matrix._inverse(camera_world);
             this.world_uniforms_camera_view[0] = matrix.n11;
             this.world_uniforms_camera_view[1] = matrix.n21;
             this.world_uniforms_camera_view[2] = matrix.n31;
@@ -283,7 +283,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         }
         // camera view
         {
-            const matrix = RenderServerDevice.#matrix.inverses(camera_projection);
+            const matrix = RenderServerDevice.#matrix._inverse(camera_projection);
             this.world_uniforms_camera_inv_projection[0] = matrix.n11;
             this.world_uniforms_camera_inv_projection[1] = matrix.n21;
             this.world_uniforms_camera_inv_projection[2] = matrix.n31;

@@ -5,7 +5,7 @@ import type { VectorLike } from "./VectorLike";
 
 export class Vector4 implements VectorLike<Vector4, Matrix4> {
 
-    //#region tmp
+    //#region init
 
     public static get new() { return new Vector4(); }
     public static create(x: number = 0, y: number = 0, z: number = 0, w: number = 0) { return new Vector4(x, y, z, w); }

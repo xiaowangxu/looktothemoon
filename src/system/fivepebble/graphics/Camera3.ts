@@ -12,22 +12,22 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     protected _projection: Matrix4 = Matrix4.make_Identity();
     get projection() { return this._projection.clone(); }
 
-    static #matrix3: Matrix3 = Matrix3.make_Identity();
-    static #matrix4: Matrix4 = Matrix4.make_Identity();
-    static #vector3: Vector3 = Vector3.make_Zero();
-    static #euler: Euler = euler();
+    static #tmp_matrix3_0: Matrix3 = Matrix3.make_Identity();
+    static #tmp_matrix4_0: Matrix4 = Matrix4.make_Identity();
+    static #tmp_vector3_0: Vector3 = Vector3.make_Zero();
+    static #tmp_euler_0: Euler = euler();
 
     protected _global_transform: Matrix4 = Matrix4.make_Identity();
     protected _global_transform_inverse: Matrix4 = Matrix4.make_Identity();
     get global_transform() { return this._global_transform.clone(); }
     set global_transform(transform: Matrix4) {
-        const euler = Camera3.#euler;
-        const matrix3 = Camera3.#matrix3;
-        const vector3 = Camera3.#vector3;
+        const euler = Camera3.#tmp_euler_0;
+        const matrix3 = Camera3.#tmp_matrix3_0;
+        const vector3 = Camera3.#tmp_vector3_0;
         transform.basis.decomposes_RotationScale(euler, vector3);
         transform.get_Position(vector3);
         this._global_transform.set_BasisPosition(matrix3.set_Euler(euler), vector3);
-        this._global_transform_inverse.inverses(this._global_transform);
+        this._global_transform_inverse._inverse(this._global_transform);
     }
 
     protected _mask: number = 0xffffffff;
@@ -42,10 +42,10 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     public abstract get is_orthogonal(): boolean;
 
     project_Point(point: Vector3): Vector2 {
-        const p = Camera3.#vector3;
+        const p = Camera3.#tmp_vector3_0;
         p._apply_Matrix4(point, this._global_transform_inverse);
         p._apply_Matrix4(p, this._projection);
-        return new Vector2(p.x, p.y);
+        return Vector2.create(p.x, p.y);
     }
 
     abstract unproject_Point(ndc: Vector2, depth?: number): Vector3;
@@ -57,10 +57,10 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     }
 
     get frustum() {
-        return Frustum3.from_Projection(Camera3.#matrix4.composes(this._global_transform_inverse, this._projection));
+        return Frustum3.from_Projection(Camera3.#tmp_matrix4_0._compose(this._global_transform_inverse, this._projection));
     }
     get_Frustum(target: Frustum3): Frustum3 {
-        return target.set_Projection(Camera3.#matrix4.composes(this._global_transform_inverse, this._projection));
+        return target.set_Projection(Camera3.#tmp_matrix4_0._compose(this._global_transform_inverse, this._projection));
     }
 
     abstract clone(): Camera3;

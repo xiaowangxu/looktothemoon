@@ -7,44 +7,19 @@ export interface MatrixLike<Mat extends MatrixLike<Mat>> {
 
     index(row: number, col: number): number;
 
-    add(b: Mat): Mat;
-    adds(a: Mat, b: Mat): Mat;
-
-    add_Number(b: number): Mat;
-    adds_Number(a: Mat, b: number): Mat;
-
-    sub(b: Mat): Mat;
-    subs(a: Mat, b: Mat): Mat;
-
-    sub_Number(b: number): Mat;
-    subs_Number(a: Mat, b: number): Mat;
-
-    mult(b: Mat): Mat;
-    mults(a: Mat, b: Mat): Mat;
-
-    mult_Number(b: number): Mat;
-    mults_Number(a: Mat, b: number): Mat;
-
-    div(b: Mat): Mat;
-    divs(a: Mat, b: Mat): Mat;
-
-    div_Number(b: number): Mat;
-    divs_Number(a: Mat, b: number): Mat;
-
-    add_Scaled(num: number, b: Mat): Mat;
-    adds_Scaled(a: Mat, num: number, b: Mat): Mat;
-
-    lerp(b: Mat, weight: number): Mat;
-    lerps(a: Mat, b: Mat, weight: number): Mat;
-
-    transpose(): Mat;
-    transposes(a: Mat): Mat;
-
-    inverse(): Mat;
-    inverses(a: Mat): Mat;
-
-    compose(b: Mat): Mat;
-    composes(a: Mat, b: Mat): Mat;
+    _add(a: Mat, b: Mat): Mat;
+    _add_Number(a: Mat, b: number): Mat;
+    _sub(a: Mat, b: Mat): Mat;
+    _sub_Number(a: Mat, b: number): Mat;
+    _mult(a: Mat, b: Mat): Mat;
+    _mult_Number(a: Mat, b: number): Mat;
+    _div(a: Mat, b: Mat): Mat;
+    _div_Number(a: Mat, b: number): Mat;
+    _add_Scaled(a: Mat, num: number, b: Mat): Mat;
+    _lerp(a: Mat, b: Mat, weight: number): Mat;
+    _transpose(a: Mat): Mat;
+    _inverse(a: Mat): Mat;
+    _compose(a: Mat, b: Mat): Mat;
 
     equal(b: Mat): boolean;
     set(...args: number[]): Mat;

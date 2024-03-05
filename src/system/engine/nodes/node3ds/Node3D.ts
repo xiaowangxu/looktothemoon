@@ -69,7 +69,7 @@ export class Node3D extends Node {
             const basis_rotation = Node3D.#basis_rotation;
             basis.set_Scale(this._local_scale.x, this._local_scale.y, this._local_scale.z);
             basis_rotation.set_Euler(this._local_rotation);
-            basis.composes(basis_rotation, basis);
+            basis._compose(basis_rotation, basis);
             this._local_transform.set_BasisPosition(basis, this._local_position);
             this.is_local_transform_dirty = false;
         }
@@ -116,7 +116,7 @@ export class Node3D extends Node {
         if (this.is_global_transform_dirty) {
             const parent = this.get_Parent();
             if (!this.top_level && parent !== undefined && parent instanceof Node3D) {
-                this._global_transform.composes(this.local_transform, parent.global_transform!);
+                this._global_transform._compose(this.local_transform, parent.global_transform!);
                 // setup global position / rotation
                 this._global_transform.get_Basis(Node3D.#basis).decomposes_RotationScale(Node3D.#euler, Node3D.#vector3);
                 this._global_position.copy(this._global_transform.get_Position(Node3D.#vector3));
@@ -134,7 +134,7 @@ export class Node3D extends Node {
     public set global_transform(transform: Matrix4) {
         const parent = this.get_Parent();
         if (!this.top_level && parent !== undefined && parent instanceof Node3D) {
-            this.local_transform = Node3D.#matrix4_0.composes(transform, Node3D.#matrix4_1.inverses(parent.global_transform));
+            this.local_transform = Node3D.#matrix4_0._compose(transform, Node3D.#matrix4_1._inverse(parent.global_transform));
         }
         else {
             this.local_transform = transform;
@@ -195,7 +195,7 @@ export class Node3D extends Node {
 
     public to_Local(global_position: Vector3) {
         const invert = this.global_transform;
-        return Vector3.new._apply_Matrix4(global_position, invert.inverses(invert));
+        return Vector3.new._apply_Matrix4(global_position, invert._inverse(invert));
     }
 
     // save / load

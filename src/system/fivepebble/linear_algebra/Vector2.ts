@@ -5,7 +5,7 @@ import type { VectorLike } from "./VectorLike";
 
 export class Vector2 implements VectorLike<Vector2, Matrix2> {
 
-    //#region tmp
+    //#region init
 
     public static get new() { return new Vector2(0, 0); }
     public static create(x: number = 0, y: number = 0) { return new Vector2(x, y); }
@@ -62,61 +62,51 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
         this.y = a.y + b.y;
         return this;
     }
-
     add_Number(a: Vector2, b: number): Vector2 {
         this.x = a.x + b;
         this.y = a.y + b;
         return this;
     }
-
     sub(a: Vector2, b: Vector2): Vector2 {
         this.x = a.x - b.x;
         this.y = a.y - b.y;
         return this;
     }
-
     sub_Number(a: Vector2, b: number): Vector2 {
         this.x = a.x - b;
         this.y = a.y - b;
         return this;
     }
-
     mult(a: Vector2, b: Vector2): Vector2 {
         this.x = a.x * b.x;
         this.y = a.y * b.y;
         return this;
     }
-
     mult_Number(a: Vector2, b: number): Vector2 {
         this.x = a.x * b;
         this.y = a.y * b;
         return this;
     }
-
     div(a: Vector2, b: Vector2): Vector2 {
         this.x = a.x / b.x;
         this.y = a.y / b.y;
         return this;
     }
-
     div_Number(a: Vector2, b: number): Vector2 {
         this.x = a.x / b;
         this.y = a.y / b;
         return this;
     }
-
     add_Scaled(a: Vector2, num: number, b: Vector2): Vector2 {
         this.x = a.x + num * b.x;
         this.y = a.y + num * b.y;
         return this;
     }
-
     lerp(a: Vector2, b: Vector2, weight: number): Vector2 {
         this.x = lerp(a.x, b.x, weight);
         this.y = lerp(a.y, b.y, weight);
         return this;
     }
-
     transform(a: Vector2, matrix: Matrix2): Vector2 {
         const n11 = matrix.n11, n12 = matrix.n12;
         const n21 = matrix.n21, n22 = matrix.n22;
@@ -125,20 +115,17 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
         this.y = n21 * x + n22 * y;
         return this;
     }
-
     normalize(a: Vector2): Vector2 {
         const length = a.length;
         this.x = a.x / length;
         this.y = a.y / length;
         return this;
     }
-
     negate(a: Vector2): Vector2 {
         this.x = -a.x;
         this.y = -a.y;
         return this;
     }
-
     dot(b: Vector2): number {
         return this.x * b.x + this.y * b.y;
     }

@@ -7,6 +7,16 @@ import { Vector2 } from "./Vector2";
 import { Vector3 } from "./Vector3";
 
 export class Matrix3 implements MatrixLike<Matrix3> {
+
+    //#region init
+
+    static get new() { return new Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1); }
+    static create(n11: number, n12: number, n13: number, n21: number, n22: number, n23: number, n31: number, n32: number, n33: number) {
+        return new Matrix3(n11, n12, n13, n21, n22, n23, n31, n32, n33);
+    }
+
+    //#endregion
+
     // [ n11 n12 n13 ]
     // [ n21 n22 n23 ]
     // [ n31 n32 n33 ]
@@ -49,7 +59,7 @@ export class Matrix3 implements MatrixLike<Matrix3> {
     }
 
     public get position() {
-        return new Vector2(
+        return Vector2.create(
             this.n13,
             this.n23,
         );
@@ -281,186 +291,73 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         return this.array[row * 3 + col];
     }
 
-    add(b: Matrix3): Matrix3 {
-        return new Matrix3(
-            this.n11 + b.n11, this.n12 + b.n12, this.n13 + b.n13,
-            this.n21 + b.n21, this.n22 + b.n22, this.n23 + b.n23,
-            this.n31 + b.n31, this.n32 + b.n32, this.n33 + b.n33,
-        );
-    }
-    adds(a: Matrix3, b: Matrix3): Matrix3 {
+    _add(a: Matrix3, b: Matrix3): Matrix3 {
         this.n11 = a.n11 + b.n11; this.n12 = a.n12 + b.n12; this.n13 = a.n13 + b.n13;
         this.n21 = a.n21 + b.n21; this.n22 = a.n22 + b.n22; this.n23 = a.n23 + b.n23;
         this.n31 = a.n31 + b.n31; this.n32 = a.n32 + b.n32; this.n33 = a.n33 + b.n33;
         return this;
     }
-
-    add_Number(b: number): Matrix3 {
-        return new Matrix3(
-            this.n11 + b, this.n12 + b, this.n13 + b,
-            this.n21 + b, this.n22 + b, this.n23 + b,
-            this.n31 + b, this.n32 + b, this.n33 + b,
-        );
-    }
-    adds_Number(a: Matrix3, b: number): Matrix3 {
+    _add_Number(a: Matrix3, b: number): Matrix3 {
         this.n11 = a.n11 + b; this.n12 = a.n12 + b; this.n13 = a.n13 + b;
         this.n21 = a.n21 + b; this.n22 = a.n22 + b; this.n23 = a.n23 + b;
         this.n31 = a.n31 + b; this.n32 = a.n32 + b; this.n33 = a.n33 + b;
         return this;
     }
-
-    sub(b: Matrix3): Matrix3 {
-        return new Matrix3(
-            this.n11 - b.n11, this.n12 - b.n12, this.n13 - b.n13,
-            this.n21 - b.n21, this.n22 - b.n22, this.n23 - b.n23,
-            this.n31 - b.n31, this.n32 - b.n32, this.n33 - b.n33,
-        );
-    }
-    subs(a: Matrix3, b: Matrix3): Matrix3 {
+    _sub(a: Matrix3, b: Matrix3): Matrix3 {
         this.n11 = a.n11 - b.n11; this.n12 = a.n12 - b.n12; this.n13 = a.n13 - b.n13;
         this.n21 = a.n21 - b.n21; this.n22 = a.n22 - b.n22; this.n23 = a.n23 - b.n23;
         this.n31 = a.n31 - b.n31; this.n32 = a.n32 - b.n32; this.n33 = a.n33 - b.n33;
         return this;
     }
-
-    sub_Number(b: number): Matrix3 {
-        return new Matrix3(
-            this.n11 - b, this.n12 - b, this.n13 - b,
-            this.n21 - b, this.n22 - b, this.n23 - b,
-            this.n31 - b, this.n32 - b, this.n33 - b,
-        );
-    }
-    subs_Number(a: Matrix3, b: number): Matrix3 {
+    _sub_Number(a: Matrix3, b: number): Matrix3 {
         this.n11 = a.n11 - b; this.n12 = a.n12 - b; this.n13 = a.n13 - b;
         this.n21 = a.n21 - b; this.n22 = a.n22 - b; this.n23 = a.n23 - b;
         this.n31 = a.n31 - b; this.n32 = a.n32 - b; this.n33 = a.n33 - b;
         return this;
     }
-
-    mult(b: Matrix3): Matrix3 {
-        return new Matrix3(
-            this.n11 * b.n11, this.n12 * b.n12, this.n13 * b.n13,
-            this.n21 * b.n21, this.n22 * b.n22, this.n23 * b.n23,
-            this.n31 * b.n31, this.n32 * b.n32, this.n33 * b.n33,
-        );
-    }
-    mults(a: Matrix3, b: Matrix3): Matrix3 {
+    _mult(a: Matrix3, b: Matrix3): Matrix3 {
         this.n11 = a.n11 * b.n11; this.n12 = a.n12 * b.n12; this.n13 = a.n13 * b.n13;
         this.n21 = a.n21 * b.n21; this.n22 = a.n22 * b.n22; this.n23 = a.n23 * b.n23;
         this.n31 = a.n31 * b.n31; this.n32 = a.n32 * b.n32; this.n33 = a.n33 * b.n33;
         return this;
     }
-
-    mult_Number(b: number): Matrix3 {
-        return new Matrix3(
-            this.n11 * b, this.n12 * b, this.n13 * b,
-            this.n21 * b, this.n22 * b, this.n23 * b,
-            this.n31 * b, this.n32 * b, this.n33 * b,
-        );
-    }
-    mults_Number(a: Matrix3, b: number): Matrix3 {
+    _mult_Number(a: Matrix3, b: number): Matrix3 {
         this.n11 = a.n11 * b; this.n12 = a.n12 * b; this.n13 = a.n13 * b;
         this.n21 = a.n21 * b; this.n22 = a.n22 * b; this.n23 = a.n23 * b;
         this.n31 = a.n31 * b; this.n32 = a.n32 * b; this.n33 = a.n33 * b;
         return this;
     }
-
-    div(b: Matrix3): Matrix3 {
-        return new Matrix3(
-            this.n11 / b.n11, this.n12 / b.n12, this.n13 / b.n13,
-            this.n21 / b.n21, this.n22 / b.n22, this.n23 / b.n23,
-            this.n31 / b.n31, this.n32 / b.n32, this.n33 / b.n33,
-        );
-    }
-    divs(a: Matrix3, b: Matrix3): Matrix3 {
+    _div(a: Matrix3, b: Matrix3): Matrix3 {
         this.n11 = a.n11 / b.n11; this.n12 = a.n12 / b.n12; this.n13 = a.n13 / b.n13;
         this.n21 = a.n21 / b.n21; this.n22 = a.n22 / b.n22; this.n23 = a.n23 / b.n23;
         this.n31 = a.n31 / b.n31; this.n32 = a.n32 / b.n32; this.n33 = a.n33 / b.n33;
         return this;
     }
-
-    div_Number(b: number): Matrix3 {
-        return new Matrix3(
-            this.n11 / b, this.n12 / b, this.n13 / b,
-            this.n21 / b, this.n22 / b, this.n23 / b,
-            this.n31 / b, this.n32 / b, this.n33 / b,
-        );
-    }
-    divs_Number(a: Matrix3, b: number): Matrix3 {
+    _div_Number(a: Matrix3, b: number): Matrix3 {
         this.n11 = a.n11 / b; this.n12 = a.n12 / b; this.n13 = a.n13 / b;
         this.n21 = a.n21 / b; this.n22 = a.n22 / b; this.n23 = a.n23 / b;
         this.n31 = a.n31 / b; this.n32 = a.n32 / b; this.n33 = a.n33 / b;
         return this;
     }
-
-    add_Scaled(num: number, b: Matrix3): Matrix3 {
-        return new Matrix3(
-            this.n11 + b.n11 * num, this.n12 + b.n12 * num, this.n13 + b.n13 * num,
-            this.n21 + b.n21 * num, this.n22 + b.n22 * num, this.n23 + b.n23 * num,
-            this.n31 + b.n31 * num, this.n32 + b.n32 * num, this.n33 + b.n33 * num,
-        );
-    }
-    adds_Scaled(a: Matrix3, num: number, b: Matrix3): Matrix3 {
+    _add_Scaled(a: Matrix3, num: number, b: Matrix3): Matrix3 {
         this.n11 = a.n11 + b.n11 * num; this.n12 = a.n12 + b.n12 * num; this.n13 = a.n13 + b.n13 * num;
         this.n21 = a.n21 + b.n21 * num; this.n22 = a.n22 + b.n22 * num; this.n23 = a.n23 + b.n23 * num;
         this.n31 = a.n31 + b.n31 * num; this.n32 = a.n32 + b.n32 * num; this.n33 = a.n33 + b.n33 * num;
         return this;
     }
-
-    lerp(b: Matrix3, weight: number): Matrix3 {
-        return new Matrix3(
-            lerp(this.n11, b.n11, weight), lerp(this.n12, b.n12, weight), lerp(this.n13, b.n13, weight),
-            lerp(this.n21, b.n21, weight), lerp(this.n22, b.n22, weight), lerp(this.n23, b.n23, weight),
-            lerp(this.n31, b.n31, weight), lerp(this.n32, b.n32, weight), lerp(this.n33, b.n33, weight),
-        );
-    }
-    lerps(a: Matrix3, b: Matrix3, weight: number): Matrix3 {
+    _lerp(a: Matrix3, b: Matrix3, weight: number): Matrix3 {
         this.n11 = lerp(a.n11, b.n11, weight); this.n12 = lerp(a.n12, b.n12, weight), this.n13 = lerp(a.n13, b.n13, weight);
         this.n21 = lerp(a.n21, b.n21, weight); this.n22 = lerp(a.n22, b.n22, weight), this.n23 = lerp(a.n23, b.n23, weight);
         this.n31 = lerp(a.n31, b.n31, weight); this.n32 = lerp(a.n32, b.n32, weight), this.n33 = lerp(a.n33, b.n33, weight);
         return this;
     }
-
-    transpose(): Matrix3 {
-        // [ 1 2 3 ]      [ 1 4 7 ]
-        // [ 4 5 6 ]  ->  [ 2 5 8 ]
-        // [ 7 8 9 ]      [ 3 6 9 ]
-        return new Matrix3(
-            this.n11, this.n21, this.n31,
-            this.n12, this.n22, this.n32,
-            this.n13, this.n23, this.n33,
-        );
-    }
-    transposes(a: Matrix3): Matrix3 {
+    _transpose(a: Matrix3): Matrix3 {
         this.n11 = a.n11; this.n12 = a.n21; this.n13 = a.n31;
         this.n21 = a.n12; this.n22 = a.n22; this.n23 = a.n32;
         this.n31 = a.n13; this.n32 = a.n23; this.n33 = a.n33;
         return this;
     }
-
-    inverse(): Matrix3 {
-        const n11 = this.n11, n21 = this.n21, n31 = this.n31;
-        const n12 = this.n12, n22 = this.n22, n32 = this.n32;
-        const n13 = this.n13, n23 = this.n23, n33 = this.n33;
-        const t11 = n33 * n22 - n32 * n23;
-        const t12 = n32 * n13 - n33 * n12;
-        const t13 = n23 * n12 - n22 * n13;
-        const det = n11 * t11 + n21 * t12 + n31 * t13;
-        if (det === 0) return new Matrix3(0, 0, 0, 0, 0, 0, 0, 0, 0);
-        const det_inverse = 1 / det;
-        return new Matrix3(
-            t11 * det_inverse,
-            (n31 * n23 - n33 * n21) * det_inverse,
-            (n32 * n21 - n31 * n22) * det_inverse,
-            t12 * det_inverse,
-            (n33 * n11 - n31 * n13) * det_inverse,
-            (n31 * n12 - n32 * n11) * det_inverse,
-            t13 * det_inverse,
-            (n21 * n13 - n23 * n11) * det_inverse,
-            (n22 * n11 - n21 * n12) * det_inverse,
-        );
-    }
-    inverses(a: Matrix3): Matrix3 {
+    _inverse(a: Matrix3): Matrix3 {
         const n11 = a.n11, n21 = a.n21, n31 = a.n31;
         const n12 = a.n12, n22 = a.n22, n32 = a.n32;
         const n13 = a.n13, n23 = a.n23, n33 = a.n33;
@@ -492,31 +389,10 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         this.n33 = (n22 * n11 - n21 * n12) * det_inverse;
         return this;
     }
-
-    /**
-     * b * this
-     */
-    compose(b: Matrix3): Matrix3 {
-        // [ b11 b12 b13 ]   [ n11 n12 n13 ]   
-        // [ b21 b22 b23 ] * [ n21 n22 n23 ]   
-        // [ b31 b32 b33 ]   [ n31 n32 n33 ]   
-        const n11 = this.n11, n21 = this.n21, n31 = this.n31;
-        const n12 = this.n12, n22 = this.n22, n32 = this.n32;
-        const n13 = this.n13, n23 = this.n23, n33 = this.n33;
-        const b11 = b.n11, b21 = b.n21, b31 = b.n31;
-        const b12 = b.n12, b22 = b.n22, b32 = b.n32;
-        const b13 = b.n13, b23 = b.n23, b33 = b.n33;
-        return new Matrix3(
-            b11 * n11 + b12 * n21 + b13 * n31, b11 * n12 + b12 * n22 + b13 * n32, b11 * n13 + b12 * n23 + b13 * n33,
-            b21 * n11 + b22 * n21 + b23 * n31, b21 * n12 + b22 * n22 + b23 * n32, b21 * n13 + b22 * n23 + b23 * n33,
-            b31 * n11 + b32 * n21 + b33 * n31, b31 * n12 + b32 * n22 + b33 * n32, b31 * n13 + b32 * n23 + b33 * n33,
-        );
-    }
-
     /**
      * b * a
      */
-    composes(a: Matrix3, b: Matrix3): Matrix3 {
+    _compose(a: Matrix3, b: Matrix3): Matrix3 {
         const n11 = a.n11, n21 = a.n21, n31 = a.n31;
         const n12 = a.n12, n22 = a.n22, n32 = a.n32;
         const n13 = a.n13, n23 = a.n23, n33 = a.n33;
