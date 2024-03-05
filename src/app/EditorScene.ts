@@ -46,6 +46,7 @@ import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { Pi, Tau } from "@/system/fivepebble/Scalar";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
+import { GridGeometryResource } from "@/system/engine/resources/geometry_resources/HelperGeometryResource";
 
 const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
     return {
@@ -92,18 +93,18 @@ export function createEditor() {
     EditorCamera.set_Zoom(0.3);
 
     // // viewport 0
-    const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
-    EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-    const EditorViewport0 = new Viewport(DefaultConfig);
-    const renderer0 = new EditorRenderer3D(DefaultConfig);
-    const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
-    renderer0.render_pipeline = pipeline0;
-    EditorViewport0.renderer_3d = renderer0;
-    EditorViewport0.transparent = true;
-    EditorViewportContainer0.add_Child(EditorViewport0);
-    const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
-    EditorViewport0.add_Child(EditorCamera0);
-    EditorViewport.add_Child(EditorViewportContainer0);
+    // const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
+    // EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+    // const EditorViewport0 = new Viewport(DefaultConfig);
+    // const renderer0 = new EditorRenderer3D(DefaultConfig);
+    // const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
+    // renderer0.render_pipeline = pipeline0;
+    // EditorViewport0.renderer_3d = renderer0;
+    // EditorViewport0.transparent = true;
+    // EditorViewportContainer0.add_Child(EditorViewport0);
+    // const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
+    // EditorViewport0.add_Child(EditorCamera0);
+    // EditorViewport.add_Child(EditorViewportContainer0);
 
     // World 
     const World = new Node3D(DefaultConfig);
@@ -281,6 +282,16 @@ export function createEditor() {
     ground.local_scale = Vector3.create(1000, 1, 1000);
     ground.local_position = Vector3.create(0, -100, 0);
     World.add_Child(ground);
+
+    const grid_geo = new GridGeometryResource(DefaultConfig);
+    grid_geo.build();
+    const grid = new MeshInstance3D(DefaultConfig);
+    grid.geometry = grid_geo;
+    const grid_mat = new PlainColorMaterialResource(DefaultConfig);
+    grid_mat.color = Color.color8(0, 0, 0, 20);
+    grid.material = grid_mat;
+    grid.top_level = true;
+    World.add_Child(grid);
 
     EditorSceneTree.start_Loop();
 
