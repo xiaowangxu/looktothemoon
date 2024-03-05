@@ -7,7 +7,7 @@
     "dev-host": "npm run build-vfs-code & vite --host",
     "build": "npm run build-vfs-code & run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
-    "build-only": "npm run build-vfs-code & vite build",
+    "build-only": "vite build",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
     "build-fs-saveload-code": "tsc src/system/filesystem/fs_saver_loader/FileSystemSaverLoader.mjs --declaration --allowJs --emitDeclarationOnly",
     "build-vfs": "node dev/vfs_gen/VfsGen.mjs res/vfs res/sys.vfs",

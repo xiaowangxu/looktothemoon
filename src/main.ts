@@ -11,11 +11,11 @@ createApp(App).mount('#app');
 VFS.touch(fspath('sys://'));
 VFS.touch(fspath('user://'));
 
-await fetch(sys_vfs).then(res => res.arrayBuffer()).then(array_buffer => VFS.load(array_buffer, fspath('sys://')));
+(async () => {
+    await fetch(sys_vfs).then(res => res.arrayBuffer()).then(array_buffer => VFS.load(array_buffer, fspath('sys://')));
+})();
 
 (window as any).VFS = VFS;
 (window as any).fspath = fspath;
 
 (window as any).scenetree = createEditor();
-
-import './system/fivepebble/bvh/Bvh3';
