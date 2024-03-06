@@ -105,7 +105,7 @@ export class OrbitCamera3D extends Node3D {
                 if (!this._is_grabbing) {
                     if (event.pressed) {
                         this.is_grabbing = true;
-                        event.mark_Canceled();
+                        event.mark_Cancelled();
                     }
                 }
                 else if (event.pressed === false) {
@@ -128,68 +128,68 @@ export class OrbitCamera3D extends Node3D {
                 else {
                     this.rotate(OrbitCamera3D.#tmp_vector2_0.mult_Number(event.relative, (this.config.render_server.pixel_ratio)));
                 }
-                event.mark_Canceled();
+                event.mark_Cancelled();
             }
         }
         if (!propagate && event instanceof ActionInputEvent && event.pressed) {
             // zoom
             if (event.action === 'zoomIn') {
                 this.zoom(true, this.get_Viewport()?.get_Input().is_KeyPressed('Control') ?? false);
-                event.mark_Canceled();
+                event.mark_Cancelled();
             }
             else if (event.action === 'zoomOut') {
                 this.zoom(false, this.get_Viewport()?.get_Input().is_KeyPressed('Control') ?? false);
-                event.mark_Canceled();
+                event.mark_Cancelled();
             }
             else if (event.action === 'switch_TopView') {
                 this.set_Rotation(0, -Math.PI / 2, true);
                 this.set_Fov(0, true);
                 this.is_grabbing = false;
-                event.mark_Canceled();
+                event.mark_Cancelled();
             }
             else if (event.action === 'switch_BottomView') {
                 this.set_Rotation(0, Math.PI / 2, true);
                 this.set_Fov(0, true);
                 this.is_grabbing = false;
-                event.mark_Canceled();
+                event.mark_Cancelled();
             }
             else if (event.action === 'switch_LeftView') {
                 this.set_Rotation(-Math.PI / 2, 0, true);
                 this.set_Fov(0, true);
                 this.is_grabbing = false;
-                event.mark_Canceled();
+                event.mark_Cancelled();
             }
             else if (event.action === 'switch_RightView') {
                 this.set_Rotation(Math.PI / 2, 0, true);
                 this.set_Fov(0, true);
                 this.is_grabbing = false;
-                event.mark_Canceled();
+                event.mark_Cancelled();
             }
             else if (event.action === 'switch_FrontView') {
                 this.set_Rotation(0, 0, true);
                 this.set_Fov(0, true);
                 this.is_grabbing = false;
-                event.mark_Canceled();
+                event.mark_Cancelled();
             }
             else if (event.action === 'switch_BackView') {
                 this.set_Rotation(Math.PI, 0, true);
                 this.set_Fov(0, true);
                 this.is_grabbing = false;
-                event.mark_Canceled();
+                event.mark_Cancelled();
             }
             else if (event.action === 'switch_CameraType') {
                 if (this.is_fov_tween_finished) {
                     this.set_Fov(this.is_orthographic ? this.perspective_fov : 0, true);
-                    event.mark_Canceled();
+                    event.mark_Cancelled();
                 }
             }
             else if (event.action === 'switch_CameraTypeOrth') {
                 this.set_Fov(0, true);
-                event.mark_Canceled();
+                event.mark_Cancelled();
             }
             else if (event.action === 'switch_CameraTypePersp') {
                 this.set_Fov(this.perspective_fov, true);
-                event.mark_Canceled();
+                event.mark_Cancelled();
             }
         }
     }

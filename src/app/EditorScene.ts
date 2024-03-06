@@ -47,6 +47,11 @@ import { Pi, Tau } from "@/system/fivepebble/Scalar";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { GridGeometryResource } from "@/system/engine/resources/geometry_resources/HelperGeometryResource";
+import { PickingArea3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingArea3D";
+import { PickingPolyLineResource } from "@/system/engine/resources/picking_shape_resources/PickingShapeResource";
+import { PickingShape3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingShape3D";
+import { PointGrabber3D } from "../system/engine/nodes/node3ds/gizmo3ds/grabber3ds/PointGrabber3D";
+import { Line3 } from "@/system/fivepebble/geometries/Line3";
 
 const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
     return {
@@ -54,7 +59,7 @@ const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
         render_server_pixel_ratio: undefined,
         render_server_scale: 1,
         fps: Infinity,
-        physics_fps: 30,
+        physics_fps: 60,
     } as Config;
 });
 
@@ -238,14 +243,44 @@ export function createEditor() {
 
     const multi_line_geometry = new MultiLineGeometryResource(DefaultConfig);
     const multi_line_material = new MultiLineMaterialResource(DefaultConfig);
-    multi_line_material.color = Color.color8(0xd8, 0x2d, 0x4e);
+    multi_line_material.line_width = 5;
+    const points = new Array(120).fill(0).map((i, idx) => {
+        return Vector3.create(Math.cos(idx / 35 * Tau), Math.sin(idx / 35 * Tau), idx / 16);
+    });
+    multi_line_geometry.set_PointCount(points.length);
+    points.forEach((p, i) => multi_line_geometry.set_Point(i, p, false, false));
+    multi_line_geometry.commit_Points();
+    multi_line_geometry.update_BBox();
+    multi_line_material.color = Color.color8(0x2d, 0xd8, 0x4e).linear_rgb;
     const MeshLine = new MeshInstance3D(DefaultConfig);
     MeshLine.geometry = multi_line_geometry;
     MeshLine.material = multi_line_material;
     MeshLine.local_scale = Vector3.create(100, 100, 100);
-    MeshLine.local_position = Vector3.create(0, 0, -50);
-    MeshLine.render_queue = 1;
+    MeshLine.local_position = Vector3.create(-600, 100, -200);
+    // MeshLine.render_queue = 1;
     World.add_Child(MeshLine);
+
+    const area = new PickingArea3D(DefaultConfig);
+    const shape = new PickingPolyLineResource(DefaultConfig);
+    shape.points = points;
+    const s = new PickingShape3D(DefaultConfig);
+    area.add_Child(s);
+    s.shape = shape;
+    MeshLine.add_Child(area);
+
+    const point = new PointGrabber3D(DefaultConfig);
+    point.enabled = false;
+    World.add_Child(point);
+
+    area.signal_mouse_entered.connect((event, result) => {
+        multi_line_material.color = Color.color8code(0xffff00ff);
+    });
+    area.signal_mouse_moved.connect((event, result) => {
+        point.local_position = result.position;
+    });
+    area.signal_mouse_exited.connect(() => {
+        multi_line_material.color = Color.color8(0x2d, 0xd8, 0x4e).linear_rgb;
+    });
 
     const infinite_line_x = new InfiniteLine3D(DefaultConfig);
     const multi_line_material_x = new MultiLineMaterialResource(DefaultConfig);
@@ -275,9 +310,9 @@ export function createEditor() {
         if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
             EditorSceneTree.start_Tween(
                 tween_parallel(
-                    new MethodTween((v) => {
-                        multi_line_geometry.set_Point(1, Vector3.create(1, v, 1));
-                    }, 0.4, TweenTransitionType.Linear, TweenEasingType.Out),
+                    // new MethodTween((v) => {
+                    //     multi_line_geometry.set_Point(1, Vector3.create(1, v, 1));
+                    // }, 0.4, TweenTransitionType.Linear, TweenEasingType.Out),
                     new PropertyTween(point_light, 'radius', Math.random() * 10, 0.4, TweenTransitionType.Linear, TweenEasingType.Out),
                     new PropertyTween(point_light, 'color', Vector3.create(Math.random(), Math.random(), Math.random()), 0.4, TweenTransitionType.Linear, TweenEasingType.Out)
                 )
@@ -338,15 +373,16 @@ export function createEditor() {
     mesh_.material = new NormalMaterialResource(DefaultConfig);
     mesh_.top_level = true;
     World.add_Child(mesh_);
-    const tris = box.get_TriFaces();
-    console.log(tris);
+    // const tris = box.get_TriFaces();
+    // console.log(tris);
 
-    const bvh = new Bvh3(Infinity);
-    bvh.build(tris!);
+    const lines : Line3[] = points.map((p, i, arr) => i === 0 ? undefined : Line3.create(arr[i - 1], arr[i])).filter(i => i !== undefined) as Line3[];
+    const bvh = new Bvh3(5);
+    bvh.build(lines);
     console.log(bvh);
     const bvh_viz = new Bvh3Visualization(DefaultConfig);
     bvh_viz.visualize_Bvh3(bvh, 6);
-    bvh_viz.top_level = true;
+    // bvh_viz.top_level = true;
     let depth = 0;
     bvh_viz.signal_input.connect((evt, prop) => {
         if (!prop) {
@@ -356,8 +392,11 @@ export function createEditor() {
             }
         }
     });
-    mesh_.add_Child(bvh_viz);
+    MeshLine.add_Child(bvh_viz);
 
     return EditorSceneTree;
 }
 
+console.log(Color.color8(0x2d, 0xd8, 0x4e));
+console.log(Color.color8(0x2d, 0xd8, 0x4e).linear_rgb);
+console.log(Color.color8(0x2d, 0xd8, 0x4e).linear_rgb.srgb);

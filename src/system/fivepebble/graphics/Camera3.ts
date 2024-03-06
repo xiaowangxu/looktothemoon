@@ -7,6 +7,8 @@ import { Vector2 } from "../linear_algebra/Vector2";
 import { Vector3 } from "../linear_algebra/Vector3";
 import { Frustum3 } from "./Frustum3";
 import { Euler } from "../linear_algebra/Euler";
+import type { LineLike } from "../geometries/LineLike";
+import type { Line3 } from "../geometries/Line3";
 
 export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
 
@@ -66,6 +68,7 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     project_Ray(ndc: Vector2, depth: number | undefined, target: Ray3): Ray3 {
         return target.set(this.unproject_Point(ndc, depth, Camera3.#tmp_vector3_0), this.unproject_Normal(ndc, Camera3.#tmp_vector3_1))
     }
+    abstract project_Line(ndc: Vector2, target: Line3): Line3;
 
     abstract clone(): Camera3;
 }
@@ -146,6 +149,13 @@ export class OrthographicCamera3 extends Camera3 {
         n.transform(n, this._global_transform.basis);
         n.normalize(n);
         return n;
+    }
+
+    project_Line(ndc: Vector2, target: Line3): Line3 {
+        this.unproject_Point(ndc, undefined, target.start);
+        this.unproject_Normal(ndc, target.end);
+        target.end.add_Scaled(target.start, this.far, target.end);
+        return target;
     }
 
     clone(): OrthographicCamera3 {
@@ -231,6 +241,13 @@ export class PerspectiveCamera3 extends Camera3 {
     unproject_Normal(ndc: Vector2, target: Vector3): Vector3 {
         const p = this.unproject_Point(ndc, this.near, target);
         return p.direction_to(this._global_transform.position, p);
+    }
+
+    project_Line(ndc: Vector2, target: Line3): Line3 {
+        this.unproject_Point(ndc, undefined, target.start);
+        this.unproject_Normal(ndc, target.end);
+        target.end.add_Scaled(target.start, this.far, target.end);
+        return target;
     }
 
     clone(): PerspectiveCamera3 {

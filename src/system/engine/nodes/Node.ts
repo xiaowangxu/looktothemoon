@@ -6,7 +6,7 @@ import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { SignalEmitter } from "../../utils/SignalEmitter";
 import { EditorRenderer3D } from "../renderer/renderer_3d/EditorRenderer3D";
 import { World3D } from "../worlds/world3ds/World3D";
-import { PickingOrder, RayPickingOption } from "../worlds/world3ds/PickingWorld3D";
+import { PickingOrder, RayPickingOption, RayPickingResult } from "../worlds/world3ds/PickingWorld3D";
 import { MouseEnterLeaveInputEvent } from "../inputs/events/mouse_events/MouseEnterLeaveInputEvent";
 import { MouseInputEvent } from "../inputs/events/mouse_events/MouseInputEvent";
 import { InputEvent } from "../inputs/InputEvent";
@@ -21,6 +21,8 @@ import type { Renderer3D } from "../renderer/renderer_3d/Renderer3D";
 import { RaycastSide } from "@/system/fivepebble/geometries/GeometryLike";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { Line3 } from "@/system/fivepebble/geometries/Line3";
+import { MouseMotionInputEvent } from "../inputs/events/mouse_events/MouseMotionInputEvent";
 
 export enum NodeNotification {
     ExitingTree,
@@ -365,9 +367,9 @@ export type CursorStyle = 'default' | 'none' | 'context-menu' | 'help' | 'pointe
 export class Viewport extends Node {
     public static readonly class_name: string = "Viewport";
 
-    static readonly #tmp_ray_0 = Ray3.new;
     static readonly #tmp_vector2_0 = Vector2.new;
-    static readonly #tmp_vector3_0 = Vector3.new;
+    static readonly #tmp_vector2_1 = Vector2.new;
+    static readonly #tmp_line3_0 = Line3.new;
 
     // input manager
     public readonly mouse_event_manager: ViewportMouseInputEventManager;
@@ -447,7 +449,7 @@ export class Viewport extends Node {
     // input and physics picking
     public redirect_input_event: boolean = true;
 
-    public physics_picking_when_mouse_event_not_canceled: boolean = true;
+    public physics_picking_when_mouse_event_not_cancelled: boolean = true;
 
     public physics_picking: boolean = true;
 
@@ -457,22 +459,75 @@ export class Viewport extends Node {
         mask = mask & 0xffffffff;
         if (this._physics_picking_mask !== mask) {
             this._physics_picking_mask = mask;
-            if (this._physics_picking_area !== undefined && (this._physics_picking_area.layer & this.physics_picking_mask) === 0) {
-                this.physics_picking_area = undefined;
+            if (this._physics_mouse_picking_result !== undefined && (this._physics_mouse_picking_result.area.layer & this.physics_picking_mask) === 0) {
+                this.physics_mouse_picking_result = undefined;
             }
         }
     }
 
-    private _physics_picking_area: PickingArea3D | undefined = undefined;
-    private set physics_picking_area(area: PickingArea3D | undefined) {
-        if (this._physics_picking_area !== area) {
-            if (this._physics_picking_area !== undefined) {
-                this._physics_picking_area.on_MouseExited(new MouseInputEvent(this.config).set_Viewport(this).set_Compose(false, false, false, false).set_Position(this.input_manager.mouse_position, this.input_manager.mouse_position_normalized));
+    private _physics_mouse_picking_area: PickingArea3D | undefined = undefined;
+    private set physics_mouse_picking_area(area: PickingArea3D | undefined) {
+        if (this._physics_mouse_picking_area !== area) {
+            const pos = this.input_manager.get_MousePosition(Viewport.#tmp_vector2_0);
+            const pos_normalized = this.input_manager.get_MousePositionNormalized(Viewport.#tmp_vector2_1);
+            if (this._physics_mouse_picking_area !== undefined) {
+                this._physics_mouse_picking_area.on_MouseExited(
+                    new MouseInputEvent(this.config)
+                        .set_Viewport(this)
+                        .set_Compose(
+                            this.input_manager.is_KeyPressed('Control'),
+                            this.input_manager.is_KeyPressed('Shift'),
+                            this.input_manager.is_KeyPressed('Alt'),
+                            this.input_manager.is_KeyPressed('Meta'),
+                        )
+                        .set_Position(pos, pos_normalized)
+                );
             }
-            this._physics_picking_area = area;
-            if (this._physics_picking_area !== undefined) {
-                this._physics_picking_area.on_MouseEntered(new MouseInputEvent(this.config).set_Viewport(this).set_Compose(false, false, false, false).set_Position(this.input_manager.mouse_position, this.input_manager.mouse_position_normalized));
+            this._physics_mouse_picking_area = area;
+            if (this._physics_mouse_picking_area !== undefined) {
+                this._physics_mouse_picking_area.on_MouseEntered(
+                    new MouseInputEvent(this.config)
+                        .set_Viewport(this)
+                        .set_Compose(
+                            this.input_manager.is_KeyPressed('Control'),
+                            this.input_manager.is_KeyPressed('Shift'),
+                            this.input_manager.is_KeyPressed('Alt'),
+                            this.input_manager.is_KeyPressed('Meta'),
+                        )
+                        .set_Position(pos, pos_normalized),
+                    this._physics_mouse_picking_result!,
+                );
             }
+        }
+    }
+    private _last_physics_mouse_picking_position: Vector2 = Vector2.new;
+    private _last_physics_mouse_picking_position_normalized: Vector2 = Vector2.new;
+    private _physics_mouse_picking_result: RayPickingResult | undefined = undefined;
+    private set physics_mouse_picking_result(result: RayPickingResult | undefined) {
+        const first = this._physics_mouse_picking_result === undefined;
+        this._physics_mouse_picking_result = result;
+        this.physics_mouse_picking_area = result?.area;
+        if (this._physics_mouse_picking_area !== undefined) {
+            const pos = first ? Viewport.#tmp_vector2_0.set(0, 0) : this.input_manager.get_MousePosition(Viewport.#tmp_vector2_0);
+            const pos_normalized = first ? Viewport.#tmp_vector2_1.set(0, 0) : this.input_manager.get_MousePositionNormalized(Viewport.#tmp_vector2_1);
+            this._physics_mouse_picking_area.on_MouseMoved(
+                new MouseMotionInputEvent(this.config)
+                    .set_Viewport(this)
+                    .set_Compose(
+                        this.input_manager.is_KeyPressed('Control'),
+                        this.input_manager.is_KeyPressed('Shift'),
+                        this.input_manager.is_KeyPressed('Alt'),
+                        this.input_manager.is_KeyPressed('Meta'),
+                    )
+                    .set_Position(pos, pos_normalized)
+                    .set_Motion(
+                        first ? pos : pos.sub(pos, this._last_physics_mouse_picking_position),
+                        first ? pos_normalized : pos_normalized.sub(pos_normalized, this._last_physics_mouse_picking_position_normalized)
+                    ),
+                this._physics_mouse_picking_result!,
+            );
+            this.input_manager.get_MousePosition(this._last_physics_mouse_picking_position);
+            this.input_manager.get_MousePositionNormalized(this._last_physics_mouse_picking_position_normalized);
         }
     }
 
@@ -501,7 +556,7 @@ export class Viewport extends Node {
         this.input_manager = new ViewportInputManager(this);
     }
 
-    private mouse_event_canceled: boolean = false;
+    private mouse_event_cancelled: boolean = false;
 
     public on_InputEvent(event: InputEvent) {
         const action_input_event = this.action_event_manager.parse_ActionInputEvent(event);
@@ -521,12 +576,12 @@ export class Viewport extends Node {
         }
         // check mouse event cancel for physics picking
         if (event instanceof MouseInputEvent || event instanceof MouseEnterLeaveInputEvent) {
-            this.mouse_event_canceled = event.canceled;
+            this.mouse_event_cancelled = event.cancelled;
         }
     }
 
     private redirect_InputEvent(event: InputEvent) {
-        if (event.canceled) return;
+        if (event.cancelled) return;
         const redirect_target = this.get_OwnWorld3DViewport();
         if (redirect_target !== undefined) {
             redirect_target.push_InputEvent(event, this);
@@ -534,7 +589,7 @@ export class Viewport extends Node {
     }
 
     private propagate_InputEventInternal(node: Node, event: InputEvent, target: Viewport | undefined) {
-        if (event.canceled) return;
+        if (event.cancelled) return;
         if (node instanceof Viewport) {
             if (node === target) {
                 node.push_InputEvent(event, undefined);
@@ -543,36 +598,36 @@ export class Viewport extends Node {
         }
         if (!node.block_input) {
             node._input(event, true);
-            if (event.canceled) return;
+            if (event.cancelled) return;
             node.signal_input.trigger(event, true);
-            if (event.canceled) return;
+            if (event.cancelled) return;
         }
         for (const child of node.children) {
             this.propagate_InputEventInternal(child, event, target);
-            if (event.canceled) return;
+            if (event.cancelled) return;
         }
         if (!node.block_input) {
             node._input(event, false);
-            if (event.canceled) return;
+            if (event.cancelled) return;
             node.signal_input.trigger(event, false);
         }
     }
 
     private propagate_InputEvent(event: InputEvent, target: Viewport | undefined) {
-        if (event.canceled) return;
+        if (event.cancelled) return;
         if (!this.block_input) {
             this._input(event, true);
-            if (event.canceled) return;
+            if (event.cancelled) return;
             this.signal_input.trigger(event, true);
-            if (event.canceled) return;
+            if (event.cancelled) return;
         }
         for (const child of this.children) {
             this.propagate_InputEventInternal(child, event, target);
-            if (event.canceled) return;
+            if (event.cancelled) return;
         }
         if (!this.block_input) {
             this._input(event, false);
-            if (event.canceled) return;
+            if (event.cancelled) return;
             this.signal_input.trigger(event, false);
         }
     }
@@ -674,15 +729,15 @@ export class Viewport extends Node {
             const camera_3d = this.get_Camera3D();
             if (picking_world === undefined ||
                 camera_3d === undefined ||
-                (this.physics_picking_when_mouse_event_not_canceled === true && this.mouse_event_canceled)) {
-                this.physics_picking_area = undefined;
+                (this.physics_picking_when_mouse_event_not_cancelled === true && this.mouse_event_cancelled)) {
+                this.physics_mouse_picking_result = undefined;
                 return;
             };
             this.input_manager.mouse_position_normalized;
-            const ray = camera_3d.get_Camera().project_Ray(this.input_manager.get_MousePositionNormalized(Viewport.#tmp_vector2_0), undefined, Viewport.#tmp_ray_0);
+            const line = camera_3d.get_Camera().project_Line(this.input_manager.get_MousePositionNormalized(Viewport.#tmp_vector2_0), Viewport.#tmp_line3_0);
             const ray_picking_option = new RayPickingOption(
-                ray.origin,
-                ray.get_Point(10000, Viewport.#tmp_vector3_0),
+                line.start,
+                line.end,
                 this.physics_picking_mask,
                 camera_3d,
                 this,
@@ -691,14 +746,14 @@ export class Viewport extends Node {
             );
             const ray_picking_results = picking_world.perform_RayPicking(ray_picking_option);
             if (ray_picking_results.length > 0) {
-                this.physics_picking_area = ray_picking_results[0].area;
+                this.physics_mouse_picking_result = ray_picking_results[0];
             }
             else {
-                this.physics_picking_area = undefined;
+                this.physics_mouse_picking_result = undefined;
             }
         }
         else {
-            this.physics_picking_area = undefined;
+            this.physics_mouse_picking_result = undefined;
         }
     }
 

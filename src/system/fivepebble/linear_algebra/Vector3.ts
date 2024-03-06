@@ -199,4 +199,26 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         this.z = (n31 * x + n32 * y + n33 * z + n34) * w;
         return this;
     }
+
+    //#region color
+
+    public get srgb() { return this.get_SRGB(new Vector3()); }
+    public get_SRGB(target: Vector3): Vector3 {
+        const { x, y, z } = this;
+        target.x = (x < 0.0031308) ? x * 12.92 : 1.055 * (Math.pow(x, 0.41666)) - 0.055;
+        target.y = (y < 0.0031308) ? y * 12.92 : 1.055 * (Math.pow(y, 0.41666)) - 0.055;
+        target.z = (z < 0.0031308) ? z * 12.92 : 1.055 * (Math.pow(z, 0.41666)) - 0.055;
+        return target;
+    }
+
+    public get linear_rgb() { return this.get_LinearRGB(new Vector3()); }
+    public get_LinearRGB(target: Vector3): Vector3 {
+        const { x, y, z } = this;
+        target.x = (x < 0.04045) ? x * 0.0773993808 : Math.pow(x * 0.9478672986 + 0.0521327014, 2.4);
+        target.y = (y < 0.04045) ? y * 0.0773993808 : Math.pow(y * 0.9478672986 + 0.0521327014, 2.4);
+        target.z = (z < 0.04045) ? z * 0.0773993808 : Math.pow(z * 0.9478672986 + 0.0521327014, 2.4);
+        return target;
+    }
+
+    //#endregion
 }

@@ -6,7 +6,6 @@ import { Node, Viewport } from "./nodes/Node";
 import type { World3D } from "./worlds/world3ds/World3D";
 import { ConfiguredObject, type Config } from "./ConfiguredObject";
 import { Ref } from "../utils/RefCounted";
-import type { Camera3D } from "./nodes/node3ds/camera3ds/Camera3D";
 import { clearAnimationInterval, setAnimationInterval } from "../utils/AnimationInterval";
 
 export class SceneTree extends ConfiguredObject {

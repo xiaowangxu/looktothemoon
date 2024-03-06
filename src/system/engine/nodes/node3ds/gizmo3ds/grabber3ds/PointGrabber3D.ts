@@ -171,7 +171,7 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
                     this.on_EndGrab();
                     return;
                 }
-                event.mark_Canceled();
+                event.mark_Cancelled();
             }
             // mouse exit
             else if (event instanceof MouseEnterLeaveInputEvent) {
@@ -181,7 +181,7 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
                 }
             }
             else {
-                event.mark_Canceled();
+                event.mark_Cancelled();
                 if (event instanceof MouseMotionInputEvent) {
                     this.on_Grabbing(event);
                 }
@@ -200,7 +200,7 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
         this.drag_global_position.copy(this.global_position);
         this.drag_offset_position.copy(PointGrabber3D.#tmp_vector3_0.sub(this.global_position, position));
         this.drag_offset_scale = this.local_scale.y;
-        evt.mark_Canceled();
+        evt.mark_Cancelled();
         this.signal_grab_start.trigger(this.global_position, this);
     }
 
@@ -210,7 +210,7 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
         const scale = this.local_scale.y;
         const new_global_position = PointGrabber3D.#tmp_vector3_0.add_Scaled(position, scale / this.drag_offset_scale, this.drag_offset_position);
         this.global_position = new_global_position;
-        evt.mark_Canceled();
+        evt.mark_Cancelled();
         this.signal_grabbing.trigger(this.global_position, this);
     }
 

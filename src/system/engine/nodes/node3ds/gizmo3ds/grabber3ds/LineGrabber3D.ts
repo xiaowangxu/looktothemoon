@@ -20,6 +20,7 @@ import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import { Out, out } from "@/system/utils/Type";
 
 const ArrowTailGeometry = new Cacher((config: Config) => {
     const geometry = new CylinderGeometryResource(config);
@@ -246,7 +247,7 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
                     this.on_EndGrab();
                     return;
                 }
-                event.mark_Canceled();
+                event.mark_Cancelled();
             }
             // mouse exit
             else if (event instanceof MouseEnterLeaveInputEvent) {
@@ -256,7 +257,7 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
                 }
             }
             else {
-                event.mark_Canceled();
+                event.mark_Cancelled();
                 if (event instanceof MouseMotionInputEvent) {
                     this.on_Grabbing(event);
                 }
@@ -275,7 +276,7 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         this.drag_global_position.copy(this.global_position);
         this.drag_offset_position.copy(LineGrabber3D.#tmp_vector3_0.sub(this.global_position, position));
         this.drag_offset_scale = this.local_scale.y;
-        evt.mark_Canceled();
+        evt.mark_Cancelled();
         this.signal_grab_start.trigger(this.global_position.clone(), this);
     }
 
@@ -285,7 +286,7 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         const scale = this.local_scale.y;
         const new_global_position = LineGrabber3D.#tmp_vector3_0.add_Scaled(position, scale / this.drag_offset_scale, this.drag_offset_position);
         this.global_position = new_global_position;
-        evt.mark_Canceled();
+        evt.mark_Cancelled();
         this.signal_grabbing.trigger(this.global_position.clone(), this);
     }
 
@@ -302,9 +303,9 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         dir.normalize(dir);
         const r0 = new Ray3(this.global_position, dir);
         const r1 = camera.project_Ray(evt.position_normalized, undefined, Ray3.new);
-        const p0 = Vector3.new, p1 = Vector3.new;
-        r0.get_ClosestPointsUncapped(r1, p0, p1);
-        return p0;
+        const p0 = out<number>(), p1 = out<number>();
+        r0.get_UncappedClosestParametersWithUncappedRay(r1, p0, p1);
+        return r0.get_Point(p0.value, Vector3.new);
     }
 
     public _notification(what: NodeNotification): void {

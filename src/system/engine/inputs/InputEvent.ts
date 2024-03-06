@@ -3,13 +3,13 @@ import { ResourceBase } from "../resources/Resource";
 export class InputEvent extends ResourceBase {
     public static readonly class_name: string = "InputEvent";
 
-    private _canceled: boolean = false;
-    public get canceled() {
-        return this._canceled;
+    private _cancelled: boolean = false;
+    public get cancelled() {
+        return this._cancelled;
     }
 
-    public mark_Canceled() {
-        this._canceled = true;
+    public mark_Cancelled() {
+        this._cancelled = true;
     }
 
     public match(event: InputEvent, with_pressed: boolean): boolean {

@@ -4,13 +4,16 @@ import { type Rid } from "../../../Rid";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
 import type { MouseInputEvent } from "../../../inputs/events/mouse_events/MouseInputEvent";
 import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
+import type { MouseMotionInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseMotionInputEvent";
+import type { RayPickingResult } from "@/system/engine/worlds/world3ds/PickingWorld3D";
 
 export class PickingArea3D extends PhysicsInstance3D {
     public static readonly class_name: string = "PickingArea3D";
 
     // signal
-    public readonly signal_mouse_entered: SignalEmitter<(event: MouseInputEvent) => void> = new SignalEmitter();
+    public readonly signal_mouse_entered: SignalEmitter<(event: MouseInputEvent, picking_result: RayPickingResult) => void> = new SignalEmitter();
     public readonly signal_mouse_exited: SignalEmitter<(event: MouseInputEvent) => void> = new SignalEmitter();
+    public readonly signal_mouse_moved: SignalEmitter<(event: MouseMotionInputEvent, picking_result: RayPickingResult) => void> = new SignalEmitter();
 
     private area_rid: Rid | undefined = undefined;
     public get picking_area_rid() { return this.area_rid; }
@@ -90,14 +93,18 @@ export class PickingArea3D extends PhysicsInstance3D {
         super._notification(what);
     }
 
-    public on_MouseEntered(event: MouseInputEvent) {
+    public on_MouseEntered(event: MouseInputEvent, picking_result: RayPickingResult) {
         this._is_mouse_hover = true;
-        this.signal_mouse_entered.trigger(event);
+        this.signal_mouse_entered.trigger(event, picking_result);
     }
 
     public on_MouseExited(event: MouseInputEvent) {
         this._is_mouse_hover = false;
         this.signal_mouse_exited.trigger(event);
+    }
+
+    public on_MouseMoved(event: MouseMotionInputEvent, picking_result: RayPickingResult) {
+        this.signal_mouse_moved.trigger(event, picking_result);
     }
 
     // save / load

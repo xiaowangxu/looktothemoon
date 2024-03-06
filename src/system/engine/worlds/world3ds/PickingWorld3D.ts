@@ -49,8 +49,8 @@ export class RayPickingOption {
     public readonly side: RaycastSide;
 
     constructor(from: Vector3, to: Vector3, mask: number, camera: Camera3D | undefined, viewport: Viewport | undefined, order: PickingOrder = PickingOrder.Ordered, side: RaycastSide = RaycastSide.Front) {
-        this.from = from.clone();
-        this.to = to.clone();
+        this.from = from;
+        this.to = to;
         this.mask = mask & 0xffffffff;
         this.camera = camera;
         this.viewport = viewport;
@@ -78,6 +78,10 @@ export class RayPickingResult {
 }
 
 export class PickingWorld3D extends ConfiguredObject {
+
+    static readonly #tmp_vector3_0 = Vector3.new;
+    static readonly #tmp_vector3_1 = Vector3.new;
+
     private readonly shape_map: Map<Rid, PickingShapeInstance> = new Map();
     private readonly area_map: Map<Rid, PickingArea> = new Map();
 
@@ -93,8 +97,8 @@ export class PickingWorld3D extends ConfiguredObject {
         const { mask, from, to, camera, viewport, order, side } = option;
         const result: RayPickingResult[] = [];
         for (const shape_instance of this.shape_map.values()) {
-            const _from = from.clone();
-            const _to = to.clone();
+            const _from = PickingWorld3D.#tmp_vector3_0.copy(from);
+            const _to = PickingWorld3D.#tmp_vector3_1.copy(to);
             const { shape, distance_offset, area, global_transform, global_transform_inverse } = shape_instance;
             if (shape !== undefined && area !== undefined && area.enabled && (area.layer & mask) !== 0) {
                 const preserve_global_transform = shape.preserve_global_transform;
@@ -107,7 +111,9 @@ export class PickingWorld3D extends ConfiguredObject {
                     const position = preserve_global_transform ? _res_position : _res_position.apply_Matrix4(_res_position, global_transform);
                     const normal = preserve_global_transform ? _res_normal : _res_normal.apply_Matrix4(_res_normal, global_transform).normalize(_res_normal);
                     const distance = position.distance_to(from);
-                    result.push(new RayPickingResult(area.area, position, normal, distance, distance + distance_offset, area.priority));
+                    result.push(
+                        new RayPickingResult(area.area, position, normal, distance, distance + distance_offset, area.priority)
+                    );
                 }
             }
         }

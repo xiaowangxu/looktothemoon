@@ -213,4 +213,28 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
     clone(): Vector4 {
         return new Vector4(this.x, this.y, this.z, this.w);
     }
+
+    //#region color
+
+    public get srgb() { return this.get_SRGB(new Vector4()); }
+    public get_SRGB(target: Vector4): Vector4 {
+        const { x, y, z, w } = this;
+        target.x = (x < 0.0031308) ? x * 12.92 : 1.055 * (Math.pow(x, 0.41666)) - 0.055;
+        target.y = (y < 0.0031308) ? y * 12.92 : 1.055 * (Math.pow(y, 0.41666)) - 0.055;
+        target.z = (z < 0.0031308) ? z * 12.92 : 1.055 * (Math.pow(z, 0.41666)) - 0.055;
+        target.w = w;
+        return target;
+    }
+
+    public get linear_rgb() { return this.get_LinearRGB(new Vector4()); }
+    public get_LinearRGB(target: Vector4): Vector4 {
+        const { x, y, z, w } = this;
+        target.x = (x < 0.04045) ? x * 0.0773993808 : Math.pow(x * 0.9478672986 + 0.0521327014, 2.4);
+        target.y = (y < 0.04045) ? y * 0.0773993808 : Math.pow(y * 0.9478672986 + 0.0521327014, 2.4);
+        target.z = (z < 0.04045) ? z * 0.0773993808 : Math.pow(z * 0.9478672986 + 0.0521327014, 2.4);
+        target.w = w;
+        return target;
+    }
+
+    //#endregion
 }

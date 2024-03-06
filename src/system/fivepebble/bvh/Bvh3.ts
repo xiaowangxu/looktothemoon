@@ -128,6 +128,7 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
             }
         }
         return [axis, pos];
+
         // else if (strategy === AVERAGE) {
         //     axis = getLongestEdgeIndex(nodeBoundingData);
         //     if (axis !== - 1) {

@@ -1,3 +1,4 @@
+import type { LineLike } from "../geometries/LineLike";
 import type { RayLike } from "../geometries/RayLike";
 import type { MatrixLike } from "../linear_algebra/MatrixLike";
 import type { Vector2 } from "../linear_algebra/Vector2";
@@ -15,6 +16,7 @@ export interface CameraLike<Proj extends MatrixLike<Proj>, Vec extends VectorLik
     unproject_Normal(ndc: Vector2, target: Vec): Vec;
 
     project_Ray(ndc: Vector2, depth: number | undefined, target: RayLike<Vec, Mat>): RayLike<Vec, Mat>;
+    project_Line(ndc: Vector2, target: LineLike<Vec, Mat>): LineLike<Vec, Mat>;
 
     get frustum(): FrustumLike<Vec, Mat>;
     get_Frustum(target: FrustumLike<Vec, Mat>): FrustumLike<Vec, Mat>;

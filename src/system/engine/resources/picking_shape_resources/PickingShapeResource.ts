@@ -3,12 +3,18 @@ import type { Viewport } from "../../nodes/Node";
 import type { Camera3D } from "../../nodes/node3ds/camera3ds/Camera3D";
 import { RaycastSide, type RaycastResult, type Raycastable } from "@/system/fivepebble/geometries/GeometryLike";
 import { type PickingShape3D } from "../../worlds/world3ds/PickingWorld3D";
-import { Epsilon } from '../../../fivepebble/Scalar';
+import { Epsilon, lerp } from '../../../fivepebble/Scalar';
 import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
+import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import { Box3 } from "@/system/fivepebble/geometries/Box3";
+import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
+import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import type { Ray3 } from "@/system/fivepebble/geometries/Ray3";
+import { Line3 } from "@/system/fivepebble/geometries/Line3";
+import { out } from "@/system/utils/Type";
 
 type RaycastResult3 = RaycastResult<Vector3, Matrix3>;
 
@@ -158,7 +164,7 @@ export class PickingSphereResource extends PickingShape3DResource {
         if (this.radius < Epsilon) return undefined;
 
         const sphere_pos = PickingSphereResource.#tmp_vector3_0.negate(from);
-        const rel =  PickingSphereResource.#tmp_vector3_1.sub(to, from);
+        const rel = PickingSphereResource.#tmp_vector3_1.sub(to, from);
         const rel_l = rel.length;
 
         if (rel_l < Epsilon) {
@@ -167,7 +173,7 @@ export class PickingSphereResource extends PickingShape3DResource {
         const normal = rel.div_Number(rel, rel_l);
 
         const sphere_d = sphere_pos.dot(normal);
-        const ray_distance = sphere_pos.distance_to( PickingSphereResource.#tmp_vector3_2.mult_Number(normal, sphere_d));
+        const ray_distance = sphere_pos.distance_to(PickingSphereResource.#tmp_vector3_2.mult_Number(normal, sphere_d));
 
         if (ray_distance >= this.radius) {
             return undefined;
@@ -352,8 +358,8 @@ export class PickingRaycastableResource<T extends Raycastable<Vector3, Matrix3>>
         if (this.raycastable === undefined) return undefined;
         return this.raycastable.raycast(from, to, side);
     }
-  
-    protected dispose(): void {  }  
+
+    protected dispose(): void { }
 }
 
 // export class PickingBVHResource extends PickingShape3DResource {
@@ -394,193 +400,182 @@ export class PickingRaycastableResource<T extends Raycastable<Vector3, Matrix3>>
 
 // }
 
-// export class PickingPolyLineResource extends PickingShape3DResource {
-//     public static readonly class_name: string = "PickingPolyLineResource";
+export class PickingPolyLineResource extends PickingShape3DResource {
+    public static readonly class_name: string = "PickingPolyLineResource";
 
-//     public readonly preserve_global_transform: boolean = true;
+    public readonly preserve_global_transform: boolean = true;
 
-//     private _width: number = 5;
-//     public get width() { return this._width; }
-//     public set width(width: number) {
-//         if (this._width !== width) {
-//             this._width = width;
-//             this.trigger_Changed();
-//         }
-//     }
+    private _width: number = 10;
+    public get width() { return this._width; }
+    public set width(width: number) {
+        if (this._width !== width) {
+            this._width = width;
+            this.trigger_Changed();
+        }
+    }
 
-//     private bbox: Box3 = box3();
+    private bbox: Box3 = Box3.new;
 
-//     private _points: Vector3[] = [];
-//     public get points() { return this._points.map(i => i); }
-//     public set points(points: Vector3[]) {
-//         this._points = points.map(i => i);
-//         this.update_BBox();
-//         this.trigger_Changed();
-//     }
+    private _points: Vector3[] = [];
+    public get points() { return this._points.map(i => i); }
+    public set points(points: Vector3[]) {
+        this._points = points.map(i => i);
+        this.update_BBox();
+        this.trigger_Changed();
+    }
 
-//     private update_BBox() {
-//         const points = this.points;
-//         const points_length = points.length;
-//         if (points.length <= 0) return;
-//         this.bbox.min.copy(points[0]);
-//         this.bbox.max.copy(points[0]);
-//         for (let i = 1; i < points_length; i++) {
-//             this.bbox.expandByPoint(points[i]);
-//         }
-//     }
+    private update_BBox() {
+        const points = this.points;
+        const points_length = points.length;
+        if (points.length <= 0) return;
+        this.bbox.min.copy(points[0]);
+        this.bbox.max.copy(points[0]);
+        for (let i = 1; i < points_length; i++) {
+            this.bbox.fit(this.bbox, points[i]);
+        }
+    }
 
-//     private get_WorldSpaceHalfWidth(camera: Camera3, distance: number, resolution: Vector2) {
-//         // transform into clip space, adjust the x and y values by the pixel width offset, then
-//         // transform back into world space to get world offset. Note clip space is [-1, 1] so full
-//         // width does not need to be halved.
-//         const _clipToWorldVector = new Vector4().set(0, 0, - distance, 1.0).transform(camera.projection);
-//         _clipToWorldVector.mult_Number(1.0 / _clipToWorldVector.w);
-//         _clipToWorldVector.x = this.width / resolution.x;
-//         _clipToWorldVector.y = this.width / resolution.y;
-//         _clipToWorldVector.transform(camera.projectionMatrixInverse);
-//         _clipToWorldVector.mult_Number(1.0 / _clipToWorldVector.w);
-//         return Math.abs(Math.max(_clipToWorldVector.x, _clipToWorldVector.y));
-//     }
+    private get_WorldSpaceHalfWidth(camera: Camera3, distance: number, resolution: Vector2) {
+        // transform into clip space, adjust the x and y values by the pixel width offset, then
+        // transform back into world space to get world offset. Note clip space is [-1, 1] so full
+        // width does not need to be halved.
+        const _clipToWorldVector = Vector4.new.set(0, 0, - distance, 1.0);
+        _clipToWorldVector.transform(_clipToWorldVector, camera.projection);
+        _clipToWorldVector.mult_Number(_clipToWorldVector, 1.0 / _clipToWorldVector.w);
+        _clipToWorldVector.x = this.width / resolution.x;
+        _clipToWorldVector.y = this.width / resolution.y;
+        _clipToWorldVector.transform(_clipToWorldVector, Matrix4.new.inverse(camera.projection));
+        _clipToWorldVector.mult_Number(_clipToWorldVector, 1.0 / _clipToWorldVector.w);
+        return Math.abs(Math.max(_clipToWorldVector.x, _clipToWorldVector.y));
+    }
 
-//     private raycast_ScreenSpace(ray: Ray3, global_transform: Matrix4, camera: Camera, resolution: Vector2): RaycastResult | undefined {
+    private raycast_ScreenSpace(line: Line3, global_transform: Matrix4, camera: Camera3, resolution: Vector2): RaycastResult3 | undefined {
 
-//         const projectionMatrix = camera.projectionMatrix;
-//         const matrixWorldInverse = camera.matrixWorldInverse;
-//         const near = 0;
-//         // pick a point 1 unit out along the ray to avoid the ray origin
-//         // sitting at the camera origin which will cause "w" to be 0 when
-//         // applying the projection matrix.
-//         const a = ray.at(1, new Vector3());
+        const projectionMatrix = camera.projection;
+        const matrixWorldInverse = Matrix4.new.inverse(camera.global_transform);
+        const near = 0;
 
-//         // ndc space [ - 1.0, 1.0 ]
-//         const _ssOrigin = new Vector4(a.x, a.y, a.z, 1);
-//         _ssOrigin.applyMatrix4(matrixWorldInverse);
-//         _ssOrigin.applyMatrix4(projectionMatrix);
-//         _ssOrigin.multiplyScalar(1 / _ssOrigin.w);
+        // ndc space [ - 1.0, 1.0 ]
+        const _ssOrigin = camera.project_Point(line.start, Vector2.new);
+        const _ssOrigin3 = Vector3.create(_ssOrigin.x * resolution.x / 2, _ssOrigin.y * resolution.y / 2, 0);
 
-//         // screen space
-//         _ssOrigin.x *= resolution.x / 2;
-//         _ssOrigin.y *= resolution.y / 2;
-//         _ssOrigin.z = 0;
+        let min_width = Infinity;
+        let min_distance = Infinity;
+        let min_point: RaycastResult3 | undefined = undefined;
 
-//         const _ssOrigin3 = new Vector3().set(_ssOrigin.x, _ssOrigin.y, _ssOrigin.z);
+        const points = this._points;
+        const points_count = points.length - 1;
+        for (let i = 0; i < points_count; i++) {
 
-//         let min_width = Infinity;
-//         let min_distance = Infinity;
-//         let min_point: RaycastResult | undefined = undefined;
+            const s = Vector3.new.apply_Matrix4(points[i], global_transform);
+            const e = Vector3.new.apply_Matrix4(points[i + 1], global_transform);
 
-//         const points = this._points;
-//         const points_count = points.length - 1;
-//         for (let i = 0; i < points_count; i++) {
+            const _start4 = Vector4.create(s.x, s.y, s.z, 1);
+            const _end4 = Vector4.create(e.x, e.y, e.z, 1);
 
-//             const s = points[i].clone().applyMatrix4(global_transform);
-//             const e = points[i + 1].clone().applyMatrix4(global_transform);
+            // camera space
+            _start4.transform(_start4, matrixWorldInverse);
+            _end4.transform(_end4, matrixWorldInverse);
 
-//             const _start4 = new Vector4(s.x, s.y, s.z, 1);
-//             const _end4 = new Vector4(e.x, e.y, e.z, 1);
+            // skip the segment if it's entirely behind the camera
+            if (_start4.z > near && _end4.z > near) continue;
 
-//             // camera space
-//             _start4.applyMatrix4(matrixWorldInverse);
-//             _end4.applyMatrix4(matrixWorldInverse);
+            // trim the segment if it extends behind camera near
+            if (_start4.z > near) {
+                const deltaDist = _start4.z - _end4.z;
+                const t = _start4.z / deltaDist;
+                _start4.lerp(_start4, _end4, t);
 
-//             // skip the segment if it's entirely behind the camera
-//             if (_start4.z > near && _end4.z > near) continue;
+            } else if (_end4.z > near) {
+                const deltaDist = _end4.z - _start4.z;
+                const t = _end4.z / deltaDist;
+                _end4.lerp(_end4, _start4, t);
+            }
 
-//             // trim the segment if it extends behind camera near
-//             if (_start4.z > near) {
-//                 const deltaDist = _start4.z - _end4.z;
-//                 const t = _start4.z / deltaDist;
-//                 _start4.lerp(_end4, t);
+            // clip space
+            _start4.transform(_start4, projectionMatrix);
+            _end4.transform(_end4, projectionMatrix);
 
-//             } else if (_end4.z > near) {
-//                 const deltaDist = _end4.z - _start4.z;
-//                 const t = _end4.z / deltaDist;
-//                 _end4.lerp(_start4, t);
-//             }
+            // ndc space [ - 1.0, 1.0 ]
+            _start4.mult_Number(_start4, 1 / _start4.w);
+            _end4.mult_Number(_end4, 1 / _end4.w);
 
-//             // clip space
-//             _start4.applyMatrix4(projectionMatrix);
-//             _end4.applyMatrix4(projectionMatrix);
+            // screen space
+            _start4.x *= resolution.x / 2;
+            _start4.y *= resolution.y / 2;
 
-//             // ndc space [ - 1.0, 1.0 ]
-//             _start4.multiplyScalar(1 / _start4.w);
-//             _end4.multiplyScalar(1 / _end4.w);
+            _end4.x *= resolution.x / 2;
+            _end4.y *= resolution.y / 2;
 
-//             // screen space
-//             _start4.x *= resolution.x / 2;
-//             _start4.y *= resolution.y / 2;
+            // create 2d segment
+            const _line = Line3.create(Vector3.create(_start4.x, _start4.y, 0), Vector3.create(_end4.x, _end4.y, 0));
 
-//             _end4.x *= resolution.x / 2;
-//             _end4.y *= resolution.y / 2;
+            if (_line.length < Epsilon) continue;
 
-//             // create 2d segment
-//             const _line = new Line3(new Vector3(_start4.x, _start4.y, 0), new Vector3(_end4.x, _end4.y, 0));
+            // get closest point on ray to segment
+            const param = _line.get_ClosestParameterToPoint(_ssOrigin3);
+            const _closestPoint = _line.get_Point(param, Vector3.new);
 
-//             if (_line.distance() < Epsilon) continue;
+            // check if the intersection point is within clip space
+            const zPos = lerp(_start4.z, _end4.z, param);
+            const isInClipSpace = zPos >= - 1 && zPos <= 1;
 
-//             // get closest point on ray to segment
-//             const param = _line.closestPointToPointParameter(_ssOrigin3, true);
-//             const _closestPoint = _line.at(param, new Vector3());
+            const width = _ssOrigin3.distance_to(_closestPoint);
+            const isInside = width < this.width * 0.5;
 
-//             // check if the intersection point is within clip space
-//             const zPos = lerp(_start4.z, _end4.z, param);
-//             const isInClipSpace = zPos >= - 1 && zPos <= 1;
+            if (isInClipSpace && isInside) {
+                if (width > min_width + Epsilon) continue;
 
-//             const width = _ssOrigin3.distanceTo(_closestPoint);
-//             const isInside = width < this.width * 0.5;
+                const p0 = out<number>(), p1 = out<number>();
+                const l = Line3.create(s, e);
+                line.get_ClosestParametersWithLine(l, p0, p1);
+                const pointOnLine = l.get_Point(p1.value, Vector3.new);
+                const distance = line.start.distance_to(pointOnLine);
 
-//             if (isInClipSpace && isInside) {
+                if (width < min_width || distance < min_distance) {
+                    min_width = width;
+                    min_distance = distance;
+                    min_point = {
+                        position: pointOnLine.clone(),
+                        normal: Vector3.create(1, 0, 0), //e.clone().sub(s).normalize(),
+                    };
+                }
+            }
+        }
 
-//                 const pointOnLine = new Vector3();
-//                 const point = new Vector3();
-//                 ray.distanceSqToSegment(s, e, point, pointOnLine);
+        return min_point;
+    }
 
-//                 const distance = ray.origin.distanceTo(pointOnLine);
+    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
+        if (camera === undefined || viewport === undefined || this.points.length <= 0) return undefined;
 
-//                 if (width < min_width || (width === min_width && distance < min_distance)) {
-//                     min_width = width;
-//                     min_distance = distance;
-//                     min_point = {
-//                         position: pointOnLine.clone(),
-//                         normal: e.clone().sub(s).normalize(),
-//                     };
-//                 }
-//             }
-//         }
+        const resolution = viewport.size;
+        const _camera = camera.get_Camera();
+        const line = Line3.create(from, to);
 
-//         return min_point;
-//     }
+        // check bbox
+        // const distanceToBox = Math.max(0, this.bbox.distanceToPoint(ray.origin));
+        // const boxMargin = this.get_WorldSpaceHalfWidth(_camera, distanceToBox, resolution);
+        // const box = this.bbox.clone().applyMatrix4(global_transform).expandByScalar(boxMargin);
+        // if (ray.intersectsBox(box) === false) {
+        //     return undefined;
+        // }
 
-//     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult | undefined {
-//         if (camera === undefined || viewport === undefined || this.points.length <= 0) return undefined;
+        return this.raycast_ScreenSpace(line, global_transform, _camera, resolution);
+    }
 
-//         const resolution = viewport.size;
-//         const _camera = camera.get_Camera();
-//         const ray = new Ray(from, to.sub(from).normalize());
+    protected dispose(): void { }
 
-//         // check bbox
-//         const distanceToBox = Math.max(0, this.bbox.distanceToPoint(ray.origin));
-//         const boxMargin = this.get_WorldSpaceHalfWidth(_camera, distanceToBox, resolution);
-//         const box = this.bbox.clone().applyMatrix4(global_transform).expandByScalar(boxMargin);
-//         if (ray.intersectsBox(box) === false) {
-//             return undefined;
-//         }
+    // save / load
 
-//         return this.raycast_ScreenSpace(ray, global_transform, _camera, resolution);
-//     }
-    
-//     protected dispose(): void { }
+    // public dump(writer: ClassWriter): void {
+    //     writer.property('width', this.width);
+    //     writer.property('points', new ValueObject(this.points));
+    // }
 
-//     // save / load
-
-//     public dump(writer: ClassWriter): void {
-//         writer.property('width', this.width);
-//         writer.property('points', new ValueObject(this.points));
-//     }
-
-//     public load(reader: ClassReader): void {
-//         this.width = reader.get<number>('width') ?? 5;
-//         const points = reader.get<ValueObject>('points')?.value;
-//         if (points !== undefined) this.points = points;
-//     }
-// }
+    // public load(reader: ClassReader): void {
+    //     this.width = reader.get<number>('width') ?? 5;
+    //     const points = reader.get<ValueObject>('points')?.value;
+    //     if (points !== undefined) this.points = points;
+    // }
+}
