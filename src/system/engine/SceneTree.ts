@@ -7,11 +7,13 @@ import type { World3D } from "./worlds/world3ds/World3D";
 import { ConfiguredObject, type Config } from "./ConfiguredObject";
 import { Ref } from "../utils/RefCounted";
 import type { Camera3D } from "./nodes/node3ds/camera3ds/Camera3D";
+import { clearAnimationInterval, setAnimationInterval } from "../utils/AnimationInterval";
 
 export class SceneTree extends ConfiguredObject {
     private readonly input_action_map: Ref<ShortCutActionMap> = new Ref(new ShortCutActionMap(this.config));
     private readonly root: Node;
     private readonly clock: Clock = new Clock();
+    private readonly fps: number;
     private readonly physics_fps: number;
     private readonly physics_clock: Clock = new Clock();
     public frame_id: number = 0;
@@ -39,6 +41,7 @@ export class SceneTree extends ConfiguredObject {
         if (root.get_Parent() !== undefined || root.ready) throw new Error('<SceneTree> constructor: root is invalid');
         this.root = root;
         this.root.set_SceneTree(this);
+        this.fps = this.config.fps;
         this.physics_fps = this.config.physics_fps;
     }
 
@@ -48,11 +51,9 @@ export class SceneTree extends ConfiguredObject {
     private loop() {
         this.clock.tick();
         this.process_Loop(this.clock.duration, this.clock.delta, this.frame_id + 1);
-        // next frame
-        this.animation_requested = requestAnimationFrame(this._loop_func);
     }
 
-    private current_camera_3d: Camera3D | undefined = undefined;
+    private current_viewport: Viewport | undefined = undefined;
     private process_Loop(time: number, delta: number, frame_id: number) {
         this.time = time;
         this.delta = delta;
@@ -90,11 +91,11 @@ export class SceneTree extends ConfiguredObject {
             if (b_m) return -1;
             return 0;
         })) {
-            this.current_camera_3d = viewport.get_Camera3D();
+            this.current_viewport = viewport;
             this.root.propagate_InternalBeforeRender(this.delta, redundant_before_render);
             viewport.render();
+            this.current_viewport = undefined;
             redundant_before_render = true;
-            this.current_camera_3d = undefined;
         }
         // queue free
         for (const node of this.node_queued_free) {
@@ -190,8 +191,8 @@ export class SceneTree extends ConfiguredObject {
         return this.input_action_map.expect;
     }
 
-    public get_RenderCamera3D() {
-        return this.current_camera_3d;
+    public get_RenderingViewport() {
+        return this.current_viewport;
     }
 
     public get_ActiveViewports(): Viewport[] {
@@ -210,15 +211,15 @@ export class SceneTree extends ConfiguredObject {
         if (this.looping) return;
         this.clock.start();
         this.physics_clock.start();
+        setAnimationInterval(this._loop_func, Math.floor(1000 / this.fps));
         if (this.physics_fps > 0) {
             this.physics_requested = setInterval(this._physics_loop_func, 1000 / this.physics_fps);
         }
-        requestAnimationFrame(this._loop_func);
     }
 
     public stop_Loop() {
         if (this.looping) {
-            cancelAnimationFrame(this.animation_requested!);
+            clearAnimationInterval(this.animation_requested);
             clearInterval(this.physics_requested);
             this.animation_requested = undefined;
             this.physics_requested = undefined;

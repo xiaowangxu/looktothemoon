@@ -48,7 +48,7 @@ export class InfiniteLine3D extends MeshInstance3D {
 
 
     private update_Visual() {
-        const camera = this.get_SceneTree()?.get_RenderCamera3D();
+        const camera = this.get_SceneTree()?.get_RenderingViewport()?.get_Camera3D();
         if (camera === undefined) {
             this.local_visible = false;
             return;

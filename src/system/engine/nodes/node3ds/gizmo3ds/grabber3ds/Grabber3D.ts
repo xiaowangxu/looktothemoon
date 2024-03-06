@@ -78,7 +78,6 @@ export class GrabberElement3D<T> extends FixSizeNode3D {
     constructor(config: Config) {
         super(config);
         this.top_level = true;
-        this.unit_pixel_count = 60;
     }
 }
 

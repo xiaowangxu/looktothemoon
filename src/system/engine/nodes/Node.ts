@@ -596,7 +596,7 @@ export class Viewport extends Node {
         }
     }
 
-    public clear_Camera3D(camera: Camera3D) {
+    public clear_ActiveCamera3D(camera: Camera3D) {
         if (this.camera_3d === camera) {
             this.camera_3d._current = false;
             this.camera_3d = undefined;

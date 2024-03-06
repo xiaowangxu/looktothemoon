@@ -54,7 +54,7 @@
         class="__sun-design-tree-container__ __sun-design-tree-relation__" :class="{ 'no-folder-line': !folderLine }"
         :style="{ '--Depth': depth + 1 }" :data-size="size">
         <!-- ref="subtree_refs" -->
-        <SunTreeItem v-for=" item  in  sorted_subs " v-memo="[item, depth]" :option="item" :depth="depth + 1"
+        <SunTreeItem v-for=" item  in  sorted_subs" v-memo="[item, depth]" :option="item" :depth="depth + 1"
             @click="onSubTreeClick" @contextmenu="onSubTreeContextMenu" @edit="onSubTreeEdit" @drop="onSubTreeDrop"
             :key="item.uid" @request-parent-drop="onRequestParentDrop">
             <template v-if="$slots.append" #append="{ option }">

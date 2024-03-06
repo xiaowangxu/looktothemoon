@@ -10,10 +10,14 @@ import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 export class FixSizeNode3D extends Node3D {
     public static readonly class_name: string = "FixSizeNode3D";
 
+    static readonly #tmp_vector2_0 = Vector2.new;
     static readonly #tmp_vector3_0 = Vector3.new;
     static readonly #tmp_vector3_1 = Vector3.new;
+    static readonly #tmp_vector3_2 = Vector3.new;
+    static readonly #tmp_plane3_0 = Plane3.new;
+    static readonly #tmp_ray3_0 = Ray3.new;
 
-    public unit_pixel_count: number = 50;
+    public unit_pixel_count: number = 60;
     private _use_active_viewport: boolean = false;
     public get use_active_viewport() { return this._use_active_viewport; }
     public set use_active_viewport(use: boolean) {
@@ -37,39 +41,43 @@ export class FixSizeNode3D extends Node3D {
         this.propergate_redundant_before_render = true;
     }
 
-    static readonly #plane: Plane3 = new Plane3(Vector3.create(0, 0, 0), 0);
-
     protected get_RelativeViewport() {
-        return this._use_active_viewport ? this.get_SceneTree()?.get_ActiveViewports()[0] : this.get_Viewport();
+        return this._use_active_viewport ? this.get_SceneTree()?.get_ActiveViewports()[0] : this.get_SceneTree()?.get_RenderingViewport();
     }
 
     protected get_RelativeCamera3D() {
-        return this._use_active_viewport ? this.get_SceneTree()?.get_ActiveViewports()[0]?.get_Camera3D() : this.get_SceneTree()?.get_RenderCamera3D();
+        return this.get_RelativeViewport()?.get_Camera3D();
+    }
+
+    protected get_Scale() {
+        const viewport = this.get_RelativeViewport();
+        const camera = this.get_RelativeCamera3D()?.get_Camera();
+        if (viewport === undefined || camera === undefined) return undefined;
+        const size = viewport.get_Size(FixSizeNode3D.#tmp_vector2_0);
+        const half_height = this.unit_pixel_count / size.y;
+
+        const plane_normal = camera.unproject_Normal(FixSizeNode3D.#tmp_vector2_0.set(0, 0), FixSizeNode3D.#tmp_vector3_0);
+        this.update_GlobalTransform();
+        const plane = FixSizeNode3D.#tmp_plane3_0.set_PointAndNormal(this._global_position, plane_normal);
+
+        const center_origin = camera.unproject_Point(FixSizeNode3D.#tmp_vector2_0, undefined, FixSizeNode3D.#tmp_vector3_1);
+        const center_ray = FixSizeNode3D.#tmp_ray3_0.set(center_origin, plane_normal);
+        const center = plane.intersect_Ray(center_ray, FixSizeNode3D.#tmp_vector3_0);
+        if (center === undefined) return undefined;
+
+        const project_origin = camera.unproject_Point(FixSizeNode3D.#tmp_vector2_0.set(0, half_height), undefined, FixSizeNode3D.#tmp_vector3_1);
+        const project_normal = camera.unproject_Normal(FixSizeNode3D.#tmp_vector2_0.set(0, half_height), FixSizeNode3D.#tmp_vector3_2);
+        const ray = FixSizeNode3D.#tmp_ray3_0.set(project_origin, project_normal);
+        const point = plane.intersect_Ray(ray, FixSizeNode3D.#tmp_vector3_2);
+        if (point === undefined) return undefined;
+
+        return center.distance_to(point) * 2;
     }
 
     protected update_Size() {
-        const viewport = this.get_RelativeViewport();
-        const camera = this.get_RelativeCamera3D()?.get_Camera();
-        if (camera === undefined) return;
-        let { y: height } = viewport!.size;
-        if (height === 0) return;
-        if (this.consider_pixel_ratio) height *= this.config.render_server.pixel_ratio;
-        const center_ray = camera.project_Ray(Vector2.create(0, 0), 0, Ray3.new);
-        const top_ray = camera.project_Ray(Vector2.create(0, 1), 0, Ray3.new);
-        const center = center_ray.get_Point(1, Vector3.new);
-        const plane = FixSizeNode3D.#plane.set_PointAndNormal(center, center_ray.direction);
-        const top = plane.intersect_UncappedRay(top_ray, Vector3.new);
-        if (top === undefined) return;
-        const distance = center.distance_to(top);
-        const is_persp = !camera.is_orthogonal;
-        if (is_persp) {
-            const self_distance = this.global_position.distance_to(center_ray.origin);
-            const h = self_distance * distance;
-            this.local_scale = FixSizeNode3D.#tmp_vector3_0.mult_Number(FixSizeNode3D.#tmp_vector3_1.set(h, h, h), this.unit_pixel_count / (height / 2));
-        }
-        else {
-            this.local_scale = FixSizeNode3D.#tmp_vector3_0.mult_Number(FixSizeNode3D.#tmp_vector3_1.set(distance, distance, distance), this.unit_pixel_count / (height / 2));
-        }
+        const scale = this.get_Scale();
+        if (scale === undefined) return;
+        this.local_scale = FixSizeNode3D.#tmp_vector3_0.set(scale, scale, scale);
     }
 
     public _notification(what: NodeNotification): void {

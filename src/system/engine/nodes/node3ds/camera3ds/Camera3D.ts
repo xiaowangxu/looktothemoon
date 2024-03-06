@@ -14,7 +14,7 @@ export class Camera3D extends Node3D {
                 this.get_Viewport()?.set_ActiveCamera3D(this);
             }
             else {
-                this.get_Viewport()?.clear_Camera3D(this);
+                this.get_Viewport()?.clear_ActiveCamera3D(this);
             }
         }
     }
@@ -47,7 +47,7 @@ export class Camera3D extends Node3D {
             }
             case NodeNotification.ExitingTree: {
                 if (this.current) {
-                    this.get_Viewport()?.clear_Camera3D(this);
+                    this.get_Viewport()?.clear_ActiveCamera3D(this);
                 }
                 break;
             }

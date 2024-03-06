@@ -6,6 +6,7 @@ export interface Config {
     render_server_size: Vector2 | undefined,
     render_server_pixel_ratio: number | undefined,
     render_server_scale?: number,
+    fps: number,
     physics_fps: number,
 }
 
