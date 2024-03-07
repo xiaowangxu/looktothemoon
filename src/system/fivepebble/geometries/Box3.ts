@@ -1,8 +1,11 @@
+import { Epsilon } from "../Scalar";
 import type { BvhShape } from "../bvh/BvhLike";
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import type { Matrix4 } from "../linear_algebra/Matrix4";
 import { Vector3 } from "../linear_algebra/Vector3";
 import type { BoxLike } from "./BoxLike";
+import type { LineLike } from "./LineLike";
+import type { RayLike } from "./RayLike";
 
 export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix3> {
 
@@ -82,6 +85,49 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
         this.min.min(a.min, b);
         this.max.max(a.max, b);
         return this;
+    }
+
+    public touch_Line(line: LineLike<Vector3, Matrix3>): boolean {
+        // separating axis theorem
+        const p1 = line.start, p2 = line.end;
+        const max = this.max, min = this.min;
+        const d_x = (p2.x - p1.x) / 2, d_y = (p2.y - p1.y) / 2, d_z = (p2.z - p1.z) / 2;
+        const e_x = (max.x - min.x) / 2, e_y = (max.y - min.y) / 2, e_z = (max.z - min.z) / 2;
+        const c_x = p1.x + d_x - (min.x + max.x) / 2;
+        const c_y = p1.y + d_y - (min.y + max.y) / 2;
+        const c_z = p1.z + d_z - (min.z + max.z) / 2;
+        const ad_x = Math.abs(d_x);
+        const ad_y = Math.abs(d_y);
+        const ad_z = Math.abs(d_z);
+        if (Math.abs(c_x) > e_x + ad_x) return false;
+        if (Math.abs(c_y) > e_y + ad_y) return false;
+        if (Math.abs(c_z) > e_z + ad_z) return false;
+        if (Math.abs(d_y * c_z - d_z * c_y) > e_y * ad_z + e_z * ad_y + Epsilon) return false;
+        if (Math.abs(d_z * c_x - d_x * c_z) > e_z * ad_x + e_x * ad_z + Epsilon) return false;
+        if (Math.abs(d_x * c_y - d_y * c_x) > e_x * ad_y + e_y * ad_x + Epsilon) return false;
+        return true;
+    }
+    
+    public touch_Ray(ray: RayLike<Vector3, Matrix3>): boolean {
+        const vmin = this.min, vmax = this.max;
+        const rdir = ray.direction, rpos = ray.origin;
+        const t1 = (vmin.x - rpos.x) / rdir.x;
+        const t2 = (vmax.x - rpos.x) / rdir.x;
+        const t3 = (vmin.y - rpos.y) / rdir.y;
+        const t4 = (vmax.y - rpos.y) / rdir.y;
+        const t5 = (vmin.z - rpos.z) / rdir.z;
+        const t6 = (vmax.z - rpos.z) / rdir.z;
+        const aMin = t1 < t2 ? t1 : t2;
+        const bMin = t3 < t4 ? t3 : t4;
+        const cMin = t5 < t6 ? t5 : t6;
+        const aMax = t1 > t2 ? t1 : t2;
+        const bMax = t3 > t4 ? t3 : t4;
+        const cMax = t5 > t6 ? t5 : t6;
+        const fMax = aMin > bMin ? aMin : bMin;
+        const fMin = aMax < bMax ? aMax : bMax;
+        const t7 = fMax > cMin ? fMax : cMin;
+        const t8 = fMin < cMax ? fMin : cMax;
+        return (t8 < 0 || t7 > t8) ? false : t7 > 0;
     }
 
     public apply_Matrix4(a: Box3, mat: Matrix4): Box3 {

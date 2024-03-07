@@ -733,7 +733,6 @@ export class Viewport extends Node {
                 this.physics_mouse_picking_result = undefined;
                 return;
             };
-            this.input_manager.mouse_position_normalized;
             const line = camera_3d.get_Camera().project_Line(this.input_manager.get_MousePositionNormalized(Viewport.#tmp_vector2_0), Viewport.#tmp_line3_0);
             const ray_picking_option = new RayPickingOption(
                 line.start,

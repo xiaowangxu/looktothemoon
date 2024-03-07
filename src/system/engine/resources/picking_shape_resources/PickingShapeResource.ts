@@ -32,6 +32,7 @@ export class PickingBoxResource extends PickingShape3DResource {
     public static readonly class_name: string = "PickingBoxResource";
 
     static readonly #tmp_vector3_0 = Vector3.new;
+    static readonly #tmp_vector3_1 = Vector3.new;
 
     public readonly preserve_global_transform: boolean = false;
 
@@ -67,8 +68,8 @@ export class PickingBoxResource extends PickingShape3DResource {
         let axis = 0;
         let sign = 0;
 
-        const position_start = new Vector3(-this.width / 2, -this.height / 2, -this.depth / 2);
-        const position_end = new Vector3(this.width / 2, this.height / 2, this.depth / 2);
+        const position_start = PickingBoxResource.#tmp_vector3_0.set(-this.width / 2, -this.height / 2, -this.depth / 2);
+        const position_end = PickingBoxResource.#tmp_vector3_1.set(this.width / 2, this.height / 2, this.depth / 2);
 
         for (let i = 0; i < 3; i++) {
             const seg_from = i === 0 ? from.x : (i === 1 ? from.y : from.z);
@@ -87,7 +88,8 @@ export class PickingBoxResource extends PickingShape3DResource {
                 cmax = (seg_to > box_end) ? ((box_end - seg_from) / length) : 1;
                 csign = -1.0;
 
-            } else {
+            }
+            else {
                 if (seg_to > box_end || seg_from < box_begin) {
                     return undefined;
                 }
@@ -112,15 +114,13 @@ export class PickingBoxResource extends PickingShape3DResource {
 
         const rel = PickingBoxResource.#tmp_vector3_0.sub(to, from);
 
-        const normal = new Vector3();
+        const result = Vector3.new.add_Scaled(from, min, rel);
+        const normal = Vector3.new;
         switch (axis) {
             case 0: normal.x = sign; break;
             case 1: normal.y = sign; break;
             case 2: normal.z = sign; break;
         }
-
-        const result = from.clone();
-        result.add_Scaled(result, min, rel);
 
         return { position: result, normal: normal };
     }
@@ -213,6 +213,7 @@ export class PickingSphereResource extends PickingShape3DResource {
 export class PickingCylinderResource extends PickingShape3DResource {
     public static readonly class_name: string = "PickingCylinderResource";
 
+    static readonly #tmp_line3_0 = Line3.new;
     static readonly #tmp_vector3_0 = Vector3.new;
     static readonly #tmp_vector3_1 = Vector3.new;
     static readonly #tmp_vector3_2 = Vector3.new;
@@ -220,11 +221,14 @@ export class PickingCylinderResource extends PickingShape3DResource {
 
     public readonly preserve_global_transform: boolean = false;
 
+    protected readonly bbox: Box3 = Box3.new;
+
     private _radius: number = 0.5;
     public get radius() { return this._radius; }
     public set radius(radius: number) {
         if (this._radius !== radius) {
             this._radius = radius;
+            this.update_BBox();
             this.trigger_Changed();
         }
     }
@@ -234,11 +238,15 @@ export class PickingCylinderResource extends PickingShape3DResource {
     public set height(height: number) {
         if (this._height !== height) {
             this._height = height;
+            this.update_BBox();
             this.trigger_Changed();
         }
     }
 
     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
+        const line = PickingCylinderResource.#tmp_line3_0.set(from, to);
+        if (!this.bbox.touch_Line(line)) return undefined;
+
         const rel = Vector3.new.sub(to, from);
         const rel_l = rel.length;
         if (rel_l < Epsilon) {
@@ -256,7 +264,8 @@ export class PickingCylinderResource extends PickingShape3DResource {
 
         if (crs_l < Epsilon) {
             axis_dir = new Vector3(0, 0, 1); // Any side axis OK.
-        } else {
+        } 
+        else {
             axis_dir = Vector3.new.div_Number(crs, crs_l);
         }
 
@@ -335,6 +344,13 @@ export class PickingCylinderResource extends PickingShape3DResource {
         return { position: result, normal: res_normal };
     }
 
+    protected update_BBox() {
+        const half_height = this._height / 2;
+        const radius = this._radius;
+        this.bbox.min.set(-radius, -half_height, -radius);
+        this.bbox.max.set(radius, half_height, radius);
+    }
+
     protected dispose(): void { }
 
     // save / load
@@ -350,16 +366,16 @@ export class PickingCylinderResource extends PickingShape3DResource {
     }
 }
 
-export class PickingRaycastableResource<T extends Raycastable<Vector3, Matrix3>> extends PickingShape3DResource {
-    public raycastable: T | undefined;
+// export class PickingRaycastableResource<T extends Raycastable<Vector3, Matrix3>> extends PickingShape3DResource {
+//     public raycastable: T | undefined;
 
-    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
-        if (this.raycastable === undefined) return undefined;
-        return this.raycastable.raycast(from, to, side);
-    }
+//     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
+//         if (this.raycastable === undefined) return undefined;
+//         return this.raycastable.raycast(from, to, side);
+//     }
 
-    protected dispose(): void { }
-}
+//     protected dispose(): void { }
+// }
 
 // export class PickingBVHResource extends PickingShape3DResource {
 //     public static readonly class_name: string = "PickingBVHResource";

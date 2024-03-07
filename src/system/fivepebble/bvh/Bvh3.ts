@@ -9,7 +9,7 @@ export class BvhNode3 {
     public parent: BvhNode3 | undefined;
     public depth: number = 0;
     public readonly aabb: AABB3;
-    public shapes: BvhShape<Vector3, Matrix3>[];
+    public shapes: BvhShape3[];
     // children
     public left: BvhNode3 | undefined = undefined;
     public right: BvhNode3 | undefined = undefined;
@@ -20,7 +20,7 @@ export class BvhNode3 {
         parent: BvhNode3 | undefined,
         depth: number,
         aabb: AABB3,
-        shapes: BvhShape<Vector3, Matrix3>[],
+        shapes: BvhShape3[],
         left: BvhNode3 | undefined = undefined,
         right: BvhNode3 | undefined = undefined,
     ) {
@@ -38,19 +38,20 @@ enum Bvh3Axis {
 };
 
 type AABB3 = Box3;
+type BvhShape3 = BvhShape<Vector3, Matrix3>;
 
 export class Bvh3 implements BvhLike<Vector3, Matrix3> {
     private readonly max_depth: number;
 
     public root: BvhNode3 | undefined;
-    private shape_aabbs_map: Map<BvhShape<Vector3, Matrix3>, AABB3> = new Map();
+    private shape_aabbs_map: Map<BvhShape3, AABB3> = new Map();
     private shape_aabbs: AABB3[] = [];
 
     constructor(max_depth: number = 16) {
         this.max_depth = max_depth;
     }
 
-    public build(shapes: BvhShape<Vector3, Matrix3>[]) {
+    public build(shapes: BvhShape3[]) {
         this.root = undefined;
         this.shape_aabbs = [];
         this.shape_aabbs_map.clear();
@@ -68,7 +69,7 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
     static readonly #vector3: Vector3 = Vector3.new;
     static readonly #centroid: AABB3 = Box3.new;
 
-    private get_CentriodAABB(shapes: BvhShape<Vector3, Matrix3>[], target: AABB3) {
+    private get_CentriodAABB(shapes: BvhShape3[], target: AABB3) {
         let cminx = Infinity;
         let cminy = Infinity;
         let cminz = Infinity;
@@ -393,34 +394,7 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
         return 2 * (x * y + y * z + z * x);
     }
 
-    private static is_RayIntersectedAABB(aabb: AABB3, ray: Ray3) {
-        const vmin = aabb.min, vmax = aabb.max;
-        const rdir = ray.direction, rpos = ray.origin;
-        const t1 = (vmin.x - rpos.x) / rdir.x;
-        const t2 = (vmax.x - rpos.x) / rdir.x;
-        const t3 = (vmin.y - rpos.y) / rdir.y;
-        const t4 = (vmax.y - rpos.y) / rdir.y;
-        const t5 = (vmin.z - rpos.z) / rdir.z;
-        const t6 = (vmax.z - rpos.z) / rdir.z;
-
-        const aMin = t1 < t2 ? t1 : t2;
-        const bMin = t3 < t4 ? t3 : t4;
-        const cMin = t5 < t6 ? t5 : t6;
-
-        const aMax = t1 > t2 ? t1 : t2;
-        const bMax = t3 > t4 ? t3 : t4;
-        const cMax = t5 > t6 ? t5 : t6;
-
-        const fMax = aMin > bMin ? aMin : bMin;
-        const fMin = aMax < bMax ? aMax : bMax;
-
-        const t7 = fMax > cMin ? fMax : cMin;
-        const t8 = fMin < cMax ? fMin : cMax;
-
-        return (t8 < 0 || t7 > t8) ? false : t7 > 0;
-    }
-
-    private build_Internal(parent: BvhNode3 | undefined, parent_aabb: AABB3, shapes: BvhShape<Vector3, Matrix3>[], depth: number): BvhNode3 | undefined {
+    private build_Internal(parent: BvhNode3 | undefined, parent_aabb: AABB3, shapes: BvhShape3[], depth: number): BvhNode3 | undefined {
         const count = shapes.length;
         if (count === 0) return undefined;
         if (count === 1) {
@@ -483,5 +457,23 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
             node.right = this.build_Internal(node, Box3.create(Vector3.create(right_minx, right_miny, right_minz), Vector3.create(right_maxx, right_maxy, right_maxz)), right, depth + 1);
             return node;
         }
+    }
+
+    public traverse(func: (aabb: AABB3) => boolean, max_depth: number = Infinity) {
+        if (this.root === undefined) return [];
+        return this.traverse_Internal(this.root, func, 0, max_depth, []);
+    }
+
+    public traverse_Internal(node: BvhNode3, func: (aabb: AABB3) => boolean, depth: number = 0, max_depth: number = Infinity, result: BvhShape3[] = []) {
+        const hit = func(node.aabb);
+        if (!hit) return result;
+        if (node.is_leaf || depth >= max_depth) {
+            result.push(...node.shapes);
+            return result;
+        }
+        const children_depth = depth + 1;
+        if (node.left !== undefined) this.traverse_Internal(node.left, func, children_depth, max_depth, result);
+        if (node.right !== undefined) this.traverse_Internal(node.right, func, children_depth, max_depth, result);
+        return result;
     }
 }

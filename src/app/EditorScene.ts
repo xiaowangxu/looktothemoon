@@ -53,6 +53,7 @@ import { PickingShape3D } from "@/system/engine/nodes/node3ds/physics3ds/Picking
 import { PointGrabber3D } from "../system/engine/nodes/node3ds/gizmo3ds/grabber3ds/PointGrabber3D";
 import { Line3 } from "@/system/fivepebble/geometries/Line3";
 import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/LineGrabber3D";
+import { RayPickingOption } from "@/system/engine/worlds/world3ds/PickingWorld3D";
 
 const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
     return {
@@ -392,6 +393,17 @@ export function createEditor() {
                 bvh_viz.visualize_Bvh3(bvh, depth);
             }
         }
+    });
+    area.signal_mouse_moved.connect((event, result) => {
+        const normal = area.get_Viewport()!.get_Input().mouse_position_normalized;
+        const line = area.get_Viewport()!.get_Camera3D()!.get_Camera().project_Line(normal, Line3.new);
+        line.start.apply_Matrix4(line.start, Matrix4.new.inverse(MeshLine.global_transform));
+        line.end.apply_Matrix4(line.end, Matrix4.new.inverse(MeshLine.global_transform));
+        console.time('bvh');
+        bvh.traverse((aabb) => {
+            return aabb.touch_Line(line);
+        });
+        console.timeEnd('bvh');
     });
     MeshLine.add_Child(bvh_viz);
 
