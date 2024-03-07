@@ -738,7 +738,7 @@ export class Viewport extends Node {
                 line.start,
                 line.end,
                 this.physics_picking_mask,
-                camera_3d,
+                camera_3d.get_Camera(),
                 this,
                 PickingOrder.OffsetOrdered,
                 RaycastSide.Front

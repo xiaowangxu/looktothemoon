@@ -1,7 +1,6 @@
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import type { SphereLike } from "./SphereLike";
 import { Vector3 } from "../linear_algebra/Vector3";
-import { GeometryContainType } from "./GeometryLike";
 
 export class Sphere3 implements SphereLike<Vector3, Matrix3> {
 
@@ -36,19 +35,6 @@ export class Sphere3 implements SphereLike<Vector3, Matrix3> {
         const normal = target.direction_to(this.center, point);
         if (normal.squared_length === 0) return target.add_Scaled(this.center, this.radius, new Vector3(1, 0, 0));
         return target.add_Scaled(this.center, this.radius, normal);
-    }
-
-    // #endregion
-
-    // #region Geometry Contain Point
-
-    contain_Point(point: Vector3, type: GeometryContainType): boolean {
-        const sqr_distance = point.squared_distance_to(this.center);
-        const sqr_radius = this.radius * this.radius;
-        if ((type & GeometryContainType.Inside) && sqr_distance < sqr_radius) return true;
-        if ((type & GeometryContainType.Touching) && sqr_distance === sqr_radius) return true;
-        if ((type & GeometryContainType.Outside) && sqr_distance > sqr_radius) return true;
-        return false;
     }
 
     // #endregion

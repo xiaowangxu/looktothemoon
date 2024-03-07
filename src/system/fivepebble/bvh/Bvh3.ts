@@ -459,7 +459,7 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
         }
     }
 
-    public traverse(func: (aabb: AABB3) => boolean, max_depth: number = Infinity) {
+    traverse(func: (aabb: AABB3) => boolean, max_depth: number = Infinity) {
         if (this.root === undefined) return [];
         return this.traverse_Internal(this.root, func, 0, max_depth, []);
     }

@@ -71,6 +71,67 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
         return this;
     }
 
+    // #region Geometry Bounded
+
+    signed_distance_to_Point(point: Vector3): number {
+        const center = this.get_Center(Box3.#tmp_vector3_0);
+        const p = center.sub(point, center);
+        const half_size = this.get_Size(Box3.#tmp_vector3_1);
+        half_size.div_Number(half_size, 2);
+        const edge_distance = p.abs(p).sub(p, half_size);
+        const outside_distance = edge_distance.max(edge_distance, Box3.#const_vector3_zero).length;
+        const inside_distance = Math.min(0, edge_distance.max_component);
+        return outside_distance + inside_distance;
+    }
+
+    distance_to_Point(point: Vector3): number {
+        return Math.abs(this.signed_distance_to_Point(point));
+    }
+
+    project_Point(point: Vector3, target: Vector3): Vector3 {
+        throw new Error('not impl');
+        // const { x, y, z } = point;
+        // const { x: min_x, y: min_y, z: min_z } = this.min;
+        // const { x: max_x, y: max_y, z: max_z } = this.max;
+        // let is_inside = true;
+        // // x
+        // if (x > max_x) {
+        //     target.x = max_x;
+        //     is_inside = false;
+        // }
+        // else if (x < min_x) {
+        //     target.x = min_x;
+        //     is_inside = false;
+        // }
+        // else target.x = x;
+        // // y
+        // if (y > max_y) {
+        //     target.y = max_y;
+        //     is_inside = false;
+        // }
+        // else if (y < min_y) {
+        //     target.y = min_y;
+        //     is_inside = false;
+        // }
+        // else target.y = y;
+        // // z
+        // if (z > max_z) {
+        //     target.z = max_z;
+        //     is_inside = false;
+        // }
+        // else if (z < min_z) {
+        //     target.z = min_z;
+        //     is_inside = false;
+        // }
+        // else target.z = z;
+
+        // if (!is_inside) return target;
+        // // inside
+
+    }
+
+    // #endregion
+
     enlarge(a: Box3, amount: number): Box3 {
         this.min.sub_Number(a.min, amount);
         this.max.add_Number(a.max, amount);
@@ -107,7 +168,7 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
         if (Math.abs(d_x * c_y - d_y * c_x) > e_x * ad_y + e_y * ad_x + Epsilon) return false;
         return true;
     }
-    
+
     public touch_Ray(ray: RayLike<Vector3, Matrix3>): boolean {
         const vmin = this.min, vmax = this.max;
         const rdir = ray.direction, rpos = ray.origin;

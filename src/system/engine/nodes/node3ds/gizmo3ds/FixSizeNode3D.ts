@@ -6,10 +6,17 @@ import { Plane3 } from "@/system/fivepebble/geometries/Plane3";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
+import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
+import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 
 export class FixSizeNode3D extends Node3D {
     public static readonly class_name: string = "FixSizeNode3D";
 
+    static readonly #tmp_matrix3_0: Matrix3 = Matrix3.new;
+    static readonly #tmp_matrix4_0: Matrix4 = Matrix4.new;
+    static readonly #tmp_matrix4_1: Matrix4 = Matrix4.new;
+    static readonly #tmp_euler_0: Euler = Euler.new;
     static readonly #tmp_vector2_0 = Vector2.new;
     static readonly #tmp_vector3_0 = Vector3.new;
     static readonly #tmp_vector3_1 = Vector3.new;
@@ -39,6 +46,35 @@ export class FixSizeNode3D extends Node3D {
         super(config);
         this.block_redundant_before_render = false;
         this.propergate_redundant_before_render = true;
+    }
+
+    protected update_GlobalTransform(): void {
+        if (this.is_global_transform_dirty) {
+            const parent = this.get_Parent();
+            this.update_LocalTransform();
+            if (!this.top_level && parent !== undefined && parent instanceof Node3D) {
+                (parent as FixSizeNode3D).update_GlobalTransform();
+                // first find position / rotation as normal
+                this._global_transform.compose(this._local_transform, (parent as FixSizeNode3D)._global_transform);
+                const parent_basis = (parent as FixSizeNode3D)._global_transform.get_Basis(FixSizeNode3D.#tmp_matrix3_0);
+                const parent_position = this._global_transform.get_Position(FixSizeNode3D.#tmp_vector3_0);
+                parent_basis.decompose_RotationScale(FixSizeNode3D.#tmp_euler_0, undefined);
+                // ignore the scale
+                const parent_global_transform = FixSizeNode3D.#tmp_matrix4_0.set_BasisPosition(parent_basis.set_Euler(FixSizeNode3D.#tmp_euler_0), parent_position);
+                const local_transform_without_position = FixSizeNode3D.#tmp_matrix4_1.copy(this._local_transform).set_Position(parent_position.set(0, 0, 0));
+                // as position is considered in global transform, drop local's position
+                this._global_transform.compose(local_transform_without_position, parent_global_transform);
+                // setup global position / rotation
+                this._global_transform.get_Basis(FixSizeNode3D.#tmp_matrix3_0).decompose_RotationScale(this._global_rotation, undefined);
+                this._global_transform.get_Position(this._global_position);
+            }
+            else {
+                this._global_transform.copy(this._local_transform);
+                this._global_position.copy(this._local_position);
+                this._global_rotation.copy(this._local_rotation);
+            }
+            this.is_global_transform_dirty = false;
+        }
     }
 
     protected get_RelativeViewport() {

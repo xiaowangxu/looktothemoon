@@ -1,5 +1,6 @@
 import type { Box3 } from "../geometries/Box3";
 import { Plane3 } from "../geometries/Plane3";
+import type { PlaneLike } from "../geometries/PlaneLike";
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import type { Matrix4 } from "../linear_algebra/Matrix4";
 import { Vector3 } from "../linear_algebra/Vector3";
@@ -108,5 +109,31 @@ export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
             if (bottom.signed_distance_to_Point(p) < 0) return false;
         }
         return true;
+    }
+
+    equal(b: Frustum3): boolean {
+        return this.top.equal(b.top) && this.right.equal(b.right) && this.bottom.equal(b.bottom) && this.left.equal(b.left) && this.near.equal(b.near) && this.far.equal(b.far);
+    }
+
+    set(top: Plane3, right: Plane3, bottom: Plane3, left: Plane3, near: Plane3, far: Plane3): Frustum3 {
+        this.top.copy(top);
+        this.right.copy(right);
+        this.bottom.copy(bottom);
+        this.left.copy(left);
+        this.near.copy(near);
+        this.far.copy(far);
+        return this;
+    }
+    copy(b: Frustum3): Frustum3 {
+        this.top.copy(b.top);
+        this.right.copy(b.right);
+        this.bottom.copy(b.bottom);
+        this.left.copy(b.left);
+        this.near.copy(b.near);
+        this.far.copy(b.far);
+        return this;
+    }
+    clone(): Frustum3 {
+        return new Frustum3(this.top, this.right, this.bottom, this.left, this.near, this.far);
     }
 }

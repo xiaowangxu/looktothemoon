@@ -388,22 +388,21 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         );
     }
 
-    public decompose_RotationScale(target_rotation: Euler, target_scale: Vector3) {
+    public decompose_RotationScale(target_rotation: Euler | undefined, target_scale: Vector3 | undefined) {
         const n11 = this.n11, n21 = this.n21, n31 = this.n31;
         const n12 = this.n12, n22 = this.n22, n32 = this.n32;
         const n13 = this.n13, n23 = this.n23, n33 = this.n33;
         const vec = Matrix3.#tmp_vector3_0;
-        target_scale.set(
-            vec.set(n11, n21, n31).length,
-            vec.set(n12, n22, n32).length,
-            vec.set(n13, n23, n33).length,
-        );
-        target_rotation.copy(
+        const scale_x = vec.set(n11, n21, n31).length;
+        const scale_y = vec.set(n12, n22, n32).length;
+        const scale_z = vec.set(n13, n23, n33).length;
+        target_scale?.set(scale_x, scale_y, scale_z);
+        target_rotation?.copy(
             Matrix3.#tmp_euler_0.set_RotateMatrix(
                 Matrix3.#tmp_matrix3_1.set(
-                    n11 / target_scale.x, n12 / target_scale.y, n13 / target_scale.z,
-                    n21 / target_scale.x, n22 / target_scale.y, n23 / target_scale.z,
-                    n31 / target_scale.x, n32 / target_scale.y, n33 / target_scale.z,
+                    n11 / scale_x, n12 / scale_y, n13 / scale_z,
+                    n21 / scale_x, n22 / scale_y, n23 / scale_z,
+                    n31 / scale_x, n32 / scale_y, n33 / scale_z,
                 ),
                 target_rotation.order
             )

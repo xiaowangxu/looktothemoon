@@ -7,7 +7,6 @@ import { Vector2 } from "../linear_algebra/Vector2";
 import { Vector3 } from "../linear_algebra/Vector3";
 import { Frustum3 } from "./Frustum3";
 import { Euler } from "../linear_algebra/Euler";
-import type { LineLike } from "../geometries/LineLike";
 import type { Line3 } from "../geometries/Line3";
 
 export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
@@ -33,14 +32,20 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
         transform.get_Position(vector3);
         this._global_transform.set_BasisPosition(matrix3.set_Euler(euler), vector3);
         this._global_transform_inverse.inverse(this._global_transform);
+        this.update_Frustum();
     }
     public get_GlobalTransform(target: Matrix4) { return target.copy(this._global_transform); }
 
+    public _frustum: Frustum3 = Frustum3.new;
     get frustum() {
-        return this.get_Frustum(Frustum3.new);
+        return this._frustum.clone();
     }
     get_Frustum(target: Frustum3): Frustum3 {
-        return target.set_Projection(Camera3.#tmp_matrix4_0.compose(this._global_transform_inverse, this._projection));
+        return target.copy(this._frustum);
+    }
+
+    protected update_Frustum() {
+        this._frustum.set_Projection(Camera3.#tmp_matrix4_0.compose(this._global_transform_inverse, this._projection));
     }
 
     protected _mask: number = 0xffffffff;
@@ -135,6 +140,7 @@ export class OrthographicCamera3 extends Camera3 {
         const half_width = this.width / (2 * this.zoom);
         const half_height = this.height / (2 * this.zoom);
         this._projection.set_OrthogonalProjection(-half_width, half_width, half_height, -half_height, this.near, this.far);
+        this.update_Frustum();
     }
 
     unproject_Point(point: Vector2, depth: number = this.near, target: Vector3): Vector3 {
@@ -227,6 +233,7 @@ export class PerspectiveCamera3 extends Camera3 {
 
     protected update() {
         this._projection.set_PerspectiveFovProjection(this.fov, this.aspect, this.near, this.far);
+        this.update_Frustum();
     }
 
     unproject_Point(ndc: Vector2, depth: number = this.near, target: Vector3): Vector3 {

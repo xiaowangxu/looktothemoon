@@ -13,7 +13,6 @@ export class Node3D extends Node {
     static readonly #tmp_vector3_0: Vector3 = Vector3.new;
     static readonly #tmp_matrix4_0: Matrix4 = Matrix4.new;
     static readonly #tmp_matrix4_1: Matrix4 = Matrix4.new;
-    static readonly #tmp_euler_0: Euler = Euler.new;
 
     // local
     protected readonly _local_position: Vector3 = Vector3.new;
@@ -84,10 +83,8 @@ export class Node3D extends Node {
     }
     public set local_transform(transform: Matrix4) {
         this._local_transform.copy(transform);
-        this._local_transform.get_Basis(Node3D.#tmp_matrix3_0).decompose_RotationScale(Node3D.#tmp_euler_0, Node3D.#tmp_vector3_0);
-        this._local_position.copy(this._local_transform.position);
-        this._local_rotation.copy(Node3D.#tmp_euler_0);
-        this._local_scale.copy(Node3D.#tmp_vector3_0);
+        this._local_transform.get_Basis(Node3D.#tmp_matrix3_0).decompose_RotationScale(this._local_rotation, this._local_scale);
+        this._local_transform.get_Position(this._local_position);
         this.is_local_transform_dirty = false;
         this.propagate_TransformChanged();
     }
@@ -97,7 +94,7 @@ export class Node3D extends Node {
     protected readonly _global_rotation: Euler = Euler.new;
 
     protected readonly _global_transform: Matrix4 = Matrix4.new;
-    private is_global_transform_dirty: boolean = false;
+    protected is_global_transform_dirty: boolean = false;
     protected is_global_transform_changed: boolean = false;
 
     public get global_position(): Vector3 { return this.get_GlobalPosition(Vector3.new); }
@@ -106,7 +103,8 @@ export class Node3D extends Node {
         return taregt.copy(this._global_position);
     }
     public set global_position(position: Vector3) {
-        this.global_transform = Node3D.#tmp_matrix4_0.set_BasisPosition(this.global_transform.get_Basis(Node3D.#tmp_matrix3_0), position);
+        this.update_GlobalTransform();
+        this.global_transform = Node3D.#tmp_matrix4_0.set_BasisPosition(this._global_transform.get_Basis(Node3D.#tmp_matrix3_0), position);
     }
     public get global_rotation(): Euler { return this.get_GlobalRotation(Euler.new); }
     public get_GlobalRotation(target: Euler) {
@@ -114,7 +112,8 @@ export class Node3D extends Node {
         return target.copy(this._global_rotation);
     }
     public set global_rotation(rotation: Euler) {
-        this.global_transform = Node3D.#tmp_matrix4_0.set_BasisPosition(Node3D.#tmp_matrix3_0.set_Euler(rotation), this.global_transform.get_Position(Node3D.#tmp_vector3_0));
+        this.update_GlobalTransform();
+        this.global_transform = Node3D.#tmp_matrix4_0.set_BasisPosition(Node3D.#tmp_matrix3_0.set_Euler(rotation), this._global_transform.get_Position(Node3D.#tmp_vector3_0));
     }
 
     public get global_transform(): Matrix4 { return this.get_GlobalTransform(Matrix4.new); }
@@ -125,17 +124,18 @@ export class Node3D extends Node {
     protected update_GlobalTransform() {
         if (this.is_global_transform_dirty) {
             const parent = this.get_Parent();
+            this.update_LocalTransform();
             if (!this.top_level && parent !== undefined && parent instanceof Node3D) {
-                this._global_transform.compose(this.local_transform, parent.global_transform!);
+                parent.update_GlobalTransform();
+                this._global_transform.compose(this._local_transform, parent._global_transform);
                 // setup global position / rotation
-                this._global_transform.get_Basis(Node3D.#tmp_matrix3_0).decompose_RotationScale(Node3D.#tmp_euler_0, Node3D.#tmp_vector3_0);
-                this._global_position.copy(this._global_transform.get_Position(Node3D.#tmp_vector3_0));
-                this._global_rotation.copy(Node3D.#tmp_euler_0);
+                this._global_transform.get_Basis(Node3D.#tmp_matrix3_0).decompose_RotationScale(this._global_rotation, undefined);
+                this._global_transform.get_Position(this._global_position);
             }
             else {
-                this._global_transform.copy(this.local_transform);
-                this._global_position.copy(this.local_position);
-                this._global_rotation.copy(this.local_rotation);
+                this._global_transform.copy(this._local_transform);
+                this._global_position.copy(this._local_position);
+                this._global_rotation.copy(this._local_rotation);
             }
             this.is_global_transform_dirty = false;
         }
@@ -199,7 +199,8 @@ export class Node3D extends Node {
 
     // apis
     public to_Global(local_position: Vector3, target: Vector3) {
-        return target.apply_Matrix4(local_position, this.global_transform);
+        this.update_GlobalTransform();
+        return target.apply_Matrix4(local_position, this._global_transform);
     }
 
     public to_Local(global_position: Vector3, target: Vector3) {

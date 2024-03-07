@@ -7,12 +7,13 @@ import type { PickingArea3D } from "../../nodes/node3ds/physics3ds/PickingArea3D
 import { RaycastSide, type RaycastResult } from "@/system/fivepebble/geometries/GeometryLike";
 import { ConfiguredObject, type Config } from "../../ConfiguredObject";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
 
 type RaycastResult3 = RaycastResult<Vector3, Matrix3>;
 
 export interface PickingShape3D {
     preserve_global_transform: boolean;
-    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3D | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined;
+    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3 | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined;
 }
 
 class PickingArea extends ConfiguredObject {
@@ -44,12 +45,12 @@ export class RayPickingOption {
     public readonly from: Vector3;
     public readonly to: Vector3;
     public readonly mask: number;
-    public readonly camera: Camera3D | undefined;
+    public readonly camera: Camera3 | undefined;
     public readonly viewport: Viewport | undefined;
     public readonly order: PickingOrder;
     public readonly side: RaycastSide;
 
-    constructor(from: Vector3, to: Vector3, mask: number, camera: Camera3D | undefined, viewport: Viewport | undefined, order: PickingOrder = PickingOrder.Ordered, side: RaycastSide = RaycastSide.Front) {
+    constructor(from: Vector3, to: Vector3, mask: number, camera: Camera3 | undefined, viewport: Viewport | undefined, order: PickingOrder = PickingOrder.Ordered, side: RaycastSide = RaycastSide.Front) {
         this.from = from;
         this.to = to;
         this.mask = mask & 0xffffffff;

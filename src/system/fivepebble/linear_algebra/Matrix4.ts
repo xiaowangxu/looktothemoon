@@ -154,6 +154,22 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         return this;
     }
 
+    public set_Basis(basis: Matrix3) {
+        this.n11 = basis.n11; this.n12 = basis.n12; this.n13 = basis.n13;
+        this.n21 = basis.n21; this.n22 = basis.n22; this.n23 = basis.n23;
+        this.n31 = basis.n31; this.n32 = basis.n32; this.n33 = basis.n33;
+        this.n41 = 0 /*   */; this.n42 = 0 /*   */; this.n43 = 0 /*   */;
+        return this;
+    }
+
+    public set_Position(position: Vector3) {
+        this.n14 = position.x;
+        this.n24 = position.y;
+        this.n34 = position.z;
+        this.n44 = 1 /*    */;
+        return this;
+    }
+
     public set_PrespectiveProjection(left: number, right: number, top: number, bottom: number, near: number, far: number) {
         const x = 2 * near / (right - left);
         const y = 2 * near / (top - bottom);
