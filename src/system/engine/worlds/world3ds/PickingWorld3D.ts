@@ -6,7 +6,7 @@ import type { Camera3D } from "../../nodes/node3ds/camera3ds/Camera3D";
 import type { PickingArea3D } from "../../nodes/node3ds/physics3ds/PickingArea3D";
 import { RaycastSide, type RaycastResult } from "@/system/fivepebble/geometries/GeometryLike";
 import { ConfiguredObject, type Config } from "../../ConfiguredObject";
-import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 
 type RaycastResult3 = RaycastResult<Vector3, Matrix3>;
 
@@ -33,6 +33,7 @@ class PickingShapeInstance extends ConfiguredObject {
     public distance_offset: number = 0;
     public readonly global_transform: Matrix4 = Matrix4.new;
     public readonly global_transform_inverse: Matrix4 = Matrix4.new;
+    public readonly global_normal_transform: Matrix3 = Matrix3.new;
 }
 
 export enum PickingOrder {
@@ -69,8 +70,8 @@ export class RayPickingResult {
 
     constructor(area: PickingArea3D, position: Vector3, normal: Vector3, distance: number, offset_distance: number, priority: number) {
         this.area = area;
-        this.position = position.clone();
-        this.normal = normal.clone();
+        this.position = position;
+        this.normal = normal;
         this.distance = distance;
         this.offset_distance = offset_distance;
         this.priority = priority;
@@ -81,6 +82,7 @@ export class PickingWorld3D extends ConfiguredObject {
 
     static readonly #tmp_vector3_0 = Vector3.new;
     static readonly #tmp_vector3_1 = Vector3.new;
+    static readonly #tmp_matrix4_0 = Matrix4.new;
 
     private readonly shape_map: Map<Rid, PickingShapeInstance> = new Map();
     private readonly area_map: Map<Rid, PickingArea> = new Map();
@@ -99,17 +101,17 @@ export class PickingWorld3D extends ConfiguredObject {
         for (const shape_instance of this.shape_map.values()) {
             const _from = PickingWorld3D.#tmp_vector3_0.copy(from);
             const _to = PickingWorld3D.#tmp_vector3_1.copy(to);
-            const { shape, distance_offset, area, global_transform, global_transform_inverse } = shape_instance;
+            const { shape, distance_offset, area, global_transform, global_transform_inverse, global_normal_transform } = shape_instance;
             if (shape !== undefined && area !== undefined && area.enabled && (area.layer & mask) !== 0) {
                 const preserve_global_transform = shape.preserve_global_transform;
                 const local_from = preserve_global_transform ? _from : _from.apply_Matrix4(_from, global_transform_inverse);
                 const local_to = preserve_global_transform ? _to : _to.apply_Matrix4(_to, global_transform_inverse);
                 const res = shape.perform_Raycast(local_from, local_to, global_transform, side, camera, viewport);
                 if (res !== undefined) {
-                    const _res_position = res.position.clone();
-                    const _res_normal = res.normal.clone();
+                    const _res_position = res.position;
+                    const _res_normal = res.normal;
                     const position = preserve_global_transform ? _res_position : _res_position.apply_Matrix4(_res_position, global_transform);
-                    const normal = preserve_global_transform ? _res_normal : _res_normal.apply_Matrix4(_res_normal, global_transform).normalize(_res_normal);
+                    const normal = preserve_global_transform ? _res_normal : _res_normal.transform(_res_normal, global_normal_transform).normalize(_res_normal);
                     const distance = position.distance_to(from);
                     result.push(
                         new RayPickingResult(area.area, position, normal, distance, distance + distance_offset, area.priority)
@@ -187,6 +189,7 @@ export class PickingWorld3D extends ConfiguredObject {
         if (shape === undefined) return;
         shape.global_transform.copy(global_transform);
         shape.global_transform_inverse.inverse(global_transform);
+        PickingWorld3D.#tmp_matrix4_0.transpose(shape.global_transform_inverse).get_Basis(shape.global_normal_transform);
     }
 
     public set_PickingShapeInstanceArea(rid: Rid, area_rid: Rid) {

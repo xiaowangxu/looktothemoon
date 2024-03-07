@@ -1,15 +1,15 @@
 <template>
     <div v-once style="position: fixed; inset: 0;">
         <canvas id="render-server-canvas" style="width: 100%; height: 100%;"></canvas>
-        <div id="viewport-0" style="position: absolute; overflow: hidden; left: 0%; top: 0%; right: 50%; bottom: 0%;">
+        <div id="viewport-0" style="position: absolute; overflow: hidden; left: 0%; top: 0%; right: 0%; bottom: 0%;">
             <!-- <div id="render-server-debug"
                 style="position: absolute; left: 10px; bottom: 10px; font-size: 10px; color: rgba(231, 13, 213, 0.848); pointer-events: none; font-family: consolas;">
             </div> -->
         </div>
-        <div id="viewport-1" style="position: absolute; overflow: hidden; left: 50%; top: 0%; right: 0%; bottom: 50%;">
+        <!-- <div id="viewport-1" style="position: absolute; overflow: hidden; left: 50%; top: 0%; right: 0%; bottom: 50%;">
         </div>
         <div id="viewport-2" style="position: absolute; overflow: hidden; left: 50%; top: 50%; right: 0%; bottom: 0%;">
-        </div>
+        </div> -->
     </div>
 
     <SunPanelResizeContainerRemainNob id="editor-left-container" click-nob-action="toggle" :nob-size="14"

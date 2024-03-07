@@ -75,8 +75,9 @@ export class FixSizeNode3D extends Node3D {
     }
 
     protected update_Size() {
-        const scale = this.get_Scale();
+        let scale = this.get_Scale();
         if (scale === undefined) return;
+        if (this.consider_pixel_ratio) scale /= this.config.render_server.pixel_ratio;
         this.local_scale = FixSizeNode3D.#tmp_vector3_0.set(scale, scale, scale);
     }
 

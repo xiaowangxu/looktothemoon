@@ -14,6 +14,14 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
     //#endregion
 
     static readonly #const_vector3_zero = new Vector3(0, 0, 0);
+    static readonly #tmp_vector3_0 = new Vector3();
+    static readonly #tmp_vector3_1 = new Vector3();
+    static readonly #tmp_vector3_2 = new Vector3();
+    static readonly #tmp_vector3_3 = new Vector3();
+    static readonly #tmp_vector3_4 = new Vector3();
+    static readonly #tmp_vector3_5 = new Vector3();
+    static readonly #tmp_vector3_6 = new Vector3();
+    static readonly #tmp_vector3_7 = new Vector3();
 
     public readonly min: Vector3;
     public readonly max: Vector3;
@@ -76,22 +84,20 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
         return this;
     }
 
-    static readonly #points: [Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3, Vector3] = [new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
-
     public apply_Matrix4(a: Box3, mat: Matrix4): Box3 {
         if (a.min.x >= a.max.x && a.min.y >= a.max.y && a.min.z >= a.max.z) {
             this.min.set(0, 0, 0);
             this.max.set(0, 0, 0);
             return this;
         }
-        const p0 = Box3.#points[0];
-        const p1 = Box3.#points[1];
-        const p2 = Box3.#points[2];
-        const p3 = Box3.#points[3];
-        const p4 = Box3.#points[4];
-        const p5 = Box3.#points[5];
-        const p6 = Box3.#points[6];
-        const p7 = Box3.#points[7];
+        const p0 = Box3.#tmp_vector3_0;
+        const p1 = Box3.#tmp_vector3_1;
+        const p2 = Box3.#tmp_vector3_2;
+        const p3 = Box3.#tmp_vector3_3;
+        const p4 = Box3.#tmp_vector3_4;
+        const p5 = Box3.#tmp_vector3_5;
+        const p6 = Box3.#tmp_vector3_6;
+        const p7 = Box3.#tmp_vector3_7;
         p0.set(a.min.x, a.min.y, a.min.z).apply_Matrix4(p0, mat); // 000
         p1.set(a.min.x, a.min.y, a.max.z).apply_Matrix4(p1, mat); // 001
         p2.set(a.min.x, a.max.y, a.min.z).apply_Matrix4(p2, mat); // 010

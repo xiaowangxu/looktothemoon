@@ -18,5 +18,7 @@ export interface BoxLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLik
     merge(a: BoxLike<Vec, Mat>, b: BoxLike<Vec, Mat>): BoxLike<Vec, Mat>;
     fit(a: BoxLike<Vec, Mat>, b: Vec): BoxLike<Vec, Mat>;
 
+    
+
     set(min: Vec, max: Vec): BoxLike<Vec, Mat>;
 }

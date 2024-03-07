@@ -77,7 +77,7 @@ export class Node3D extends Node {
             const basis_rotation = Node3D.#tmp_matrix3_1;
             basis.set_Scale(this._local_scale.x, this._local_scale.y, this._local_scale.z);
             basis_rotation.set_Euler(this._local_rotation);
-            basis.compose(basis_rotation, basis);
+            basis.compose(basis, basis_rotation);
             this._local_transform.set_BasisPosition(basis, this._local_position);
             this.is_local_transform_dirty = false;
         }

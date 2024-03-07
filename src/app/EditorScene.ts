@@ -48,10 +48,11 @@ import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { GridGeometryResource } from "@/system/engine/resources/geometry_resources/HelperGeometryResource";
 import { PickingArea3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingArea3D";
-import { PickingPolyLineResource } from "@/system/engine/resources/picking_shape_resources/PickingShapeResource";
+import { PickingBoxResource, PickingPolyLineResource, PickingSphereResource } from "@/system/engine/resources/picking_shape_resources/PickingShapeResource";
 import { PickingShape3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingShape3D";
 import { PointGrabber3D } from "../system/engine/nodes/node3ds/gizmo3ds/grabber3ds/PointGrabber3D";
 import { Line3 } from "@/system/fivepebble/geometries/Line3";
+import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/LineGrabber3D";
 
 const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
     return {
@@ -99,31 +100,31 @@ export function createEditor() {
     EditorCamera.set_Zoom(0.3);
 
     // // viewport 0
-    const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
-    EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-    const EditorViewport0 = new Viewport(DefaultConfig);
-    const renderer0 = new EditorRenderer3D(DefaultConfig);
-    const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
-    renderer0.render_pipeline = pipeline0;
-    EditorViewport0.renderer_3d = renderer0;
-    EditorViewport0.transparent = true;
-    EditorViewportContainer0.add_Child(EditorViewport0);
-    const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
-    EditorViewport0.add_Child(EditorCamera0);
-    EditorViewport.add_Child(EditorViewportContainer0);
+    // const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
+    // EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+    // const EditorViewport0 = new Viewport(DefaultConfig);
+    // const renderer0 = new EditorRenderer3D(DefaultConfig);
+    // const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
+    // renderer0.render_pipeline = pipeline0;
+    // EditorViewport0.renderer_3d = renderer0;
+    // EditorViewport0.transparent = true;
+    // EditorViewportContainer0.add_Child(EditorViewport0);
+    // const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
+    // EditorViewport0.add_Child(EditorCamera0);
+    // EditorViewport.add_Child(EditorViewportContainer0);
     // // viewport 1
-    const EditorViewportContainer1 = new ViewportDomContainer(DefaultConfig);
-    EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
-    const EditorViewport1 = new Viewport(DefaultConfig);
-    const renderer1 = new EditorRenderer3D(DefaultConfig);
-    const pipeline1 = new EditorRenderer3DPipeline(DefaultConfig);
-    renderer1.render_pipeline = pipeline1;
-    EditorViewport1.renderer_3d = renderer1;
-    EditorViewport1.transparent = true;
-    EditorViewportContainer1.add_Child(EditorViewport1);
-    const EditorCamera1 = new EditorOrbitCamera3D(DefaultConfig);
-    EditorViewport1.add_Child(EditorCamera1);
-    EditorViewport.add_Child(EditorViewportContainer1);
+    // const EditorViewportContainer1 = new ViewportDomContainer(DefaultConfig);
+    // EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
+    // const EditorViewport1 = new Viewport(DefaultConfig);
+    // const renderer1 = new EditorRenderer3D(DefaultConfig);
+    // const pipeline1 = new EditorRenderer3DPipeline(DefaultConfig);
+    // renderer1.render_pipeline = pipeline1;
+    // EditorViewport1.renderer_3d = renderer1;
+    // EditorViewport1.transparent = true;
+    // EditorViewportContainer1.add_Child(EditorViewport1);
+    // const EditorCamera1 = new EditorOrbitCamera3D(DefaultConfig);
+    // EditorViewport1.add_Child(EditorCamera1);
+    // EditorViewport.add_Child(EditorViewportContainer1);
 
     // World 
     const World = new Node3D(DefaultConfig);
@@ -243,7 +244,7 @@ export function createEditor() {
 
     const multi_line_geometry = new MultiLineGeometryResource(DefaultConfig);
     const multi_line_material = new MultiLineMaterialResource(DefaultConfig);
-    multi_line_material.line_width = 5;
+    // multi_line_material.line_width = 5;
     const points = new Array(120).fill(0).map((i, idx) => {
         return Vector3.create(Math.cos(idx / 35 * Tau), Math.sin(idx / 35 * Tau), idx / 16);
     });
@@ -372,11 +373,11 @@ export function createEditor() {
     mesh_.geometry = box;
     mesh_.material = new NormalMaterialResource(DefaultConfig);
     mesh_.top_level = true;
-    World.add_Child(mesh_);
+    // World.add_Child(mesh_);
     // const tris = box.get_TriFaces();
     // console.log(tris);
 
-    const lines : Line3[] = points.map((p, i, arr) => i === 0 ? undefined : Line3.create(arr[i - 1], arr[i])).filter(i => i !== undefined) as Line3[];
+    const lines: Line3[] = points.map((p, i, arr) => i === 0 ? undefined : Line3.create(arr[i - 1], arr[i])).filter(i => i !== undefined) as Line3[];
     const bvh = new Bvh3(5);
     bvh.build(lines);
     console.log(bvh);
@@ -394,9 +395,29 @@ export function createEditor() {
     });
     MeshLine.add_Child(bvh_viz);
 
+    const sphere_geo = new BoxGeometryResource(DefaultConfig);
+    const sphere_mesh = new MeshInstance3D(DefaultConfig);
+    sphere_mesh.geometry = sphere_geo;
+    sphere_mesh.material = new NormalMaterialResource(DefaultConfig);
+    sphere_mesh.local_position = Vector3.create(400, 100, -100);
+    sphere_mesh.local_rotation = Euler.create(0.32, 0.123, 1.23);
+    sphere_mesh.local_scale = Vector3.create(300, 100, 100);
+    World.add_Child(sphere_mesh);
+    sphere_geo.build();
+    const sphere_area = new PickingArea3D(DefaultConfig);
+    const sphere_shape = new PickingShape3D(DefaultConfig);
+    sphere_area.add_Child(sphere_shape);
+    sphere_shape.shape = new PickingBoxResource(DefaultConfig);
+    sphere_mesh.add_Child(sphere_area);
+    const line_grabber = new LineGrabber3D(DefaultConfig);
+    line_grabber.offset_length = 0;
+    line_grabber.color = Color.color8code(0xff9900ff);
+    line_grabber.enabled = false;
+    World.add_Child(line_grabber);
+    sphere_area.signal_mouse_moved.connect((event, result) => {
+        line_grabber.local_position = result.position;
+        line_grabber.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), result.normal));
+    });
+
     return EditorSceneTree;
 }
-
-console.log(Color.color8(0x2d, 0xd8, 0x4e));
-console.log(Color.color8(0x2d, 0xd8, 0x4e).linear_rgb);
-console.log(Color.color8(0x2d, 0xd8, 0x4e).linear_rgb.srgb);

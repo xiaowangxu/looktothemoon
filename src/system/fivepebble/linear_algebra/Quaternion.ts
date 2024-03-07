@@ -24,7 +24,7 @@ export class Quaternion {
 
     get length(): number { return Math.sqrt(this.squared_length); }
     get squared_length(): number { return this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w; }
-   
+
     public get axis() { return this.get_Axis(new Vector3()); }
     public get_Axis(target: Vector3) {
         const x = this.x, y = this.y, z = this.z, w = this.w;
@@ -42,6 +42,14 @@ export class Quaternion {
         this.y = y;
         this.z = z;
         this.w = w;
+    }
+
+    public set_Identity() {
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+        this.w = 1;
+        return this;
     }
 
     public set_Vector4(vec: Vector4) {
@@ -158,29 +166,44 @@ export class Quaternion {
     }
 
     public set_Rotate(v0: Vector3, v1: Vector3) {
-        const c = Quaternion.#tmp_vector3_0.cross(v0, v1);
-        const d = v0.dot(v1);
-        if (d < Epsilon - 1) {
-            this.x = 0;
-            this.y = 1;
-            this.z = 0;
-            this.w = 0;
+        let r = v0.dot(v1) + 1;
+        const v0_x = v0.x, v0_y = v0.y, v0_z = v0.z;
+        const v1_x = v1.x, v1_y = v1.y, v1_z = v1.z;
+        if (r < Epsilon) {
+            // v0 and v1 point in opposite directions
+            r = 0;
+            if (Math.abs(v0_x) > Math.abs(v0_z)) {
+                this.x = - v0_y;
+                this.y = v0_x;
+                this.z = 0;
+                this.w = r;
+            }
+            else {
+                this.x = 0;
+                this.y = - v0_z;
+                this.z = v0_y;
+                this.w = r;
+            }
         }
         else {
-            const s = Math.sqrt((1 + d) * 2);
-            const rs = 1 / s;
-            this.x = c.x * rs;
-            this.y = c.y * rs;
-            this.z = c.z * rs;
-            this.w = s * 0.5;
+            this.x = v0_y * v1_z - v0_z * v1_y;
+            this.y = v0_z * v1_x - v0_x * v1_z;
+            this.z = v0_x * v1_y - v0_y * v1_x;
+            this.w = r;
         }
-        return this;
+        return this.normalize(this);
     }
 
     public dot(b: Quaternion) {
         return this.x * b.x + this.y * b.y + this.z * b.z + this.w * b.w;
     }
-
+    public conjugate(b: Quaternion) {
+        this.x = -b.x;
+        this.y = -b.y;
+        this.z = -b.z;
+        this.w = b.w;
+        return this;
+    }
     public normalize(a: Quaternion): Quaternion {
         const length = a.length;
         this.x = a.x / length;
@@ -189,7 +212,6 @@ export class Quaternion {
         this.w = a.w / length;
         return this;
     }
-
     public inverse(a: Quaternion): Quaternion {
         this.x = -a.x;
         this.y = -a.y;
@@ -197,12 +219,10 @@ export class Quaternion {
         this.w = a.w;
         return this;
     }
-
     public angle_to(b: Quaternion) {
         const dot = this.dot(b);
         return Math.acos(dot * dot * 2 - 1);
     }
-
     public slerp(a: Quaternion, b: Quaternion, weight: number): Quaternion {
         let ax = a.x,
             ay = a.y,
@@ -251,6 +271,7 @@ export class Quaternion {
     public equal(b: Quaternion): boolean {
         return this.x === b.x && this.y === b.y && this.z === b.z && this.w === b.w;
     }
+
     public set(x: number, y: number, z: number, w: number): Quaternion {
         this.x = x;
         this.y = y;

@@ -191,9 +191,8 @@ export class PickingSphereResource extends PickingShape3DResource {
             return undefined;
         }
 
-        const result_position = from.clone();
-        result_position.add_Scaled(result_position, inters_d, normal);
-        const result_normal = result_position.clone().normalize(result_position);
+        const result_position = Vector3.new.add_Scaled(from, inters_d, normal);
+        const result_normal = Vector3.new.normalize(result_position);
 
         return { position: result_position, normal: result_normal };
     }
