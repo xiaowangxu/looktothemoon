@@ -2,7 +2,7 @@
     <SunButtonPopup ref="buttonpopup_ref" class="__sun-design-select-button__" :mode="mode" :get-popup-rect="getPopupRect"
         :active="active" :disabled="disabled" :size="size" :flat="flat" :border-mask="borderMask" :bordered="bordered"
         :squared="squared" drop-shadow :color-scheme="selected?.colorScheme ?? colorScheme" vertical scrollable-indicators
-        align="start" content-style="width: 100%;" @opened="onOpened">
+        :align="align" content-style="width: 100%;" @opened="onOpened">
         <template #button="{ opened }">
             <template v-if="!iconOnly">
                 <template v-if="selected !== undefined">
@@ -67,7 +67,7 @@
 import '../SunDesignStyle.styl';
 import SunIcon from '../icon/SunIcon.vue';
 import SunButtonPopup from '../buttonpopup/SunButtonPopup.vue';
-import { type Size, type Item, type BorderMask, type ColorScheme, type UID, type Rect, type BoxSize, type PopupOpenMode, calcButtonPopupRect, type PreferedDirection, useInputModel } from '../SunDesignConstants';
+import { type Size, type Item, type BorderMask, type ColorScheme, type UID, type Rect, type BoxSize, type PopupOpenMode, calcButtonPopupRect, type PreferedDirection, useInputModel, Align } from '../SunDesignConstants';
 import SunButton from '../button/SunButton.vue';
 import SunButtonItem from '../item/SunButtonItem.vue';
 import { ChevronDown, ChevronUp } from 'lucide-vue-next';
@@ -92,6 +92,7 @@ const props = withDefaults(
         mode?: PopupOpenMode,
         size?: Size,
         flat?: boolean,
+        align?: Align,
         bordered?: boolean,
         borderMask?: BorderMask,
         colorScheme?: ColorScheme,

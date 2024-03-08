@@ -168,11 +168,12 @@ export class VisualWorld3DMesh extends WorldObject {
         // transform back into world space to get world offset. Note clip space is [-1, 1] so full
         // width does not need to be halved.
         const clip_to_world = VisualWorld3DMesh.#tmp_vetcor4_0.set(0, 0, - distance, 1.0);
-        clip_to_world.transform(clip_to_world, camera.projection);
+        const projection = camera.get_Projection(VisualWorld3DMesh.#tmp_matrix4_0);
+        clip_to_world.transform(clip_to_world, projection);
         clip_to_world.mult_Number(clip_to_world, 1.0 / clip_to_world.w);
         clip_to_world.x = size / resolution.x;
         clip_to_world.y = size / resolution.y;
-        clip_to_world.transform(clip_to_world, Matrix4.new.inverse(camera.projection));
+        clip_to_world.transform(clip_to_world, projection.inverse(projection));
         clip_to_world.mult_Number(clip_to_world, 1.0 / clip_to_world.w);
         return Math.abs(Math.max(clip_to_world.x, clip_to_world.y));
     }

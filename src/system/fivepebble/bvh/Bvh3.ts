@@ -407,7 +407,7 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
             const node = new BvhNode3(parent, depth, parent_aabb, shapes, undefined, undefined);
             return node;
         }
-        if (depth > this.max_depth) {
+        if (depth >= this.max_depth) {
             const node = new BvhNode3(parent, depth, parent_aabb, shapes, undefined, undefined);
             return node;
         }

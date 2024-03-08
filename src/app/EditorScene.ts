@@ -106,31 +106,31 @@ export function createEditor() {
     EditorCamera.set_Zoom(0.3);
 
     // // viewport 0
-    const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
-    EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-    const EditorViewport0 = new Viewport(DefaultConfig);
-    const renderer0 = new EditorRenderer3D(DefaultConfig);
-    const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
-    renderer0.render_pipeline = pipeline0;
-    EditorViewport0.renderer_3d = renderer0;
-    EditorViewport0.transparent = true;
-    EditorViewportContainer0.add_Child(EditorViewport0);
-    const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
-    EditorViewport0.add_Child(EditorCamera0);
-    EditorViewport.add_Child(EditorViewportContainer0);
+    // const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
+    // EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+    // const EditorViewport0 = new Viewport(DefaultConfig);
+    // const renderer0 = new EditorRenderer3D(DefaultConfig);
+    // const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
+    // renderer0.render_pipeline = pipeline0;
+    // EditorViewport0.renderer_3d = renderer0;
+    // EditorViewport0.transparent = true;
+    // EditorViewportContainer0.add_Child(EditorViewport0);
+    // const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
+    // EditorViewport0.add_Child(EditorCamera0);
+    // EditorViewport.add_Child(EditorViewportContainer0);
     // // viewport 1
-    const EditorViewportContainer1 = new ViewportDomContainer(DefaultConfig);
-    EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
-    const EditorViewport1 = new Viewport(DefaultConfig);
-    const renderer1 = new EditorRenderer3D(DefaultConfig);
-    const pipeline1 = new EditorRenderer3DPipeline(DefaultConfig);
-    renderer1.render_pipeline = pipeline1;
-    EditorViewport1.renderer_3d = renderer1;
-    EditorViewport1.transparent = true;
-    EditorViewportContainer1.add_Child(EditorViewport1);
-    const EditorCamera1 = new EditorOrbitCamera3D(DefaultConfig);
-    EditorViewport1.add_Child(EditorCamera1);
-    EditorViewport.add_Child(EditorViewportContainer1);
+    // const EditorViewportContainer1 = new ViewportDomContainer(DefaultConfig);
+    // EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
+    // const EditorViewport1 = new Viewport(DefaultConfig);
+    // const renderer1 = new EditorRenderer3D(DefaultConfig);
+    // const pipeline1 = new EditorRenderer3DPipeline(DefaultConfig);
+    // renderer1.render_pipeline = pipeline1;
+    // EditorViewport1.renderer_3d = renderer1;
+    // EditorViewport1.transparent = true;
+    // EditorViewportContainer1.add_Child(EditorViewport1);
+    // const EditorCamera1 = new EditorOrbitCamera3D(DefaultConfig);
+    // EditorViewport1.add_Child(EditorCamera1);
+    // EditorViewport.add_Child(EditorViewportContainer1);
 
     // World 
     const World = new Node3D(DefaultConfig);
@@ -252,18 +252,19 @@ export function createEditor() {
     const multi_line_geometry = new MultiLineGeometryResource(DefaultConfig);
     const multi_line_material = new MultiLineMaterialResource(DefaultConfig);
     const points = new Array(120).fill(0).map((i, idx) => {
-        return Vector3.create(Math.cos(idx / 35 * Tau), Math.sin(idx / 35 * Tau), idx / 16);
+        return Vector3.create(Math.cos(idx / 35 * Tau), Math.sin(idx / 35 * Tau), idx / 8);
     });
     multi_line_geometry.set_PointsCount(points.length);
     points.forEach((p, i) => multi_line_geometry.set_Point(i, p, false, false));
     multi_line_geometry.commit_Points();
     multi_line_geometry.update_BBox();
-    multi_line_material.color = Color.color8(0x2d, 0xd8, 0x4e).linear_rgb;
+    multi_line_material.color = Color.color8(0, 0, 0).linear_rgb;
     const MeshLine = new MeshInstance3D(DefaultConfig);
     MeshLine.geometry = multi_line_geometry;
     MeshLine.material = multi_line_material;
     MeshLine.local_scale = Vector3.create(100, 100, 100);
-    MeshLine.local_position = Vector3.create(-600, 100, -200);
+    MeshLine.local_rotation = Euler.create(-0.75, 0, 0);
+    MeshLine.local_position = Vector3.create(800, 0, -400);
     // MeshLine.render_queue = 1;
     World.add_Child(MeshLine);
 
@@ -274,19 +275,15 @@ export function createEditor() {
     area.add_Child(s);
     s.shape = shape;
     MeshLine.add_Child(area);
-
-    const point = new PointGrabber3D(DefaultConfig);
-    point.enabled = false;
-    World.add_Child(point);
-
-    area.signal_mouse_entered.connect((event, result) => {
-        multi_line_material.color = Color.color8code(0xffff00ff);
-    });
-    area.signal_mouse_moved.connect((event, result) => {
-        point.local_position = result.position;
+    area.signal_mouse_entered.connect((evt, result) => {
+        multi_line_material.color = Color.color8(255, 0, 0);
     });
     area.signal_mouse_exited.connect(() => {
-        multi_line_material.color = Color.color8(0x2d, 0xd8, 0x4e).linear_rgb;
+        multi_line_material.color = Color.color8(0, 0, 0);
+    });
+    area.signal_mouse_moved.connect((event, result) => {
+        line_grabber.local_position = result.position;
+        line_grabber.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), result.normal));
     });
 
     const infinite_line_x = new InfiniteLine3D(DefaultConfig);
@@ -382,34 +379,19 @@ export function createEditor() {
     // const tris = box.get_TriFaces();
     // console.log(tris);
 
-    const lines: Line3[] = points.map((p, i, arr) => i === 0 ? undefined : Line3.create(arr[i - 1], arr[i])).filter(i => i !== undefined) as Line3[];
-    const bvh = new Bvh3();
-    bvh.build(lines, 5);
-    console.log(bvh);
     const bvh_viz = new Bvh3Visualization(DefaultConfig);
-    bvh_viz.visualize_Bvh3(bvh, 6);
+    bvh_viz.visualize_Bvh3(shape.bvh, 6);
     // bvh_viz.top_level = true;
     let depth = 0;
     bvh_viz.signal_input.connect((evt, prop) => {
         if (!prop) {
             if (evt instanceof KeyInputEvent && evt.pressed && evt.key === 'a' && !evt.echo) {
-                depth = (depth + 1) % 20;
-                bvh_viz.visualize_Bvh3(bvh, depth);
+                depth = (depth + 1) % 10;
+                bvh_viz.visualize_Bvh3(shape.bvh, depth);
             }
         }
     });
-    area.signal_mouse_moved.connect((event, result) => {
-        // const normal = area.get_Viewport()!.get_Input().mouse_position_normalized;
-        // const line = area.get_Viewport()!.get_Camera3D()!.get_Camera().project_Line(normal, Line3.new);
-        // line.start.apply_Matrix4(line.start, Matrix4.new.inverse(MeshLine.global_transform));
-        // line.end.apply_Matrix4(line.end, Matrix4.new.inverse(MeshLine.global_transform));
-        // console.time('bvh');
-        // bvh.traverse((aabb) => {
-        //     return aabb.touch_Line(line);
-        // });
-        // console.timeEnd('bvh');
-    });
-    MeshLine.add_Child(bvh_viz);
+    // MeshLine.add_Child(bvh_viz);
 
     const box_geo = new BoxGeometryResource(DefaultConfig);
     const box_mesh = new MeshInstance3D(DefaultConfig);
