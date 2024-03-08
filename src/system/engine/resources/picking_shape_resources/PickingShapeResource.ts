@@ -15,6 +15,7 @@ import type { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { Line3 } from "@/system/fivepebble/geometries/Line3";
 import { out } from "@/system/utils/Type";
 import { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
+import { Bvh3 } from "@/system/fivepebble/bvh/Bvh3";
 
 type RaycastResult3 = RaycastResult<Vector3, Matrix3>;
 
@@ -218,6 +219,8 @@ export class PickingCylinderResource extends PickingShape3DResource {
     static readonly #tmp_vector3_1 = Vector3.new;
     static readonly #tmp_vector3_2 = Vector3.new;
     static readonly #tmp_vector3_3 = Vector3.new;
+    static readonly #tmp_vector2_0 = Vector2.new;
+    static readonly #tmp_vector2_1 = Vector2.new;
 
     public readonly preserve_global_transform: boolean = false;
 
@@ -247,26 +250,23 @@ export class PickingCylinderResource extends PickingShape3DResource {
         const line = PickingCylinderResource.#tmp_line3_0.set(from, to);
         if (!this.bbox.touch_Line(line)) return undefined;
 
-        const rel = Vector3.new.sub(to, from);
+        const rel = PickingCylinderResource.#tmp_vector3_0.sub(to, from);
         const rel_l = rel.length;
-        if (rel_l < Epsilon) {
-            return undefined;
-        }
+        if (rel_l < Epsilon) return undefined;
 
-        const cylinder_axis = new Vector3(0, 1, 0);
+        const cylinder_axis = PickingCylinderResource.#tmp_vector3_1.set(0, 1, 0);
 
         // First check if they are parallel.
-        const normal = Vector3.new.div_Number(rel, rel_l);
-        const crs = Vector3.new.cross(normal, cylinder_axis);
+        const normal = PickingCylinderResource.#tmp_vector3_2.div_Number(rel, rel_l);
+        const crs = normal.cross(normal, cylinder_axis);
         const crs_l = crs.length;
 
-        let axis_dir: Vector3;
-
+        const axis_dir = PickingCylinderResource.#tmp_vector3_3;
         if (crs_l < Epsilon) {
-            axis_dir = new Vector3(0, 0, 1); // Any side axis OK.
+            axis_dir.set(0, 0, 1); // Any side axis OK.
         }
         else {
-            axis_dir = Vector3.new.div_Number(crs, crs_l);
+            axis_dir.div_Number(crs, crs_l);
         }
 
         const dist = axis_dir.dot(from);
@@ -281,21 +281,20 @@ export class PickingCylinderResource extends PickingShape3DResource {
             return undefined; // Avoid numerical error.
         }
 
-        const size = new Vector2(Math.sqrt(w2), this.height / 2);
+        const size_x = Math.sqrt(w2), size_y = this.height / 2;
 
         const side_dir = Vector3.new.normalize(Vector3.new.cross(axis_dir, cylinder_axis));
 
-        const from2D = new Vector2(side_dir.dot(from), from.y);
-        const to2D = new Vector2(side_dir.dot(to), to.y);
+        const from_2d = PickingCylinderResource.#tmp_vector2_0.set(side_dir.dot(from), from.y);
+        const to_2d = PickingCylinderResource.#tmp_vector2_1.set(side_dir.dot(to), to.y);
 
         let min = 0, max = 1;
-
         let axis = -1;
 
         for (let i = 0; i < 2; i++) {
-            const seg_from = i === 0 ? from2D.x : from2D.y;
-            const seg_to = i === 0 ? to2D.x : to2D.y;
-            const box_begin = - (i === 0 ? size.x : size.y);
+            const seg_from = i === 0 ? from_2d.x : from_2d.y;
+            const seg_to = i === 0 ? to_2d.x : to_2d.y;
+            const box_begin = - (i === 0 ? size_x : size_y);
             const box_end = -box_begin;
             let cmin, cmax;
 
@@ -307,7 +306,8 @@ export class PickingCylinderResource extends PickingShape3DResource {
                 cmin = (seg_from < box_begin) ? ((box_begin - seg_from) / length) : 0;
                 cmax = (seg_to > box_end) ? ((box_end - seg_from) / length) : 1;
 
-            } else {
+            }
+            else {
                 if (seg_to > box_end || seg_from < box_begin) {
                     return undefined;
                 }
@@ -487,24 +487,20 @@ export class PickingPolyLineResource extends PickingShape3DResource {
         }
     }
 
-    private bbox: Box3 = Box3.new;
-
     private _points: Vector3[] = [];
-    public get points() { return this._points.map(i => i); }
+    public get points() { return this._points; }
     public set points(points: Vector3[]) {
-        this._points = points.map(i => i);
-        this.update_BBox();
+        this._points = points;
+        this.update_Bvh();
         this.trigger_Changed();
     }
 
-    private update_BBox() {
-        const points = this.points;
-        const points_length = points.length;
-        if (points.length <= 0) return;
-        this.bbox.min.copy(points[0]);
-        this.bbox.max.copy(points[0]);
-        for (let i = 1; i < points_length; i++) {
-            this.bbox.fit(this.bbox, points[i]);
+    private readonly bvh = Bvh3.new;
+
+    private update_Bvh() {
+        const lines: Line3[] = [];
+        for (let i = 1; i < this._points.length; i++) {
+
         }
     }
 

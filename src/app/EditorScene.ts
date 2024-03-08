@@ -46,7 +46,7 @@ import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { Pi, Tau } from "@/system/fivepebble/Scalar";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
-import { GridGeometryResource } from "@/system/engine/resources/geometry_resources/HelperGeometryResource";
+import { GridGeometryResource, WireframeBoxGeometryResource } from "@/system/engine/resources/geometry_resources/HelperGeometryResource";
 import { PickingArea3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingArea3D";
 import { PickingBoxResource, PickingPointResource, PickingPolyLineResource, PickingSphereResource } from "@/system/engine/resources/picking_shape_resources/PickingShapeResource";
 import { PickingShape3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingShape3D";
@@ -55,6 +55,10 @@ import { Line3 } from "@/system/fivepebble/geometries/Line3";
 import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/LineGrabber3D";
 import { RayPickingOption } from "@/system/engine/worlds/world3ds/PickingWorld3D";
 import { FixSizeNode3D } from "@/system/engine/nodes/node3ds/gizmo3ds/FixSizeNode3D";
+import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
+import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import { Box3 } from "@/system/fivepebble/geometries/Box3";
 
 const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
     return {
@@ -170,15 +174,16 @@ export function createEditor() {
 
     const count = 2;
 
-    multi_geometry.set_InstanceCount(count * count, false, false);
+    multi_geometry.set_InstancesCount(count * count, false, false);
 
     for (let i = 0; i < count; i++) {
         for (let j = 0; j < count; j++) {
-            multi_geometry.set_InstanceTransform(i * count + j, Matrix4.new.set_BasisPosition(Matrix3.new.set_RotateX(Pi / 2), Vector3.create(i * 2, j * 2, 0)), false);
+            multi_geometry.set_InstanceTransform(i * count + j, Matrix4.new.set_BasisPosition(Matrix3.new.set_RotateX(Pi / 2), Vector3.create(i * 2, j * 2, 0)), false, false);
         }
     }
 
     multi_geometry.commit_InstanceTransforms();
+    multi_geometry.update_BBox();
 
     const material = new StandardMaterialResource(DefaultConfig);
     material.color = Color.create(1, 1, 1, 1);
@@ -246,11 +251,10 @@ export function createEditor() {
 
     const multi_line_geometry = new MultiLineGeometryResource(DefaultConfig);
     const multi_line_material = new MultiLineMaterialResource(DefaultConfig);
-    // multi_line_material.line_width = 5;
     const points = new Array(120).fill(0).map((i, idx) => {
         return Vector3.create(Math.cos(idx / 35 * Tau), Math.sin(idx / 35 * Tau), idx / 16);
     });
-    multi_line_geometry.set_PointCount(points.length);
+    multi_line_geometry.set_PointsCount(points.length);
     points.forEach((p, i) => multi_line_geometry.set_Point(i, p, false, false));
     multi_line_geometry.commit_Points();
     multi_line_geometry.update_BBox();
@@ -363,7 +367,6 @@ export function createEditor() {
         mesh.local_scale = Vector3.create(100, 100, 100);
         mesh.local_position = Vector3.create(-500, -100, 250);
         World.add_Child(mesh);
-
     });
 
     // bvh
@@ -380,8 +383,8 @@ export function createEditor() {
     // console.log(tris);
 
     const lines: Line3[] = points.map((p, i, arr) => i === 0 ? undefined : Line3.create(arr[i - 1], arr[i])).filter(i => i !== undefined) as Line3[];
-    const bvh = new Bvh3(5);
-    bvh.build(lines);
+    const bvh = new Bvh3();
+    bvh.build(lines, 5);
     console.log(bvh);
     const bvh_viz = new Bvh3Visualization(DefaultConfig);
     bvh_viz.visualize_Bvh3(bvh, 6);
@@ -396,15 +399,15 @@ export function createEditor() {
         }
     });
     area.signal_mouse_moved.connect((event, result) => {
-        const normal = area.get_Viewport()!.get_Input().mouse_position_normalized;
-        const line = area.get_Viewport()!.get_Camera3D()!.get_Camera().project_Line(normal, Line3.new);
-        line.start.apply_Matrix4(line.start, Matrix4.new.inverse(MeshLine.global_transform));
-        line.end.apply_Matrix4(line.end, Matrix4.new.inverse(MeshLine.global_transform));
-        console.time('bvh');
-        bvh.traverse((aabb) => {
-            return aabb.touch_Line(line);
-        });
-        console.timeEnd('bvh');
+        // const normal = area.get_Viewport()!.get_Input().mouse_position_normalized;
+        // const line = area.get_Viewport()!.get_Camera3D()!.get_Camera().project_Line(normal, Line3.new);
+        // line.start.apply_Matrix4(line.start, Matrix4.new.inverse(MeshLine.global_transform));
+        // line.end.apply_Matrix4(line.end, Matrix4.new.inverse(MeshLine.global_transform));
+        // console.time('bvh');
+        // bvh.traverse((aabb) => {
+        //     return aabb.touch_Line(line);
+        // });
+        // console.timeEnd('bvh');
     });
     MeshLine.add_Child(bvh_viz);
 
@@ -458,7 +461,6 @@ export function createEditor() {
     point_area.signal_mouse_exited.connect(() => {
         point_mat.color = Color.color8(0, 0, 0);
     });
-
 
     return EditorSceneTree;
 }

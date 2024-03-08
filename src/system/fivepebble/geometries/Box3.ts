@@ -222,6 +222,13 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
         return this;
     }
 
+    public get_FarestDistanceToPoint(point: Vector3): number {
+        const x = Math.max((this.min.x - point.x) ** 2, (this.max.x - point.x) ** 2);
+        const y = Math.max((this.min.y - point.y) ** 2, (this.max.y - point.y) ** 2);
+        const z = Math.max((this.min.z - point.z) ** 2, (this.max.z - point.z) ** 2);
+        return Math.sqrt(x + y + z);
+    }
+
     equal(b: Box3): boolean {
         return this.min.equal(b.min) && this.max.equal(b.max);
     }

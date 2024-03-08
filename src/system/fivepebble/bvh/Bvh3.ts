@@ -41,17 +41,23 @@ type AABB3 = Box3;
 type BvhShape3 = BvhShape<Vector3, Matrix3>;
 
 export class Bvh3 implements BvhLike<Vector3, Matrix3> {
-    private readonly max_depth: number;
+
+    //#region init
+
+    static get new() { return new Bvh3(); }
+
+    //#endregion
+
+    private max_depth: number = 16;
 
     public root: BvhNode3 | undefined;
     private shape_aabbs_map: Map<BvhShape3, AABB3> = new Map();
     private shape_aabbs: AABB3[] = [];
 
-    constructor(max_depth: number = 16) {
-        this.max_depth = max_depth;
-    }
+    constructor() {    }
 
-    public build(shapes: BvhShape3[]) {
+    public build(shapes: BvhShape3[], max_depth: number = 16) {
+        this.max_depth = max_depth;
         this.root = undefined;
         this.shape_aabbs = [];
         this.shape_aabbs_map.clear();

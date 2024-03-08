@@ -66,6 +66,9 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
     protected _bbox: Box3 = Box3.new;
     public get bbox() { return this._bbox; }
 
+    protected _bbox_pixel_enlargement: number = 0;
+    public get bbox_pixel_enlargement() { return this._bbox_pixel_enlargement; }
+
     private _vertex_count: number | undefined;
     public get vertex_count() { return this._vertex_count; }
     private _primitive_type: RenderStatePrimitiveType | undefined;
@@ -180,6 +183,9 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
             this.render_state.set_VertexArrayIndexBuffer(vertex_array, index.buffer as WebGL2RenderStateBuffer);
         }
         this.clear_GeometryInternal();
+        this.vertex_array_attributes_map = vertex_array_attributes_map;
+        this.vertex_array_index_ref = vertex_array_index_ref;
+        this.vertex_array_ref.value = vertex_array;
         if (bbox !== undefined) {
             this.set_BBox(bbox);
         }
@@ -187,9 +193,6 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
             this._bbox.set(RenderServerGeometry.#zero_vec3, RenderServerGeometry.#zero_vec3);
             this.singal_bbox_changed.trigger(this._bbox);
         }
-        this.vertex_array_attributes_map = vertex_array_attributes_map;
-        this.vertex_array_index_ref = vertex_array_index_ref;
-        this.vertex_array_ref.value = vertex_array;
     }
 
     public add_Surface(offset: number, length: number) {
@@ -201,6 +204,10 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
     public set_BBox(bbox: Box3) {
         this._bbox.copy(bbox);
         this.singal_bbox_changed.trigger(this._bbox);
+    }
+
+    public set_BBoxPixelEnlargement(amount: number) {
+        this._bbox_pixel_enlargement = Math.max(0, Math.min(65536, amount));
     }
 
     public dispose(): void {

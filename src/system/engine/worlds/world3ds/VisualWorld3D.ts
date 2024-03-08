@@ -23,6 +23,8 @@ import type { WebGL2RenderStateProgram } from "@/system/sliverofstraw/webgl2/web
 import { RenderServerLightType, RenderServerLightsData } from "../../render_server/RenderServerLightData";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
+import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 
 // #region sky
 
@@ -37,7 +39,7 @@ const SkyQuadGeometry = new Cacher((config: Config) => {
     const quad_index = new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 1, 2, 3]);
     const quad_surface = config.render_server.create_Geometry();
     quad_surface.set_Geometry(RenderStatePrimitiveType.TriangleStrip, { position: quad_position }, quad_index);
-    return quad_surface;
+    return new Ref(quad_surface);
 });
 
 const quad_vert_shader_code = `#version 300 es
@@ -150,12 +152,31 @@ const SkyProgramUniform = new Cacher((config: Config) => {
     const sky_program = config.render_server.render_state.create_Program(quad_vert_shader, quad_frag_shader).expect();
     const uniform_time_location = config.render_server.render_state.get_ProgramUniformLocation(sky_program, 'time');
     const uniform_time_slot = new WebGL2RenderStateFloatUniformSlot(config.render_server.render_state, sky_program, uniform_time_location!, 0);
-    return { sky_program, uniform_time_slot };
+    return { sky_program: new Ref(sky_program), uniform_time_slot: new Ref(uniform_time_slot) };
 });
 
 // #endregion
 
 export class VisualWorld3DMesh extends WorldObject {
+
+    static #tmp_box3_0 = Box3.new;
+    static #tmp_vetcor3_0 = Vector3.new;
+    static #tmp_vetcor4_0 = Vector4.new;
+    static #tmp_matrix4_0 = Matrix4.new;
+    static get_WorldSpaceHalfWidth(camera: Camera3, distance: number, size: number, resolution: Vector2) {
+        // transform into clip space, adjust the x and y values by the pixel width offset, then
+        // transform back into world space to get world offset. Note clip space is [-1, 1] so full
+        // width does not need to be halved.
+        const clip_to_world = VisualWorld3DMesh.#tmp_vetcor4_0.set(0, 0, - distance, 1.0);
+        clip_to_world.transform(clip_to_world, camera.projection);
+        clip_to_world.mult_Number(clip_to_world, 1.0 / clip_to_world.w);
+        clip_to_world.x = size / resolution.x;
+        clip_to_world.y = size / resolution.y;
+        clip_to_world.transform(clip_to_world, Matrix4.new.inverse(camera.projection));
+        clip_to_world.mult_Number(clip_to_world, 1.0 / clip_to_world.w);
+        return Math.abs(Math.max(clip_to_world.x, clip_to_world.y));
+    }
+
     public readonly geometry_ref: Ref<RenderServerGeometry> = new Ref();
     protected readonly surface_materials_ref: RefArray<RenderServerMaterial> = new RefArray();
     public readonly material_override_ref: Ref<RenderServerMaterial> = new Ref();
@@ -167,6 +188,7 @@ export class VisualWorld3DMesh extends WorldObject {
     public layer: number = 0xffffffff;
     public cast_shadow: boolean = false;
     public render_queue: number = 0;
+    public bbox_enlargment: number = 0;
 
     public get visible() {
         return this._visible && !this.is_bbox_empty;
@@ -193,11 +215,13 @@ export class VisualWorld3DMesh extends WorldObject {
     private update_BBox() {
         if (!this.has_geometry) {
             this._bbox.set(VisualWorld3DMesh.#zero_vec3, VisualWorld3DMesh.#zero_vec3);
+            this.is_bbox_empty = true;
         }
         else {
             this._bbox.apply_Matrix4(this.geometry_ref.expect.bbox, this.global_transform);
+            this.is_bbox_empty = this._bbox.is_empty;
+            if (!this.is_bbox_empty && this.bbox_enlargment > 0) this._bbox.enlarge(this._bbox, this.bbox_enlargment);
         }
-        this.is_bbox_empty = this._bbox.is_empty;
     }
 
     private update_SurfaceMaterialsEmpty() {
@@ -227,6 +251,11 @@ export class VisualWorld3DMesh extends WorldObject {
             this.surface_materials_ref.clear();
         }
         this.update_SurfaceMaterialsEmpty();
+        this.update_BBox();
+    }
+
+    public set_BBoxEnlargement(amount: number) {
+        this.bbox_enlargment = Math.max(0, Math.min(65536, amount));
         this.update_BBox();
     }
 
@@ -271,8 +300,24 @@ export class VisualWorld3DMesh extends WorldObject {
 
     // fill render queue
 
-    public fill_RenderQueue(queue: Renderer3DQueue, mask: number, frustum: Frustum3): boolean {
-        if (!this.visible || (this.layer & mask) === 0 || this.geometry_ref.is_empty || !frustum.contain_Box(this.bbox, false)) return false;
+    public fill_RenderQueue(queue: Renderer3DQueue, mask: number, frustum: Frustum3, camera: Camera3, base_size: Vector2): boolean {
+        if (!this.visible || (this.layer & mask) === 0 || this.geometry_ref.is_empty) return false;
+
+        // bbox test
+        const need_enlarge = this.geometry_ref.expect.bbox_pixel_enlargement > 0;
+        if (!need_enlarge && !frustum.contain_Box(this.bbox, false)) {
+            return false;
+        }
+        else if (need_enlarge) {
+            const position = camera.get_GlobalTransform(VisualWorld3DMesh.#tmp_matrix4_0).get_Position(VisualWorld3DMesh.#tmp_vetcor3_0);
+            const distance = this.bbox.get_FarestDistanceToPoint(position);
+            const amount = VisualWorld3DMesh.get_WorldSpaceHalfWidth(camera, distance, this.geometry_ref.expect.bbox_pixel_enlargement, base_size);
+            const bbox = VisualWorld3DMesh.#tmp_box3_0.enlarge(this.bbox, amount);
+            if (!frustum.contain_Box(bbox, false)) {
+                return false;
+            }
+        }
+
         if (this.is_surface_materials_empty) {
             if (this.material_override_ref.is_empty) return false;
             const geometry = this.geometry_ref.expect;
@@ -422,10 +467,10 @@ export class VisualWorld3D extends ConfiguredObject {
         this.sky_frame_buffer.value = this.render_server.render_state.create_FrameBuffer().expect();
         this.render_server.render_state.set_FrameBufferAttachment(this.sky_frame_buffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.sky_texture.expect);
         this.render_server.render_state.enable_FrameBuffer(this.sky_frame_buffer.expect);
-        this.sky_quad_geometry = SkyQuadGeometry.get(this.config);
+        this.sky_quad_geometry = SkyQuadGeometry.get(this.config).expect;
         const { sky_program, uniform_time_slot } = SkyProgramUniform.get(this.config);
-        this.sky_program = sky_program;
-        this.sky_uniform_time_slot = uniform_time_slot;
+        this.sky_program = sky_program.expect;
+        this.sky_uniform_time_slot = uniform_time_slot.expect;
     }
 
     public trigger_BeforeRender(scene_tree: SceneTree) {
@@ -478,6 +523,13 @@ export class VisualWorld3D extends ConfiguredObject {
             else {
                 instance.set_Geometry(geometry.geometry);
             }
+        }
+    }
+
+    public set_MeshBBoxEnlargment(rid: Rid, amount: number) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            instance.set_BBoxEnlargement(amount);
         }
     }
 

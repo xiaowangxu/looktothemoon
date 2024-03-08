@@ -183,7 +183,7 @@ export class EditorRenderer3D extends Renderer3D {
             total_objects_count++;
             const render_queue = mesh.render_queue;
             const queue = render_queue === 0 ? this.render_queue_0 : this.render_queue_1;
-            if (queue !== undefined) if (mesh.fill_RenderQueue(queue, cam_mask, cam_frustum)) rendered_objects_count++;
+            if (queue !== undefined) if (mesh.fill_RenderQueue(queue, cam_mask, cam_frustum, cam, this.base_size)) rendered_objects_count++;
         }
 
         pipeline.set_Size(size);

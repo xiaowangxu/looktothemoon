@@ -127,9 +127,11 @@ export class Vector3 implements VectorLike<Vector3, Matrix3> {
         return this.x * b.x + this.y * b.y + this.z * b.z;
     }
     cross(a: Vector3, b: Vector3): Vector3 {
-        this.x = a.y * b.z - a.z * b.y;
-        this.y = a.z * b.x - a.x * b.z;
-        this.z = a.x * b.y - a.y * b.x;
+        const {x:a_x, y: a_y, z:a_z} = a;
+        const {x:b_x, y: b_y, z:b_z} = b;
+        this.x = a_y * b_z - a_z * b_y;
+        this.y = a_z * b_x - a_x * b_z;
+        this.z = a_x * b_y - a_y * b_x;
         return this;
     }
     min(a: Vector3, b: Vector3): Vector3 {

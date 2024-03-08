@@ -66,6 +66,11 @@ export abstract class GeometryResource extends Resource {
 }
 
 export class MultiGeometryResource extends GeometryResource {
+
+    static #tmp_matrix4_0 = Matrix4.new;
+    static #tmp_box3_0 = Box3.new;
+
+    private readonly _base_bbox: Box3 = Box3.new;
     private readonly _bbox: Box3 = Box3.new;
 
     private readonly override_geometry_ref: Ref<GeometryResource> = new Ref();
@@ -79,7 +84,7 @@ export class MultiGeometryResource extends GeometryResource {
         this.instance_transform_attribute_buffer_ref.value = new RenderDeviceMatrix4AttributeBuffer(this.render_server, RenderStateBufferUsage.DynamicDraw, undefined, 1);
     }
 
-    public set_OverrideGeometry(geometry: GeometryResource) {
+    public set_OverrideGeometry(geometry: GeometryResource, update_bbox: boolean = true) {
         if (geometry instanceof MultiGeometryResource) throw new Error('<MultiGeometryResource> set_OverrideGeometry: base geometry should not be another MultiGeometryResource');
         if (!geometry.geometry.has_geometry) throw new Error('<MultiGeometryResource> set_OverrideGeometry: base geometry does not have a geometry, maybe it is not properly initialized');
         this.override_geometry_ref.value = geometry;
@@ -88,7 +93,7 @@ export class MultiGeometryResource extends GeometryResource {
         const vertex_count = geometry.geometry.vertex_count!;
         const primitive_type = geometry.geometry.primitive_type!;
         attributes.instance_transform = this.instance_transform_attribute_buffer_ref.expect;
-        this._bbox.copy(geometry.geometry.bbox);
+        this._base_bbox.copy(geometry.geometry.bbox);
         this.geometry.set_Geometry(
             primitive_type,
             attributes,
@@ -98,10 +103,14 @@ export class MultiGeometryResource extends GeometryResource {
         for (const { offset, length } of geometry.geometry.get_Surfaces()) {
             this.geometry.add_Surface(offset, length);
         }
-        this.geometry.set_BBox(this._bbox);
+        if (update_bbox) {
+            this.update_BBox();
+        }
     }
 
-    public set_InstanceCount(count: number, fill_default: boolean = true, commit: boolean = true) {
+    public get instances_count() { return this.geometry.instance_count; }
+
+    public set_InstancesCount(count: number, fill_default: boolean = true, commit: boolean = true) {
         count = Math.max(0, Math.floor(count));
         if (this.geometry.instance_count === count) return;
         this.geometry.instance_count = count;
@@ -117,13 +126,38 @@ export class MultiGeometryResource extends GeometryResource {
         }
     }
 
-    public set_InstanceTransform(idx: number, transform: Matrix4, commit: boolean = true) {
+    public set_InstanceTransform(idx: number, transform: Matrix4, update_bbox: boolean = true, commit: boolean = true) {
         if (idx < 0 || idx >= this.geometry.instance_count) return;
         this.instance_transform_attribute_buffer_ref.expect.update_Data(transform, idx, commit);
+        if (update_bbox) this.update_BBox();
+    }
+
+    public get_InstanceTransform(idx: number, target: Matrix4): Matrix4 {
+        if (idx < 0 || idx >= this.geometry.instance_count) throw new Error('<MultiGeometryResource> get_InstanceTransform: index out of bound');;
+        return this.instance_transform_attribute_buffer_ref.expect.get_Data(idx, target);
     }
 
     public commit_InstanceTransforms() {
         this.instance_transform_attribute_buffer_ref.expect.commit_Data();
+    }
+
+    public update_BBox() {
+        const instances_count = this.instances_count;
+        if (instances_count < 1) {
+            this._bbox.min.set(0, 0, 0);
+            this._bbox.max.set(0, 0, 0);
+            this.geometry.set_BBox(this._bbox);
+            return;
+        };
+        const matrix4 = this.instance_transform_attribute_buffer_ref.expect.get_Data(0, MultiGeometryResource.#tmp_matrix4_0);
+        const trans_box = MultiGeometryResource.#tmp_box3_0.apply_Matrix4(this._base_bbox, matrix4);
+        this._bbox.copy(trans_box);
+        for (let i = 1; i < instances_count; i++) {
+            this.instance_transform_attribute_buffer_ref.expect.get_Data(i, matrix4);
+            trans_box.apply_Matrix4(this._base_bbox, matrix4);
+            this._bbox.merge(this._bbox, trans_box);
+        }
+        this.geometry.set_BBox(this._bbox);
     }
 
     protected dispose(): void {

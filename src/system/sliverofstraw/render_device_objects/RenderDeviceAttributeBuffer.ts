@@ -10,8 +10,9 @@ import type { RenderStateVertexArray } from "../render_state_objects/RenderState
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { PackedVector2Array, type PackedArray, PackedVector3Array, PackedVector4Array, PackedMatrix4Array, PackedIndexArray, PackedMatrix3Array } from "@/system/engine/classes/value_wrappers/PackedArray";
 import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import type { Out } from "@/system/utils/Type";
 
-export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
+export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>, Data = any>
     extends RenderDeviceObject<T>
 {
     protected readonly buffer_ref: Ref<Buffer | RenderStateBufferView<T, Buffer>> = new Ref();
@@ -34,15 +35,15 @@ export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buff
         this.per_instance_count = per_instance_count;
     }
 
-    public abstract alloc_Data(data: any[]): void;
+    public abstract alloc_Data(data: Data[]): void;
     public abstract alloc_Data(data: ArrayBufferView): void;
     public abstract alloc_Data(count: number): void;
-    public abstract alloc_Data(data: any[] | ArrayBufferView | number): void;
+    public abstract alloc_Data(data: Data[] | ArrayBufferView | number): void;
 
-    public abstract update_Data(data: any, offset: number, commit?: boolean): void;
+    public abstract update_Data(data: Data, offset: number, commit?: boolean): void;
     public abstract update_Data(data: ArrayBufferView, offset: number, commit?: boolean): void;
-    public abstract update_Data(data: any[], offset: number, commit?: boolean): void;
-    public abstract update_Data(data: any[] | ArrayBufferView | any, offset: number, commit?: boolean): void;
+    public abstract update_Data(data: Data[], offset: number, commit?: boolean): void;
+    public abstract update_Data(data: Data[] | ArrayBufferView | Data, offset: number, commit?: boolean): void;
 
     public commit_Data(): void;
     public commit_Data(offset: number, lenght?: number): void;
@@ -54,6 +55,8 @@ export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buff
             this.render_state.update_Buffer(this.buffer_ref.expect, this.data, offset, offset, lenght);
         }
     }
+
+    public abstract get_Data(idx: number, target: Data | never): Data;
 
     public abstract get_PackedArray(): PackedArray;
 
@@ -71,8 +74,8 @@ export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buff
     }
 }
 
-export class RenderDeviceAttributeBufferView<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>, AttriBuffer extends RenderDeviceAttributeBuffer<T, Buffer> = RenderDeviceAttributeBuffer<T, Buffer>>
-    extends RenderDeviceAttributeBuffer<T, Buffer>
+export class RenderDeviceAttributeBufferView<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>, Data = any, AttriBuffer extends RenderDeviceAttributeBuffer<T, Buffer, Data> = RenderDeviceAttributeBuffer<T, Buffer, Data>>
+    extends RenderDeviceAttributeBuffer<T, Buffer, Data>
 {
     protected readonly attribute_buffer_ref: Ref<AttriBuffer> = new Ref();
 
@@ -96,15 +99,23 @@ export class RenderDeviceAttributeBufferView<T extends RenderState<T>, Buffer ex
         this.buffer_ref.value = this.render_state.create_BufferView(attribute_buffer.buffer, attribute_buffer.per_item_element_count, stride_in_bytes, offset_in_bytes, this.per_instance_count).expect() as RenderStateBufferView<T, Buffer>;
     }
 
-    public alloc_Data(data: any[]): void;
+    public alloc_Data(data: Data[]): void;
     public alloc_Data(data: ArrayBufferView): void;
     public alloc_Data(count: number): void;
-    public alloc_Data(data: any[] | ArrayBufferView | number): void { }
+    public alloc_Data(data: Data[] | ArrayBufferView | number): void {
+        throw new Error('<RenderDeviceAttributeBufferView> alloc_Data: can not alloc data from a attribute buffer view');
+    }
 
-    public update_Data(data: any, offset: number, commit?: boolean): void;
+    public update_Data(data: Data, offset: number, commit?: boolean): void;
     public update_Data(data: ArrayBufferView, offset: number, commit?: boolean): void;
-    public update_Data(data: any[], offset: number, commit?: boolean): void;
-    public update_Data(data: any[] | ArrayBufferView | any, offset: number, commit: boolean = true): void { }
+    public update_Data(data: Data[], offset: number, commit?: boolean): void;
+    public update_Data(data: Data[] | ArrayBufferView | Data, offset: number, commit: boolean = true): void {
+        throw new Error('<RenderDeviceAttributeBufferView> update_Data: can not update data from a attribute buffer view');
+    }
+
+    public get_Data(idx: number, target: Data): Data {
+        throw new Error('<RenderDeviceAttributeBufferView> get_Data: can not get data from a attribute buffer view');
+    }
 
     public get_PackedArray(): PackedArray {
         throw new Error('<RenderDeviceAttributeBufferView> get_PackedArray: can not get packed array from a attribute buffer view');
@@ -117,7 +128,7 @@ export class RenderDeviceAttributeBufferView<T extends RenderState<T>, Buffer ex
 }
 
 export class RenderDeviceVector2AttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
-    extends RenderDeviceAttributeBuffer<T, Buffer>
+    extends RenderDeviceAttributeBuffer<T, Buffer, Vector2>
 {
     public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
     public get per_item_element_count(): number { return 2; }
@@ -197,13 +208,22 @@ export class RenderDeviceVector2AttributeBuffer<T extends RenderState<T>, Buffer
         if (commit) this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
     }
 
+    public get_Data(idx: number, target: Vector2): Vector2 {
+        if (idx < 0 || idx >= this.item_count) throw new Error('<RenderDeviceVector2AttributeBuffer> get_Data: index out of bound');
+        const base = idx * this.per_item_element_count;
+        const x = this._data[base];
+        const y = this._data[base + 1];
+        target.set(x, y);
+        return target;
+    }
+
     public get_PackedArray(): PackedArray {
         return new PackedVector2Array(this.data);
     }
 }
 
 export class RenderDeviceVector3AttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
-    extends RenderDeviceAttributeBuffer<T, Buffer>
+    extends RenderDeviceAttributeBuffer<T, Buffer, Vector3>
 {
     public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
     public get per_item_element_count(): number { return 3; }
@@ -286,13 +306,23 @@ export class RenderDeviceVector3AttributeBuffer<T extends RenderState<T>, Buffer
         if (commit) this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
     }
 
+    public get_Data(idx: number, target: Vector3): Vector3 {
+        if (idx < 0 || idx >= this.item_count) throw new Error('<RenderDeviceVector3AttributeBuffer> get_Data: index out of bound');
+        const base = idx * this.per_item_element_count;
+        const x = this._data[base];
+        const y = this._data[base + 1];
+        const z = this._data[base + 2];
+        target.set(x, y, z);
+        return target;
+    }
+
     public get_PackedArray(): PackedArray {
         return new PackedVector3Array(this.data);
     }
 }
 
 export class RenderDeviceVector4AttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
-    extends RenderDeviceAttributeBuffer<T, Buffer>
+    extends RenderDeviceAttributeBuffer<T, Buffer, Vector4>
 {
     public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
     public get per_item_element_count(): number { return 4; }
@@ -378,13 +408,24 @@ export class RenderDeviceVector4AttributeBuffer<T extends RenderState<T>, Buffer
         if (commit) this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
     }
 
+    public get_Data(idx: number, target: Vector4): Vector4 {
+        if (idx < 0 || idx >= this.item_count) throw new Error('<RenderDeviceVector4AttributeBuffer> get_Data: index out of bound');
+        const base = idx * this.per_item_element_count;
+        const x = this._data[base];
+        const y = this._data[base + 1];
+        const z = this._data[base + 2];
+        const w = this._data[base + 3];
+        target.set(x, y, z, w);
+        return target;
+    }
+
     public get_PackedArray(): PackedArray {
         return new PackedVector4Array(this.data);
     }
 }
 
 export class RenderDeviceIndexAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
-    extends RenderDeviceAttributeBuffer<T, Buffer>
+    extends RenderDeviceAttributeBuffer<T, Buffer, number>
 {
     public get per_element_byte_count(): number { return Uint32Array.BYTES_PER_ELEMENT; }
     public get per_item_element_count(): number { return 1; }
@@ -450,13 +491,18 @@ export class RenderDeviceIndexAttributeBuffer<T extends RenderState<T>, Buffer e
         if (commit) this.render_state.update_Buffer(this.buffer_ref.expect, uint32array, offset_bytes);
     }
 
+    public get_Data(idx: number, target: never): number {
+        if (idx < 0 || idx >= this.item_count) throw new Error('<RenderDeviceVector4AttributeBuffer> get_Data: index out of bound');
+        return this._data[idx];
+    }
+
     public get_PackedArray(): PackedArray {
         return new PackedIndexArray(this.data);
     }
 }
 
 export class RenderDeviceMatrix3AttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
-    extends RenderDeviceAttributeBuffer<T, Buffer>
+    extends RenderDeviceAttributeBuffer<T, Buffer, Matrix3>
 {
     private readonly buffer_slice_row_0: Ref<RenderStateBufferView<T>> = new Ref();
     private readonly buffer_slice_row_1: Ref<RenderStateBufferView<T>> = new Ref();
@@ -544,6 +590,26 @@ export class RenderDeviceMatrix3AttributeBuffer<T extends RenderState<T>, Buffer
         if (commit) this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
     }
 
+    public get_Data(idx: number, target: Matrix3): Matrix3 {
+        if (idx < 0 || idx >= this.item_count) throw new Error('<RenderDeviceMatrix3AttributeBuffer> get_Data: index out of bound');
+        const base = idx * this.per_item_element_count;
+        const n11 = this._data[base];
+        const n21 = this._data[base + 1];
+        const n31 = this._data[base + 2];
+        const n12 = this._data[base + 3];
+        const n22 = this._data[base + 4];
+        const n32 = this._data[base + 5];
+        const n13 = this._data[base + 6];
+        const n23 = this._data[base + 7];
+        const n33 = this._data[base + 8];
+        target.set(
+            n11, n12, n13,
+            n21, n22, n23,
+            n31, n32, n33,
+        );
+        return target;
+    }
+
     public bound_VertexArray(vertex_array: RenderStateVertexArray<T>, attribute_location: number): void {
         this.render_state.set_VertexArrayAttributeBuffer(vertex_array, attribute_location + 0, this.buffer_slice_row_0.expect);
         this.render_state.set_VertexArrayAttributeBuffer(vertex_array, attribute_location + 1, this.buffer_slice_row_1.expect);
@@ -569,7 +635,7 @@ export class RenderDeviceMatrix3AttributeBuffer<T extends RenderState<T>, Buffer
 }
 
 export class RenderDeviceMatrix4AttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
-    extends RenderDeviceAttributeBuffer<T, Buffer>
+    extends RenderDeviceAttributeBuffer<T, Buffer, Matrix4>
 {
     private readonly buffer_slice_row_0: Ref<RenderStateBufferView<T>> = new Ref();
     private readonly buffer_slice_row_1: Ref<RenderStateBufferView<T>> = new Ref();
@@ -657,6 +723,34 @@ export class RenderDeviceMatrix4AttributeBuffer<T extends RenderState<T>, Buffer
             }
         }
         if (commit) this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
+    }
+
+    public get_Data(idx: number, target: Matrix4): Matrix4 {
+        if (idx < 0 || idx >= this.item_count) throw new Error('<RenderDeviceMatrix4AttributeBuffer> get_Data: index out of bound');
+        const base = idx * this.per_item_element_count;
+        const n11 = this._data[base];
+        const n21 = this._data[base + 1];
+        const n31 = this._data[base + 2];
+        const n41 = this._data[base + 3];
+        const n12 = this._data[base + 4];
+        const n22 = this._data[base + 5];
+        const n32 = this._data[base + 6];
+        const n42 = this._data[base + 7];
+        const n13 = this._data[base + 8];
+        const n23 = this._data[base + 9];
+        const n33 = this._data[base + 10];
+        const n43 = this._data[base + 11];
+        const n14 = this._data[base + 12];
+        const n24 = this._data[base + 13];
+        const n34 = this._data[base + 14];
+        const n44 = this._data[base + 15];
+        target.set(
+            n11, n12, n13, n14,
+            n21, n22, n23, n24,
+            n31, n32, n33, n34,
+            n41, n42, n43, n44,
+        );
+        return target;
     }
 
     public bound_VertexArray(vertex_array: RenderStateVertexArray<T>, attribute_location: number): void {

@@ -326,8 +326,8 @@ export class TorusGeometryResource extends PrimitiveGeometryResource {
             index_buffer,
             index_count,
             Box3.create(
-                Vector3.create(-outer_radius, -outer_radius, -tube_radius),
-                Vector3.create(outer_radius, outer_radius, tube_radius),
+                Vector3.create(-outer_radius, -tube_radius, -outer_radius),
+                Vector3.create(outer_radius, tube_radius, outer_radius),
             )
         );
     }

@@ -58,6 +58,15 @@ export class MultiLineGeometryResource extends GeometryResource {
         }
     }
 
+    // private _line_width: number = 2;
+    // public get line_width() { return this._line_width; }
+    // public set line_width(line_width: number) {
+    //     if (this.line_width !== line_width) {
+    //         this._line_width = line_width;
+    //         this.geometry.set_BBoxPixelEnlargement(this._line_width);
+    //     }
+    // }
+
     constructor(config: Config) {
         super(config);
         this.geometry_ref.value = this.render_server.create_Geometry();
@@ -87,7 +96,9 @@ export class MultiLineGeometryResource extends GeometryResource {
         this.update_BBox();
     }
 
-    public set_PointCount(count: number) {
+    public get points_count() { return this.geometry.instance_count + 1; }
+
+    public set_PointsCount(count: number) {
         count = Math.max(2, Math.floor(count));
         if (this.geometry.instance_count === count - 1) return;
         this.geometry.instance_count = count - 1;
@@ -98,6 +109,11 @@ export class MultiLineGeometryResource extends GeometryResource {
         if (idx < 0 || idx >= this.geometry.instance_count + 1) return;
         this.points_attribute_buffer_ref.expect.update_Data(point, idx, commit);
         if (update_bbox) this.update_BBox();
+    }
+
+    public get_Point(idx: number, target: Vector3): Vector3 {
+        if (idx < 0 || idx >= this.geometry.instance_count + 1) throw new Error('<MultiLineGeometryResource> get_Point: index out of bound');
+        return this.points_attribute_buffer_ref.expect.get_Data(idx, target);
     }
 
     public commit_Points() {
@@ -126,7 +142,7 @@ export class MultiLineGeometryResource extends GeometryResource {
 
     private update_EnlargedBBox() {
         this._bbox.enlarge(this._base_bbox, this._bbox_margin);
-        this.geometry.set_BBox(this._bbox);
+        this.geometry.set_BBox(this._base_bbox);
     }
 
     protected dispose(): void {
