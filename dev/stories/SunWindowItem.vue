@@ -21,7 +21,7 @@
                         <template v-for="s in 3">
                             <SunLabel size="large" :no-horizontal-padding="false" squared bold>
                                 类型区域{{ s }}</SunLabel>
-                            <SunButton v-for="i in 10" flat>
+                            <SunButton v-for="i in 10" flat align="start">
                                 <AppWindow />
                                 <SunButtonLabel style="margin-right: auto;">按钮 {{ i }}</SunButtonLabel>
                             </SunButton>

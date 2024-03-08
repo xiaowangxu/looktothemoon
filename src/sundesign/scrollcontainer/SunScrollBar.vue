@@ -115,19 +115,19 @@ scrollbar-track-offset = 7px
     pointer-events: all
     top: scrollbar-nob-offset
     bottom: 0
-    --NobSize: 'clamp(0.05, calc(var(--NobSizePercentage, 0.2)), 0.4)' % ('')
-    width: calc(100% * var(--NobSize))
+    --NobSize: 'clamp(16px, calc(100% * var(--NobSizePercentage, 0.2)), calc(30%))' % ('')
+    width: var(--NobSize)
     height: scrollbar-nob-size
-    left: calc((100% * (1 - var(--NobSize))) * var(--Percentage))
+    left: calc((100% - var(--NobSize)) * var(--Percentage))
     border-radius: scrollbar-nob-border-radius
     opacity: scrollbar-nob-opacity
 
     .__sun-design__.__sun-design-scrollbar__.vertical > &
         left: scrollbar-nob-offset
         right: 0
-        height: calc(100% * var(--NobSize))
+        height: var(--NobSize)
         width: scrollbar-nob-size
-        top: calc((100% * (1 - var(--NobSize))) * var(--Percentage))
+        top: calc((100% - var(--NobSize)) * var(--Percentage))
 
     :hover>.hoverparent>&.dragging,
     .hovertrack:hover>&.dragging,

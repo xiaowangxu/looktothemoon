@@ -34,12 +34,12 @@ export const PanelFoldContainer: Story = {
                 </SunPanelFoldContainer>
             </SunPanel>
             <SunPanel vertical style="width: 200px;">
-                <SunPanelFoldContainer label="折叠容器1" style="width: 100%;" resizable style="min-height: 24px; height: 0;">
-                    <div style="width: 100%; height: 100%; background-color: green;"/>
+                <SunPanelFoldContainer label="折叠容器1" style="width: 100%;" resizable>
+                    <div style="width: 100%; height: 100%; min-height: 24px; background-color: green;"/>
                 </SunPanelFoldContainer>
                 <SunPanelSeparator/>
-                <SunPanelFoldContainer label="折叠容器2" style="width: 100%;" resizable style="min-height: 24px; height: 0;">
-                    <div style="width: 100%; height: 100%; background-color: blue;"/>
+                <SunPanelFoldContainer label="折叠容器2" style="width: 100%;" resizable>
+                    <div style="width: 100%; height: 100%; min-height: 24px; background-color: blue;"/>
                 </SunPanelFoldContainer>
             </SunPanel>
             

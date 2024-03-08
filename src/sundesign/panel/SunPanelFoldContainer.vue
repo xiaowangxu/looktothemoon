@@ -15,7 +15,7 @@
             <slot name="append" />
         </div>
     </SunButtonLike>
-    <div v-show="!folded" class="__sun-design-panel-fold-container-content-container__"
+    <div class="__sun-design-panel-fold-container-content-container__"
         :class="{ unfolded: !folded, resizable }" v-bind="$attrs">
         <slot />
     </div>
@@ -122,13 +122,15 @@ watch(folded, folded => {
     width: 100%
     flex: 1
     overflow: hidden
+    display: none
 
     &.resizable
         resize: vertical
         flex-basis: auto
 
-    // &.unfolded
-    //     border-top: solid-border
+    &.unfolded
+        display: block
+        // border-top: solid-border
 
 .__sun-design-panel-fold-container-append__
     gap: panel-padding
