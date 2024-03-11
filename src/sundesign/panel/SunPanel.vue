@@ -16,7 +16,6 @@
 import '../SunDesignStyle.styl';
 import { type Size, getFocusables, TrapFocusOutEvent } from '../SunDesignConstants';
 import { onMounted, ref } from 'vue';
-import { div } from 'three/examples/jsm/nodes/Nodes.js';
 
 // props
 const props = withDefaults(

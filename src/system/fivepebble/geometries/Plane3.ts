@@ -1,13 +1,10 @@
 import type { PlaneLike } from "./PlaneLike";
-import type { Matrix4 } from "../linear_algebra/Matrix4";
 import type { Line3 } from "./Line3";
 import type { Ray3 } from "./Ray3";
 import type { Sphere3 } from "./Sphere3";
 import { Matrix3 } from "../linear_algebra/Matrix3";
 import { Epsilon, is_ApproxZero } from "../Scalar";
 import { Vector3 } from "../linear_algebra/Vector3";
-import type { GeometryLike } from "./GeometryLike";
-import type { Plane } from "three";
 
 export class Plane3 implements PlaneLike<Vector3, Matrix3>  {
 
