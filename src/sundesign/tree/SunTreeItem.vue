@@ -487,6 +487,8 @@ treeitem-gap = (panel-padding / 2)
         left: 'calc((var(--Depth) - 1) * var(--Indent, %s) + %s)' % (content-size-normal + gap-normal  relative-offset-normal - relation-width / 2)
     &[data-size="large"]::after
         left: 'calc((var(--Depth) - 1) * var(--Indent, %s) + %s)' % (content-size-large + gap-large  relative-offset-large - relation-width / 2)
+    &:has(> .__sun-design-tree-list-container__ > .__sun-design-tree-item-container__.active)::after
+        border-left: relation-border-active
 
 .__sun-design-tree-item-drop-indicator__
     position absolute
