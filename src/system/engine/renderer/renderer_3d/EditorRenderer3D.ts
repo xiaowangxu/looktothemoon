@@ -15,6 +15,7 @@ import { Renderer3DQueue } from "./Renderer3DQueue";
 import { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
 
 // #region quad surface
+
 const QuadGeometry = new Cacher((config: Config) => {
     const quad_position = new RenderDeviceVector2AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
         /* 0 */ Vector2.create(-1, 1),
@@ -26,11 +27,13 @@ const QuadGeometry = new Cacher((config: Config) => {
     const quad_index = new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 1, 2, 3]);
     const quad_surface = config.render_server.create_Geometry();
     quad_surface.set_Geometry(RenderStatePrimitiveType.TriangleStrip, { position: quad_position }, quad_index);
-    return quad_surface;
+    return new Ref(quad_surface);
 });
+
 // #endregion
 
 // #region quad shader
+
 const quad_vert_shader_code = `#version 300 es
 precision highp float;
 
@@ -42,13 +45,16 @@ void main() {
 	gl_Position = vec4(a_position, 1.0, 1.0);
 	v_uv = (a_position + 1.0) / 2.0;
 }`;
+
 const QuadVertexShader = new Cacher((config: Config) => {
     const quad_vert_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, quad_vert_shader_code).expect();
-    return quad_vert_shader;
+    return new Ref(quad_vert_shader);
 });
+
 // #endregion
 
 // #region on screen
+
 const onscreen_frag_shader_code = `#version 300 es
 precision highp float;
 
@@ -57,35 +63,156 @@ ${RenderServerDevice.WorldUniformsCode}
 in vec2 v_uv;
 
 uniform sampler2D u_screen;
-uniform bool u_colormap;
 
 layout(location = 0) out vec4 o_color;
 
 void main() {
-	o_color = vec4(texture(u_screen, vec2(v_uv.x, v_uv.y)).rgba);
-	if (u_colormap) {
-		float r = o_color.r;
-		o_color.r = r <= 0.0031308 ? (12.92 * r) : (1.055 * pow(r, 1.0 / 2.4) - 0.055);
-		float g = o_color.g;
-		o_color.g = g <= 0.0031308 ? (12.92 * g) : (1.055 * pow(g, 1.0 / 2.4) - 0.055);
-		float b = o_color.b;
-		o_color.b = b <= 0.0031308 ? (12.92 * b) : (1.055 * pow(b, 1.0 / 2.4) - 0.055);
-	}
+	  o_color = vec4(texture(u_screen, vec2(v_uv.x, v_uv.y)).rgba);
 }`;
-const OnscreenProgramUniform = new Cacher((config: Config) => {
+
+const OnscreenProgram = new Cacher((config: Config) => {
     const onscreen_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, onscreen_frag_shader_code).expect();
-    const onscreen_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config), onscreen_frag_shader).expect();
+    const onscreen_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config).expect, onscreen_frag_shader).expect();
 
     const uniform_screen_location = config.render_server.render_state.get_ProgramUniformLocation(onscreen_program, 'u_screen');
     const uniform_screen_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, onscreen_program, uniform_screen_location!, 0);
     uniform_screen_slot.commit();
 
-    const uniform_colormap_location = config.render_server.render_state.get_ProgramUniformLocation(onscreen_program, 'u_colormap');
-    const uniform_colormap_slot = new WebGL2RenderStateUintUniformSlot(config.render_server.render_state, onscreen_program, uniform_colormap_location!, 0);
-    uniform_colormap_slot.commit();
-
-    return { onscreen_program, uniform_colormap_slot };
+    return new Ref(onscreen_program);
 });
+
+//#endregion
+
+// #region on screen fxaa
+
+const fxaa_vert_shader_code = `#version 300 es
+precision highp float;
+
+${RenderServerDevice.WorldUniformsCode}
+
+layout(location = 0) in vec2 a_position;
+
+out vec2 v_frag_coord;
+out vec2 v_rgbNW;
+out vec2 v_rgbNE;
+out vec2 v_rgbSW;
+out vec2 v_rgbSE;
+out vec2 v_rgbM;
+
+void texcoords(vec2 fragCoord, vec2 resolution, out vec2 v_rgbNW, out vec2 v_rgbNE, out vec2 v_rgbSW, out vec2 v_rgbSE, out vec2 v_rgbM) {
+	  vec2 inverseVP = 1.0 / resolution.xy;
+	  v_rgbNW = (fragCoord + vec2(-1.0, -1.0)) * inverseVP;
+	  v_rgbNE = (fragCoord + vec2(1.0, -1.0)) * inverseVP;
+	  v_rgbSW = (fragCoord + vec2(-1.0, 1.0)) * inverseVP;
+	  v_rgbSE = (fragCoord + vec2(1.0, 1.0)) * inverseVP;
+	  v_rgbM = vec2(fragCoord * inverseVP);
+}
+
+void main() {
+    v_frag_coord = (a_position + 1.0) / 2.0 * screen_size;
+    texcoords(v_frag_coord, screen_size , v_rgbNW, v_rgbNE, v_rgbSW, v_rgbSE, v_rgbM);
+	  gl_Position = vec4(a_position, 1.0, 1.0);
+}`;
+
+const fxaa_frag_shader_code = `#version 300 es
+precision highp float;
+
+${RenderServerDevice.WorldUniformsCode}
+
+uniform sampler2D u_screen;
+
+in vec2 v_frag_coord;
+in vec2 v_rgbNW;
+in vec2 v_rgbNE;
+in vec2 v_rgbSW;
+in vec2 v_rgbSE;
+in vec2 v_rgbM;
+
+layout(location = 0) out vec4 o_color;
+
+#ifndef FXAA_REDUCE_MIN
+    #define FXAA_REDUCE_MIN   (1.0/ 128.0)
+#endif
+#ifndef FXAA_REDUCE_MUL
+    #define FXAA_REDUCE_MUL   (1.0 / 8.0)
+#endif
+#ifndef FXAA_SPAN_MAX
+    #define FXAA_SPAN_MAX     8.0
+#endif
+
+//To save 9 dependent texture reads, you can compute
+//these in the vertex shader and use the optimized
+//frag.glsl function in your frag shader. 
+
+//This is best suited for mobile devices, like iOS.
+
+//optimized version for mobile, where dependent 
+//texture reads can be a bottleneck
+vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution,
+            vec2 v_rgbNW, vec2 v_rgbNE, 
+            vec2 v_rgbSW, vec2 v_rgbSE, 
+            vec2 v_rgbM) {
+    vec4 color;
+    mediump vec2 inverseVP = vec2(1.0 / resolution.x, 1.0 / resolution.y);
+    vec3 rgbNW = texture(tex, v_rgbNW).xyz;
+    vec3 rgbNE = texture(tex, v_rgbNE).xyz;
+    vec3 rgbSW = texture(tex, v_rgbSW).xyz;
+    vec3 rgbSE = texture(tex, v_rgbSE).xyz;
+    vec4 texColor = texture(tex, v_rgbM);
+    vec3 rgbM  = texColor.xyz;
+    vec3 luma = vec3(0.299, 0.587, 0.114);
+    float lumaNW = dot(rgbNW, luma);
+    float lumaNE = dot(rgbNE, luma);
+    float lumaSW = dot(rgbSW, luma);
+    float lumaSE = dot(rgbSE, luma);
+    float lumaM  = dot(rgbM,  luma);
+    float lumaMin = min(lumaM, min(min(lumaNW, lumaNE), min(lumaSW, lumaSE)));
+    float lumaMax = max(lumaM, max(max(lumaNW, lumaNE), max(lumaSW, lumaSE)));
+    
+    mediump vec2 dir;
+    dir.x = -((lumaNW + lumaNE) - (lumaSW + lumaSE));
+    dir.y =  ((lumaNW + lumaSW) - (lumaNE + lumaSE));
+    
+    float dirReduce = max((lumaNW + lumaNE + lumaSW + lumaSE) *
+                          (0.25 * FXAA_REDUCE_MUL), FXAA_REDUCE_MIN);
+    
+    float rcpDirMin = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
+    dir = min(vec2(FXAA_SPAN_MAX, FXAA_SPAN_MAX),
+              max(vec2(-FXAA_SPAN_MAX, -FXAA_SPAN_MAX),
+              dir * rcpDirMin)) * inverseVP;
+    
+    vec3 rgbA = 0.5 * (
+        texture(tex, fragCoord * inverseVP + dir * (1.0 / 3.0 - 0.5)).xyz +
+        texture(tex, fragCoord * inverseVP + dir * (2.0 / 3.0 - 0.5)).xyz);
+    vec3 rgbB = rgbA * 0.5 + 0.25 * (
+        texture(tex, fragCoord * inverseVP + dir * -0.5).xyz +
+        texture(tex, fragCoord * inverseVP + dir * 0.5).xyz);
+
+    float lumaB = dot(rgbB, luma);
+    if ((lumaB < lumaMin) || (lumaB > lumaMax))
+        color = vec4(rgbA, texColor.a);
+    else
+        color = vec4(rgbB, texColor.a);
+    return color;
+}
+
+void main() {
+		o_color = fxaa(u_screen, v_frag_coord, screen_size, v_rgbNW, v_rgbNE, v_rgbSW, v_rgbSE, v_rgbM);
+}`;
+
+const FxaaProgram = new Cacher((config: Config) => {
+    const fxaa_vert_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, fxaa_vert_shader_code).expect();
+    const fxaa_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, fxaa_frag_shader_code).expect();
+    const fxaa_program = config.render_server.render_state.create_Program(fxaa_vert_shader, fxaa_frag_shader).expect();
+
+    const uniform_screen_location = config.render_server.render_state.get_ProgramUniformLocation(fxaa_program, 'u_screen');
+    const uniform_screen_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, fxaa_program, uniform_screen_location!, 0);
+    uniform_screen_slot.commit();
+
+    return new Ref(fxaa_program);
+});
+
+// #endregion
 
 export class EditorRenderer3D extends Renderer3D {
     public readonly render_queue_0 = new Renderer3DQueue();
@@ -94,9 +221,9 @@ export class EditorRenderer3D extends Renderer3D {
     private readonly lights_data: Ref<RenderServerLightsData> = new Ref(this.config.render_server.create_LightsData(64, 64));
 
     // cache items
-    private readonly quad_geometry = QuadGeometry.get(this.config);
-    private readonly on_screen_program = OnscreenProgramUniform.get(this.config).onscreen_program;
-    private readonly on_screen_uniform_colormap_slot = OnscreenProgramUniform.get(this.config).uniform_colormap_slot;
+    private readonly quad_geometry = QuadGeometry.get(this.config).expect;
+    private readonly on_screen_program = OnscreenProgram.get(this.config).expect;
+    private readonly on_screen_fxaa_program = FxaaProgram.get(this.config).expect;
 
     constructor(config: Config) {
         super(config);
@@ -123,9 +250,7 @@ export class EditorRenderer3D extends Renderer3D {
         this.render_server.render_state.set_ScissorProxy(_x, _y, width, height);
         if (texture !== undefined) {
             this.render_server.render_state.active_Texture(texture, 0);
-            this.on_screen_uniform_colormap_slot.value = 0;
-            this.on_screen_uniform_colormap_slot.commit();
-            this.render_server.render_state.draw_Elements(this.on_screen_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+            this.render_server.render_state.draw_Elements(this.on_screen_fxaa_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
         }
     }
 
