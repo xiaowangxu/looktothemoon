@@ -241,7 +241,7 @@ export class PerspectiveCamera3 extends Camera3 {
         const half_height = this.near * Math.tan(this.fov / 2);
         const half_width = this.aspect * half_height;
         const p = target.set(ndc.x * half_width, ndc.y * half_height, -depth);
-        p.apply_Matrix4(p, this.global_transform);
+        p.apply_Matrix4(p, this._global_transform);
         return p;
     }
 

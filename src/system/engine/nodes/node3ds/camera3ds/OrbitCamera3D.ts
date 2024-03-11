@@ -14,11 +14,15 @@ import { Plane3 } from '@/system/fivepebble/geometries/Plane3';
 import type { Config } from "../../../ConfiguredObject";
 import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
+import { Camera3 } from "@/system/fivepebble/graphics/Camera3";
 
 export class OrbitCamera3D extends Node3D {
     public static readonly class_name: string = "OrbitCamera3D";
 
     static readonly #tmp_vector2_0 = Vector2.new;
+    static readonly #tmp_vector2_1 = Vector2.new;
+    static readonly #tmp_plane3_0 = Plane3.new;
+    static readonly #tmp_ray3_0 = Ray3.new;
     static readonly #tmp_vector3_0 = Vector3.new;
     static readonly #tmp_vector3_1 = Vector3.new;
 
@@ -97,6 +101,9 @@ export class OrbitCamera3D extends Node3D {
         }
     }
     public get is_grabbing() { return this._is_grabbing; }
+    private drag_start_camera!: Camera3;
+    private drag_start_global_position: Vector3 = Vector3.new;
+    private drag_start_mouse_position_normalized: Vector2 = Vector2.new;
 
     public _input(event: InputEvent, propagate: boolean): void {
         if (!propagate && event instanceof MouseButtonInputEvent) {
@@ -105,6 +112,9 @@ export class OrbitCamera3D extends Node3D {
                 if (!this._is_grabbing) {
                     if (event.pressed) {
                         this.is_grabbing = true;
+                        this.drag_start_camera = this.camera.get_Camera().clone();
+                        this.get_GlobalPosition(this.drag_start_global_position);
+                        event.get_PositionNormalized(this.drag_start_mouse_position_normalized);
                         event.mark_Cancelled();
                     }
                 }
@@ -123,10 +133,10 @@ export class OrbitCamera3D extends Node3D {
         if (!propagate && event instanceof MouseMotionInputEvent) {
             if (this._is_grabbing) {
                 if (event.ctrl) {
-                    this.pan(event.relative_normalized);
+                    this.pan(event.get_PositionNormalized(OrbitCamera3D.#tmp_vector2_0));
                 }
                 else {
-                    this.rotate(OrbitCamera3D.#tmp_vector2_0.mult_Number(event.relative, (this.config.render_server.pixel_ratio)));
+                    this.rotate(OrbitCamera3D.#tmp_vector2_0.mult_Number(event.get_Relative(OrbitCamera3D.#tmp_vector2_0), (this.config.render_server.pixel_ratio)));
                 }
                 event.mark_Cancelled();
             }
@@ -281,24 +291,19 @@ export class OrbitCamera3D extends Node3D {
         this.set_Rotation(this.direction - x * this.rotate_strength, this.yaw - y * this.rotate_strength);
     }
 
-    private pan(relative_normalized: Vector2) {
+    private pan(position_normalized: Vector2) {
         if (!this.pan_enable) return;
 
-        const viewport = this.get_Viewport();
-        if (viewport === undefined) return;
-        const camera = viewport.get_Camera3D();
-        if (camera === undefined) return;
+        const dir = this.drag_start_camera.unproject_Normal(OrbitCamera3D.#tmp_vector2_1.set(0, 0), OrbitCamera3D.#tmp_vector3_0);
+        const plane = OrbitCamera3D.#tmp_plane3_0.set_PointAndNormal(this.drag_start_global_position, dir);
+        const ray = this.drag_start_camera.project_Ray(this.drag_start_mouse_position_normalized, undefined, OrbitCamera3D.#tmp_ray3_0);
+        const result = plane.intersect_UncappedRay(ray, OrbitCamera3D.#tmp_vector3_0);
+        const ray2 = this.drag_start_camera.project_Ray(position_normalized, undefined, OrbitCamera3D.#tmp_ray3_0);
+        const result2 = plane.intersect_UncappedRay(ray2, OrbitCamera3D.#tmp_vector3_1);
+        if (result === undefined || result2 === undefined) return;
 
-        const dir = this.camera_arm.to_Global(Vector3.create(0, 0, 1), Vector3.new);
-        dir.sub(dir, this.global_position);
-        dir.normalize(dir);
-        const plane = Plane3.new.set_PointAndNormal(this.global_position, dir);
-        const ray = camera.get_Camera().project_Ray(OrbitCamera3D.#tmp_vector2_0.negate(relative_normalized), undefined, Ray3.new);
-        const result = plane.intersect_UncappedRay(ray, Vector3.new);
-
-        if (result !== undefined) {
-            this.set_Position(result, false);
-        }
+        const shift = result2.sub(result2, result);
+        this.set_Position(OrbitCamera3D.#tmp_vector3_0.sub(this.drag_start_global_position, shift));
     }
 
     // transform
@@ -346,7 +351,6 @@ export class OrbitCamera3D extends Node3D {
     private get is_position_tween_finished() { return this.position_tween === undefined || this.position_tween.finished; }
 
     public set_Position(position: Vector3, animate: boolean = false) {
-        const pos = position;
         if (!animate) {
             this.local_position = position;
         }
@@ -354,7 +358,7 @@ export class OrbitCamera3D extends Node3D {
             if (this.position_tween !== undefined) {
                 this.get_SceneTree()?.stop_Tween(this.position_tween);
             }
-            this.position_tween = new PropertyTween(this, 'local_position', pos, this.transform_duration, TweenTransitionType.Quad, TweenEasingType.Out);
+            this.position_tween = new PropertyTween(this, 'local_position', position.clone(), this.transform_duration, TweenTransitionType.Quad, TweenEasingType.Out);
             this.get_SceneTree()?.start_Tween(this.position_tween);
         }
     }

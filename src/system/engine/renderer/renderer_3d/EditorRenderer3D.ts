@@ -171,6 +171,9 @@ export class EditorRenderer3D extends Renderer3D {
             light_idx = light.fill_LightData(lights_data, light_idx, 0);
             light_idx++;
         }
+        if (light_idx < lights_data.max_light_count) {
+            lights_data.set_Light(light_idx, 0);
+        }
         lights_data.commit_AllLightsData();
         this.render_server.use_LightsData(lights_data);
 

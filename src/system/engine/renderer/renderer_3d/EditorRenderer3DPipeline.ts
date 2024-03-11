@@ -386,8 +386,8 @@ void main() {
 	  vec3 R = normalize(dir.xyz);
 	  float theta = atan(R.z, R.x);
 	  float gamma = acos(R.y);
-	  o_color = texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
-    // o_color = vec4(0.8, 0.8, 0.8, 1.0);
+	  // o_color = texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
+    o_color = vec4(0.95, 0.95, 0.95, 1.0);
     o_normal = vec4(0.0, 0.0, 0.0, 1.0);
 }
 `;

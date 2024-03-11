@@ -98,7 +98,7 @@ export function createEditor() {
     const pipeline = DRenderPipeline.get(DefaultConfig).expect;
     renderer.render_pipeline = pipeline;
     EditorViewport.renderer_3d = renderer;
-    EditorViewport.transparent = true;
+    // EditorViewport.transparent = true;
     EditorViewportContainer.add_Child(EditorViewport);
     // camera
     const EditorCamera = new EditorOrbitCamera3D(DefaultConfig);
@@ -251,6 +251,7 @@ export function createEditor() {
 
     const multi_line_geometry = new MultiLineGeometryResource(DefaultConfig);
     const multi_line_material = new MultiLineMaterialResource(DefaultConfig);
+    // multi_line_material.line_width = 10;
     const points = new Array(120).fill(0).map((i, idx) => {
         return Vector3.create(Math.cos(idx / 35 * Tau), Math.sin(idx / 35 * Tau), idx / 8);
     });
@@ -263,7 +264,7 @@ export function createEditor() {
     MeshLine.geometry = multi_line_geometry;
     MeshLine.material = multi_line_material;
     MeshLine.local_scale = Vector3.create(100, 100, 100);
-    MeshLine.local_rotation = Euler.create(-0.75, 0, 0);
+    // MeshLine.local_rotation = Euler.create(-0.75, 0, 0);
     MeshLine.local_position = Vector3.create(800, 0, -400);
     // MeshLine.render_queue = 1;
     World.add_Child(MeshLine);
