@@ -1,7 +1,7 @@
 import { Ref } from "@/system/utils/RefCounted";
-import type { Config } from "../../ConfiguredObject";
+import type { Config } from "../../../ConfiguredObject";
 import type { EditorRenderer3D } from "./EditorRenderer3D";
-import { Renderer3DPipeline } from "./Renderer3DPipeline";
+import { Renderer3DPipeline } from "../Renderer3DPipeline";
 import type { WebGL2RenderStateFrameBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
 import type { WebGL2RenderStateRenderBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateRenderBuffer";
 import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
@@ -10,11 +10,11 @@ import { WebGL2RenderStateFrameBufferAttachmentPoint } from "@/system/sliverofst
 import { Cacher } from "@/system/utils/Cacher";
 import { RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { WebGL2RenderStateIntUniformSlot, WebGL2RenderStateUintUniformSlot } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
-import { RenderServerDevice } from "../../render_server/RenderServer";
-import { RenderServerShaderPass } from "../../render_server/RenderServerShader";
-import { RenderServerMaterialCullFace } from "../../render_server/RenderServerMaterial";
-import type { Viewport } from "../../nodes/Node";
-import type { World3D } from "../../worlds/world3ds/World3D";
+import { RenderServerDevice } from "../../../render_server/RenderServer";
+import { RenderServerShaderPass } from "../../../render_server/RenderServerShader";
+import { RenderServerMaterialCullFace } from "../../../render_server/RenderServerMaterial";
+import type { Viewport } from "../../../nodes/Node";
+import type { World3D } from "../../../worlds/world3ds/World3D";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
 // #region quad surface

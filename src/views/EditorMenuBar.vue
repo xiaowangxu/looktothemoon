@@ -2,7 +2,9 @@
     <div style="display: flex; align-items: flex-start; gap: 8px;">
         <SunPanel :trap-focus="false">
             <SunPanelContainer>
-                <SunButtonMenuPopup ref="sys_option_ref" :options="system_options" squared flat>
+                <SunButtonMenuPopup ref="sys_option_ref" :options="system_options" squared flat :stop-events="false"
+                    check-passive-click-outside @mouseenter="toggle(sys_option_ref);" @opened="sys_option_opened = true"
+                    @closed="sys_option_opened = false">
                     <svg xmlns="http://www.w3.org/2000/svg" id="a" viewBox="7 7 34 34">
                         <rect fill="#404040" x="23.41" y="19.41" width="4" height="12" rx="2" ry="2"
                             transform="translate(-10.53 25.41) rotate(-45)" />
@@ -27,9 +29,15 @@
             </SunPanelContainer>
             <SunPanelSeparator />
             <SunPanelContainer>
-                <SunButtonMenuPopup ref="file_option_ref" :options="options" flat>文件</SunButtonMenuPopup>
-                <SunButtonMenuPopup ref="edit_option_ref" :options="edit_options" flat>编辑</SunButtonMenuPopup>
-                <SunButtonMenuPopup ref="view_option_ref" :options="options" flat>视图</SunButtonMenuPopup>
+                <SunButtonMenuPopup ref="file_option_ref" :options="options" flat :stop-events="false"
+                    check-passive-click-outside @mouseenter="toggle(file_option_ref);"
+                    @opened="file_option_opened = true" @closed="file_option_opened = false">文件</SunButtonMenuPopup>
+                <SunButtonMenuPopup ref="edit_option_ref" :options="edit_options" flat :stop-events="false"
+                    check-passive-click-outside @mouseenter="toggle(edit_option_ref);"
+                    @opened="edit_option_opened = true" @closed="edit_option_opened = false">编辑</SunButtonMenuPopup>
+                <SunButtonMenuPopup ref="view_option_ref" :options="options" flat :stop-events="false"
+                    check-passive-click-outside @mouseenter="toggle(view_option_ref);"
+                    @opened="view_option_opened = true" @closed="view_option_opened = false">视图</SunButtonMenuPopup>
             </SunPanelContainer>
         </SunPanel>
         <SunPanel size="small" :trap-focus="false">
@@ -59,7 +67,27 @@ import SunPanelContainer from '@/sundesign/panel/SunPanelContainer.vue';
 import SunPanelSeparator from '@/sundesign/panel/SunPanelSeparator.vue';
 import SunButton from '@/sundesign/button/SunButton.vue';
 import { Undo2, Redo2, Save } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { computed, ref, type Ref } from 'vue';
+
+const sys_option_ref = ref<InstanceType<typeof SunButtonMenuPopup> | undefined>();
+const file_option_ref = ref<InstanceType<typeof SunButtonMenuPopup> | undefined>();
+const edit_option_ref = ref<InstanceType<typeof SunButtonMenuPopup> | undefined>();
+const view_option_ref = ref<InstanceType<typeof SunButtonMenuPopup> | undefined>();
+
+const sys_option_opened = ref(false);
+const file_option_opened = ref(false);
+const edit_option_opened = ref(false);
+const view_option_opened = ref(false);
+
+const has_opened = computed(() => sys_option_opened.value || file_option_opened.value || edit_option_opened.value || view_option_opened.value);
+
+function toggle(target: InstanceType<typeof SunButtonMenuPopup> | undefined) {
+    if (!has_opened.value) return;
+    sys_option_ref.value?.toggle(sys_option_ref.value === target);
+    file_option_ref.value?.toggle(file_option_ref.value === target);
+    edit_option_ref.value?.toggle(edit_option_ref.value === target);
+    view_option_ref.value?.toggle(view_option_ref.value === target);
+}
 
 const system_options = ref([
     [

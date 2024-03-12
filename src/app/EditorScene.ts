@@ -22,8 +22,8 @@ import { StandardMaterialResource } from "../system/engine/resources/material_re
 import { ClassLoader } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
 import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
 import { MaterialOverrideResource } from "@/system/engine/resources/material_resources/MaterialResource";
-import { EditorRenderer3DPipeline } from "@/system/engine/renderer/renderer_3d/EditorRenderer3DPipeline";
-import { EditorRenderer3D } from "@/system/engine/renderer/renderer_3d/EditorRenderer3D";
+import { EditorRenderer3DPipeline } from "@/system/engine/renderer/renderer_3d/editor_renderer_3d/EditorRenderer3DPipeline";
+import { EditorRenderer3D } from "@/system/engine/renderer/renderer_3d/editor_renderer_3d/EditorRenderer3D";
 import { TranslateGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/TranslateGrabber3D";
 import { PointLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/PointLight3D";
 import { AmbientLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/AmbientLight3D";

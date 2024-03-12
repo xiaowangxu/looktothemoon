@@ -12,7 +12,6 @@
 
 <script setup lang="ts">
 
-import { CopySlash } from 'lucide-vue-next';
 import type { Rect } from '../SunDesignConstants';
 import SunPopupCover from './SunPopupCover.vue';
 import { computed, onBeforeUnmount, ref, toRef, watch } from 'vue';
@@ -71,9 +70,11 @@ const position_style = computed(() => {
 watch(toRef(props, 'checkPassiveClickOutside'), c => {
     if (c) {
         window.addEventListener('click', onWindowClick, { capture: true });
+        window.addEventListener('contextmenu', onWindowContextmenu, { capture: true });
     }
     else {
         window.removeEventListener('click', onWindowClick, { capture: true });
+        window.removeEventListener('contextmenu', onWindowContextmenu, { capture: true });
     }
 }, { immediate: true });
 
@@ -84,9 +85,17 @@ function onWindowClick(evt: MouseEvent) {
     }
 }
 
+function onWindowContextmenu(evt: MouseEvent) {
+    if (container_div_dom.value === null) return;
+    if (!evt.composedPath().includes(container_div_dom.value)) {
+        emits('coverContextmenu', evt);
+    }
+}
+
 onBeforeUnmount(() => {
     if (props.checkPassiveClickOutside) {
         window.removeEventListener('click', onWindowClick, { capture: true });
+        window.removeEventListener('contextmenu', onWindowContextmenu, { capture: true });
     }
 });
 

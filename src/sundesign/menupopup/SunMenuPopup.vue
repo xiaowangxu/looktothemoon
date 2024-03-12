@@ -89,6 +89,7 @@ const props = withDefaults(
         visible: true,
         preferedDirection: 0,
         stopEvents: true,
+        checkPassiveClickOutside: false,
         scrollableIndicators: true,
         scrollBarStateH: 'adaptive',
         scrollBarStateV: 'adaptive',

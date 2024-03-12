@@ -1,17 +1,17 @@
-import type { Viewport } from "../../nodes/Node";
-import { World3D } from "../../worlds/world3ds/World3D";
-import { RenderServerDevice } from "../../render_server/RenderServer";
-import { RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType } from "../../../sliverofstraw/RenderState";
-import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer } from "../../../sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
-import { Vector2 } from "../../../fivepebble/linear_algebra/Vector2";
-import { WebGL2RenderStateIntUniformSlot, WebGL2RenderStateUintUniformSlot } from "../../../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
-import { Ref } from "../../../utils/RefCounted";
-import type { WebGL2RenderStateTexture } from "../../../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
-import { type Config } from "../../ConfiguredObject";
+import type { Viewport } from "../../../nodes/Node";
+import { World3D } from "../../../worlds/world3ds/World3D";
+import { RenderServerDevice } from "../../../render_server/RenderServer";
+import { RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType } from "../../../../sliverofstraw/RenderState";
+import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer } from "../../../../sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
+import { Vector2 } from "../../../../fivepebble/linear_algebra/Vector2";
+import { WebGL2RenderStateIntUniformSlot, WebGL2RenderStateUintUniformSlot } from "../../../../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
+import { Ref } from "../../../../utils/RefCounted";
+import type { WebGL2RenderStateTexture } from "../../../../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
+import { type Config } from "../../../ConfiguredObject";
 import { Cacher } from "@/system/utils/Cacher";
-import { type RenderServerLightsData } from "../../render_server/RenderServerLightData";
-import { Renderer3D } from "./Renderer3D";
-import { Renderer3DQueue } from "./Renderer3DQueue";
+import { type RenderServerLightsData } from "../../../render_server/RenderServerLightData";
+import { Renderer3D } from "../Renderer3D";
+import { Renderer3DQueue } from "../Renderer3DQueue";
 import { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
@@ -296,7 +296,7 @@ export class EditorRenderer3D extends Renderer3D {
         for (const light of world_3d.lights) {
             if (light_idx >= lights_data.max_light_count) break;
             if (!light.visible) continue;
-            light_idx = light.fill_LightData(lights_data, light_idx, 0);
+            light_idx = light.fill_LightData(lights_data, light_idx);
             light_idx++;
         }
         if (light_idx < lights_data.max_light_count) {

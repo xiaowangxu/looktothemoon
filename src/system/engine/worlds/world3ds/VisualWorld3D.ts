@@ -432,11 +432,11 @@ export class VisualWorld3DLight extends WorldObject {
 
     static readonly #color: Vector3 = new Vector3();
 
-    public fill_LightData(lights_data: RenderServerLightsData, idx: number, lid: number): number {
+    public fill_LightData(lights_data: RenderServerLightsData, idx: number): number {
         if (idx >= lights_data.max_light_count) return idx;
         const color = VisualWorld3DLight.#color;
         color.mult_Number(this.color, this.intensity);
-        lights_data.set_Light(idx, this.type, lid, this.position, this.direction, color, this.attenuation, this.layer, this.param_0, this.param_1, this.param_2, this.param_3, this.shadow_bias, this.shadow_normal_bias, this.shadow_opacity, undefined);
+        lights_data.set_Light(idx, this.type, 0, this.position, this.direction, color, this.attenuation, this.layer, this.param_0, this.param_1, this.param_2, this.param_3, this.shadow_bias, this.shadow_normal_bias, this.shadow_opacity, 0);
         return idx;
     }
 
@@ -485,6 +485,7 @@ export class VisualWorld3D extends ConfiguredObject {
 
     private update_Sky(scene_tree: SceneTree) {
         if (this.sky_changed) {
+            this.sky_changed = false;
             this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false);
             this.render_server.render_state.set_ViewportProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
             this.render_server.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);

@@ -8,7 +8,8 @@
         </slot>
     </SunButton>
     <SunMenuPopup ref="menupopup_ref" :mode="mode" :visible="opened" :size="size" :options="options"
-        :preferedDirection="preferedDirection" :getPopupRect="getPopupPanelRect" @clickOutside="onCoverClick"
+        :preferedDirection="preferedDirection" :getPopupRect="getPopupPanelRect" :stop-events="stopEvents"
+        :check-passive-click-outside="checkPassiveClickOutside" @clickOutside="onCoverClick"
         @trap-focus-out="onTrapFocusOut" @click="onClick">
     </SunMenuPopup>
 </template>
@@ -34,6 +35,8 @@ const props = withDefaults(
         preferedDirection?: PreferedDirection,
         minWidth?: number,
         maxWidth?: number,
+        stopEvents?: boolean,
+        checkPassiveClickOutside?: boolean,
         // button
         size?: Size,
         flat?: boolean,
@@ -50,6 +53,8 @@ const props = withDefaults(
     {
         minWidth: 180,
         maxWidth: 460,
+        stopEvents: true,
+        checkPassiveClickOutside: false,
         mode: 'instance',
         preferedDirection: 0,
         openActive: true,

@@ -12,6 +12,7 @@
         :get-popup-rect="getPopupPanelRect" @cover-click="onCoverClick" @cover-contextmenu="onCoverClick"
         :measureIgnoreMaxHeight="measureIgnoreMaxHeight" :measureIgnoreMinHeight="measureIgnoreMinHeight"
         :measureIgnoreMaxWidth="measureIgnoreMaxWidth" :measureIgnoreMinWidth="measureIgnoreMinWidth"
+        :stop-events="stopEvents" :check-passive-click-outside="checkPassiveClickOutside"
         @before-measure="emits('beforeMeasure')" @after-measure="emits('afterMeasure')"
         @trap-focus-out="onTrapFocusOut">
         <slot name="popup" :opened="opened" :toggle="toggle" />
@@ -46,6 +47,8 @@ const props = withDefaults(
         colorScheme?: ColorScheme,
         squared?: boolean,
         align?: Align,
+        stopEvents?: boolean,
+        checkPassiveClickOutside?: boolean,
         // panel
         openActive?: boolean,
         panelStyle?: string,
@@ -66,6 +69,8 @@ const props = withDefaults(
     {
         mode: 'instance',
         openActive: true,
+        stopEvents: true,
+        checkPassiveClickOutside: false,
         measureIgnoreMaxHeight: false,
         measureIgnoreMinHeight: false,
         measureIgnoreMaxWidth: false,
