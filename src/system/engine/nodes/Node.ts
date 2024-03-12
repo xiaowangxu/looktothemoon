@@ -23,6 +23,8 @@ import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Line3 } from "@/system/fivepebble/geometries/Line3";
 import { MouseMotionInputEvent } from "../inputs/events/mouse_events/MouseMotionInputEvent";
+import type { Color } from "@/system/fivepebble/graphics/Color";
+import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 
 export enum NodeNotification {
     ExitingTree,
@@ -439,6 +441,21 @@ export class Viewport extends Node {
     }
 
     public transparent: boolean = false;
+
+    public use_sky: boolean = false;
+
+    private readonly _background_color: Color = Vector4.create(0.9, 0.9, 0.9, 1);
+    public get background_color(): Color {
+        return this._background_color.clone();
+    }
+    public get_BackgroundColor(target: Color) {
+        return target.copy(this._background_color);
+    }
+    public set background_color(color: Color) {
+        if (!this._background_color.equal(color)) {
+            this._background_color.copy(color);
+        }
+    }
 
     public color_map: boolean = true;
 

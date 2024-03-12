@@ -67,7 +67,7 @@ export const ContextMenu: Story = {
                             uid: 'test',
                             render: (props,) => {
                                 return <>
-                                    <SunButtonLike flat noPressedColor hover={props.hovered} onMouseenter={(evt: Event) => props.hover(props.uid, undefined, evt.target!, undefined)}>
+                                    <SunButtonLike flat noPressedColor hover={props.hovered} onMouseenter={(evt: Event) => props.hover(props.item.uid, undefined, evt.target!, undefined)}>
                                         <Search />
                                         <input class="__sun-design__" style="flex: 1; border: none; padding: 0; background-color: transparent; outline: none; width: 0px;" placeholder="查找" />
                                     </SunButtonLike>
@@ -142,7 +142,7 @@ export const ContextMenu: Story = {
                             uid: 'test',
                             render: (props,) => {
                                 return <>
-                                    <SunButtonLike flat noPressedColor hover={props.hovered} onMouseenter={(evt: Event) => props.hover(props.uid, [[
+                                    <SunButtonLike flat noPressedColor hover={props.hovered} onMouseenter={(evt: Event) => props.hover(props.item.uid, [[
                                         {
                                             label: '测试',
                                             icon: 'Globe',

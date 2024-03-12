@@ -95,9 +95,9 @@ export class RenderServerShader extends RenderDeviceObject<WebGL2RenderState>
 
     protected setup_ProgramUniforms(program: WebGL2RenderStateProgram, uniforms: UniformInitSet<WebGL2RenderState>): WebGL2RenderDeviceUniformSet {
         // WorldUniforms
-        const location = this.render_state.get_ProgramUniformBlockLocation(program, RenderServerDevice.WorldUniformsName);
-        if (location >= 0) {
-            this.render_state.set_ProgramUniformBuffer(program, location, RenderServerDevice.WorldUniformsUnit);
+        const world_location = this.render_state.get_ProgramUniformBlockLocation(program, RenderServerDevice.WorldUniformsName);
+        if (world_location >= 0) {
+            this.render_state.set_ProgramUniformBuffer(program, world_location, RenderServerDevice.WorldUniformsUnit);
         }
         const uniform = new WebGL2RenderDeviceUniformSet();
         for (const [name, val] of Object.entries(uniforms)) {

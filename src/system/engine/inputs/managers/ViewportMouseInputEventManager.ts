@@ -10,15 +10,13 @@ export class ViewportMouseInputEventManager {
 
     static #tmp_vector2_0 = Vector2.new;
     static #tmp_vector2_1 = Vector2.new;
+    static #tmp_vector2_2 = Vector2.new;
 
     private readonly viewport: Viewport;
 
     private get config() { return this.viewport.config; }
 
     private get canvas() { return this.viewport.canvas; }
-    private get canvas_size() {
-        return this.viewport.size;
-    }
 
     private _is_mouse_inside: boolean = false;
     private set is_mouse_inside(inside: boolean) {
@@ -34,8 +32,8 @@ export class ViewportMouseInputEventManager {
     }
     public get is_mouse_inside() { return this._is_mouse_inside; }
 
-    private _mouse_position: Vector2 = Vector2.new;
-    private _mouse_position_normalized: Vector2 = Vector2.new;
+    private _mouse_position: Vector2 = Vector2.create(0, 0);
+    private _mouse_position_normalized: Vector2 = Vector2.create(-1, -1);
 
     public get mouse_position() { return this._mouse_position.clone(); }
     public get_MousePosition(target: Vector2) { return target.copy(this._mouse_position); }
@@ -91,12 +89,12 @@ export class ViewportMouseInputEventManager {
     }
 
     private update_MousePosition(event: MouseEvent) {
-        const { x, y } = this.canvas_size;
+        const { x, y } = this.viewport.get_Size(ViewportMouseInputEventManager.#tmp_vector2_2);
         const { offsetX, offsetY } = event;
         this._mouse_position.set(offsetX, offsetY);
         this._mouse_position_normalized.set(
-            x === 0 ? 0 : (offsetX / x * 2 - 1),
-            y === 0 ? 0 : (1 - offsetY / y * 2)
+            x === 0 ? -1 : (offsetX / x * 2 - 1),
+            y === 0 ? -1 : (1 - offsetY / y * 2)
         );
     }
 

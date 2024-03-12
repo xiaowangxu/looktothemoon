@@ -13,6 +13,8 @@ import { type RenderServerLightsData } from "../../render_server/RenderServerLig
 import { Renderer3D } from "./Renderer3D";
 import { Renderer3DQueue } from "./Renderer3DQueue";
 import { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
+import { Color } from "@/system/fivepebble/graphics/Color";
+import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 
 // #region quad surface
 
@@ -255,6 +257,7 @@ export class EditorRenderer3D extends Renderer3D {
     }
 
     static readonly #size: Vector2 = Vector2.new;
+    static readonly #bg_color: Color = Vector4.new;
     static readonly #frustum: Frustum3 = Frustum3.new;
 
     public render(world: World3D, viewport: Viewport, once: boolean): void {
@@ -280,7 +283,7 @@ export class EditorRenderer3D extends Renderer3D {
         size.set(width, height);
 
         this.render_server.set_WorldUniforms(cam_world, cam_projection, cam_is_orthogonal, width, height, time);
-        this.render_server.set_EnvironmentUniforms();
+        this.render_server.set_EnvironmentUniforms(viewport.get_BackgroundColor(EditorRenderer3D.#bg_color), viewport.use_sky);
 
         const world_3d = world.visual_world;
         const sky_texture = world_3d.sky_texture.expect;

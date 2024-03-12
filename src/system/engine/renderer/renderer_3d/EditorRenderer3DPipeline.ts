@@ -382,12 +382,12 @@ uniform sampler2D sky;
 ${RenderServerDevice.FrameOutputBufferCode}
 
 void main() {
-	  vec4 dir = mat4(mat3(camera_world)) * inverse(camera_projection) * vec4((v_uv * 2.0 - 1.0), 1.0, 1.0);
-	  vec3 R = normalize(dir.xyz);
-	  float theta = atan(R.z, R.x);
-	  float gamma = acos(R.y);
-	  // o_color = texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
-    o_color = vec4(0.95, 0.95, 0.95, 1.0);
+    vec4 dir = mat4(mat3(camera_world)) * inverse(camera_projection) * vec4((v_uv * 2.0 - 1.0), 1.0, 1.0);
+    vec3 R = normalize(dir.xyz);
+    float theta = atan(R.z, R.x);
+    float gamma = acos(R.y);
+    vec4 sky_color = texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
+    o_color = mix(background_color, sky_color, float(use_sky));
     o_normal = vec4(0.0, 0.0, 0.0, 1.0);
 }
 `;
@@ -400,7 +400,7 @@ const SkyDomeProgram = new Cacher((config: Config) => {
     const uniform_sky_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, skydome_program, uniform_sky_location!, RenderServerDevice.SkyTextureUnit);
     uniform_sky_slot.commit();
 
-    return skydome_program;
+    return new Ref(skydome_program);
 });
 
 // #endregion
@@ -609,7 +609,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
     private oit_screen_quad_solid_program = OiTPorgramUniform.get(this.config).oit_program;
     private oit_screen_quad_solid_colormap_uniform_slot = OiTPorgramUniform.get(this.config).uniform_oit_colormap_slot;
 
-    private sky_quad_solid_program = SkyDomeProgram.get(this.config);
+    private sky_quad_solid_program = SkyDomeProgram.get(this.config).expect;
 
     protected resize_Internal(): void {
         this.resize_Result();
