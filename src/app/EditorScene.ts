@@ -48,7 +48,7 @@ import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { GridGeometryResource, WireframeBoxGeometryResource } from "@/system/engine/resources/geometry_resources/HelperGeometryResource";
 import { PickingArea3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingArea3D";
-import { PickingBoxResource, PickingPointResource, PickingPolyLineResource, PickingSphereResource } from "@/system/engine/resources/picking_shape_resources/PickingShapeResource";
+import { PickingBoxResource, PickingBvh3Resource, PickingPointResource, PickingPolyLineResource, PickingSphereResource } from "@/system/engine/resources/picking_shape_resources/PickingShapeResource";
 import { PickingShape3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingShape3D";
 import { PointGrabber3D } from "../system/engine/nodes/node3ds/gizmo3ds/grabber3ds/PointGrabber3D";
 import { Line3 } from "@/system/fivepebble/geometries/Line3";
@@ -365,6 +365,18 @@ export function createEditor() {
         mesh.local_scale = Vector3.create(100, 100, 100);
         mesh.local_position = Vector3.create(-500, -100, 250);
         World.add_Child(mesh);
+
+        const area = new PickingArea3D(DefaultConfig);
+        const shape = new PickingBvh3Resource(DefaultConfig);
+        shape.bvh.build(huli_geo.get_TriFaces()!);
+        const s = new PickingShape3D(DefaultConfig);
+        area.add_Child(s);
+        s.shape = shape;
+        mesh.add_Child(area);
+        area.signal_mouse_moved.connect((event, result) => {
+            line_grabber.local_position = result.position;
+            line_grabber.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), result.normal));
+        });
     });
 
     // bvh
