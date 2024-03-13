@@ -139,11 +139,11 @@ class SunHoverMenuBase<D extends Record<string, unknown>, T extends Component> {
         };
     }
 
-    protected onMouseenter(evt: MouseEvent) {
+    protected onMouseenter(evt: Event) {
         this.close_timer?.();
         this.close_timer = undefined;
         if (this.open_timer === undefined && this.vue === undefined) {
-            this.onMousemove(evt);
+            if (evt instanceof MouseEvent) this.onMousemove(evt);
             if (this.option.syncGroup && this.group !== undefined && hasSunHoverMenuGroup(this.group)) {
                 this.open();
             }
@@ -158,7 +158,7 @@ class SunHoverMenuBase<D extends Record<string, unknown>, T extends Component> {
         this.mouse_position.y = evt.clientY;
     }
 
-    protected onMouseleave(evt: MouseEvent) {
+    protected onMouseleave(evt: Event) {
         this.open_timer?.();
         this.open_timer = undefined;
         if (this.close_timer === undefined) {
@@ -188,6 +188,10 @@ class SunHoverMenuBase<D extends Record<string, unknown>, T extends Component> {
     }
 
     public close() {
+        this.open_timer?.();
+        this.open_timer = undefined;
+        this.close_timer?.();
+        this.close_timer = undefined;
         if (this.vue === undefined) return;
         this.vue?.unmount();
         this.vue = undefined;
@@ -195,10 +199,6 @@ class SunHoverMenuBase<D extends Record<string, unknown>, T extends Component> {
             document.body.removeChild(this.root);
             this.root = undefined;
         }
-        this.open_timer?.();
-        this.open_timer = undefined;
-        this.close_timer?.();
-        this.close_timer = undefined;
         removeSunHoverMenuGroup(this);
     }
 }
@@ -250,6 +250,7 @@ export default class SunHoverMenu<D extends Record<string, unknown>, T extends C
         super(content, binding, _get_popup_rect, panel_props, option);
         this.target = target;
         this.target.addEventListener('mouseenter', this._onMouseenter);
+        // this.target.addEventListener('focusin', this._onMouseenter);
         this.target.addEventListener('mousemove', this._onMousemove);
         this.target.addEventListener('mouseleave', this._onMouseleave);
         this.target.addEventListener('mousedown', this._onClose);

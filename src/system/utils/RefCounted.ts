@@ -4,11 +4,16 @@ export interface RefCounted {
     unref(): void;
 }
 
-export type ToRefed<T> = T extends RefCounted ? Ref<T> : T;
+export type Refed<T> = T extends RefCounted ? Ref<T> : T;
+export type Unrefed<T> = T extends Ref<infer V> ? V : T;
 
-export function unref<V, T extends RefCounted>(item: V | Ref<T>) {
+export function ref<V extends RefCounted>(item: V): Ref<V> {
+    return new Ref<V>(item);
+}
+
+export function unref<V>(item: V extends RefCounted ? Ref<V> : V): V {
     if (item instanceof Ref) return item.expect;
-    return item;
+    return item as V;
 }
 
 export class Ref<T extends RefCounted> {
@@ -18,11 +23,11 @@ export class Ref<T extends RefCounted> {
     public set value(item: T | undefined) {
         if (this.ref === item) return;
         if (this.ref !== undefined) {
-            this.ref.unref();
+            this._unref(this.ref);
         }
         this.ref = item;
         if (this.ref !== undefined) {
-            this.ref.ref();
+            this._ref(this.ref);
         }
     }
 
@@ -35,6 +40,14 @@ export class Ref<T extends RefCounted> {
 
     constructor(item: T | undefined = undefined) {
         this.value = item;
+    }
+
+    protected _unref(target: RefCounted) {
+        target.unref();
+    }
+
+    protected _ref(target: RefCounted) {
+        target.ref();
     }
 
     public borrow() {
