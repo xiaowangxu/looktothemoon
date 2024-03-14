@@ -82,6 +82,8 @@ const DRenderPipeline = new Cacher((config: Config) => {
     return new Ref(new EditorRenderer3DPipeline(config));
 });
 
+const bg_color = Color.create(0.9, 0.9, 0.9);
+
 export function createEditor() {
     const render_server_canvas = document.getElementById('render-server-canvas') as HTMLCanvasElement;
     const DefaultConfig: Config = DConfig.get(render_server_canvas);
@@ -98,6 +100,7 @@ export function createEditor() {
     const pipeline = DRenderPipeline.get(DefaultConfig).expect;
     renderer.render_pipeline = pipeline;
     EditorViewport.renderer_3d = renderer;
+    EditorViewport.background_color = bg_color;
     // EditorViewport.transparent = true;
     EditorViewportContainer.add_Child(EditorViewport);
     // camera
@@ -114,6 +117,7 @@ export function createEditor() {
     renderer0.render_pipeline = pipeline0;
     EditorViewport0.renderer_3d = renderer0;
     // EditorViewport0.transparent = true;
+    EditorViewport0.background_color = bg_color;
     EditorViewportContainer0.add_Child(EditorViewport0);
     const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
     EditorViewport0.add_Child(EditorCamera0);
@@ -127,6 +131,7 @@ export function createEditor() {
     renderer1.render_pipeline = pipeline1;
     EditorViewport1.renderer_3d = renderer1;
     // EditorViewport1.transparent = true;
+    EditorViewport1.background_color = bg_color;
     EditorViewportContainer1.add_Child(EditorViewport1);
     const EditorCamera1 = new EditorOrbitCamera3D(DefaultConfig);
     EditorViewport1.add_Child(EditorCamera1);

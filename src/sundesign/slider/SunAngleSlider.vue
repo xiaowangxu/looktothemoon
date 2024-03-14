@@ -1,5 +1,6 @@
 <template>
-    <SunPanel vertical class="__sun-design-angleedit-panel__" @mousedown.self="onWheelMouseDown" :trap-focus="false">
+    <SunPanel vertical class="__sun-design-angleedit-panel__" :class="{ disabled: disabled }" :drop-shadow="dropShadow"
+        @mousedown.self="onWheelMouseDown" :trap-focus="false">
         <div ref="wheel_ref" class="__sun-design-angleedit-wheel__">
             <div class="__sun-design-angleedit-content-tick__ th0"></div>
             <div class="__sun-design-angleedit-content-tick__ th1"></div>
@@ -18,9 +19,9 @@
             </div>
         </div>
         <button class="__sun-design__ colored bordered __sun-design-angleedit-content-nob__"
-            :style="{ '--Degree': `${display_deg}deg` }" @mousedown="onNobMouseDown" @keydown.arrow-left="decrease"
-            @keydown.arrow-right="increase" @keydown.arrow-up="increase" @keydown.arrow-down="decrease"
-            :disabled="disabled"></button>
+            :class="{ 'drop-shadow': dropShadow }" :style="{ '--Degree': `${display_deg}deg` }"
+            @mousedown="onNobMouseDown" @keydown.arrow-left="decrease" @keydown.arrow-right="increase"
+            @keydown.arrow-up="increase" @keydown.arrow-down="decrease" :disabled="disabled"></button>
     </SunPanel>
 </template>
 
@@ -34,6 +35,7 @@ import { useInputModel } from '../SunDesignConstants';
 // props
 const props = withDefaults(
     defineProps<{
+        dropShadow?: boolean,
         disabled?: boolean,
         step?: number,
         min?: number,
@@ -44,6 +46,7 @@ const props = withDefaults(
         modelModifiers?: Record<string, boolean>,
     }>(),
     {
+        dropShadow: false,
         disabled: false,
         step: 0,
         valueSnapBase: 0,
@@ -223,6 +226,9 @@ nob-width = 3px
     overflow: visible !important
     position: relative
     padding: panel-padding
+    background-color: var(--attachment-color) !important
+    &.disabled
+        background-color: var(--attachment-color-disabled) !important
 
 .__sun-design-angleedit-wheel__
     width: 100%
@@ -242,9 +248,9 @@ nob-width = 3px
     left: 'calc(50% + (100% - %s) / 2 * cos(var(--Degree)) - %s)' % (wheel-width nob-size / 2)
     top: 'calc(50% + (100% - %s) / 2 * sin(var(--Degree)) - %s)' % (wheel-width nob-size / 2)
     border: solid-border
-    background-color: var(--attachment-color)
     outline: none
-    box-shadow: panel-drop-shadow
+    &.drop-shadow
+        box-shadow: panel-drop-shadow
 
 .__sun-design-angleedit-content-tick__
     position: absolute
@@ -273,7 +279,9 @@ nob-width = 3px
 .__sun-design-angleedit-content-mask__
     position: absolute
     inset: 8px
-    background-color: white
+    background-color: var(--attachment-color)
+    .__sun-design-angleedit-panel__.disabled > .__sun-design-angleedit-wheel__ > &
+        background-color: var(--attachment-color-disabled)
     border-radius: 50%
     display: flex
     align-items: center

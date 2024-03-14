@@ -32,7 +32,8 @@
                 style="position: absolute; inset: 0;" :nob-size="14" :expand-indicator="false" :first-snap="25"
                 flip-direction :initial-size="280" :max="-80" initial-collapse="second">
                 <template #nob>
-                    <div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
+                    <div
+                        style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
                         <button class="editor-container-nob" style="width: 4px; height: clamp(30px, 6%, 50px);">
                         </button>
                     </div>
@@ -64,8 +65,9 @@
 
                 </template>
                 <template #second>
-                    <SunPanel :trap-focus="false"
-                        style="width: max(150px, calc(100% - 14px)); position: absolute; left: 0px; margin: 14px 0px; height: calc(100% - 28px);">
+                    <SunPanel vertical :trap-focus="false"
+                        style="width: max(200px, calc(100% - 14px)); position: absolute; left: 0px; margin: 14px 0px; height: calc(100% - 28px);">
+                        <EditorInspector />
                     </SunPanel>
                 </template>
             </SunPanelResizeContainerRemainNob>
@@ -82,6 +84,7 @@ import EditorMenuBar from './EditorMenuBar.vue';
 import EditorOutline from './EditorOutline.vue';
 import EditorFileSystem from './EditorFileSystem.vue';
 import EditorCameraControl from './EditorCameraControl.vue';
+import EditorInspector from './EditorInspector.vue';
 
 </script>
 
