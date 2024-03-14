@@ -1,9 +1,9 @@
 <template>
     <SunButtonPopup ref="buttonpopup_ref" class="__sun-design-color-picker-button__ __sun-design-color-button__"
-        :style="{ '--Color': color_str, '--PlainColor': plain_color_str }" v-bind="$attrs" :size="size" popup-size="normal"
-        :flat="flat" :borderMask="borderMask" :squared="squared" :disabled="disabled" drop-shadow mode="instance" vertical
-        content-style="width: 100%; min-width: 180px; max-width: 180px;" :getPopupRect="getPopupRect" scrollable-indicators
-        @opened="onOpened" @closed="onClosed" :title="color_str">
+        :style="{ '--Color': color_str, '--PlainColor': plain_color_str }" v-bind="$attrs" :size="size"
+        popup-size="normal" :flat="flat" :borderMask="borderMask" :squared="squared" :disabled="disabled" drop-shadow
+        mode="instance" vertical content-style="width: 100%; min-width: 180px; max-width: 180px;"
+        :getPopupRect="getPopupRect" scrollable-indicators @opened="onOpened" @closed="onClosed" :title="color_str">
         <template #popup>
 
             <!-- Previewer -->
@@ -36,11 +36,11 @@
                                 <template #closed>
                                     <MoreVertical />
                                 </template>
-                            </SunSelect> -->
+</SunSelect> -->
                             <div class="__sun-design-color-picker-wheel-cover__" />
                             <button class="__sun-design-color-picker-hue-nob__" @mousedown="onHueNobMouseDown"
                                 @keydown.arrow-left="wheel_deg -= 1" @keydown.arrow-right="wheel_deg += 1"
-                                @keydown.arrow-up="wheel_deg -= 1" @keydown.arrow-down="wheel_deg += 1"></button>
+                                @keydown.arrow-up="wheel_deg += 1" @keydown.arrow-down="wheel_deg -= 1"></button>
                             <div ref="shade_ref" class="__sun-design-color-picker-field__" :data-size="size"
                                 @mousedown.self="onShadeMouseDown">
                                 <button class="__sun-design-color-picker-shade-nob__" @mousedown="onShadeNobMouseDown"
@@ -61,7 +61,8 @@
                     <SunPanelContainer gap no-padding vertical style="flex: 1;">
                         <SunControlGroup>
                             <SunControlGroupRow>
-                                <SunNumberEdit v-model="input_r" v-bind="edit_props_r" :drag-factor="2" style="flex: 1;">
+                                <SunNumberEdit v-model="input_r" v-bind="edit_props_r" :drag-factor="2"
+                                    style="flex: 1;">
                                     <template #suffix> {{ edit_props_r.suffix }} </template>
                                 </SunNumberEdit>
                             </SunControlGroupRow>
@@ -72,7 +73,8 @@
                                 </SunNumberEdit>
                             </SunControlGroupRow>
                             <SunControlGroupRow>
-                                <SunNumberEdit v-model="input_b" v-bind="edit_props_b" :drag-factor="2" style="flex: 1;">
+                                <SunNumberEdit v-model="input_b" v-bind="edit_props_b" :drag-factor="2"
+                                    style="flex: 1;">
                                     <template #suffix> {{ edit_props_b.suffix }} </template>
                                 </SunNumberEdit>
                             </SunControlGroupRow>
@@ -100,7 +102,8 @@
                     <SunControlGroupRow>
                         <SunLineEdit v-model.lazy="color_edit_str" class="__sun-design-color-picker-lineedit__"
                             style="flex: 1;" />
-                        <SunSelect style="width: min-content; align-self: flex-end;" icon-only squared v-model="code_format"
+                        <SunSelect style="width: min-content; align-self: flex-end;" icon-only squared
+                            v-model="code_format"
                             :options="[[{ label: 'Hex', uid: 0 }, { label: 'Color String', uid: 1 }]]">
                             <template #closed>
                                 <Hash />
@@ -398,7 +401,8 @@ function onHueNobMouseDown(evt: MouseEvent) {
 }
 function onHueNobMouseMove(evt: MouseEvent) {
     const new_pos_x = evt.clientX - last_wheel_pos_x, new_pos_y = evt.clientY - last_wheel_pos_y;
-    const deg = Math.atan2(new_pos_y, new_pos_x) / Math.PI * 180;
+    let deg = Math.atan2(new_pos_y, new_pos_x) / Math.PI * 180;
+    if (evt.shiftKey) deg = Math.round(deg / 15) * 15;
     shade_hue.value = deg;
 }
 function onHueNobMouseUp(evt: MouseEvent) {
@@ -427,7 +431,8 @@ function onWheelClick(evt: MouseEvent) {
     const wheel_rect = wheel_ref.value.getBoundingClientRect();
     const wheel_center_x = wheel_rect.x + wheel_rect.width / 2, wheel_center_y = wheel_rect.y + wheel_rect.height / 2;
     const new_pos_x = evt.clientX - wheel_center_x, new_pos_y = evt.clientY - wheel_center_y;
-    const deg = Math.atan2(new_pos_y, new_pos_x) / Math.PI * 180;
+    let deg = Math.atan2(new_pos_y, new_pos_x) / Math.PI * 180;
+    if (evt.shiftKey) deg = Math.round(deg / 15) * 15;
     shade_hue.value = deg;
 }
 function removeWheelEvents() {
@@ -452,8 +457,12 @@ function onShadeNobMouseDown(evt: MouseEvent) {
 }
 function onShadeNobMouseMove(evt: MouseEvent) {
     const new_pos_x = evt.clientX - last_shade_x, new_pos_y = evt.clientY - last_shade_y;
-    const x = Math.min(1, Math.max(0, new_pos_x / last_shade_width));
-    const y = Math.min(1, Math.max(0, new_pos_y / last_shade_height));
+    let x = Math.min(1, Math.max(0, new_pos_x / last_shade_width));
+    let y = Math.min(1, Math.max(0, new_pos_y / last_shade_height));
+    if (evt.shiftKey) {
+        x = Math.round(x / 0.1) * 0.1;
+        y = Math.round(y / 0.1) * 0.1;
+    }
     shade_sat.value = x;
     shade_brit.value = y;
 }
@@ -482,8 +491,12 @@ function onShadeClick(evt: MouseEvent) {
     if (props.disabled || shade_ref.value === null) return;
     const shade_rect = shade_ref.value.getBoundingClientRect();
     const new_pos_x = evt.clientX - shade_rect.x, new_pos_y = evt.clientY - shade_rect.y;
-    const x = Math.min(1, Math.max(0, new_pos_x / shade_rect.width));
-    const y = Math.min(1, Math.max(0, new_pos_y / shade_rect.height));
+    let x = Math.min(1, Math.max(0, new_pos_x / shade_rect.width));
+    let y = Math.min(1, Math.max(0, new_pos_y / shade_rect.height));
+    if (evt.shiftKey) {
+        x = Math.round(x / 0.1) * 0.1;
+        y = Math.round(y / 0.1) * 0.1;
+    }
     shade_sat.value = x;
     shade_brit.value = y;
 }

@@ -2,12 +2,12 @@
     <div ref="div_ref" class="__sun-design__ __sun-design-panel__"
         :class="{ vertical, 'not-container': !container, 'drop-shadow': dropShadow, 'panel-bordered': !container }"
         :data-size="size">
-        <div v-if="trapFocus && !container" ref="div_focus_top_ref" class="__sun-design-panel-trapfocus__" tabindex="0"
+        <div v-if="should_trap_focus" ref="div_focus_top_ref" class="__sun-design-panel-trapfocus__" tabindex="0"
             @focus="onTrapFocusTopFocused" @keydown.tab.shift.prevent="focusLast">
         </div>
         <slot />
-        <div v-if="trapFocus && !container" ref="div_focus_bottom_ref" class="__sun-design-panel-trapfocus__" tabindex="0"
-            style="left: 50%;" @focus="onTrapFocusBottomFocused"></div>
+        <div v-if="should_trap_focus" ref="div_focus_bottom_ref" class="__sun-design-panel-trapfocus__"
+            tabindex="0" style="left: 50%;" @focus="onTrapFocusBottomFocused"></div>
     </div>
 </template>
 
@@ -15,7 +15,7 @@
 
 import '../SunDesignStyle.styl';
 import { type Size, getFocusables, TrapFocusOutEvent } from '../SunDesignConstants';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 // props
 const props = withDefaults(
@@ -31,7 +31,6 @@ const props = withDefaults(
         vertical: false,
         dropShadow: true,
         container: false,
-        trapFocus: true,
     }
 );
 
@@ -41,6 +40,7 @@ const emits = defineEmits<{
 }>();
 
 // datas
+const should_trap_focus = computed(() => props.trapFocus === undefined ? !props.container : props.trapFocus);
 const div_ref = ref<HTMLDivElement | null>(null);
 const div_focus_top_ref = ref<HTMLDivElement | null>(null);
 const div_focus_bottom_ref = ref<HTMLDivElement | null>(null);

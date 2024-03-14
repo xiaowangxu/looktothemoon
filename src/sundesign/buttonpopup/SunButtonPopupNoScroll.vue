@@ -5,27 +5,23 @@
         @keydown.tab="onFocusChange">
         <slot name="button" :opened="opened" :toggle="toggle" />
     </SunButton>
-    <SunMeasurePopupPanel ref="measurepopuppanel_ref" :mode="mode" :visible="opened" :style="panelStyle"
+    <SunMeasurePopupPanelNoScroll ref="measurepopuppanel_ref" :mode="mode" :visible="opened" :style="panelStyle"
         :size="popupSize ?? size" :content-style="contentStyle" :vertical="vertical" :dropShadow="dropShadow"
-        :container="container" :trap-focus="trapFocus" :scrollableIndicators="scrollableIndicators" :scrollBarStateH="scrollBarStateH"
-        :scrollBarStateV="scrollBarStateV" :scrollBarVisibility="scrollBarVisibility"
-        :get-popup-rect="getPopupPanelRect" @cover-click="onCoverClick" @cover-contextmenu="onCoverClick"
-        :measureIgnoreMaxHeight="measureIgnoreMaxHeight" :measureIgnoreMinHeight="measureIgnoreMinHeight"
-        :measureIgnoreMaxWidth="measureIgnoreMaxWidth" :measureIgnoreMinWidth="measureIgnoreMinWidth"
-        :stop-events="stopEvents" :check-passive-click-outside="checkPassiveClickOutside"
-        @before-measure="emits('beforeMeasure')" @after-measure="emits('afterMeasure')"
-        @trap-focus-out="onTrapFocusOut">
+        :container="container" :trap-focus="trapFocus" :get-popup-rect="getPopupPanelRect" @cover-click="onCoverClick"
+        @cover-contextmenu="onCoverClick" :measureIgnoreMaxHeight="measureIgnoreMaxHeight"
+        :measureIgnoreMinHeight="measureIgnoreMinHeight" :measureIgnoreMaxWidth="measureIgnoreMaxWidth"
+        :measureIgnoreMinWidth="measureIgnoreMinWidth" :stop-events="stopEvents"
+        :check-passive-click-outside="checkPassiveClickOutside" @before-measure="emits('beforeMeasure')"
+        @after-measure="emits('afterMeasure')" @trap-focus-out="onTrapFocusOut">
         <slot name="popup" :opened="opened" :toggle="toggle" />
-    </SunMeasurePopupPanel>
+    </SunMeasurePopupPanelNoScroll>
 </template>
 
 <script setup lang="ts">
 
 import '../SunDesignStyle.styl';
-import SunMeasurePopupPanel from '../measurepopuppanel/SunMeasurePopupPanel.vue';
+import SunMeasurePopupPanelNoScroll from '../measurepopuppanel/SunMeasurePopupPanelNoScroll.vue';
 import SunButton from '../button/SunButton.vue';
-import { type ScrollBarState } from '../scrollcontainer/SunScrollContainer.vue';
-import { type ScrollBarVisibility } from '../scrollcontainer/SunScrollBar.vue';
 import { type Size, type BorderMask, type ColorScheme, type Rect, type BoxSize, type PopupOpenMode, calcButtonPopupRect, TrapFocusOutEvent, Align } from '../SunDesignConstants';
 import { ref, watch, nextTick } from 'vue';
 
@@ -57,10 +53,6 @@ const props = withDefaults(
         container?: boolean,
         trapFocus?: boolean,
         contentStyle?: string,
-        scrollableIndicators?: boolean,
-        scrollBarStateH?: ScrollBarState,
-        scrollBarStateV?: ScrollBarState,
-        scrollBarVisibility?: ScrollBarVisibility,
         getPopupRect?: (buttonRect: Rect, contentMinSize: BoxSize, windowSize: BoxSize) => Rect,
         measureIgnoreMaxHeight?: boolean,
         measureIgnoreMinHeight?: boolean,
@@ -77,10 +69,6 @@ const props = withDefaults(
         measureIgnoreMinHeight: false,
         measureIgnoreMaxWidth: false,
         measureIgnoreMinWidth: false,
-        scrollableIndicators: true,
-        scrollBarStateH: 'adaptive',
-        scrollBarStateV: 'adaptive',
-        scrollBarVisibility: 'hover',
     }
 );
 
