@@ -556,13 +556,13 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         console.log("delete shader", shader.id);
     }
 
-    public create_Program(vert_shader: WebGL2RenderStateShader, frag_shader: WebGL2RenderStateShader, vert_attributes_locations?: { [key: string]: number }):
+    public create_Program(vert_shader: WebGL2RenderStateShader, frag_shader?: WebGL2RenderStateShader, vert_attributes_locations?: { [key: string]: number }):
         Result<WebGL2RenderStateProgram, Error> {
         const gl = this.gl;
         const program = gl.createProgram();
         if (program === null) return Result.Error(new Error('<WebGL2RenderState> create_Program: failed to create render state program'));
         gl.attachShader(program, vert_shader.shader);
-        gl.attachShader(program, frag_shader.shader);
+        if (frag_shader !== undefined) gl.attachShader(program, frag_shader.shader);
         if (vert_attributes_locations !== undefined) {
             for (const [attribute, location] of Object.entries(vert_attributes_locations)) {
                 gl.bindAttribLocation(program, location, attribute);

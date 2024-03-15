@@ -30,7 +30,7 @@ export class WebGL2RenderDeviceUniformSet {
     }
 
     public get_Uniform<T extends RenderStateUniformType>(name: string) {
-        return unref(this.uniforms.get(name)) as (RenderStateUniformSlotTypeMap<WebGL2RenderState, T> | undefined);
+        return this.uniforms.get(name)?.expect as (RenderStateUniformSlotTypeMap<WebGL2RenderState, T> | undefined);
     }
 
     public commit_Uniform(name: string) {

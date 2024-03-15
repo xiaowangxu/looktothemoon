@@ -126,7 +126,7 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     public abstract delete_Shader(shader: RenderStateShader<T>): void;
 
-    public abstract create_Program(vert_shader: RenderStateShader<T>, frag_shader: RenderStateShader<T>):
+    public abstract create_Program(vert_shader: RenderStateShader<T>, frag_shader?: RenderStateShader<T>):
         Result<RenderStateProgram<T>, Error>;
 
     public abstract delete_Program(program: RenderStateProgram<T>): void;
