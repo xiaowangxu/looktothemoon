@@ -543,6 +543,8 @@ export class PickingPolyLineResource extends PickingShape3DResource {
         }
     }
 
+    public distance_first: boolean = true;
+
     private _points: Vector3[] = [];
     public get points() { return this._points; }
     public set points(points: Vector3[]) {
@@ -642,24 +644,25 @@ export class PickingPolyLineResource extends PickingShape3DResource {
             const width = picking_point_world.distance_to(closest_point);
             const inside = width < this.line_width * 0.5;
             if (is_in_clip_space && inside) {
-                if (width > min_width + Epsilon) continue;
                 const l = _line.set(start, end);
                 line.get_ClosestParametersWithLine(l, p0, p1);
                 const point_on_line = l.get_Point(p1.value, closest_point);
                 const distance = line.start.distance_to(point_on_line);
-                if (width < min_width || distance < min_distance) {
-                    min_width = width;
-                    min_distance = distance;
-                    if (min_point === undefined) {
-                        min_point = {
-                            position: point_on_line.clone(),
-                            normal: l.get_Direction(Vector3.new),
-                        };
-                    }
-                    else {
-                        min_point.position.copy(point_on_line);
-                        l.get_Direction(min_point.normal);
-                    }
+                if (this.distance_first) {
+                    if (distance > min_distance + Epsilon) continue;
+                }
+                else if (width > min_width + Epsilon) continue;
+                min_width = width;
+                min_distance = distance;
+                if (min_point === undefined) {
+                    min_point = {
+                        position: point_on_line.clone(),
+                        normal: l.get_Direction(Vector3.new),
+                    };
+                }
+                else {
+                    min_point.position.copy(point_on_line);
+                    l.get_Direction(min_point.normal);
                 }
             }
         }
