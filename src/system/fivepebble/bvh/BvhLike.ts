@@ -12,4 +12,5 @@ export interface BvhShape<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLi
 export interface BvhLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
     build(shapes: BvhShape<Vec, Mat>[]): void;
     traverse(func: (aabb: AABB<Vec, Mat>) => boolean, max_depth: number): BvhShape<Vec, Mat>[];
+    traverse_Iterator(func: (aabb: AABB<Vec, Mat>) => boolean, max_depth: number): Iterator<BvhShape<Vec, Mat>>;
 }

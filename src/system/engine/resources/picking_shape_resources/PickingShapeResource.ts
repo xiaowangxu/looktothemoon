@@ -14,7 +14,7 @@ import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { Line3 } from "@/system/fivepebble/geometries/Line3";
 import { out } from "@/system/utils/Type";
 import { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
-import { Bvh3 } from "@/system/fivepebble/bvh/Bvh3";
+import { Bvh3, Bvh3Strategy } from "@/system/fivepebble/bvh/Bvh3";
 import type { Triangle3 } from "@/system/fivepebble/geometries/Triangle3";
 
 type RaycastResult3 = RaycastResult<Vector3, Matrix3>;
@@ -559,7 +559,7 @@ export class PickingPolyLineResource extends PickingShape3DResource {
             const line = Line3.create(this._points[i - 1], this._points[i]);
             lines.push(line);
         }
-        this.bvh.build(lines, 5);
+        this.bvh.build(lines, 5, Bvh3Strategy.Average);
     }
 
     private get_WorldSpaceHalfWidth(camera: Camera3, distance: number, size: number, resolution: Vector2) {
@@ -686,6 +686,7 @@ export class PickingPolyLineResource extends PickingShape3DResource {
         this.amount = this.get_WorldSpaceHalfWidth(camera, distance, this._line_width, resolution);
 
         const shapes = this.bvh.traverse(this.bvh_traverse) as Line3[];
+        if (shapes.length === 0) return undefined;
         return this.raycast_LinesScreenSpace(line_global, shapes, global_transform, camera, resolution);
     }
 

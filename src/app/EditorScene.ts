@@ -37,7 +37,7 @@ import { Ref } from "@/system/utils/RefCounted";
 import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
 import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType, MethodTween } from "@/system/engine/Tween";
 import { InfiniteLine3D } from "@/system/engine/nodes/node3ds/gizmo3ds/InfiniteLine3D";
-import { Bvh3 } from "@/system/fivepebble/bvh/Bvh3";
+import { Bvh3, Bvh3Strategy } from "@/system/fivepebble/bvh/Bvh3";
 import { Bvh3Visualization } from './nodes/Bvh3Visualization';
 
 import huli from 'res://huli.obj?url';
@@ -292,6 +292,19 @@ export function createEditor() {
         line_grabber.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), result.normal));
     });
 
+    const bvh_viz = new Bvh3Visualization(DefaultConfig);
+    bvh_viz.visualize_Bvh3(shape.bvh, 6);
+    let depth = 0;
+    bvh_viz.signal_input.connect((evt, prop) => {
+        if (!prop) {
+            if (evt instanceof KeyInputEvent && evt.pressed && evt.key === 'a' && !evt.echo) {
+                depth = (depth + 1) % 10;
+                bvh_viz.visualize_Bvh3(shape.bvh, depth);
+            }
+        }
+    });
+    MeshLine.add_Child(bvh_viz);
+
     const infinite_line_x = new InfiniteLine3D(DefaultConfig);
     const multi_line_material_x = new MultiLineMaterialResource(DefaultConfig);
     multi_line_material_x.color = Color.color8code(0xd82d4e33);
@@ -373,7 +386,7 @@ export function createEditor() {
 
         const area = new PickingArea3D(DefaultConfig);
         const shape = new PickingBvh3Resource(DefaultConfig);
-        shape.bvh.build(huli_geo.get_TriFaces()!);
+        shape.bvh.build(huli_geo.get_TriFaces()!, undefined, Bvh3Strategy.Center);
         const s = new PickingShape3D(DefaultConfig);
         area.add_Child(s);
         s.shape = shape;
@@ -382,34 +395,20 @@ export function createEditor() {
             line_grabber.local_position = result.position;
             line_grabber.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), result.normal));
         });
+
+        // const bvh_viz = new Bvh3Visualization(DefaultConfig);
+        // bvh_viz.visualize_Bvh3(shape.bvh, 6);
+        // let depth = 0;
+        // bvh_viz.signal_input.connect((evt, prop) => {
+        //     if (!prop) {
+        //         if (evt instanceof KeyInputEvent && evt.pressed && evt.key === 'a' && !evt.echo) {
+        //             depth = (depth + 1) % 10;
+        //             bvh_viz.visualize_Bvh3(shape.bvh, depth);
+        //         }
+        //     }
+        // });
+        // mesh.add_Child(bvh_viz);
     });
-
-    // bvh
-
-    const box = new TorusGeometryResource(DefaultConfig);
-    box.build();
-
-    const mesh_ = new MeshInstance3D(DefaultConfig);
-    mesh_.geometry = box;
-    mesh_.material = new NormalMaterialResource(DefaultConfig);
-    mesh_.top_level = true;
-    // World.add_Child(mesh_);
-    // const tris = box.get_TriFaces();
-    // console.log(tris);
-
-    const bvh_viz = new Bvh3Visualization(DefaultConfig);
-    bvh_viz.visualize_Bvh3(shape.bvh, 6);
-    // bvh_viz.top_level = true;
-    let depth = 0;
-    bvh_viz.signal_input.connect((evt, prop) => {
-        if (!prop) {
-            if (evt instanceof KeyInputEvent && evt.pressed && evt.key === 'a' && !evt.echo) {
-                depth = (depth + 1) % 10;
-                bvh_viz.visualize_Bvh3(shape.bvh, depth);
-            }
-        }
-    });
-    // MeshLine.add_Child(bvh_viz);
 
     const box_geo = new BoxGeometryResource(DefaultConfig);
     const box_mesh = new MeshInstance3D(DefaultConfig);
