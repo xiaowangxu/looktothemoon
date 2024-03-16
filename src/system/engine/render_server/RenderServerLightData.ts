@@ -110,7 +110,7 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
         if (type !== undefined || lid !== undefined) {
             const type_id = this.light_type_id[id];
             if (type === undefined) type = type_id & 0xffff;
-            if (lid === undefined) lid = type_id >> 16;
+            if (lid === undefined) lid = type_id >>> 16;
             this.light_type_id[id] = (lid << 16) | (type & 0xffff);
         }
         if (position !== undefined) {
