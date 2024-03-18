@@ -41,6 +41,15 @@ export class DirectionalLight3D extends LightInstance3D {
 
     protected on_RenderQueueChanged(): void { return; }
 
+    protected on_CastShadowChanged(): void {
+        if (this.light_rid !== undefined) {
+            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            if (visual_world !== undefined) {
+                visual_world.set_LightCastShadow(this.light_rid, this._cast_shadow);
+            }
+        }
+    }
+
     protected on_ShadowBiasChanged(): void {
         if (this.light_rid !== undefined) {
             const visual_world = this.get_Viewport()?.world_3d?.visual_world;
@@ -82,6 +91,7 @@ export class DirectionalLight3D extends LightInstance3D {
                         visual_world.set_LightShadowBias(this.light_rid, this._shadow_bias);
                         visual_world.set_LightShadowNormalBias(this.light_rid, this._shadow_normal_bias);
                         visual_world.set_LightShadowOpacity(this.light_rid, this._shadow_opacity);
+                        visual_world.set_LightCastShadow(this.light_rid, this._cast_shadow);
                     }
                 }
                 break;

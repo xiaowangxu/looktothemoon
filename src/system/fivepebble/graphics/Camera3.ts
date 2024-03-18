@@ -9,7 +9,7 @@ import { Frustum3 } from "./Frustum3";
 import { Euler } from "../linear_algebra/Euler";
 import type { Line3 } from "../geometries/Line3";
 
-export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
+export class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
 
     static readonly #tmp_matrix3_0: Matrix3 = Matrix3.new;
     static readonly #tmp_matrix4_0: Matrix4 = Matrix4.new;
@@ -19,6 +19,10 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
 
     protected _projection: Matrix4 = Matrix4.new;
     get projection() { return this._projection.clone(); }
+    set projection(proj: Matrix4) {
+        this._projection.copy(proj);
+        this.update_Frustum();
+    }
     public get_Projection(target: Matrix4) { return target.copy(this._projection); }
 
     protected _global_transform: Matrix4 = Matrix4.new;
@@ -28,7 +32,7 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
         const euler = Camera3.#tmp_euler_0;
         const matrix3 = Camera3.#tmp_matrix3_0;
         const vector3 = Camera3.#tmp_vector3_0;
-        transform.basis.decompose_RotationScale(euler, vector3);
+        transform.get_Basis(matrix3).decompose_RotationScale(euler, vector3);
         transform.get_Position(vector3);
         this._global_transform.set_BasisPosition(matrix3.set_Euler(euler), vector3);
         this._global_transform_inverse.inverse(this._global_transform);
@@ -45,7 +49,12 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     }
 
     protected update_Frustum() {
-        this._frustum.set_Projection(Camera3.#tmp_matrix4_0.compose(this._global_transform_inverse, this._projection));
+        this._frustum.set_Projection(this.get_GlobalProjection(Camera3.#tmp_matrix4_0));
+    }
+
+    public get global_projection() { return this.get_GlobalProjection(Matrix4.new); }
+    public get_GlobalProjection(target: Matrix4) {
+        return target.compose(this._global_transform_inverse, this._projection)
     }
 
     protected _mask: number = 0xffffffff;
@@ -57,7 +66,7 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     }
     get mask() { return this._mask; }
 
-    public abstract get is_orthogonal(): boolean;
+    public get is_orthogonal(): boolean {return false;};
 
     project_Point(point: Vector3, target: Vector2): Vector2 {
         const p = Camera3.#tmp_vector3_0;
@@ -66,16 +75,29 @@ export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
         return target.set(p.x, p.y);
     }
 
-    abstract unproject_Point(ndc: Vector2, depth: number | undefined, target: Vector3): Vector3;
-
-    abstract unproject_Normal(ndc: Vector2, target: Vector3): Vector3;
+    unproject_Point(ndc: Vector2, depth: number | undefined, target: Vector3): Vector3 {
+        throw new Error('not impl');
+    }
+    unproject_Normal(ndc: Vector2, target: Vector3): Vector3 {
+        throw new Error('not impl');
+    }
 
     project_Ray(ndc: Vector2, depth: number | undefined, target: Ray3): Ray3 {
         return target.set(this.unproject_Point(ndc, depth, Camera3.#tmp_vector3_0), this.unproject_Normal(ndc, Camera3.#tmp_vector3_1))
     }
-    abstract project_Line(ndc: Vector2, target: Line3): Line3;
+    project_Line(ndc: Vector2, target: Line3): Line3 {
+        throw new Error('not impl');
+    }
 
-    abstract clone(): Camera3;
+    clone(): Camera3 {
+        const cam = new Camera3();
+        cam._mask = this._mask;
+        cam._global_transform.copy(this._global_transform);
+        cam._global_transform_inverse.copy(this._global_transform_inverse);
+        cam._projection.copy(this._projection);
+        cam._frustum.copy(this._frustum);
+        return cam;
+    }
 }
 
 export class OrthographicCamera3 extends Camera3 {
@@ -166,7 +188,7 @@ export class OrthographicCamera3 extends Camera3 {
 
     clone(): OrthographicCamera3 {
         const orth = new OrthographicCamera3();
-        orth.mask = this.mask;
+        orth._mask = this._mask;
         orth._global_transform.copy(this._global_transform);
         orth._global_transform_inverse.copy(this._global_transform_inverse);
         orth._width = this.width;
@@ -175,6 +197,7 @@ export class OrthographicCamera3 extends Camera3 {
         orth._far = this.far;
         orth._zoom = this.zoom;
         orth._projection.copy(this._projection);
+        orth._frustum.copy(this._frustum);
         return orth;
     }
 }
@@ -259,7 +282,7 @@ export class PerspectiveCamera3 extends Camera3 {
 
     clone(): PerspectiveCamera3 {
         const persp = new PerspectiveCamera3();
-        persp.mask = this.mask;
+        persp._mask = this._mask;
         persp._global_transform.copy(this._global_transform);
         persp._global_transform_inverse.copy(this._global_transform_inverse);
         persp._fov = this.fov;
@@ -267,6 +290,7 @@ export class PerspectiveCamera3 extends Camera3 {
         persp._near = this.near;
         persp._far = this.far;
         persp._projection.copy(this._projection)
+        persp._frustum.copy(this._frustum);
         return persp;
     }
 }

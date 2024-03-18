@@ -34,6 +34,8 @@ export class AmbientLight3D extends LightInstance3D {
         }
     }
 
+    protected on_CastShadowChanged(): void { return; }
+
     protected on_AttenuationChanged(): void { return; }
 
     protected on_RenderQueueChanged(): void { return; }

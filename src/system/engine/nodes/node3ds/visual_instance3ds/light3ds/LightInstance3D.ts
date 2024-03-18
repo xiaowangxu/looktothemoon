@@ -34,6 +34,15 @@ export abstract class LightInstance3D extends VisualInstance3D {
         }
     }
 
+    protected _cast_shadow: boolean = false;
+    public get cast_shadow() { return this._cast_shadow; }
+    public set cast_shadow(cast: boolean) {
+        if (this._cast_shadow !== cast) {
+            this._cast_shadow = cast;
+            this.on_CastShadowChanged();
+        }
+    }
+
     protected _shadow_bias: number = 0.0001;
     public get shadow_bias() { return this._shadow_bias; }
     public set shadow_bias(shadow_bias: number) {
@@ -73,6 +82,10 @@ export abstract class LightInstance3D extends VisualInstance3D {
         throw new Error('abstract method');
     }
 
+    protected on_CastShadowChanged() {
+        throw new Error('abstract method');
+    }
+
     protected on_ShadowBiasChanged() {
         throw new Error('abstract method');
     }
@@ -83,17 +96,5 @@ export abstract class LightInstance3D extends VisualInstance3D {
 
     protected on_ShadowOpacityChanged() {
         throw new Error('abstract method');
-    }
-
-    // save / load
-
-    public dump(writer: ClassWriter): void {
-        super.dump(writer);
-        writer.property('color', this.color);
-    }
-
-    public load(reader: ClassReader): void {
-        super.load(reader);
-        this.color = reader.get<Vector3>('color') ?? new Vector3(1, 1, 1);
     }
 }

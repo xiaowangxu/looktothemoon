@@ -27,9 +27,9 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
     public readonly max_light_count;
 
     // lights data
-    private static LightParamCount = 20;
+    private static LightParamCount = 21;
     private readonly /*             */ lights_data: Uint32Array;
-    private readonly /*           */ light_type_id: Uint32Array;
+    private readonly /*              */ light_type: Uint32Array;
     private readonly /*             */ light_pos_x: Float32Array;
     private readonly /*             */ light_pos_y: Float32Array;
     private readonly /*             */ light_pos_z: Float32Array;
@@ -49,6 +49,7 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
     private readonly /**/ light_shadow_normal_bias: Float32Array;
     private readonly /*    */ light_shadow_opacity: Float32Array;
     private readonly /*       */ light_data_stride: Uint32Array;
+    private readonly /*         */ light_perserved: Uint32Array;
 
     constructor(render_server: RenderServerDevice, width: number, height: number) {
         super(render_server);
@@ -62,7 +63,7 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
         // data
         this.lights_data = new Uint32Array(max_light_count * RenderServerLightsData.LightParamCount);
         const light_layer_bytes = max_light_count * Uint32Array.BYTES_PER_ELEMENT;
-        /*           */this.light_type_id = new Uint32Array(this.lights_data.buffer, light_layer_bytes * 0, max_light_count);
+        /*              */this.light_type = new Uint32Array(this.lights_data.buffer, light_layer_bytes * 0, max_light_count);
         /*             */this.light_pos_x = new Float32Array(this.lights_data.buffer, light_layer_bytes * 1, max_light_count);
         /*             */this.light_pos_y = new Float32Array(this.lights_data.buffer, light_layer_bytes * 2, max_light_count);
         /*             */this.light_pos_z = new Float32Array(this.lights_data.buffer, light_layer_bytes * 3, max_light_count);
@@ -82,6 +83,7 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
         /**/this.light_shadow_normal_bias = new Float32Array(this.lights_data.buffer, light_layer_bytes * 17, max_light_count);
         /*    */this.light_shadow_opacity = new Float32Array(this.lights_data.buffer, light_layer_bytes * 18, max_light_count);
         /*       */this.light_data_stride = new Uint32Array(this.lights_data.buffer, light_layer_bytes * 19, max_light_count);
+        /*         */this.light_perserved = new Uint32Array(this.lights_data.buffer, light_layer_bytes * 20, max_light_count);
         this.light_attenuation.fill(2);
         this.light_mask.fill(0xffffffff);
     }
@@ -95,11 +97,11 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
     }
 
     public clear_Lights() {
-        this.light_type_id.fill(0);
+        this.light_type.fill(0);
     }
 
     public set_Light(id: number,
-        type?: RenderServerLightType, lid?: number,
+        type?: RenderServerLightType,
         position?: Vector3, direction?: Vector3, color?: Vector3, attenuation?: number,
         mask?: number,
         param_0?: number, param_1?: number, param_2?: number, param_3?: number,
@@ -107,11 +109,8 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
         data_stride?: number,
     ) {
         if (id < 0 || id >= this.max_light_count) return;
-        if (type !== undefined || lid !== undefined) {
-            const type_id = this.light_type_id[id];
-            if (type === undefined) type = type_id & 0xffff;
-            if (lid === undefined) lid = type_id >> 16;
-            this.light_type_id[id] = (lid << 16) | (type & 0xffff);
+        if (type !== undefined) {
+            this.light_type[id] = type;
         }
         if (position !== undefined) {
             this.light_pos_x[id] = position.x;
@@ -140,9 +139,9 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
         if (data_stride !== undefined)/*       */ this.light_data_stride[id] = Math.max(0, Math.floor(data_stride));
     }
 
-    public set_LightProjectionMatrixRegion(id: number, proj: Matrix4, min: Vector2, max: Vector2) {
+    public set_LightProjectionMatrixRegion(id: number, proj: Matrix4, min: Vector2, max: Vector2, layer: number) {
         if (id < 0 || id >= this.max_light_count) return;
-        this.light_type_id[id] = proj.n11;
+        this.light_type[id] = proj.n11;
         this.light_pos_x[id] = proj.n12;
         this.light_pos_y[id] = proj.n13;
         this.light_pos_z[id] = proj.n14;
@@ -162,6 +161,7 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
         this.light_shadow_normal_bias[id] = min.y;
         this.light_shadow_opacity[id] = max.x;
         this.light_data_stride[id] = max.y;
+        this.light_perserved[id] = layer;
     }
 
     public commit_AllLightsData() {

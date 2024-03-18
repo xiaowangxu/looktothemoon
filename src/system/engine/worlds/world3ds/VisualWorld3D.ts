@@ -23,7 +23,7 @@ import type { WebGL2RenderStateProgram } from "@/system/sliverofstraw/webgl2/web
 import { RenderServerLightType, RenderServerLightsData } from "../../render_server/RenderServerLightData";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
-import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
+import { Camera3 } from "@/system/fivepebble/graphics/Camera3";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 
 // #region sky
@@ -348,6 +348,7 @@ export class VisualWorld3DMesh extends WorldObject {
 }
 
 export class VisualWorld3DLight extends WorldObject {
+
     public type: RenderServerLightType = RenderServerLightType.SpotLight;
     public readonly position: Vector3 = new Vector3();
     public readonly direction: Vector3 = new Vector3(0, 0, -1);
@@ -360,9 +361,11 @@ export class VisualWorld3DLight extends WorldObject {
     public param_1: number = 0;
     public param_2: number = 0;
     public param_3: number = 0;
+    public cast_shadow: boolean = false;
     public shadow_bias: number = 0;
     public shadow_normal_bias: number = 0;
     public shadow_opacity: number = 0;
+    public shadows: Set<VisualWorld3DLightShadow> = new Set();
 
     constructor(config: Config, rid: Rid) {
         super(config, rid);
@@ -416,6 +419,20 @@ export class VisualWorld3DLight extends WorldObject {
         this.param_3 = val;
     }
 
+    public set_CastShadow(cast: boolean) {
+        this.cast_shadow = cast;
+    }
+
+    public add_Shadow(shadow: VisualWorld3DLightShadow) {
+        shadow.light = this;
+        this.shadows.add(shadow);
+    }
+
+    public remove_Shadow(shadow: VisualWorld3DLightShadow) {
+        shadow.light = undefined;
+        this.shadows.delete(shadow);
+    }
+
     public set_ShadowBias(bias: number) {
         this.shadow_bias = bias;
     }
@@ -436,8 +453,54 @@ export class VisualWorld3DLight extends WorldObject {
         if (idx >= lights_data.max_light_count) return idx;
         const color = VisualWorld3DLight.#color;
         color.mult_Number(this.color, this.intensity);
-        lights_data.set_Light(idx, this.type, 0, this.position, this.direction, color, this.attenuation, this.layer, this.param_0, this.param_1, this.param_2, this.param_3, this.shadow_bias, this.shadow_normal_bias, this.shadow_opacity, 0);
-        return idx;
+        const data_stride = this.cast_shadow ? 0 : this.shadows.size;
+        lights_data.set_Light(idx, this.type, this.position, this.direction, color, this.attenuation, this.layer, this.param_0, this.param_1, this.param_2, this.param_3, this.shadow_bias, this.shadow_normal_bias, this.shadow_opacity, data_stride);
+        if (data_stride > 0) {
+            let _idx = idx;
+            for (const shadow of this.shadows) {
+                shadow.fill_LightShadowData(lights_data, ++_idx);
+            }
+        }
+        return idx + data_stride;
+    }
+
+    public dispose(): void {
+        this.shadows.clear();
+    }
+}
+
+export enum LightShadowMapSize {
+    S128, S256, S512, S1024, S2048
+}
+
+export class VisualWorld3DLightShadow extends WorldObject {
+
+    public light: VisualWorld3DLight | undefined = undefined;
+    public readonly camera: Camera3 = new Camera3();
+    public readonly global_projection: Matrix4 = Matrix4.new;
+    public size: LightShadowMapSize = LightShadowMapSize.S512;
+
+    public rect_min: Vector2 = Vector2.create(0, 0);
+    public rect_max: Vector2 = Vector2.create(1, 1);
+    public rect_layer: number = 0;
+
+    public set_Projection(mat: Matrix4) {
+        this.camera.projection = mat;
+        this.update_GlobalProjection();
+    }
+
+    public set_GlobalTransform(mat: Matrix4) {
+        this.camera.global_transform = mat;
+        this.update_GlobalProjection();
+    }
+
+    protected update_GlobalProjection() {
+        this.camera.get_GlobalProjection(this.global_projection);
+    }
+
+    public fill_LightShadowData(lights_data: RenderServerLightsData, idx: number) {
+        if (idx >= lights_data.max_light_count) return;
+        lights_data.set_LightProjectionMatrixRegion(idx, this.global_projection, this.rect_min, this.rect_max, this.rect_layer);
     }
 
     public dispose(): void { }
@@ -446,11 +509,13 @@ export class VisualWorld3DLight extends WorldObject {
 export class VisualWorld3D extends ConfiguredObject {
     protected readonly meshes_map: Map<Rid, VisualWorld3DMesh> = new Map();
     protected readonly lights_map: Map<Rid, VisualWorld3DLight> = new Map();
+    protected readonly light_shadows_map: Map<Rid, VisualWorld3DLightShadow> = new Map();
 
     public get render_server() { return this.config.render_server; }
 
     public get meshes() { return this.meshes_map.values(); }
     public get lights() { return this.lights_map.values(); }
+    public get light_shadows() { return this.light_shadows_map.values(); }
 
     // signal
     public signal_before_render: SignalEmitter<() => void> = new SignalEmitter();
@@ -496,7 +561,8 @@ export class VisualWorld3D extends ConfiguredObject {
         }
     }
 
-    // Mesh
+
+    //#region Mesh
 
     public create_Mesh(): Rid {
         const rid = RID();
@@ -594,12 +660,14 @@ export class VisualWorld3D extends ConfiguredObject {
         }
     }
 
-    // Light
+    //#endregion
+
+    //#region Light
 
     public create_Light(): Rid {
         const rid = RID();
-        const mesh = new VisualWorld3DLight(this.config, rid);
-        this.lights_map.set(rid, mesh);
+        const light = new VisualWorld3DLight(this.config, rid);
+        this.lights_map.set(rid, light);
         return rid;
     }
 
@@ -715,6 +783,29 @@ export class VisualWorld3D extends ConfiguredObject {
         }
     }
 
+    public set_LightCastShadow(rid: Rid, cast: boolean) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_CastShadow(cast);
+        }
+    }
+
+    public add_LightShadow(rid: Rid, shadow: Rid) {
+        const instance = this.get_Light(rid);
+        const shadow_instance = this.get_LightShadow(shadow);
+        if (instance && shadow_instance && shadow_instance.light === undefined) {
+            instance.add_Shadow(shadow_instance);
+        }
+    }
+
+    public remove_LightShadow(rid: Rid, shadow: Rid) {
+        const instance = this.get_Light(rid);
+        const shadow_instance = this.get_LightShadow(shadow);
+        if (instance && shadow_instance && shadow_instance.light === instance) {
+            instance.remove_Shadow(shadow_instance);
+        }
+    }
+
     public set_LightShadowNormalBias(rid: Rid, bias: number) {
         const instance = this.get_Light(rid);
         if (instance) {
@@ -729,12 +820,54 @@ export class VisualWorld3D extends ConfiguredObject {
         }
     }
 
+    //#endregion
+
+    //#region LightShadow
+
+    public create_LightShadow(): Rid {
+        const rid = RID();
+        const light = new VisualWorld3DLightShadow(this.config, rid);
+        this.light_shadows_map.set(rid, light);
+        return rid;
+    }
+
+    protected get_LightShadow(rid: Rid): VisualWorld3DLightShadow | undefined {
+        return this.light_shadows_map.get(rid);
+    }
+
+    public free_LightShadow(rid: Rid) {
+        const instance = this.get_LightShadow(rid);
+        if (instance === undefined) return;
+        if (instance.light !== undefined) instance.light.remove_Shadow(instance);
+        instance.dispose();
+        this.light_shadows_map.delete(rid);
+    }
+
+    public set_LightShadowProjection(rid: Rid, projection: Matrix4) {
+        const instance = this.get_LightShadow(rid);
+        if (instance) {
+            instance.set_Projection(projection);
+        }
+    }
+
+    public set_LightShadowGlobalTransform(rid: Rid, transform: Matrix4) {
+        const instance = this.get_LightShadow(rid);
+        if (instance) {
+            instance.set_GlobalTransform(transform);
+        }
+    }
+
+    //#endregion
+
     public dispose() {
         for (const mesh of this.meshes) {
             mesh.dispose();
         }
         for (const light of this.lights) {
             light.dispose();
+        }
+        for (const light_shadow of this.light_shadows) {
+            light_shadow.dispose();
         }
         this.meshes_map.clear();
         this.lights_map.clear();

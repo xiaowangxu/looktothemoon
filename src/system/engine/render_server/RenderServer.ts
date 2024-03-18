@@ -281,7 +281,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
             this.world_uniforms_camera_projection[14] = camera_projection.n34;
             this.world_uniforms_camera_projection[15] = camera_projection.n44;
         }
-        // camera view
+        // camera inv projection
         {
             const matrix = RenderServerDevice.#matrix.inverse(camera_projection);
             this.world_uniforms_camera_inv_projection[0] = matrix.n11;
