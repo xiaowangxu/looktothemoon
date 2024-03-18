@@ -1044,7 +1044,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             if (attachment instanceof WebGL2RenderStateTexture) {
                 switch (attachment.type) {
                     case gl.TEXTURE_2D: {
-                        gl.framebufferTexture2D(gl.FRAMEBUFFER, point, gl.TEXTURE_2D, attachment.texture, 0);
+                        gl.framebufferTexture2D(gl.FRAMEBUFFER, point, gl.TEXTURE_2D, attachment.texture, level);
                         break;
                     }
                     case gl.TEXTURE_2D_ARRAY: {

@@ -442,9 +442,11 @@ export class StandardMaterialResource extends MaterialResource {
 
         ivec3 lights_size = textureSize(lights, 0);
         int max_lights_count = lights_size.x * lights_size.y;
+        const int MAX_COUNT = 32;
+        int max_count = min(max_lights_count, MAX_COUNT);
         vec3 c_dir = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0f, 0.0f, 1.0f)) : normalize(camera_world[3].xyz - v_world);
 
-        for(int i = 0; i < max_lights_count; i++) {
+        for(int i = 0; i < max_count; i++) {
             LightData light = get_light(lights_size, i);
             i += light.stride;
             if(light.type == 0u) break;

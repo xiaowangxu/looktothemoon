@@ -9,7 +9,7 @@ import { RenderServerGeometry } from "./RenderServerGeometry";
 import { RenderServerShader } from "./RenderServerShader";
 import { RenderServerMaterial } from "./RenderServerMaterial";
 import { RenderDeviceMatrix4AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
-import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
+import { WebGL2RenderStateFrameBufferAttachmentPoint, type WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Color } from "@/system/fivepebble/graphics/Color";
 

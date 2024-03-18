@@ -109,33 +109,33 @@ export function createEditor() {
     EditorCamera.set_Zoom(0.3);
 
     // // viewport 0
-    const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
-    EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-    const EditorViewport0 = new Viewport(DefaultConfig);
-    const renderer0 = new EditorRenderer3D(DefaultConfig);
-    const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
-    renderer0.render_pipeline = pipeline0;
-    EditorViewport0.renderer_3d = renderer0;
-    // EditorViewport0.transparent = true;
-    EditorViewport0.background_color = bg_color;
-    EditorViewportContainer0.add_Child(EditorViewport0);
-    const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
-    EditorViewport0.add_Child(EditorCamera0);
-    EditorViewport.add_Child(EditorViewportContainer0);
+    // const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
+    // EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+    // const EditorViewport0 = new Viewport(DefaultConfig);
+    // const renderer0 = new EditorRenderer3D(DefaultConfig);
+    // const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
+    // renderer0.render_pipeline = pipeline0;
+    // EditorViewport0.renderer_3d = renderer0;
+    // // EditorViewport0.transparent = true;
+    // EditorViewport0.background_color = bg_color;
+    // EditorViewportContainer0.add_Child(EditorViewport0);
+    // const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
+    // EditorViewport0.add_Child(EditorCamera0);
+    // EditorViewport.add_Child(EditorViewportContainer0);
     // // viewport 1
-    const EditorViewportContainer1 = new ViewportDomContainer(DefaultConfig);
-    EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
-    const EditorViewport1 = new Viewport(DefaultConfig);
-    const renderer1 = new EditorRenderer3D(DefaultConfig);
-    const pipeline1 = new EditorRenderer3DPipeline(DefaultConfig);
-    renderer1.render_pipeline = pipeline1;
-    EditorViewport1.renderer_3d = renderer1;
-    // EditorViewport1.transparent = true;
-    EditorViewport1.background_color = bg_color;
-    EditorViewportContainer1.add_Child(EditorViewport1);
-    const EditorCamera1 = new EditorOrbitCamera3D(DefaultConfig);
-    EditorViewport1.add_Child(EditorCamera1);
-    EditorViewport.add_Child(EditorViewportContainer1);
+    // const EditorViewportContainer1 = new ViewportDomContainer(DefaultConfig);
+    // EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
+    // const EditorViewport1 = new Viewport(DefaultConfig);
+    // const renderer1 = new EditorRenderer3D(DefaultConfig);
+    // const pipeline1 = new EditorRenderer3DPipeline(DefaultConfig);
+    // renderer1.render_pipeline = pipeline1;
+    // EditorViewport1.renderer_3d = renderer1;
+    // // EditorViewport1.transparent = true;
+    // EditorViewport1.background_color = bg_color;
+    // EditorViewportContainer1.add_Child(EditorViewport1);
+    // const EditorCamera1 = new EditorOrbitCamera3D(DefaultConfig);
+    // EditorViewport1.add_Child(EditorCamera1);
+    // EditorViewport.add_Child(EditorViewportContainer1);
 
     // World 
     const World = new Node3D(DefaultConfig);
@@ -460,6 +460,13 @@ export function createEditor() {
     point_area.signal_mouse_exited.connect(() => {
         point_mat.color = Color.color8(0, 0, 0);
     });
+
+    // for (let i = 0; i < 1000; i++) {
+    //     const point_light = new PointLight3D(DefaultConfig);
+    //     point_light.color = Vector3.create(Math.random(), Math.random(), Math.random());
+    //     point_light.local_position = Vector3.create(Math.random() * 600 - 400, Math.random() * 600 - 300, Math.random() * 400 - 400);
+    //     World.add_Child(point_light);
+    // }
 
     return EditorSceneTree;
 }
