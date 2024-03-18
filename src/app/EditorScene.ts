@@ -351,7 +351,7 @@ export function createEditor() {
     const ground_material = new FlatMaterialResource(DefaultConfig);
     ground_material.color = Color.create(0.8, 0.8, 0.8);
     ground.material = ground_material;
-    ground.local_scale = Vector3.create(1000, 1, 1000);
+    ground.local_scale = Vector3.create(1000, 10, 1000);
     ground.local_position = Vector3.create(0, -100, 0);
     World.add_Child(ground);
 
