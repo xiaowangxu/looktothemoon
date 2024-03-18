@@ -41,6 +41,8 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     private readonly active_sampled_texture_slots: (WeakRef<WebGL2RenderStateSampledTexture> | undefined)[];
     private active_sampled_texture_slot_pointer: number = 0;
 
+    private readonly max_framebuffer_attachment: number = 15;
+
     // #region state proxy
 
     // buffer
@@ -318,6 +320,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             canvas_preserve_drawing_buffer = false,
         } = option;
 
+
         const gl = this.render_device.canvas.getContext('webgl2', { antialias: canvas_antialias, preserveDrawingBuffer: canvas_preserve_drawing_buffer }) as WebGL2RenderingContext | null;
 
         if (gl === null) throw new Error('<WebGL2RenderState> constructor: failed to get webgl2 context');
@@ -333,6 +336,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             if (texture_float_linear_ext === null) throw new Error('<WebGL2RenderState> constructor: failed to get webgl2 texture float extension');
         }
 
+        this.max_framebuffer_attachment = this.gl.getParameter(this.gl.MAX_DRAW_BUFFERS);
         this.default_texture_slot = default_texture_slot;
         this.texture_slot_base = texture_slot_base;
         this.max_texture_slot = this.gl.getParameter(this.gl.MAX_TEXTURE_IMAGE_UNITS);
@@ -1087,11 +1091,22 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         gl.blitFramebuffer(src_x, src_y, src_x1, src_y1, dst_x, dst_y, dst_x1, dst_y1, this.get_FrameBufferPartBits(parts), this.get_TextureFilter(filter));
     }
 
-    public enable_FrameBuffer(frame_buffer: WebGL2RenderStateFrameBuffer) {
+    public enable_FrameBuffer(frame_buffer: WebGL2RenderStateFrameBuffer, enable_override?: WebGL2RenderStateFrameBufferAttachmentPoint[]) {
         const gl = this.gl;
         this.bind_FrameBufferProxy(gl.FRAMEBUFFER, frame_buffer.frame_buffer);
-        const used_attachement_points = frame_buffer.attachement_points.filter(ap => ap !== gl.DEPTH_ATTACHMENT && ap !== gl.DEPTH_STENCIL_ATTACHMENT);
-        gl.drawBuffers(used_attachement_points);
+        const attachment_points = frame_buffer.attachement_points.filter(ap => ap !== this.gl.DEPTH_ATTACHMENT && ap !== this.gl.DEPTH_STENCIL_ATTACHMENT);
+        const attachment_points_count = attachment_points.length;
+        const max_attachment = this.gl.COLOR_ATTACHMENT0 + this.max_framebuffer_attachment - 1;
+        const active_attcahments = [];
+        for (let i = this.gl.COLOR_ATTACHMENT0, count = 0; i <= max_attachment && count < attachment_points_count; i++) {
+            let has = attachment_points.includes(i);
+            if (has) {
+                count++;
+                if (enable_override !== undefined) has = has && enable_override.findIndex(p => this.get_FrameBufferAttachmentPoint(p) === i) >= 0;
+            }
+            active_attcahments.push(has ? i : this.gl.NONE);
+        }
+        gl.drawBuffers(active_attcahments);
     }
 
     public delete_FrameBuffer(frame_buffer: WebGL2RenderStateFrameBuffer): void {

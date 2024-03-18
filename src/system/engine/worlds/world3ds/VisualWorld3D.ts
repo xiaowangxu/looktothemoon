@@ -25,6 +25,7 @@ import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { Camera3 } from "@/system/fivepebble/graphics/Camera3";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import { ShadowRenderer3D } from "../../renderer/renderer_3d/shadow_renderer_3d/ShadowRenderer3D";
 
 // #region sky
 
@@ -187,7 +188,7 @@ export class VisualWorld3DMesh extends WorldObject {
     public readonly global_transform: Matrix4 = Matrix4.new;
     public _visible: boolean = true;
     public layer: number = 0xffffffff;
-    public cast_shadow: boolean = false;
+    public cast_shadow: boolean = true;
     public render_queue: number = 0;
     public bbox_enlargment: number = 0;
 
@@ -397,6 +398,9 @@ export class VisualWorld3DLight extends WorldObject {
 
     public set_Layer(layer: number) {
         this.layer = layer & 0xffffffff;
+        for (const shadow of this.shadows) {
+            shadow.set_Mask(this.layer);
+        }
     }
 
     public set_Visible(visible: boolean) {
@@ -425,11 +429,13 @@ export class VisualWorld3DLight extends WorldObject {
 
     public add_Shadow(shadow: VisualWorld3DLightShadow) {
         shadow.light = this;
+        shadow.set_Mask(this.layer);
         this.shadows.add(shadow);
     }
 
     public remove_Shadow(shadow: VisualWorld3DLightShadow) {
         shadow.light = undefined;
+        shadow.set_Mask(0);
         this.shadows.delete(shadow);
     }
 
@@ -492,6 +498,11 @@ export class VisualWorld3DLightShadow extends WorldObject {
     public set_GlobalTransform(mat: Matrix4) {
         this.camera.global_transform = mat;
         this.update_GlobalProjection();
+        console.log(this);
+    }
+
+    public set_Mask(mask: number) {
+        this.camera.mask = mask;
     }
 
     protected update_GlobalProjection() {
@@ -517,8 +528,9 @@ export class VisualWorld3D extends ConfiguredObject {
     public get lights() { return this.lights_map.values(); }
     public get light_shadows() { return this.light_shadows_map.values(); }
 
-    // signal
-    public signal_before_render: SignalEmitter<() => void> = new SignalEmitter();
+    // light shadow maps
+    public readonly shadows_texture: Ref<WebGL2RenderStateTexture> = new Ref();
+    protected readonly shadow_renderer: Ref<ShadowRenderer3D> = new Ref(new ShadowRenderer3D(this.config));
 
     public readonly sky_texture: Ref<WebGL2RenderStateTexture> = new Ref();
     public readonly sky_frame_buffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
@@ -537,30 +549,44 @@ export class VisualWorld3D extends ConfiguredObject {
         const { sky_program, uniform_time_slot } = SkyProgramUniform.get(this.config);
         this.sky_program = sky_program.expect;
         this.sky_uniform_time_slot = uniform_time_slot.expect;
+
+        // shadows texture
+        this.shadows_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.D32F, 0, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+        this.render_server.render_state.alloc_Texture2D(this.shadows_texture.expect, 2048, 2048, 0, RenderStateTextureDataFormat.Depth);
     }
+
+    private before_render: boolean = true;
 
     public trigger_BeforeRender(scene_tree: SceneTree) {
-        this.signal_before_render.trigger();
-        this.update_Sky(scene_tree);
+        this.before_render = true;
     }
 
-    // Sky
-
-    private sky_changed: boolean = true;
+    public render(scene_tree: SceneTree) {
+        if (!this.before_render) return;
+        this.update_Sky(scene_tree);
+        this.update_LightShadows(scene_tree);
+        this.before_render = false;
+    }
 
     private update_Sky(scene_tree: SceneTree) {
-        if (this.sky_changed) {
-            this.sky_changed = false;
-            this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false);
-            this.render_server.render_state.set_ViewportProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
-            this.render_server.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
-            this.render_server.render_state.use_FrameBuffer(this.sky_frame_buffer.expect);
-            this.sky_uniform_time_slot.value = scene_tree.time;
-            this.sky_uniform_time_slot.commit();
-            this.render_server.render_state.draw_Elements(this.sky_program, this.sky_quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
-        }
+        this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false);
+        this.render_server.render_state.set_ViewportProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
+        this.render_server.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
+        this.render_server.render_state.use_FrameBuffer(this.sky_frame_buffer.expect);
+        this.sky_uniform_time_slot.value = scene_tree.time;
+        this.sky_uniform_time_slot.commit();
+        this.render_server.render_state.draw_Elements(this.sky_program, this.sky_quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
+    private update_LightShadows(scene_tree: SceneTree) {
+        const time = scene_tree.time;
+        const shadow_renderer = this.shadow_renderer.expect;
+        for (const shadow of this.light_shadows) {
+            if (shadow.light !== undefined) {
+                shadow_renderer.render(this, shadow.camera, time, false);
+            }
+        }
+    }
 
     //#region Mesh
 
@@ -873,5 +899,7 @@ export class VisualWorld3D extends ConfiguredObject {
         this.lights_map.clear();
         this.sky_frame_buffer.clear();
         this.sky_texture.clear();
+        this.shadows_texture.clear();
+        this.shadow_renderer.clear();
     }
 }

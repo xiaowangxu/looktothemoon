@@ -1,9 +1,9 @@
-import { World3D } from "../../worlds/world3ds/World3D";
 import { Ref } from "../../../utils/RefCounted";
 import { type Config } from "../../ConfiguredObject";
 import type { Renderer3DPipeline } from "./Renderer3DPipeline";
 import { Resource } from "../../resources/Resource";
 import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
+import type { VisualWorld3D } from "../../worlds/world3ds/VisualWorld3D";
 
 export abstract class OffscreenRenderer3D extends Resource {
     protected get render_server() { return this.config.render_server; }
@@ -20,6 +20,10 @@ export abstract class OffscreenRenderer3D extends Resource {
         super(config);
     }
 
-    public abstract render(world: World3D, camera: Camera3, once: boolean): void;
+    public abstract render(world: VisualWorld3D, camera: Camera3, time: number, once: boolean): void;
+
+    protected dispose(): void {
+        this._render_pipeline.clear();
+    }
 }
 

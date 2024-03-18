@@ -15,6 +15,7 @@ import type { Config } from "../../../ConfiguredObject";
 import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { Camera3 } from "@/system/fivepebble/graphics/Camera3";
+import type { MouseInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseInputEvent";
 
 export class OrbitCamera3D extends Node3D {
     public static readonly class_name: string = "OrbitCamera3D";
@@ -88,6 +89,7 @@ export class OrbitCamera3D extends Node3D {
     }
 
     // drag
+    private _is_grabbing_rotate: boolean = false;
     private _is_grabbing: boolean = false;
     private set is_grabbing(is_grabbing: boolean) {
         if (this._is_grabbing !== is_grabbing) {
@@ -112,9 +114,7 @@ export class OrbitCamera3D extends Node3D {
                 if (!this._is_grabbing) {
                     if (event.pressed) {
                         this.is_grabbing = true;
-                        this.drag_start_camera = this.camera.get_Camera().clone();
-                        this.get_GlobalPosition(this.drag_start_global_position);
-                        event.get_PositionNormalized(this.drag_start_mouse_position_normalized);
+                        this.update_GrabStart(event);
                         event.mark_Cancelled();
                     }
                 }
@@ -133,9 +133,14 @@ export class OrbitCamera3D extends Node3D {
         if (!propagate && event instanceof MouseMotionInputEvent) {
             if (this._is_grabbing) {
                 if (event.ctrl) {
+                    if (this._is_grabbing_rotate) {
+                        this.update_GrabStart(event);
+                    }
+                    this._is_grabbing_rotate = false;
                     this.pan(event.get_PositionNormalized(OrbitCamera3D.#tmp_vector2_0));
                 }
                 else {
+                    this._is_grabbing_rotate = true;
                     this.rotate(OrbitCamera3D.#tmp_vector2_0.mult_Number(event.get_Relative(OrbitCamera3D.#tmp_vector2_0), (this.config.render_server.pixel_ratio)));
                 }
                 event.mark_Cancelled();
@@ -202,6 +207,12 @@ export class OrbitCamera3D extends Node3D {
                 event.mark_Cancelled();
             }
         }
+    }
+
+    private update_GrabStart(evt: MouseInputEvent) {
+        this.drag_start_camera = this.camera.get_Camera().clone();
+        this.get_GlobalPosition(this.drag_start_global_position);
+        evt.get_PositionNormalized(this.drag_start_mouse_position_normalized);
     }
 
     // zoom

@@ -59,6 +59,7 @@ const QuadVertexShader = new Cacher((config: Config) => {
 
 const onscreen_frag_shader_code = `#version 300 es
 precision highp float;
+precision highp sampler2DArray;
 
 ${RenderServerDevice.WorldUniformsCode}
 
@@ -69,7 +70,7 @@ uniform sampler2D u_screen;
 layout(location = 0) out vec4 o_color;
 
 void main() {
-	  o_color = vec4(texture(u_screen, vec2(v_uv.x, v_uv.y)).rgba);
+    o_color = vec4(texture(u_screen, vec2(v_uv.x, v_uv.y)).rgba);
 }`;
 
 const OnscreenProgram = new Cacher((config: Config) => {
@@ -224,8 +225,7 @@ export class EditorRenderer3D extends Renderer3D {
 
     // cache items
     private readonly quad_geometry = QuadGeometry.get(this.config).expect;
-    private readonly on_screen_program = OnscreenProgram.get(this.config).expect;
-    private readonly on_screen_fxaa_program = FxaaProgram.get(this.config).expect;
+    private readonly on_screen_program = FxaaProgram.get(this.config).expect;
 
     constructor(config: Config) {
         super(config);
@@ -252,7 +252,7 @@ export class EditorRenderer3D extends Renderer3D {
         this.render_server.render_state.set_ScissorProxy(_x, _y, width, height);
         if (texture !== undefined) {
             this.render_server.render_state.active_Texture(texture, 0);
-            this.render_server.render_state.draw_Elements(this.on_screen_fxaa_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+            this.render_server.render_state.draw_Elements(this.on_screen_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
         }
     }
 
@@ -288,6 +288,8 @@ export class EditorRenderer3D extends Renderer3D {
         const world_3d = world.visual_world;
         const sky_texture = world_3d.sky_texture.expect;
         this.render_server.use_SkyTexture(sky_texture);
+        const shadow_texture = world_3d.shadows_texture.expect;
+        this.render_server.use_ShadowsTexture(shadow_texture);
 
         // update lights
         const lights_data = this.lights_data.expect;
@@ -343,6 +345,7 @@ export class EditorRenderer3D extends Renderer3D {
     public dispose() {
         this.render_queue_0.dispose();
         this.render_queue_1.dispose();
-        this.render_pipeline?.dispose();
+        this.lights_data.clear();
+        super.dispose();
     }
 }

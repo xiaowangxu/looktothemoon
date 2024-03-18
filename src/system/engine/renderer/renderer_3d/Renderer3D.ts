@@ -37,5 +37,9 @@ export abstract class Renderer3D extends Resource {
     }
 
     public abstract render(world: World3D, viewport: Viewport, once: boolean): void;
+
+    protected dispose(): void {
+        this._render_pipeline.clear();
+    }
 }
 

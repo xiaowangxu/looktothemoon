@@ -9,7 +9,7 @@ import { ShortCut } from "@/system/engine/inputs/ShortCut";
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
 import { BoxGeometryResource, CylinderGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
-import { NormalMaterialResource, PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
+import { FlatMaterialResource, NormalMaterialResource, PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
@@ -35,7 +35,7 @@ import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
 import { Cacher } from "@/system/utils/Cacher";
 import { Ref } from "@/system/utils/RefCounted";
 import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
-import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType, MethodTween } from "@/system/engine/Tween";
+import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType, MethodTween, TweenLoop, TweenPingPong } from "@/system/engine/Tween";
 import { InfiniteLine3D } from "@/system/engine/nodes/node3ds/gizmo3ds/InfiniteLine3D";
 import { Bvh3, Bvh3Strategy } from "@/system/fivepebble/bvh/Bvh3";
 import { Bvh3Visualization } from './nodes/Bvh3Visualization';
@@ -148,11 +148,11 @@ export function createEditor() {
     directional_light0.intensity = 0.2;
     directional_light0.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 0, -1), Vector3.new.normalize(Vector3.create(-1, -1, 1))));
     World.add_Child(directional_light0);
-    const directional_light1 = new DirectionalLight3D(DefaultConfig);
-    directional_light1.color = Vector3.create(1, 0.9, 0.8);
-    directional_light1.intensity = 0.1;
-    directional_light1.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 0, -1), Vector3.new.normalize(Vector3.create(1, 1, -1))));
-    World.add_Child(directional_light1);
+    // const directional_light1 = new DirectionalLight3D(DefaultConfig);
+    // directional_light1.color = Vector3.create(1, 0.9, 0.8);
+    // directional_light1.intensity = 0.1;
+    // directional_light1.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 0, -1), Vector3.new.normalize(Vector3.create(1, 1, -1))));
+    // World.add_Child(directional_light1);
 
     const EditorSceneTree = new SceneTree(DefaultConfig, EditorViewportContainer);
     EditorSceneTree.register_Singleton(GrabbingSingleton);
@@ -197,7 +197,7 @@ export function createEditor() {
     Mesh1.geometry = multi_geometry;
     Mesh1.material = material;
     Mesh1.local_scale = Vector3.create(100, 100, 100);
-    Mesh1.local_position = Vector3.create(0, 0, -100);
+    Mesh1.local_position = Vector3.create(0, 0, -400);
     Mesh1.local_visible = true;
 
     World.add_Child(Mesh1);
@@ -348,7 +348,7 @@ export function createEditor() {
     const geo = new BoxGeometryResource(DefaultConfig);
     geo.build();
     ground.geometry = geo;
-    const ground_material = new PlainColorMaterialResource(DefaultConfig);
+    const ground_material = new FlatMaterialResource(DefaultConfig);
     ground_material.color = Color.create(0.8, 0.8, 0.8);
     ground.material = ground_material;
     ground.local_scale = Vector3.create(1000, 1, 1000);
@@ -363,6 +363,7 @@ export function createEditor() {
     grid_mat.color = Color.color8(0, 0, 0, 20);
     grid.material = grid_mat;
     grid.top_level = true;
+    grid.cast_shadow = false;
     World.add_Child(grid);
 
     EditorSceneTree.start_Loop();
@@ -373,7 +374,7 @@ export function createEditor() {
 
         const huli_geo = new ClassLoader(DInstanceCache.get(DefaultConfig)).fetch<ArrayGeometryResource>('sys://huli.geometry.lttmbin').expect();
 
-        const normal_material = new StandardMaterialResource(DefaultConfig);
+        const normal_material = new FlatMaterialResource(DefaultConfig);
         const override_material = new MaterialOverrideResource(DefaultConfig);
         override_material.set_OverrideMaterial(normal_material);
 
@@ -383,6 +384,21 @@ export function createEditor() {
         mesh.local_scale = Vector3.create(100, 100, 100);
         mesh.local_position = Vector3.create(-500, -100, 250);
         World.add_Child(mesh);
+        const tween = EditorSceneTree.start_Tween(new TweenLoop(
+            new TweenPingPong(
+                new PropertyTween(
+                    mesh, 'local_position', Vector3.create(-500, -300, 250), 2, TweenTransitionType.Quad, TweenEasingType.InOut, 
+                )
+            ),
+            Infinity
+        ));
+        EditorViewport.signal_input.connect((evt, pro) => {
+            if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
+                EditorSceneTree.stop_Tween(
+                    tween!
+                );
+            }
+        });
 
         const area = new PickingArea3D(DefaultConfig);
         const shape = new PickingBvh3Resource(DefaultConfig);

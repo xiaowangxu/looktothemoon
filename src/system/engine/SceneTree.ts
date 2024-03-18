@@ -72,13 +72,11 @@ export class SceneTree extends ConfiguredObject {
         else {
             this.config.render_server.set_Size(window.innerWidth, window.innerHeight);
         }
-        const worlds = new Set<World3D>();
         for (const viewport of this.viewports) {
             const world = viewport.world_3d;
-            if (world !== undefined) worlds.add(world);
-        }
-        for (const world of worlds) {
-            world.trigger_BeforeRender(this);
+            if (world !== undefined) {
+                world.trigger_BeforeRender(this);
+            }
         }
         let redundant_before_render = false;
         for (const viewport of [...this.viewports].sort((a, b) => {
@@ -239,7 +237,9 @@ export class SceneTree extends ConfiguredObject {
         tween.start();
         if (!tween.finished) {
             this.tweens.add(tween);
+            return tween;
         }
+        return undefined;
     }
 
     public stop_Tween(tween: TweenBase) {

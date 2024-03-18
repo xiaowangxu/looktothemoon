@@ -731,7 +731,9 @@ export class Viewport extends Node {
         this.signal_before_render.trigger();
         const world_3d = this.get_RenderableWorld3D();
         const camera_3d = this.get_Camera3D();
-        if (camera_3d !== undefined && world_3d !== undefined) {
+        const scene_tree = this.get_SceneTree();
+        if (camera_3d !== undefined && world_3d !== undefined && scene_tree !== undefined) {
+            world_3d.visual_world.render(scene_tree);
             this._renderer_3d.expect.render(world_3d, this, once);
         }
         this.signal_after_render.trigger();

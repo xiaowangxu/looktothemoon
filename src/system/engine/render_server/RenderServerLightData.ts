@@ -51,6 +51,10 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
     private readonly /*       */ light_data_stride: Uint32Array;
     private readonly /*         */ light_perserved: Uint32Array;
 
+    private readonly light_proj_n11: Float32Array;
+    private readonly light_proj_n34: Float32Array;
+    private readonly light_rect_max_y: Float32Array;
+
     constructor(render_server: RenderServerDevice, width: number, height: number) {
         super(render_server);
         this.texture_width = width;
@@ -84,6 +88,9 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
         /*    */this.light_shadow_opacity = new Float32Array(this.lights_data.buffer, light_layer_bytes * 18, max_light_count);
         /*       */this.light_data_stride = new Uint32Array(this.lights_data.buffer, light_layer_bytes * 19, max_light_count);
         /*         */this.light_perserved = new Uint32Array(this.lights_data.buffer, light_layer_bytes * 20, max_light_count);
+        this.light_proj_n11 = new Float32Array(this.lights_data.buffer, light_layer_bytes * 0, max_light_count);
+        this.light_proj_n34 = new Float32Array(this.lights_data.buffer, light_layer_bytes * 11, max_light_count);
+        this.light_rect_max_y = new Float32Array(this.lights_data.buffer, light_layer_bytes * 19, max_light_count);
         this.light_attenuation.fill(2);
         this.light_mask.fill(0xffffffff);
     }
@@ -141,7 +148,7 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
 
     public set_LightProjectionMatrixRegion(id: number, proj: Matrix4, min: Vector2, max: Vector2, layer: number) {
         if (id < 0 || id >= this.max_light_count) return;
-        this.light_type[id] = proj.n11;
+        this.light_proj_n11[id] = proj.n11;
         this.light_pos_x[id] = proj.n12;
         this.light_pos_y[id] = proj.n13;
         this.light_pos_z[id] = proj.n14;
@@ -152,7 +159,7 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
         this.light_color_g[id] = proj.n31;
         this.light_color_b[id] = proj.n32;
         this.light_attenuation[id] = proj.n33;
-        this.light_mask[id] = proj.n34;
+        this.light_proj_n34[id] = proj.n34;
         this.light_param_0[id] = proj.n41;
         this.light_param_1[id] = proj.n42;
         this.light_param_2[id] = proj.n43;
@@ -160,7 +167,7 @@ export class RenderServerLightsData extends RenderDeviceObject<WebGL2RenderState
         this.light_shadow_bias[id] = min.x;
         this.light_shadow_normal_bias[id] = min.y;
         this.light_shadow_opacity[id] = max.x;
-        this.light_data_stride[id] = max.y;
+        this.light_rect_max_y[id] = max.y;
         this.light_perserved[id] = layer;
     }
 

@@ -43,7 +43,7 @@ export abstract class LightInstance3D extends VisualInstance3D {
         }
     }
 
-    protected _shadow_bias: number = 0.0001;
+    protected _shadow_bias: number = 0.002;
     public get shadow_bias() { return this._shadow_bias; }
     public set shadow_bias(shadow_bias: number) {
         if (this._shadow_bias !== shadow_bias) {
@@ -61,7 +61,7 @@ export abstract class LightInstance3D extends VisualInstance3D {
         }
     }
 
-    protected _shadow_opacity: number = 0.0;
+    protected _shadow_opacity: number = 1.0;
     public get shadow_opacity() { return this._shadow_opacity; }
     public set shadow_opacity(shadow_opacity: number) {
         if (this._shadow_opacity !== shadow_opacity) {

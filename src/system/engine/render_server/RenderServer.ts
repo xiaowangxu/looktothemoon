@@ -51,7 +51,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     //   |-------|-------|-------|-------|-------|-------|-------|-------|
     //   |   0   |   1   |   2   |   3   |   4   |   5   |   6   |   7   |
     //   |-------|-------|-------|-------|-------|-------|-------|-------|
-    //   |       |       | light | l_cls | l_shd |  sky  | envgi |       |
+    //   |       |       | light | l_cls |shadow |  sky  | envgi |       |
     //   |-------|-------|-------|-------|-------|-------|-------|-------|
     //   |   8   |   9   |   10  |   11  |   12  |   13  |   14  |   15  |
     //   |-------|-------|-------|-------|-------|-------|-------|-------|
@@ -60,6 +60,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
 
     public static readonly LightsTextureUnit: number = 2;
     public static readonly LightsClusterTextureUnit: number = 3;
+    public static readonly ShadowsTextureUnit: number = 4;
     public static readonly SkyTextureUnit: number = 5;
     public static readonly EnvironmentGITextureUnit: number = 6;
 
@@ -158,6 +159,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     // Render Data
 
     public readonly lights_data_ref: Ref<RenderServerLightsData> = new Ref();
+    public readonly shadows_texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
 
     public readonly sky_texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
 
@@ -222,7 +224,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
 
     static readonly #matrix: Matrix4 = Matrix4.new;
 
-    public set_WorldUniforms(camera_world: Matrix4, camera_projection: Matrix4, camera_is_orthogonal: boolean, screen_width: number, screen_height: number, time: number) {
+    public set_WorldUniforms(camera_world: Matrix4, camera_projection: Matrix4, camera_is_orthogonal: boolean, screen_width: number, screen_height: number, time: number, pixel_ratio_override?: number) {
         // camera world
         {
             this.world_uniforms_camera_world[0] = camera_world.n11;
@@ -316,7 +318,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         }
         // pixel ratio
         {
-            this.world_uniforms_pixel_ratio[0] = this._pixel_ratio;
+            this.world_uniforms_pixel_ratio[0] = pixel_ratio_override ?? this._pixel_ratio;
         }
         this.render_state.update_Buffer(this.world_uniforms_buffer_ref.expect, this.world_uniforms_buffer_world_data, this.world_uniforms_buffer_world_data.byteOffset);
     }
@@ -394,6 +396,13 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         }
     }
 
+    public use_ShadowsTexture(shadow: WebGL2RenderStateTexture) {
+        if (this.shadows_texture_ref.value !== shadow) {
+            this.shadows_texture_ref.value = shadow;
+            this.render_state.active_Texture(shadow, RenderServerDevice.ShadowsTextureUnit);
+        }
+    }
+
     public use_SkyTexture(sky: WebGL2RenderStateTexture) {
         if (this.sky_texture_ref.value !== sky) {
             this.sky_texture_ref.value = sky;
@@ -416,6 +425,8 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     public dispose(): void {
         this.world_uniforms_buffer_ref.clear();
         this.lights_data_ref.clear();
+        this.shadows_texture_ref.clear();
+        this.sky_texture_ref.clear();
         this.plain_color_textures.empty.clear();
         this.plain_color_textures.white.clear();
         this.plain_color_textures.black.clear();
