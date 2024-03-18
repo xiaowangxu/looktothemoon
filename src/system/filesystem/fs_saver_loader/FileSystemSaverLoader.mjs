@@ -44,7 +44,7 @@ export function save_FileSystem(nodes, blocks) {
     //#endregion
 
     //#region body
-    
+
     const nodes_count = nodes.length;
     data_view.setUint32(pnt, nodes_count, little_endian); pnt += 4;
     for (let i = 0; i < nodes_count; i++) {
@@ -96,7 +96,7 @@ export function save_FileSystem(nodes, blocks) {
         data_view.setUint32(pnt, buffer_length, little_endian); pnt += 4;
         uint_array.set(new Uint8Array(buffer), pnt); pnt += buffer_length;
     }
-    
+
     //#endregion
 
     return array_buffer;
@@ -205,7 +205,7 @@ export function load_FileSystem(data) {
     for (let i = 0; i < nodes_count; i++) {
         // type
         const type = data_view.getUint8(pnt); pnt += 1;
-        const is_file = (type >> 1) !== 0;
+        const is_file = (type >>> 1) !== 0;
         const is_root = (type & 0b1) !== 0;
         // flags
         pnt += 2;
