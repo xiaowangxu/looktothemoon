@@ -15,18 +15,19 @@ export const RenderServerGeometryAttributeLoctions = {
     position: 0,
     normal: 1,
     tangent: 2,
-    color: 3,
-    uv: 4,
-    uv2: 5,
-    instance_transform: 6,
-    instance_transform1: 7,
-    instance_transform2: 8,
-    instance_transform3: 9,
-    InternalMax: 10,
-    custom0: 10,
-    custom1: 11,
-    custom2: 12,
-    custom3: 13,
+    bitangent: 3,
+    color: 4,
+    uv: 5,
+    uv2: 6,
+    instance_transform: 7,
+    instance_transform1: 8,
+    instance_transform2: 9,
+    instance_transform3: 10,
+    InternalMax: 11,
+    custom0: 11,
+    custom1: 12,
+    custom2: 13,
+    custom3: 14,
 };
 
 export type RenderServerGeometryArray<RS extends RenderState<RS>, Buffer extends RenderStateBuffer<RS> = RenderStateBuffer<RS>> = {
@@ -45,10 +46,11 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
     public static readonly GeometryAttributesCode = `layout(location = 0) in vec3 a_position;
     layout(location = 1) in vec3 a_normal;
     layout(location = 2) in vec3 a_tangent;
-    layout(location = 3) in vec3 a_color;
-    layout(location = 4) in vec2 a_uv;
-    layout(location = 5) in vec2 a_uv2;
-    layout(location = 6) in mat4 a_instance_transform;`;
+    layout(location = 3) in vec3 a_bitangent;
+    layout(location = 4) in vec3 a_color;
+    layout(location = 5) in vec2 a_uv;
+    layout(location = 6) in vec2 a_uv2;
+    layout(location = 7) in mat4 a_instance_transform;`;
 
     protected vertex_array_attributes_map: Map<string, { attribute: Ref<RenderDeviceAttributeBuffer<WebGL2RenderState>>, location: number }> = new Map();
     protected readonly vertex_array_ref: Ref<WebGL2RenderStateVertexArray> = new Ref();

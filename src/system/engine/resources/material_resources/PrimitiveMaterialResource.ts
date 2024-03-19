@@ -31,6 +31,7 @@ export const PrimitiveVertexShader = new Cacher((config: Config) => {
     out vec3 v_world;
     out vec3 v_normal;
     out vec2 v_uv;
+    out vec3 v_camera_dir;
     
     void main() {
         mat4 _model_world = model_world * a_instance_transform;
@@ -39,6 +40,9 @@ export const PrimitiveVertexShader = new Cacher((config: Config) => {
         v_normal = normalize(mat3(transpose(inverse(_model_world))) * a_normal);
         v_uv = a_uv;
         v_world = world.xyz;
+        v_camera_dir = camera_is_orthogonal ?
+                       normalize(mat3(camera_world) * vec3(0.0, 0.0, 1.0)) :
+                       normalize(camera_world[3].xyz - v_world);
     }`;
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect());
 });
@@ -362,6 +366,7 @@ export class FlatMaterialResource extends MaterialResource {
     in vec3 v_world;
     in vec3 v_normal;
     in vec2 v_uv;
+    in vec3 v_camera_dir;
 
     ${RenderServerDevice.FrameOutputBufferCode}
 
@@ -487,7 +492,7 @@ export class FlatMaterialResource extends MaterialResource {
         int max_lights_count = lights_size.x * lights_size.y;
         const int MAX_COUNT = 32;
         int max_count = min(max_lights_count, MAX_COUNT);
-        vec3 c_dir = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0f, 0.0f, 1.0f)) : normalize(camera_world[3].xyz - v_world);
+        vec3 c_dir = normalize(v_camera_dir);
 
         for(int i = 0; i < max_count; i++) {
             LightData light = get_light(lights_size, i);

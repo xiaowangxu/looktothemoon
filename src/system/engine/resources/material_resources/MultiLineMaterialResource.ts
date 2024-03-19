@@ -2,7 +2,7 @@ import { Epsilon } from "@/system/fivepebble/Scalar";
 import { RenderStateUniformType, RenderStateShaderType } from "@/system/sliverofstraw/RenderState";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { RenderServerDevice } from "../../render_server/RenderServer";
-import { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
+import { RenderServerGeometry, RenderServerGeometryAttributeLoctions } from "../../render_server/RenderServerGeometry";
 import type { UniformInitSet } from "../../render_server/RenderServerShader";
 import { MaterialResource, type MaterialReadOnlyUniforms } from "./MaterialResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
@@ -23,8 +23,8 @@ export const MultiLineVertexShader = new Cacher((config: Config) => {
     ${RenderServerDevice.WorldUniformsCode}
     
     ${RenderServerGeometry.GeometryAttributesCode}
-    layout(location = 10) in vec3 a_start;
-    layout(location = 11) in vec3 a_end;
+    layout(location = ${RenderServerGeometryAttributeLoctions.custom0}) in vec3 a_start;
+    layout(location = ${RenderServerGeometryAttributeLoctions.custom1}) in vec3 a_end;
     
     uniform mat4 model_world;
 
