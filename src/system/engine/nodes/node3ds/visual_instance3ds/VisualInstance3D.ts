@@ -43,9 +43,7 @@ export abstract class VisualInstance3D extends Node3D {
         }
     }
 
-    protected on_RenderQueueChanged() {
-        throw new Error('abstract method');
-    }
+    protected abstract on_RenderQueueChanged(): void;
 
     protected _layer: number = 0xffffffff;
     public get layer() { return this._layer; }
@@ -57,9 +55,7 @@ export abstract class VisualInstance3D extends Node3D {
         }
     }
 
-    protected on_LayerChanged() {
-        throw new Error('abstract method');
-    }
+    protected abstract on_LayerChanged(): void;
 
     private propagate_VisibilityChanged() {
         if (this.is_global_visible_dirty) return;

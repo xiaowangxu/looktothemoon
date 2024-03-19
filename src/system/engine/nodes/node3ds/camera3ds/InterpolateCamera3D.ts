@@ -80,9 +80,9 @@ export class InterpolateCamera3D extends Camera3D {
         this.update_Camera();
     }
 
-    protected on_VisualMaskChanged(): void {
-        this.persp_camera.mask = this.visual_mask;
-        this.orth_camera.mask = this.visual_mask;
+    protected on_MaskChanged(): void {
+        this.persp_camera.mask = this.mask;
+        this.orth_camera.mask = this.mask;
     }
 
     private update_Camera() {

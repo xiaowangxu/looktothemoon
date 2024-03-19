@@ -346,6 +346,7 @@ export class FlatMaterialResource extends MaterialResource {
     static readonly #fragment_shade_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
+    precision highp sampler2DArray;
     precision highp sampler3D;
 
     ${RenderServerDevice.ConstantsCode}
@@ -354,7 +355,7 @@ export class FlatMaterialResource extends MaterialResource {
 
     uniform vec4 u_color;
     uniform usampler2DArray lights;
-    uniform sampler2D shadows;
+    uniform sampler2DArray shadows;
     uniform sampler2D sky;
     uniform uint layer;
     
@@ -462,7 +463,7 @@ export class FlatMaterialResource extends MaterialResource {
         projected_pos.xyz /= projected_pos.w;
         float current_depth = projected_pos.z - bias;
         bool in_range = projected_pos.x >= -1.0 && projected_pos.x <= 1.0 && projected_pos.y >= -1.0 && projected_pos.y <= 1.0;
-        float projected_depth = texture(shadows, ((projected_pos.xy) + vec2(1.0)) / 2.0).r * 2.0 - 1.0;
+        float projected_depth = texture(shadows, vec3(((projected_pos.xy) + vec2(1.0)) / 2.0, 0.0)).r * 2.0 - 1.0;
         return (projected_depth <= current_depth);
     }
 

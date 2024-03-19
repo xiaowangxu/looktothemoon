@@ -570,6 +570,8 @@ export class Viewport extends Node {
         this.input_manager = new ViewportInputManager(this);
     }
 
+    //#region input
+
     private mouse_event_cancelled: boolean = false;
 
     public on_InputEvent(event: InputEvent) {
@@ -592,6 +594,15 @@ export class Viewport extends Node {
         if (event instanceof MouseInputEvent || event instanceof MouseEnterLeaveInputEvent) {
             this.mouse_event_cancelled = event.cancelled;
         }
+    }
+
+    private get_OwnWorld3DViewport(): Viewport | undefined {
+        if (this.world_3d !== undefined) return this;
+        const parent = this.get_Parent();
+        if (parent !== undefined) {
+            return parent.get_Viewport()?.get_OwnWorld3DViewport();
+        }
+        return undefined;
     }
 
     private redirect_InputEvent(event: InputEvent) {
@@ -654,6 +665,15 @@ export class Viewport extends Node {
         this.propagate_InputEvent(event, target);
     }
 
+    public get_Input() {
+        return this.input_manager;
+    }
+
+    //#endregion
+
+
+    //#region camera3d
+
     public set_ActiveCamera3D(camera: Camera3D) {
         if (this.camera_3d !== camera) {
             if (this.camera_3d !== undefined) {
@@ -673,22 +693,11 @@ export class Viewport extends Node {
         }
     }
 
-    public get_Input() {
-        return this.input_manager;
-    }
-
     public get_Camera3D(): Camera3D | undefined {
         return this.camera_3d;
     }
 
-    private get_OwnWorld3DViewport(): Viewport | undefined {
-        if (this.world_3d !== undefined) return this;
-        const parent = this.get_Parent();
-        if (parent !== undefined) {
-            return parent.get_Viewport()?.get_OwnWorld3DViewport();
-        }
-        return undefined;
-    }
+    //#endregion
 
     public get_RenderableWorld3D(): World3D | undefined {
         if (this.world_3d !== undefined) return this.world_3d;
@@ -699,9 +708,11 @@ export class Viewport extends Node {
         return undefined;
     }
 
+    // process
+
     private is_size_changed: boolean = true;
 
-    public before_InternalBeforeRender(): void {
+    public trigger_BeforeRender(): void {
         const camera_3d = this.get_Camera3D();
         if (camera_3d !== undefined) {
             camera_3d._notification(NodeNotification.SetupCamera);
@@ -733,7 +744,7 @@ export class Viewport extends Node {
         const camera_3d = this.get_Camera3D();
         const scene_tree = this.get_SceneTree();
         if (camera_3d !== undefined && world_3d !== undefined && scene_tree !== undefined) {
-            world_3d.visual_world.render(scene_tree);
+            world_3d.visual_world.render(this);
             this._renderer_3d.expect.render(world_3d, this, once);
         }
         this.signal_after_render.trigger();

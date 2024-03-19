@@ -16,6 +16,15 @@ export class AmbientLight3D extends LightInstance3D {
         }
     }
 
+    protected on_MaskChanged(): void {
+        if (this.light_rid !== undefined) {
+            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            if (visual_world !== undefined) {
+                visual_world.set_LightMask(this.light_rid, this._mask);
+            }
+        }
+    }
+
     protected on_ColorChanged(): void {
         if (this.light_rid !== undefined) {
             const visual_world = this.get_Viewport()?.world_3d?.visual_world;
@@ -38,7 +47,14 @@ export class AmbientLight3D extends LightInstance3D {
 
     protected on_AttenuationChanged(): void { return; }
 
-    protected on_RenderQueueChanged(): void { return; }
+    protected on_RenderQueueChanged(): void {
+        if (this.light_rid !== undefined) {
+            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            if (visual_world !== undefined) {
+                visual_world.set_LightRenderQueue(this.light_rid, this._render_queue);
+            }
+        }
+    }
 
     protected on_ShadowBiasChanged(): void { return; }
 
@@ -57,6 +73,7 @@ export class AmbientLight3D extends LightInstance3D {
                         visual_world.set_LightColor(this.light_rid, this._color);
                         visual_world.set_LightIntensity(this.light_rid, this._intensity);
                         visual_world.set_LightLayer(this.light_rid, this._layer);
+                        visual_world.set_LightRenderQueue(this.light_rid, this._render_queue);
                     }
                 }
                 break;

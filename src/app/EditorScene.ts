@@ -8,7 +8,7 @@ import { MouseButton, MouseButtonInputEvent } from "@/system/engine/inputs/event
 import { ShortCut } from "@/system/engine/inputs/ShortCut";
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
-import { BoxGeometryResource, CylinderGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
+import { BoxGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
 import { FlatMaterialResource, NormalMaterialResource, PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
@@ -35,36 +35,28 @@ import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
 import { Cacher } from "@/system/utils/Cacher";
 import { Ref } from "@/system/utils/RefCounted";
 import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
-import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType, MethodTween, TweenLoop, TweenPingPong } from "@/system/engine/Tween";
+import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType, TweenLoop, TweenPingPong } from "@/system/engine/Tween";
 import { InfiniteLine3D } from "@/system/engine/nodes/node3ds/gizmo3ds/InfiniteLine3D";
-import { Bvh3, Bvh3Strategy } from "@/system/fivepebble/bvh/Bvh3";
+import { Bvh3Strategy } from "@/system/fivepebble/bvh/Bvh3";
 import { Bvh3Visualization } from './nodes/Bvh3Visualization';
 
 import huli from 'res://huli.obj?url';
-import stanford_bunny from 'res://stanford-bunny.obj?url';
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { Pi, Tau } from "@/system/fivepebble/Scalar";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
-import { GridGeometryResource, WireframeBoxGeometryResource } from "@/system/engine/resources/geometry_resources/HelperGeometryResource";
+import { GridGeometryResource } from "@/system/engine/resources/geometry_resources/HelperGeometryResource";
 import { PickingArea3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingArea3D";
-import { PickingBoxResource, PickingBvh3Resource, PickingPointResource, PickingPolyLineResource, PickingSphereResource } from "@/system/engine/resources/picking_shape_resources/PickingShapeResource";
+import { PickingBoxResource, PickingBvh3Resource, PickingPointResource, PickingPolyLineResource } from "@/system/engine/resources/picking_shape_resources/PickingShapeResource";
 import { PickingShape3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingShape3D";
-import { PointGrabber3D } from "../system/engine/nodes/node3ds/gizmo3ds/grabber3ds/PointGrabber3D";
-import { Line3 } from "@/system/fivepebble/geometries/Line3";
 import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/LineGrabber3D";
-import { RayPickingOption } from "@/system/engine/worlds/world3ds/PickingWorld3D";
 import { FixSizeNode3D } from "@/system/engine/nodes/node3ds/gizmo3ds/FixSizeNode3D";
-import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
-import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
-import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
-import { Box3 } from "@/system/fivepebble/geometries/Box3";
 
 const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
     return {
         render_server: new RenderServerDevice(canvas),
         render_server_pixel_ratio: undefined,
-        render_server_scale: 1.25,
+        render_server_scale: 1.2,
         fps: Infinity,
         physics_fps: 60,
     } as Config;
@@ -141,18 +133,19 @@ export function createEditor() {
     const World = new Node3D(DefaultConfig);
     World.local_scale = Vector3.create(0.01, 0.01, 0.01);
     const ambient_light = new AmbientLight3D(DefaultConfig);
-    ambient_light.intensity = 0.05;
+    ambient_light.intensity = 0.075;
     World.add_Child(ambient_light);
     const directional_light0 = new DirectionalLight3D(DefaultConfig);
     directional_light0.color = Vector3.create(0.9, 0.9, 1);
-    directional_light0.intensity = 0.2;
+    directional_light0.intensity = 0.3;
     directional_light0.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 0, -1), Vector3.new.normalize(Vector3.create(-1, -1, 1))));
+    directional_light0.layer = 0xffffffff;
     World.add_Child(directional_light0);
-    // const directional_light1 = new DirectionalLight3D(DefaultConfig);
-    // directional_light1.color = Vector3.create(1, 0.9, 0.8);
-    // directional_light1.intensity = 0.1;
-    // directional_light1.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 0, -1), Vector3.new.normalize(Vector3.create(1, 1, -1))));
-    // World.add_Child(directional_light1);
+    const directional_light1 = new DirectionalLight3D(DefaultConfig);
+    directional_light1.color = Vector3.create(1, 0.9, 0.8);
+    directional_light1.intensity = 0.02;
+    directional_light1.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 0, -1), Vector3.new.normalize(Vector3.create(1, 1, -1))));
+    World.add_Child(directional_light1);
 
     const EditorSceneTree = new SceneTree(DefaultConfig, EditorViewportContainer);
     EditorSceneTree.register_Singleton(GrabbingSingleton);

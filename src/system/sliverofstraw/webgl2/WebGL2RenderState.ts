@@ -809,6 +809,9 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
                 this.gl.texSubImage2D(type, level, offset_x, offset_y, width, height, this.get_TextureDataFormatType(format), data_type, data);
             }
         }
+        else {
+            throw new Error('<WebGLRenderState> alloc_Texture3D: target texture is not texture 2d');
+        }
     }
 
     // 3D
@@ -819,7 +822,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             wrap_s, wrap_t, wrap_r, min_filter, mag_filter
         } = texture;
         const gl = this.gl;
-        if (type !== gl.TEXTURE_3D && type !== gl.TEXTURE_2D_ARRAY) return;
+        if (type !== gl.TEXTURE_3D && type !== gl.TEXTURE_2D_ARRAY) throw new Error('<WebGLRenderState> alloc_Texture3D: target texture is not texture 2d array or texture 3d');
         this.active_TextureSlotProxy(this.gl.TEXTURE0);
         if (!this.bind_TextureProxy(type, texture.texture)) {
             this.gl.bindTexture(type, texture.texture);

@@ -378,35 +378,42 @@ export class RenderServerDevice extends WebGL2RenderDevice {
 
     // Create
 
-    public create_LightsData(width: number, height: number) {
-        return new RenderServerLightsData(this, width, height);
-    }
-
     public use_LightsData(lights_data: RenderServerLightsData | undefined) {
         if (this.lights_data_ref.value !== lights_data) {
             if (lights_data === undefined) {
-                this.lights_data_ref.value = lights_data;
+                this.lights_data_ref.value = undefined;
                 this.render_state.deactive_Texture(RenderStateTextureType.Tex2DArray, RenderServerDevice.LightsTextureUnit);
             }
             else {
-                const texture = lights_data.lights_texture;
                 this.lights_data_ref.value = lights_data;
-                this.render_state.active_Texture(texture, RenderServerDevice.LightsTextureUnit);
+                this.render_state.active_Texture(lights_data.lights_texture, RenderServerDevice.LightsTextureUnit);
             }
         }
     }
 
-    public use_ShadowsTexture(shadow: WebGL2RenderStateTexture) {
+    public use_ShadowsTexture(shadow: WebGL2RenderStateTexture | undefined) {
         if (this.shadows_texture_ref.value !== shadow) {
-            this.shadows_texture_ref.value = shadow;
-            this.render_state.active_Texture(shadow, RenderServerDevice.ShadowsTextureUnit);
+            if (shadow === undefined) {
+                this.shadows_texture_ref.value = undefined;
+                this.render_state.deactive_Texture(RenderStateTextureType.Tex2DArray, RenderServerDevice.ShadowsTextureUnit);
+            }
+            else {
+                this.shadows_texture_ref.value = shadow;
+                this.render_state.active_Texture(shadow, RenderServerDevice.ShadowsTextureUnit);
+            }
         }
     }
 
-    public use_SkyTexture(sky: WebGL2RenderStateTexture) {
+    public use_SkyTexture(sky: WebGL2RenderStateTexture | undefined) {
         if (this.sky_texture_ref.value !== sky) {
-            this.sky_texture_ref.value = sky;
-            this.render_state.active_Texture(sky, RenderServerDevice.SkyTextureUnit);
+            if (sky === undefined) {
+                this.shadows_texture_ref.value = undefined;
+                this.render_state.deactive_Texture(RenderStateTextureType.Tex2D, RenderServerDevice.SkyTextureUnit);
+            }
+            else {
+                this.sky_texture_ref.value = sky;
+                this.render_state.active_Texture(sky, RenderServerDevice.SkyTextureUnit);
+            }
         }
     }
 

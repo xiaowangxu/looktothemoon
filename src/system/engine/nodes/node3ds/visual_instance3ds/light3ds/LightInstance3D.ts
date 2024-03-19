@@ -6,6 +6,18 @@ import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 export abstract class LightInstance3D extends VisualInstance3D {
     public static readonly class_name: string = "LightInstance3D";
 
+    protected _mask: number = 0xffffffff;
+    public get mask() { return this._mask; }
+    public set mask(mask: number) {
+        mask = mask & 0xffffffff;
+        if (this._mask !== mask) {
+            this._mask = mask;
+            this.on_MaskChanged();
+        }
+    }
+
+    protected abstract on_MaskChanged(): void;
+
     protected readonly _color: PlainColor = new Vector3(1, 1, 1);
     public get color() { return this._color.clone(); }
     public get_Color(target: PlainColor) { return target.copy(this._color); }
@@ -70,31 +82,17 @@ export abstract class LightInstance3D extends VisualInstance3D {
         }
     }
 
-    protected on_ColorChanged() {
-        throw new Error('abstract method');
-    }
+    protected abstract on_ColorChanged(): void;
 
-    protected on_IntensityChanged() {
-        throw new Error('abstract method');
-    }
+    protected abstract on_IntensityChanged(): void;
 
-    protected on_AttenuationChanged() {
-        throw new Error('abstract method');
-    }
+    protected abstract on_AttenuationChanged(): void;
 
-    protected on_CastShadowChanged() {
-        throw new Error('abstract method');
-    }
+    protected abstract on_CastShadowChanged(): void;
 
-    protected on_ShadowBiasChanged() {
-        throw new Error('abstract method');
-    }
+    protected abstract on_ShadowBiasChanged(): void;
 
-    protected on_ShadowNormalBiasChanged() {
-        throw new Error('abstract method');
-    }
+    protected abstract on_ShadowNormalBiasChanged(): void;
 
-    protected on_ShadowOpacityChanged() {
-        throw new Error('abstract method');
-    }
+    protected abstract on_ShadowOpacityChanged(): void;
 }

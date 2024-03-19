@@ -3,7 +3,7 @@ import { NodeNotification } from "../../Node";
 import { Node3D } from "../Node3D";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
-export class Camera3D extends Node3D {
+export abstract class Camera3D extends Node3D {
     public static readonly class_name: string = "Camera3D";
 
     public _current: boolean = true;
@@ -19,23 +19,21 @@ export class Camera3D extends Node3D {
         }
     }
 
-    private _visual_mask: number = 0xffffffff;
-    public get visual_mask() { return this._visual_mask; }
-    public set visual_mask(mask: number) {
+    private _mask: number = 0xffffffff;
+    public get mask() { return this._mask; }
+    public set mask(mask: number) {
         mask = mask & 0xffffffff;
-        if (this._visual_mask !== mask) {
-            this._visual_mask = mask;
-            this.on_VisualMaskChanged();
+        if (this._mask !== mask) {
+            this._mask = mask;
+            this.on_MaskChanged();
         }
     }
 
-    protected on_VisualMaskChanged() {
-        throw new Error('abstract method');
-    }
+    protected abstract on_MaskChanged(): void;
 
-    public get_Camera(): Camera3 {
-        throw new Error('abstract method');
-    }
+    public abstract get_Camera(): Camera3;
+
+    public abstract update_ViewportSize(size: Readonly<Vector2>): void;
 
     public _notification(what: NodeNotification): void {
         switch (what) {
@@ -53,9 +51,5 @@ export class Camera3D extends Node3D {
             }
         }
         super._notification(what);
-    }
-
-    public update_ViewportSize(size: Readonly<Vector2>) {
-        throw new Error('abstract method');
     }
 }

@@ -1,4 +1,3 @@
-import { SignalEmitter } from "../../../utils/SignalEmitter";
 import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
 import type { WebGL2RenderStateFrameBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
 import { RenderStateTextureType, RenderStateTextureFormat, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureDataFormat, RenderStateDataType, RenderStateShaderType, RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
@@ -25,7 +24,8 @@ import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { Camera3 } from "@/system/fivepebble/graphics/Camera3";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
-import { ShadowRenderer3D } from "../../renderer/renderer_3d/shadow_renderer_3d/ShadowRenderer3D";
+import { RenderServerPlainColorTexture } from "../../render_server/RenderServer";
+import type { Viewport } from "../../nodes/Node";
 
 // #region sky
 
@@ -302,9 +302,7 @@ export class VisualWorld3DMesh extends WorldObject {
 
     // fill render queue
 
-    public fill_RenderQueue(queue: Renderer3DQueue, mask: number, frustum: Frustum3, camera: Camera3, base_size: Vector2): boolean {
-        if (!this.visible || (this.layer & mask) === 0 || this.geometry_ref.is_empty) return false;
-
+    public fill_RenderQueue(queue: Renderer3DQueue, frustum: Frustum3, camera: Camera3, base_size: Vector2): boolean {
         // bbox test
         const need_enlarge = this.geometry_ref.expect.bbox_pixel_enlargement > 0;
         if (!need_enlarge && !frustum.contain_Box(this.bbox, false)) {
@@ -357,6 +355,7 @@ export class VisualWorld3DLight extends WorldObject {
     public intensity: number = 1.0;
     public attenuation: number = 2.0;
     public layer: number = 0xffffffff;
+    public mask: number = 0xffffffff;
     public visible: boolean = true;
     public param_0: number = 0;
     public param_1: number = 0;
@@ -367,6 +366,7 @@ export class VisualWorld3DLight extends WorldObject {
     public shadow_normal_bias: number = 0;
     public shadow_opacity: number = 0;
     public shadows: Set<VisualWorld3DLightShadow> = new Set();
+    public render_queue: number = 0;
 
     constructor(config: Config, rid: Rid) {
         super(config, rid);
@@ -396,11 +396,19 @@ export class VisualWorld3DLight extends WorldObject {
         this.attenuation = attenuation;
     }
 
+    public set_Mask(mask: number) {
+        this.mask = mask & 0xffffffff;
+        for (const shadow of this.shadows) {
+            shadow.set_Mask(this.mask);
+        }
+    }
+
     public set_Layer(layer: number) {
         this.layer = layer & 0xffffffff;
-        for (const shadow of this.shadows) {
-            shadow.set_Mask(this.layer);
-        }
+    }
+
+    public set_RenderQueue(render_queue: number) {
+        this.render_queue = render_queue;
     }
 
     public set_Visible(visible: boolean) {
@@ -459,8 +467,8 @@ export class VisualWorld3DLight extends WorldObject {
         if (idx >= lights_data.max_light_count) return idx;
         const color = VisualWorld3DLight.#color;
         color.mult_Number(this.color, this.intensity);
-        const data_stride = this.cast_shadow ? 0 : this.shadows.size;
-        lights_data.set_Light(idx, this.type, this.position, this.direction, color, this.attenuation, this.layer, this.param_0, this.param_1, this.param_2, this.param_3, this.shadow_bias, this.shadow_normal_bias, this.shadow_opacity, data_stride);
+        const data_stride = !this.cast_shadow ? 0 : this.shadows.size;
+        lights_data.set_Light(idx, this.type, this.position, this.direction, color, this.attenuation, this.mask, this.param_0, this.param_1, this.param_2, this.param_3, this.shadow_bias, this.shadow_normal_bias, this.shadow_opacity, data_stride);
         if (data_stride > 0) {
             let _idx = idx;
             for (const shadow of this.shadows) {
@@ -529,8 +537,8 @@ export class VisualWorld3D extends ConfiguredObject {
     public get light_shadows() { return this.light_shadows_map.values(); }
 
     // light shadow maps
-    public readonly shadows_texture: Ref<WebGL2RenderStateTexture> = new Ref();
-    protected readonly shadow_renderer: Ref<ShadowRenderer3D> = new Ref(new ShadowRenderer3D(this.config));
+    public readonly lights_data: Ref<RenderServerLightsData> = new Ref(new RenderServerLightsData(this.render_server, 64, 64));
+    public readonly shadows_texture: Ref<WebGL2RenderStateTexture> = new Ref(this.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.Empty));
 
     public readonly sky_texture: Ref<WebGL2RenderStateTexture> = new Ref();
     public readonly sky_frame_buffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
@@ -551,41 +559,48 @@ export class VisualWorld3D extends ConfiguredObject {
         this.sky_uniform_time_slot = uniform_time_slot.expect;
 
         // shadows texture
-        this.shadows_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.D32F, 0, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-        this.render_server.render_state.alloc_Texture2D(this.shadows_texture.expect, 2048, 2048, 0, RenderStateTextureDataFormat.Depth);
+        this.shadows_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2DArray, false, RenderStateTextureFormat.D32F, 0, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+        this.render_server.render_state.alloc_Texture3D(this.shadows_texture.expect, 2048, 2048, 8, 0, RenderStateTextureDataFormat.Depth);
     }
 
-    private before_render: boolean = true;
+    private rendered_once: boolean = true;
 
     public trigger_BeforeRender(scene_tree: SceneTree) {
-        this.before_render = true;
+        this.rendered_once = false;
     }
 
-    public render(scene_tree: SceneTree) {
-        if (!this.before_render) return;
-        this.update_Sky(scene_tree);
-        this.update_LightShadows(scene_tree);
-        this.before_render = false;
+    public render(viewport: Viewport) {
+        if (!this.rendered_once) {
+            this.update_Sky(viewport.get_SceneTree()?.time ?? 0);
+            this.update_LightsData(viewport.get_Camera3D()?.get_Camera()?.mask ?? 0xffffffff);
+        }
+        this.rendered_once = true;
     }
 
-    private update_Sky(scene_tree: SceneTree) {
+    private update_Sky(time: number) {
         this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false);
         this.render_server.render_state.set_ViewportProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
         this.render_server.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
         this.render_server.render_state.use_FrameBuffer(this.sky_frame_buffer.expect);
-        this.sky_uniform_time_slot.value = scene_tree.time;
+        this.sky_uniform_time_slot.value = time;
         this.sky_uniform_time_slot.commit();
         this.render_server.render_state.draw_Elements(this.sky_program, this.sky_quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
-    private update_LightShadows(scene_tree: SceneTree) {
-        const time = scene_tree.time;
-        const shadow_renderer = this.shadow_renderer.expect;
-        for (const shadow of this.light_shadows) {
-            if (shadow.light !== undefined) {
-                shadow_renderer.render(this, shadow.camera, time, false);
-            }
+    private update_LightsData(mask: number) {
+        const lights_data = this.lights_data.expect;
+        lights_data.clear_Lights();
+        let light_idx = 0;
+        for (const light of this.lights) {
+            if (light_idx >= lights_data.max_light_count) break;
+            if (!light.visible || (light.layer & mask) === 0) continue;
+            light_idx = light.fill_LightData(lights_data, light_idx);
+            light_idx++;
         }
+        if (light_idx < lights_data.max_light_count) {
+            lights_data.set_Light(light_idx, 0);
+        }
+        lights_data.commit_AllLightsData();
     }
 
     //#region Mesh
@@ -757,6 +772,20 @@ export class VisualWorld3D extends ConfiguredObject {
         }
     }
 
+    public set_LightMask(rid: Rid, mask: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Mask(mask);
+        }
+    }
+
+    public set_LightRenderQueue(rid: Rid, queue: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_RenderQueue(queue);
+        }
+    }
+
     public set_LightVisibility(rid: Rid, visible: boolean) {
         const instance = this.get_Light(rid);
         if (instance) {
@@ -900,6 +929,6 @@ export class VisualWorld3D extends ConfiguredObject {
         this.sky_frame_buffer.clear();
         this.sky_texture.clear();
         this.shadows_texture.clear();
-        this.shadow_renderer.clear();
+        this.lights_data.clear();
     }
 }

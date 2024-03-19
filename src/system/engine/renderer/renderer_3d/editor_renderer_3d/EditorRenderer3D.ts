@@ -221,8 +221,6 @@ export class EditorRenderer3D extends Renderer3D {
     public readonly render_queue_0 = new Renderer3DQueue();
     public readonly render_queue_1 = new Renderer3DQueue();
 
-    private readonly lights_data: Ref<RenderServerLightsData> = new Ref(this.config.render_server.create_LightsData(64, 64));
-
     // cache items
     private readonly quad_geometry = QuadGeometry.get(this.config).expect;
     private readonly on_screen_program = FxaaProgram.get(this.config).expect;
@@ -290,21 +288,7 @@ export class EditorRenderer3D extends Renderer3D {
         this.render_server.use_SkyTexture(sky_texture);
         const shadow_texture = world_3d.shadows_texture.expect;
         this.render_server.use_ShadowsTexture(shadow_texture);
-
-        // update lights
-        const lights_data = this.lights_data.expect;
-        lights_data.clear_Lights();
-        let light_idx = 0;
-        for (const light of world_3d.lights) {
-            if (light_idx >= lights_data.max_light_count) break;
-            if (!light.visible) continue;
-            light_idx = light.fill_LightData(lights_data, light_idx);
-            light_idx++;
-        }
-        if (light_idx < lights_data.max_light_count) {
-            lights_data.set_Light(light_idx, 0);
-        }
-        lights_data.commit_AllLightsData();
+        const lights_data = world_3d.lights_data.expect;
         this.render_server.use_LightsData(lights_data);
 
         // fill up render queue
@@ -314,9 +298,12 @@ export class EditorRenderer3D extends Renderer3D {
         this.render_queue_1.reset();
         for (const mesh of world_3d.meshes) {
             total_objects_count++;
+            if (!mesh.visible || (mesh.layer & cam_mask) === 0 || !mesh.has_geometry) continue;
             const render_queue = mesh.render_queue;
             const queue = render_queue === 0 ? this.render_queue_0 : this.render_queue_1;
-            if (queue !== undefined) if (mesh.fill_RenderQueue(queue, cam_mask, cam_frustum, cam, this.base_size)) rendered_objects_count++;
+            if (queue !== undefined) {
+                if (mesh.fill_RenderQueue(queue, cam_frustum, cam, this.base_size)) rendered_objects_count++;
+            }
         }
 
         pipeline.set_Size(size);
@@ -324,6 +311,8 @@ export class EditorRenderer3D extends Renderer3D {
         pipeline.render(this, world, viewport, once);
 
         this.render_server.use_LightsData(undefined);
+        this.render_server.use_ShadowsTexture(undefined);
+        this.render_server.use_SkyTexture(undefined);
 
         this.render_OnScreen(pipeline.texture, x, y, width, height);
 
@@ -345,7 +334,6 @@ export class EditorRenderer3D extends Renderer3D {
     public dispose() {
         this.render_queue_0.dispose();
         this.render_queue_1.dispose();
-        this.lights_data.clear();
         super.dispose();
     }
 }

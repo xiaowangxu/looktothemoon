@@ -22,6 +22,15 @@ export class DirectionalLight3D extends LightInstance3D {
         }
     }
 
+    protected on_MaskChanged(): void {
+        if (this.light_rid !== undefined) {
+            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            if (visual_world !== undefined) {
+                visual_world.set_LightMask(this.light_rid, this._mask);
+            }
+        }
+    }
+
     protected on_ColorChanged(): void {
         if (this.light_rid !== undefined) {
             const visual_world = this.get_Viewport()?.world_3d?.visual_world;
@@ -42,7 +51,14 @@ export class DirectionalLight3D extends LightInstance3D {
 
     protected on_AttenuationChanged(): void { return; }
 
-    protected on_RenderQueueChanged(): void { return; }
+    protected on_RenderQueueChanged(): void {
+        if (this.light_rid !== undefined) {
+            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            if (visual_world !== undefined) {
+                visual_world.set_LightRenderQueue(this.light_rid, this._render_queue);
+            }
+        }
+    }
 
     protected on_CastShadowChanged(): void {
         if (this.light_rid !== undefined) {
@@ -95,21 +111,8 @@ export class DirectionalLight3D extends LightInstance3D {
                         visual_world.set_LightShadowNormalBias(this.light_rid, this._shadow_normal_bias);
                         visual_world.set_LightShadowOpacity(this.light_rid, this._shadow_opacity);
                         visual_world.set_LightCastShadow(this.light_rid, this._cast_shadow);
-                        this.shadow_rid = visual_world.create_LightShadow();
-                        const proj = new OrthographicCamera3();
-                        proj.near = 0.1;
-                        proj.far = 100;
-                        proj.height = 20;
-                        proj.width = 20;
-                        console.log(proj);
-                        visual_world.set_LightShadowProjection(this.shadow_rid, proj.projection);
-                        visual_world.set_LightShadowGlobalTransform(this.shadow_rid, Matrix4.create(
-                            -0.7148371312307991, -0.43313563726996845, 0.5490003602370945, 20,
-                            0, 0.7850814257852597, 0.6193925692862191, 20,
-                            -0.699290980789629, 0.4427648073342347, -0.5612053541909207, -20,
-                            0, 0, 0, 1
-                        ));
-                        visual_world.add_LightShadow(this.light_rid, this.shadow_rid);
+                        visual_world.set_LightRenderQueue(this.light_rid, this._render_queue);
+                        visual_world.set_LightMask(this.light_rid, this._mask);
                     }
                 }
                 break;
@@ -127,8 +130,6 @@ export class DirectionalLight3D extends LightInstance3D {
                 if (this.light_rid !== undefined && (this.is_global_transform_changed || this.is_global_visible_changed)) {
                     const visual_world = this.get_Viewport()?.world_3d?.visual_world;
                     if (visual_world === undefined) throw new Error('<DirectionalLight3D> _notification@InternalBeforeRender: cannot find visual world, fail to update mesh instance');
-                    // visual_world.set_LightShadowGlobalTransform(this.shadow_rid!, this.get_Viewport()!.get_Camera3D()!.get_Camera().global_transform);
-                    // console.log(this.get_Viewport()!.get_Camera3D()!.get_Camera());
                     if (this.is_global_transform_changed) {
                         this.update_GlobalTransform();
                         const vec = DirectionalLight3D.#tmp_vector3_0.set(0, 0, -1);

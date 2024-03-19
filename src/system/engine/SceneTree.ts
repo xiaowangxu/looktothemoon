@@ -57,13 +57,6 @@ export class SceneTree extends ConfiguredObject {
         this.time = time;
         this.delta = delta;
         this.frame_id = frame_id;
-        // internal process process
-        this.root.propagate_Process(this.delta);
-        this.process_Tween(this.delta);
-        this.root.propagate_InternalAfterProcess(this.delta);
-        for (const viewport of this.viewports) {
-            viewport.before_InternalBeforeRender();
-        }
         // render server resize
         this.config.render_server.set_PixelRatio(this.config.render_server_pixel_ratio ?? window.devicePixelRatio * (this.config.render_server_scale ?? 1));
         if (this.config.render_server_size) {
@@ -72,11 +65,14 @@ export class SceneTree extends ConfiguredObject {
         else {
             this.config.render_server.set_Size(window.innerWidth, window.innerHeight);
         }
+        // internal process process
+        this.root.propagate_Process(this.delta);
+        this.process_Tween(this.delta);
+        this.root.propagate_InternalAfterProcess(this.delta);
         for (const viewport of this.viewports) {
+            viewport.trigger_BeforeRender();
             const world = viewport.world_3d;
-            if (world !== undefined) {
-                world.trigger_BeforeRender(this);
-            }
+            if (world !== undefined) world.trigger_BeforeRender(this);
         }
         let redundant_before_render = false;
         for (const viewport of [...this.viewports].sort((a, b) => {

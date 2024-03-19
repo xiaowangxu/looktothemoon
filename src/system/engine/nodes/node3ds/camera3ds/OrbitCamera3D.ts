@@ -77,8 +77,8 @@ export class OrbitCamera3D extends Node3D {
         }
     }
 
-    public get visual_mask() { return this.camera.visual_mask; }
-    public set visual_mask(mask: number) { this.camera.visual_mask = mask; }
+    public get visual_mask() { return this.camera.mask; }
+    public set visual_mask(mask: number) { this.camera.mask = mask; }
 
     constructor(config: Config) {
         super(config);

@@ -13,7 +13,8 @@ import { RenderStateFrameBufferPart, RenderStateDataType } from "@/system/sliver
 import { RenderServerMaterialCullFace } from "@/system/engine/render_server/RenderServerMaterial";
 
 export class ShadowRenderer3D extends OffscreenRenderer3D {
-    public readonly render_queue = new Renderer3DQueue();
+    public render_queue: number = 0;
+    public readonly _render_queue = new Renderer3DQueue();
 
     static readonly #frustum: Frustum3 = Frustum3.new;
     static readonly #size: Vector2 = Vector2.new;
@@ -65,21 +66,21 @@ export class ShadowRenderer3D extends OffscreenRenderer3D {
 
         const frame = this.frame.expect;
 
-        this.render_server.render_state.set_FrameBufferAttachment(frame, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, world.shadows_texture.expect);
+        this.render_server.render_state.set_FrameBufferAttachment(frame, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, world.shadows_texture.expect, undefined, 0);
         this.render_server.render_state.enable_FrameBuffer(frame);
 
         this.render_server.set_WorldUniforms(cam_world, cam_projection, cam_is_orthogonal, width, height, time, 1);
 
-        const queue = this.render_queue;
+        const render_queue = this._render_queue;
 
         // fill up render queue
         let total_objects_count = 0;
         let rendered_objects_count = 0;
-        this.render_queue.reset();
+        this._render_queue.reset();
         for (const mesh of world.meshes) {
             total_objects_count++;
-            if (!mesh.cast_shadow || mesh.render_queue !== 0) continue;
-            if (mesh.fill_RenderQueue(queue, cam_mask, cam_frustum, cam, size)) rendered_objects_count++;
+            if ((mesh.layer & cam_mask) === 0 || !mesh.cast_shadow || mesh.render_queue !== this.render_queue || !mesh.has_geometry) continue;
+            if (mesh.fill_RenderQueue(render_queue, cam_frustum, cam, size)) rendered_objects_count++;
         }
 
         this.render_server.set_RenderCapabilities(true, true, this.render_server.render_state.gl.LEQUAL, false);
@@ -90,7 +91,6 @@ export class ShadowRenderer3D extends OffscreenRenderer3D {
         this.render_server.render_state.clear_FrameBuffer(frame, RenderStateFrameBufferPart.Depth | RenderStateFrameBufferPart.Color);
 
         // render queue solid
-        const render_queue = queue;
         for (let i = 0; i <= render_queue.solid_pointer; i++) {
             const geometry = render_queue.solid_geometry_queue[i];
             const indexed = render_queue.solid_indexed_queue[i];
@@ -137,12 +137,12 @@ export class ShadowRenderer3D extends OffscreenRenderer3D {
         }
 
         if (once) {
-            this.render_queue.clear();
+            this._render_queue.clear();
         }
     }
 
     protected dispose(): void {
-        this.render_queue.dispose();
+        this._render_queue.dispose();
         super.dispose();
     }
 }
