@@ -407,7 +407,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     public use_SkyTexture(sky: WebGL2RenderStateTexture | undefined) {
         if (this.sky_texture_ref.value !== sky) {
             if (sky === undefined) {
-                this.shadows_texture_ref.value = undefined;
+                this.sky_texture_ref.value = undefined;
                 this.render_state.deactive_Texture(RenderStateTextureType.Tex2D, RenderServerDevice.SkyTextureUnit);
             }
             else {
