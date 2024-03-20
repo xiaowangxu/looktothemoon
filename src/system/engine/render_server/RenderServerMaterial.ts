@@ -19,6 +19,9 @@ export enum RenderServerMaterialCullFace {
     Back, Front, None
 }
 
+export const MaterialModelWorldUniform: Readonly<RenderServerMaterialUniforms> = { model_world: RenderStateUniformType.Mat4 };
+export const MaterialModelLayerUniform: Readonly<RenderServerMaterialUniforms> = { layer: RenderStateUniformType.Uint };
+
 export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> {
     private readonly shader_ref: Ref<RenderServerShader> = new Ref();
     private uniforms_map: Map<string, { type: RenderStateUniformType, value: UniformType }> = new Map();

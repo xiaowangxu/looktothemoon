@@ -29,7 +29,7 @@ export abstract class MaterialResource extends Resource {
 		super(config);
 	}
 
-	public set_Uniform(uniform: string, value: WebGL2RenderStateTexture | number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined): void {
+	protected set_Uniform(uniform: string, value: WebGL2RenderStateTexture | number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined): void {
 		this.material.set_Uniform(uniform, value);
 	}
 	
@@ -66,6 +66,7 @@ export class MaterialOverrideResource extends MaterialResource {
 	public set_OverrideMaterial<T extends MaterialResource>(material: T extends MaterialOverrideResource ? never : T) {
 		if (material instanceof MaterialOverrideResource) throw new Error('<MaterialOverrideResource> set_OverrideMaterial: base material should not be another MaterialOverrideResource');
 		if (!material.material.has_shader) throw new Error('<MaterialOverrideResource> set_OverrideMaterial: base material does not have a shader, maybe it is not properly initialized');
+		this.clear_OverrideUniformsMap();
 		this.override_material_ref.value = material;
 		this.material.set_Material(material.material.shader, material.uniforms);
 	}

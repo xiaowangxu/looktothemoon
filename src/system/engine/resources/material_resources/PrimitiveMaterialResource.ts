@@ -13,6 +13,7 @@ import type { ClassWriter, ClassReader } from "../../classes/saver_loader/ClassW
 import { Cacher } from "@/system/utils/Cacher";
 import type { TextureResource } from "../texture_resources/TextureResource";
 import { Ref } from "@/system/utils/RefCounted";
+import { MaterialModelLayerUniform, MaterialModelWorldUniform } from "../../render_server/RenderServerMaterial";
 
 export const PrimitiveVertexShader = new Cacher((config: Config) => {
     const code = `#version 300 es
@@ -73,11 +74,11 @@ export const PrimitiveFragmentPreZShaderUniforms: UniformInitSet<WebGL2RenderSta
 
 export class PlainColorMaterialResource extends MaterialResource {
 
-    static readonly uniforms: MaterialReadOnlyUniforms = {
-        model_world: RenderStateUniformType.Mat4,
+    static readonly #uniforms: MaterialReadOnlyUniforms = {
+        ...MaterialModelWorldUniform,
         u_color: RenderStateUniformType.Vec4,
         u_texture: RenderStateUniformType.Tex2D,
-    } as const;
+    };
 
     static readonly #fragment_shade_shader = `#version 300 es
     precision highp float;
@@ -121,8 +122,8 @@ export class PlainColorMaterialResource extends MaterialResource {
 
     void main() {
         vec4 color = texture(u_texture, v_uv) * u_color;
-
         o_normal = vec4(v_normal, 1.0);
+        
         ${RenderServerDevice.OitOutputCode}
     }`;
     private fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
@@ -130,7 +131,7 @@ export class PlainColorMaterialResource extends MaterialResource {
         u_texture: { type: RenderStateUniformType.Tex2D, default: { texture: this.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.White) } },
     };
 
-    public get uniforms() { return PlainColorMaterialResource.uniforms; }
+    public get uniforms() { return PlainColorMaterialResource.#uniforms; }
 
     private _color: Color = new Vector4(1, 1, 1, 1);
     public get color() { return this._color; }
@@ -181,7 +182,7 @@ export class PlainColorMaterialResource extends MaterialResource {
                 }
             }
         );
-        this.material.set_Material(shader, PlainColorMaterialResource.uniforms);
+        this.material.set_Material(shader, PlainColorMaterialResource.#uniforms);
         this.material.transparent = false;
     }
 
@@ -195,10 +196,10 @@ export class NormalMaterialResource extends MaterialResource {
     public static class_name: string = 'NormalMaterialResource';
 
     static readonly #uniforms: MaterialReadOnlyUniforms = {
-        model_world: RenderStateUniformType.Mat4,
+        ...MaterialModelWorldUniform,
         u_remap: RenderStateUniformType.Int,
-    } as const;
-
+    };
+    
     static readonly #fragment_shade_shader = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
@@ -278,7 +279,7 @@ export class UVMaterialResource extends MaterialResource {
     public static class_name: string = 'UVMaterialResource';
 
     static readonly #uniforms: MaterialReadOnlyUniforms = {
-        model_world: RenderStateUniformType.Mat4,
+        ...MaterialModelWorldUniform,
     };
 
     static readonly #fragment_shade_shader = `#version 300 es
@@ -342,8 +343,8 @@ export class FlatMaterialResource extends MaterialResource {
     public static class_name: string = 'StandardMaterialResource';
 
     static readonly #uniforms: MaterialReadOnlyUniforms = {
-        model_world: RenderStateUniformType.Mat4,
-        layer: RenderStateUniformType.Uint,
+        ...MaterialModelWorldUniform,
+        ...MaterialModelLayerUniform,
         u_color: RenderStateUniformType.Vec4,
     };
 
@@ -598,8 +599,8 @@ export class StandardMaterialResource extends MaterialResource {
     public static class_name: string = 'StandardMaterialResource';
 
     static readonly #uniforms: MaterialReadOnlyUniforms = {
-        model_world: RenderStateUniformType.Mat4,
-        layer: RenderStateUniformType.Uint,
+        ...MaterialModelWorldUniform,
+        ...MaterialModelLayerUniform,
         u_color: RenderStateUniformType.Vec4,
     };
 

@@ -8,8 +8,8 @@ import { MouseButton, MouseButtonInputEvent } from "@/system/engine/inputs/event
 import { ShortCut } from "@/system/engine/inputs/ShortCut";
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
-import { BoxGeometryResource, PlaneGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
-import { FlatMaterialResource, NormalMaterialResource, PlainColorMaterialResource, UVMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
+import { BoxGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
+import { FlatMaterialResource, NormalMaterialResource, PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
@@ -17,7 +17,7 @@ import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineGeometryResource";
 import { MultiLineMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
 import type { Config } from "@/system/engine/ConfiguredObject";
-import { RenderServerDevice, RenderServerPlainColorTexture } from "@/system/engine/render_server/RenderServer";
+import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
 import { StandardMaterialResource } from "../system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { ClassLoader } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
 import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
@@ -35,7 +35,7 @@ import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
 import { Cacher } from "@/system/utils/Cacher";
 import { Ref } from "@/system/utils/RefCounted";
 import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
-import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType, TweenLoop, TweenPingPong } from "@/system/engine/Tween";
+import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType } from "@/system/engine/Tween";
 import { InfiniteLine3D } from "@/system/engine/nodes/node3ds/gizmo3ds/InfiniteLine3D";
 import { Bvh3Strategy } from "@/system/fivepebble/bvh/Bvh3";
 import { Bvh3Visualization } from './nodes/Bvh3Visualization';
@@ -53,10 +53,24 @@ import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds
 import { FixSizeNode3D } from "@/system/engine/nodes/node3ds/gizmo3ds/FixSizeNode3D";
 import { PlaceholderTextureResource } from "@/system/engine/resources/texture_resources/TextureResource";
 import { ImageTextureResource } from "@/system/engine/resources/texture_resources/ImageTextureResource";
-import png_url from 'res://test-image.png';
 import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
-import { VFS } from "@/system/filesystem/VirtualFileSystem";
-import { RenderStateTextureMagFilter, RenderStateTextureMinFilter } from "@/system/sliverofstraw/RenderState";
+import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/MatcapMaterialResource";
+
+// import png_url2 from 'res://matcap-2.jpg';
+// import png_url3 from 'res://matcap-3.jpg';
+// import png_url4 from 'res://matcap-4.jpg';
+// import png_url5 from 'res://matcap-5.jpg';
+// import png_url6 from 'res://matcap-6.jpg';
+// import png_url7 from 'res://matcap-7.jpg';
+// import png_url8 from 'res://matcap-8.jpg';
+// import png_url9 from 'res://matcap-9.jpg';
+// let i = 2;
+// for (const url of [png_url2, png_url3, png_url4, png_url5, png_url6, png_url7, png_url8, png_url9]) {
+//     const image_loader = new ImageLoader();
+//     image_loader.parse(url).then(r => {
+//         console.log(r.expect().save(undefined, `download://matcap-${i++}.lttmbin`));
+//     });
+// }
 
 const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
     return {
@@ -373,44 +387,58 @@ export function createEditor() {
         class_saver.save(undefined, 'sys://huli.geometry.lttmbin');
 
         const huli_geo = new ClassLoader(DInstanceCache.get(DefaultConfig)).fetch<ArrayGeometryResource>('sys://huli.geometry.lttmbin').expect();
-
-        const normal_material = new FlatMaterialResource(DefaultConfig);
-        const override_material = new MaterialOverrideResource(DefaultConfig);
-        override_material.set_OverrideMaterial(normal_material);
-
-        const mesh = new MeshInstance3D(DefaultConfig);
-        mesh.geometry = huli_geo;
-        mesh.material = override_material;
-        mesh.local_scale = Vector3.create(100, 100, 100);
-        mesh.local_position = Vector3.create(-500, -100, 250);
-        World.add_Child(mesh);
-        const tween = EditorSceneTree.start_Tween(new TweenLoop(
-            new TweenPingPong(
-                new PropertyTween(
-                    mesh, 'local_position', Vector3.create(-500, -300, 250), 2, TweenTransitionType.Quad, TweenEasingType.InOut,
-                )
-            ),
-            Infinity
-        ));
-        EditorViewport.signal_input.connect((evt, pro) => {
-            if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
-                EditorSceneTree.stop_Tween(
-                    tween!
-                );
-            }
-        });
-
-        const area = new PickingArea3D(DefaultConfig);
         const shape = new PickingBvh3Resource(DefaultConfig);
         shape.bvh.build(huli_geo.get_TriFaces()!, undefined, Bvh3Strategy.Center);
-        const s = new PickingShape3D(DefaultConfig);
-        area.add_Child(s);
-        s.shape = shape;
-        mesh.add_Child(area);
-        area.signal_mouse_moved.connect((event, result) => {
-            line_grabber.local_position = result.position;
-            line_grabber.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), result.normal));
-        });
+        const normal_material = new MatcapMaterialResource(DefaultConfig);
+
+        for (let i = 0; i <= 9; i++) {
+            const override_material = new MaterialOverrideResource(DefaultConfig);
+            override_material.set_OverrideMaterial(normal_material);
+            override_material.set_UniformOverride('u_texture', new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>(`sys://textures/matcaps/matcap-${i}.lttmbin`).expect())
+            const mesh = new MeshInstance3D(DefaultConfig);
+            mesh.geometry = huli_geo;
+            mesh.material = override_material;
+            mesh.local_scale = Vector3.create(100, 100, 100);
+            mesh.local_position = Vector3.create(-500 - i * 300, -100, 250);
+            World.add_Child(mesh);
+
+            const area = new PickingArea3D(DefaultConfig);
+            const s = new PickingShape3D(DefaultConfig);
+            area.add_Child(s);
+            s.shape = shape;
+            mesh.add_Child(area);
+            area.signal_mouse_moved.connect((event, result) => {
+                line_grabber.local_position = result.position;
+                line_grabber.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), result.normal));
+            });
+        }
+        // const tween = EditorSceneTree.start_Tween(new TweenLoop(
+        //     new TweenPingPong(
+        //         new PropertyTween(
+        //             mesh, 'local_position', Vector3.create(-500, -300, 250), 2, TweenTransitionType.Quad, TweenEasingType.InOut,
+        //         )
+        //     ),
+        //     Infinity
+        // ));
+        // EditorViewport.signal_input.connect((evt, pro) => {
+        //     if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
+        //         EditorSceneTree.stop_Tween(
+        //             tween!
+        //         );
+        //     }
+        // });
+
+        // const area = new PickingArea3D(DefaultConfig);
+        // const shape = new PickingBvh3Resource(DefaultConfig);
+        // shape.bvh.build(huli_geo.get_TriFaces()!, undefined, Bvh3Strategy.Center);
+        // const s = new PickingShape3D(DefaultConfig);
+        // area.add_Child(s);
+        // s.shape = shape;
+        // mesh.add_Child(area);
+        // area.signal_mouse_moved.connect((event, result) => {
+        //     line_grabber.local_position = result.position;
+        //     line_grabber.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), result.normal));
+        // });
 
         // const bvh_viz = new Bvh3Visualization(DefaultConfig);
         // bvh_viz.visualize_Bvh3(shape.bvh, 6);
@@ -530,7 +558,7 @@ export function createEditor() {
     plane_mesh2.local_position = Vector3.create(-3, 0, 2.2);
     plane_mesh2.render_queue = 0;
     World.add_Child(plane_mesh2);
-    
+
     const plane_mesh3 = new MeshInstance3D(DefaultConfig);
     plane_mesh3.geometry = plane;
     plane_mesh3.material = __plain2;
@@ -552,10 +580,6 @@ export function createEditor() {
     //     console.error(err);
     // });
 
-    // const image_loader = new ImageLoader();
-    // image_loader.parse(png_url).then(r => {
-    //     console.log(r.expect().save(undefined, 'download://f-texture.lttmbin'));
-    // });
 
     return EditorSceneTree;
 }
