@@ -56,7 +56,7 @@ const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
     return {
         render_server: new RenderServerDevice(canvas),
         render_server_pixel_ratio: undefined,
-        render_server_scale: 1.2,
+        render_server_scale: 0.85,
         fps: Infinity,
         physics_fps: 60,
     } as Config;
@@ -470,11 +470,27 @@ export function createEditor() {
         point_mat.color = Color.color8(0, 0, 0);
     });
 
+    // const box_geometry = new BoxGeometryResource(DefaultConfig);
+    // box_geometry.width = 0.05;
+    // box_geometry.build();
+    // const transparent_material = new PlainColorMaterialResource(DefaultConfig);
+
     // for (let i = 0; i < 1000; i++) {
-    //     const point_light = new PointLight3D(DefaultConfig);
-    //     point_light.color = Vector3.create(Math.random(), Math.random(), Math.random());
-    //     point_light.local_position = Vector3.create(Math.random() * 600 - 400, Math.random() * 600 - 300, Math.random() * 400 - 400);
-    //     World.add_Child(point_light);
+        // const point_light = new PointLight3D(DefaultConfig);
+        // point_light.color = Vector3.create(Math.random(), Math.random(), Math.random());
+        // point_light.local_position = Vector3.create(Math.random() * 600 - 400, Math.random() * 600 - 300, Math.random() * 400 - 400);
+        // World.add_Child(point_light);
+        // const mesh = new MeshInstance3D(DefaultConfig);
+        // const mat = new MaterialOverrideResource(DefaultConfig);
+        // mat.set_OverrideMaterial(transparent_material);
+        // mat.set_UniformOverride('u_color', Color.create(Math.random(), Math.random(), Math.random(), 0.5));
+        // mat.material.transparent = true;
+        // mesh.geometry = box_geometry;
+        // mesh.material = mat;
+        // mesh.local_position = Vector3.create(i / 10, Math.random() * 10 - 5, Math.random() * 10 - 5);
+        // mesh.top_level = true;
+        // World.add_Child(mesh);
+
     // }
 
     return EditorSceneTree;

@@ -45,6 +45,8 @@ export class MaterialOverrideResource extends MaterialResource {
 
 	private readonly override_material_ref: Ref<MaterialResource> = new Ref();
 
+	public set transparent(transparent: boolean) { this.material.transparent = transparent; }
+
 	constructor(config: Config) {
 		super(config);
 		this.material_ref.value = this.render_server.create_Material();
