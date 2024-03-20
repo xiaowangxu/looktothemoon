@@ -795,6 +795,20 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         this.set_TextureParameters(texture, wrap_s, wrap_t, wrap_r, min_filter, mag_filter);
     }
 
+    public load_Image2D(texture: WebGL2RenderStateTexture, level: number, format: RenderStateTextureDataFormat, image: TexImageSource) {
+        const { data_type, type, width, height } = texture;
+        this.active_TextureSlotProxy(this.gl.TEXTURE0);
+        if (!this.bind_TextureProxy(type, texture.texture)) {
+            this.gl.bindTexture(type, texture.texture);
+        }
+        if (type === this.gl.TEXTURE_2D) {
+                this.gl.texSubImage2D(type, level, 0, 0, width, height, this.get_TextureDataFormatType(format), data_type, image);
+        }
+        else {
+            throw new Error('<WebGLRenderState> load_Image2D: target texture is not texture 2d');
+        }
+    }
+
     public update_Texture2D(texture: WebGL2RenderStateTexture, level: number, format: RenderStateTextureDataFormat, data: ArrayBufferView, width: number, height: number, offset_x: number = 0, offset_y: number = 0, src_offset?: number) {
         const { data_type, type } = texture;
         this.active_TextureSlotProxy(this.gl.TEXTURE0);

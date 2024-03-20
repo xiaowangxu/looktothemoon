@@ -279,7 +279,7 @@ export class MultiLineMaterialResource extends MaterialResource {
     public set color(color: Color) {
         if (!this._color.equal(color)) {
             this._color = color;
-            this.material.set_UniformOverride('u_color', this._color);
+            this.material.set_Uniform('u_color', this._color);
             this.material.transparent = this._color.a < (1.0 - Epsilon);
         }
     }
@@ -290,7 +290,7 @@ export class MultiLineMaterialResource extends MaterialResource {
         line_width = Math.max(0, line_width);
         if (this._line_width !== line_width) {
             this._line_width = line_width;
-            this.material.set_UniformOverride('u_linewidth', this._line_width);
+            this.material.set_Uniform('u_linewidth', this._line_width);
         }
     }
 
@@ -299,7 +299,7 @@ export class MultiLineMaterialResource extends MaterialResource {
     public set consider_pixel_ratio(consider_pixel_ratio: boolean) {
         if (this._consider_pixel_ratio !== consider_pixel_ratio) {
             this._consider_pixel_ratio = consider_pixel_ratio;
-            this.material.set_UniformOverride('u_consider_pixel_ratio', this._consider_pixel_ratio ? 1 : 0);
+            this.material.set_Uniform('u_consider_pixel_ratio', this._consider_pixel_ratio ? 1 : 0);
         }
     }
 

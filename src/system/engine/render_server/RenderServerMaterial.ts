@@ -11,8 +11,8 @@ import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 
-type UniformOverrideValueType = number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined;
-type UniformOverrideType = Ref<WebGL2RenderStateTexture> | UniformOverrideValueType;
+type UniformValueType = number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined;
+type UniformType = Ref<WebGL2RenderStateTexture> | UniformValueType;
 export type RenderServerMaterialUniforms = { [name: string]: RenderStateUniformType };
 
 export enum RenderServerMaterialCullFace {
@@ -21,7 +21,7 @@ export enum RenderServerMaterialCullFace {
 
 export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> {
     private readonly shader_ref: Ref<RenderServerShader> = new Ref();
-    private uniforms_override: Map<string, { type: RenderStateUniformType, value: UniformOverrideType }> = new Map();
+    private uniforms_map: Map<string, { type: RenderStateUniformType, value: UniformType }> = new Map();
 
     public transparent: boolean = false;
     public cull_face: RenderServerMaterialCullFace = RenderServerMaterialCullFace.Back;
@@ -33,25 +33,25 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
         super(render_device);
     }
 
-    private clear_UniformOverride() {
-        for (const { type, value } of this.uniforms_override.values()) {
+    private clear_UniformsMap() {
+        for (const { type, value } of this.uniforms_map.values()) {
             if (type === RenderStateUniformType.Tex2D ||
                 type === RenderStateUniformType.Tex3D ||
                 type === RenderStateUniformType.Tex2DArray) {
                 (value as Ref<WebGL2RenderStateTexture>).clear();
             }
         }
-        this.uniforms_override.clear();
+        this.uniforms_map.clear();
     }
 
     private clear_Material() {
         this.shader_ref.clear();
-        this.clear_UniformOverride();
+        this.clear_UniformsMap();
     }
 
     public set_Material(shader: RenderServerShader, uniforms: RenderServerMaterialUniforms) {
         this.shader_ref.value = shader;
-        const uniform_override: Map<string, { type: RenderStateUniformType, value: UniformOverrideType | undefined }> = new Map();
+        const uniform_override: Map<string, { type: RenderStateUniformType, value: UniformType | undefined }> = new Map();
         for (const [name, type] of Object.entries(uniforms)) {
             switch (type) {
                 case RenderStateUniformType.Uint:
@@ -77,13 +77,17 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
                 }
             }
         }
-        this.clear_UniformOverride();
-        this.uniforms_override = uniform_override;
+        this.clear_UniformsMap();
+        this.uniforms_map = uniform_override;
     }
 
-    public set_UniformOverride(uniform: string, value: WebGL2RenderStateTexture | number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined): void {
-        if (!this.uniforms_override.has(uniform)) return;
-        const uniform_override = this.uniforms_override.get(uniform)!
+    public has_Uniform(uniform: string) {
+        return this.uniforms_map.has(uniform);
+    }
+
+    public set_Uniform(uniform: string, value: number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | WebGL2RenderStateTexture | undefined): void {
+        if (!this.has_Uniform(uniform)) return;
+        const uniform_override = this.uniforms_map.get(uniform)!
         const type = uniform_override.type;
         switch (type) {
             case RenderStateUniformType.Uint:
@@ -132,10 +136,10 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
         }
     }
 
-    public commit_AllUniformOverride(stage: RenderServerShaderPass) {
+    public commit_AllUniforms(stage: RenderServerShaderPass) {
         if (!this.has_shader) return;
         const shader = this.shader_ref.expect;
-        for (const [name, { type, value }] of this.uniforms_override.entries()) {
+        for (const [name, { type, value }] of this.uniforms_map.entries()) {
             switch (type) {
                 case RenderStateUniformType.Uint:
                 case RenderStateUniformType.Int:
@@ -145,7 +149,7 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
                 case RenderStateUniformType.Vec4:
                 case RenderStateUniformType.Mat3:
                 case RenderStateUniformType.Mat4: {
-                    shader.set_ValueUniform(stage, name, value as UniformOverrideValueType);
+                    shader.set_ValueUniform(stage, name, value as UniformValueType);
                     break;
                 }
                 case RenderStateUniformType.Tex2D:

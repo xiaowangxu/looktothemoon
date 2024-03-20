@@ -669,9 +669,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
             const program = material.get_Program(RenderServerShaderPass.Shade);
             if (geometry !== undefined && program !== undefined) {
                 this.set_CullFace(material.cull_face);
-                material.set_UniformOverride('model_world', transform);
-                material.set_UniformOverride('layer', layer);
-                material.commit_AllUniformOverride(RenderServerShaderPass.Shade);
+                material.set_Uniform('model_world', transform);
+                material.set_Uniform('layer', layer);
+                material.commit_AllUniforms(RenderServerShaderPass.Shade);
                 if (indexed) {
                     this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
                 }
@@ -734,9 +734,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
             const program = material.get_Program(RenderServerShaderPass.OiT);
             if (geometry !== undefined && program !== undefined) {
                 this.set_CullFace(material.cull_face);
-                material.set_UniformOverride('model_world', transform);
-                material.set_UniformOverride('layer', layer);
-                material.commit_AllUniformOverride(RenderServerShaderPass.OiT);
+                material.set_Uniform('model_world', transform);
+                material.set_Uniform('layer', layer);
+                material.commit_AllUniforms(RenderServerShaderPass.OiT);
                 if (indexed) {
                     this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
                 }
@@ -767,9 +767,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
             const program = material.get_Program(RenderServerShaderPass.PreZ);
             if (geometry !== undefined && program !== undefined) {
                 this.set_CullFace(material.cull_face);
-                material.set_UniformOverride('model_world', transform);
-                material.set_UniformOverride('layer', layer);
-                material.commit_AllUniformOverride(RenderServerShaderPass.PreZ);
+                material.set_Uniform('model_world', transform);
+                material.set_Uniform('layer', layer);
+                material.commit_AllUniforms(RenderServerShaderPass.PreZ);
                 if (indexed) {
                     this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
                 }
@@ -821,9 +821,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
             const program = material.get_Program(RenderServerShaderPass.Shade);
             if (geometry !== undefined && program !== undefined) {
                 this.set_CullFace(material.cull_face);
-                material.set_UniformOverride('model_world', transform);
-                material.set_UniformOverride('layer', layer);
-                material.commit_AllUniformOverride(RenderServerShaderPass.Shade);
+                material.set_Uniform('model_world', transform);
+                material.set_Uniform('layer', layer);
+                material.commit_AllUniforms(RenderServerShaderPass.Shade);
                 if (indexed) {
                     this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
                 }
@@ -874,9 +874,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
             const program = material.get_Program(RenderServerShaderPass.OiT);
             if (geometry !== undefined && program !== undefined) {
                 this.set_CullFace(material.cull_face);
-                material.set_UniformOverride('model_world', transform);
-                material.set_UniformOverride('layer', layer);
-                material.commit_AllUniformOverride(RenderServerShaderPass.OiT);
+                material.set_Uniform('model_world', transform);
+                material.set_Uniform('layer', layer);
+                material.commit_AllUniforms(RenderServerShaderPass.OiT);
                 if (indexed) {
                     this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
                 }

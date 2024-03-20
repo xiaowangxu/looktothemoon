@@ -73,11 +73,11 @@ export const PrimitiveFragmentPreZShaderUniforms: UniformInitSet<WebGL2RenderSta
 
 export class PlainColorMaterialResource extends MaterialResource {
 
-    static readonly #uniforms: MaterialReadOnlyUniforms = {
+    static readonly uniforms: MaterialReadOnlyUniforms = {
         model_world: RenderStateUniformType.Mat4,
         u_color: RenderStateUniformType.Vec4,
         u_texture: RenderStateUniformType.Tex2D,
-    };
+    } as const;
 
     static readonly #fragment_shade_shader = `#version 300 es
     precision highp float;
@@ -130,14 +130,14 @@ export class PlainColorMaterialResource extends MaterialResource {
         u_texture: { type: RenderStateUniformType.Tex2D, default: { texture: this.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.White) } },
     };
 
-    public get uniforms() { return PlainColorMaterialResource.#uniforms; }
+    public get uniforms() { return PlainColorMaterialResource.uniforms; }
 
     private _color: Color = new Vector4(1, 1, 1, 1);
     public get color() { return this._color; }
     public set color(color: Color) {
         if (!this._color.equal(color)) {
             this._color.copy(color);
-            this.material.set_UniformOverride('u_color', this._color);
+            this.material.set_Uniform('u_color', this._color);
             this.material.transparent = this._color.a < (1.0 - Epsilon);
         }
     }
@@ -147,7 +147,7 @@ export class PlainColorMaterialResource extends MaterialResource {
     public set texture(texture: TextureResource | undefined) {
         if (this._texture.value !== texture) {
             this._texture.value = texture;
-            this.set_UniformOverride('u_texture', this._texture.value?.texture);
+            this.set_Uniform('u_texture', this._texture.value?.texture);
         }
     }
 
@@ -181,7 +181,7 @@ export class PlainColorMaterialResource extends MaterialResource {
                 }
             }
         );
-        this.material.set_Material(shader, PlainColorMaterialResource.#uniforms);
+        this.material.set_Material(shader, PlainColorMaterialResource.uniforms);
         this.material.transparent = false;
     }
 
@@ -197,7 +197,7 @@ export class NormalMaterialResource extends MaterialResource {
     static readonly #uniforms: MaterialReadOnlyUniforms = {
         model_world: RenderStateUniformType.Mat4,
         u_remap: RenderStateUniformType.Int,
-    };
+    } as const;
 
     static readonly #fragment_shade_shader = `#version 300 es
     precision highp float;
@@ -230,7 +230,7 @@ export class NormalMaterialResource extends MaterialResource {
     public set remap(remap: boolean) {
         if (this._remap !== remap) {
             this._remap = remap;
-            this.material.set_UniformOverride('u_remap', this._remap ? 1 : 0);
+            this.material.set_Uniform('u_remap', this._remap ? 1 : 0);
         }
     }
 
@@ -559,7 +559,7 @@ export class FlatMaterialResource extends MaterialResource {
     public set color(color: Color) {
         if (!this._color.equal(color)) {
             this._color.copy(color);
-            this.material.set_UniformOverride('u_color', this._color);
+            this.material.set_Uniform('u_color', this._color);
             this.material.transparent = this._color.a < (1.0 - Epsilon);
         }
     }
@@ -926,7 +926,7 @@ export class StandardMaterialResource extends MaterialResource {
     public set color(color: Color) {
         if (!this._color.equal(color)) {
             this._color.copy(color);
-            this.material.set_UniformOverride('u_color', this._color);
+            this.material.set_Uniform('u_color', this._color);
             this.material.transparent = this._color.a < (1.0 - Epsilon);
         }
     }

@@ -8,8 +8,8 @@ import { MouseButton, MouseButtonInputEvent } from "@/system/engine/inputs/event
 import { ShortCut } from "@/system/engine/inputs/ShortCut";
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
-import { BoxGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
-import { FlatMaterialResource, NormalMaterialResource, PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
+import { BoxGeometryResource, PlaneGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
+import { FlatMaterialResource, NormalMaterialResource, PlainColorMaterialResource, UVMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
@@ -17,7 +17,7 @@ import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineGeometryResource";
 import { MultiLineMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
 import type { Config } from "@/system/engine/ConfiguredObject";
-import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
+import { RenderServerDevice, RenderServerPlainColorTexture } from "@/system/engine/render_server/RenderServer";
 import { StandardMaterialResource } from "../system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { ClassLoader } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
 import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
@@ -51,12 +51,18 @@ import { PickingBoxResource, PickingBvh3Resource, PickingPointResource, PickingP
 import { PickingShape3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingShape3D";
 import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/LineGrabber3D";
 import { FixSizeNode3D } from "@/system/engine/nodes/node3ds/gizmo3ds/FixSizeNode3D";
+import { PlaceholderTextureResource } from "@/system/engine/resources/texture_resources/TextureResource";
+import { ImageTextureResource } from "@/system/engine/resources/texture_resources/ImageTextureResource";
+import png_url from 'res://test-image.png';
+import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
+import { VFS } from "@/system/filesystem/VirtualFileSystem";
+import { RenderStateTextureMagFilter, RenderStateTextureMinFilter } from "@/system/sliverofstraw/RenderState";
 
 const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
     return {
         render_server: new RenderServerDevice(canvas),
         render_server_pixel_ratio: undefined,
-        render_server_scale: 0.85,
+        render_server_scale: 1,
         fps: Infinity,
         physics_fps: 60,
     } as Config;
@@ -78,7 +84,8 @@ const bg_color = Color.create(0.9, 0.9, 0.9);
 
 export function createEditor() {
     const render_server_canvas = document.getElementById('render-server-canvas') as HTMLCanvasElement;
-    const DefaultConfig: Config = DConfig.get(render_server_canvas);
+    const DefaultConfig = DConfig.get(render_server_canvas);
+    const DefaultResourceCache = DInstanceCache.get(DefaultConfig);
 
     // viewport container
     const EditorViewportContainer = new ViewportDomContainer(DefaultConfig);
@@ -380,7 +387,7 @@ export function createEditor() {
         const tween = EditorSceneTree.start_Tween(new TweenLoop(
             new TweenPingPong(
                 new PropertyTween(
-                    mesh, 'local_position', Vector3.create(-500, -300, 250), 2, TweenTransitionType.Quad, TweenEasingType.InOut, 
+                    mesh, 'local_position', Vector3.create(-500, -300, 250), 2, TweenTransitionType.Quad, TweenEasingType.InOut,
                 )
             ),
             Infinity
@@ -476,22 +483,79 @@ export function createEditor() {
     // const transparent_material = new PlainColorMaterialResource(DefaultConfig);
 
     // for (let i = 0; i < 1000; i++) {
-        // const point_light = new PointLight3D(DefaultConfig);
-        // point_light.color = Vector3.create(Math.random(), Math.random(), Math.random());
-        // point_light.local_position = Vector3.create(Math.random() * 600 - 400, Math.random() * 600 - 300, Math.random() * 400 - 400);
-        // World.add_Child(point_light);
-        // const mesh = new MeshInstance3D(DefaultConfig);
-        // const mat = new MaterialOverrideResource(DefaultConfig);
-        // mat.set_OverrideMaterial(transparent_material);
-        // mat.set_UniformOverride('u_color', Color.create(Math.random(), Math.random(), Math.random(), 0.5));
-        // mat.material.transparent = true;
-        // mesh.geometry = box_geometry;
-        // mesh.material = mat;
-        // mesh.local_position = Vector3.create(i / 10, Math.random() * 10 - 5, Math.random() * 10 - 5);
-        // mesh.top_level = true;
-        // World.add_Child(mesh);
+    // const point_light = new PointLight3D(DefaultConfig);
+    // point_light.color = Vector3.create(Math.random(), Math.random(), Math.random());
+    // point_light.local_position = Vector3.create(Math.random() * 600 - 400, Math.random() * 600 - 300, Math.random() * 400 - 400);
+    // World.add_Child(point_light);
+    // const mesh = new MeshInstance3D(DefaultConfig);
+    // const mat = new MaterialOverrideResource(DefaultConfig);
+    // mat.set_OverrideMaterial(transparent_material);
+    // mat.set_UniformOverride('u_color', Color.create(Math.random(), Math.random(), Math.random(), 0.5));
+    // mat.material.transparent = true;
+    // mesh.geometry = box_geometry;
+    // mesh.material = mat;
+    // mesh.local_position = Vector3.create(i / 10, Math.random() * 10 - 5, Math.random() * 10 - 5);
+    // mesh.top_level = true;
+    // World.add_Child(mesh);
 
     // }
+
+    const plane = new SphereGeometryResource(DefaultConfig);
+    // plane.width = plane.height = 1;
+    plane.build();
+    const plain = new PlainColorMaterialResource(DefaultConfig);
+    const __plain = new MaterialOverrideResource(DefaultConfig);
+    __plain.set_OverrideMaterial(plain);
+    const __plain2 = new MaterialOverrideResource(DefaultConfig);
+    __plain2.set_OverrideMaterial(plain);
+
+    plain.texture = new PlaceholderTextureResource(DefaultConfig);
+    __plain.set_UniformOverride('u_texture', new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://f-texture.lttmbin').expect());
+    __plain2.set_UniformOverride('u_texture', new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://test-texture.lttmbin').expect());
+
+    console.log(__plain2)
+
+    const plane_mesh = new MeshInstance3D(DefaultConfig);
+    plane_mesh.geometry = plane;
+    plane_mesh.material = plain;
+    plane_mesh.top_level = true;
+    plane_mesh.local_position = Vector3.create(-3, 0, 1);
+    plane_mesh.render_queue = 0;
+    World.add_Child(plane_mesh);
+
+    const plane_mesh2 = new MeshInstance3D(DefaultConfig);
+    plane_mesh2.geometry = plane;
+    plane_mesh2.material = __plain;
+    plane_mesh2.top_level = true;
+    plane_mesh2.local_position = Vector3.create(-3, 0, 2.2);
+    plane_mesh2.render_queue = 0;
+    World.add_Child(plane_mesh2);
+    
+    const plane_mesh3 = new MeshInstance3D(DefaultConfig);
+    plane_mesh3.geometry = plane;
+    plane_mesh3.material = __plain2;
+    plane_mesh3.top_level = true;
+    plane_mesh3.local_position = Vector3.create(-3, 0, 3.4);
+    plane_mesh3.render_queue = 0;
+    World.add_Child(plane_mesh3);
+
+    // new Promise<HTMLImageElement>((r, e) => {
+    //     const image = new Image();
+    //     image.src = png_url;
+    //     image.onload = () => r(image);
+    //     image.onerror = e;
+    // }).then(img => {
+    //     const image_texture = new ImageTextureResource(DefaultConfig);
+    //     image_texture.set_Image(img);
+    //     plain.texture = image_texture;
+    // }).catch(err => {
+    //     console.error(err);
+    // });
+
+    // const image_loader = new ImageLoader();
+    // image_loader.parse(png_url).then(r => {
+    //     console.log(r.expect().save(undefined, 'download://f-texture.lttmbin'));
+    // });
 
     return EditorSceneTree;
 }

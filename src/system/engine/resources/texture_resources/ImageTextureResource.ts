@@ -15,6 +15,8 @@ export type ImageTextureArray = {
 
 type ImageBitDepth = 8 | 32;
 
+type ImageSrc = ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | OffscreenCanvas;
+
 export class ImageTextureResource extends TextureResource {
     public static class_name: string = 'ImageTextureResource';
 
@@ -23,14 +25,16 @@ export class ImageTextureResource extends TextureResource {
         this.texture_ref.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA8, 0, this.wrap_s, this.wrap_t, this.wrap_r, this.min_filter, this.mag_filter).expect();
     }
 
-    public set_Image(levels: number, array: ImageTextureArray, bit_depth: ImageBitDepth = 8, is_srgb: boolean = true, y_flip: boolean = true) {
+    /**
+     * set images data from typed arrays
+     */
+    public set_ImageData(levels: number, array: ImageTextureArray, bit_depth: ImageBitDepth = 8, is_srgb: boolean = true, y_flip: boolean = true) {
         const render_state = this.render_server.render_state;
         if (bit_depth === 32 && is_srgb) throw new Error("<ImageTextureResource> set_Image: srgb image cannot use 32bit float data");
         const texture = this.texture;
         render_state.set_TextureLevels(texture, levels);
         render_state.set_TextureFormat(texture, is_srgb ? RenderStateTextureFormat.SRGBA8 : (bit_depth === 8 ? RenderStateTextureFormat.RGBA8 : RenderStateTextureFormat.RGBA32F));
-        this.texture_ref.value = texture;
-        render_state.set_PixelStoreColorspaceConversion(true);
+        render_state.set_PixelStoreColorspaceConversion(is_srgb);
         for (const { level, width, height, data, y_flip: _y_filp = y_flip } of array) {
             if (level >= levels) continue;
             if ((bit_depth === 8 && !(data instanceof Uint8Array || data instanceof Uint8ClampedArray)) || (bit_depth === 32 && !(data instanceof Float32Array))) throw new Error(`<ImageTextureResource> set_Image: ${bit_depth}bit image has invalid data type`);
@@ -41,6 +45,21 @@ export class ImageTextureResource extends TextureResource {
 
     public generate_Mipmap() {
         this.render_server.render_state.generate_Mipmap(this.texture);
+    }
+
+    /**
+     * load image data
+     */
+    public set_Image(image: ImageSrc, levels: number = 1) {
+        const render_state = this.render_server.render_state;
+        const texture = this.texture;
+        render_state.set_TextureLevels(texture, levels);
+        render_state.set_TextureFormat(texture, RenderStateTextureFormat.SRGBA8);
+        render_state.set_PixelStoreColorspaceConversion(true);
+        render_state.set_PixelStoreYFlip(true);
+        const width = image.width, height = image.height;
+        render_state.alloc_Texture2D(texture, width, height, 0, RenderStateTextureDataFormat.RGBA);
+        render_state.load_Image2D(texture, 0, RenderStateTextureDataFormat.RGBA, image);
     }
 
     // save / load
@@ -70,7 +89,7 @@ export class ImageTextureResource extends TextureResource {
                 });
                 i++;
             }
-            this.set_Image(levels, array, bit_depth, is_srgb);
+            this.set_ImageData(levels, array, bit_depth, is_srgb);
             if (gen_mipmap) this.generate_Mipmap();
         }
 

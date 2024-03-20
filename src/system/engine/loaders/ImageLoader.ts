@@ -45,7 +45,6 @@ export class ImageLoader {
             return Result.Ok(class_saver);
         }
         catch (err) {
-            console.log(err);
             return Result.Error(new Error('fail to load image'));
         }
     }

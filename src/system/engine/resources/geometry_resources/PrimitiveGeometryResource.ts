@@ -738,3 +738,81 @@ export class SphereGeometryResource extends PrimitiveGeometryResource {
         this.build();
     }
 }
+
+export class PlaneGeometryResource extends PrimitiveGeometryResource {
+    public static class_name: string = 'PlaneGeometryResource';
+
+    protected _width: number = 1;
+    protected _height: number = 1;
+
+    public get width() { return this._width; }
+    public get height() { return this._height; }
+
+    public set width(width: number) {
+        width = Math.max(width, 0);
+        if (this._width !== width) {
+            this._width = width;
+        }
+    }
+    public set height(height: number) {
+        height = Math.max(height, 0);
+        if (this._height !== height) {
+            this._height = height;
+        }
+    }
+
+    public build() {
+        const half_w = this.width / 2;
+        const half_h = this.height / 2;
+        const position_buffer = new RenderDeviceVector3AttributeBuffer(this.render_server, RenderStateBufferUsage.StaticDraw,
+            new Float32Array([
+                half_w, half_h, 0,
+                -half_w, half_h, 0,
+                -half_w, -half_h, 0,
+                half_w, -half_h, 0,
+            ]));
+        const normal_buffer = new RenderDeviceVector3AttributeBuffer(this.render_server, RenderStateBufferUsage.StaticDraw,
+            new Float32Array([
+                0, 0, 1,
+                0, 0, 1,
+                0, 0, 1,
+                0, 0, 1,
+            ]));
+        const uv_buffer = new RenderDeviceVector2AttributeBuffer(this.render_server, RenderStateBufferUsage.StaticDraw,
+            new Float32Array([
+                1, 1,
+                0, 1,
+                0, 0,
+                1, 0,
+            ]));
+        const index_buffer = new RenderDeviceIndexAttributeBuffer(this.render_server, RenderStateBufferUsage.StaticDraw,
+            new Uint32Array([
+                // top
+                0, 1, 2, 0, 2, 3,
+            ]));
+        this.geometry.set_Geometry(
+            RenderStatePrimitiveType.Triangles,
+            {
+                position: position_buffer,
+                normal: normal_buffer,
+                uv: uv_buffer,
+            },
+            index_buffer,
+            6,
+            Box3.create(Vector3.create(-half_w, -half_h, 0), Vector3.create(half_w, half_h, 0))
+        );
+    }
+
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        writer.property('width', this.width);
+        writer.property('height', this.height);
+    }
+
+    public load(reader: ClassReader): void {
+        this.width = reader.get<number>('width') ?? 1;
+        this.height = reader.get<number>('height') ?? 1;
+        this.build();
+    }
+}

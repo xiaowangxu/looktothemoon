@@ -221,7 +221,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     public set color(color: Color) {
         if (!this._color.equal(color)) {
             this._color = color;
-            this.material.set_UniformOverride('u_color', this._color);
+            this.material.set_Uniform('u_color', this._color);
             this.material.transparent = this._color.a < (1.0 - Epsilon);
         }
     }
