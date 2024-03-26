@@ -220,6 +220,7 @@ const FxaaProgram = new Cacher((config: Config) => {
 export class EditorRenderer3D extends Renderer3D {
     public readonly render_queue_0 = new Renderer3DQueue();
     public readonly render_queue_1 = new Renderer3DQueue();
+    public readonly render_queue_highlight = new Renderer3DQueue(1024, 256);
 
     // cache items
     private readonly quad_geometry = QuadGeometry.get(this.config).expect;
@@ -296,13 +297,19 @@ export class EditorRenderer3D extends Renderer3D {
         let rendered_objects_count = 0;
         this.render_queue_0.reset();
         this.render_queue_1.reset();
+        this.render_queue_highlight.reset();
         for (const mesh of world_3d.meshes) {
             total_objects_count++;
             if (!mesh.visible || (mesh.layer & cam_mask) === 0 || !mesh.has_geometry) continue;
             const render_queue = mesh.render_queue;
             const queue = render_queue === 0 ? this.render_queue_0 : this.render_queue_1;
             if (queue !== undefined) {
-                if (mesh.fill_RenderQueue(queue, cam_frustum, cam, this.base_size)) rendered_objects_count++;
+                if (mesh.fill_RenderQueue(queue, cam_frustum, cam, this.base_size)) {
+                    rendered_objects_count++;
+                    // if (mesh.rid > 160){
+                    //     mesh.fill_RenderQueue(this.render_queue_highlight, cam_frustum, cam, this.base_size);
+                    // }
+                }
             }
         }
 
@@ -319,6 +326,7 @@ export class EditorRenderer3D extends Renderer3D {
         if (once) {
             this.render_queue_0.clear();
             this.render_queue_1.clear();
+            this.render_queue_highlight.clear();
         }
 
         // debug

@@ -113,6 +113,7 @@ export function createEditor() {
     const pipeline = DRenderPipeline.get(DefaultConfig).expect;
     renderer.render_pipeline = pipeline;
     EditorViewport.renderer_3d = renderer;
+    // EditorViewport.use_sky = true;
     EditorViewport.background_color = bg_color;
     // EditorViewport.transparent = true;
     EditorViewportContainer.add_Child(EditorViewport);
@@ -317,7 +318,7 @@ export function createEditor() {
             }
         }
     });
-    MeshLine.add_Child(bvh_viz);
+    // MeshLine.add_Child(bvh_viz);
 
     const infinite_line_x = new InfiniteLine3D(DefaultConfig);
     const multi_line_material_x = new MultiLineMaterialResource(DefaultConfig);
@@ -378,7 +379,7 @@ export function createEditor() {
     grid.material = grid_mat;
     grid.top_level = true;
     grid.cast_shadow = false;
-    World.add_Child(grid);
+    // World.add_Child(grid);
 
     EditorSceneTree.start_Loop();
 
@@ -473,6 +474,7 @@ export function createEditor() {
     line_grabber.color = Color.color8code(0xff9900ff);
     line_grabber.enabled = false;
     World.add_Child(line_grabber);
+    line_grabber.local_position = Vector3.create(0, 0, -1);
     box_area.signal_mouse_moved.connect((event, result) => {
         line_grabber.local_position = result.position;
         line_grabber.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), result.normal));

@@ -20,7 +20,7 @@ export enum RenderServerColorspace { LinearSRGB, SRGB }
 export class RenderServerDevice extends WebGL2RenderDevice {
 
     // Codes
-    public static readonly ConstantsCode = `const float PI = 3.1415926535;\nconst float TAU = 6.283185307;\nconst float EPSILON = 1e-10;`
+    public static readonly ConstantsCode = `const float PI = 3.1415926535;\nconst float TAU = 6.283185307;\nconst float EPSILON = 1e-10;\nconst float SQRT2 = 1.414213562373095;`
     public static readonly WorldUniformsCode = `layout(std140) uniform WorldUniforms {
     mat4 camera_world;
     mat4 camera_view;

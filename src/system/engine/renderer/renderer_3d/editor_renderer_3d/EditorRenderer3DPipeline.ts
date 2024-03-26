@@ -362,6 +362,64 @@ const OiTPorgramUniform = new Cacher((config: Config) => {
 
 // #endregion
 
+// #region highlight
+
+const highlight_frag_shader_code = `#version 300 es
+precision highp float;
+
+${RenderServerDevice.WorldUniformsCode}
+${RenderServerDevice.ConstantsCode}
+
+in vec2 v_uv;
+
+uniform sampler2D u_depth;
+
+layout(location = 0) out vec4 o_color;
+
+bool is_visible(const vec2 uv) {
+    return (texture(u_depth, uv).r + 1.0) / 2.0 < 0.999999;
+}
+
+void main() {
+    vec2 pixel_uv_size = vec2(1.0, 1.0) / screen_size;
+    bool base_visible = is_visible(v_uv);
+    float line_width = 2.0 * pixel_ratio;
+    float line_width_sqrt = line_width * SQRT2 / 2.0;
+    bool visible = 
+                   is_visible(v_uv + vec2(0.0, pixel_uv_size.y) * line_width) ||
+                   is_visible(v_uv + vec2(0.0, pixel_uv_size.y) * -line_width) ||
+                   is_visible(v_uv + vec2(pixel_uv_size.x, 0.0) * line_width) ||
+                   is_visible(v_uv + vec2(pixel_uv_size.x, 0.0) * -line_width) ||
+                   is_visible(v_uv + vec2(pixel_uv_size.x, pixel_uv_size.y) * line_width_sqrt) ||
+                   is_visible(v_uv + vec2(-pixel_uv_size.x, pixel_uv_size.y) * line_width_sqrt) ||
+                   is_visible(v_uv + vec2(pixel_uv_size.x, -pixel_uv_size.y) * line_width_sqrt) ||
+                   is_visible(v_uv + vec2(-pixel_uv_size.x, -pixel_uv_size.y) * line_width_sqrt) || 
+
+                   is_visible(v_uv + vec2(0.0, pixel_uv_size.y) * line_width / 2.0) ||
+                   is_visible(v_uv + vec2(0.0, pixel_uv_size.y) * -line_width / 2.0) ||
+                   is_visible(v_uv + vec2(pixel_uv_size.x, 0.0) * line_width / 2.0) ||
+                   is_visible(v_uv + vec2(pixel_uv_size.x, 0.0) * -line_width / 2.0) ||
+                   is_visible(v_uv + vec2(pixel_uv_size.x, pixel_uv_size.y) * line_width_sqrt / 2.0) ||
+                   is_visible(v_uv + vec2(-pixel_uv_size.x, pixel_uv_size.y) * line_width_sqrt / 2.0) ||
+                   is_visible(v_uv + vec2(pixel_uv_size.x, -pixel_uv_size.y) * line_width_sqrt / 2.0) ||
+                   is_visible(v_uv + vec2(-pixel_uv_size.x, -pixel_uv_size.y) * line_width_sqrt / 2.0)
+    ;
+	o_color = vec4(1.0, 0.5, 0.0, (visible && !base_visible) ? 1.0 : 0.0);
+}`;
+
+const HighlightProgram = new Cacher((config: Config) => {
+    const highlight_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, highlight_frag_shader_code).expect();
+    const highlight_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config), highlight_frag_shader).expect();
+
+    const uniform_screen_location = config.render_server.render_state.get_ProgramUniformLocation(highlight_program, 'u_depth');
+    const uniform_screen_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, highlight_program, uniform_screen_location!, 0);
+    uniform_screen_slot.commit();
+
+    return new Ref(highlight_program);
+});
+
+// #endregion
+
 // #region sky
 
 const skydome_frag_shader_code = `#version 300 es
@@ -462,6 +520,18 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
     //#region Texture
     private readonly transparent_color_texture: Ref<WebGL2RenderStateTexture> = new Ref();
     private readonly transparent_accum_texture: Ref<WebGL2RenderStateTexture> = new Ref();
+    //#endregion
+
+    //#endregion
+
+    //#region Highlight
+
+    //#region Frame Buffer
+    private readonly highlight_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
+    //#endregion
+
+    //#region Texture
+    private readonly highlight_depth_texture: Ref<WebGL2RenderStateTexture> = new Ref();
     //#endregion
 
     //#endregion
@@ -574,6 +644,24 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.alloc_Texture2D(this.transparent_accum_texture.expect, this.size.x, this.size.y, 0, RenderStateTextureDataFormat.Red);
     }
 
+    private alloc_Highlight() {
+        // frame buffer
+        this.highlight_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
+
+        // texture
+        this.highlight_depth_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.D32F, 0, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+
+        this.resize_Highlight();
+
+        // link frame buffer
+        this.render_server.render_state.set_FrameBufferAttachment(this.highlight_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, this.highlight_depth_texture.expect);
+        this.render_server.render_state.enable_FrameBuffer(this.highlight_framebuffer.expect);
+    }
+
+    private resize_Highlight() {
+        this.render_server.render_state.alloc_Texture2D(this.highlight_depth_texture.expect, this.size.x, this.size.y, 0, RenderStateTextureDataFormat.Depth);
+    }
+
     private alloc_Result() {
         // frame buffer
         this.result_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
@@ -596,6 +684,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         super(config);
         this.alloc_Result();
         this.alloc_Solid();
+        this.alloc_Highlight();
         this.alloc_Transparent();
     }
 
@@ -606,6 +695,8 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
     private ssao_quad_solid_program = FogProgramUniform.get(this.config);
 
+    private highlight_program = HighlightProgram.get(this.config);
+
     private oit_screen_quad_solid_program = OiTPorgramUniform.get(this.config).oit_program;
     private oit_screen_quad_solid_colormap_uniform_slot = OiTPorgramUniform.get(this.config).uniform_oit_colormap_slot;
 
@@ -614,6 +705,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
     protected resize_Internal(): void {
         this.resize_Result();
         this.resize_Solid();
+        this.resize_Highlight();
         this.resize_Transparent();
     }
 
@@ -840,7 +932,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
     private compose_RenderQueue1Solid(renderer: EditorRenderer3D) {
         this.render_server.render_state.use_FrameBuffer(this.result_framebuffer.expect);
         this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true);
-        this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.ONE, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
+        this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.SRC_ALPHA, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
         this.set_CullFace(RenderServerMaterialCullFace.None);
         this.render_server.render_state.active_Texture(this.solid_color_texture.expect, 0);
         this.screen_quad_solid_colormap_uniform_slot.value = 0;
@@ -903,6 +995,71 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.draw_Elements(this.oit_screen_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
+    private render_RenderQueueHighlight(renderer: EditorRenderer3D) {
+        const { x: width, y: height } = this.size;
+        this.render_server.set_RenderCapabilities(true, true, this.render_server.render_state.gl.LEQUAL, false);
+        this.render_server.render_state.set_ViewportProxy(0, 0, width, height);
+        this.render_server.render_state.set_ScissorProxy(0, 0, width, height);
+        this.render_server.render_state.set_CapabilityProxy(this.render_server.render_state.gl.CULL_FACE, true);
+        this.render_server.render_state.clear_FrameBuffer(this.highlight_framebuffer.expect, RenderStateFrameBufferPart.Depth);
+
+        // render queue highlight
+        const render_queue = renderer.render_queue_highlight;
+        for (let i = 0; i <= render_queue.solid_pointer; i++) {
+            const geometry = render_queue.solid_geometry_queue[i];
+            const indexed = render_queue.solid_indexed_queue[i];
+            const instance_count = render_queue.solid_instance_count_queue[i];
+            const material = render_queue.solid_material_queue[i];
+            const transform = render_queue.solid_transform_queue[i];
+            const layer = render_queue.solid_layer_queue[i];
+            if (material === undefined) continue;
+            const program = material.get_Program(RenderServerShaderPass.PreZ);
+            if (geometry !== undefined && program !== undefined) {
+                this.set_CullFace(material.cull_face);
+                material.set_Uniform('model_world', transform);
+                material.set_Uniform('layer', layer);
+                material.commit_AllUniforms(RenderServerShaderPass.PreZ);
+                if (indexed) {
+                    this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
+                }
+                else {
+                    this.render_server.render_state.draw_Arrays(program, geometry, instance_count);
+                }
+            }
+        }
+        for (let i = 0; i <= render_queue.transparent_pointer; i++) {
+            const geometry = render_queue.transparent_geometry_queue[i];
+            const indexed = render_queue.transparent_indexed_queue[i];
+            const instance_count = render_queue.transparent_instance_count_queue[i];
+            const material = render_queue.transparent_material_queue[i];
+            const transform = render_queue.transparent_transform_queue[i];
+            const layer = render_queue.transparent_layer_queue[i];
+            if (material === undefined) continue;
+            const program = material.get_Program(RenderServerShaderPass.PreZ);
+            if (geometry !== undefined && program !== undefined) {
+                this.set_CullFace(material.cull_face);
+                material.set_Uniform('model_world', transform);
+                material.set_Uniform('layer', layer);
+                material.commit_AllUniforms(RenderServerShaderPass.PreZ);
+                if (indexed) {
+                    this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
+                }
+                else {
+                    this.render_server.render_state.draw_Arrays(program, geometry, instance_count);
+                }
+            }
+        }
+    }
+
+    private compose_RenderQueueHighlight(renderer: EditorRenderer3D) {
+        this.render_server.render_state.use_FrameBuffer(this.result_framebuffer.expect);
+        this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true);
+        this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.SRC_ALPHA, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
+        this.set_CullFace(RenderServerMaterialCullFace.None);
+        this.render_server.render_state.active_Texture(this.highlight_depth_texture.expect, 0);
+        this.render_server.render_state.draw_Elements(this.highlight_program.expect, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+    }
+
     protected render_Internal(renderer: EditorRenderer3D, world: World3D, viewport: Viewport, once: boolean): void {
         const { transparent: transparent_bg, color_map } = viewport;
         // render queue 0
@@ -920,6 +1077,11 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
                 this.render_RenderQueue1Transparent(renderer);
                 this.compose_RenderQueue1Transparent(renderer);
             }
+        }
+        // render highlight
+        if (renderer.render_queue_highlight.solid_pointer >= 0 || renderer.render_queue_highlight.transparent_pointer >= 0) {
+            this.render_RenderQueueHighlight(renderer);
+            this.compose_RenderQueueHighlight(renderer);
         }
     }
 
@@ -945,6 +1107,10 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.transparent_accum_renderbuffer.clear();
         this.transparent_color_texture.clear();
         this.transparent_accum_texture.clear();
+
+        // highlight
+        this.highlight_framebuffer.clear();
+        this.highlight_depth_texture.clear();
         // reuslt
         this.result_framebuffer.clear();
         this.result_color_texture.clear();
