@@ -20,6 +20,8 @@ export class Renderer3DQueue {
     public readonly transparent_transform_queue: Array<Matrix4>;
     public readonly transparent_layer_queue: Array<number>;
 
+    public addtion_sync_queue: Renderer3DQueue | undefined = undefined;
+
     private last_solid_pointer: number = -1;
     public solid_pointer: number = -1;
 
@@ -83,6 +85,9 @@ export class Renderer3DQueue {
             this.transparent_material_queue[this.transparent_pointer] = material;
             this.transparent_transform_queue[this.transparent_pointer].copy(transform);
             this.transparent_layer_queue[this.transparent_pointer] = layer;
+        }
+        if (this.addtion_sync_queue !== undefined) {
+            this.addtion_sync_queue.add(vertex_array, material, indexed, instance_count, transform, layer);
         }
     }
 

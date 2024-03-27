@@ -192,6 +192,10 @@ export class VisualWorld3DMesh extends WorldObject {
     public render_queue: number = 0;
     public bbox_enlargment: number = 0;
 
+    //editor
+
+    public editor_highlighted: boolean = false;
+
     public get visible() {
         return this._visible && !this.is_bbox_empty;
     }
@@ -259,6 +263,10 @@ export class VisualWorld3DMesh extends WorldObject {
     public set_BBoxEnlargement(amount: number) {
         this.bbox_enlargment = Math.max(0, Math.min(65536, amount));
         this.update_BBox();
+    }
+
+    public set_EditorHighlighted(highlighted: boolean) {
+        this.editor_highlighted = highlighted;
     }
 
     public set_SurfaceMaterial(surface_idx: number, material: RenderServerMaterial | undefined) {
@@ -612,14 +620,38 @@ export class VisualWorld3D extends ConfiguredObject {
         return rid;
     }
 
+    protected mesh_getter_cache: [undefined | Rid, VisualWorld3DMesh | undefined] = [undefined, undefined];
+    protected set_MeshGetterCache(rid: Rid, mesh: VisualWorld3DMesh) {
+        this.mesh_getter_cache[0] = rid;
+        this.mesh_getter_cache[1] = mesh;
+    }
+    protected reset_MeshGetterCache(rid: Rid) {
+        if (this.mesh_getter_cache[0] === rid) {
+            this.mesh_getter_cache[0] = undefined;
+            this.mesh_getter_cache[1] = undefined;
+        }
+    }
+    protected clear_MeshGetterCache() {
+        this.mesh_getter_cache[0] = undefined;
+        this.mesh_getter_cache[1] = undefined;
+    }
+
     protected get_Mesh(rid: Rid): VisualWorld3DMesh | undefined {
-        return this.meshes_map.get(rid);
+        if (this.mesh_getter_cache[0] === rid) {
+            return this.mesh_getter_cache[1];
+        }
+        const mesh = this.meshes_map.get(rid);
+        if (mesh !== undefined) {
+            this.set_MeshGetterCache(rid, mesh);
+        }
+        return mesh;
     }
 
     public free_Mesh(rid: Rid) {
         const instance = this.get_Mesh(rid);
         if (instance === undefined) return;
         instance.dispose();
+        this.reset_MeshGetterCache(rid);
         this.meshes_map.delete(rid);
     }
 
@@ -639,6 +671,13 @@ export class VisualWorld3D extends ConfiguredObject {
         const instance = this.get_Mesh(rid);
         if (instance) {
             instance.set_BBoxEnlargement(amount);
+        }
+    }
+
+    public set_MeshEditorHighlighted(rid: Rid, highlighted: boolean) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            instance.set_EditorHighlighted(highlighted);
         }
     }
 
@@ -712,14 +751,38 @@ export class VisualWorld3D extends ConfiguredObject {
         return rid;
     }
 
+    protected light_getter_cache: [undefined | Rid, VisualWorld3DLight | undefined] = [undefined, undefined];
+    protected set_LightGetterCache(rid: Rid, light: VisualWorld3DLight) {
+        this.light_getter_cache[0] = rid;
+        this.light_getter_cache[1] = light;
+    }
+    protected reset_LightGetterCache(rid: Rid) {
+        if (this.light_getter_cache[0] === rid) {
+            this.light_getter_cache[0] = undefined;
+            this.light_getter_cache[1] = undefined;
+        }
+    }
+    protected clear_LightGetterCache() {
+        this.light_getter_cache[0] = undefined;
+        this.light_getter_cache[1] = undefined;
+    }
+
     protected get_Light(rid: Rid): VisualWorld3DLight | undefined {
-        return this.lights_map.get(rid);
+        if (this.light_getter_cache[0] === rid) {
+            return this.light_getter_cache[1];
+        }
+        const light = this.lights_map.get(rid);
+        if (light !== undefined) {
+            this.set_LightGetterCache(rid, light);
+        }
+        return light;
     }
 
     public free_Light(rid: Rid) {
         const instance = this.get_Light(rid);
         if (instance === undefined) return;
         instance.dispose();
+        this.reset_LightGetterCache(rid);
         this.lights_map.delete(rid);
     }
 
@@ -886,8 +949,31 @@ export class VisualWorld3D extends ConfiguredObject {
         return rid;
     }
 
+    protected light_shadow_getter_cache: [undefined | Rid, VisualWorld3DLightShadow | undefined] = [undefined, undefined];
+    protected set_LightShadowGetterCache(rid: Rid, light: VisualWorld3DLightShadow) {
+        this.light_shadow_getter_cache[0] = rid;
+        this.light_shadow_getter_cache[1] = light;
+    }
+    protected reset_LightShadowGetterCache(rid: Rid) {
+        if (this.light_shadow_getter_cache[0] === rid) {
+            this.light_shadow_getter_cache[0] = undefined;
+            this.light_shadow_getter_cache[1] = undefined;
+        }
+    }
+    protected clear_LightShadowGetterCache() {
+        this.light_shadow_getter_cache[0] = undefined;
+        this.light_shadow_getter_cache[1] = undefined;
+    }
+
     protected get_LightShadow(rid: Rid): VisualWorld3DLightShadow | undefined {
-        return this.light_shadows_map.get(rid);
+        if (this.light_shadow_getter_cache[0] === rid) {
+            return this.light_shadow_getter_cache[1];
+        }
+        const shadow = this.light_shadows_map.get(rid);
+        if (shadow !== undefined) {
+            this.set_LightShadowGetterCache(rid, shadow);
+        }
+        return shadow;
     }
 
     public free_LightShadow(rid: Rid) {
@@ -895,6 +981,7 @@ export class VisualWorld3D extends ConfiguredObject {
         if (instance === undefined) return;
         if (instance.light !== undefined) instance.light.remove_Shadow(instance);
         instance.dispose();
+        this.reset_LightShadowGetterCache(rid);
         this.light_shadows_map.delete(rid);
     }
 
@@ -930,5 +1017,8 @@ export class VisualWorld3D extends ConfiguredObject {
         this.sky_texture.clear();
         this.shadows_texture.clear();
         this.lights_data.clear();
+        this.clear_MeshGetterCache();
+        this.clear_LightGetterCache();
+        this.clear_LightShadowGetterCache();
     }
 }

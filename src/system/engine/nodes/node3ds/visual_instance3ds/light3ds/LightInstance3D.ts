@@ -95,4 +95,6 @@ export abstract class LightInstance3D extends VisualInstance3D {
     protected abstract on_ShadowNormalBiasChanged(): void;
 
     protected abstract on_ShadowOpacityChanged(): void;
+
+    protected on_EditorHighlightedChanged(): void { }
 }

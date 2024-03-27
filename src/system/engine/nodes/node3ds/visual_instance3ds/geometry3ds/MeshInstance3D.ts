@@ -10,7 +10,7 @@ export class MeshInstance3D extends GeometryInstance3D {
     public static readonly class_name: string = "MeshInstance3D";
 
     private mesh_rid: Rid | undefined = undefined;
-    
+
     private _geometry: Ref<GeometryResource> = new Ref();
     public get geometry() { return this._geometry.value; }
     public set geometry(geometry: GeometryResource | undefined) {
@@ -96,6 +96,15 @@ export class MeshInstance3D extends GeometryInstance3D {
         }
     }
 
+    protected on_EditorHighlightedChanged(): void {
+        if (this.mesh_rid !== undefined) {
+            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            if (visual_world !== undefined) {
+                visual_world.set_MeshEditorHighlighted(this.mesh_rid, this._editor_highlighted);
+            }
+        }
+    }
+
     public _notification(what: NodeNotification): void {
         switch (what) {
             case NodeNotification.EnteredTree: {
@@ -115,6 +124,7 @@ export class MeshInstance3D extends GeometryInstance3D {
                         visual_world.set_MeshLayer(this.mesh_rid, this._layer);
                         visual_world.set_MeshRenderQueue(this.mesh_rid, this._render_queue);
                         visual_world.set_MeshCastShadow(this.mesh_rid, this._cast_shadow);
+                        visual_world.set_MeshEditorHighlighted(this.mesh_rid, this._editor_highlighted);
                     }
                 }
                 break;

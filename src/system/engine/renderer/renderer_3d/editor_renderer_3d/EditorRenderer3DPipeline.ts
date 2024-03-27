@@ -9,13 +9,15 @@ import { RenderStateBufferUsage, RenderStateDataType, RenderStateFrameBufferPart
 import { WebGL2RenderStateFrameBufferAttachmentPoint } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { Cacher } from "@/system/utils/Cacher";
 import { RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
-import { WebGL2RenderStateIntUniformSlot, WebGL2RenderStateUintUniformSlot } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
+import { WebGL2RenderStateIntUniformSlot, WebGL2RenderStateUintUniformSlot, WebGL2RenderStateVec4UniformSlot } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 import { RenderServerDevice } from "../../../render_server/RenderServer";
 import { RenderServerShaderPass } from "../../../render_server/RenderServerShader";
 import { RenderServerMaterialCullFace } from "../../../render_server/RenderServerMaterial";
 import type { Viewport } from "../../../nodes/Node";
 import type { World3D } from "../../../worlds/world3ds/World3D";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import type { Color } from "@/system/fivepebble/graphics/Color";
+import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 
 // #region quad surface
 
@@ -30,7 +32,7 @@ const QuadGeometry = new Cacher((config: Config) => {
     const quad_index = new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 1, 2, 3]);
     const quad_surface = config.render_server.create_Geometry();
     quad_surface.set_Geometry(RenderStatePrimitiveType.TriangleStrip, { position: quad_position }, quad_index);
-    return quad_surface;
+    return new Ref(quad_surface);
 });
 
 // #endregion
@@ -51,7 +53,7 @@ void main() {
 
 const QuadVertexShader = new Cacher((config: Config) => {
     const quad_vert_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, quad_vert_shader_code).expect();
-    return quad_vert_shader;
+    return new Ref(quad_vert_shader);
 });
 
 // #endregion
@@ -84,20 +86,199 @@ void main() {
 
 const OnscreenProgramUniform = new Cacher((config: Config) => {
     const onscreen_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, onscreen_frag_shader_code).expect();
-    const onscreen_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config), onscreen_frag_shader).expect();
+    const onscreen_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config).expect, onscreen_frag_shader).expect();
+    const program = new Ref(onscreen_program)
 
     const uniform_screen_location = config.render_server.render_state.get_ProgramUniformLocation(onscreen_program, 'u_screen');
     const uniform_screen_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, onscreen_program, uniform_screen_location!, 0);
     uniform_screen_slot.commit();
+    uniform_screen_slot.dispose();
 
     const uniform_colormap_location = config.render_server.render_state.get_ProgramUniformLocation(onscreen_program, 'u_colormap');
     const uniform_colormap_slot = new WebGL2RenderStateUintUniformSlot(config.render_server.render_state, onscreen_program, uniform_colormap_location!, 0);
     uniform_colormap_slot.commit();
 
-    return { onscreen_program, uniform_colormap_slot };
+    return { program, uniform_colormap_slot: new Ref(uniform_colormap_slot) };
 });
 
 // #endregion
+
+// #region oit composite
+
+const oit_frag_shader_code = `#version 300 es
+precision highp float;
+
+${RenderServerDevice.WorldUniformsCode}
+
+uniform sampler2D u_color;
+uniform sampler2D u_accum;
+uniform bool u_colormap;
+
+in vec2 v_uv;
+
+layout(location = 0) out vec4 o_color;
+
+void main() {
+	ivec2 uv = ivec2(v_uv * screen_size);
+	vec4 color = texelFetch(u_color, uv, 0);
+	float color_a = 1.0 - color.a;
+	float a = texelFetch(u_accum, uv, 0).r;
+	o_color = vec4(color_a * color.rgb / max(a, 0.00001), color_a);
+	if (u_colormap) {
+		float r = o_color.r;
+		o_color.r = r <= 0.0031308 ? (12.92 * r) : (1.055 * pow(r, 1.0 / 2.4) - 0.055);
+		float g = o_color.g;
+		o_color.g = g <= 0.0031308 ? (12.92 * g) : (1.055 * pow(g, 1.0 / 2.4) - 0.055);
+		float b = o_color.b;
+		o_color.b = b <= 0.0031308 ? (12.92 * b) : (1.055 * pow(b, 1.0 / 2.4) - 0.055);
+	}
+}`;
+
+const OiTPorgramUniform = new Cacher((config: Config) => {
+    const oit_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, oit_frag_shader_code).expect();
+    const oit_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config).expect, oit_frag_shader).expect();
+    const program = new Ref(oit_program);
+
+    const uniform_oit_color_location = config.render_server.render_state.get_ProgramUniformLocation(oit_program, 'u_color');
+    const uniform_oit_color_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, oit_program, uniform_oit_color_location!, 0);
+    uniform_oit_color_slot.commit();
+    uniform_oit_color_slot.dispose();
+
+    const uniform_oit_accum_location = config.render_server.render_state.get_ProgramUniformLocation(oit_program, 'u_accum');
+    const uniform_oit_accum_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, oit_program, uniform_oit_accum_location!, 1);
+    uniform_oit_accum_slot.commit();
+    uniform_oit_accum_slot.dispose();
+
+    const uniform_oit_colormap_location = config.render_server.render_state.get_ProgramUniformLocation(oit_program, 'u_colormap');
+    const uniform_oit_colormap_slot = new WebGL2RenderStateUintUniformSlot(config.render_server.render_state, oit_program, uniform_oit_colormap_location!, 0);
+    uniform_oit_colormap_slot.commit();
+
+    return { program, uniform_colormap_slot: new Ref(uniform_oit_colormap_slot) };
+});
+
+// #endregion
+
+// #region highlight
+
+const highlight_frag_shader_code = `#version 300 es
+precision highp float;
+
+${RenderServerDevice.WorldUniformsCode}
+${RenderServerDevice.ConstantsCode}
+
+in vec2 v_uv;
+
+uniform sampler2D u_depth;
+uniform sampler2D u_scene_depth;
+uniform vec4 u_color;
+
+layout(location = 0) out vec4 o_color;
+
+bool is_visible(const vec2 uv) {
+    return (texture(u_depth, uv).r + 1.0) / 2.0 < 0.999999;
+}
+
+void main() {
+    vec2 pixel_uv_size = vec2(1.0, 1.0) / screen_size;
+    bool base_visible = is_visible(v_uv);
+    float line_width = 2.0 * pixel_ratio;
+    float line_width_sqrt = line_width * SQRT2 / 2.0;
+    float line_width_cos = 0.92387953251 * line_width;
+    float line_width_sin = 0.38268343236 * line_width;
+    bool visible = 
+                   is_visible(v_uv + vec2(0.0, pixel_uv_size.y) * line_width) ||
+                   is_visible(v_uv + vec2(0.0, pixel_uv_size.y) * -line_width) ||
+                   is_visible(v_uv + vec2(pixel_uv_size.x, 0.0) * line_width) ||
+                   is_visible(v_uv + vec2(pixel_uv_size.x, 0.0) * -line_width) ||
+                   is_visible(v_uv + pixel_uv_size * line_width_sqrt) ||
+                   is_visible(v_uv + vec2(-pixel_uv_size.x, pixel_uv_size.y) * line_width_sqrt) ||
+                   is_visible(v_uv + vec2(pixel_uv_size.x, -pixel_uv_size.y) * line_width_sqrt) ||
+                   is_visible(v_uv + vec2(-pixel_uv_size.x, -pixel_uv_size.y) * line_width_sqrt) 
+
+                    ||
+
+                   is_visible(v_uv + pixel_uv_size * vec2(line_width_cos, line_width_sin)) ||
+                   is_visible(v_uv + pixel_uv_size * vec2(-line_width_cos, line_width_sin)) ||
+                   is_visible(v_uv + pixel_uv_size * vec2(line_width_sin, line_width_cos)) ||
+                   is_visible(v_uv + pixel_uv_size * vec2(-line_width_sin, line_width_cos)) ||
+                   is_visible(v_uv + pixel_uv_size * vec2(line_width_cos, -line_width_sin)) ||
+                   is_visible(v_uv + pixel_uv_size * vec2(-line_width_cos, -line_width_sin)) ||
+                   is_visible(v_uv + pixel_uv_size * vec2(line_width_sin, -line_width_cos)) ||
+                   is_visible(v_uv + pixel_uv_size * vec2(-line_width_sin, -line_width_cos))
+    ;
+	o_color = vec4(u_color.rgb, (visible && !base_visible) ? u_color.a : 0.0);
+}`;
+
+const HighlightProgramUniform = new Cacher((config: Config) => {
+    const highlight_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, highlight_frag_shader_code).expect();
+    const highlight_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config).expect, highlight_frag_shader).expect();
+    const program = new Ref(highlight_program);
+
+    const uniform_depth_location = config.render_server.render_state.get_ProgramUniformLocation(highlight_program, 'u_depth');
+    const uniform_depth_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, highlight_program, uniform_depth_location!, 0);
+    uniform_depth_slot.commit();
+    uniform_depth_slot.dispose();
+
+    const uniform_screen_location = config.render_server.render_state.get_ProgramUniformLocation(highlight_program, 'u_scene_depth');
+    const uniform_screen_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, highlight_program, uniform_screen_location!, 1);
+    uniform_screen_slot.commit();
+    uniform_screen_slot.dispose();
+
+    const uniform_color_location = config.render_server.render_state.get_ProgramUniformLocation(highlight_program, 'u_color');
+    const uniform_color_slot = new WebGL2RenderStateVec4UniformSlot(config.render_server.render_state, highlight_program, uniform_color_location!, Vector4.create(1.0, 0.0, 0.0, 1.0));
+    uniform_color_slot.commit();
+
+    return { program, uniform_color_slot: new Ref(uniform_color_slot) };
+});
+
+// #endregion
+
+// #region sky
+
+const skydome_frag_shader_code = `#version 300 es
+precision highp float;
+precision highp usampler2DArray;
+precision highp sampler3D;
+
+const float PI = 3.1415926535;
+const float TAU = 6.283185307;
+const float EPSILON = 0.00001;
+
+${RenderServerDevice.WorldUniformsCode}
+
+in vec2 v_uv;
+
+uniform sampler2D sky;
+
+${RenderServerDevice.FrameOutputBufferCode}
+
+void main() {
+    vec4 dir = mat4(mat3(camera_world)) * inverse(camera_projection) * vec4((v_uv * 2.0 - 1.0), 1.0, 1.0);
+    vec3 R = normalize(dir.xyz);
+    float theta = atan(R.z, R.x);
+    float gamma = acos(R.y);
+    vec4 sky_color = texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
+    o_color = mix(background_color, sky_color, float(use_sky));
+    o_normal = vec4(0.0, 0.0, 0.0, 1.0);
+}
+`;
+
+const SkyDomeProgram = new Cacher((config: Config) => {
+    const skydome_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, skydome_frag_shader_code).expect();
+    const skydome_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config).expect, skydome_frag_shader).expect();
+    const program = new Ref(skydome_program);
+
+    const uniform_sky_location = config.render_server.render_state.get_ProgramUniformLocation(skydome_program, 'sky');
+    const uniform_sky_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, skydome_program, uniform_sky_location!, RenderServerDevice.SkyTextureUnit);
+    uniform_sky_slot.commit();
+    uniform_sky_slot.dispose();
+
+    return program;
+});
+
+// #endregion
+
+//#region discard
 
 // #region ssao
 
@@ -257,7 +438,7 @@ void main() {
 
 const SSAOProgramUniform = new Cacher((config: Config) => {
     const ssao_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, ssao_frag_shader_code).expect();
-    const ssao_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config), ssao_frag_shader).expect();
+    const ssao_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config).expect, ssao_frag_shader).expect();
 
     const uniform_depth_location = config.render_server.render_state.get_ProgramUniformLocation(ssao_program, 'u_depth');
     const uniform_depth_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, ssao_program, uniform_depth_location!, 0);
@@ -295,7 +476,7 @@ void main() {
 
 const FogProgramUniform = new Cacher((config: Config) => {
     const fog_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, fog_frag_shader_code).expect();
-    const fog_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config), fog_frag_shader).expect();
+    const fog_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config).expect, fog_frag_shader).expect();
 
     const uniform_depth_location = config.render_server.render_state.get_ProgramUniformLocation(fog_program, 'u_depth');
     const uniform_depth_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, fog_program, uniform_depth_location!, 0);
@@ -310,158 +491,7 @@ const FogProgramUniform = new Cacher((config: Config) => {
 
 // #endregion
 
-// #region oit composite
-
-const oit_frag_shader_code = `#version 300 es
-precision highp float;
-
-${RenderServerDevice.WorldUniformsCode}
-
-uniform sampler2D u_color;
-uniform sampler2D u_accum;
-uniform bool u_colormap;
-
-in vec2 v_uv;
-
-layout(location = 0) out vec4 o_color;
-
-void main() {
-	ivec2 uv = ivec2(v_uv * screen_size);
-	vec4 color = texelFetch(u_color, uv, 0);
-	float color_a = 1.0 - color.a;
-	float a = texelFetch(u_accum, uv, 0).r;
-	o_color = vec4(color_a * color.rgb / max(a, 0.00001), color_a);
-	if (u_colormap) {
-		float r = o_color.r;
-		o_color.r = r <= 0.0031308 ? (12.92 * r) : (1.055 * pow(r, 1.0 / 2.4) - 0.055);
-		float g = o_color.g;
-		o_color.g = g <= 0.0031308 ? (12.92 * g) : (1.055 * pow(g, 1.0 / 2.4) - 0.055);
-		float b = o_color.b;
-		o_color.b = b <= 0.0031308 ? (12.92 * b) : (1.055 * pow(b, 1.0 / 2.4) - 0.055);
-	}
-}`;
-
-const OiTPorgramUniform = new Cacher((config: Config) => {
-    const oit_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, oit_frag_shader_code).expect();
-    const oit_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config), oit_frag_shader).expect();
-
-    const uniform_oit_color_location = config.render_server.render_state.get_ProgramUniformLocation(oit_program, 'u_color');
-    const uniform_oit_color_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, oit_program, uniform_oit_color_location!, 0);
-    uniform_oit_color_slot.commit();
-
-    const uniform_oit_accum_location = config.render_server.render_state.get_ProgramUniformLocation(oit_program, 'u_accum');
-    const uniform_oit_accum_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, oit_program, uniform_oit_accum_location!, 1);
-    uniform_oit_accum_slot.commit();
-
-    const uniform_oit_colormap_location = config.render_server.render_state.get_ProgramUniformLocation(oit_program, 'u_colormap');
-    const uniform_oit_colormap_slot = new WebGL2RenderStateUintUniformSlot(config.render_server.render_state, oit_program, uniform_oit_colormap_location!, 0);
-    uniform_oit_colormap_slot.commit();
-
-    return { oit_program, uniform_oit_colormap_slot };
-});
-
-// #endregion
-
-// #region highlight
-
-const highlight_frag_shader_code = `#version 300 es
-precision highp float;
-
-${RenderServerDevice.WorldUniformsCode}
-${RenderServerDevice.ConstantsCode}
-
-in vec2 v_uv;
-
-uniform sampler2D u_depth;
-
-layout(location = 0) out vec4 o_color;
-
-bool is_visible(const vec2 uv) {
-    return (texture(u_depth, uv).r + 1.0) / 2.0 < 0.999999;
-}
-
-void main() {
-    vec2 pixel_uv_size = vec2(1.0, 1.0) / screen_size;
-    bool base_visible = is_visible(v_uv);
-    float line_width = 2.0 * pixel_ratio;
-    float line_width_sqrt = line_width * SQRT2 / 2.0;
-    bool visible = 
-                   is_visible(v_uv + vec2(0.0, pixel_uv_size.y) * line_width) ||
-                   is_visible(v_uv + vec2(0.0, pixel_uv_size.y) * -line_width) ||
-                   is_visible(v_uv + vec2(pixel_uv_size.x, 0.0) * line_width) ||
-                   is_visible(v_uv + vec2(pixel_uv_size.x, 0.0) * -line_width) ||
-                   is_visible(v_uv + vec2(pixel_uv_size.x, pixel_uv_size.y) * line_width_sqrt) ||
-                   is_visible(v_uv + vec2(-pixel_uv_size.x, pixel_uv_size.y) * line_width_sqrt) ||
-                   is_visible(v_uv + vec2(pixel_uv_size.x, -pixel_uv_size.y) * line_width_sqrt) ||
-                   is_visible(v_uv + vec2(-pixel_uv_size.x, -pixel_uv_size.y) * line_width_sqrt) || 
-
-                   is_visible(v_uv + vec2(0.0, pixel_uv_size.y) * line_width / 2.0) ||
-                   is_visible(v_uv + vec2(0.0, pixel_uv_size.y) * -line_width / 2.0) ||
-                   is_visible(v_uv + vec2(pixel_uv_size.x, 0.0) * line_width / 2.0) ||
-                   is_visible(v_uv + vec2(pixel_uv_size.x, 0.0) * -line_width / 2.0) ||
-                   is_visible(v_uv + vec2(pixel_uv_size.x, pixel_uv_size.y) * line_width_sqrt / 2.0) ||
-                   is_visible(v_uv + vec2(-pixel_uv_size.x, pixel_uv_size.y) * line_width_sqrt / 2.0) ||
-                   is_visible(v_uv + vec2(pixel_uv_size.x, -pixel_uv_size.y) * line_width_sqrt / 2.0) ||
-                   is_visible(v_uv + vec2(-pixel_uv_size.x, -pixel_uv_size.y) * line_width_sqrt / 2.0)
-    ;
-	o_color = vec4(1.0, 0.5, 0.0, (visible && !base_visible) ? 1.0 : 0.0);
-}`;
-
-const HighlightProgram = new Cacher((config: Config) => {
-    const highlight_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, highlight_frag_shader_code).expect();
-    const highlight_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config), highlight_frag_shader).expect();
-
-    const uniform_screen_location = config.render_server.render_state.get_ProgramUniformLocation(highlight_program, 'u_depth');
-    const uniform_screen_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, highlight_program, uniform_screen_location!, 0);
-    uniform_screen_slot.commit();
-
-    return new Ref(highlight_program);
-});
-
-// #endregion
-
-// #region sky
-
-const skydome_frag_shader_code = `#version 300 es
-precision highp float;
-precision highp usampler2DArray;
-precision highp sampler3D;
-
-const float PI = 3.1415926535;
-const float TAU = 6.283185307;
-const float EPSILON = 0.00001;
-
-${RenderServerDevice.WorldUniformsCode}
-
-in vec2 v_uv;
-
-uniform sampler2D sky;
-
-${RenderServerDevice.FrameOutputBufferCode}
-
-void main() {
-    vec4 dir = mat4(mat3(camera_world)) * inverse(camera_projection) * vec4((v_uv * 2.0 - 1.0), 1.0, 1.0);
-    vec3 R = normalize(dir.xyz);
-    float theta = atan(R.z, R.x);
-    float gamma = acos(R.y);
-    vec4 sky_color = texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
-    o_color = mix(background_color, sky_color, float(use_sky));
-    o_normal = vec4(0.0, 0.0, 0.0, 1.0);
-}
-`;
-
-const SkyDomeProgram = new Cacher((config: Config) => {
-    const skydome_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, skydome_frag_shader_code).expect();
-    const skydome_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config), skydome_frag_shader).expect();
-
-    const uniform_sky_location = config.render_server.render_state.get_ProgramUniformLocation(skydome_program, 'sky');
-    const uniform_sky_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, skydome_program, uniform_sky_location!, RenderServerDevice.SkyTextureUnit);
-    uniform_sky_slot.commit();
-
-    return new Ref(skydome_program);
-});
-
-// #endregion
+//#endregion
 
 export class EditorRenderer3DPipeline extends Renderer3DPipeline {
     private get render_server() { return this.config.render_server; }
@@ -688,17 +718,16 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.alloc_Transparent();
     }
 
-    private quad_geometry = QuadGeometry.get(this.config);
+    private quad_geometry = QuadGeometry.get(this.config).expect;
 
-    private screen_quad_solid_program = OnscreenProgramUniform.get(this.config).onscreen_program;
-    private screen_quad_solid_colormap_uniform_slot = OnscreenProgramUniform.get(this.config).uniform_colormap_slot;
+    private screen_quad_solid_program = OnscreenProgramUniform.get(this.config).program.expect;
+    private screen_quad_solid_colormap_uniform_slot = OnscreenProgramUniform.get(this.config).uniform_colormap_slot.expect;
 
-    private ssao_quad_solid_program = FogProgramUniform.get(this.config);
+    private highlight_program = HighlightProgramUniform.get(this.config).program.expect;
+    private highlight_color_uniform_slot = HighlightProgramUniform.get(this.config).uniform_color_slot.expect;
 
-    private highlight_program = HighlightProgram.get(this.config);
-
-    private oit_screen_quad_solid_program = OiTPorgramUniform.get(this.config).oit_program;
-    private oit_screen_quad_solid_colormap_uniform_slot = OiTPorgramUniform.get(this.config).uniform_oit_colormap_slot;
+    private oit_screen_quad_solid_program = OiTPorgramUniform.get(this.config).program.expect;
+    private oit_screen_quad_solid_colormap_uniform_slot = OiTPorgramUniform.get(this.config).uniform_colormap_slot.expect;
 
     private sky_quad_solid_program = SkyDomeProgram.get(this.config).expect;
 
@@ -1051,17 +1080,24 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         }
     }
 
-    private compose_RenderQueueHighlight(renderer: EditorRenderer3D) {
+    private compose_RenderQueueHighlight(renderer: EditorRenderer3D, editor_highlight_color: Color) {
         this.render_server.render_state.use_FrameBuffer(this.result_framebuffer.expect);
         this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true);
         this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.SRC_ALPHA, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
         this.set_CullFace(RenderServerMaterialCullFace.None);
         this.render_server.render_state.active_Texture(this.highlight_depth_texture.expect, 0);
-        this.render_server.render_state.draw_Elements(this.highlight_program.expect, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+        this.render_server.render_state.active_Texture(this.solid_depth_texture.expect, 1);
+        this.highlight_color_uniform_slot.value = editor_highlight_color;
+        this.highlight_color_uniform_slot.commit();
+        this.render_server.render_state.draw_Elements(this.highlight_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
+
+    static readonly #editor_highlight_color: Color = Vector4.new;
 
     protected render_Internal(renderer: EditorRenderer3D, world: World3D, viewport: Viewport, once: boolean): void {
         const { transparent: transparent_bg, color_map } = viewport;
+        const editor_highlight_color = viewport.get_EditorHighlightColor(EditorRenderer3DPipeline.#editor_highlight_color);
+
         // render queue 0
         this.render_RenderQueue0Solid(renderer, transparent_bg);
         this.compose_RenderQueue0Solid(renderer, color_map);
@@ -1081,7 +1117,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         // render highlight
         if (renderer.render_queue_highlight.solid_pointer >= 0 || renderer.render_queue_highlight.transparent_pointer >= 0) {
             this.render_RenderQueueHighlight(renderer);
-            this.compose_RenderQueueHighlight(renderer);
+            this.compose_RenderQueueHighlight(renderer, editor_highlight_color);
         }
     }
 

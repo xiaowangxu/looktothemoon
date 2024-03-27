@@ -94,7 +94,7 @@ const DRenderPipeline = new Cacher((config: Config) => {
     return new Ref(new EditorRenderer3DPipeline(config));
 });
 
-const bg_color = Color.create(0.9, 0.9, 0.9);
+const bg_color = Color.create(0.2, 0.2, 0.2).linear_rgb;
 
 export function createEditor() {
     const render_server_canvas = document.getElementById('render-server-canvas') as HTMLCanvasElement;
@@ -115,6 +115,7 @@ export function createEditor() {
     EditorViewport.renderer_3d = renderer;
     // EditorViewport.use_sky = true;
     EditorViewport.background_color = bg_color;
+    EditorViewport.color_map = true;
     // EditorViewport.transparent = true;
     EditorViewportContainer.add_Child(EditorViewport);
     // camera
@@ -412,6 +413,8 @@ export function createEditor() {
                 line_grabber.local_position = result.position;
                 line_grabber.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), result.normal));
             });
+
+            mesh.editor_highlighted = i % 2 === 0;
         }
         // const tween = EditorSceneTree.start_Tween(new TweenLoop(
         //     new TweenPingPong(
@@ -530,7 +533,7 @@ export function createEditor() {
 
     // }
 
-    const plane = new SphereGeometryResource(DefaultConfig);
+    const plane = new BoxGeometryResource(DefaultConfig);
     // plane.width = plane.height = 1;
     plane.build();
     const plain = new PlainColorMaterialResource(DefaultConfig);

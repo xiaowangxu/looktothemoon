@@ -554,6 +554,22 @@ export class Viewport extends Node {
         }
     }
 
+    // editor
+    public editor_highlighted: boolean = true; 
+    
+    private readonly _editor_highlight_color: Color = Vector4.create(1.0, 0.5, 0.0, 1);
+    public get editor_highlight_color(): Color {
+        return this._editor_highlight_color.clone();
+    }
+    public get_EditorHighlightColor(target: Color) {
+        return target.copy(this._editor_highlight_color);
+    }
+    public set editor_highlight_color(color: Color) {
+        if (!this._editor_highlight_color.equal(color)) {
+            this._editor_highlight_color.copy(color);
+        }
+    }
+
     // signals
     public readonly signal_before_render: SignalEmitter<() => void> = new SignalEmitter();
     public readonly signal_after_render: SignalEmitter<() => void> = new SignalEmitter();

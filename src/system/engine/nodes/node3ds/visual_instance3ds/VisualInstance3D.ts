@@ -57,6 +57,17 @@ export abstract class VisualInstance3D extends Node3D {
 
     protected abstract on_LayerChanged(): void;
 
+    protected _editor_highlighted: boolean = false;
+    public get editor_highlighted() { return this._editor_highlighted; }
+    public set editor_highlighted(editor_highlighted: boolean) {
+        if (this._editor_highlighted !== editor_highlighted) {
+            this._editor_highlighted = editor_highlighted;
+            this.on_EditorHighlightedChanged();
+        }
+    }
+
+    protected abstract on_EditorHighlightedChanged(): void;
+
     private propagate_VisibilityChanged() {
         if (this.is_global_visible_dirty) return;
         for (const child of this.children) {

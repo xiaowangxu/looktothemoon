@@ -292,6 +292,8 @@ export class EditorRenderer3D extends Renderer3D {
         const lights_data = world_3d.lights_data.expect;
         this.render_server.use_LightsData(lights_data);
 
+        const editor_highlighted = viewport.editor_highlighted;
+
         // fill up render queue
         let total_objects_count = 0;
         let rendered_objects_count = 0;
@@ -304,12 +306,13 @@ export class EditorRenderer3D extends Renderer3D {
             const render_queue = mesh.render_queue;
             const queue = render_queue === 0 ? this.render_queue_0 : this.render_queue_1;
             if (queue !== undefined) {
+                if (editor_highlighted && mesh.editor_highlighted) {
+                    queue.addtion_sync_queue = this.render_queue_highlight;
+                }
                 if (mesh.fill_RenderQueue(queue, cam_frustum, cam, this.base_size)) {
                     rendered_objects_count++;
-                    // if (mesh.rid > 160){
-                    //     mesh.fill_RenderQueue(this.render_queue_highlight, cam_frustum, cam, this.base_size);
-                    // }
                 }
+                queue.addtion_sync_queue = undefined;
             }
         }
 
