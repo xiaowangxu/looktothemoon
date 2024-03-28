@@ -9,7 +9,7 @@ import { RenderStateBufferUsage, RenderStateDataType, RenderStateFrameBufferPart
 import { WebGL2RenderStateFrameBufferAttachmentPoint } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { Cacher } from "@/system/utils/Cacher";
 import { RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
-import { WebGL2RenderStateIntUniformSlot, WebGL2RenderStateUintUniformSlot, WebGL2RenderStateVec4UniformSlot } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
+import { WebGL2RenderStateFloatUniformSlot, WebGL2RenderStateIntUniformSlot, WebGL2RenderStateUintUniformSlot, WebGL2RenderStateVec4UniformSlot } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 import { RenderServerDevice } from "../../../render_server/RenderServer";
 import { RenderServerShaderPass } from "../../../render_server/RenderServerShader";
 import { RenderServerMaterialCullFace } from "../../../render_server/RenderServerMaterial";
@@ -171,6 +171,7 @@ in vec2 v_uv;
 uniform sampler2D u_depth;
 uniform sampler2D u_scene_depth;
 uniform vec4 u_color;
+uniform float u_line_width;
 
 layout(location = 0) out vec4 o_color;
 
@@ -181,7 +182,7 @@ bool is_visible(const vec2 uv) {
 void main() {
     vec2 pixel_uv_size = vec2(1.0, 1.0) / screen_size;
     bool base_visible = is_visible(v_uv);
-    float line_width = 2.0 * pixel_ratio;
+    float line_width = u_line_width * pixel_ratio;
     float line_width_sqrt = line_width * SQRT2 / 2.0;
     float line_width_cos = 0.92387953251 * line_width;
     float line_width_sin = 0.38268343236 * line_width;
@@ -228,7 +229,11 @@ const HighlightProgramUniform = new Cacher((config: Config) => {
     const uniform_color_slot = new WebGL2RenderStateVec4UniformSlot(config.render_server.render_state, highlight_program, uniform_color_location!, Vector4.create(1.0, 0.0, 0.0, 1.0));
     uniform_color_slot.commit();
 
-    return { program, uniform_color_slot: new Ref(uniform_color_slot) };
+    const uniform_line_width_location = config.render_server.render_state.get_ProgramUniformLocation(highlight_program, 'u_line_width');
+    const uniform_line_width_slot = new WebGL2RenderStateFloatUniformSlot(config.render_server.render_state, highlight_program, uniform_line_width_location!, 2.0);
+    uniform_line_width_slot.commit();
+
+    return { program, uniform_color_slot: new Ref(uniform_color_slot), uniform_line_width_slot: new Ref(uniform_line_width_slot) };
 });
 
 // #endregion
@@ -725,6 +730,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
     private highlight_program = HighlightProgramUniform.get(this.config).program.expect;
     private highlight_color_uniform_slot = HighlightProgramUniform.get(this.config).uniform_color_slot.expect;
+    private highlight_line_width_uniform_slot = HighlightProgramUniform.get(this.config).uniform_line_width_slot.expect;
 
     private oit_screen_quad_solid_program = OiTPorgramUniform.get(this.config).program.expect;
     private oit_screen_quad_solid_colormap_uniform_slot = OiTPorgramUniform.get(this.config).uniform_colormap_slot.expect;
@@ -1080,7 +1086,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         }
     }
 
-    private compose_RenderQueueHighlight(renderer: EditorRenderer3D, editor_highlight_color: Color) {
+    private compose_RenderQueueHighlight(renderer: EditorRenderer3D, editor_highlight_color: Color, line_width: number) {
         this.render_server.render_state.use_FrameBuffer(this.result_framebuffer.expect);
         this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true);
         this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.SRC_ALPHA, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
@@ -1089,13 +1095,15 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.active_Texture(this.solid_depth_texture.expect, 1);
         this.highlight_color_uniform_slot.value = editor_highlight_color;
         this.highlight_color_uniform_slot.commit();
+        this.highlight_line_width_uniform_slot.value = line_width;
+        this.highlight_line_width_uniform_slot.commit();
         this.render_server.render_state.draw_Elements(this.highlight_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
     static readonly #editor_highlight_color: Color = Vector4.new;
 
     protected render_Internal(renderer: EditorRenderer3D, world: World3D, viewport: Viewport, once: boolean): void {
-        const { transparent: transparent_bg, color_map } = viewport;
+        const { transparent: transparent_bg, color_map, editor_highlight_line_width } = viewport;
         const editor_highlight_color = viewport.get_EditorHighlightColor(EditorRenderer3DPipeline.#editor_highlight_color);
 
         // render queue 0
@@ -1117,7 +1125,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         // render highlight
         if (renderer.render_queue_highlight.solid_pointer >= 0 || renderer.render_queue_highlight.transparent_pointer >= 0) {
             this.render_RenderQueueHighlight(renderer);
-            this.compose_RenderQueueHighlight(renderer, editor_highlight_color);
+            this.compose_RenderQueueHighlight(renderer, editor_highlight_color, editor_highlight_line_width);
         }
     }
 

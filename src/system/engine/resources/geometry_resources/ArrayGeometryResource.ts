@@ -61,6 +61,13 @@ export class ArrayGeometryResource extends GeometryResource {
         this.geometry.set_BBox(bbox);
     }
 
+    public update_Array(key: string, array: PackedArray, offset: number = 0, commit?: boolean) {
+        const attribute_buffer = this.geometry.get_AttributeBuffer(key);
+        if (attribute_buffer !== undefined) {
+            attribute_buffer.update_Data(array.data, offset, commit);
+        }
+    }
+
     // save / load
 
     public dump(writer: ClassWriter): void {
@@ -101,9 +108,9 @@ export class ArrayGeometryResource extends GeometryResource {
         external?: string
     ) {
         const refid = class_saver.create_Data(rid, ArrayGeometryResource.class_name, unique, external);
-       
+
         class_saver.add_Property(refid, 'primitive_type', primitive_type);
-        
+
         const attr_buf: Map<string, PackedArray> = new Map();
         const attr_loc: Map<string, number> = new Map();
         for (const [key, val] of Object.entries(array)) {
@@ -118,7 +125,7 @@ export class ArrayGeometryResource extends GeometryResource {
         }
         class_saver.add_Property(refid, 'array', attr_buf);
         class_saver.add_Property(refid, 'locations', attr_loc);
-        
+
         class_saver.add_Property(refid, 'index', index);
         class_saver.add_Property(refid, 'vertex_count', vertex_count);
         class_saver.add_Property(refid, 'usage', usage === RenderStateBufferUsage.StaticDraw ? undefined : usage);

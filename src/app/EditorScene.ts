@@ -64,6 +64,13 @@ import { MatcapMaterialResource } from "@/system/engine/resources/material_resou
 // import png_url7 from 'res://matcap-7.jpg';
 // import png_url8 from 'res://matcap-8.jpg';
 // import png_url9 from 'res://matcap-9.jpg';
+// import png_url10 from 'res://matcap-10.png';
+// import png_url11 from 'res://matcap-11.png';
+// import png_url12 from 'res://matcap-12.png';
+// const image_loader = new ImageLoader();
+// image_loader.parse(png_url12).then(r => {
+//     console.log(r.expect().save(undefined, `download://matcap-12.lttmbin`));
+// });
 // let i = 2;
 // for (const url of [png_url2, png_url3, png_url4, png_url5, png_url6, png_url7, png_url8, png_url9]) {
 //     const image_loader = new ImageLoader();
@@ -94,7 +101,7 @@ const DRenderPipeline = new Cacher((config: Config) => {
     return new Ref(new EditorRenderer3DPipeline(config));
 });
 
-const bg_color = Color.create(0.2, 0.2, 0.2).linear_rgb;
+const bg_color = Color.create(0.8, 0.8, 0.8).linear_rgb;
 
 export function createEditor() {
     const render_server_canvas = document.getElementById('render-server-canvas') as HTMLCanvasElement;
@@ -123,34 +130,35 @@ export function createEditor() {
     EditorViewport.add_Child(EditorCamera);
     EditorCamera.set_Zoom(0.3);
 
-    // // viewport 0
-    // const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
-    // EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-    // const EditorViewport0 = new Viewport(DefaultConfig);
-    // const renderer0 = new EditorRenderer3D(DefaultConfig);
-    // const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
-    // renderer0.render_pipeline = pipeline0;
-    // EditorViewport0.renderer_3d = renderer0;
-    // // EditorViewport0.transparent = true;
-    // EditorViewport0.background_color = bg_color;
-    // EditorViewportContainer0.add_Child(EditorViewport0);
-    // const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
-    // EditorViewport0.add_Child(EditorCamera0);
-    // EditorViewport.add_Child(EditorViewportContainer0);
-    // // viewport 1
-    // const EditorViewportContainer1 = new ViewportDomContainer(DefaultConfig);
-    // EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
-    // const EditorViewport1 = new Viewport(DefaultConfig);
-    // const renderer1 = new EditorRenderer3D(DefaultConfig);
-    // const pipeline1 = new EditorRenderer3DPipeline(DefaultConfig);
-    // renderer1.render_pipeline = pipeline1;
-    // EditorViewport1.renderer_3d = renderer1;
-    // // EditorViewport1.transparent = true;
-    // EditorViewport1.background_color = bg_color;
-    // EditorViewportContainer1.add_Child(EditorViewport1);
-    // const EditorCamera1 = new EditorOrbitCamera3D(DefaultConfig);
-    // EditorViewport1.add_Child(EditorCamera1);
-    // EditorViewport.add_Child(EditorViewportContainer1);
+    // viewport 0
+    const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
+    EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+    const EditorViewport0 = new Viewport(DefaultConfig);
+    const renderer0 = new EditorRenderer3D(DefaultConfig);
+    const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
+    renderer0.render_pipeline = pipeline0;
+    EditorViewport0.renderer_3d = renderer0;
+    // EditorViewport0.transparent = true;
+    EditorViewport0.background_color = bg_color;
+    EditorViewportContainer0.add_Child(EditorViewport0);
+    const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
+    EditorViewport0.add_Child(EditorCamera0);
+    EditorViewport.add_Child(EditorViewportContainer0);
+    // viewport 1
+    const EditorViewportContainer1 = new ViewportDomContainer(DefaultConfig);
+    EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
+    const EditorViewport1 = new Viewport(DefaultConfig);
+    const renderer1 = new EditorRenderer3D(DefaultConfig);
+    const pipeline1 = new EditorRenderer3DPipeline(DefaultConfig);
+    renderer1.render_pipeline = pipeline1;
+    EditorViewport1.renderer_3d = renderer1;
+    // EditorViewport1.transparent = true;
+    EditorViewport1.background_color = bg_color;
+    EditorViewport1.editor_highlight_color = Color.color8(0, 0, 255);
+    EditorViewportContainer1.add_Child(EditorViewport1);
+    const EditorCamera1 = new EditorOrbitCamera3D(DefaultConfig);
+    EditorViewport1.add_Child(EditorCamera1);
+    EditorViewport.add_Child(EditorViewportContainer1);
 
     // World 
     const World = new Node3D(DefaultConfig);
@@ -393,7 +401,7 @@ export function createEditor() {
         shape.bvh.build(huli_geo.get_TriFaces()!, undefined, Bvh3Strategy.Center);
         const normal_material = new MatcapMaterialResource(DefaultConfig);
 
-        for (let i = 0; i <= 9; i++) {
+        for (let i = 0; i <= 12; i++) {
             const override_material = new MaterialOverrideResource(DefaultConfig);
             override_material.set_OverrideMaterial(normal_material);
             override_material.set_UniformOverride('u_texture', new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>(`sys://textures/matcaps/matcap-${i}.lttmbin`).expect())
@@ -401,7 +409,7 @@ export function createEditor() {
             mesh.geometry = huli_geo;
             mesh.material = override_material;
             mesh.local_scale = Vector3.create(100, 100, 100);
-            mesh.local_position = Vector3.create(-500 - i * 300, -100, 250);
+            mesh.local_position = Vector3.create(-500 - (i % 5) * 300, -100 + Math.floor(i / 5) * 300, 250);
             World.add_Child(mesh);
 
             const area = new PickingArea3D(DefaultConfig);
@@ -465,6 +473,8 @@ export function createEditor() {
     box_mesh.local_position = Vector3.create(400, 100, -100);
     box_mesh.local_rotation = Euler.create(0.32, 0.123, 1.23);
     box_mesh.local_scale = Vector3.create(300, 100, 100);
+    box_mesh.editor_highlighted = true;
+
     World.add_Child(box_mesh);
     box_geo.build();
     const box_area = new PickingArea3D(DefaultConfig);
