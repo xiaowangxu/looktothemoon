@@ -2,6 +2,8 @@ export type Required<Type, Key extends keyof Type> = Type & { [Property in Key]-
 
 export type Self<T> = T;
 
+export type NotNull = Exclude<any, null | undefined>;
+
 export class Out<T> {
 
     //#region init
