@@ -160,10 +160,11 @@ const SkyProgramUniform = new Cacher((config: Config) => {
 
 export class VisualWorld3DMesh extends WorldObject {
 
-    static #tmp_box3_0 = Box3.new;
-    static #tmp_vetcor3_0 = Vector3.new;
-    static #tmp_vetcor4_0 = Vector4.new;
-    static #tmp_matrix4_0 = Matrix4.new;
+    static readonly #const_vector3_zero: Vector3 = new Vector3(0, 0, 0);
+    static readonly #tmp_box3_0 = Box3.new;
+    static readonly #tmp_vetcor3_0 = Vector3.new;
+    static readonly #tmp_vetcor4_0 = Vector4.new;
+    static readonly #tmp_matrix4_0 = Matrix4.new;
     static get_WorldSpaceHalfWidth(camera: Camera3, distance: number, size: number, resolution: Vector2) {
         // transform into clip space, adjust the x and y values by the pixel width offset, then
         // transform back into world space to get world offset. Note clip space is [-1, 1] so full
@@ -196,37 +197,34 @@ export class VisualWorld3DMesh extends WorldObject {
 
     public editor_highlighted: boolean = false;
 
-    public get visible() {
-        return this._visible && !this.is_bbox_empty;
-    }
+    public get visible() { return this._visible && !this.is_bbox_empty; }
 
-    public get has_geometry() {
-        return !this.geometry_ref.is_empty && this.geometry_ref.expect.has_geometry;
-    }
+    public get has_geometry() { return !this.geometry_ref.is_empty && this.geometry_ref.expect.has_geometry; }
 
-    public get bbox() { return this._bbox; }
+    // global transformed
+    private bbox: Box3 = Box3.new;
     private is_bbox_empty: boolean = true;
-    private _bbox: Box3 = Box3.new;
+    private _bbox_override: Box3 | undefined = undefined;
 
     constructor(config: Config, rid: Rid) {
         super(config, rid);
     }
 
-    private on_geometry_bbox_changed = (bbox: Box3) => {
-        this.update_BBox();
-    }
-
-    static readonly #zero_vec3: Vector3 = new Vector3(0, 0, 0);
-
     private update_BBox() {
-        if (!this.has_geometry) {
-            this._bbox.set(VisualWorld3DMesh.#zero_vec3, VisualWorld3DMesh.#zero_vec3);
-            this.is_bbox_empty = true;
+        if (this._bbox_override === undefined) {
+            if (!this.has_geometry) {
+                this.bbox.set(VisualWorld3DMesh.#const_vector3_zero, VisualWorld3DMesh.#const_vector3_zero);
+                this.is_bbox_empty = true;
+            }
+            else {
+                this.bbox.apply_Matrix4(this.geometry_ref.expect.bbox, this.global_transform);
+                this.is_bbox_empty = this.bbox.is_empty;
+                if (!this.is_bbox_empty && this.bbox_enlargment > 0) this.bbox.enlarge(this.bbox, this.bbox_enlargment);
+            }
         }
         else {
-            this._bbox.apply_Matrix4(this.geometry_ref.expect.bbox, this.global_transform);
-            this.is_bbox_empty = this._bbox.is_empty;
-            if (!this.is_bbox_empty && this.bbox_enlargment > 0) this._bbox.enlarge(this._bbox, this.bbox_enlargment);
+            this.bbox.apply_Matrix4(this._bbox_override, this.global_transform);
+            this.is_bbox_empty = this.bbox.is_empty;
         }
     }
 
@@ -240,6 +238,7 @@ export class VisualWorld3DMesh extends WorldObject {
         this.is_surface_materials_empty = true;
     }
 
+    private on_geometry_bbox_changed = (bbox: Box3) => { this.update_BBox(); }
     public set_Geometry(geometry: RenderServerGeometry | undefined) {
         if (!this.geometry_ref.is_empty) {
             this.geometry_ref.expect.singal_bbox_changed.disconnect(this.on_geometry_bbox_changed);
@@ -257,6 +256,18 @@ export class VisualWorld3DMesh extends WorldObject {
             this.surface_materials_ref.clear();
         }
         this.update_SurfaceMaterialsEmpty();
+        this.update_BBox();
+    }
+
+    public set_BBoxOverride(bbox: Box3 | undefined) {
+        if (bbox === undefined) {
+            if (this._bbox_override === undefined) return;
+            this._bbox_override = undefined
+        }
+        else {
+            if (this._bbox_override === undefined) this._bbox_override = bbox.clone();
+            else this._bbox_override.copy(bbox);
+        }
         this.update_BBox();
     }
 
@@ -664,6 +675,13 @@ export class VisualWorld3D extends ConfiguredObject {
             else {
                 instance.set_Geometry(geometry.geometry);
             }
+        }
+    }
+
+    public set_MeshBBoxOverride(rid: Rid, bbox: Box3 | undefined) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            instance.set_BBoxOverride(bbox);
         }
     }
 

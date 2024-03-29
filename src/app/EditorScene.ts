@@ -56,6 +56,7 @@ import { ImageTextureResource } from "@/system/engine/resources/texture_resource
 import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
 import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/MatcapMaterialResource";
 import { RenderStateTextureMagFilter, RenderStateTextureMinFilter } from "@/system/sliverofstraw/RenderState";
+import { Box3 } from "@/system/fivepebble/geometries/Box3";
 
 // import png_url2 from 'res://matcap-2.jpg';
 // import png_url3 from 'res://matcap-3.jpg';
@@ -224,6 +225,7 @@ export function createEditor() {
     Mesh1.local_scale = Vector3.create(100, 100, 100);
     Mesh1.local_position = Vector3.create(0, 0, -400);
     Mesh1.local_visible = true;
+    Mesh1.bbox_override = Box3.create(Vector3.create(-0.1, -0.1, -0.1), Vector3.create(0.1, 0.1, 0.1));
 
     World.add_Child(Mesh1);
 
