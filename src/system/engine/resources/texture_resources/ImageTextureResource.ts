@@ -1,6 +1,6 @@
 import type { Config } from "../../ConfiguredObject";
 import { RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateTextureWrap } from "@/system/sliverofstraw/RenderState";
-import { TextureResource } from "./TextureResource";
+import { ParameterMutableTextureResource } from "./TextureResource";
 import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
 import type { ClassSaver } from "../../classes/saver_loader/ClassSaverLoader";
 import type { Rid } from "../../Rid";
@@ -17,7 +17,7 @@ type ImageBitDepth = 8 | 32;
 
 type ImageSrc = ImageBitmap | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | OffscreenCanvas;
 
-export class ImageTextureResource extends TextureResource {
+export class ImageTextureResource extends ParameterMutableTextureResource {
     public static class_name: string = 'ImageTextureResource';
 
     constructor(config: Config) {

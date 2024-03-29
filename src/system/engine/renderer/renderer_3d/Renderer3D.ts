@@ -5,15 +5,20 @@ import { Ref } from "../../../utils/RefCounted";
 import { type Config } from "../../ConfiguredObject";
 import type { Renderer3DPipeline } from "./Renderer3DPipeline";
 import { Resource } from "../../resources/Resource";
+import { RenderTextureResource } from "../../resources/texture_resources/RenderTextureResource";
 
 export abstract class Renderer3D extends Resource {
     protected get render_server() { return this.config.render_server; }
+
+    private render_texture_ref: Ref<RenderTextureResource> = new Ref(new RenderTextureResource(this.config));
+    public get render_texture(): RenderTextureResource { return this.render_texture_ref.expect; }
 
     protected _render_pipeline: Ref<Renderer3DPipeline> = new Ref();
     public get render_pipeline() { return this._render_pipeline.value; }
     public set render_pipeline(pipeline: Renderer3DPipeline | undefined) {
         if (this._render_pipeline.value !== pipeline) {
             this._render_pipeline.value = pipeline;
+            this.render_texture_ref.expect.set_Texture(pipeline?.texture);
         }
     }
 
@@ -40,6 +45,7 @@ export abstract class Renderer3D extends Resource {
 
     protected dispose(): void {
         this._render_pipeline.clear();
+        this.render_texture_ref.clear();
     }
 }
 

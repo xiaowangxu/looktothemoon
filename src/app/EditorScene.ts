@@ -51,10 +51,11 @@ import { PickingBoxResource, PickingBvh3Resource, PickingPointResource, PickingP
 import { PickingShape3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingShape3D";
 import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/LineGrabber3D";
 import { FixSizeNode3D } from "@/system/engine/nodes/node3ds/gizmo3ds/FixSizeNode3D";
-import { PlaceholderTextureResource } from "@/system/engine/resources/texture_resources/TextureResource";
+import { PlaceholderTextureResource } from "@/system/engine/resources/texture_resources/PlaceholderTextureResource";
 import { ImageTextureResource } from "@/system/engine/resources/texture_resources/ImageTextureResource";
 import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
 import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/MatcapMaterialResource";
+import { RenderStateTextureMagFilter, RenderStateTextureMinFilter } from "@/system/sliverofstraw/RenderState";
 
 // import png_url2 from 'res://matcap-2.jpg';
 // import png_url3 from 'res://matcap-3.jpg';
@@ -554,8 +555,14 @@ export function createEditor() {
     __plain2.set_OverrideMaterial(plain);
 
     plain.texture = new PlaceholderTextureResource(DefaultConfig);
-    __plain.set_UniformOverride('u_texture', new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://f-texture.lttmbin').expect());
-    __plain2.set_UniformOverride('u_texture', new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://test-texture.lttmbin').expect());
+    const tex1 = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://f-texture.lttmbin').expect();
+    tex1.min_filter = RenderStateTextureMinFilter.Linear;
+    tex1.mag_filter = RenderStateTextureMagFilter.Linear;
+    __plain.set_UniformOverride('u_texture', tex1);
+    const tex2 = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://test-texture.lttmbin').expect();
+    tex2.min_filter = RenderStateTextureMinFilter.Linear;
+    tex2.mag_filter = RenderStateTextureMagFilter.Linear;
+    __plain2.set_UniformOverride('u_texture', tex2);
 
     console.log(__plain2)
 

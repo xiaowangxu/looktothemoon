@@ -404,6 +404,28 @@ export class Viewport extends Node {
         }
     }
 
+    public transparent: boolean = false;
+
+    public use_sky: boolean = false;
+    
+    private readonly _background_color: Color = Vector4.create(0.9, 0.9, 0.9, 1);
+    public get background_color(): Color {
+        return this._background_color.clone();
+    }
+    public get_BackgroundColor(target: Color) {
+        return target.copy(this._background_color);
+    }
+    public set background_color(color: Color) {
+        if (!this._background_color.equal(color)) {
+            this._background_color.copy(color);
+        }
+    }
+
+    public color_map: boolean = true;
+
+    public get renderer_3d_texture() { return this._renderer_3d.value?.render_texture; }
+
+    // size & position
     private readonly _size: Vector2 = Vector2.new;
     private is_size_dirty: boolean = false;
     public get size(): Vector2 {
@@ -437,25 +459,7 @@ export class Viewport extends Node {
         }
     }
 
-    public transparent: boolean = false;
-
-    public use_sky: boolean = false;
-
-    private readonly _background_color: Color = Vector4.create(0.9, 0.9, 0.9, 1);
-    public get background_color(): Color {
-        return this._background_color.clone();
-    }
-    public get_BackgroundColor(target: Color) {
-        return target.copy(this._background_color);
-    }
-    public set background_color(color: Color) {
-        if (!this._background_color.equal(color)) {
-            this._background_color.copy(color);
-        }
-    }
-
-    public color_map: boolean = true;
-
+    // mode
     public debug: boolean = false;
 
     public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
@@ -545,6 +549,7 @@ export class Viewport extends Node {
         }
     }
 
+    // style
     private _cursor_style: CursorStyle = 'default';
     public get cursor_style(): CursorStyle { return this._cursor_style; }
     public set cursor_style(cursor_style: CursorStyle) {
@@ -555,9 +560,9 @@ export class Viewport extends Node {
     }
 
     // editor
-    public editor_highlighted: boolean = true; 
-    public editor_highlight_line_width: number = 2.5; 
-    
+    public editor_highlighted: boolean = true;
+    public editor_highlight_line_width: number = 2.5;
+
     private readonly _editor_highlight_color: Color = Vector4.create(1.0, 0.5, 0.0, 1);
     public get editor_highlight_color(): Color {
         return this._editor_highlight_color.clone();
