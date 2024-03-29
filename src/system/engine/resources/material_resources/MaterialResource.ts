@@ -49,6 +49,7 @@ export class MaterialOverrideResource extends MaterialResource {
 
 	private readonly override_uniforms_map: Map<string, Refed<OverrideUniformType>> = new Map();
 
+    public get transparent() { return this.material.transparent; }
 	public set transparent(transparent: boolean) { this.material.transparent = transparent; }
 
 	constructor(config: Config) {
