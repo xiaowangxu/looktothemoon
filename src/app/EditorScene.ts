@@ -225,7 +225,6 @@ export function createEditor() {
     Mesh1.local_scale = Vector3.create(100, 100, 100);
     Mesh1.local_position = Vector3.create(0, 0, -400);
     Mesh1.local_visible = true;
-    Mesh1.bbox_override = Box3.create(Vector3.create(-0.1, -0.1, -0.1), Vector3.create(0.1, 0.1, 0.1));
 
     World.add_Child(Mesh1);
 
@@ -547,7 +546,7 @@ export function createEditor() {
 
     // }
 
-    const plane = new BoxGeometryResource(DefaultConfig);
+    const plane = new SphereGeometryResource(DefaultConfig);
     // plane.width = plane.height = 1;
     plane.build();
     const plain = new PlainColorMaterialResource(DefaultConfig);
