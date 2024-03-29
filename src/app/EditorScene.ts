@@ -15,7 +15,7 @@ import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineGeometryResource";
-import { MultiLineMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
+import { MultiLineMaterial2Resource, MultiLineMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
 import { StandardMaterialResource } from "../system/engine/resources/material_resources/PrimitiveMaterialResource";
@@ -399,12 +399,13 @@ export function createEditor() {
         const huli_geo = new ClassLoader(DInstanceCache.get(DefaultConfig)).fetch<ArrayGeometryResource>('sys://huli.geometry.lttmbin').expect();
         const shape = new PickingBvh3Resource(DefaultConfig);
         shape.bvh.build(huli_geo.get_TriFaces()!, undefined, Bvh3Strategy.Center);
-        const normal_material = new MatcapMaterialResource(DefaultConfig);
+        // const normal_material = new MatcapMaterialResource(DefaultConfig);
 
         for (let i = 0; i <= 12; i++) {
-            const override_material = new MaterialOverrideResource(DefaultConfig);
-            override_material.set_OverrideMaterial(normal_material);
-            override_material.set_UniformOverride('u_texture', new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>(`sys://textures/matcaps/matcap-${i}.lttmbin`).expect())
+            const override_material = new MatcapMaterialResource(DefaultConfig); // new MaterialOverrideResource(DefaultConfig);
+            // override_material.set_OverrideMaterial(normal_material);
+            // override_material.set_UniformOverride('u_texture', new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>(`sys://textures/matcaps/matcap-${i}.lttmbin`).expect())
+            override_material.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>(`sys://textures/matcaps/matcap-${i}.lttmbin`).expect();
             const mesh = new MeshInstance3D(DefaultConfig);
             mesh.geometry = huli_geo;
             mesh.material = override_material;
@@ -595,6 +596,37 @@ export function createEditor() {
     //     console.error(err);
     // });
 
+
+    // {
+    //     const line_geo = new MultiLineGeometryResource(DefaultConfig);
+    //     line_geo.set_PointsCount(5);
+    //     line_geo.set_Point(0, Vector3.create(-0.5, 0.5, -0.5), false, false);
+    //     line_geo.set_Point(1, Vector3.create(+0.5, 0.5, -0.5), false, false);
+    //     line_geo.set_Point(2, Vector3.create(+0.5, -0.5, -0.5), false, false);
+    //     line_geo.set_Point(3, Vector3.create(-0.5, -0.5, -0.5), false, false);
+    //     line_geo.set_Point(4, Vector3.create(-0.5, 0.5, -0.5), false, false);
+    //     line_geo.commit_Points();
+    //     line_geo.update_BBox();
+    //     const line_mat = new MultiLineMaterial2Resource(DefaultConfig);
+    //     line_mat.color = Color.create(0, 0, 0);
+    //     line_mat.line_width = 3;
+    //     const line_mesh = new MeshInstance3D(DefaultConfig);
+    //     line_mesh.render_queue = 1;
+    //     line_mesh.geometry = line_geo;
+    //     line_mesh.material = line_mat;
+
+    //     const box_geo = new BoxGeometryResource(DefaultConfig);
+    //     box_geo.build();
+    //     const box_mat = new MatcapMaterialResource(DefaultConfig);
+    //     box_mat.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/matcaps/matcap-4.lttmbin').expect();
+    //     const box_mesh = new MeshInstance3D(DefaultConfig);
+    //     box_mesh.geometry = box_geo;
+    //     box_mesh.material = box_mat;
+
+    //     box_mesh.add_Child(line_mesh);
+    //     box_mesh.top_level = true;
+    //     World.add_Child(box_mesh);
+    // }
 
     return EditorSceneTree;
 }

@@ -12,37 +12,10 @@ import { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { Epsilon } from "@/system/fivepebble/Scalar";
+import { Cacher } from "@/system/utils/Cacher";
 
-export class MatcapMaterialResource extends MaterialResource {
-
-    static readonly #uniforms: MaterialReadOnlyUniforms = {
-        ...MaterialModelWorldUniform,
-        u_texture: RenderStateUniformType.Tex2D,
-        u_color: RenderStateUniformType.Vec4,
-    };
-
-    public get uniforms() { return MatcapMaterialResource.#uniforms; }
-
-    private _color: Color = new Vector4(1, 1, 1, 1);
-    public get color() { return this._color; }
-    public set color(color: Color) {
-        if (!this._color.equal(color)) {
-            this._color.copy(color);
-            this.material.set_Uniform('u_color', this._color);
-            this.material.transparent = this._color.a < (1.0 - Epsilon);
-        }
-    }
-    
-    private _texture: Ref<TextureResource> = new Ref();
-    public get texture() { return this._texture.value; }
-    public set texture(texture: TextureResource | undefined) {
-        if (this._texture.value !== texture) {
-            this._texture.value = texture;
-            this.set_Uniform('u_texture', this._texture.value?.texture);
-        }
-    }
-
-    static readonly #vertex_shader = `#version 300 es
+const MatcapVertexShader = new Cacher((config: Config) => {
+    const code = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -74,8 +47,11 @@ export class MatcapMaterialResource extends MaterialResource {
         v_normal_view = normalize(transpose(inverse(mat3(model_view))) * v_normal);
         v_lookat_view = -normalize(vec3(model_view * world));
     }`;
+    return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect());
+});
 
-    static readonly #fragment_shade_shader = `#version 300 es
+const MatcapFragmentShadeShader = new Cacher((config: Config) => {
+    const code = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -108,17 +84,22 @@ export class MatcapMaterialResource extends MaterialResource {
         vec2 matcap_uv = matcap_uv_compute(normalize(v_lookat_view), normalize(v_normal_view));
         o_color = vec4(texture(u_texture, matcap_uv).rgb, 1.0) * u_color;
     }`;
-    private fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
+    return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());
+});
+const MatcapFragmentShadeShaderUniforms = new Cacher((config: Config) => {
+    return {
         u_texture: {
             type: RenderStateUniformType.Tex2D,
             default: {
-                texture: this.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.Empty)
+                texture: config.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.Empty),
             }
         },
         u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
-    };
+    } as UniformInitSet<WebGL2RenderState>;
+});
 
-    static readonly #fragment_oit_shader = `#version 300 es
+const MatcapFragmentOitShader = new Cacher((config: Config) => {
+    const code = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
     precision highp sampler3D;
@@ -152,15 +133,71 @@ export class MatcapMaterialResource extends MaterialResource {
         vec4 color = vec4(texture(u_texture, matcap_uv).rgb, 1.0) * u_color;
         ${RenderServerDevice.OitOutputCode}
     }`;
-    private fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
+    return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());
+});
+const MatcapFragmentOitShaderUniforms = new Cacher((config: Config) => {
+    return {
         u_texture: {
             type: RenderStateUniformType.Tex2D,
             default: {
-                texture: this.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.Empty)
+                texture: config.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.Empty),
             }
         },
         u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
+    } as UniformInitSet<WebGL2RenderState>;
+});
+
+const MatcapShader = new Cacher((config: Config) => {
+    const shader = config.render_server.create_Shader();
+    shader.set_Shaders(
+        MatcapVertexShader.get(config).expect,
+        PrimitiveVertexShaderUniforms,
+        {
+            prez: {
+                shader: PrimitiveFragmentPreZShader.get(config).expect,
+                uniforms: PrimitiveFragmentPreZShaderUniforms,
+            },
+            shade: {
+                shader: MatcapFragmentShadeShader.get(config).expect,
+                uniforms: MatcapFragmentShadeShaderUniforms.get(config),
+            },
+            oit: {
+                shader: MatcapFragmentOitShader.get(config).expect,
+                uniforms: MatcapFragmentOitShaderUniforms.get(config),
+            }
+        }
+    );
+    return new Ref(shader);
+});
+
+export class MatcapMaterialResource extends MaterialResource {
+
+    static readonly #uniforms: MaterialReadOnlyUniforms = {
+        ...MaterialModelWorldUniform,
+        u_texture: RenderStateUniformType.Tex2D,
+        u_color: RenderStateUniformType.Vec4,
     };
+
+    public get uniforms() { return MatcapMaterialResource.#uniforms; }
+
+    private _color: Color = new Vector4(1, 1, 1, 1);
+    public get color() { return this._color; }
+    public set color(color: Color) {
+        if (!this._color.equal(color)) {
+            this._color.copy(color);
+            this.material.set_Uniform('u_color', this._color);
+            this.material.transparent = this._color.a < (1.0 - Epsilon);
+        }
+    }
+
+    private _texture: Ref<TextureResource> = new Ref();
+    public get texture() { return this._texture.value; }
+    public set texture(texture: TextureResource | undefined) {
+        if (this._texture.value !== texture) {
+            this._texture.value = texture;
+            this.set_Uniform('u_texture', this._texture.value?.texture);
+        }
+    }
 
     constructor(config: Config) {
         super(config);
@@ -169,30 +206,7 @@ export class MatcapMaterialResource extends MaterialResource {
     }
 
     public update_Material() {
-        const shader = this.render_server.create_Shader();
-        const vertex_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, MatcapMaterialResource.#vertex_shader).expect();
-        const fragment_prez_shader = PrimitiveFragmentPreZShader.get(this.config).expect;
-        const fragment_shade_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, MatcapMaterialResource.#fragment_shade_shader).expect();
-        const fragment_oit_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, MatcapMaterialResource.#fragment_oit_shader).expect();
-        shader.set_Shaders(
-            vertex_shader,
-            PrimitiveVertexShaderUniforms,
-            {
-                prez: {
-                    shader: fragment_prez_shader,
-                    uniforms: PrimitiveFragmentPreZShaderUniforms,
-                },
-                shade: {
-                    shader: fragment_shade_shader,
-                    uniforms: this.fragment_shade_uniforms,
-                },
-                oit: {
-                    shader: fragment_oit_shader,
-                    uniforms: this.fragment_oit_uniforms,
-                }
-            }
-        );
-        this.material.set_Material(shader, MatcapMaterialResource.#uniforms);
+        this.material.set_Material(MatcapShader.get(this.config).expect, MatcapMaterialResource.#uniforms);
         this.material.transparent = false;
     }
 
