@@ -96,11 +96,11 @@ export class MeshInstance3D extends GeometryInstance3D {
         }
     }
 
-    protected on_BBoxOverrideChanged(): void {
+    protected on_CullableOverrideChanged(): void {
         if (this.mesh_rid !== undefined) {
             const visual_world = this.get_Viewport()?.world_3d?.visual_world;
             if (visual_world !== undefined) {
-                visual_world.set_MeshBBoxOverride(this.mesh_rid, this._bbox_override);
+                visual_world.set_MeshCullableOverride(this.mesh_rid, this._cullable_override);
             }
         }
     }
@@ -133,7 +133,7 @@ export class MeshInstance3D extends GeometryInstance3D {
                         visual_world.set_MeshLayer(this.mesh_rid, this._layer);
                         visual_world.set_MeshRenderQueue(this.mesh_rid, this._render_queue);
                         visual_world.set_MeshCastShadow(this.mesh_rid, this._cast_shadow);
-                        visual_world.set_MeshBBoxOverride(this.mesh_rid, this._bbox_override);
+                        visual_world.set_MeshCullableOverride(this.mesh_rid, this._cullable_override);
                         visual_world.set_MeshEditorHighlighted(this.mesh_rid, this._editor_highlighted);
                     }
                 }

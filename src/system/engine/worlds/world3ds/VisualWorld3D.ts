@@ -26,6 +26,10 @@ import { Camera3 } from "@/system/fivepebble/graphics/Camera3";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { RenderServerPlainColorTexture } from "../../render_server/RenderServer";
 import type { Viewport } from "../../nodes/Node";
+import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import type { Cloneable } from "@/system/utils/Type";
+import type { Transformable } from "@/system/fivepebble/linear_algebra/VectorLike";
+import type { CameraFrustumLikeCullable } from "@/system/fivepebble/graphics/CameraLike";
 
 // #region sky
 
@@ -158,73 +162,51 @@ const SkyProgramUniform = new Cacher((config: Config) => {
 
 // #endregion
 
+export type Cullable = CameraFrustumLikeCullable<Matrix4, Vector3, Matrix3> & Cloneable<Cullable> & Transformable<Cullable, Vector4, Matrix4>;
+
 export class VisualWorld3DMesh extends WorldObject {
 
-    static readonly #const_vector3_zero: Vector3 = new Vector3(0, 0, 0);
-    static readonly #tmp_box3_0 = Box3.new;
-    static readonly #tmp_vetcor3_0 = Vector3.new;
-    static readonly #tmp_vetcor4_0 = Vector4.new;
-    static readonly #tmp_matrix4_0 = Matrix4.new;
-    static get_WorldSpaceHalfWidth(camera: Camera3, distance: number, size: number, resolution: Vector2) {
-        // transform into clip space, adjust the x and y values by the pixel width offset, then
-        // transform back into world space to get world offset. Note clip space is [-1, 1] so full
-        // width does not need to be halved.
-        const clip_to_world = VisualWorld3DMesh.#tmp_vetcor4_0.set(0, 0, - distance, 1.0);
-        const projection = camera.get_Projection(VisualWorld3DMesh.#tmp_matrix4_0);
-        clip_to_world.transform(clip_to_world, projection);
-        clip_to_world.mult_Number(clip_to_world, 1.0 / clip_to_world.w);
-        clip_to_world.x = size / resolution.x;
-        clip_to_world.y = size / resolution.y;
-        clip_to_world.transform(clip_to_world, projection.inverse(projection));
-        clip_to_world.mult_Number(clip_to_world, 1.0 / clip_to_world.w);
-        return Math.abs(Math.max(clip_to_world.x, clip_to_world.y));
-    }
-
     public readonly geometry_ref: Ref<RenderServerGeometry> = new Ref();
+    public get has_geometry() { return !this.geometry_ref.is_empty && this.geometry_ref.expect.has_geometry; }
+
     protected readonly surface_materials_ref: RefArray<RenderServerMaterial> = new RefArray();
     public readonly material_override_ref: Ref<RenderServerMaterial> = new Ref();
 
     private is_surface_materials_empty: boolean = false;
 
     public readonly global_transform: Matrix4 = Matrix4.new;
-    public _visible: boolean = true;
+    public visible: boolean = true;
     public layer: number = 0xffffffff;
     public cast_shadow: boolean = true;
     public render_queue: number = 0;
-    public bbox_enlargment: number = 0;
 
     //editor
-
     public editor_highlighted: boolean = false;
 
-    public get visible() { return this._visible && !this.is_bbox_empty; }
-
-    public get has_geometry() { return !this.geometry_ref.is_empty && this.geometry_ref.expect.has_geometry; }
-
+    // cullable
     // global transformed
-    private bbox: Box3 = Box3.new;
-    private is_bbox_empty: boolean = true;
-    private _bbox_override: Box3 | undefined = undefined;
+    private cullable: Cullable = Box3.new;
+    private is_cullable_empty: boolean = true;
+    private cullable_override: Cullable | undefined = undefined;
+    public cullable_enlargment: number = 0;
 
     constructor(config: Config, rid: Rid) {
         super(config, rid);
     }
 
-    private update_BBox() {
-        if (this._bbox_override === undefined) {
+    private update_Cullable() {
+        if (this.cullable_override === undefined) {
             if (!this.has_geometry) {
-                this.bbox.set(VisualWorld3DMesh.#const_vector3_zero, VisualWorld3DMesh.#const_vector3_zero);
-                this.is_bbox_empty = true;
+                this.is_cullable_empty = true;
             }
             else {
-                this.bbox.apply_Matrix4(this.geometry_ref.expect.bbox, this.global_transform);
-                this.is_bbox_empty = this.bbox.is_empty;
-                if (!this.is_bbox_empty && this.bbox_enlargment > 0) this.bbox.enlarge(this.bbox, this.bbox_enlargment);
+                this.cullable.apply_Matrix4(this.geometry_ref.expect.bbox, this.global_transform);
+                this.is_cullable_empty = this.cullable.is_empty;
             }
         }
         else {
-            this.bbox.apply_Matrix4(this._bbox_override, this.global_transform);
-            this.is_bbox_empty = this.bbox.is_empty;
+            this.cullable.apply_Matrix4(this.cullable_override, this.global_transform);
+            this.is_cullable_empty = this.cullable.is_empty;
         }
     }
 
@@ -238,7 +220,7 @@ export class VisualWorld3DMesh extends WorldObject {
         this.is_surface_materials_empty = true;
     }
 
-    private on_geometry_bbox_changed = (bbox: Box3) => { this.update_BBox(); }
+    private on_geometry_bbox_changed = (bbox: Box3) => { this.update_Cullable(); }
     public set_Geometry(geometry: RenderServerGeometry | undefined) {
         if (!this.geometry_ref.is_empty) {
             this.geometry_ref.expect.singal_bbox_changed.disconnect(this.on_geometry_bbox_changed);
@@ -256,24 +238,25 @@ export class VisualWorld3DMesh extends WorldObject {
             this.surface_materials_ref.clear();
         }
         this.update_SurfaceMaterialsEmpty();
-        this.update_BBox();
+        this.update_Cullable();
     }
 
-    public set_BBoxOverride(bbox: Box3 | undefined) {
-        if (bbox === undefined) {
-            if (this._bbox_override === undefined) return;
-            this._bbox_override = undefined
+    public set_CullableOverride(cullable: Cullable | undefined) {
+        if (cullable === undefined) {
+            if (this.cullable_override === undefined) return;
+            this.cullable_override = undefined;
+            this.cullable = Box3.new;
         }
         else {
-            if (this._bbox_override === undefined) this._bbox_override = bbox.clone();
-            else this._bbox_override.copy(bbox);
+            this.cullable_override = cullable.clone();
+            this.cullable = cullable.clone();
         }
-        this.update_BBox();
+        this.update_Cullable();
     }
 
-    public set_BBoxEnlargement(amount: number) {
-        this.bbox_enlargment = Math.max(0, Math.min(65536, amount));
-        this.update_BBox();
+    public set_CullableEnlargement(amount: number) {
+        this.cullable_enlargment = Math.max(0, Math.min(65536, amount));
+        this.update_Cullable();
     }
 
     public set_EditorHighlighted(highlighted: boolean) {
@@ -295,11 +278,11 @@ export class VisualWorld3DMesh extends WorldObject {
 
     public set_GlobalTransform(mat: Matrix4) {
         this.global_transform.copy(mat);
-        this.update_BBox();
+        this.update_Cullable();
     }
 
     public set_Visible(visible: boolean) {
-        this._visible = visible;
+        this.visible = visible;
     }
 
     public set_Layer(layer: number) {
@@ -322,21 +305,8 @@ export class VisualWorld3DMesh extends WorldObject {
     // fill render queue
 
     public fill_RenderQueue(queue: Renderer3DQueue, frustum: Frustum3, camera: Camera3, base_size: Vector2): boolean {
-        // bbox test
-        const need_enlarge = this.geometry_ref.expect.bbox_pixel_enlargement > 0;
-        if (!need_enlarge && !frustum.contain_Box(this.bbox, false)) {
-            return false;
-        }
-        else if (need_enlarge) {
-            const position = camera.get_GlobalTransform(VisualWorld3DMesh.#tmp_matrix4_0).get_Position(VisualWorld3DMesh.#tmp_vetcor3_0);
-            const distance = this.bbox.get_FarestDistanceToPoint(position);
-            const amount = VisualWorld3DMesh.get_WorldSpaceHalfWidth(camera, distance, this.geometry_ref.expect.bbox_pixel_enlargement, base_size);
-            const bbox = VisualWorld3DMesh.#tmp_box3_0.enlarge(this.bbox, amount);
-            if (!frustum.contain_Box(bbox, false)) {
-                return false;
-            }
-        }
-
+        // cullable test
+        if (this.is_cullable_empty || this.cullable.cull(camera, frustum, base_size, this.cullable_enlargment)) return false;
         if (this.is_surface_materials_empty) {
             if (this.material_override_ref.is_empty) return false;
             const geometry = this.geometry_ref.expect;
@@ -678,17 +648,17 @@ export class VisualWorld3D extends ConfiguredObject {
         }
     }
 
-    public set_MeshBBoxOverride(rid: Rid, bbox: Box3 | undefined) {
+    public set_MeshCullableOverride(rid: Rid, cullable: Cullable | undefined) {
         const instance = this.get_Mesh(rid);
         if (instance) {
-            instance.set_BBoxOverride(bbox);
+            instance.set_CullableOverride(cullable);
         }
     }
 
-    public set_MeshBBoxEnlargment(rid: Rid, amount: number) {
+    public set_MeshCullableEnlargment(rid: Rid, amount: number) {
         const instance = this.get_Mesh(rid);
         if (instance) {
-            instance.set_BBoxEnlargement(amount);
+            instance.set_CullableEnlargement(amount);
         }
     }
 

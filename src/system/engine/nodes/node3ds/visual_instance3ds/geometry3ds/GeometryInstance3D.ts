@@ -1,6 +1,7 @@
 import type { Box3 } from "@/system/fivepebble/geometries/Box3";
 import type { ClassReader, ClassWriter } from "../../../../classes/saver_loader/ClassWriterReader";
 import { VisualInstance3D } from "../VisualInstance3D";
+import type { Cullable } from "@/system/engine/worlds/world3ds/VisualWorld3D";
 
 export abstract class GeometryInstance3D extends VisualInstance3D {
     public static readonly class_name: string = "GeometryInstance3D";
@@ -16,24 +17,20 @@ export abstract class GeometryInstance3D extends VisualInstance3D {
 
     protected abstract on_CastShadowChanged(): void;
 
-    protected _bbox_override: Box3 | undefined = undefined;
-    public get bbox_override() { return this._bbox_override; }
-    public set bbox_override(bbox: Box3 | undefined) {
-        if (bbox === undefined) {
-            if (this._bbox_override === undefined) return;
-            this._bbox_override = undefined;
+    protected _cullable_override: Cullable | undefined = undefined;
+    public get cullable_override() { return this._cullable_override?.clone(); }
+    public set cullable_override(cullable: Cullable | undefined) {
+        if (cullable === undefined) {
+            if (this._cullable_override === undefined) return;
+            this._cullable_override = undefined;
         }
         else {
-            if (this._bbox_override === undefined) this._bbox_override = bbox.clone();
-            else {
-                if (this._bbox_override.equal(bbox)) return;
-                else this._bbox_override.copy(bbox);
-            }
+            this._cullable_override = cullable.clone();
         }
-        this.on_BBoxOverrideChanged();
+        this.on_CullableOverrideChanged();
     }
 
-    protected abstract on_BBoxOverrideChanged(): void;
+    protected abstract on_CullableOverrideChanged(): void;
 
     // save / load
 

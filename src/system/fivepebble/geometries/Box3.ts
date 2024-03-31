@@ -8,8 +8,12 @@ import type { BoxLike } from "./BoxLike";
 import type { Transformable } from "../linear_algebra/VectorLike";
 import type { LineLike } from "./LineLike";
 import type { RayLike } from "./RayLike";
+import type { Frustum3 } from "../graphics/Frustum3";
+import type { CameraFrustumLikeCullable } from "../graphics/CameraLike";
+import type { Camera3 } from "../graphics/Camera3";
+import type { Vector2 } from "../linear_algebra/Vector2";
 
-export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix3>, Transformable<Box3, Vector4, Matrix4> {
+export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix3>, CameraFrustumLikeCullable<Matrix4, Vector3, Matrix3>, Transformable<Box3, Vector4, Matrix4> {
 
     //#region init
 
@@ -19,6 +23,7 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
     //#endregion
 
     static readonly #const_vector3_zero = new Vector3(0, 0, 0);
+    static readonly #tmp_box3_0 = new Box3(new Vector3(0, 0, 0), new Vector3(0, 0, 0));
     static readonly #tmp_vector3_0 = new Vector3();
     static readonly #tmp_vector3_1 = new Vector3();
     static readonly #tmp_vector3_2 = new Vector3();
@@ -264,6 +269,48 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
     }
     get_AABB(target: Box3): Box3 {
         return target.copy(this);
+    }
+
+    //#endregion
+
+    //#region Frustum Cullabel
+
+    cull(camera: Camera3, frustum: Frustum3, screen_size: Vector2, enlargement: number): boolean {
+        let box: Box3 = this;
+        if (enlargement > 0) box = Box3.#tmp_box3_0.enlarge(box, enlargement);
+        const p = Box3.#tmp_vector3_0;
+        const near = frustum.near;
+        {
+            p.set(near.normal.x > 0 ? box.max.x : box.min.x, near.normal.y > 0 ? box.max.y : box.min.y, near.normal.z > 0 ? box.max.z : box.min.z);
+            if (near.signed_distance_to_Point(p) < 0) return true;
+        }
+        const far = frustum.far;
+        {
+            p.set(far.normal.x > 0 ? box.max.x : box.min.x, far.normal.y > 0 ? box.max.y : box.min.y, far.normal.z > 0 ? box.max.z : box.min.z);
+            if (far.signed_distance_to_Point(p) < 0) return true;
+        }
+        const left = frustum.left;
+        {
+            p.set(left.normal.x > 0 ? box.max.x : box.min.x, left.normal.y > 0 ? box.max.y : box.min.y, left.normal.z > 0 ? box.max.z : box.min.z);
+            if (left.signed_distance_to_Point(p) < 0) return true;
+        }
+        const right = frustum.right;
+        {
+            p.set(right.normal.x > 0 ? box.max.x : box.min.x, right.normal.y > 0 ? box.max.y : box.min.y, right.normal.z > 0 ? box.max.z : box.min.z);
+            if (right.signed_distance_to_Point(p) < 0) return true;
+        }
+        const top = frustum.top;
+        {
+            p.set(top.normal.x > 0 ? box.max.x : box.min.x,
+                top.normal.y > 0 ? box.max.y : box.min.y, top.normal.z > 0 ? box.max.z : box.min.z);
+            if (top.signed_distance_to_Point(p) < 0) return true;
+        }
+        const bottom = frustum.bottom;
+        {
+            p.set(bottom.normal.x > 0 ? box.max.x : box.min.x, bottom.normal.y > 0 ? box.max.y : box.min.y, bottom.normal.z > 0 ? box.max.z : box.min.z);
+            if (bottom.signed_distance_to_Point(p) < 0) return true;
+        }
+        return false;
     }
 
     //#endregion

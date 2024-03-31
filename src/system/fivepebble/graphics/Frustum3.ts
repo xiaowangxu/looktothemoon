@@ -74,43 +74,6 @@ export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
         return true;
     }
 
-    contain_Box(box: Box3, check_empty: boolean = true): boolean {
-        if (check_empty && box.is_empty) return false;
-        const p = Frustum3.#tmp_vector3_0;
-        const near = this.near;
-        {
-            p.set(near.normal.x > 0 ? box.max.x : box.min.x, near.normal.y > 0 ? box.max.y : box.min.y, near.normal.z > 0 ? box.max.z : box.min.z);
-            if (near.signed_distance_to_Point(p) < 0) return false;
-        }
-        const far = this.far;
-        {
-            p.set(far.normal.x > 0 ? box.max.x : box.min.x, far.normal.y > 0 ? box.max.y : box.min.y, far.normal.z > 0 ? box.max.z : box.min.z);
-            if (far.signed_distance_to_Point(p) < 0) return false;
-        }
-        const left = this.left;
-        {
-            p.set(left.normal.x > 0 ? box.max.x : box.min.x, left.normal.y > 0 ? box.max.y : box.min.y, left.normal.z > 0 ? box.max.z : box.min.z);
-            if (left.signed_distance_to_Point(p) < 0) return false;
-        }
-        const right = this.right;
-        {
-            p.set(right.normal.x > 0 ? box.max.x : box.min.x, right.normal.y > 0 ? box.max.y : box.min.y, right.normal.z > 0 ? box.max.z : box.min.z);
-            if (right.signed_distance_to_Point(p) < 0) return false;
-        }
-        const top = this.top;
-        {
-            p.set(top.normal.x > 0 ? box.max.x : box.min.x,
-                top.normal.y > 0 ? box.max.y : box.min.y, top.normal.z > 0 ? box.max.z : box.min.z);
-            if (top.signed_distance_to_Point(p) < 0) return false;
-        }
-        const bottom = this.bottom;
-        {
-            p.set(bottom.normal.x > 0 ? box.max.x : box.min.x, bottom.normal.y > 0 ? box.max.y : box.min.y, bottom.normal.z > 0 ? box.max.z : box.min.z);
-            if (bottom.signed_distance_to_Point(p) < 0) return false;
-        }
-        return true;
-    }
-
     equal(b: Frustum3): boolean {
         return this.top.equal(b.top) && this.right.equal(b.right) && this.bottom.equal(b.bottom) && this.left.equal(b.left) && this.near.equal(b.near) && this.far.equal(b.far);
     }
