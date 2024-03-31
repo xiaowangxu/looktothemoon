@@ -14,5 +14,7 @@ export interface FrustumLike<Vec extends VectorLike<Vec, Mat>, Mat extends Matri
 }
 
 export interface FrustumLikeCullable<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
+    get is_empty(): boolean;
+
     cull(frustum: FrustumLike<Vec, Mat>): boolean;
 }
