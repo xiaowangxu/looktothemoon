@@ -3,11 +3,13 @@ import type { BvhShape } from "../bvh/BvhLike";
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import type { Matrix4 } from "../linear_algebra/Matrix4";
 import { Vector3 } from "../linear_algebra/Vector3";
+import type { Vector4 } from "../linear_algebra/Vector4";
 import type { BoxLike } from "./BoxLike";
+import type { Transformable } from "../linear_algebra/VectorLike";
 import type { LineLike } from "./LineLike";
 import type { RayLike } from "./RayLike";
 
-export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix3> {
+export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix3>, Transformable<Box3, Vector4, Matrix4> {
 
     //#region init
 
@@ -191,7 +193,7 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
         return (t8 < 0 || t7 > t8) ? false : t7 > 0;
     }
 
-    public apply_Matrix4(a: Box3, mat: Matrix4): Box3 {
+    apply_Matrix4(a: Box3, mat: Matrix4): Box3 {
         if (a.min.x >= a.max.x && a.min.y >= a.max.y && a.min.z >= a.max.z) {
             this.min.set(0, 0, 0);
             this.max.set(0, 0, 0);

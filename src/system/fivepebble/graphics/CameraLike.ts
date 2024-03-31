@@ -1,3 +1,4 @@
+import type { Cloneable } from "@/system/utils/Type";
 import type { LineLike } from "../geometries/LineLike";
 import type { RayLike } from "../geometries/RayLike";
 import type { MatrixLike } from "../linear_algebra/MatrixLike";
@@ -5,7 +6,8 @@ import type { Vector2 } from "../linear_algebra/Vector2";
 import type { VectorLike } from "../linear_algebra/VectorLike";
 import type { FrustumLike } from "./FrustumLike";
 
-export interface CameraLike<Proj extends MatrixLike<Proj>, Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
+export interface CameraLike<Proj extends MatrixLike<Proj>, Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>>
+    extends Cloneable<CameraLike<Proj, Vec, Mat>> {
     get projection(): Proj;
     set projection(mat: Proj);
     get_Projection(target: Proj): Proj;
@@ -29,6 +31,4 @@ export interface CameraLike<Proj extends MatrixLike<Proj>, Vec extends VectorLik
 
     get frustum(): FrustumLike<Vec, Mat>;
     get_Frustum(target: FrustumLike<Vec, Mat>): FrustumLike<Vec, Mat>;
-
-    clone(): CameraLike<Proj, Vec, Mat>;
 }

@@ -1,4 +1,7 @@
-export interface MatrixLike<Mat extends MatrixLike<Mat>> {
+import type { Cloneable, Copyable, Equality } from "@/system/utils/Type";
+
+export interface MatrixLike<Mat extends MatrixLike<Mat>>
+    extends Cloneable<Mat>, Copyable<Mat>, Equality<Mat> {
     get row_dimension(): number;
     get col_dimension(): number;
     get determinant(): number;
@@ -21,8 +24,5 @@ export interface MatrixLike<Mat extends MatrixLike<Mat>> {
     inverse(a: Mat): Mat;
     compose(a: Mat, b: Mat): Mat;
 
-    equal(b: Mat): boolean;
     set(...args: number[]): Mat;
-    copy(b: Mat): Mat;
-    clone(): Mat;
 }

@@ -1,12 +1,9 @@
+import type { Cloneable, Copyable, Equality } from "@/system/utils/Type";
 import type { MatrixLike } from "../linear_algebra/MatrixLike";
 import type { VectorLike } from "../linear_algebra/VectorLike";
 
-export interface GeometryLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
-    equal(b: GeometryLike<Vec, Mat>): boolean;
-
-    copy(b: GeometryLike<Vec, Mat>): GeometryLike<Vec, Mat>;
-    clone(): GeometryLike<Vec, Mat>;
-}
+export interface GeometryLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>>
+    extends Cloneable<GeometryLike<Vec, Mat>>, Copyable<GeometryLike<Vec, Mat>>, Equality<GeometryLike<Vec, Mat>> { }
 
 export enum GeometryPointBoundedType {
     Inside = 0b001,

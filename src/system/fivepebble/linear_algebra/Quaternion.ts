@@ -1,10 +1,11 @@
+import type { Cloneable, Copyable, Equality } from "@/system/utils/Type";
 import { Epsilon } from "../Scalar";
 import { EulerOrder, type Euler } from "./Euler";
 import type { Matrix3 } from "./Matrix3";
 import { Vector3 } from "./Vector3";
 import type { Vector4 } from "./Vector4";
 
-export class Quaternion {
+export class Quaternion implements Cloneable<Quaternion>, Copyable<Quaternion>, Equality<Quaternion>  {
 
     //#region init
 
@@ -268,7 +269,7 @@ export class Quaternion {
         return this;
     }
 
-    public equal(b: Quaternion): boolean {
+    equal(b: Quaternion): boolean {
         return this.x === b.x && this.y === b.y && this.z === b.z && this.w === b.w;
     }
 
@@ -279,14 +280,14 @@ export class Quaternion {
         this.w = w;
         return this;
     }
-    public copy(b: Quaternion | Vector4): Quaternion {
+    copy(b: Quaternion | Vector4): Quaternion {
         this.x = b.x;
         this.y = b.y;
         this.z = b.z;
         this.w = b.w;
         return this;
     }
-    public clone(): Quaternion {
+    clone(): Quaternion {
         return new Quaternion(this.x, this.y, this.z, this.w);
     }
 }

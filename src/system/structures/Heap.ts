@@ -1,4 +1,6 @@
-export class Heap<T> implements Iterable<T> {
+import type { Cloneable } from "../utils/Type";
+
+export class Heap<T> implements Iterable<T>, Cloneable<Heap<T>> {
     private heap_arr: T[] = [];
     private readonly comparator: (a: T, b: T) => number;
 
@@ -30,7 +32,7 @@ export class Heap<T> implements Iterable<T> {
         this.heap_arr = [];
     }
 
-    public clone(): Heap<T> {
+    clone(): Heap<T> {
         const cloned = new Heap<T>(this.comparator);
         cloned.heap_arr = [...this.heap_arr];
         return cloned;

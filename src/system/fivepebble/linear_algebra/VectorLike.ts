@@ -1,6 +1,8 @@
+import type { Cloneable, Copyable, Equality } from "@/system/utils/Type";
 import type { MatrixLike } from "./MatrixLike";
 
-export interface VectorLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
+export interface VectorLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>>
+    extends Cloneable<Vec>, Copyable<Vec>, Equality<Vec> {
     get dimension(): number;
     get array(): number[];
 
@@ -34,8 +36,9 @@ export interface VectorLike<Vec extends VectorLike<Vec, Mat>, Mat extends Matrix
     squared_distance_to(b: Vec): number;
     direction_to(a: Vec, b: Vec): Vec;
 
-    equal(b: Vec): boolean;
     set(...args: number[]): Vec;
-    copy(b: Vec): Vec;
-    clone(): Vec;
+}
+
+export interface Transformable<T, Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
+    apply_Matrix4(a: T, mat: Mat): T;
 }

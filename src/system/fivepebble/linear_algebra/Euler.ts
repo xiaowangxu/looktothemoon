@@ -1,3 +1,4 @@
+import type { Cloneable, Copyable, Equality } from "@/system/utils/Type";
 import { clamp, is_ApproxEqual } from "../Scalar";
 import { Matrix3 } from "./Matrix3";
 import type { Quaternion } from "./Quaternion";
@@ -6,7 +7,7 @@ export enum EulerOrder {
     XYZ, YXZ, ZXY, ZYX, YZX, XZY
 }
 
-export class Euler {
+export class Euler implements Cloneable<Euler>, Copyable<Euler>, Equality<Euler> {
 
     //#region init
 
@@ -148,7 +149,7 @@ export class Euler {
         return this;
     }
 
-    public equal(b: Euler): boolean {
+    equal(b: Euler): boolean {
         return this.x === b.x && this.y === b.y && this.z === b.z && this.order === b.order;
     }
     public set(x: number, y: number, z: number, order: EulerOrder = EulerOrder.XYZ) {
@@ -158,14 +159,14 @@ export class Euler {
         this.order = order;
         return this;
     }
-    public copy(b: Euler) {
+    copy(b: Euler) {
         this.x = b.x;
         this.y = b.y;
         this.z = b.z;
         this.order = b.order;
         return this;
     }
-    public clone(): Euler {
+    clone(): Euler {
         return new Euler(this.x, this.y, this.z, this.order);
     }
 }
