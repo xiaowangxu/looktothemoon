@@ -86,7 +86,7 @@ export class MultiGeometryResource extends GeometryResource {
 
     public set_OverrideGeometry<T extends GeometryResource>(geometry: T extends MultiGeometryResource ? never: T, update_bbox: boolean = true) {
         if (geometry instanceof MultiGeometryResource) throw new Error('<MultiGeometryResource> set_OverrideGeometry: base geometry should not be another MultiGeometryResource');
-        if (!geometry.geometry.has_geometry) throw new Error('<MultiGeometryResource> set_OverrideGeometry: base geometry does not have a geometry, maybe it is not properly initialized');
+        if (!geometry.geometry.has_geometry) throw new Error('<MultiGeometryResource> set_OverrideGeometry: base geometry resource does not have a geometry, maybe it is not properly initialized');
         this.override_geometry_ref.value = geometry;
         const attributes = geometry.geometry.get_AttributeBuffers()!;
         const index = geometry.geometry.get_IndexAttributeBuffer()!;

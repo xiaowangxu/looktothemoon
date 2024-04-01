@@ -62,11 +62,13 @@ export type UniformValueTypeByTypeName<RS extends RenderState<RS>> = {
 };
 export type UniformInitSet<RS extends RenderState<RS>> = { [name: string]: UniformValueTypeByTypeName<RS>[keyof typeof RenderStateUniformType] };
 
-export const enum RenderServerShaderPass {
+export enum RenderServerShaderPass {
     PreZ = 'prez',
     Shade = 'shade',
     OiT = 'oit',
 }
+
+export type FragmentShaderSetInitSet<Val = { shader: WebGL2RenderStateShader, uniforms: UniformInitSet<WebGL2RenderState> }> = { [K in RenderServerShaderPass]?: Val };
 
 export class RenderServerShader extends RenderDeviceObject<WebGL2RenderState>
 {
@@ -179,7 +181,7 @@ export class RenderServerShader extends RenderDeviceObject<WebGL2RenderState>
         return uniform;
     }
 
-    public set_Shaders(vertex: WebGL2RenderStateShader, vert_uniforms: UniformInitSet<WebGL2RenderState>, fragments_set: { [K in RenderServerShaderPass]?: { shader: WebGL2RenderStateShader, uniforms: UniformInitSet<WebGL2RenderState> } }) {
+    public set_Shaders(vertex: WebGL2RenderStateShader, vert_uniforms: UniformInitSet<WebGL2RenderState>, fragments_set: FragmentShaderSetInitSet) {
         for (const [name, { shader, uniforms: frag_uniforms }] of Object.entries(fragments_set)) {
             const _name = name as RenderServerShaderPass;
             switch (_name) {
