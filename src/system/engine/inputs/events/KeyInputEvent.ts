@@ -1,5 +1,3 @@
-import type { Config } from "../../ConfiguredObject";
-import type { Viewport } from "../../nodes/Node";
 import { InputEvent } from "../InputEvent";
 import { ComposeInputEvent } from "./ComposeInputEvent";
 

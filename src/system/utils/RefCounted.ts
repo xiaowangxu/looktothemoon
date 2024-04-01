@@ -7,12 +7,7 @@ export interface RefCounted {
 export type Refed<T> = T extends Ref<infer V> ? Ref<V> : (T extends RefCounted ? Ref<T> : T);
 export type Unrefed<T> = T extends Ref<infer V> ? V : T;
 
-export function ref<V extends RefCounted>(item: V  | Ref<V>): Ref<V> {
-    if (item instanceof Ref) return item.borrow();
-    return new Ref<V>(item);
-}
-
-export function unref<V>(item: V extends RefCounted ? Ref<V> : V): V {
+export function unref<V>(item: Refed<V>): V {
     if (item instanceof Ref) return item.expect;
     return item as V;
 }
