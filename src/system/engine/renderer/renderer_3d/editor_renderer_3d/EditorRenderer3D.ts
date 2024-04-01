@@ -188,10 +188,6 @@ export class EditorRenderer3D extends Renderer3D {
 
         pipeline.render(this, world, viewport, once);
 
-        this.render_server.use_LightsData(undefined);
-        this.render_server.use_ShadowsTexture(undefined);
-        this.render_server.use_SkyTexture(undefined);
-
         this.render_OnScreen(pipeline.texture, x, y, width, height);
 
         if (once) {

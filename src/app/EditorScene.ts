@@ -15,7 +15,7 @@ import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineGeometryResource";
-import { MultiLineMaterial2Resource, MultiLineMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
+import { MultiLineMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
 import { StandardMaterialResource } from "../system/engine/resources/material_resources/PrimitiveMaterialResource";
@@ -53,10 +53,8 @@ import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds
 import { FixSizeNode3D } from "@/system/engine/nodes/node3ds/gizmo3ds/FixSizeNode3D";
 import { PlaceholderTextureResource } from "@/system/engine/resources/texture_resources/PlaceholderTextureResource";
 import { ImageTextureResource } from "@/system/engine/resources/texture_resources/ImageTextureResource";
-import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
 import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/MatcapMaterialResource";
 import { RenderStateTextureMagFilter, RenderStateTextureMinFilter } from "@/system/sliverofstraw/RenderState";
-import { Box3 } from "@/system/fivepebble/geometries/Box3";
 
 // import png_url2 from 'res://matcap-2.jpg';
 // import png_url3 from 'res://matcap-3.jpg';
@@ -103,7 +101,7 @@ const DRenderPipeline = new Cacher((config: Config) => {
     return new Ref(new EditorRenderer3DPipeline(config));
 });
 
-const bg_color = Color.create(0.8, 0.8, 0.8).linear_rgb;
+const bg_color = Color.create(0.25, 0.25, 0.25).linear_rgb;
 
 export function createEditor() {
     const render_server_canvas = document.getElementById('render-server-canvas') as HTMLCanvasElement;
@@ -408,7 +406,6 @@ export function createEditor() {
             // override_material.set_OverrideMaterial(normal_material);
             // override_material.set_UniformOverride('u_texture', new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>(`sys://textures/matcaps/matcap-${i}.lttmbin`).expect())
             override_material.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>(`sys://textures/matcaps/matcap-${i}.lttmbin`).expect();
-            override_material.color = Color.color8(255, 255, 255, 128);
             const mesh = new MeshInstance3D(DefaultConfig);
             mesh.geometry = huli_geo;
             mesh.material = override_material;
