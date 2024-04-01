@@ -20,7 +20,7 @@ export class Matrix3 implements MatrixLike<Matrix3> {
     //#endregion
 
     // used in Euler set_* to overcome ref init error
-    public static $tmp_matrix3_for_euler_0: Matrix3 = new Matrix3();
+    public static readonly $tmp_matrix3_for_euler_0: Matrix3 = new Matrix3();
     static readonly #tmp_vector3_0: Vector3 = new Vector3();
     static readonly #tmp_matrix3_1: Matrix3 = new Matrix3();
     static readonly #tmp_euler_0: Euler = new Euler();

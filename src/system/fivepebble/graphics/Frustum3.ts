@@ -8,6 +8,7 @@ import type { FrustumLike } from "./FrustumLike";
 
 export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
 
+
     //#region init
 
     static get new() {
@@ -32,7 +33,14 @@ export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
     static readonly #const_plane3_left: Plane3 = new Plane3(new Vector3(1, 0, 0), -1);
     static readonly #const_plane3_near: Plane3 = new Plane3(new Vector3(0, 0, 1), -1);
     static readonly #const_plane3_far: Plane3 = new Plane3(new Vector3(0, 0, -1), -1);
-    static readonly #tmp_vector3_0: Vector3 = new Vector3();
+    public static readonly $tmp_frustum3_for_cullable_0: Frustum3 = new Frustum3(
+        Frustum3.#const_plane3_top,
+        Frustum3.#const_plane3_right,
+        Frustum3.#const_plane3_bottom,
+        Frustum3.#const_plane3_left,
+        Frustum3.#const_plane3_near,
+        Frustum3.#const_plane3_far,
+    );
 
     public readonly top: Plane3;
     public readonly right: Plane3;
@@ -72,6 +80,22 @@ export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
         if (this.left.is_PointBelow(point, false)) return false;
         if (this.far.is_PointBelow(point, false)) return false;
         return true;
+    }
+
+    enlarge(a: Frustum3, amount: number): Frustum3 {
+        this.near.normal.copy(a.near.normal);
+        this.near.distance = a.near.distance + amount;
+        this.far.normal.copy(a.far.normal);
+        this.far.distance = a.far.distance + amount;
+        this.top.normal.copy(a.top.normal);
+        this.top.distance = a.top.distance + amount;
+        this.right.normal.copy(a.right.normal);
+        this.right.distance = a.right.distance + amount;
+        this.bottom.normal.copy(a.bottom.normal);
+        this.bottom.distance = a.bottom.distance + amount;
+        this.left.normal.copy(a.left.normal);
+        this.left.distance = a.left.distance + amount;
+        return this;
     }
 
     equal(b: Frustum3): boolean {

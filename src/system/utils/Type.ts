@@ -34,3 +34,11 @@ export interface Copyable<T> {
 export interface Equality<T> {
     equal(other: T): boolean;
 }
+
+enum Ordering {
+    Less = -1, Equal = 0, Greater = 1
+}
+
+export interface PartialEquailty<T> {
+    compare(other: T): Ordering;
+}

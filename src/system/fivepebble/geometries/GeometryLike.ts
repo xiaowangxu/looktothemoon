@@ -5,12 +5,6 @@ import type { VectorLike } from "../linear_algebra/VectorLike";
 export interface GeometryLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>>
     extends Cloneable<GeometryLike<Vec, Mat>>, Copyable<GeometryLike<Vec, Mat>>, Equality<GeometryLike<Vec, Mat>> { }
 
-export enum GeometryPointBoundedType {
-    Inside = 0b001,
-    Touching = 0b010,
-    Outside = 0b100,
-}
-
 export interface GeometryLikeBounded<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
     signed_distance_to_Point(point: Vec): number; // outside is positive , inside is negative , boundary is 0
     distance_to_Point(point: Vec): number;

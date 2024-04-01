@@ -35,5 +35,6 @@ export interface CameraLike<Proj extends MatrixLike<Proj>, Vec extends VectorLik
 
 export interface CameraFrustumLikeCullable<Proj extends MatrixLike<Proj>, Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
     get is_empty(): boolean;
+    
     cull(camera: CameraLike<Proj, Vec, Mat>, frustum: FrustumLike<Vec, Mat>, screen_size: Vector2, enlargement: number): boolean;
 }
