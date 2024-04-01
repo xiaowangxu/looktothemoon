@@ -1,3 +1,5 @@
+import type { Cloneable } from "../utils/Type";
+
 class LinkListNode<T> {
     public value: T;
     public prev?: LinkListNode<T>;
@@ -8,7 +10,7 @@ class LinkListNode<T> {
     }
 }
 
-export class LinkList<T> implements Iterable<T> {
+export class LinkList<T> implements Iterable<T>, Cloneable<LinkList<T>> {
     private _head: LinkListNode<T> | undefined;
     private _tail: LinkListNode<T> | undefined;
     private _length: number = 0;
@@ -189,14 +191,7 @@ export class LinkList<T> implements Iterable<T> {
         }
     };
 
-    public clone() {
+    clone() {
         return new LinkList(this);
     }
-
-    // public print() {
-    //     console.log('length:', this.length);
-    //     for (let i = this._head, j = this._tail; i !== undefined && j !== undefined; i = i.next, j = j.prev) {
-    //         console.log(i.value, j.value);
-    //     }
-    // }
 }
