@@ -408,6 +408,7 @@ export function createEditor() {
             // override_material.set_OverrideMaterial(normal_material);
             // override_material.set_UniformOverride('u_texture', new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>(`sys://textures/matcaps/matcap-${i}.lttmbin`).expect())
             override_material.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>(`sys://textures/matcaps/matcap-${i}.lttmbin`).expect();
+            override_material.color = Color.color8(255, 255, 255, 128);
             const mesh = new MeshInstance3D(DefaultConfig);
             mesh.geometry = huli_geo;
             mesh.material = override_material;

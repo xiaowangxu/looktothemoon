@@ -1,6 +1,6 @@
 import { ResourceBase } from "../resources/Resource";
 
-export class InputEvent extends ResourceBase {
+export abstract class InputEvent extends ResourceBase {
     public static readonly class_name: string = "InputEvent";
 
     private _cancelled: boolean = false;

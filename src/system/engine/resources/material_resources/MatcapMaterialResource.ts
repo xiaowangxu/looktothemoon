@@ -128,7 +128,7 @@ const MatcapFragmentOitShader = new Cacher((config: Config) => {
     }
 
     void main() {
-        o_normal = vec4(normalize(v_normal), 1.0);
+        o_normal = vec4(1.0, 0.0, 0.0, 1.0);
         vec2 matcap_uv = matcap_uv_compute(normalize(v_lookat_view), normalize(v_normal_view));
         vec4 color = vec4(texture(u_texture, matcap_uv).rgb, 1.0) * u_color;
         ${RenderServerDevice.OitOutputCode}
