@@ -198,7 +198,7 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
         return (t8 < 0 || t7 > t8) ? false : t7 > 0;
     }
 
-    apply_Matrix4(a: Box3, mat: Matrix4): Box3 {
+    affine_transform(a: Box3, mat: Matrix4): Box3 {
         if (a.min.x >= a.max.x && a.min.y >= a.max.y && a.min.z >= a.max.z) {
             this.min.set(0, 0, 0);
             this.max.set(0, 0, 0);
@@ -212,14 +212,14 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
         const p5 = Box3.#tmp_vector3_5;
         const p6 = Box3.#tmp_vector3_6;
         const p7 = Box3.#tmp_vector3_7;
-        p0.set(a.min.x, a.min.y, a.min.z).apply_Matrix4(p0, mat); // 000
-        p1.set(a.min.x, a.min.y, a.max.z).apply_Matrix4(p1, mat); // 001
-        p2.set(a.min.x, a.max.y, a.min.z).apply_Matrix4(p2, mat); // 010
-        p3.set(a.min.x, a.max.y, a.max.z).apply_Matrix4(p3, mat); // 011
-        p4.set(a.max.x, a.min.y, a.min.z).apply_Matrix4(p4, mat); // 100
-        p5.set(a.max.x, a.min.y, a.max.z).apply_Matrix4(p5, mat); // 101
-        p6.set(a.max.x, a.max.y, a.min.z).apply_Matrix4(p6, mat); // 110
-        p7.set(a.max.x, a.max.y, a.max.z).apply_Matrix4(p7, mat); // 111
+        p0.set(a.min.x, a.min.y, a.min.z).affine_transform(p0, mat); // 000
+        p1.set(a.min.x, a.min.y, a.max.z).affine_transform(p1, mat); // 001
+        p2.set(a.min.x, a.max.y, a.min.z).affine_transform(p2, mat); // 010
+        p3.set(a.min.x, a.max.y, a.max.z).affine_transform(p3, mat); // 011
+        p4.set(a.max.x, a.min.y, a.min.z).affine_transform(p4, mat); // 100
+        p5.set(a.max.x, a.min.y, a.max.z).affine_transform(p5, mat); // 101
+        p6.set(a.max.x, a.max.y, a.min.z).affine_transform(p6, mat); // 110
+        p7.set(a.max.x, a.max.y, a.max.z).affine_transform(p7, mat); // 111
         this.min.x = Math.min(p0.x, p1.x, p2.x, p3.x, p4.x, p5.x, p6.x, p7.x);
         this.min.y = Math.min(p0.y, p1.y, p2.y, p3.y, p4.y, p5.y, p6.y, p7.y);
         this.min.z = Math.min(p0.z, p1.z, p2.z, p3.z, p4.z, p5.z, p6.z, p7.z);

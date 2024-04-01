@@ -599,8 +599,8 @@ export class PickingPolyLineResource extends PickingShape3DResource {
         const p1 = PickingPolyLineResource.#tmp_out_number_1;
 
         for (const _l of to) {
-            start.apply_Matrix4(_l.start, global_transform);
-            end.apply_Matrix4(_l.end, global_transform);
+            start.affine_transform(_l.start, global_transform);
+            end.affine_transform(_l.end, global_transform);
             start4.set(start.x, start.y, start.z, 1);
             end4.set(end.x, end.y, end.z, 1);
             // camera space
@@ -680,7 +680,7 @@ export class PickingPolyLineResource extends PickingShape3DResource {
         if (camera === undefined || viewport === undefined || this.points.length <= 0 || this.bvh.root === undefined) return undefined;
 
         const global_inverse = PickingPolyLineResource.#tmp_matrix4_0.inverse(global_transform);
-        PickingPolyLineResource.#tmp_line3_0.set(PickingPolyLineResource.#tmp_vector3_0.apply_Matrix4(from, global_inverse), PickingPolyLineResource.#tmp_vector3_1.apply_Matrix4(to, global_inverse));
+        PickingPolyLineResource.#tmp_line3_0.set(PickingPolyLineResource.#tmp_vector3_0.affine_transform(from, global_inverse), PickingPolyLineResource.#tmp_vector3_1.affine_transform(to, global_inverse));
         const line_global = PickingPolyLineResource.#tmp_line3_1.set(from, to);
         const camera_position = camera.get_GlobalTransform(PickingPolyLineResource.#tmp_matrix4_0).get_Position(PickingPolyLineResource.#tmp_vector3_0);
         const resolution = viewport.get_Size(PickingPolyLineResource.#tmp_vector2_0);

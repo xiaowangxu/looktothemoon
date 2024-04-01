@@ -30,3 +30,7 @@ export interface RaycastResult<Vec extends VectorLike<Vec, Mat>, Mat extends Mat
     position: Vec;
     normal: Vec;
 }
+
+export interface Transformable<T, Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
+    affine_transform(a: T, mat: Mat): T;
+}

@@ -70,8 +70,8 @@ export class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
 
     project_Point(point: Vector3, target: Vector2): Vector2 {
         const p = Camera3.#tmp_vector3_0;
-        p.apply_Matrix4(point, this._global_transform_inverse);
-        p.apply_Matrix4(p, this._projection);
+        p.affine_transform(point, this._global_transform_inverse);
+        p.affine_transform(p, this._projection);
         return target.set(p.x, p.y);
     }
 
@@ -169,7 +169,7 @@ export class OrthographicCamera3 extends Camera3 {
         const half_width = this.width / (2 * this.zoom);
         const half_height = this.height / (2 * this.zoom);
         const p = target.set(point.x * half_width, point.y * half_height, -depth);
-        return p.apply_Matrix4(p, this._global_transform);
+        return p.affine_transform(p, this._global_transform);
     }
 
     unproject_Normal(point: Vector2, target: Vector3): Vector3 {
@@ -264,7 +264,7 @@ export class PerspectiveCamera3 extends Camera3 {
         const half_height = this.near * Math.tan(this.fov / 2);
         const half_width = this.aspect * half_height;
         const p = target.set(ndc.x * half_width, ndc.y * half_height, -depth);
-        p.apply_Matrix4(p, this._global_transform);
+        p.affine_transform(p, this._global_transform);
         return p;
     }
 

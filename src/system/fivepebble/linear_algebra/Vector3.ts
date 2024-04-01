@@ -190,7 +190,7 @@ export class Vector3 implements VectorLike<Vector3, Matrix3>, Transformable<Vect
         return new Vector3(this.x, this.y, this.z);
     }
 
-    apply_Matrix4(a: Vector3, mat: Matrix4) {
+    affine_transform(a: Vector3, mat: Matrix4) {
         const n11 = mat.n11, n12 = mat.n12, n13 = mat.n13, n14 = mat.n14;
         const n21 = mat.n21, n22 = mat.n22, n23 = mat.n23, n24 = mat.n24;
         const n31 = mat.n31, n32 = mat.n32, n33 = mat.n33, n34 = mat.n34;

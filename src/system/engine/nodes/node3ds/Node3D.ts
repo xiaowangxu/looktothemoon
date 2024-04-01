@@ -200,12 +200,12 @@ export class Node3D extends Node {
     // apis
     public to_Global(local_position: Vector3, target: Vector3) {
         this.update_GlobalTransform();
-        return target.apply_Matrix4(local_position, this._global_transform);
+        return target.affine_transform(local_position, this._global_transform);
     }
 
     public to_Local(global_position: Vector3, target: Vector3) {
         const global_transform = this.get_GlobalTransform(Node3D.#tmp_matrix4_0);
-        return target.apply_Matrix4(global_position, global_transform.inverse(global_transform));
+        return target.affine_transform(global_position, global_transform.inverse(global_transform));
     }
 
     // save / load

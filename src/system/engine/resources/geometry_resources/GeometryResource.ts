@@ -150,11 +150,11 @@ export class MultiGeometryResource extends GeometryResource {
             return;
         };
         const matrix4 = this.instance_transform_attribute_buffer_ref.expect.get_Data(0, MultiGeometryResource.#tmp_matrix4_0);
-        const trans_box = MultiGeometryResource.#tmp_box3_0.apply_Matrix4(this._base_bbox, matrix4);
+        const trans_box = MultiGeometryResource.#tmp_box3_0.affine_transform(this._base_bbox, matrix4);
         this._bbox.copy(trans_box);
         for (let i = 1; i < instances_count; i++) {
             this.instance_transform_attribute_buffer_ref.expect.get_Data(i, matrix4);
-            trans_box.apply_Matrix4(this._base_bbox, matrix4);
+            trans_box.affine_transform(this._base_bbox, matrix4);
             this._bbox.merge(this._bbox, trans_box);
         }
         this.geometry.set_BBox(this._bbox);

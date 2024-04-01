@@ -189,7 +189,7 @@ export class SpotLight3D extends LightInstance3D {
                     if (this.is_global_transform_changed) {
                         this.update_GlobalTransform();
                         const vec = SpotLight3D.#tmp_vector3_0.set(0, 0, -1);
-                        vec.apply_Matrix4(vec, this._global_transform);
+                        vec.affine_transform(vec, this._global_transform);
                         vec.direction_to(this._global_position, vec);
                         visual_world.set_LightGlobalPosition(this.light_rid, this._global_position);
                         visual_world.set_LightGlobalDirection(this.light_rid, vec);

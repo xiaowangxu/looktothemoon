@@ -200,12 +200,12 @@ export class VisualWorld3DMesh extends WorldObject {
                 this.is_cullable_empty = true;
             }
             else {
-                this.cullable.apply_Matrix4(this.geometry_ref.expect.bbox, this.global_transform);
+                this.cullable.affine_transform(this.geometry_ref.expect.bbox, this.global_transform);
                 this.is_cullable_empty = this.cullable.is_empty;
             }
         }
         else {
-            this.cullable.apply_Matrix4(this.cullable_override, this.global_transform);
+            this.cullable.affine_transform(this.cullable_override, this.global_transform);
             this.is_cullable_empty = this.cullable.is_empty;
         }
     }

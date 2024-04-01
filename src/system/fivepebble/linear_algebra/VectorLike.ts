@@ -40,5 +40,5 @@ export interface VectorLike<Vec extends VectorLike<Vec, Mat>, Mat extends Matrix
 }
 
 export interface Transformable<T, Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
-    apply_Matrix4(a: T, mat: Mat): T;
+    affine_transform(a: T, mat: Mat): T;
 }
