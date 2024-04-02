@@ -633,3 +633,7 @@ export class TweenPingPong extends TweenBase {
         }
     }
 }
+
+export function tween_pingpong(tween: ResverseableTween) {
+    return new TweenPingPong(tween);
+}

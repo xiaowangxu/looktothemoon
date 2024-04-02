@@ -1,8 +1,8 @@
-import { Epsilon } from "@/system/fivepebble/Scalar";
+import { Epsilon, clamp } from "@/system/fivepebble/Scalar";
 import { RenderStateUniformType, RenderStateShaderType } from "@/system/sliverofstraw/RenderState";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { RenderServerDevice } from "../../render_server/RenderServer";
-import { RenderServerGeometry, RenderServerGeometryAttributeLoctions } from "../../render_server/RenderServerGeometry";
+import { RenderServerGeometry, RenderServerGeometryAttributeLocations } from "../../render_server/RenderServerGeometry";
 import type { UniformInitSet } from "../../render_server/RenderServerShader";
 import { MaterialResource, type MaterialReadOnlyUniforms } from "./MaterialResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
@@ -23,8 +23,11 @@ export const MultiLineVertexShader = new Cacher((config: Config) => {
     ${RenderServerDevice.WorldUniformsCode}
     
     ${RenderServerGeometry.GeometryAttributesCode}
-    layout(location = ${RenderServerGeometryAttributeLoctions.custom0}) in vec3 a_start;
-    layout(location = ${RenderServerGeometryAttributeLoctions.custom1}) in vec3 a_end;
+    layout(location = ${RenderServerGeometryAttributeLocations.custom0}) in vec3 a_start;
+    layout(location = ${RenderServerGeometryAttributeLocations.custom1}) in vec3 a_end;
+    layout(location = ${RenderServerGeometryAttributeLocations.custom2}) in float a_length_percentage_start;
+    layout(location = ${RenderServerGeometryAttributeLocations.custom3}) in float a_length_percentage_end;
+    layout(location = ${RenderServerGeometryAttributeLocations.custom4}) in float a_total_length;
     
     uniform mat4 model_world;
 
@@ -32,11 +35,13 @@ export const MultiLineVertexShader = new Cacher((config: Config) => {
     uniform int u_consider_pixel_ratio;
     
     out vec2 v_uv;
+    out vec3 v_normal;
     out vec2 v_screen_start;
     out float v_screen_length;
-    out vec2 v_screen_direction;
     out vec4 v_project_position;
-    out float v_percentage;
+    out float v_segment_percentage;
+    out float v_length_percentage;
+    out float v_length;
     
     void trimSegment(const in vec4 start, inout vec4 end) {
         // trim end segment so it terminates between the camera plane and the near plane
@@ -49,6 +54,12 @@ export const MultiLineVertexShader = new Cacher((config: Config) => {
     }
     
     void main() {
+        float scalex = length(model_world[0].xyz);
+        float scaley = length(model_world[1].xyz);
+        float scalez = length(model_world[2].xyz);
+        float scale = max(scalex, max(scaley, scalez));
+        v_length = a_total_length * scale / (bool(u_consider_pixel_ratio) ? pixel_ratio : 1.0);
+        
         vec2 screen = screen_size;
         float aspect = screen.x / screen.y;
     
@@ -90,7 +101,6 @@ export const MultiLineVertexShader = new Cacher((config: Config) => {
         vec2 v_end = (ndcEnd.xy + vec2(1.0)) / 2.0 * screen_size;
         vec2 start_to_end = v_end - v_screen_start;
         v_screen_length = length(start_to_end);
-        v_screen_direction = normalize(start_to_end);
     
         // account for clip-space aspect ratio
         dir.x *= aspect;
@@ -121,8 +131,9 @@ export const MultiLineVertexShader = new Cacher((config: Config) => {
     
         // select end
         bool is_start = a_position.y < 0.5;
-        v_percentage = float(!is_start);
+        v_segment_percentage = float(!is_start);
         vec4 clip = is_start ? clip_start : clip_end;
+        v_length_percentage = is_start ? a_length_percentage_start : a_length_percentage_end;
         v_project_position = clip;
     
         // back to clip space
@@ -132,7 +143,7 @@ export const MultiLineVertexShader = new Cacher((config: Config) => {
     
         gl_Position = clip;
     
-        // vec4 mvPosition = (a_position.y < 0.5) ? start : end; // this is an approximation
+        v_normal = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0, 0.0, 1.0)) : normalize(camera_world[3].xyz - (is_start ? a_start : a_end));
     }`;
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect());
 });
@@ -149,14 +160,17 @@ export const MultiLineFragmentPreZShader = new Cacher((config: Config) => {
     precision highp sampler3D;
 
     ${RenderServerDevice.WorldUniformsCode}
+    ${RenderServerDevice.ConstantsCode}
 
-    uniform vec4 u_color;
     uniform int u_dashed;
+    uniform float u_dash_scale;
+    uniform float u_dash_offset;
+    uniform float u_dash_gap;
     
     in vec2 v_uv;
-    in vec2 v_screen_start;
-    in float v_screen_length;
-    in vec2 v_screen_direction;
+    in vec3 v_normal;
+    in float v_length_percentage;
+    in float v_length;
 
     ${RenderServerDevice.FrameOutputBufferCode}
 
@@ -164,22 +178,22 @@ export const MultiLineFragmentPreZShader = new Cacher((config: Config) => {
         if (abs(v_uv.y) > 1.0f) {
             float a = v_uv.x;
             float b = (v_uv.y > 0.0f) ? v_uv.y - 1.0f : v_uv.y + 1.0f;
-            float len2 = a * a + b * b;
-            if (len2 > 1.0f) discard;
+            if (a * a + b * b > 1.0f) discard;
         }
         if (bool(u_dashed)) {
-            vec2 direction = gl_FragCoord.xy - v_screen_start;
-            float project_length = dot(v_screen_direction, direction);
-            float uv_y = clamp(project_length / v_screen_length, 0.0, 1.0);
-            float length = v_screen_length * (uv_y - 0.5);
-            if (fract(mod(length, 100.0) / 100.0) > 0.5) discard;
+            float percentage = fract(v_length_percentage * v_length * u_dash_scale);
+            float segment_percentage = mod(percentage + u_dash_offset, 1.0);
+            if (segment_percentage >= u_dash_gap || segment_percentage < EPSILON) discard;
         }
-        o_normal = vec4(0.0, 0.0, 1.0, 1.0);
+        o_normal = vec4(normalize(v_normal), 1.0);
     }`;
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());
 });
 export const MultiLineFragmentPreZShaderUniforms: UniformInitSet<WebGL2RenderState> = {
     u_dashed: { type: RenderStateUniformType.Int, default: 0 },
+    u_dash_scale: { type: RenderStateUniformType.Float, default: 1.0 },
+    u_dash_offset: { type: RenderStateUniformType.Float, default: 0.0 },
+    u_dash_gap: { type: RenderStateUniformType.Float, default: 0.6 },
 };
 
 export const MultiLineFragmentShadeShader = new Cacher((config: Config) => {
@@ -189,14 +203,18 @@ export const MultiLineFragmentShadeShader = new Cacher((config: Config) => {
     precision highp sampler3D;
 
     ${RenderServerDevice.WorldUniformsCode}
+    ${RenderServerDevice.ConstantsCode}
 
     uniform vec4 u_color;
     uniform int u_dashed;
+    uniform float u_dash_scale;
+    uniform float u_dash_offset;
+    uniform float u_dash_gap;
     
     in vec2 v_uv;
-    in vec2 v_screen_start;
-    in float v_screen_length;
-    in vec2 v_screen_direction;
+    in vec3 v_normal;
+    in float v_length_percentage;
+    in float v_length;
 
     ${RenderServerDevice.FrameOutputBufferCode}
 
@@ -204,24 +222,24 @@ export const MultiLineFragmentShadeShader = new Cacher((config: Config) => {
         if (abs(v_uv.y) > 1.0f) {
             float a = v_uv.x;
             float b = (v_uv.y > 0.0f) ? v_uv.y - 1.0f : v_uv.y + 1.0f;
-            float len2 = a * a + b * b;
-            if (len2 > 1.0f) discard;
+            if (a * a + b * b > 1.0f) discard;
         }
         if (bool(u_dashed)) {
-            vec2 direction = gl_FragCoord.xy - v_screen_start;
-            float project_length = dot(v_screen_direction, direction);
-            float uv_y = clamp(project_length / v_screen_length, 0.0, 1.0);
-            float length = v_screen_length * (uv_y - 0.5);
-            if (fract(mod(length, 100.0) / 100.0) > 0.5) discard;
+            float percentage = fract(v_length_percentage * v_length * u_dash_scale);
+            float segment_percentage = mod(percentage + u_dash_offset, 1.0);
+            if (segment_percentage >= u_dash_gap || segment_percentage < EPSILON) discard;
         }
-        o_color = u_color; // vec4(uv_y, 0.0, 0.0, 1.0);
-        o_normal = vec4(0.0, 0.0, 1.0, 1.0);
+        o_color = u_color;
+        o_normal = vec4(normalize(v_normal), 1.0);
     }`;
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());
 });
 export const MultiLineFragmentShadeShaderUniforms: UniformInitSet<WebGL2RenderState> = {
     u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
     u_dashed: { type: RenderStateUniformType.Int, default: 0 },
+    u_dash_scale: { type: RenderStateUniformType.Float, default: 1.0 },
+    u_dash_offset: { type: RenderStateUniformType.Float, default: 0.0 },
+    u_dash_gap: { type: RenderStateUniformType.Float, default: 0.6 },
 };
 
 export const MultiLineFragmentOitShader = new Cacher((config: Config) => {
@@ -231,14 +249,18 @@ export const MultiLineFragmentOitShader = new Cacher((config: Config) => {
     precision highp sampler3D;
 
     ${RenderServerDevice.WorldUniformsCode}
+    ${RenderServerDevice.ConstantsCode}
 
     uniform vec4 u_color;
     uniform int u_dashed;
+    uniform float u_dash_scale;
+    uniform float u_dash_offset;
+    uniform float u_dash_gap;
     
     in vec2 v_uv;
-    in vec2 v_screen_start;
-    in float v_screen_length;
-    in vec2 v_screen_direction;
+    in vec3 v_normal;
+    in float v_length_percentage;
+    in float v_length;
 
     ${RenderServerDevice.FrameOiTOutputBufferCode}
 
@@ -246,18 +268,15 @@ export const MultiLineFragmentOitShader = new Cacher((config: Config) => {
         if (abs(v_uv.y) > 1.0f) {
             float a = v_uv.x;
             float b = (v_uv.y > 0.0f) ? v_uv.y - 1.0f : v_uv.y + 1.0f;
-            float len2 = a * a + b * b;
-            if (len2 > 1.0f) discard;
+            if (a * a + b * b > 1.0f) discard;
         }
         if (bool(u_dashed)) {
-            vec2 direction = gl_FragCoord.xy - v_screen_start;
-            float project_length = dot(v_screen_direction, direction);
-            float uv_y = clamp(project_length / v_screen_length, 0.0, 1.0);
-            float length = v_screen_length * (uv_y - 0.5);
-            if (fract(mod(length, 100.0) / 100.0) > 0.5) discard;
+            float percentage = fract(v_length_percentage * v_length * u_dash_scale);
+            float segment_percentage = mod(percentage + u_dash_offset, 1.0);
+            if (segment_percentage >= u_dash_gap || segment_percentage < EPSILON) discard;
         }
-        vec4 color = u_color; // vec4(uv_y, 0.0, 0.0, 1.0);
-        o_normal = vec4(0.0, 0.0, 1.0, 1.0);
+        vec4 color = u_color;
+        o_normal = vec4(normalize(v_normal), 1.0);
         ${RenderServerDevice.OitOutputCode}
     }`;
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());
@@ -265,6 +284,9 @@ export const MultiLineFragmentOitShader = new Cacher((config: Config) => {
 export const MultiLineFragmentOitShaderUniforms: UniformInitSet<WebGL2RenderState> = {
     u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
     u_dashed: { type: RenderStateUniformType.Int, default: 0 },
+    u_dash_scale: { type: RenderStateUniformType.Float, default: 1.0 },
+    u_dash_offset: { type: RenderStateUniformType.Float, default: 0.0 },
+    u_dash_gap: { type: RenderStateUniformType.Float, default: 0.6 },
 };
 
 export class MultiLineMaterialResource extends MaterialResource {
@@ -275,6 +297,9 @@ export class MultiLineMaterialResource extends MaterialResource {
         u_linewidth: RenderStateUniformType.Float,
         u_consider_pixel_ratio: RenderStateUniformType.Int,
         u_dashed: RenderStateUniformType.Int,
+        u_dash_scale: RenderStateUniformType.Float,
+        u_dash_offset: RenderStateUniformType.Float,
+        u_dash_gap: RenderStateUniformType.Float,
     };
 
     public get uniforms() { return MultiLineMaterialResource.#uniforms; }
@@ -296,6 +321,45 @@ export class MultiLineMaterialResource extends MaterialResource {
         if (this._line_width !== line_width) {
             this._line_width = line_width;
             this.material.set_Uniform('u_linewidth', this._line_width);
+        }
+    }
+
+    private _dashed: boolean = false;
+    public get dashed() { return this._dashed; }
+    public set dashed(dashed: boolean) {
+        if (this._dashed !== dashed) {
+            this._dashed = dashed;
+            this.material.set_Uniform('u_dashed', this._dashed ? 1 : 0);
+        }
+    }
+
+    private _dash_gap: number = 0.6;
+    public get dash_gap() { return this._dash_gap; }
+    public set dash_gap(dash_gap: number) {
+        dash_gap = clamp(dash_gap, 0, 1);
+        if (this._dash_gap !== dash_gap) {
+            this._dash_gap = dash_gap;
+            this.material.set_Uniform('u_dash_gap', this._dash_gap);
+        }
+    }
+
+    private _dash_scale: number = 1.0;
+    public get dash_scale() { return this._dash_scale; }
+    public set dash_scale(dash_scale: number) {
+        dash_scale = Math.max(dash_scale, 0);
+        if (this._dash_scale !== dash_scale) {
+            this._dash_scale = dash_scale;
+            this.material.set_Uniform('u_dash_scale', this._dash_scale);
+        }
+    }
+
+    private _dash_offset: number = 0.0;
+    public get dash_offset() { return this._dash_offset; }
+    public set dash_offset(dash_offset: number) {
+        dash_offset = clamp(dash_offset, 0, 1);
+        if (this._dash_offset !== dash_offset) {
+            this._dash_offset = dash_offset;
+            this.material.set_Uniform('u_dash_offset', this._dash_offset);
         }
     }
 
@@ -339,134 +403,6 @@ export class MultiLineMaterialResource extends MaterialResource {
             }
         );
         this.material.set_Material(shader, MultiLineMaterialResource.#uniforms);
-        this.material.transparent = false;
-    }
-}
-
-export class MultiLineMaterial2Resource extends MaterialResource {
-
-    static readonly #uniforms: MaterialReadOnlyUniforms = {
-        model_world: RenderStateUniformType.Mat4,
-        u_color: RenderStateUniformType.Vec4,
-        u_linewidth: RenderStateUniformType.Float,
-        u_consider_pixel_ratio: RenderStateUniformType.Int,
-        u_dashed: RenderStateUniformType.Int,
-    };
-
-    public get uniforms() { return MultiLineMaterial2Resource.#uniforms; }
-
-    private _color: Color = new Vector4(1, 1, 1, 1);
-    public get color() { return this._color; }
-    public set color(color: Color) {
-        if (!this._color.equal(color)) {
-            this._color = color;
-            this.material.set_Uniform('u_color', this._color);
-            this.material.transparent = this._color.a < (1.0 - Epsilon);
-        }
-    }
-
-    private _line_width: number = 2;
-    public get line_width() { return this._line_width; }
-    public set line_width(line_width: number) {
-        line_width = Math.max(0, line_width);
-        if (this._line_width !== line_width) {
-            this._line_width = line_width;
-            this.material.set_Uniform('u_linewidth', this._line_width);
-        }
-    }
-
-    private _consider_pixel_ratio: boolean = true;
-    public get consider_pixel_ratio() { return this._consider_pixel_ratio; }
-    public set consider_pixel_ratio(consider_pixel_ratio: boolean) {
-        if (this._consider_pixel_ratio !== consider_pixel_ratio) {
-            this._consider_pixel_ratio = consider_pixel_ratio;
-            this.material.set_Uniform('u_consider_pixel_ratio', this._consider_pixel_ratio ? 1 : 0);
-        }
-    }
-
-    private static frag_code = `#version 300 es
-    precision highp float;
-    precision highp usampler2DArray;
-    precision highp sampler3D;
-
-    ${RenderServerDevice.WorldUniformsCode}
-    ${RenderServerDevice.ConstantsCode}
-
-    uniform vec4 u_color;
-    uniform int u_dashed;
-    uniform highp sampler2D u_scene_depth;
-    
-    in vec2 v_uv;
-    in vec2 v_screen_start;
-    in float v_screen_length;
-    in vec2 v_screen_direction;
-    in float v_percentage;
-    in vec4 v_project_position;
-
-    ${RenderServerDevice.FrameOutputBufferCode}
-
-    void main() {
-        vec2 screen_coor = (v_project_position.xy / v_project_position.w + 1.0) / 2.0;
-        float depth = texture(u_scene_depth, screen_coor).r;
-        float line_depth = (v_project_position.z / v_project_position.w + 1.0) / 2.0;
-        bool check = abs(depth - line_depth) <= (camera_is_orthogonal ? 0.000005 : 0.00005);
-        bool not_hidden = depth >= line_depth - (camera_is_orthogonal ? 0.000005 : 0.0005);
-        bool normal_not_hidden = depth >= gl_FragCoord.z;
-        if ((check && !not_hidden) || (!check && !normal_not_hidden)) discard;
-        if (check && !not_hidden) discard;
-        if (abs(v_uv.y) > 1.0f) {
-            float a = v_uv.x;
-            float b = (v_uv.y > 0.0f) ? v_uv.y - 1.0f : v_uv.y + 1.0f;
-            float len2 = a * a + b * b;
-            if (len2 > 1.0f) discard;
-        }
-        if (bool(u_dashed)) {
-            vec2 direction = gl_FragCoord.xy - v_screen_start;
-            float project_length = dot(v_screen_direction, direction);
-            float uv_y = clamp(project_length / v_screen_length, 0.0, 1.0);
-            float length = v_screen_length * (uv_y - 0.5);
-            if (fract(mod(length, 100.0) / 100.0) > 0.5) discard;
-        }
-        o_color = u_color; // vec4(uv_y, 0.0, 0.0, 1.0);
-        o_normal = vec4(0.0, 0.0, 1.0, 1.0);
-    }`;
-    private static frag_uniforms: UniformInitSet<WebGL2RenderState> = {
-        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
-        u_dashed: { type: RenderStateUniformType.Int, default: 0 },
-        u_scene_depth: { type: RenderStateUniformType.Int, default: 0 },
-    }
-
-    constructor(config: Config) {
-        super(config);
-        this.material_ref.value = this.render_server.create_Material();
-        this.update_Material();
-    }
-
-    public update_Material() {
-        const shader = this.render_server.create_Shader();
-        const vertex_shader = MultiLineVertexShader.get(this.config).expect;
-        const fragment_prez_shader = MultiLineFragmentPreZShader.get(this.config).expect;
-        const fragment_shade_shader = this.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, MultiLineMaterial2Resource.frag_code).expect();
-        const fragment_oit_shader = MultiLineFragmentOitShader.get(this.config).expect;
-        shader.set_Shaders(
-            vertex_shader,
-            MultiLineVertexShaderUniforms,
-            {
-                prez: {
-                    shader: fragment_prez_shader,
-                    uniforms: MultiLineFragmentPreZShaderUniforms,
-                },
-                shade: {
-                    shader: fragment_shade_shader,
-                    uniforms: MultiLineMaterial2Resource.frag_uniforms,
-                },
-                oit: {
-                    shader: fragment_oit_shader,
-                    uniforms: MultiLineFragmentOitShaderUniforms,
-                }
-            }
-        );
-        this.material.set_Material(shader, MultiLineMaterial2Resource.#uniforms);
         this.material.transparent = false;
     }
 }

@@ -264,7 +264,7 @@ void main() {
     float gamma = acos(R.y);
     vec4 sky_color = texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
     o_color = mix(background_color, sky_color, float(use_sky));
-    o_normal = vec4(0.0, 0.0, 0.0, 1.0);
+    o_normal = vec4(-R, 1.0);
 }
 `;
 
@@ -636,6 +636,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
     //#region Frame Buffer
     private readonly solid_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
+    private readonly solid_1_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
     private readonly solid_copy_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
     //#endregion
 
@@ -705,6 +706,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
     private alloc_Solid() {
         // frame buffer
         this.solid_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
+        this.solid_1_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
         this.solid_copy_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
 
         // texture
@@ -723,6 +725,10 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.set_FrameBufferAttachment(this.solid_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color1, this.solid_normal_texture.expect);
         this.render_server.render_state.set_FrameBufferAttachment(this.solid_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, this.solid_depth_texture.expect);
         this.render_server.render_state.enable_FrameBuffer(this.solid_framebuffer.expect);
+
+        this.render_server.render_state.set_FrameBufferAttachment(this.solid_1_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.solid_color_texture.expect);
+        this.render_server.render_state.set_FrameBufferAttachment(this.solid_1_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, this.solid_depth_texture.expect);
+        this.render_server.render_state.enable_FrameBuffer(this.solid_1_framebuffer.expect);
 
         this.render_server.render_state.set_FrameBufferAttachment(this.solid_copy_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.solid_color_copy_texture.expect);
         this.render_server.render_state.set_FrameBufferAttachment(this.solid_copy_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color1, this.solid_normal_copy_texture.expect);
@@ -1019,7 +1025,6 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
     private render_RenderQueue1Solid(renderer: EditorRenderer3D) {
         const { x: width, y: height } = this.size;
-        console.log(width, height);
 
         // blit
         this.render_server.render_state.blit_FrameBuffer(this.solid_framebuffer.expect, this.solid_copy_framebuffer.expect, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth, RenderStateTextureMagFilter.Nearest, 0, 0, width, height);
@@ -1029,7 +1034,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.set_ScissorProxy(0, 0, width, height);
         this.render_server.render_state.set_CapabilityProxy(this.render_server.render_state.gl.CULL_FACE, true);
         this.render_server.render_state.set_ClearColorProxy(0, 0, 0, 0);
-        this.render_server.render_state.clear_FrameBuffer(this.solid_framebuffer.expect, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth);
+        this.render_server.render_state.clear_FrameBuffer(this.solid_1_framebuffer.expect, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth);
 
         this.render_server.render_state.active_Texture(this.solid_depth_copy_texture.expect, 0);
         this.render_server.render_state.active_Texture(this.solid_color_copy_texture.expect, 1);
@@ -1246,6 +1251,8 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
     public dispose(): void {
         // solid
         this.solid_framebuffer.clear();
+        this.solid_1_framebuffer.clear();
+        this.solid_copy_framebuffer.clear();
         this.solid_color_texture.clear();
         this.solid_normal_texture.clear();
         this.solid_depth_texture.clear();

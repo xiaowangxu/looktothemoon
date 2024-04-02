@@ -11,7 +11,7 @@ import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 
-export const RenderServerGeometryAttributeLoctions = {
+export const RenderServerGeometryAttributeLocations = {
     position: 0,
     normal: 1,
     tangent: 2,
@@ -28,6 +28,10 @@ export const RenderServerGeometryAttributeLoctions = {
     custom1: 12,
     custom2: 13,
     custom3: 14,
+    custom4: 15,
+    custom5: 16,
+    custom6: 17,
+    custom7: 18,
 };
 
 export type RenderServerGeometryArray<RS extends RenderState<RS>, Buffer extends RenderStateBuffer<RS> = RenderStateBuffer<RS>> = {
@@ -91,7 +95,7 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
         for (const [name, attr] of this.vertex_array_attributes_map.entries()) {
             // ignore default matrix
             if (attr.attribute.expect === (this.render_device as RenderServerDevice).identity_transform_attribute_buffer) continue;
-            if ((RenderServerGeometryAttributeLoctions as Record<string, number>)[name] !== undefined) {
+            if ((RenderServerGeometryAttributeLocations as Record<string, number>)[name] !== undefined) {
                 ans[name] = attr.attribute.expect;
             }
             else {
@@ -159,7 +163,7 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
         for (const [name, attribute] of Object.entries(array)) {
             if (attribute instanceof RenderDeviceAttributeBuffer) {
                 // is system buffer
-                const location: number | undefined = (RenderServerGeometryAttributeLoctions as Record<string, number>)[name];
+                const location: number | undefined = (RenderServerGeometryAttributeLocations as Record<string, number>)[name];
                 if (location === undefined) throw new Error('<RenderServerGeometry> set_Geometry: attribute\'s location is not system determinded');
                 vertex_array_attributes_map.set(name, { attribute: new Ref(attribute), location });
                 attribute.bound_VertexArray(vertex_array, location);
@@ -173,7 +177,7 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
             }
         }
         if (default_instance_transform_attribute && array.instance_transform === undefined) {
-            const location = RenderServerGeometryAttributeLoctions.instance_transform;
+            const location = RenderServerGeometryAttributeLocations.instance_transform;
             const attribute = (this.render_device as RenderServerDevice).identity_transform_attribute_buffer;
             vertex_array_attributes_map.set('instance_transform', { attribute: new Ref(attribute), location });
             attribute.bound_VertexArray(vertex_array, location);

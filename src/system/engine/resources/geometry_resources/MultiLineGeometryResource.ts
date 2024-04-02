@@ -1,4 +1,4 @@
-import { RenderDeviceAttributeBufferView, RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceVector3AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
+import { RenderDeviceAttributeBufferView, RenderDeviceFloatAttributeBuffer, RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceVector3AttributeBuffer, RenderDeviceVector4AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { Cacher } from "@/system/utils/Cacher";
 import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
@@ -8,7 +8,7 @@ import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2Rend
 import type { WebGL2RenderStateBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import type { Config } from "../../ConfiguredObject";
-import { RenderServerGeometryAttributeLoctions } from "../../render_server/RenderServerGeometry";
+import { RenderServerGeometryAttributeLocations } from "../../render_server/RenderServerGeometry";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
 const PositionAttributeBuffer = new Cacher((config: Config) => {
@@ -44,8 +44,12 @@ const IndexAttributeBuffer = new Cacher((config: Config) => {
 export class MultiLineGeometryResource extends GeometryResource {
 
     private readonly points_attribute_buffer_ref: Ref<RenderDeviceVector3AttributeBuffer<WebGL2RenderState, WebGL2RenderStateBuffer>> = new Ref();
-    private readonly start_attribute_buffer_ref: Ref<RenderDeviceAttributeBufferView<WebGL2RenderState, WebGL2RenderStateBuffer>> = new Ref();
-    private readonly end_attribute_buffer_ref: Ref<RenderDeviceAttributeBufferView<WebGL2RenderState, WebGL2RenderStateBuffer>> = new Ref();
+    private readonly points_start_attribute_buffer_ref: Ref<RenderDeviceAttributeBufferView<WebGL2RenderState, WebGL2RenderStateBuffer>> = new Ref();
+    private readonly points_end_attribute_buffer_ref: Ref<RenderDeviceAttributeBufferView<WebGL2RenderState, WebGL2RenderStateBuffer>> = new Ref();
+    private readonly length_percentages_attribute_buffer_ref: Ref<RenderDeviceFloatAttributeBuffer<WebGL2RenderState, WebGL2RenderStateBuffer>> = new Ref();
+    private readonly length_percentages_start_attribute_buffer_ref: Ref<RenderDeviceAttributeBufferView<WebGL2RenderState, WebGL2RenderStateBuffer>> = new Ref();
+    private readonly length_percentages_end_attribute_buffer_ref: Ref<RenderDeviceAttributeBufferView<WebGL2RenderState, WebGL2RenderStateBuffer>> = new Ref();
+    private readonly total_length_attribute_buffer_ref: Ref<RenderDeviceFloatAttributeBuffer<WebGL2RenderState, WebGL2RenderStateBuffer>> = new Ref();
 
     private readonly _base_bbox: Box3 = Box3.create(Vector3.create(0, 0, 0), Vector3.create(1, 0, 0));
     private readonly _bbox: Box3 = Box3.new;
@@ -58,33 +62,40 @@ export class MultiLineGeometryResource extends GeometryResource {
         }
     }
 
-    // private _line_width: number = 2;
-    // public get line_width() { return this._line_width; }
-    // public set line_width(line_width: number) {
-    //     if (this.line_width !== line_width) {
-    //         this._line_width = line_width;
-    //         this.geometry.set_BBoxPixelEnlargement(this._line_width);
-    //     }
-    // }
-
     constructor(config: Config) {
         super(config);
         this.geometry_ref.value = this.render_server.create_Geometry();
-        this.points_attribute_buffer_ref.value = new RenderDeviceVector3AttributeBuffer(this.render_server, RenderStateBufferUsage.DynamicDraw, [Vector3.create(0, 0, 0), Vector3.create(1, 0, 0)], 1);
-        this.start_attribute_buffer_ref.value = new RenderDeviceAttributeBufferView(this.render_server, this.points_attribute_buffer_ref.expect, 1, 0);
-        this.end_attribute_buffer_ref.value = new RenderDeviceAttributeBufferView(this.render_server, this.points_attribute_buffer_ref.expect, 1, 1);
+        this.points_attribute_buffer_ref.value = new RenderDeviceVector3AttributeBuffer(this.render_server, RenderStateBufferUsage.StaticDraw, [Vector3.create(0, 0, 0), Vector3.create(1, 0, 0)], 1);
+        this.points_start_attribute_buffer_ref.value = new RenderDeviceAttributeBufferView(this.render_server, this.points_attribute_buffer_ref.expect, 1, 0);
+        this.points_end_attribute_buffer_ref.value = new RenderDeviceAttributeBufferView(this.render_server, this.points_attribute_buffer_ref.expect, 1, 1);
+        this.length_percentages_attribute_buffer_ref.value = new RenderDeviceFloatAttributeBuffer(this.render_server, RenderStateBufferUsage.StaticDraw, [0, 1], 1);
+        this.length_percentages_start_attribute_buffer_ref.value = new RenderDeviceAttributeBufferView(this.render_server, this.length_percentages_attribute_buffer_ref.expect, 1, 0);
+        this.length_percentages_end_attribute_buffer_ref.value = new RenderDeviceAttributeBufferView(this.render_server, this.length_percentages_attribute_buffer_ref.expect, 1, 1);
+        this.total_length_attribute_buffer_ref.value = new RenderDeviceFloatAttributeBuffer(this.render_server, RenderStateBufferUsage.StaticDraw, 8);
         this.geometry.set_Geometry(
             RenderStatePrimitiveType.Triangles,
             {
                 position: PositionAttributeBuffer.get(this.config).expect,
                 uv: UVAttributeBuffer.get(this.config).expect,
                 start: {
-                    attribute: this.start_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLoctions.custom0,
+                    attribute: this.points_start_attribute_buffer_ref.expect,
+                    location: RenderServerGeometryAttributeLocations.custom0,
                 },
                 end: {
-                    attribute: this.end_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLoctions.custom1,
+                    attribute: this.points_end_attribute_buffer_ref.expect,
+                    location: RenderServerGeometryAttributeLocations.custom1,
+                },
+                percentage_start: {
+                    attribute: this.length_percentages_start_attribute_buffer_ref.expect,
+                    location: RenderServerGeometryAttributeLocations.custom2,
+                },
+                percentage_end: {
+                    attribute: this.length_percentages_end_attribute_buffer_ref.expect,
+                    location: RenderServerGeometryAttributeLocations.custom3,
+                },
+                length: {
+                    attribute: this.total_length_attribute_buffer_ref.expect,
+                    location: RenderServerGeometryAttributeLocations.custom4,
                 }
             },
             IndexAttributeBuffer.get(this.config).expect,
@@ -103,11 +114,13 @@ export class MultiLineGeometryResource extends GeometryResource {
         if (this.geometry.instance_count === count - 1) return;
         this.geometry.instance_count = count - 1;
         this.points_attribute_buffer_ref.expect.alloc_Data(count);
+        this.length_percentages_attribute_buffer_ref.expect.alloc_Data(count);
     }
 
-    public set_Point(idx: number, point: Vector3, update_bbox: boolean = true, commit: boolean = true) {
+    public set_Point(idx: number, point: Vector3, update_bbox: boolean = true, update_length_percentages: boolean = true, commit: boolean = true) {
         if (idx < 0 || idx >= this.geometry.instance_count + 1) return;
         this.points_attribute_buffer_ref.expect.update_Data(point, idx, commit);
+        if (update_length_percentages) this.update_LengthPercentages();
         if (update_bbox) this.update_BBox();
     }
 
@@ -118,6 +131,38 @@ export class MultiLineGeometryResource extends GeometryResource {
 
     public commit_Points() {
         this.points_attribute_buffer_ref.expect.commit_Data();
+    }
+
+    public update_LengthPercentages() {
+        const points_count = this.points_count;
+        const last_point = Vector3.new;
+        const point = Vector3.new;
+        this.points_attribute_buffer_ref.expect.get_Data(0, last_point);
+        this.length_percentages_attribute_buffer_ref.expect.update_Data(0, 0, false);
+        let total_length = 0;
+        for (let i = 1; i < points_count; i++) {
+            this.points_attribute_buffer_ref.expect.get_Data(i, point);
+            const length = last_point.distance_to(point);
+            total_length += length;
+            this.length_percentages_attribute_buffer_ref.expect.update_Data(total_length, i, false);
+            last_point.copy(point);
+        }
+        if (total_length !== 0) {
+            for (let i = 0; i < points_count; i++) {
+                const length = this.length_percentages_attribute_buffer_ref.expect.get_Data(i);
+                this.length_percentages_attribute_buffer_ref.expect.update_Data(length / total_length, i, false);
+            }
+        }
+        this.total_length_attribute_buffer_ref.expect.update_Data(total_length, 0, false);
+        this.total_length_attribute_buffer_ref.expect.update_Data(total_length, 1, false);
+        this.total_length_attribute_buffer_ref.expect.update_Data(total_length, 2, false);
+        this.total_length_attribute_buffer_ref.expect.update_Data(total_length, 3, false);
+        this.total_length_attribute_buffer_ref.expect.update_Data(total_length, 4, false);
+        this.total_length_attribute_buffer_ref.expect.update_Data(total_length, 5, false);
+        this.total_length_attribute_buffer_ref.expect.update_Data(total_length, 6, false);
+        this.total_length_attribute_buffer_ref.expect.update_Data(total_length, 7, false);
+        this.total_length_attribute_buffer_ref.expect.commit_Data();
+        this.length_percentages_attribute_buffer_ref.expect.commit_Data();
     }
 
     public update_BBox() {
@@ -147,8 +192,12 @@ export class MultiLineGeometryResource extends GeometryResource {
 
     protected dispose(): void {
         this.points_attribute_buffer_ref.clear();
-        this.start_attribute_buffer_ref.clear();
-        this.end_attribute_buffer_ref.clear();
+        this.points_start_attribute_buffer_ref.clear();
+        this.points_end_attribute_buffer_ref.clear();
+        this.length_percentages_attribute_buffer_ref.clear();
+        this.length_percentages_start_attribute_buffer_ref.clear();
+        this.length_percentages_end_attribute_buffer_ref.clear();
+        this.total_length_attribute_buffer_ref.clear();
         super.dispose();
     }
 }

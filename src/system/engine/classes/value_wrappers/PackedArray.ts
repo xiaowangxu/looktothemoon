@@ -1,6 +1,6 @@
 import type { RenderDevice } from "@/system/sliverofstraw/RenderDevice";
 import type { RenderState, RenderStateBufferUsage } from "@/system/sliverofstraw/RenderState";
-import { RenderDeviceVector2AttributeBuffer, type RenderDeviceAttributeBuffer, RenderDeviceVector3AttributeBuffer, RenderDeviceVector4AttributeBuffer, RenderDeviceMatrix4AttributeBuffer, RenderDeviceIndexAttributeBuffer, RenderDeviceMatrix3AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
+import { RenderDeviceVector2AttributeBuffer, type RenderDeviceAttributeBuffer, RenderDeviceVector3AttributeBuffer, RenderDeviceVector4AttributeBuffer, RenderDeviceMatrix4AttributeBuffer, RenderDeviceIndexAttributeBuffer, RenderDeviceMatrix3AttributeBuffer, RenderDeviceFloatAttributeBuffer, RenderDeviceIntAttributeBuffer, RenderDeviceUintAttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 
 export abstract class PackedArray {
     public abstract get data(): ArrayBufferView;
@@ -45,6 +45,66 @@ export class PackedIndexArray extends PackedArray {
 
     public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceIndexAttributeBuffer<T> {
         return new RenderDeviceIndexAttributeBuffer(render_device, usage, this.data);
+    }
+}
+
+export class PackedUintArray extends PackedArray {
+    public readonly data: Uint32Array;
+
+    constructor(length: number)
+    constructor(array: Uint32Array)
+    constructor(data: Uint32Array | number) {
+        super();
+        if (data instanceof Uint32Array) {
+            this.data = data;
+        }
+        else {
+            this.data = new Uint32Array(data);
+        }
+    }
+
+    public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceUintAttributeBuffer<T> {
+        return new RenderDeviceUintAttributeBuffer(render_device, usage, this.data);
+    }
+}
+
+export class PackedFloatArray extends PackedArray {
+    public readonly data: Float32Array;
+
+    constructor(length: number)
+    constructor(array: Float32Array)
+    constructor(data: Float32Array | number) {
+        super();
+        if (data instanceof Float32Array) {
+            this.data = data;
+        }
+        else {
+            this.data = new Float32Array(data);
+        }
+    }
+
+    public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceFloatAttributeBuffer<T> {
+        return new RenderDeviceFloatAttributeBuffer(render_device, usage, this.data);
+    }
+}
+
+export class PackedIntArray extends PackedArray {
+    public readonly data: Int32Array;
+
+    constructor(length: number)
+    constructor(array: Int32Array)
+    constructor(data: Int32Array | number) {
+        super();
+        if (data instanceof Int32Array) {
+            this.data = data;
+        }
+        else {
+            this.data = new Int32Array(data);
+        }
+    }
+
+    public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceIntAttributeBuffer<T> {
+        return new RenderDeviceIntAttributeBuffer(render_device, usage, this.data);
     }
 }
 

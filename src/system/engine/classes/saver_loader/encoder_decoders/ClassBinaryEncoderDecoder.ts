@@ -11,7 +11,7 @@ import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { ArrayBuffer as MD5 } from 'spark-md5';
 import type { ClassExchangeData, ClassInstanceData } from "../ClassSaverLoader";
 import { ValueDataType } from "../../ValueDataType";
-import { PackedIndexArray, PackedMatrix3Array, PackedMatrix4Array, PackedVector2Array, PackedVector3Array, PackedVector4Array } from "../../value_wrappers/PackedArray";
+import { PackedFloatArray, PackedIndexArray, PackedIntArray, PackedMatrix3Array, PackedMatrix4Array, PackedUintArray, PackedVector2Array, PackedVector3Array, PackedVector4Array } from "../../value_wrappers/PackedArray";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 
 // Lttm Bin format
@@ -208,28 +208,24 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEnc
                 return;
             }
             // typed array
-            case ValueDataType.Uint8Array: { this.append_TypedArray(value); return; }
-            case ValueDataType.Uint16Array: { this.append_TypedArray(value); return; }
-            case ValueDataType.Uint32Array: { this.append_TypedArray(value); return; }
-            case ValueDataType.Int8Array: { this.append_TypedArray(value); return; }
-            case ValueDataType.Int16Array: { this.append_TypedArray(value); return; }
-            case ValueDataType.Int32Array: { this.append_TypedArray(value); return; }
-            case ValueDataType.Float32Array: { this.append_TypedArray(value); return; }
+            case ValueDataType.Uint8Array:
+            case ValueDataType.Uint16Array:
+            case ValueDataType.Uint32Array:
+            case ValueDataType.Int8Array:
+            case ValueDataType.Int16Array:
+            case ValueDataType.Int32Array:
+            case ValueDataType.Float32Array:
             case ValueDataType.Float64Array: { this.append_TypedArray(value); return; }
-            case ValueDataType.PackedIndexArray: {
-                const data: PackedIndexArray = value;
-                this.append_TypedArray(data.data);
-                return;
-            }
+            // packed array
+            case ValueDataType.PackedIndexArray:
             case ValueDataType.PackedVector2Array:
             case ValueDataType.PackedVector3Array:
             case ValueDataType.PackedVector4Array:
             case ValueDataType.PackedMatrix3Array:
-            case ValueDataType.PackedMatrix4Array: {
-                const data: PackedVector2Array | PackedVector3Array | PackedVector4Array | PackedMatrix4Array = value;
-                this.append_TypedArray(data.data);
-                return;
-            }
+            case ValueDataType.PackedMatrix4Array:
+            case ValueDataType.PackedUintArray:
+            case ValueDataType.PackedIntArray:
+            case ValueDataType.PackedFloatArray: { this.append_TypedArray(value.data); return; }
             default: {
                 const n: never = type;
                 throw new Error('<ClassBinaryEncoder> append_ValueInternal: unkown value type');
@@ -282,6 +278,9 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEnc
         if (value instanceof PackedVector4Array) return ValueDataType.PackedVector4Array;
         if (value instanceof PackedMatrix3Array) return ValueDataType.PackedMatrix3Array;
         if (value instanceof PackedMatrix4Array) return ValueDataType.PackedMatrix4Array;
+        if (value instanceof PackedUintArray) return ValueDataType.PackedUintArray;
+        if (value instanceof PackedIntArray) return ValueDataType.PackedIntArray;
+        if (value instanceof PackedFloatArray) return ValueDataType.PackedFloatArray;
         // math
         if (value instanceof Vector2) return ValueDataType.Vector2;
         if (value instanceof Vector3) return ValueDataType.Vector3;
@@ -593,6 +592,15 @@ export class ClassBinaryDecoder extends ClassDecoder<ArrayBuffer, ClassBinaryDec
             }
             case ValueDataType.PackedMatrix4Array: {
                 return new PackedMatrix4Array(this.get_TypedArray(Float32Array));
+            }
+            case ValueDataType.PackedUintArray: {
+                return new PackedUintArray(this.get_TypedArray(Uint32Array));
+            }
+            case ValueDataType.PackedIntArray: {
+                return new PackedIntArray(this.get_TypedArray(Int32Array));
+            }
+            case ValueDataType.PackedFloatArray: {
+                return new PackedFloatArray(this.get_TypedArray(Float32Array));
             }
             default: {
                 const n: never = type;

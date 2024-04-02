@@ -8,7 +8,7 @@ import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { RenderStateVertexArray } from "../render_state_objects/RenderStateVertexArray";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
-import { PackedVector2Array, type PackedArray, PackedVector3Array, PackedVector4Array, PackedMatrix4Array, PackedIndexArray, PackedMatrix3Array } from "@/system/engine/classes/value_wrappers/PackedArray";
+import { PackedVector2Array, type PackedArray, PackedVector3Array, PackedVector4Array, PackedMatrix4Array, PackedIndexArray, PackedMatrix3Array, PackedFloatArray, PackedIntArray, PackedUintArray } from "@/system/engine/classes/value_wrappers/PackedArray";
 import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import type { Out } from "@/system/utils/Type";
 
@@ -56,7 +56,7 @@ export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buff
         }
     }
 
-    public abstract get_Data(idx: number, target: Data | never): Data;
+    public abstract get_Data(idx: number, target: Data | undefined): Data;
 
     public abstract get_PackedArray(): PackedArray;
 
@@ -438,7 +438,7 @@ export class RenderDeviceIndexAttributeBuffer<T extends RenderState<T>, Buffer e
     public get data() { return this._data; }
 
     constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: number[] | Uint32Array | number) {
-        super(render_device);
+        super(render_device, 0);
         this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Index, usage, 1, RenderStateDataType.UnsignedInt, false, 0).expect() as Buffer;
         if (data !== undefined) this.alloc_Data(data as any);
     }
@@ -491,13 +491,244 @@ export class RenderDeviceIndexAttributeBuffer<T extends RenderState<T>, Buffer e
         if (commit) this.render_state.update_Buffer(this.buffer_ref.expect, uint32array, offset_bytes);
     }
 
-    public get_Data(idx: number, target: never): number {
-        if (idx < 0 || idx >= this.item_count) throw new Error('<RenderDeviceVector4AttributeBuffer> get_Data: index out of bound');
+    public get_Data(idx: number, target: undefined = undefined): number {
+        if (idx < 0 || idx >= this.item_count) throw new Error('<RenderDeviceIndexAttributeBuffer> get_Data: index out of bound');
         return this._data[idx];
     }
 
     public get_PackedArray(): PackedArray {
         return new PackedIndexArray(this.data);
+    }
+}
+
+export class RenderDeviceUintAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
+    extends RenderDeviceAttributeBuffer<T, Buffer, number>
+{
+    public get per_element_byte_count(): number { return Uint32Array.BYTES_PER_ELEMENT; }
+    public get per_item_element_count(): number { return 1; }
+
+    public get data_type(): RenderStateDataType { return RenderStateDataType.UnsignedInt; }
+    private _element_count: number = 0;
+    public get element_count(): number { return this._element_count; }
+
+    private _data: Uint32Array = new Uint32Array(0);
+    public get data() { return this._data; }
+
+    constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: number[] | Uint32Array | number, per_instance_count: number = 0) {
+        super(render_device, per_instance_count);
+        this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 1, RenderStateDataType.UnsignedInt, false, this.per_instance_count).expect() as Buffer;
+        if (data !== undefined) this.alloc_Data(data as any);
+    }
+
+    public alloc_Data(data: number[]): void;
+    public alloc_Data(data: Uint32Array): void;
+    public alloc_Data(count: number): void;
+    public alloc_Data(data: number[] | Uint32Array | number): void {
+        const is_count = typeof data === 'number';
+        if (data instanceof Uint32Array) {
+            this._element_count = data.length;
+            this._data = data;
+        }
+        else {
+            const element_count = is_count ? data : data.length;
+            this._element_count = element_count;
+            const uint32array = is_count ? new Uint32Array(element_count) : new Uint32Array(data);
+            this._data = uint32array;
+        }
+        this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, is_count ? undefined : this._data);
+    }
+
+    public update_Data(data: number[], offset: number, commit?: boolean): void;
+    public update_Data(data: Uint32Array, offset: number, commit?: boolean): void;
+    public update_Data(data: number, offset: number, commit?: boolean): void;
+    public update_Data(data: number[] | Uint32Array | number, offset: number, commit: boolean = true): void {
+        let uint32array: Uint32Array;
+        let offset_bytes: number;
+        if (data instanceof Uint32Array) {
+            offset_bytes = offset * this.per_element_byte_count;
+            const element_bytes = data.byteLength;
+            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceUintAttributeBuffer> update_Data: data overflow');
+            uint32array = new Uint32Array(this._data.buffer, offset_bytes, data.length);
+            uint32array.set(data);
+        }
+        else {
+            const single = !(data instanceof Array);
+            offset_bytes = offset * this.per_element_byte_count;
+            const element_count = single ? 1 : data.length;
+            const element_bytes = element_count * this.per_element_byte_count;
+            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceUintAttributeBuffer> update_Data: data overflow');
+            uint32array = new Uint32Array(this._data.buffer, offset_bytes, element_count);
+            if (single) {
+                uint32array[0] = data;
+            }
+            else {
+                uint32array.set(data);
+            }
+        }
+        if (commit) this.render_state.update_Buffer(this.buffer_ref.expect, uint32array, offset_bytes);
+    }
+
+    public get_Data(idx: number, target: undefined = undefined): number {
+        if (idx < 0 || idx >= this.item_count) throw new Error('<RenderDeviceUintAttributeBuffer> get_Data: index out of bound');
+        return this._data[idx];
+    }
+
+    public get_PackedArray(): PackedArray {
+        return new PackedUintArray(this.data);
+    }
+}
+
+export class RenderDeviceIntAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
+    extends RenderDeviceAttributeBuffer<T, Buffer, number>
+{
+    public get per_element_byte_count(): number { return Int32Array.BYTES_PER_ELEMENT; }
+    public get per_item_element_count(): number { return 1; }
+
+    public get data_type(): RenderStateDataType { return RenderStateDataType.Int; }
+    private _element_count: number = 0;
+    public get element_count(): number { return this._element_count; }
+
+    private _data: Int32Array = new Int32Array(0);
+    public get data() { return this._data; }
+
+    constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: number[] | Int32Array | number, per_instance_count: number = 0) {
+        super(render_device, per_instance_count);
+        this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 1, RenderStateDataType.Int, false, this.per_instance_count).expect() as Buffer;
+        if (data !== undefined) this.alloc_Data(data as any);
+    }
+
+    public alloc_Data(data: number[]): void;
+    public alloc_Data(data: Int32Array): void;
+    public alloc_Data(count: number): void;
+    public alloc_Data(data: number[] | Int32Array | number): void {
+        const is_count = typeof data === 'number';
+        if (data instanceof Int32Array) {
+            this._element_count = data.length;
+            this._data = data;
+        }
+        else {
+            const element_count = is_count ? data : data.length;
+            this._element_count = element_count;
+            const int32array = is_count ? new Int32Array(element_count) : new Int32Array(data);
+            this._data = int32array;
+        }
+        this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, is_count ? undefined : this._data);
+    }
+
+    public update_Data(data: number[], offset: number, commit?: boolean): void;
+    public update_Data(data: Int32Array, offset: number, commit?: boolean): void;
+    public update_Data(data: number, offset: number, commit?: boolean): void;
+    public update_Data(data: number[] | Int32Array | number, offset: number, commit: boolean = true): void {
+        let int32array: Int32Array;
+        let offset_bytes: number;
+        if (data instanceof Int32Array) {
+            offset_bytes = offset * this.per_element_byte_count;
+            const element_bytes = data.byteLength;
+            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceIntAttributeBuffer> update_Data: data overflow');
+            int32array = new Int32Array(this._data.buffer, offset_bytes, data.length);
+            int32array.set(data);
+        }
+        else {
+            const single = !(data instanceof Array);
+            offset_bytes = offset * this.per_element_byte_count;
+            const element_count = single ? 1 : data.length;
+            const element_bytes = element_count * this.per_element_byte_count;
+            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceIntAttributeBuffer> update_Data: data overflow');
+            int32array = new Int32Array(this._data.buffer, offset_bytes, element_count);
+            if (single) {
+                int32array[0] = data;
+            }
+            else {
+                int32array.set(data);
+            }
+        }
+        if (commit) this.render_state.update_Buffer(this.buffer_ref.expect, int32array, offset_bytes);
+    }
+
+    public get_Data(idx: number, target: undefined = undefined): number {
+        if (idx < 0 || idx >= this.item_count) throw new Error('<RenderDeviceIntAttributeBuffer> get_Data: index out of bound');
+        return this._data[idx];
+    }
+
+    public get_PackedArray(): PackedArray {
+        return new PackedIntArray(this.data);
+    }
+}
+
+export class RenderDeviceFloatAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
+    extends RenderDeviceAttributeBuffer<T, Buffer, number>
+{
+    public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
+    public get per_item_element_count(): number { return 1; }
+
+    public get data_type(): RenderStateDataType { return RenderStateDataType.Float; }
+    private _element_count: number = 0;
+    public get element_count(): number { return this._element_count; }
+
+    private _data: Float32Array = new Float32Array(0);
+    public get data() { return this._data; }
+
+    constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: number[] | Float32Array | number, per_instance_count: number = 0) {
+        super(render_device, per_instance_count);
+        this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 1, RenderStateDataType.Float, false, this.per_instance_count).expect() as Buffer;
+        if (data !== undefined) this.alloc_Data(data as any);
+    }
+
+    public alloc_Data(data: number[]): void;
+    public alloc_Data(data: Float32Array): void;
+    public alloc_Data(count: number): void;
+    public alloc_Data(data: number[] | Float32Array | number): void {
+        const is_count = typeof data === 'number';
+        if (data instanceof Float32Array) {
+            this._element_count = data.length;
+            this._data = data;
+        }
+        else {
+            const element_count = is_count ? data : data.length;
+            this._element_count = element_count;
+            const float32array = is_count ? new Float32Array(element_count) : new Float32Array(data);
+            this._data = float32array;
+        }
+        this.render_state.alloc_Buffer(this.buffer_ref.expect, this.byte_count, is_count ? undefined : this._data);
+    }
+
+    public update_Data(data: number[], offset: number, commit?: boolean): void;
+    public update_Data(data: Float32Array, offset: number, commit?: boolean): void;
+    public update_Data(data: number, offset: number, commit?: boolean): void;
+    public update_Data(data: number[] | Float32Array | number, offset: number, commit: boolean = true): void {
+        let float32array: Float32Array;
+        let offset_bytes: number;
+        if (data instanceof Float32Array) {
+            offset_bytes = offset * this.per_element_byte_count;
+            const element_bytes = data.byteLength;
+            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceFloatAttributeBuffer> update_Data: data overflow');
+            float32array = new Float32Array(this._data.buffer, offset_bytes, data.length);
+            float32array.set(data);
+        }
+        else {
+            const single = !(data instanceof Array);
+            offset_bytes = offset * this.per_element_byte_count;
+            const element_count = single ? 1 : data.length;
+            const element_bytes = element_count * this.per_element_byte_count;
+            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceFloatAttributeBuffer> update_Data: data overflow');
+            float32array = new Float32Array(this._data.buffer, offset_bytes, element_count);
+            if (single) {
+                float32array[0] = data;
+            }
+            else {
+                float32array.set(data);
+            }
+        }
+        if (commit) this.render_state.update_Buffer(this.buffer_ref.expect, float32array, offset_bytes);
+    }
+
+    public get_Data(idx: number, target: undefined = undefined): number {
+        if (idx < 0 || idx >= this.item_count) throw new Error('<RenderDeviceFloatAttributeBuffer> get_Data: index out of bound');
+        return this._data[idx];
+    }
+
+    public get_PackedArray(): PackedArray {
+        return new PackedFloatArray(this.data);
     }
 }
 
