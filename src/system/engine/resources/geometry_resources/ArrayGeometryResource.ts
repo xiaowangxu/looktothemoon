@@ -61,7 +61,7 @@ export class ArrayGeometryResource extends GeometryResource {
         this.geometry.set_BBox(bbox);
     }
 
-    public update_Array(key: string, array: PackedArray, offset: number = 0, commit?: boolean) {
+    public update_Array(key: string, array: PackedArray, offset: number = 0, commit: boolean = true) {
         const attribute_buffer = this.geometry.get_AttributeBuffer(key);
         if (attribute_buffer !== undefined) {
             attribute_buffer.update_Data(array.data, offset, commit);

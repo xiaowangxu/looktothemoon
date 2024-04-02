@@ -14,8 +14,8 @@ import { Color } from "@/system/fivepebble/graphics/Color";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
-import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineGeometryResource";
-import { MultiLineMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
+import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineSegmentGeometryResource";
+import { MultiLineSegmentMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
 import { StandardMaterialResource } from "../system/engine/resources/material_resources/PrimitiveMaterialResource";
@@ -35,7 +35,7 @@ import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
 import { Cacher } from "@/system/utils/Cacher";
 import { Ref } from "@/system/utils/RefCounted";
 import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
-import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType, tween_loop, TweenPingPong, tween_pingpong } from "@/system/engine/Tween";
+import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType, tween_loop, TweenPingPong, tween_pingpong, tween_sequence, tween_wait } from "@/system/engine/Tween";
 import { InfiniteLine3D } from "@/system/engine/nodes/node3ds/gizmo3ds/InfiniteLine3D";
 import { Bvh3Strategy } from "@/system/fivepebble/bvh/Bvh3";
 import { Bvh3Visualization } from './nodes/Bvh3Visualization';
@@ -279,16 +279,20 @@ export function createEditor() {
     // }
 
     const multi_line_geometry = new MultiLineGeometryResource(DefaultConfig);
-    const multi_line_material = new MultiLineMaterialResource(DefaultConfig);
+    const multi_line_material = new MultiLineSegmentMaterialResource(DefaultConfig);
     const points = new Array(120).fill(0).map((i, idx) => {
         return Vector3.create(Math.cos(idx / 35 * Tau), Math.sin(idx / 35 * Tau), idx / 8);
     });
     multi_line_geometry.set_PointsCount(points.length);
-    points.forEach((p, i) => multi_line_geometry.set_Point(i, p, false, false, false));
+    points.forEach((p, i) => {
+        multi_line_geometry.set_Point(i, p, false, false, false);
+        multi_line_geometry.set_Color(i, Color.hsv(i / 119, 1, 1), false)
+    });
     // multi_line_geometry.set_PointsCount(2);
     // multi_line_geometry.set_Point(0, Vector3.create(0, 0, 0), false, false, false);
     // multi_line_geometry.set_Point(1, Vector3.create(0, 0, -1), false, false, false);
     multi_line_geometry.commit_Points();
+    multi_line_geometry.commit_Colors();
     multi_line_geometry.update_LengthPercentages();
     multi_line_geometry.update_BBox();
     // multi_line_material.line_width = 10;
@@ -296,7 +300,7 @@ export function createEditor() {
     multi_line_material.dash_gap = 0.5;
     multi_line_material.dash_scale = 2.0;
     multi_line_material.dash_offset = 0.0;
-    multi_line_material.color = Color.color8(0, 255, 0).linear_rgb;
+    multi_line_material.color = Color.color8(255, 255, 255).linear_rgb;
     const MeshLine = new MeshInstance3D(DefaultConfig);
     MeshLine.geometry = multi_line_geometry;
     MeshLine.material = multi_line_material;
@@ -316,24 +320,30 @@ export function createEditor() {
 
     EditorSceneTree.start_Tween(
         tween_loop(
-            tween_pingpong(
-                new PropertyTween(
-                    MeshLine, "local_scale",
-                    Vector3.create(200, 200, 200),
-                    5.0,
-                    TweenTransitionType.Linear,
-                    TweenEasingType.In
-                )
+            tween_sequence(
+
+                tween_pingpong(
+                    new PropertyTween(
+                        MeshLine, "local_scale",
+                        Vector3.create(200, 200, 200),
+                        5,
+                        TweenTransitionType.Linear,
+                        TweenEasingType.In
+                    )
+                ),
+                tween_wait(1)
             ),
             Infinity
         )
     );
 
     area.signal_mouse_entered.connect((evt, result) => {
+        multi_line_material.vertex_color = false;
         multi_line_material.color = Color.color8(255, 0, 0);
     });
     area.signal_mouse_exited.connect(() => {
-        multi_line_material.color = Color.color8(0, 255, 0);
+        multi_line_material.vertex_color = true;
+        multi_line_material.color = Color.color8(255, 255, 255);
     });
     area.signal_mouse_moved.connect((event, result) => {
         line_grabber.local_position = result.position;
@@ -354,14 +364,14 @@ export function createEditor() {
     // MeshLine.add_Child(bvh_viz);
 
     const infinite_line_x = new InfiniteLine3D(DefaultConfig);
-    const multi_line_material_x = new MultiLineMaterialResource(DefaultConfig);
+    const multi_line_material_x = new MultiLineSegmentMaterialResource(DefaultConfig);
     multi_line_material_x.color = Color.color8code(0xd82d4e33);
     // multi_line_material_x.line_width = 1;
     infinite_line_x.material = multi_line_material_x;
     infinite_line_x.render_queue = 1;
     World.add_Child(infinite_line_x);
     const infinite_line_y = new InfiniteLine3D(DefaultConfig);
-    const multi_line_material_y = new MultiLineMaterialResource(DefaultConfig);
+    const multi_line_material_y = new MultiLineSegmentMaterialResource(DefaultConfig);
     // multi_line_material_y.line_width = 1;
     multi_line_material_y.color = Color.color8code(0x04b97344);
     infinite_line_y.material = multi_line_material_y;
@@ -369,7 +379,7 @@ export function createEditor() {
     infinite_line_y.ray = Ray3.create(Vector3.new, Vector3.create(0, 1, 0));
     World.add_Child(infinite_line_y);
     const infinite_line_z = new InfiniteLine3D(DefaultConfig);
-    const multi_line_material_z = new MultiLineMaterialResource(DefaultConfig);
+    const multi_line_material_z = new MultiLineSegmentMaterialResource(DefaultConfig);
     // multi_line_material_z.line_width = 1;
     multi_line_material_z.color = Color.color8code(0x466fd644);
     infinite_line_z.material = multi_line_material_z;

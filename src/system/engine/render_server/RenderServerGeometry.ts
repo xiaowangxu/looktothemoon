@@ -29,9 +29,7 @@ export const RenderServerGeometryAttributeLocations = {
     custom2: 13,
     custom3: 14,
     custom4: 15,
-    custom5: 16,
-    custom6: 17,
-    custom7: 18,
+    TotalMax: 15,
 };
 
 export type RenderServerGeometryArray<RS extends RenderState<RS>, Buffer extends RenderStateBuffer<RS> = RenderStateBuffer<RS>> = {

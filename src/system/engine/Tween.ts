@@ -599,6 +599,10 @@ export class TimerTween extends TweenBase {
     }
 }
 
+export function tween_wait(duration: number) {
+    return new TimerTween(duration);
+}
+
 // adaptor tweens
 
 type ResverseableTween = TweenBase & { reversed: boolean };

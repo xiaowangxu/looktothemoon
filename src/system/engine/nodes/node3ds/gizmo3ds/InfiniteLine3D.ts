@@ -2,7 +2,7 @@ import type { Config } from "@/system/engine/ConfiguredObject";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Cacher } from "@/system/utils/Cacher";
-import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineGeometryResource";
+import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineSegmentGeometryResource";
 import { Ref } from "@/system/utils/RefCounted";
 import { MeshInstance3D } from "../visual_instance3ds/geometry3ds/MeshInstance3D";
 import { NodeNotification } from "../../Node";
