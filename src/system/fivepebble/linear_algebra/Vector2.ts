@@ -23,6 +23,10 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
     get product(): number { return this.x * this.y; }
     get min_component(): number { return Math.min(this.x, this.y); }
     get max_component(): number { return Math.max(this.x, this.y); }
+    get angle(): number {
+        const angle = Math.atan2(-this.y, -this.x)
+        return isNaN(angle) ? 0 : angle + Math.PI;
+    }
 
     constructor(x: number = 0, y: number = 0) {
         this.x = x;

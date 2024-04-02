@@ -55,6 +55,7 @@ import { PlaceholderTextureResource } from "@/system/engine/resources/texture_re
 import { ImageTextureResource } from "@/system/engine/resources/texture_resources/ImageTextureResource";
 import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/MatcapMaterialResource";
 import { RenderStateTextureMagFilter, RenderStateTextureMinFilter } from "@/system/sliverofstraw/RenderState";
+import { Dom3D } from "@/system/engine/nodes/node3ds/Dom3D";
 
 // import png_url2 from 'res://matcap-2.jpg';
 // import png_url3 from 'res://matcap-3.jpg';
@@ -667,6 +668,20 @@ export function createEditor() {
     //     box_mesh.top_level = true;
     //     World.add_Child(box_mesh);
     // }
+
+    const dom = new Dom3D(DefaultConfig);
+    dom.dom = document.createElement('div');
+    dom.dom.innerText = "Hello World !";
+    dom.dom.dataset['size'] = 'small';
+    dom.dom.classList.add('__sun-design__', 'bordered', 'sized');
+    dom.dom.style.backgroundColor = 'var(--panel-color)'; 
+    dom.dom.style.width = 'fit-content'; 
+    dom.dom.style.padding = '3px 8px'; 
+    dom.dom.style.borderRadius = '99999px'; 
+    // dom.dom.style.fontWeight = 'bold';
+    dom.top_level = true;
+    dom.local_position = Vector3.create(0, 5, -3);
+    World.add_Child(dom);
 
     return EditorSceneTree;
 }

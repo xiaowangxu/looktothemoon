@@ -121,6 +121,7 @@ export class ViewportMouseInputEventManager {
 
     private _on_MouseMoved = this.on_MouseMoved.bind(this);
     private on_MouseMoved(event: MouseEvent) {
+        if (event.target !== this.canvas) return;
         const last_mouse_position = ViewportMouseInputEventManager.#tmp_vector2_0.copy(this._mouse_position);
         const last_mouse_position_normalized = ViewportMouseInputEventManager.#tmp_vector2_1.copy(this._mouse_position_normalized);
         this.update_MousePosition(event);
@@ -137,6 +138,7 @@ export class ViewportMouseInputEventManager {
 
     private _on_MouseDown = this.on_MouseDown.bind(this);
     private on_MouseDown(event: MouseEvent) {
+        if (event.target !== this.canvas) return;
         this.update_MouseKey(event, true);
         this.trigger_MouseEvent(
             new MouseButtonInputEvent(this.config)
@@ -149,6 +151,7 @@ export class ViewportMouseInputEventManager {
 
     private _on_MouseUp = this.on_MouseUp.bind(this);
     private on_MouseUp(event: MouseEvent) {
+        if (event.target !== this.canvas) return;
         this.update_MouseKey(event, false);
         this.trigger_MouseEvent(
             new MouseButtonInputEvent(this.config)
@@ -161,6 +164,7 @@ export class ViewportMouseInputEventManager {
 
     private _on_Click = this.on_Click.bind(this);
     private on_Click(event: MouseEvent) {
+        if (event.target !== this.canvas) return;
         this.trigger_MouseEvent(
             new MouseButtonInputEvent(this.config)
                 .set_Viewport(this.viewport)

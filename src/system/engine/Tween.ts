@@ -561,6 +561,10 @@ export class CallbackTween extends TweenBase {
     }
 }
 
+export function tween_call(callback: () => void) {
+    return new CallbackTween(callback);
+}
+
 export class TimerTween extends TweenBase {
     private readonly duration: number;
 
