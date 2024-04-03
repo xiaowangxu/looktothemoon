@@ -163,6 +163,8 @@ export class EditorRenderer3D extends Renderer3D {
         const editor_highlighted = viewport.editor_highlighted;
 
         // fill up render queue
+
+        
         let total_objects_count = 0;
         let rendered_objects_count = 0;
         this.render_queue_0.reset();
@@ -183,7 +185,10 @@ export class EditorRenderer3D extends Renderer3D {
                 queue.addtion_sync_queue = undefined;
             }
         }
-
+        
+        this.render_queue_0.sort();
+        this.render_queue_1.sort();
+        
         pipeline.set_Size(size);
 
         pipeline.render(this, world, viewport, once);

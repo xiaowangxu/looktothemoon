@@ -306,12 +306,14 @@ export class VisualWorld3DMesh extends WorldObject {
 
     public fill_RenderQueue(queue: Renderer3DQueue, frustum: Frustum3, camera: Camera3, base_size: Vector2): boolean {
         // cullable test
-        if (this.is_cullable_empty || this.cullable.cull(camera, frustum, base_size, this.cullable_enlargment)) return false;
+        const cullable = this.cullable;
+        if (this.is_cullable_empty || cullable.cull(camera, frustum, base_size, this.cullable_enlargment)) return false;
+        const sort_distance = cullable.sort_distance_to(camera, this.cullable_enlargment);
         if (this.is_surface_materials_empty) {
             if (this.material_override_ref.is_empty) return false;
             const geometry = this.geometry_ref.expect;
             const vertex_array = geometry.get_Geometry();
-            if (vertex_array !== undefined) queue.add(vertex_array, this.material_override_ref.expect, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer);
+            if (vertex_array !== undefined) queue.add(vertex_array, this.material_override_ref.expect, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer, sort_distance);
         }
         else {
             const surface_materials_count = this.surface_materials_ref.length;
@@ -323,7 +325,7 @@ export class VisualWorld3DMesh extends WorldObject {
                 }
                 const geometry = this.geometry_ref.expect;
                 const vertex_array_view = geometry.get_Surface(i);
-                if (vertex_array_view !== undefined) queue.add(vertex_array_view, material, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer);
+                if (vertex_array_view !== undefined) queue.add(vertex_array_view, material, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer, sort_distance);
             }
         }
         return true;

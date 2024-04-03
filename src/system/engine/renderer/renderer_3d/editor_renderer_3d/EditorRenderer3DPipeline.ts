@@ -1031,7 +1031,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
         // render queue solid
         const render_queue = renderer.render_queue_0;
-        for (let i = 0; i <= render_queue.solid_pointer; i++) {
+        for (const i of render_queue.get_SolidIterator()) {
             const geometry = render_queue.solid_geometry_queue[i];
             const indexed = render_queue.solid_indexed_queue[i];
             const instance_count = render_queue.solid_instance_count_queue[i];
@@ -1084,7 +1084,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         // draw scene
         // render queue transparent
         const render_queue = renderer.render_queue_0;
-        for (let i = 0; i <= render_queue.transparent_pointer; i++) {
+        for (const i of render_queue.get_TransparentIterator()) {
             const geometry = render_queue.transparent_geometry_queue[i];
             const indexed = render_queue.transparent_indexed_queue[i];
             const instance_count = render_queue.transparent_instance_count_queue[i];
@@ -1112,7 +1112,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.set_CapabilityProxy(this.render_server.render_state.gl.CULL_FACE, true);
         this.render_server.render_state.use_FrameBuffer(this.transparent_depth_normal_framebuffer.expect);
 
-        for (let i = 0; i <= render_queue.transparent_pointer; i++) {
+        for (const i of render_queue.get_TransparentIterator()) {
             const geometry = render_queue.transparent_geometry_queue[i];
             const indexed = render_queue.transparent_indexed_queue[i];
             const instance_count = render_queue.transparent_instance_count_queue[i];
@@ -1170,7 +1170,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
         // render queue solid
         const render_queue = renderer.render_queue_1;
-        for (let i = 0; i <= render_queue.solid_pointer; i++) {
+        for (const i of render_queue.get_SolidIterator()) {
             const geometry = render_queue.solid_geometry_queue[i];
             const indexed = render_queue.solid_indexed_queue[i];
             const instance_count = render_queue.solid_instance_count_queue[i];
@@ -1218,7 +1218,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         // draw scene
         // render queue transparent
         const render_queue = renderer.render_queue_1;
-        for (let i = 0; i <= render_queue.transparent_pointer; i++) {
+        for (const i of render_queue.get_TransparentIterator()) {
             const geometry = render_queue.transparent_geometry_queue[i];
             const indexed = render_queue.transparent_indexed_queue[i];
             const instance_count = render_queue.transparent_instance_count_queue[i];
@@ -1268,7 +1268,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
         // render queue highlight
         const render_queue = renderer.render_queue_highlight;
-        for (let i = 0; i <= render_queue.solid_pointer; i++) {
+        for (const i of render_queue.get_SolidIterator()) {
             const geometry = render_queue.solid_geometry_queue[i];
             const indexed = render_queue.solid_indexed_queue[i];
             const instance_count = render_queue.solid_instance_count_queue[i];
@@ -1290,7 +1290,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
                 }
             }
         }
-        for (let i = 0; i <= render_queue.transparent_pointer; i++) {
+        for (const i of render_queue.get_TransparentIterator()) {
             const geometry = render_queue.transparent_geometry_queue[i];
             const indexed = render_queue.transparent_indexed_queue[i];
             const instance_count = render_queue.transparent_instance_count_queue[i];

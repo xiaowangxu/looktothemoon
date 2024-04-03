@@ -9,7 +9,7 @@ import type { Transformable } from "../linear_algebra/VectorLike";
 import type { LineLike } from "./LineLike";
 import type { RayLike } from "./RayLike";
 import type { Frustum3 } from "../graphics/Frustum3";
-import type { CameraFrustumLikeCullable } from "../graphics/CameraLike";
+import type { CameraFrustumLikeCullable, CameraLike } from "../graphics/CameraLike";
 import type { Camera3 } from "../graphics/Camera3";
 import type { Vector2 } from "../linear_algebra/Vector2";
 
@@ -274,6 +274,12 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
     //#endregion
 
     //#region Frustum Cullabel
+
+    sort_distance_to(camera: Camera3, enlargement: number): number {
+        const center = this.get_Center(Box3.#tmp_vector3_0);
+        const position = camera.get_GlobalPosition(Box3.#tmp_vector3_1);
+        return center.distance_to(position);
+    }
 
     cull(camera: Camera3, frustum: Frustum3, screen_size: Vector2, enlargement: number): boolean {
         let box: Box3 = this;

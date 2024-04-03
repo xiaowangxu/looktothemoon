@@ -19,6 +19,12 @@ export interface CameraLike<Proj extends MatrixLike<Proj>, Vec extends VectorLik
     get global_projection(): Proj;
     get_GlobalProjection(target: Proj): Proj;
 
+    get global_position(): Vec;
+    get_GlobalPosition(target: Vec): Vec;
+
+    get global_basis(): Mat;
+    get_GlobalBasis(target: Mat): Mat;
+
     get mask(): number;
     set mask(mask: number);
 
@@ -35,6 +41,8 @@ export interface CameraLike<Proj extends MatrixLike<Proj>, Vec extends VectorLik
 
 export interface CameraFrustumLikeCullable<Proj extends MatrixLike<Proj>, Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
     get is_empty(): boolean;
+
+    sort_distance_to(camera: CameraLike<Proj, Vec, Mat>, enlargement: number): number;
     
     cull(camera: CameraLike<Proj, Vec, Mat>, frustum: FrustumLike<Vec, Mat>, screen_size: Vector2, enlargement: number): boolean;
 }

@@ -40,6 +40,20 @@ export class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     }
     public get_GlobalTransform(target: Matrix4) { return target.copy(this._global_transform); }
 
+    get global_position(): Vector3 {
+        return this._global_transform.position;
+    }
+    get_GlobalPosition(target: Vector3): Vector3 {
+        return this._global_transform.get_Position(target);
+    }
+
+    get global_basis(): Matrix3 {
+        return this._global_transform.basis;
+    }
+    get_GlobalBasis(target: Matrix3): Matrix3 {
+        return this._global_transform.get_Basis(target);
+    }
+
     protected _frustum: Frustum3 = Frustum3.new;
     get frustum() {
         return this._frustum.clone();

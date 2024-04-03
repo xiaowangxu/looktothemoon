@@ -1,7 +1,7 @@
 import { Matrix3 } from "../linear_algebra/Matrix3";
 import type { SphereLike } from "./SphereLike";
 import { Vector3 } from "../linear_algebra/Vector3";
-import type { CameraFrustumLikeCullable } from "../graphics/CameraLike";
+import type { CameraFrustumLikeCullable, CameraLike } from "../graphics/CameraLike";
 import type { Matrix4 } from "../linear_algebra/Matrix4";
 import type { Vector2 } from "../linear_algebra/Vector2";
 import type { Camera3 } from "../graphics/Camera3";
@@ -51,12 +51,21 @@ export class Sphere3 implements SphereLike<Vector3, Matrix3>, CameraFrustumLikeC
         return target.add_Scaled(this.center, this.radius, normal);
     }
 
+    // #endregion
+
+    //#region camera frustum cull
+
     affine_transform(a: Sphere3, mat: Matrix4): Sphere3 {
         const basis = mat.get_Basis(Sphere3.#tmp_matrix3_0);
         basis.decompose_RotationScale(Sphere3.#tmp_euler_0, Sphere3.#tmp_vector3_0);
         this.center.affine_transform(a.center, mat);
         this.radius = a.radius * Sphere3.#tmp_vector3_0.max_component;
         return this;
+    }
+
+    sort_distance_to(camera: CameraLike<Matrix4, Vector3, Matrix3>, enlargement: number): number {
+        const position = camera.get_GlobalPosition(Sphere3.#tmp_vector3_0);
+        return this.center.distance_to(position);
     }
 
     cull(camera: Camera3, frustum: Frustum3, screen_size: Vector2, enlargement: number): boolean {
