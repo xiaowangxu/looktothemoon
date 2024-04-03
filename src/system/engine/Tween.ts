@@ -40,7 +40,7 @@ export class TweenBase {
     }
 }
 
-// structure tweens
+//#region structure tweens
 
 export class TweenSequence extends TweenBase {
     private readonly tweens: TweenBase[] = [];
@@ -102,6 +102,10 @@ export class TweenSequence extends TweenBase {
     }
 }
 
+export function tween_sequence(...tweens: TweenBase[]) {
+    return new TweenSequence(tweens);
+}
+
 export class TweenParallel extends TweenBase {
     private readonly tweens: TweenBase[] = [];
     private running_tweens: Set<TweenBase> = new Set();
@@ -155,6 +159,10 @@ export class TweenParallel extends TweenBase {
             this.finished = this.process_Tween(delta);
         }
     }
+}
+
+export function tween_parallel(...tweens: TweenBase[]) {
+    return new TweenParallel(tweens);
 }
 
 export class TweenLoop extends TweenBase {
@@ -219,19 +227,13 @@ export class TweenLoop extends TweenBase {
     }
 }
 
-export function tween_sequence(...tweens: TweenBase[]) {
-    return new TweenSequence(tweens);
-}
-
-export function tween_parallel(...tweens: TweenBase[]) {
-    return new TweenParallel(tweens);
-}
-
 export function tween_loop(tween: TweenBase, loop_times: number = Infinity) {
     return new TweenLoop(tween, loop_times);
 }
 
-// interpolate tweens
+//#endregion
+
+//#region interpolate tweens
 
 export enum TweenTransitionType {
     Linear, Sine, Quad, Cubic, Quart, Quint, Expo, Back, Elastic, Circle, Bounce
@@ -412,6 +414,10 @@ export class InterpolateTween extends TweenBase {
     }
 }
 
+export function tween_interpolate(duration: number, transition: TweenTransitionType, easing: TweenEasingType, reversed: boolean = false) {
+    return new InterpolateTween(duration, transition, easing, reversed);
+}
+
 export class MethodTween extends InterpolateTween {
     private readonly method: (value: number) => void;
 
@@ -435,6 +441,10 @@ export class MethodTween extends InterpolateTween {
     }
 }
 
+export function tween_interpolated_method(method: (value: number) => void, duration: number, transition: TweenTransitionType, easing: TweenEasingType, reversed: boolean = false) {
+    return new MethodTween(method, duration, transition, easing, reversed);
+}
+
 export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extends Obj[Key]> extends InterpolateTween {
     public readonly object: Obj;
     public readonly key: Key;
@@ -442,11 +452,11 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
     public readonly target: Val;
     private readonly lerp: (a: any, b: any, v: number) => any;
 
-    constructor(object: Obj, key: Key, target: Val, duration: number, transition: TweenTransitionType, easing: TweenEasingType, reversed: boolean = false, lerp: ((a: Val, b: Val, v: number) => Val) | undefined = undefined) {
+    constructor(object: Obj, key: Key, target: Val, duration: number, transition: TweenTransitionType, easing: TweenEasingType, initial: Val | undefined = undefined, reversed: boolean = false, lerp: ((a: Val, b: Val, v: number) => Val) | undefined = undefined) {
         super(duration, transition, easing, reversed);
         this.object = object;
         this.key = key;
-        this.initial = this.object[this.key] as Val;
+        this.initial = initial ?? (this.object[this.key] as Val);
         this.target = target;
         // set lerp function
         if (lerp !== undefined) {
@@ -511,6 +521,12 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
     }
 }
 
+export function tween_interpolated_property<Obj extends Object, Key extends keyof Obj, Val extends Obj[Key]>(
+    object: Obj, key: Key, target: Val, duration: number, transition: TweenTransitionType, easing: TweenEasingType, initial: Val | undefined = undefined, reversed: boolean = false, lerp: ((a: Val, b: Val, v: number) => Val) | undefined = undefined
+) {
+    return new PropertyTween(object, key, target, duration, transition, easing, initial, reversed, lerp);
+}
+
 export class PropertyMethodTween<T> extends TweenBase {
     private _property_tween: PropertyTween<PropertyMethodTween<T>, 'tween_value', T>;
     private _initial_value: T;
@@ -526,7 +542,7 @@ export class PropertyMethodTween<T> extends TweenBase {
         super();
         this.method = method;
         this._initial_value = start;
-        this._property_tween = new PropertyTween(this, 'tween_value', end, duration, transition, easing, reversed, lerp);
+        this._property_tween = new PropertyTween(this, 'tween_value', end, duration, transition, easing, undefined, reversed, lerp);
     }
 
     public start(): void {
@@ -545,7 +561,15 @@ export class PropertyMethodTween<T> extends TweenBase {
     }
 }
 
-// trigger tweens
+export function tween_interpolated_property_method<T>(
+    method: (value: T) => void, start: T, end: T, duration: number, transition: TweenTransitionType, easing: TweenEasingType, reversed: boolean = false, lerp: ((a: T, b: T, v: number) => T) | undefined = undefined
+) {
+    return new PropertyMethodTween(method, start, end, duration, transition, easing, reversed, lerp);
+}
+
+//#endregion
+
+//#region trigger tweens
 
 export class CallbackTween extends TweenBase {
     private readonly callback: () => void;
@@ -607,7 +631,9 @@ export function tween_wait(duration: number) {
     return new TimerTween(duration);
 }
 
-// adaptor tweens
+//#endregion
+
+//#region adaptor tweens
 
 type ResverseableTween = TweenBase & { reversed: boolean };
 
@@ -645,3 +671,5 @@ export class TweenPingPong extends TweenBase {
 export function tween_pingpong(tween: ResverseableTween) {
     return new TweenPingPong(tween);
 }
+
+//#endregion
