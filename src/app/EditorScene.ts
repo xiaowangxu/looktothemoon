@@ -686,7 +686,7 @@ export function createEditor() {
         const box_mesh = new MeshInstance3D(DefaultConfig);
         box_mesh.geometry = box_geo;
         box_mesh.material = box_mat;
-        box_mat.material.polygon_offset = true;
+        box_mat.polygon_offset = true;
 
         box_mesh.add_Child(line_mesh);
         box_mesh.top_level = true;
@@ -740,7 +740,7 @@ export function createEditor() {
         const box_mesh = new MeshInstance3D(DefaultConfig);
         box_mesh.geometry = box_geo;
         box_mesh.material = box_mat;
-        box_mat.material.polygon_offset = true;
+        box_mat.polygon_offset = true;
 
         box_mesh.add_Child(line_mesh);
         box_mesh.top_level = true;
@@ -774,7 +774,7 @@ export function createEditor() {
         const box_mesh = new MeshInstance3D(DefaultConfig);
         box_mesh.geometry = box_geo;
         box_mesh.material = box_mat;
-        box_mat.material.polygon_offset = true;
+        box_mat.polygon_offset = true;
 
         box_mesh.add_Child(line_mesh);
         box_mesh.top_level = true;

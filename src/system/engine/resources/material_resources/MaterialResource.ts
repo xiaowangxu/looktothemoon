@@ -24,6 +24,9 @@ export abstract class MaterialResource extends Resource {
 	public get uniforms(): MaterialReadOnlyUniforms { return MaterialResource.$const_empty_uniforms; }
 
 	public set cull_face(face: RenderServerMaterialCullFace) { this.material.cull_face = face; }
+	public set polygon_offset(polygon_offset: boolean) { this.material.polygon_offset = polygon_offset; }
+	public set polygon_offset_factor(polygon_offset_factor: number) { this.material.polygon_offset_factor = polygon_offset_factor; }
+	public set polygon_offset_units(polygon_offset_units: number) { this.material.polygon_offset_units = polygon_offset_units; }
 
 	constructor(config: Config) {
 		super(config);
@@ -32,7 +35,7 @@ export abstract class MaterialResource extends Resource {
 	protected set_Uniform(uniform: string, value: WebGL2RenderStateTexture | number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined): void {
 		this.material.set_Uniform(uniform, value);
 	}
-	
+
 	protected dispose(): void {
 		console.log(">>> dispose <MaterialResource>", this.rid);
 		this.material_ref.clear();
@@ -49,7 +52,7 @@ export class MaterialOverrideResource extends MaterialResource {
 
 	private readonly override_uniforms_map: Map<string, Refed<OverrideUniformType>> = new Map();
 
-    public get transparent() { return this.material.transparent; }
+	public get transparent() { return this.material.transparent; }
 	public set transparent(transparent: boolean) { this.material.transparent = transparent; }
 
 	constructor(config: Config) {
