@@ -14,7 +14,7 @@ import { Color } from "@/system/fivepebble/graphics/Color";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
-import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineSegmentGeometryResource";
+import { MultiLineGeometryResource, MultiSegmentGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineSegmentGeometryResource";
 import { MultiLineSegmentMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
@@ -57,6 +57,7 @@ import { MatcapMaterialResource } from "@/system/engine/resources/material_resou
 import { RenderStateTextureMagFilter, RenderStateTextureMinFilter } from "@/system/sliverofstraw/RenderState";
 import { Dom3D } from "@/system/engine/nodes/node3ds/Dom3D";
 
+// import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
 // import png_url2 from 'res://matcap-2.jpg';
 // import png_url3 from 'res://matcap-3.jpg';
 // import png_url4 from 'res://matcap-4.jpg';
@@ -68,9 +69,11 @@ import { Dom3D } from "@/system/engine/nodes/node3ds/Dom3D";
 // import png_url10 from 'res://matcap-10.png';
 // import png_url11 from 'res://matcap-11.png';
 // import png_url12 from 'res://matcap-12.png';
+// import png_url13 from 'res://matcap-13.png';
+// import png_url14 from 'res://matcap-14.png';
 // const image_loader = new ImageLoader();
-// image_loader.parse(png_url12).then(r => {
-//     console.log(r.expect().save(undefined, `download://matcap-12.lttmbin`));
+// image_loader.parse(png_url14).then(r => {
+//     console.log(r.expect().save(undefined, `download://matcap-14.lttmbin`));
 // });
 // let i = 2;
 // for (const url of [png_url2, png_url3, png_url4, png_url5, png_url6, png_url7, png_url8, png_url9]) {
@@ -435,7 +438,7 @@ export function createEditor() {
         shape.bvh.build(huli_geo.get_TriFaces()!, undefined, Bvh3Strategy.Center);
         // const normal_material = new MatcapMaterialResource(DefaultConfig);
 
-        for (let i = 0; i <= 12; i++) {
+        for (let i = 0; i <= 14; i++) {
             const override_material = new MatcapMaterialResource(DefaultConfig); // new MaterialOverrideResource(DefaultConfig);
             // override_material.set_OverrideMaterial(normal_material);
             // override_material.set_UniformOverride('u_texture', new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>(`sys://textures/matcaps/matcap-${i}.lttmbin`).expect())
@@ -636,47 +639,158 @@ export function createEditor() {
     //     console.error(err);
     // });
 
+    {
+        const line_geo = new MultiSegmentGeometryResource(DefaultConfig);
+        line_geo.set_PointsCount(24);
+        line_geo.set_Point(0, Vector3.create(-0.5, 0.5, -0.5), false, false);
+        line_geo.set_Point(1, Vector3.create(+0.5, 0.5, -0.5), false, false);
+        line_geo.set_Point(2, Vector3.create(+0.5, 0.5, -0.5), false, false);
+        line_geo.set_Point(3, Vector3.create(+0.5, -0.5, -0.5), false, false);
+        line_geo.set_Point(4, Vector3.create(+0.5, -0.5, -0.5), false, false);
+        line_geo.set_Point(5, Vector3.create(-0.5, -0.5, -0.5), false, false);
+        line_geo.set_Point(6, Vector3.create(-0.5, -0.5, -0.5), false, false);
+        line_geo.set_Point(7, Vector3.create(-0.5, 0.5, -0.5), false, false);
 
-    // {
-    //     const line_geo = new MultiLineGeometryResource(DefaultConfig);
-    //     line_geo.set_PointsCount(5);
-    //     line_geo.set_Point(0, Vector3.create(-0.5, 0.5, -0.5), false, false);
-    //     line_geo.set_Point(1, Vector3.create(+0.5, 0.5, -0.5), false, false);
-    //     line_geo.set_Point(2, Vector3.create(+0.5, -0.5, -0.5), false, false);
-    //     line_geo.set_Point(3, Vector3.create(-0.5, -0.5, -0.5), false, false);
-    //     line_geo.set_Point(4, Vector3.create(-0.5, 0.5, -0.5), false, false);
-    //     line_geo.commit_Points();
-    //     line_geo.update_BBox();
-    //     const line_mat = new MultiLineMaterial2Resource(DefaultConfig);
-    //     line_mat.color = Color.create(0, 0, 0);
-    //     line_mat.line_width = 3;
-    //     const line_mesh = new MeshInstance3D(DefaultConfig);
-    //     line_mesh.render_queue = 1;
-    //     line_mesh.geometry = line_geo;
-    //     line_mesh.material = line_mat;
+        line_geo.set_Point(8 + 0, Vector3.create(-0.5, 0.5, 0.5), false, false);
+        line_geo.set_Point(8 + 1, Vector3.create(+0.5, 0.5, 0.5), false, false);
+        line_geo.set_Point(8 + 2, Vector3.create(+0.5, 0.5, 0.5), false, false);
+        line_geo.set_Point(8 + 3, Vector3.create(+0.5, -0.5, 0.5), false, false);
+        line_geo.set_Point(8 + 4, Vector3.create(+0.5, -0.5, 0.5), false, false);
+        line_geo.set_Point(8 + 5, Vector3.create(-0.5, -0.5, 0.5), false, false);
+        line_geo.set_Point(8 + 6, Vector3.create(-0.5, -0.5, 0.5), false, false);
+        line_geo.set_Point(8 + 7, Vector3.create(-0.5, 0.5, 0.5), false, false);
 
-    //     const box_geo = new BoxGeometryResource(DefaultConfig);
-    //     box_geo.build();
-    //     const box_mat = new MatcapMaterialResource(DefaultConfig);
-    //     box_mat.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/matcaps/matcap-4.lttmbin').expect();
-    //     const box_mesh = new MeshInstance3D(DefaultConfig);
-    //     box_mesh.geometry = box_geo;
-    //     box_mesh.material = box_mat;
+        line_geo.set_Point(16 + 0, Vector3.create(-0.5, 0.5, 0.5), false, false);
+        line_geo.set_Point(16 + 1, Vector3.create(-0.5, 0.5, -0.5), false, false);
+        line_geo.set_Point(16 + 2, Vector3.create(+0.5, 0.5, 0.5), false, false);
+        line_geo.set_Point(16 + 3, Vector3.create(+0.5, 0.5, -0.5), false, false);
+        line_geo.set_Point(16 + 4, Vector3.create(+0.5, -0.5, 0.5), false, false);
+        line_geo.set_Point(16 + 5, Vector3.create(+0.5, -0.5, -0.5), false, false);
+        line_geo.set_Point(16 + 6, Vector3.create(-0.5, -0.5, 0.5), false, false);
+        line_geo.set_Point(16 + 7, Vector3.create(-0.5, -0.5, -0.5), false, false);
 
-    //     box_mesh.add_Child(line_mesh);
-    //     box_mesh.top_level = true;
-    //     World.add_Child(box_mesh);
-    // }
+        line_geo.commit_Points();
+        line_geo.update_BBox();
+        const line_mat = new MultiLineSegmentMaterialResource(DefaultConfig);
+        line_mat.color = Color.create(0, 0, 0);
+        // line_mat.line_width = 3;
+        const line_mesh = new MeshInstance3D(DefaultConfig);
+        // line_mesh.render_queue = 1;
+        line_mesh.geometry = line_geo;
+        line_mesh.material = line_mat;
+
+        const box_geo = new BoxGeometryResource(DefaultConfig);
+        box_geo.build();
+        const box_mat = new MatcapMaterialResource(DefaultConfig);
+        box_mat.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/matcaps/matcap-13.lttmbin').expect();
+        const box_mesh = new MeshInstance3D(DefaultConfig);
+        box_mesh.geometry = box_geo;
+        box_mesh.material = box_mat;
+        box_mat.material.polygon_offset = true;
+
+        box_mesh.add_Child(line_mesh);
+        box_mesh.top_level = true;
+        box_mesh.local_position = Vector3.create(0, 7, -2);
+        World.add_Child(box_mesh);
+    }
+    {
+        const line_geo = new MultiSegmentGeometryResource(DefaultConfig);
+        line_geo.set_PointsCount(24);
+        line_geo.set_Point(0, Vector3.create(-0.5, 0.5, -0.5), false, false);
+        line_geo.set_Point(1, Vector3.create(+0.5, 0.5, -0.5), false, false);
+        line_geo.set_Point(2, Vector3.create(+0.5, 0.5, -0.5), false, false);
+        line_geo.set_Point(3, Vector3.create(+0.5, -0.5, -0.5), false, false);
+        line_geo.set_Point(4, Vector3.create(+0.5, -0.5, -0.5), false, false);
+        line_geo.set_Point(5, Vector3.create(-0.5, -0.5, -0.5), false, false);
+        line_geo.set_Point(6, Vector3.create(-0.5, -0.5, -0.5), false, false);
+        line_geo.set_Point(7, Vector3.create(-0.5, 0.5, -0.5), false, false);
+
+        line_geo.set_Point(8 + 0, Vector3.create(-0.5, 0.5, 0.5), false, false);
+        line_geo.set_Point(8 + 1, Vector3.create(+0.5, 0.5, 0.5), false, false);
+        line_geo.set_Point(8 + 2, Vector3.create(+0.5, 0.5, 0.5), false, false);
+        line_geo.set_Point(8 + 3, Vector3.create(+0.5, -0.5, 0.5), false, false);
+        line_geo.set_Point(8 + 4, Vector3.create(+0.5, -0.5, 0.5), false, false);
+        line_geo.set_Point(8 + 5, Vector3.create(-0.5, -0.5, 0.5), false, false);
+        line_geo.set_Point(8 + 6, Vector3.create(-0.5, -0.5, 0.5), false, false);
+        line_geo.set_Point(8 + 7, Vector3.create(-0.5, 0.5, 0.5), false, false);
+
+        line_geo.set_Point(16 + 0, Vector3.create(-0.5, 0.5, 0.5), false, false);
+        line_geo.set_Point(16 + 1, Vector3.create(-0.5, 0.5, -0.5), false, false);
+        line_geo.set_Point(16 + 2, Vector3.create(+0.5, 0.5, 0.5), false, false);
+        line_geo.set_Point(16 + 3, Vector3.create(+0.5, 0.5, -0.5), false, false);
+        line_geo.set_Point(16 + 4, Vector3.create(+0.5, -0.5, 0.5), false, false);
+        line_geo.set_Point(16 + 5, Vector3.create(+0.5, -0.5, -0.5), false, false);
+        line_geo.set_Point(16 + 6, Vector3.create(-0.5, -0.5, 0.5), false, false);
+        line_geo.set_Point(16 + 7, Vector3.create(-0.5, -0.5, -0.5), false, false);
+
+        line_geo.commit_Points();
+        line_geo.update_BBox();
+        const line_mat = new MultiLineSegmentMaterialResource(DefaultConfig);
+        line_mat.color = Color.create(0.0, 0.0, 0.0);
+        // line_mat.line_width = 3;
+        const line_mesh = new MeshInstance3D(DefaultConfig);
+        // line_mesh.render_queue = 1;
+        line_mesh.geometry = line_geo;
+        line_mesh.material = line_mat;
+
+        const box_geo = new BoxGeometryResource(DefaultConfig);
+        box_geo.build();
+        const box_mat = new MatcapMaterialResource(DefaultConfig);
+        box_mat.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/matcaps/matcap-13.lttmbin').expect();
+        const box_mesh = new MeshInstance3D(DefaultConfig);
+        box_mesh.geometry = box_geo;
+        box_mesh.material = box_mat;
+        box_mat.material.polygon_offset = true;
+
+        box_mesh.add_Child(line_mesh);
+        box_mesh.top_level = true;
+        box_mesh.local_scale = Vector3.create(0.5, 0.5, 0.5);
+        box_mesh.local_position = Vector3.create(0.75, 7, -2);
+        World.add_Child(box_mesh);
+    }
+    {
+        const line_geo = new MultiLineGeometryResource(DefaultConfig);
+        line_geo.set_PointsCount(33);
+        for (let i = 0; i <= 32; i++) {
+            const rad = i / 32 * Tau;
+            line_geo.set_Point(i, Vector3.create(Math.cos(rad) / 2, 0, Math.sin(rad) / 2), false, false);
+        }
+
+        line_geo.commit_Points();
+        line_geo.update_BBox();
+        const line_mat = new MultiLineSegmentMaterialResource(DefaultConfig);
+        line_mat.color = Color.create(0.8, 0.6, 0.0);
+        // line_mat.line_width = 3;
+        const line_mesh = new MeshInstance3D(DefaultConfig);
+        // line_mesh.render_queue = 1;
+        line_mesh.geometry = line_geo;
+        line_mesh.material = line_mat;
+        line_mesh.local_rotation = Euler.create(0.12, 0, 0.23);
+
+        const box_geo = new SphereGeometryResource(DefaultConfig);
+        box_geo.build();
+        const box_mat = new MatcapMaterialResource(DefaultConfig);
+        box_mat.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/matcaps/matcap-11.lttmbin').expect();
+        const box_mesh = new MeshInstance3D(DefaultConfig);
+        box_mesh.geometry = box_geo;
+        box_mesh.material = box_mat;
+        box_mat.material.polygon_offset = true;
+
+        box_mesh.add_Child(line_mesh);
+        box_mesh.top_level = true;
+        box_mesh.local_position = Vector3.create(2, 7, -2);
+        World.add_Child(box_mesh);
+    }
 
     const dom = new Dom3D(DefaultConfig);
     dom.dom = document.createElement('div');
     dom.dom.innerText = "Hello World !";
     dom.dom.dataset['size'] = 'small';
     dom.dom.classList.add('__sun-design__', 'bordered', 'sized');
-    dom.dom.style.backgroundColor = 'var(--panel-color)'; 
-    dom.dom.style.width = 'fit-content'; 
-    dom.dom.style.padding = '3px 8px'; 
-    dom.dom.style.borderRadius = '99999px'; 
+    dom.dom.style.backgroundColor = 'var(--panel-color)';
+    dom.dom.style.width = 'fit-content';
+    dom.dom.style.padding = '3px 8px';
+    dom.dom.style.borderRadius = '99999px';
     // dom.dom.style.fontWeight = 'bold';
     dom.top_level = true;
     dom.local_position = Vector3.create(0, 5, -3);

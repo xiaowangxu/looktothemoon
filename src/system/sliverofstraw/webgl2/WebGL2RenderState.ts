@@ -255,6 +255,18 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         return false;
     }
 
+    private polygon_offset_state: [number | null, number | null] = [null, null];
+    public set_PolygonOffsetProxy(factor: number, units: number) {
+        const [_factor, _units] = this.polygon_offset_state;
+        if (_factor !== factor || _units !== units) {
+            this.polygon_offset_state[0] = factor;
+            this.polygon_offset_state[1] = units;
+            this.gl.polygonOffset(factor, units);
+            return true;
+        }
+        return false;
+    }
+
     private pixel_store_pack_alignment: number = 4;
     public set_PixelStorePackAlignment(value: 1 | 2 | 4 | 8) {
         if (this.pixel_store_pack_alignment !== value) {

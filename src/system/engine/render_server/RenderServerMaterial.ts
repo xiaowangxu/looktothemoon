@@ -28,6 +28,9 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
 
     public transparent: boolean = false;
     public cull_face: RenderServerMaterialCullFace = RenderServerMaterialCullFace.Back;
+    public polygon_offset: boolean = false;
+    public polygon_offset_factor: number = 1.5;
+    public polygon_offset_units: number = 1.5;
 
     public get shader() { return this.shader_ref.expect; }
     public get has_shader() { return !this.shader_ref.is_empty; }

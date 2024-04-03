@@ -361,7 +361,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         }
     }
 
-    public set_RenderCapabilities(depth_test?: boolean, depth_write?: boolean, depth_func?: number, blend?: boolean) {
+    public set_RenderCapabilities(depth_test?: boolean, depth_write?: boolean, depth_func?: number, blend?: boolean, polygon_offset?: boolean) {
         if (depth_test !== undefined) {
             this.render_state.set_CapabilityProxy(this.render_state.gl.DEPTH_TEST, depth_test);
         }
@@ -373,6 +373,9 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         }
         if (blend !== undefined) {
             this.render_state.set_CapabilityProxy(this.render_state.gl.BLEND, blend);
+        }
+        if (polygon_offset !== undefined) {
+            this.render_state.set_CapabilityProxy(this.render_state.gl.POLYGON_OFFSET_FILL, polygon_offset);
         }
     }
 

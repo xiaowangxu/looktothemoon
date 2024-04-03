@@ -1042,6 +1042,10 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
             const program = material.get_Program(RenderServerShaderPass.Shade);
             if (geometry !== undefined && program !== undefined) {
                 this.set_CullFace(material.cull_face);
+                this.render_server.render_state.set_CapabilityProxy(this.render_server.render_state.gl.POLYGON_OFFSET_FILL, material.polygon_offset);
+                if (material.polygon_offset) {
+                    this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
+                }
                 material.set_Uniform('model_world', transform);
                 material.set_Uniform('layer', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.Shade);
@@ -1063,7 +1067,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
     private compose_RenderQueue0Solid(renderer: EditorRenderer3D, color_map: boolean) {
         this.render_server.render_state.use_FrameBuffer(this.result_framebuffer.expect);
-        this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false);
+        this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false, false);
         this.set_CullFace(RenderServerMaterialCullFace.None);
         this.render_server.render_state.active_Texture(this.solid_color_texture.expect, 0);
         this.screen_quad_solid_colormap_uniform_slot.value = color_map ? 1 : 0;
@@ -1095,6 +1099,10 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
             const program = material.get_Program(RenderServerShaderPass.OiT);
             if (geometry !== undefined && program !== undefined) {
                 this.set_CullFace(material.cull_face);
+                this.render_server.render_state.set_CapabilityProxy(this.render_server.render_state.gl.POLYGON_OFFSET_FILL, material.polygon_offset);
+                if (material.polygon_offset) {
+                    this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
+                }
                 material.set_Uniform('model_world', transform);
                 material.set_Uniform('layer', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.OiT);
@@ -1123,6 +1131,10 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
             const program = material.get_Program(RenderServerShaderPass.PreZ);
             if (geometry !== undefined && program !== undefined) {
                 this.set_CullFace(material.cull_face);
+                this.render_server.render_state.set_CapabilityProxy(this.render_server.render_state.gl.POLYGON_OFFSET_FILL, material.polygon_offset);
+                if (material.polygon_offset) {
+                    this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
+                }
                 material.set_Uniform('model_world', transform);
                 material.set_Uniform('layer', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.PreZ);
@@ -1138,7 +1150,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
     private compose_RenderQueue0Transparent(renderer: EditorRenderer3D, color_map: boolean) {
         this.render_server.render_state.use_FrameBuffer(this.result_framebuffer.expect);
-        this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true);
+        this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true, false);
         this.set_CullFace(RenderServerMaterialCullFace.None);
         this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.ONE, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
         this.render_server.render_state.active_Texture(this.transparent_color_texture.expect, 0);
@@ -1181,6 +1193,10 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
             const program = material.get_Program(RenderServerShaderPass.Shade);
             if (geometry !== undefined && program !== undefined) {
                 this.set_CullFace(material.cull_face);
+                this.render_server.render_state.set_CapabilityProxy(this.render_server.render_state.gl.POLYGON_OFFSET_FILL, material.polygon_offset);
+                if (material.polygon_offset) {
+                    this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
+                }
                 material.set_Uniform('model_world', transform);
                 material.set_Uniform('layer', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.Shade);
@@ -1196,7 +1212,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
     private compose_RenderQueue1Solid(renderer: EditorRenderer3D) {
         this.render_server.render_state.use_FrameBuffer(this.result_framebuffer.expect);
-        this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true);
+        this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true, false);
         this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.SRC_ALPHA, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
         this.set_CullFace(RenderServerMaterialCullFace.None);
         this.render_server.render_state.active_Texture(this.solid_color_texture.expect, 0);
@@ -1229,6 +1245,10 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
             const program = material.get_Program(RenderServerShaderPass.OiT);
             if (geometry !== undefined && program !== undefined) {
                 this.set_CullFace(material.cull_face);
+                this.render_server.render_state.set_CapabilityProxy(this.render_server.render_state.gl.POLYGON_OFFSET_FILL, material.polygon_offset);
+                if (material.polygon_offset) {
+                    this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
+                }
                 material.set_Uniform('model_world', transform);
                 material.set_Uniform('layer', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.OiT);
@@ -1244,7 +1264,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
     private compose_RenderQueue1Transparent(renderer: EditorRenderer3D) {
         this.render_server.render_state.use_FrameBuffer(this.result_framebuffer.expect);
-        this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true);
+        this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true, false);
         this.set_CullFace(RenderServerMaterialCullFace.None);
         this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.ONE, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
         this.render_server.render_state.active_Texture(this.transparent_color_texture.expect, 0);
@@ -1279,6 +1299,10 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
             const program = material.get_Program(RenderServerShaderPass.PreZ);
             if (geometry !== undefined && program !== undefined) {
                 this.set_CullFace(material.cull_face);
+                this.render_server.render_state.set_CapabilityProxy(this.render_server.render_state.gl.POLYGON_OFFSET_FILL, material.polygon_offset);
+                if (material.polygon_offset) {
+                    this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
+                }
                 material.set_Uniform('model_world', transform);
                 material.set_Uniform('layer', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.PreZ);
@@ -1301,6 +1325,10 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
             const program = material.get_Program(RenderServerShaderPass.PreZ);
             if (geometry !== undefined && program !== undefined) {
                 this.set_CullFace(material.cull_face);
+                this.render_server.render_state.set_CapabilityProxy(this.render_server.render_state.gl.POLYGON_OFFSET_FILL, material.polygon_offset);
+                if (material.polygon_offset) {
+                    this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
+                }
                 material.set_Uniform('model_world', transform);
                 material.set_Uniform('layer', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.PreZ);
@@ -1316,7 +1344,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
     private compose_RenderQueueHighlight(renderer: EditorRenderer3D, editor_highlight_color: Color, line_width: number) {
         this.render_server.render_state.use_FrameBuffer(this.result_framebuffer.expect);
-        this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true);
+        this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true, false);
         this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.SRC_ALPHA, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
         this.set_CullFace(RenderServerMaterialCullFace.None);
         this.render_server.render_state.active_Texture(this.highlight_depth_texture.expect, 0);
@@ -1330,7 +1358,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
     private render_Postprocessing(renderer: EditorRenderer3D) {
         this.render_server.render_state.use_FrameBuffer(this.postprocessing_framebuffer.expect);
-        this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false);
+        this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false, false);
         this.set_CullFace(RenderServerMaterialCullFace.None);
         this.render_server.render_state.active_Texture(this.result_color_texture.expect, 0);
         this.render_server.render_state.active_Texture(this.solid_depth_texture.expect, 1);
