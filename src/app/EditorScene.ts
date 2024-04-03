@@ -86,7 +86,7 @@ const DConfig = new Cacher((canvas: HTMLCanvasElement) => {
         render_server_pixel_ratio: undefined,
         render_server_scale: 1,
         fps: Infinity,
-        physics_fps: 60,
+        physics_fps: 40,
     } as Config;
 });
 
@@ -319,24 +319,23 @@ export function createEditor() {
     s.shape = shape;
     MeshLine.add_Child(area);
 
-    EditorSceneTree.start_Tween(
-        tween_loop(
-            tween_sequence(
-
-                tween_pingpong(
-                    new PropertyTween(
-                        MeshLine, "local_scale",
-                        Vector3.create(200, 200, 200),
-                        5,
-                        TweenTransitionType.Linear,
-                        TweenEasingType.In
-                    )
-                ),
-                tween_wait(1)
-            ),
-            Infinity
-        )
-    );
+    // EditorSceneTree.start_Tween(
+    //     tween_loop(
+    //         tween_sequence(
+    //             tween_pingpong(
+    //                 new PropertyTween(
+    //                     MeshLine, "local_scale",
+    //                     Vector3.create(200, 200, 200),
+    //                     5,
+    //                     TweenTransitionType.Linear,
+    //                     TweenEasingType.In
+    //                 )
+    //             ),
+    //             tween_wait(1)
+    //         ),
+    //         Infinity
+    //     )
+    // );
 
     area.signal_mouse_entered.connect((evt, result) => {
         multi_line_material.vertex_color = false;

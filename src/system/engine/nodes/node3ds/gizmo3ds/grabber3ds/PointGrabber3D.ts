@@ -43,7 +43,7 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
     private readonly shape: PickingShape3D = new PickingShape3D(this.config);
     private readonly material: Ref<MaterialOverrideResource> = new Ref(new MaterialOverrideResource(this.config));
 
-    private _radius: number = 0.075;
+    private _radius: number = 0.085;
     public get radius() { return this._radius; }
     public set radius(radius: number) {
         if (this._radius !== radius) {

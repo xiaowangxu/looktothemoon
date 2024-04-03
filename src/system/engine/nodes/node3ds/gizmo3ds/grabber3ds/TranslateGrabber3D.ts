@@ -52,19 +52,12 @@ export class TranslateGrabber3D extends Grabber3D<Vector3> {
 
         this.axis_x_grabber.local_rotation = Euler.create(0, 0, - Math.PI / 2);
         this.axis_x_grabber.color = Color.color8code(red);
-        this.axis_x_grabber.length = 0.8;
-        this.axis_x_grabber.offset_length = 0.175;
 
         this.axis_y_grabber.color = Color.color8code(green);
-        this.axis_y_grabber.length = 0.8;
-        this.axis_y_grabber.offset_length = 0.175;
 
         this.axis_z_grabber.local_rotation = Euler.create(Math.PI / 2, 0, 0);
         this.axis_z_grabber.color = Color.color8code(blue);
-        this.axis_z_grabber.length = 0.8;
-        this.axis_z_grabber.offset_length = 0.175;
 
-        this.center_grabber.radius = 0.075;
         this.center_grabber.color = Color.color8code(grey);
 
         this.add_Child(this.axis_x_grabber);

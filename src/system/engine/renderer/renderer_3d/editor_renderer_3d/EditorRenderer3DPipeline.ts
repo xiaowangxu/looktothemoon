@@ -360,7 +360,7 @@ vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution,
     vec3 rgbSE = texture(tex, v_rgbSE).xyz;
     vec4 texColor = texture(tex, v_rgbM);
     vec3 rgbM  = texColor.xyz;
-    vec3 luma = vec3(0.299, 0.587, 0.114);
+    vec3 luma = vec3(0.2126729,  0.7151522, 0.0721750);
     float lumaNW = dot(rgbNW, luma);
     float lumaNE = dot(rgbNE, luma);
     float lumaSW = dot(rgbSW, luma);
@@ -398,6 +398,135 @@ vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution,
 
 void main() {
 	o_color = fxaa(u_screen, v_frag_coord, screen_size, v_rgbNW, v_rgbNE, v_rgbSW, v_rgbSE, v_rgbM);
+}`;
+
+const fxaa_frag_shader_code_0 = `#version 300 es
+precision highp float;
+
+// https://www.zhihu.com/question/56111556/answer/2786741301
+
+${RenderServerDevice.WorldUniformsCode}
+
+const float ContrastThreshold = 0.25;
+const float RelativeThreshold = 0.15;
+
+uniform sampler2D u_screen;
+
+in vec2 v_uv;
+
+layout(location = 0) out vec4 o_color;
+
+float linear_to_luminance(vec3 rgb)
+{
+    return dot(rgb, vec3(0.1126729,  0.8151522, 0.0721750));
+}
+
+vec4 sample_screen(vec2 uv, float shift_x, float shift_y) {
+    return texture(u_screen, uv + vec2(shift_x, shift_y));
+}
+
+float sample_luminance(vec2 uv, float shift_x, float shift_y)
+{
+    return linear_to_luminance(texture(u_screen, uv + vec2(shift_x, shift_y)).rgb);
+}
+
+struct LuminanceData {
+    float m, n, e, s, w;
+    float ne, nw, se, sw;
+    float highest, lowest, contrast;
+};
+
+LuminanceData sample_luminance_neighborhood(vec2 uv) {
+    vec2 pixel_size = 1.0 / screen_size;
+
+    LuminanceData l;
+
+    l.m  = sample_luminance(uv,          0.0,           0.0);
+    l.n  = sample_luminance(uv,          0.0,  pixel_size.y);
+    l.e  = sample_luminance(uv, pixel_size.x,           0.0);
+    l.s  = sample_luminance(uv,          0.0, -pixel_size.y);
+    l.w  = sample_luminance(uv,-pixel_size.x,           0.0);
+    l.ne = sample_luminance(uv, pixel_size.x,  pixel_size.y);
+    l.nw = sample_luminance(uv,-pixel_size.x,  pixel_size.y);
+    l.se = sample_luminance(uv, pixel_size.x, -pixel_size.y);
+    l.sw = sample_luminance(uv,-pixel_size.x, -pixel_size.y);
+
+    l.highest = max(max(max(max(l.n, l.e), l.s), l.w), l.m);
+    l.lowest = min(min(min(min(l.n, l.e), l.s), l.w), l.m);
+
+    l.contrast = l.highest - l.lowest;
+
+    return l;
+}
+
+bool skip_pixel (LuminanceData l) {
+    float threshold = max(ContrastThreshold, RelativeThreshold * l.highest);
+    return l.contrast < threshold;
+}
+
+float blend_factor(LuminanceData l) {
+    float blend = 2.0 * (l.n + l.e + l.s + l.w);
+    blend += l.ne + l.nw + l.se + l.sw;
+    blend *= 1.0 / 12.0;
+    blend = abs(blend - l.m);
+    blend = clamp(blend / l.contrast, 0.0, 1.0);
+    return blend;
+    // float blend_factor = smoothstep(0.0, 1.0, blend);
+    // return blend_factor * blend_factor;
+}
+
+struct EdgeData {
+    float pixel_step; 
+    bool is_horizontal;
+};
+
+EdgeData determine_edge (LuminanceData l) {
+    EdgeData e;
+
+    float horizontal =
+        abs(l.n + l.s - 2.0 * l.m) * 2.0 +
+        abs(l.ne + l.se - 2.0 * l.e) +
+        abs(l.nw + l.sw - 2.0 * l.w);
+    float vertical =
+        abs(l.e + l.w - 2.0 * l.m) * 2.0 +
+        abs(l.ne + l.nw - 2.0 * l.n) +
+        abs(l.se + l.sw - 2.0 * l.s);
+
+    e.is_horizontal = horizontal >= vertical;
+
+    vec2 pixel_size = 1.0 / screen_size;
+    e.pixel_step = e.is_horizontal ? pixel_size.y : pixel_size.x;
+    float positive = abs((e.is_horizontal ? l.n : l.e) - l.m);
+    float negative = abs((e.is_horizontal ? l.s : l.w) - l.m);
+    if(positive < negative) e.pixel_step = -e.pixel_step;
+
+    return e;
+}
+
+vec4 fxaa(vec2 uv) {
+    LuminanceData l = sample_luminance_neighborhood(uv);
+    if (skip_pixel(l)) {
+        return sample_screen(uv, 0.0, 0.0);
+    }
+    float pixel_blend = blend_factor(l);
+    EdgeData e = determine_edge(l);
+    float shift_x = 0.0;
+    float shift_y = 0.0;
+    if (e.is_horizontal) {
+        shift_y = e.pixel_step * pixel_blend;
+    }
+    else {
+        shift_x = e.pixel_step * pixel_blend;
+    }
+    return vec4(sample_screen(uv, shift_x, shift_y).rgb, 1.0);
+}
+
+void main() {
+    // LuminanceData l = sample_luminance_neighborhood(v_uv);
+    // EdgeData e = determine_edge(l);
+    // bool skip = skip_pixel(l);
+    // vec3 color = skip ? vec3(0.0) : e.is_horizontal ? vec3(1.0, 0.0, 0.0) : vec3(1.0);
+	o_color = fxaa(v_uv);
 }`;
 
 const FxaaProgram = new Cacher((config: Config) => {
@@ -795,7 +924,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.result_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
 
         // texture
-        this.result_color_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+        this.result_color_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Linear, RenderStateTextureMagFilter.Linear).expect();
 
         this.resize_Result();
 
