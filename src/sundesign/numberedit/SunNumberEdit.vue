@@ -378,6 +378,13 @@ defineExpose({
     overflow: hidden
     gap: inherit
 
+    &[data-size="small"]
+        font-size: font-size-small !important
+    &[data-size="normal"]
+        font-size: font-size-normal !important
+    &[data-size="large"]
+        font-size: font-size-large !important
+
 .__sun-design-numberedit-dec__, .__sun-design-numberedit-inc__
     display: none !important
     padding: 0px
