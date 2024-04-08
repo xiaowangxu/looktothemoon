@@ -22,7 +22,7 @@
 import '../SunDesignStyle.styl';
 import SunMeasurePopupPanelNoScroll from '../measurepopuppanel/SunMeasurePopupPanelNoScroll.vue';
 import SunButton from '../button/SunButton.vue';
-import { type Size, type BorderMask, type ColorScheme, type Rect, type BoxSize, type PopupOpenMode, calcButtonPopupRect, TrapFocusOutEvent, Align } from '../SunDesignConstants';
+import { type Size, type BorderMask, type ColorScheme, type Rect, type BoxSize, type PopupOpenMode, calcButtonPopupRect, TrapFocusOutEvent, type Align } from '../SunDesignConstants';
 import { ref, watch, nextTick } from 'vue';
 
 defineOptions({
@@ -103,7 +103,7 @@ watch(opened, (opened) => {
     }
 });
 const button_ref = ref<InstanceType<typeof SunButton> | undefined>();
-const measurepopuppanel_ref = ref<InstanceType<typeof SunMeasurePopupPanel> | undefined>();
+const measurepopuppanel_ref = ref<InstanceType<typeof SunMeasurePopupPanelNoScroll> | undefined>();
 
 function getPopupPanelRect(contentMinSize: BoxSize, windowSize: BoxSize): Rect {
     const { x, y, width, height } = (button_ref.value?.button as HTMLButtonElement)?.getBoundingClientRect() ?? { x: 0, y: 0, width: 0, height: 0 };
