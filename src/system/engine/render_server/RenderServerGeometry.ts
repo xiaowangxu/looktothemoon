@@ -15,20 +15,20 @@ export const RenderServerGeometryAttributeLocations = {
     position: 0,
     normal: 1,
     tangent: 2,
-    bitangent: 3,
-    color: 4,
-    uv: 5,
-    uv2: 6,
-    instance_transform: 7,
-    instance_transform1: 8,
-    instance_transform2: 9,
-    instance_transform3: 10,
-    InternalMax: 11,
-    custom0: 11,
-    custom1: 12,
-    custom2: 13,
-    custom3: 14,
-    custom4: 15,
+    color: 3,
+    uv: 4,
+    uv2: 5,
+    bone: 6,
+    weight: 7,
+    instance_transform: 8,
+    instance_transform1: 9,
+    instance_transform2: 10,
+    instance_transform3: 11,
+    InternalMax: 12,
+    custom0: 12,
+    custom1: 13,
+    custom2: 14,
+    custom3: 15,
     TotalMax: 15,
 };
 
@@ -45,14 +45,15 @@ type IndexAttributeBuffer = RenderDeviceIndexAttributeBuffer<WebGL2RenderState> 
 
 export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> {
 
-    public static readonly GeometryAttributesCode = `layout(location = 0) in vec3 a_position;
-    layout(location = 1) in vec3 a_normal;
-    layout(location = 2) in vec3 a_tangent;
-    layout(location = 3) in vec3 a_bitangent;
-    layout(location = 4) in vec3 a_color;
-    layout(location = 5) in vec2 a_uv;
-    layout(location = 6) in vec2 a_uv2;
-    layout(location = 7) in mat4 a_instance_transform;`;
+    public static readonly GeometryAttributesCode = `    layout(location = ${RenderServerGeometryAttributeLocations.position}) in vec3 a_position;
+    layout(location = ${RenderServerGeometryAttributeLocations.normal}) in vec3 a_normal;
+    layout(location = ${RenderServerGeometryAttributeLocations.tangent}) in vec3 a_tangent;
+    layout(location = ${RenderServerGeometryAttributeLocations.color}) in vec3 a_color;
+    layout(location = ${RenderServerGeometryAttributeLocations.uv}) in vec2 a_uv;
+    layout(location = ${RenderServerGeometryAttributeLocations.uv2}) in vec2 a_uv2;
+    layout(location = ${RenderServerGeometryAttributeLocations.bone}) in int a_bone;
+    layout(location = ${RenderServerGeometryAttributeLocations.weight}) in float a_weight;
+    layout(location = ${RenderServerGeometryAttributeLocations.instance_transform}) in mat4 a_instance_transform;`;
 
     protected vertex_array_attributes_map: Map<string, { attribute: Ref<RenderDeviceAttributeBuffer<WebGL2RenderState>>, location: number }> = new Map();
     protected readonly vertex_array_ref: Ref<WebGL2RenderStateVertexArray> = new Ref();

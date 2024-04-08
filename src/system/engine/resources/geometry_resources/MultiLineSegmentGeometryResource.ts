@@ -106,15 +106,15 @@ export class MultiLineGeometryResource extends GeometryResource {
                 },
                 length: {
                     attribute: this.total_length_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.custom4,
+                    location: RenderServerGeometryAttributeLocations.instance_transform,
                 },
                 color_start: {
                     attribute: this.colors_start_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.instance_transform,
+                    location: RenderServerGeometryAttributeLocations.instance_transform1,
                 },
                 color_end: {
                     attribute: this.colors_end_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.instance_transform1,
+                    location: RenderServerGeometryAttributeLocations.instance_transform2,
                 }
             },
             IndexAttributeBuffer.get(this.config).expect,
@@ -312,15 +312,15 @@ export class MultiSegmentGeometryResource extends GeometryResource {
                 },
                 length: {
                     attribute: this.total_length_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.custom4,
+                    location: RenderServerGeometryAttributeLocations.instance_transform,
                 },
                 color_start: {
                     attribute: this.colors_start_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.instance_transform,
+                    location: RenderServerGeometryAttributeLocations.instance_transform1,
                 },
                 color_end: {
                     attribute: this.colors_end_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.instance_transform1,
+                    location: RenderServerGeometryAttributeLocations.instance_transform2,
                 }
             },
             IndexAttributeBuffer.get(this.config).expect,

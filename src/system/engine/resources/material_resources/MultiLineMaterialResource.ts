@@ -28,9 +28,9 @@ export const MultiLineSegmentVertexShader = new Cacher((config: Config) => {
     layout(location = ${RenderServerGeometryAttributeLocations.custom1}) in vec3 a_end;
     layout(location = ${RenderServerGeometryAttributeLocations.custom2}) in float a_length_percentage_start;
     layout(location = ${RenderServerGeometryAttributeLocations.custom3}) in float a_length_percentage_end;
-    layout(location = ${RenderServerGeometryAttributeLocations.custom4}) in float a_total_length;
-    layout(location = ${RenderServerGeometryAttributeLocations.instance_transform}) in vec4 a_color_start;
-    layout(location = ${RenderServerGeometryAttributeLocations.instance_transform1}) in vec4 a_color_end;
+    layout(location = ${RenderServerGeometryAttributeLocations.instance_transform}) in float a_total_length;
+    layout(location = ${RenderServerGeometryAttributeLocations.instance_transform1}) in vec4 a_color_start;
+    layout(location = ${RenderServerGeometryAttributeLocations.instance_transform2}) in vec4 a_color_end;
     
     uniform mat4 model_world;
 
