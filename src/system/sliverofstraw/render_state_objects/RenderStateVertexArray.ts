@@ -6,6 +6,7 @@ export class RenderStateVertexArray<T extends RenderState<T>> extends RenderStat
     public readonly primitive_type: number;
     public readonly offset: number;
     public count: number;
+    public readonly attribute_locations: Set<number> = new Set();
 
     constructor(render_state: T, primitive_type: number, offset: number, count: number) {
         super(render_state);
@@ -14,7 +15,12 @@ export class RenderStateVertexArray<T extends RenderState<T>> extends RenderStat
         this.count = count;
     }
 
+    public has_AttributeLocation(location: number) {
+        return this.attribute_locations.has(location);
+    }
+
     public dispose(): void {
+        this.attribute_locations.clear();
         this.render_state.delete_VertexArray(this);
     }
 }
@@ -31,6 +37,10 @@ export class RenderStateVertexArrayView<T extends RenderState<T>> extends Render
         this.vertex_array_ref.value = vertex_array;
         this.offset = offset;
         this.count = count;
+    }
+
+    public has_AttributeLocation(location: number) {
+        return this.vertex_array_ref.expect.attribute_locations.has(location);
     }
 
     public dispose() {

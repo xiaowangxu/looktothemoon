@@ -694,8 +694,14 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     public toggle_VertexArrayAttribute(vertex_array: WebGL2RenderStateVertexArray, attribute_location: number, enable: boolean): void {
         const gl = this.gl;
         this.bind_VertexArrayProxy(vertex_array.vertex_array);
-        if (enable) gl.enableVertexAttribArray(attribute_location);
-        else gl.disableVertexAttribArray(attribute_location);
+        if (enable) {
+            gl.enableVertexAttribArray(attribute_location);
+            vertex_array.attribute_locations.add(attribute_location);
+        }
+        else {
+            vertex_array.attribute_locations.delete(attribute_location);
+            gl.disableVertexAttribArray(attribute_location);
+        }
     }
 
     public set_VertexArrayAttributeBuffer(vertex_array: WebGL2RenderStateVertexArray, attribute_location: number, buffer: WebGL2RenderStateBuffer | WebGL2RenderStateBufferView): void {
@@ -818,7 +824,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
             this.gl.bindTexture(type, texture.texture);
         }
         if (type === this.gl.TEXTURE_2D) {
-                this.gl.texSubImage2D(type, level, 0, 0, width, height, this.get_TextureDataFormatType(format), data_type, image);
+            this.gl.texSubImage2D(type, level, 0, 0, width, height, this.get_TextureDataFormatType(format), data_type, image);
         }
         else {
             throw new Error('<WebGLRenderState> load_Image2D: target texture is not texture 2d');

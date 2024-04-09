@@ -18,6 +18,7 @@ import type { World3D } from "../../../worlds/world3ds/World3D";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { Color } from "@/system/fivepebble/graphics/Color";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import { RenderServerGeometry } from "@/system/engine/render_server/RenderServerGeometry";
 
 // #region quad surface
 
@@ -1037,6 +1038,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
                     this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
                 }
                 material.set_Uniform('model_world', transform);
+                material.set_Uniform('has_tangent', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
                 material.set_Uniform('layer', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.Shade);
                 if (indexed) {
@@ -1092,6 +1094,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
                     this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
                 }
                 material.set_Uniform('model_world', transform);
+                material.set_Uniform('has_tangent', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
                 material.set_Uniform('layer', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.OiT);
                 if (indexed) {
@@ -1124,6 +1127,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
                     this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
                 }
                 material.set_Uniform('model_world', transform);
+                material.set_Uniform('has_tangent', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
                 material.set_Uniform('layer', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.PreZ);
                 if (indexed) {
@@ -1184,6 +1188,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
                     this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
                 }
                 material.set_Uniform('model_world', transform);
+                material.set_Uniform('has_tangent', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
                 material.set_Uniform('layer', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.Shade);
                 if (indexed) {
@@ -1234,6 +1239,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
                     this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
                 }
                 material.set_Uniform('model_world', transform);
+                material.set_Uniform('has_tangent', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
                 material.set_Uniform('layer', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.OiT);
                 if (indexed) {
@@ -1286,6 +1292,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
                     this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
                 }
                 material.set_Uniform('model_world', transform);
+                material.set_Uniform('has_tangent', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
                 material.set_Uniform('layer', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.PreZ);
                 if (indexed) {
@@ -1312,6 +1319,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
                     this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
                 }
                 material.set_Uniform('model_world', transform);
+                material.set_Uniform('has_tangent', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
                 material.set_Uniform('layer', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.PreZ);
                 if (indexed) {
@@ -1344,7 +1352,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.set_CullFace(RenderServerMaterialCullFace.None);
         this.render_server.render_state.active_Texture(this.result_color_texture.expect, 0);
         this.render_server.render_state.active_Texture(this.solid_depth_texture.expect, 1);
-        this.render_server.render_state.active_Texture(this.solid_normal_texture.expect, 2);     
+        this.render_server.render_state.active_Texture(this.solid_normal_texture.expect, 2);
         this.postprocessing_fxaa_uniform_colormap_slot.value = color_map ? 1 : 0;
         this.postprocessing_fxaa_uniform_colormap_slot.commit();
         this.render_server.render_state.draw_Elements(this.postprocessing_fxaa_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
