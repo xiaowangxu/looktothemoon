@@ -51,14 +51,14 @@ export class TranslateGrabber3D extends Grabber3D<Vector3> {
         this.on_RenderQueueChanged();
 
         this.axis_x_grabber.local_rotation = Euler.create(0, 0, - Math.PI / 2);
-        this.axis_x_grabber.color = Color.color8code(red);
+        this.axis_x_grabber.color = Color.color8code(red).linear_rgb;
 
-        this.axis_y_grabber.color = Color.color8code(green);
+        this.axis_y_grabber.color = Color.color8code(green).linear_rgb;
 
         this.axis_z_grabber.local_rotation = Euler.create(Math.PI / 2, 0, 0);
-        this.axis_z_grabber.color = Color.color8code(blue);
+        this.axis_z_grabber.color = Color.color8code(blue).linear_rgb;
 
-        this.center_grabber.color = Color.color8code(grey);
+        this.center_grabber.color = Color.color8code(grey).linear_rgb;
 
         this.add_Child(this.axis_x_grabber);
         this.add_Child(this.axis_y_grabber);

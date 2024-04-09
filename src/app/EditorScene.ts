@@ -370,7 +370,7 @@ export function createEditor() {
 
     const infinite_line_x = new InfiniteLine3D(DefaultConfig);
     const multi_line_material_x = new MultiLineSegmentMaterialResource(DefaultConfig);
-    multi_line_material_x.color = Color.color8code(0xd82d4e33);
+    multi_line_material_x.color = Color.color8code(0xd82d4e33).linear_rgb;
     // multi_line_material_x.line_width = 1;
     infinite_line_x.material = multi_line_material_x;
     infinite_line_x.render_queue = 1;
@@ -378,7 +378,7 @@ export function createEditor() {
     const infinite_line_y = new InfiniteLine3D(DefaultConfig);
     const multi_line_material_y = new MultiLineSegmentMaterialResource(DefaultConfig);
     // multi_line_material_y.line_width = 1;
-    multi_line_material_y.color = Color.color8code(0x04b97344);
+    multi_line_material_y.color = Color.color8code(0x04b97344).linear_rgb;
     infinite_line_y.material = multi_line_material_y;
     infinite_line_y.render_queue = 1;
     infinite_line_y.ray = Ray3.create(Vector3.new, Vector3.create(0, 1, 0));
@@ -386,7 +386,7 @@ export function createEditor() {
     const infinite_line_z = new InfiniteLine3D(DefaultConfig);
     const multi_line_material_z = new MultiLineSegmentMaterialResource(DefaultConfig);
     // multi_line_material_z.line_width = 1;
-    multi_line_material_z.color = Color.color8code(0x466fd644);
+    multi_line_material_z.color = Color.color8code(0x466fd644).linear_rgb;
     infinite_line_z.material = multi_line_material_z;
     infinite_line_z.render_queue = 1;
     infinite_line_z.ray = Ray3.create(Vector3.new, Vector3.create(0, 0, 1));
@@ -524,7 +524,7 @@ export function createEditor() {
     box_mesh.add_Child(box_area);
     const line_grabber = new LineGrabber3D(DefaultConfig);
     line_grabber.offset_length = 0;
-    line_grabber.color = Color.color8code(0xff9900ff);
+    line_grabber.color = Color.color8code(0xff9900ff).linear_rgb;
     line_grabber.enabled = false;
     World.add_Child(line_grabber);
     line_grabber.local_position = Vector3.create(0, 0, -1);

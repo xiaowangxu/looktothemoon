@@ -563,7 +563,7 @@ export class Viewport extends Node {
     public editor_highlighted: boolean = true;
     public editor_highlight_line_width: number = 2.5;
 
-    private readonly _editor_highlight_color: Color = Vector4.create(1.0, 0.5, 0.0, 1);
+    private readonly _editor_highlight_color: Color = Vector4.create(1.0, 0.5, 0.0, 1).linear_rgb;
     public get editor_highlight_color(): Color {
         return this._editor_highlight_color.clone();
     }

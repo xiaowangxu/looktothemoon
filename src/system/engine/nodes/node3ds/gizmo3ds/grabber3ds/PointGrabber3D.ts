@@ -81,6 +81,13 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
         this.update_Visual();
     }
 
+    private readonly _highlight_color: Color = Color.color8(0xff, 0xbb, 0x00).linear_rgb;
+    public get highlight_color() { return this._highlight_color.clone(); }
+    public set highlight_color(highlight_color: Color) {
+        this._highlight_color.copy(highlight_color);
+        this.update_Visual();
+    }
+
     protected on_VisibleChanged(): void {
         this.on_EnabledChanged();
         this.point.local_visible = this.visible;
@@ -112,15 +119,15 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
 
     private update_Visual() {
         if (this.is_hovering) {
-            this.visual_color.set(0xff / 255, 0xbb / 255, 0x00 / 255, 1.0);
+            this.visual_color.copy(this._highlight_color);
             this.material.expect.set_UniformOverride('u_color', this.visual_color);
         }
         else if (this.is_grabbing) {
-            this.visual_color.set(0xff / 255, 0xbb / 255, 0x00 / 255, 1.0);
+            this.visual_color.copy(this._highlight_color);
             this.material.expect.set_UniformOverride('u_color', this.visual_color);
         }
         else {
-            this.visual_color.copy(this.color);
+            this.visual_color.copy(this._color);
             this.material.expect.set_UniformOverride('u_color', this.visual_color);
         }
     }

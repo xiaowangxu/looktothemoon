@@ -74,14 +74,6 @@ layout(location = 0) out vec4 o_color;
 
 void main() {
 	o_color = vec4(texture(u_screen, vec2(v_uv.x, v_uv.y)).rgba);
-	if (u_colormap) {
-		float r = o_color.r;
-		o_color.r = r <= 0.0031308 ? (12.92 * r) : (1.055 * pow(r, 1.0 / 2.4) - 0.055);
-		float g = o_color.g;
-		o_color.g = g <= 0.0031308 ? (12.92 * g) : (1.055 * pow(g, 1.0 / 2.4) - 0.055);
-		float b = o_color.b;
-		o_color.b = b <= 0.0031308 ? (12.92 * b) : (1.055 * pow(b, 1.0 / 2.4) - 0.055);
-	}
 }`;
 
 const OnscreenProgramUniform = new Cacher((config: Config) => {
@@ -94,11 +86,7 @@ const OnscreenProgramUniform = new Cacher((config: Config) => {
     uniform_screen_slot.commit();
     uniform_screen_slot.dispose();
 
-    const uniform_colormap_location = config.render_server.render_state.get_ProgramUniformLocation(onscreen_program, 'u_colormap');
-    const uniform_colormap_slot = new WebGL2RenderStateUintUniformSlot(config.render_server.render_state, onscreen_program, uniform_colormap_location!, 0);
-    uniform_colormap_slot.commit();
-
-    return { program, uniform_colormap_slot: new Ref(uniform_colormap_slot) };
+    return program;
 });
 
 // #endregion
@@ -124,14 +112,6 @@ void main() {
 	float color_a = 1.0 - color.a;
 	float a = texelFetch(u_accum, uv, 0).r;
 	o_color = vec4(color_a * color.rgb / max(a, 0.00001), color_a);
-	if (u_colormap) {
-		float r = o_color.r;
-		o_color.r = r <= 0.0031308 ? (12.92 * r) : (1.055 * pow(r, 1.0 / 2.4) - 0.055);
-		float g = o_color.g;
-		o_color.g = g <= 0.0031308 ? (12.92 * g) : (1.055 * pow(g, 1.0 / 2.4) - 0.055);
-		float b = o_color.b;
-		o_color.b = b <= 0.0031308 ? (12.92 * b) : (1.055 * pow(b, 1.0 / 2.4) - 0.055);
-	}
 }`;
 
 const OiTPorgramUniform = new Cacher((config: Config) => {
@@ -149,11 +129,7 @@ const OiTPorgramUniform = new Cacher((config: Config) => {
     uniform_oit_accum_slot.commit();
     uniform_oit_accum_slot.dispose();
 
-    const uniform_oit_colormap_location = config.render_server.render_state.get_ProgramUniformLocation(oit_program, 'u_colormap');
-    const uniform_oit_colormap_slot = new WebGL2RenderStateUintUniformSlot(config.render_server.render_state, oit_program, uniform_oit_colormap_location!, 0);
-    uniform_oit_colormap_slot.commit();
-
-    return { program, uniform_colormap_slot: new Ref(uniform_oit_colormap_slot) };
+    return program;
 });
 
 // #endregion
@@ -320,6 +296,7 @@ precision highp float;
 ${RenderServerDevice.WorldUniformsCode}
 
 uniform sampler2D u_screen;
+uniform bool u_colormap;
 
 in vec2 v_frag_coord;
 in vec2 v_rgbNW;
@@ -398,147 +375,161 @@ vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution,
 
 void main() {
 	o_color = fxaa(u_screen, v_frag_coord, screen_size, v_rgbNW, v_rgbNE, v_rgbSW, v_rgbSE, v_rgbM);
+    if (u_colormap) {
+        float r = o_color.r;
+        o_color.r = r <= 0.0031308 ? (12.92 * r) : (1.055 * pow(r, 1.0 / 2.4) - 0.055);
+        float g = o_color.g;
+        o_color.g = g <= 0.0031308 ? (12.92 * g) : (1.055 * pow(g, 1.0 / 2.4) - 0.055);
+        float b = o_color.b;
+        o_color.b = b <= 0.0031308 ? (12.92 * b) : (1.055 * pow(b, 1.0 / 2.4) - 0.055);
+    }
 }`;
 
-const fxaa_frag_shader_code_0 = `#version 300 es
-precision highp float;
+// const fxaa_frag_shader_code = `#version 300 es
+// precision highp float;
 
-// https://www.zhihu.com/question/56111556/answer/2786741301
+// // https://www.zhihu.com/question/56111556/answer/2786741301
 
-${RenderServerDevice.WorldUniformsCode}
+// ${RenderServerDevice.WorldUniformsCode}
 
-const float ContrastThreshold = 0.25;
-const float RelativeThreshold = 0.15;
+// const float ContrastThreshold = 0.25;
+// const float RelativeThreshold = 0.15;
 
-uniform sampler2D u_screen;
+// uniform sampler2D u_screen;
 
-in vec2 v_uv;
+// in vec2 v_uv;
 
-layout(location = 0) out vec4 o_color;
+// layout(location = 0) out vec4 o_color;
 
-float linear_to_luminance(vec3 rgb)
-{
-    return dot(rgb, vec3(0.1126729,  0.8151522, 0.0721750));
-}
+// float linear_to_luminance(vec3 rgb)
+// {
+//     return dot(rgb, vec3(0.1126729,  0.8151522, 0.0721750));
+// }
 
-vec4 sample_screen(vec2 uv, float shift_x, float shift_y) {
-    return texture(u_screen, uv + vec2(shift_x, shift_y));
-}
+// vec4 sample_screen(vec2 uv, float shift_x, float shift_y) {
+//     return texture(u_screen, uv + vec2(shift_x, shift_y));
+// }
 
-float sample_luminance(vec2 uv, float shift_x, float shift_y)
-{
-    return linear_to_luminance(texture(u_screen, uv + vec2(shift_x, shift_y)).rgb);
-}
+// float sample_luminance(vec2 uv, float shift_x, float shift_y)
+// {
+//     return linear_to_luminance(texture(u_screen, uv + vec2(shift_x, shift_y)).rgb);
+// }
 
-struct LuminanceData {
-    float m, n, e, s, w;
-    float ne, nw, se, sw;
-    float highest, lowest, contrast;
-};
+// struct LuminanceData {
+//     float m, n, e, s, w;
+//     float ne, nw, se, sw;
+//     float highest, lowest, contrast;
+// };
 
-LuminanceData sample_luminance_neighborhood(vec2 uv) {
-    vec2 pixel_size = 1.0 / screen_size;
+// LuminanceData sample_luminance_neighborhood(vec2 uv) {
+//     vec2 pixel_size = 1.0 / screen_size;
 
-    LuminanceData l;
+//     LuminanceData l;
 
-    l.m  = sample_luminance(uv,          0.0,           0.0);
-    l.n  = sample_luminance(uv,          0.0,  pixel_size.y);
-    l.e  = sample_luminance(uv, pixel_size.x,           0.0);
-    l.s  = sample_luminance(uv,          0.0, -pixel_size.y);
-    l.w  = sample_luminance(uv,-pixel_size.x,           0.0);
-    l.ne = sample_luminance(uv, pixel_size.x,  pixel_size.y);
-    l.nw = sample_luminance(uv,-pixel_size.x,  pixel_size.y);
-    l.se = sample_luminance(uv, pixel_size.x, -pixel_size.y);
-    l.sw = sample_luminance(uv,-pixel_size.x, -pixel_size.y);
+//     l.m  = sample_luminance(uv,          0.0,           0.0);
+//     l.n  = sample_luminance(uv,          0.0,  pixel_size.y);
+//     l.e  = sample_luminance(uv, pixel_size.x,           0.0);
+//     l.s  = sample_luminance(uv,          0.0, -pixel_size.y);
+//     l.w  = sample_luminance(uv,-pixel_size.x,           0.0);
+//     l.ne = sample_luminance(uv, pixel_size.x,  pixel_size.y);
+//     l.nw = sample_luminance(uv,-pixel_size.x,  pixel_size.y);
+//     l.se = sample_luminance(uv, pixel_size.x, -pixel_size.y);
+//     l.sw = sample_luminance(uv,-pixel_size.x, -pixel_size.y);
 
-    l.highest = max(max(max(max(l.n, l.e), l.s), l.w), l.m);
-    l.lowest = min(min(min(min(l.n, l.e), l.s), l.w), l.m);
+//     l.highest = max(max(max(max(l.n, l.e), l.s), l.w), l.m);
+//     l.lowest = min(min(min(min(l.n, l.e), l.s), l.w), l.m);
 
-    l.contrast = l.highest - l.lowest;
+//     l.contrast = l.highest - l.lowest;
 
-    return l;
-}
+//     return l;
+// }
 
-bool skip_pixel (LuminanceData l) {
-    float threshold = max(ContrastThreshold, RelativeThreshold * l.highest);
-    return l.contrast < threshold;
-}
+// bool skip_pixel (LuminanceData l) {
+//     float threshold = max(ContrastThreshold, RelativeThreshold * l.highest);
+//     return l.contrast < threshold;
+// }
 
-float blend_factor(LuminanceData l) {
-    float blend = 2.0 * (l.n + l.e + l.s + l.w);
-    blend += l.ne + l.nw + l.se + l.sw;
-    blend *= 1.0 / 12.0;
-    blend = abs(blend - l.m);
-    blend = clamp(blend / l.contrast, 0.0, 1.0);
-    return blend;
-    // float blend_factor = smoothstep(0.0, 1.0, blend);
-    // return blend_factor * blend_factor;
-}
+// float blend_factor(LuminanceData l) {
+//     float blend = 2.0 * (l.n + l.e + l.s + l.w);
+//     blend += l.ne + l.nw + l.se + l.sw;
+//     blend *= 1.0 / 12.0;
+//     blend = abs(blend - l.m);
+//     blend = clamp(blend / l.contrast, 0.0, 1.0);
+//     return blend;
+//     // float blend_factor = smoothstep(0.0, 1.0, blend);
+//     // return blend_factor * blend_factor;
+// }
 
-struct EdgeData {
-    float pixel_step; 
-    bool is_horizontal;
-};
+// struct EdgeData {
+//     float pixel_step; 
+//     bool is_horizontal;
+// };
 
-EdgeData determine_edge (LuminanceData l) {
-    EdgeData e;
+// EdgeData determine_edge (LuminanceData l) {
+//     EdgeData e;
 
-    float horizontal =
-        abs(l.n + l.s - 2.0 * l.m) * 2.0 +
-        abs(l.ne + l.se - 2.0 * l.e) +
-        abs(l.nw + l.sw - 2.0 * l.w);
-    float vertical =
-        abs(l.e + l.w - 2.0 * l.m) * 2.0 +
-        abs(l.ne + l.nw - 2.0 * l.n) +
-        abs(l.se + l.sw - 2.0 * l.s);
+//     float horizontal =
+//         abs(l.n + l.s - 2.0 * l.m) * 2.0 +
+//         abs(l.ne + l.se - 2.0 * l.e) +
+//         abs(l.nw + l.sw - 2.0 * l.w);
+//     float vertical =
+//         abs(l.e + l.w - 2.0 * l.m) * 2.0 +
+//         abs(l.ne + l.nw - 2.0 * l.n) +
+//         abs(l.se + l.sw - 2.0 * l.s);
 
-    e.is_horizontal = horizontal >= vertical;
+//     e.is_horizontal = horizontal >= vertical;
 
-    vec2 pixel_size = 1.0 / screen_size;
-    e.pixel_step = e.is_horizontal ? pixel_size.y : pixel_size.x;
-    float positive = abs((e.is_horizontal ? l.n : l.e) - l.m);
-    float negative = abs((e.is_horizontal ? l.s : l.w) - l.m);
-    if(positive < negative) e.pixel_step = -e.pixel_step;
+//     vec2 pixel_size = 1.0 / screen_size;
+//     e.pixel_step = e.is_horizontal ? pixel_size.y : pixel_size.x;
+//     float positive = abs((e.is_horizontal ? l.n : l.e) - l.m);
+//     float negative = abs((e.is_horizontal ? l.s : l.w) - l.m);
+//     if(positive < negative) e.pixel_step = -e.pixel_step;
 
-    return e;
-}
+//     return e;
+// }
 
-vec4 fxaa(vec2 uv) {
-    LuminanceData l = sample_luminance_neighborhood(uv);
-    if (skip_pixel(l)) {
-        return sample_screen(uv, 0.0, 0.0);
-    }
-    float pixel_blend = blend_factor(l);
-    EdgeData e = determine_edge(l);
-    float shift_x = 0.0;
-    float shift_y = 0.0;
-    if (e.is_horizontal) {
-        shift_y = e.pixel_step * pixel_blend;
-    }
-    else {
-        shift_x = e.pixel_step * pixel_blend;
-    }
-    return vec4(sample_screen(uv, shift_x, shift_y).rgb, 1.0);
-}
+// vec4 fxaa(vec2 uv) {
+//     LuminanceData l = sample_luminance_neighborhood(uv);
+//     if (skip_pixel(l)) {
+//         return sample_screen(uv, 0.0, 0.0);
+//     }
+//     float pixel_blend = blend_factor(l);
+//     EdgeData e = determine_edge(l);
+//     float shift_x = 0.0;
+//     float shift_y = 0.0;
+//     if (e.is_horizontal) {
+//         shift_y = e.pixel_step * pixel_blend;
+//     }
+//     else {
+//         shift_x = e.pixel_step * pixel_blend;
+//     }
+//     return vec4(sample_screen(uv, shift_x, shift_y).rgb, 1.0);
+// }
 
-void main() {
-    // LuminanceData l = sample_luminance_neighborhood(v_uv);
-    // EdgeData e = determine_edge(l);
-    // bool skip = skip_pixel(l);
-    // vec3 color = skip ? vec3(0.0) : e.is_horizontal ? vec3(1.0, 0.0, 0.0) : vec3(1.0);
-	o_color = fxaa(v_uv);
-}`;
+// void main() {
+//     // LuminanceData l = sample_luminance_neighborhood(v_uv);
+//     // EdgeData e = determine_edge(l);
+//     // bool skip = skip_pixel(l);
+//     // vec3 color = skip ? vec3(0.0) : e.is_horizontal ? vec3(1.0, 0.0, 0.0) : vec3(1.0);
+// 	o_color = fxaa(v_uv);
+// }`;
 
 const FxaaProgram = new Cacher((config: Config) => {
     const fxaa_vert_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, fxaa_vert_shader_code).expect();
     const fxaa_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, fxaa_frag_shader_code).expect();
     const fxaa_program = config.render_server.render_state.create_Program(fxaa_vert_shader, fxaa_frag_shader).expect();
+    const program = new Ref(fxaa_program);
 
     const uniform_screen_location = config.render_server.render_state.get_ProgramUniformLocation(fxaa_program, 'u_screen');
     const uniform_screen_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, fxaa_program, uniform_screen_location!, 0);
     uniform_screen_slot.commit();
+    uniform_screen_slot.dispose();
 
-    return new Ref(fxaa_program);
+    const uniform_colormap_location = config.render_server.render_state.get_ProgramUniformLocation(fxaa_program, 'u_colormap');
+    const uniform_colormap_slot = new WebGL2RenderStateUintUniformSlot(config.render_server.render_state, fxaa_program, uniform_colormap_location!, 0);
+    uniform_colormap_slot.commit();
+
+    return { program, uniform_colormap_slot: new Ref(uniform_colormap_slot) };
 });
 
 // #endregion
@@ -966,17 +957,16 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
     private quad_geometry = QuadGeometry.get(this.config).expect;
 
-    private screen_quad_solid_program = OnscreenProgramUniform.get(this.config).program.expect;
-    private screen_quad_solid_colormap_uniform_slot = OnscreenProgramUniform.get(this.config).uniform_colormap_slot.expect;
+    private screen_quad_solid_program = OnscreenProgramUniform.get(this.config).expect;
 
     private highlight_program = HighlightProgramUniform.get(this.config).program.expect;
     private highlight_color_uniform_slot = HighlightProgramUniform.get(this.config).uniform_color_slot.expect;
     private highlight_line_width_uniform_slot = HighlightProgramUniform.get(this.config).uniform_line_width_slot.expect;
 
-    private oit_screen_quad_solid_program = OiTPorgramUniform.get(this.config).program.expect;
-    private oit_screen_quad_solid_colormap_uniform_slot = OiTPorgramUniform.get(this.config).uniform_colormap_slot.expect;
+    private oit_screen_quad_solid_program = OiTPorgramUniform.get(this.config).expect;
 
-    private postprocessing_fxaa_program = FxaaProgram.get(this.config).expect;
+    private postprocessing_fxaa_program = FxaaProgram.get(this.config).program.expect;
+    private postprocessing_fxaa_uniform_colormap_slot = FxaaProgram.get(this.config).uniform_colormap_slot.expect;
 
     private sky_quad_solid_program = SkyDomeProgram.get(this.config).expect;
 
@@ -1065,13 +1055,11 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         }
     }
 
-    private compose_RenderQueue0Solid(renderer: EditorRenderer3D, color_map: boolean) {
+    private compose_RenderQueue0Solid(renderer: EditorRenderer3D) {
         this.render_server.render_state.use_FrameBuffer(this.result_framebuffer.expect);
         this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false, false);
         this.set_CullFace(RenderServerMaterialCullFace.None);
         this.render_server.render_state.active_Texture(this.solid_color_texture.expect, 0);
-        this.screen_quad_solid_colormap_uniform_slot.value = color_map ? 1 : 0;
-        this.screen_quad_solid_colormap_uniform_slot.commit();
         this.render_server.render_state.draw_Elements(this.screen_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
@@ -1148,15 +1136,13 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         }
     }
 
-    private compose_RenderQueue0Transparent(renderer: EditorRenderer3D, color_map: boolean) {
+    private compose_RenderQueue0Transparent(renderer: EditorRenderer3D) {
         this.render_server.render_state.use_FrameBuffer(this.result_framebuffer.expect);
         this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true, false);
         this.set_CullFace(RenderServerMaterialCullFace.None);
         this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.ONE, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
         this.render_server.render_state.active_Texture(this.transparent_color_texture.expect, 0);
         this.render_server.render_state.active_Texture(this.transparent_accum_texture.expect, 1);
-        this.oit_screen_quad_solid_colormap_uniform_slot.value = color_map ? 1 : 0;
-        this.oit_screen_quad_solid_colormap_uniform_slot.commit();
         this.render_server.render_state.draw_Elements(this.oit_screen_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
@@ -1216,8 +1202,6 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.SRC_ALPHA, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
         this.set_CullFace(RenderServerMaterialCullFace.None);
         this.render_server.render_state.active_Texture(this.solid_color_texture.expect, 0);
-        this.screen_quad_solid_colormap_uniform_slot.value = 0;
-        this.screen_quad_solid_colormap_uniform_slot.commit();
         this.render_server.render_state.draw_Elements(this.screen_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
@@ -1269,8 +1253,6 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.ONE, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
         this.render_server.render_state.active_Texture(this.transparent_color_texture.expect, 0);
         this.render_server.render_state.active_Texture(this.transparent_accum_texture.expect, 1);
-        this.oit_screen_quad_solid_colormap_uniform_slot.value = 0;
-        this.oit_screen_quad_solid_colormap_uniform_slot.commit();
         this.render_server.render_state.draw_Elements(this.oit_screen_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
@@ -1356,13 +1338,15 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.draw_Elements(this.highlight_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
-    private render_Postprocessing(renderer: EditorRenderer3D) {
+    private render_Postprocessing(renderer: EditorRenderer3D, color_map: boolean) {
         this.render_server.render_state.use_FrameBuffer(this.postprocessing_framebuffer.expect);
         this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false, false);
         this.set_CullFace(RenderServerMaterialCullFace.None);
         this.render_server.render_state.active_Texture(this.result_color_texture.expect, 0);
         this.render_server.render_state.active_Texture(this.solid_depth_texture.expect, 1);
-        this.render_server.render_state.active_Texture(this.solid_normal_texture.expect, 2);
+        this.render_server.render_state.active_Texture(this.solid_normal_texture.expect, 2);     
+        this.postprocessing_fxaa_uniform_colormap_slot.value = color_map ? 1 : 0;
+        this.postprocessing_fxaa_uniform_colormap_slot.commit();
         this.render_server.render_state.draw_Elements(this.postprocessing_fxaa_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
@@ -1376,10 +1360,10 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
         // render queue 0
         this.render_RenderQueue0Solid(renderer, transparent_bg);
-        this.compose_RenderQueue0Solid(renderer, color_map);
+        this.compose_RenderQueue0Solid(renderer);
         if (renderer.render_queue_0.transparent_pointer >= 0) {
             this.render_RenderQueue0Transparent(renderer);
-            this.compose_RenderQueue0Transparent(renderer, color_map);
+            this.compose_RenderQueue0Transparent(renderer);
         }
         // render queue 1
         if (renderer.render_queue_1 !== undefined) {
@@ -1402,7 +1386,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         }
 
         // post processing
-        this.render_Postprocessing(renderer);
+        this.render_Postprocessing(renderer, color_map);
     }
 
     public dispose(): void {

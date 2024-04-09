@@ -110,6 +110,13 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         this.update_Visual();
     }
 
+    private readonly _highlight_color: Color = Color.color8(0xff, 0xbb, 0x00).linear_rgb;
+    public get highlight_color() { return this._highlight_color.clone(); }
+    public set highlight_color(highlight_color: Color) {
+        this._highlight_color.copy(highlight_color);
+        this.update_Visual();
+    }
+
     protected on_VisibleChanged(): void {
         this.on_EnabledChanged();
         this.arrow_head.local_visible = this.arrow_tail.local_visible = this.visible;
@@ -154,15 +161,15 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
 
     private update_Visual() {
         if (this.is_hovering) {
-            this.visual_color.set(0xff / 255, 0xbb / 255, 0x00 / 255, this.visual_opacity);
+            this.visual_color.set(this._highlight_color.r, this._highlight_color.g, this._highlight_color.b, this._highlight_color.a * this.visual_opacity);
             this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);
         }
         else if (this.is_grabbing) {
-            this.visual_color.set(0xff / 255, 0xbb / 255, 0x00 / 255, this.visual_opacity);
+            this.visual_color.set(this._highlight_color.r, this._highlight_color.g, this._highlight_color.b, this._highlight_color.a * this.visual_opacity);
             this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);
         }
         else {
-            this.visual_color.set(this.color.r, this.color.g, this.color.b, this.color.a * this.visual_opacity);
+            this.visual_color.set(this._color.r, this._color.g, this._color.b, this._color.a * this.visual_opacity);
             this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);
         }
     }
