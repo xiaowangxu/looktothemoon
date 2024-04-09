@@ -162,6 +162,8 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     public abstract set_VertexArrayIndexBuffer(vertex_array: RenderStateVertexArray<T>, buffer: RenderStateBuffer<T> | RenderStateBufferView<T>): void;
 
+    public abstract set_VertexArrayVertexCount(vertex_array: RenderStateVertexArray<T>, count: number): void;
+
     // texture
 
     public abstract create_Texture(type: RenderStateTextureType, constant: boolean, format: RenderStateTextureFormat, levels: number,

@@ -5,7 +5,7 @@ import type { RenderState } from "../RenderState";
 export class RenderStateVertexArray<T extends RenderState<T>> extends RenderStateObject<T> {
     public readonly primitive_type: number;
     public readonly offset: number;
-    public readonly count: number;
+    public count: number;
 
     constructor(render_state: T, primitive_type: number, offset: number, count: number) {
         super(render_state);

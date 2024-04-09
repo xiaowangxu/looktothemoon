@@ -715,6 +715,10 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         }
     }
 
+    public set_VertexArrayVertexCount(vertex_array: WebGL2RenderStateVertexArray, count: number) {
+        vertex_array.count = Math.max(count, 0);
+    }
+
     // Texture
 
     public create_Texture(type: RenderStateTextureType, constant: boolean, format: RenderStateTextureFormat, levels: number, wrap_s: RenderStateTextureWrap = RenderStateTextureWrap.Clamp, wrap_t: RenderStateTextureWrap = RenderStateTextureWrap.Clamp, wrap_r: RenderStateTextureWrap = RenderStateTextureWrap.Clamp, min_filter: RenderStateTextureMinFilter = RenderStateTextureMinFilter.Linear, mag_filter: RenderStateTextureMagFilter = RenderStateTextureMagFilter.Linear): Result<WebGL2RenderStateTexture, Error> {

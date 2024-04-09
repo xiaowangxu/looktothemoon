@@ -2,7 +2,6 @@ import { Epsilon, clamp } from "@/system/fivepebble/Scalar";
 import { RenderStateUniformType, RenderStateShaderType } from "@/system/sliverofstraw/RenderState";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { RenderServerDevice } from "../../render_server/RenderServer";
-import { RenderServerGeometry, RenderServerGeometryAttributeLocations } from "../../render_server/RenderServerGeometry";
 import type { UniformInitSet } from "../../render_server/RenderServerShader";
 import { MaterialResource, type MaterialReadOnlyUniforms } from "./MaterialResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
@@ -11,6 +10,7 @@ import { Color } from "@/system/fivepebble/graphics/Color";
 import type { Config } from "../../ConfiguredObject";
 import { Cacher } from "@/system/utils/Cacher";
 import { Ref } from "@/system/utils/RefCounted";
+import { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
 
 export const MultiLineSegmentVertexShader = new Cacher((config: Config) => {
     const code = `#version 300 es
@@ -24,13 +24,13 @@ export const MultiLineSegmentVertexShader = new Cacher((config: Config) => {
     
     layout(location = 0) in vec3 a_position;
     layout(location = 5) in vec2 a_uv;
-    layout(location = ${RenderServerGeometryAttributeLocations.custom0}) in vec3 a_start;
-    layout(location = ${RenderServerGeometryAttributeLocations.custom1}) in vec3 a_end;
-    layout(location = ${RenderServerGeometryAttributeLocations.custom2}) in float a_length_percentage_start;
-    layout(location = ${RenderServerGeometryAttributeLocations.custom3}) in float a_length_percentage_end;
-    layout(location = ${RenderServerGeometryAttributeLocations.instance_transform}) in float a_total_length;
-    layout(location = ${RenderServerGeometryAttributeLocations.instance_transform1}) in vec4 a_color_start;
-    layout(location = ${RenderServerGeometryAttributeLocations.instance_transform2}) in vec4 a_color_end;
+    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.custom0}) in vec3 a_start;
+    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.custom1}) in vec3 a_end;
+    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.custom2}) in float a_length_percentage_start;
+    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.custom3}) in float a_length_percentage_end;
+    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.instance_transform}) in float a_total_length;
+    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.instance_transform1}) in vec4 a_color_start;
+    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.instance_transform2}) in vec4 a_color_end;
     
     uniform mat4 model_world;
 

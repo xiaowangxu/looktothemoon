@@ -8,9 +8,9 @@ import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2Rend
 import type { WebGL2RenderStateBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import type { Config } from "../../ConfiguredObject";
-import { RenderServerGeometryAttributeLocations } from "../../render_server/RenderServerGeometry";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
 
 const PositionAttributeBuffer = new Cacher((config: Config) => {
     return new Ref(new RenderDeviceVector3AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
@@ -90,31 +90,31 @@ export class MultiLineGeometryResource extends GeometryResource {
                 uv: UVAttributeBuffer.get(this.config).expect,
                 start: {
                     attribute: this.points_start_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.custom0,
+                    location: RenderServerGeometry.GeometryAttributeLocations.custom0,
                 },
                 end: {
                     attribute: this.points_end_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.custom1,
+                    location: RenderServerGeometry.GeometryAttributeLocations.custom1,
                 },
                 percentage_start: {
                     attribute: this.length_percentages_start_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.custom2,
+                    location: RenderServerGeometry.GeometryAttributeLocations.custom2,
                 },
                 percentage_end: {
                     attribute: this.length_percentages_end_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.custom3,
+                    location: RenderServerGeometry.GeometryAttributeLocations.custom3,
                 },
                 length: {
                     attribute: this.total_length_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.instance_transform,
+                    location: RenderServerGeometry.GeometryAttributeLocations.instance_transform,
                 },
                 color_start: {
                     attribute: this.colors_start_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.instance_transform1,
+                    location: RenderServerGeometry.GeometryAttributeLocations.instance_transform1,
                 },
                 color_end: {
                     attribute: this.colors_end_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.instance_transform2,
+                    location: RenderServerGeometry.GeometryAttributeLocations.instance_transform2,
                 }
             },
             IndexAttributeBuffer.get(this.config).expect,
@@ -296,31 +296,31 @@ export class MultiSegmentGeometryResource extends GeometryResource {
                 uv: UVAttributeBuffer.get(this.config).expect,
                 start: {
                     attribute: this.points_start_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.custom0,
+                    location: RenderServerGeometry.GeometryAttributeLocations.custom0,
                 },
                 end: {
                     attribute: this.points_end_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.custom1,
+                    location: RenderServerGeometry.GeometryAttributeLocations.custom1,
                 },
                 percentage_start: {
                     attribute: this.length_percentages_start_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.custom2,
+                    location: RenderServerGeometry.GeometryAttributeLocations.custom2,
                 },
                 percentage_end: {
                     attribute: this.length_percentages_end_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.custom3,
+                    location: RenderServerGeometry.GeometryAttributeLocations.custom3,
                 },
                 length: {
                     attribute: this.total_length_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.instance_transform,
+                    location: RenderServerGeometry.GeometryAttributeLocations.instance_transform,
                 },
                 color_start: {
                     attribute: this.colors_start_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.instance_transform1,
+                    location: RenderServerGeometry.GeometryAttributeLocations.instance_transform1,
                 },
                 color_end: {
                     attribute: this.colors_end_attribute_buffer_ref.expect,
-                    location: RenderServerGeometryAttributeLocations.instance_transform2,
+                    location: RenderServerGeometry.GeometryAttributeLocations.instance_transform2,
                 }
             },
             IndexAttributeBuffer.get(this.config).expect,

@@ -113,7 +113,7 @@ export class Matrix3 implements MatrixLike<Matrix3> {
     public set_RotateY(angle: number) {
         const cr = Math.cos(angle);
         const sr = Math.sin(angle);
-        this.n11 = cr; this.n11 = 0; this.n13 = sr;
+        this.n11 = cr; this.n12 = 0; this.n13 = sr;
         this.n21 = 0; this.n22 = 1; this.n23 = 0;
         this.n31 = -sr; this.n32 = 0; this.n33 = cr;
         return this;

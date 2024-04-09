@@ -12,7 +12,7 @@ import { BoxGeometryResource, SphereGeometryResource, TorusGeometryResource } fr
 import { FlatMaterialResource, NormalMaterialResource, PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
-import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
+import { GeometryResource, MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { MultiLineGeometryResource, MultiSegmentGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineSegmentGeometryResource";
 import { MultiLineSegmentMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
@@ -54,8 +54,10 @@ import { FixSizeNode3D } from "@/system/engine/nodes/node3ds/gizmo3ds/FixSizeNod
 import { PlaceholderTextureResource } from "@/system/engine/resources/texture_resources/PlaceholderTextureResource";
 import { ImageTextureResource } from "@/system/engine/resources/texture_resources/ImageTextureResource";
 import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/MatcapMaterialResource";
-import { RenderStateTextureMagFilter, RenderStateTextureMinFilter } from "@/system/sliverofstraw/RenderState";
+import { RenderStateBufferUsage, RenderStatePrimitiveType, RenderStateTextureMagFilter, RenderStateTextureMinFilter } from "@/system/sliverofstraw/RenderState";
 import { Dom3D } from "@/system/engine/nodes/node3ds/Dom3D";
+import { Box3 } from "@/system/fivepebble/geometries/Box3";
+import { RenderDeviceVector3AttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer, RenderDeviceMatrix4AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 
 // import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
 // import png_url2 from 'res://matcap-2.jpg';
@@ -795,6 +797,146 @@ export function createEditor() {
     dom.top_level = true;
     dom.local_position = Vector3.create(0, 5, -3);
     World.add_Child(dom);
+
+    // {
+    //     const half_w = 1 / 2;
+    //     const half_h = 1 / 2;
+    //     const half_d = 1 / 2;
+    //     const position_buffer = new RenderDeviceVector3AttributeBuffer(DefaultConfig.render_server, RenderStateBufferUsage.StaticDraw,
+    //         new Float32Array([
+    //             // top
+    //             half_w, half_h, half_d,
+    //             half_w, half_h, -half_d,
+    //             -half_w, half_h, half_d,
+    //             -half_w, half_h, -half_d,
+    //             // bottom
+    //             half_w, -half_h, half_d,
+    //             half_w, -half_h, -half_d,
+    //             -half_w, -half_h, half_d,
+    //             -half_w, -half_h, -half_d,
+    //             // front
+    //             half_w, -half_h, half_d,
+    //             half_w, half_h, half_d,
+    //             -half_w, -half_h, half_d,
+    //             -half_w, half_h, half_d,
+    //             // back
+    //             half_w, -half_h, -half_d,
+    //             half_w, half_h, -half_d,
+    //             -half_w, -half_h, -half_d,
+    //             -half_w, half_h, -half_d,
+    //             // right
+    //             half_w, -half_h, -half_d,
+    //             half_w, half_h, -half_d,
+    //             half_w, -half_h, half_d,
+    //             half_w, half_h, half_d,
+    //             // left
+    //             -half_w, -half_h, -half_d,
+    //             -half_w, half_h, -half_d,
+    //             -half_w, -half_h, half_d,
+    //             -half_w, half_h, half_d,
+    //         ]));
+    //     const normal_buffer = new RenderDeviceVector3AttributeBuffer(DefaultConfig.render_server, RenderStateBufferUsage.StaticDraw,
+    //         new Float32Array([
+    //             // top
+    //             0, 1, 0,
+    //             0, 1, 0,
+    //             0, 1, 0,
+    //             0, 1, 0,
+    //             // bottom
+    //             0, -1, 0,
+    //             0, -1, 0,
+    //             0, -1, 0,
+    //             0, -1, 0,
+    //             // front
+    //             0, 0, 1,
+    //             0, 0, 1,
+    //             0, 0, 1,
+    //             0, 0, 1,
+    //             // back
+    //             0, 0, -1,
+    //             0, 0, -1,
+    //             0, 0, -1,
+    //             0, 0, -1,
+    //             // right
+    //             1, 0, 0,
+    //             1, 0, 0,
+    //             1, 0, 0,
+    //             1, 0, 0,
+    //             // left
+    //             -1, 0, 0,
+    //             -1, 0, 0,
+    //             -1, 0, 0,
+    //             -1, 0, 0,
+    //         ]));
+    //     const uv_buffer = new RenderDeviceVector2AttributeBuffer(DefaultConfig.render_server, RenderStateBufferUsage.StaticDraw,
+    //         new Float32Array([
+    //             // top
+    //             1, 0,
+    //             1, 1,
+    //             0, 0,
+    //             0, 1,
+    //             // bottom
+    //             1, 1,
+    //             1, 0,
+    //             0, 1,
+    //             0, 0,
+    //             // front
+    //             1, 0,
+    //             1, 1,
+    //             0, 0,
+    //             0, 1,
+    //             // back
+    //             1, 1,
+    //             1, 0,
+    //             0, 1,
+    //             0, 0,
+    //             // right
+    //             1, 0,
+    //             1, 1,
+    //             0, 0,
+    //             0, 1,
+    //             // left
+    //             0, 0,
+    //             0, 1,
+    //             1, 0,
+    //             1, 1,
+    //         ]));
+    //     const index_buffer = new RenderDeviceIndexAttributeBuffer(DefaultConfig.render_server, RenderStateBufferUsage.StaticDraw,
+    //         new Uint32Array([
+    //             // top
+    //             0, 1, 2, 2, 1, 3,
+    //             // bottom
+    //             4, 6, 5, 5, 6, 7,
+    //             // front
+    //             8, 9, 10, 10, 9, 11,
+    //             // back
+    //             12, 14, 13, 13, 14, 15,
+    //             // right
+    //             16, 17, 18, 18, 17, 19,
+    //             // left
+    //             20, 22, 21, 21, 22, 23,
+    //         ]));
+    //     const instance_transfrom_buffer = new RenderDeviceMatrix4AttributeBuffer(DefaultConfig.render_server, RenderStateBufferUsage.StaticDraw, [
+    //         Matrix4.new.set_BasisPosition(Matrix3.new.set_RotateY(0.3), Vector3.create(2, 1, 1))
+    //     ], 1);
+
+    //     const geo = new ArrayGeometryResource(DefaultConfig);
+    //     geo.geometry.set_EmptyGeometry(RenderStatePrimitiveType.Triangles);
+    //     geo.geometry.set_Attribute('position', position_buffer);
+    //     geo.geometry.set_Attribute('normal', normal_buffer);
+    //     geo.geometry.set_Attribute('uv', uv_buffer);
+    //     geo.geometry.set_Attribute('instance_transform', instance_transfrom_buffer);
+    //     geo.geometry.set_Index(index_buffer);
+    //     geo.geometry.set_VertexCount(36);
+    //     geo.geometry.set_BBox(Box3.create(Vector3.create(-half_w, -half_h, -half_d), Vector3.create(half_w, half_h, half_d)));
+
+    //     const mesh = new MeshInstance3D(DefaultConfig);
+    //     mesh.geometry = geo;
+    //     mesh.material = __plain2;
+    //     mesh.top_level = true;
+    //     mesh.render_queue = 0;
+    //     World.add_Child(mesh);
+    // }
 
     return EditorSceneTree;
 }

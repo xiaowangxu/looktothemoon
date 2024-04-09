@@ -11,27 +11,6 @@ import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 
-export const RenderServerGeometryAttributeLocations = {
-    position: 0,
-    normal: 1,
-    tangent: 2,
-    color: 3,
-    uv: 4,
-    uv2: 5,
-    bone: 6,
-    weight: 7,
-    instance_transform: 8,
-    instance_transform1: 9,
-    instance_transform2: 10,
-    instance_transform3: 11,
-    InternalMax: 12,
-    custom0: 12,
-    custom1: 13,
-    custom2: 14,
-    custom3: 15,
-    TotalMax: 15,
-};
-
 export type RenderServerGeometryArray<RS extends RenderState<RS>, Buffer extends RenderStateBuffer<RS> = RenderStateBuffer<RS>> = {
     [key in string]:
     RenderDeviceAttributeBuffer<RS, Buffer> |
@@ -45,15 +24,37 @@ type IndexAttributeBuffer = RenderDeviceIndexAttributeBuffer<WebGL2RenderState> 
 
 export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> {
 
-    public static readonly GeometryAttributesCode = `    layout(location = ${RenderServerGeometryAttributeLocations.position}) in vec3 a_position;
-    layout(location = ${RenderServerGeometryAttributeLocations.normal}) in vec3 a_normal;
-    layout(location = ${RenderServerGeometryAttributeLocations.tangent}) in vec3 a_tangent;
-    layout(location = ${RenderServerGeometryAttributeLocations.color}) in vec3 a_color;
-    layout(location = ${RenderServerGeometryAttributeLocations.uv}) in vec2 a_uv;
-    layout(location = ${RenderServerGeometryAttributeLocations.uv2}) in vec2 a_uv2;
-    layout(location = ${RenderServerGeometryAttributeLocations.bone}) in int a_bone;
-    layout(location = ${RenderServerGeometryAttributeLocations.weight}) in float a_weight;
-    layout(location = ${RenderServerGeometryAttributeLocations.instance_transform}) in mat4 a_instance_transform;`;
+    static readonly #const_zero_vec3: Vector3 = new Vector3(0, 0, 0);
+
+    public static readonly GeometryAttributeLocations = {
+        position: 0,
+        normal: 1,
+        tangent: 2,
+        color: 3,
+        uv: 4,
+        uv2: 5,
+        bone: 6,
+        weight: 7,
+        instance_transform: 8,
+        instance_transform1: 9,
+        instance_transform2: 10,
+        instance_transform3: 11,
+        InternalMax: 12,
+        custom0: 12,
+        custom1: 13,
+        custom2: 14,
+        custom3: 15,
+        TotalMax: 15,
+    };
+    public static readonly GeometryAttributesCode = `    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.position}) in vec3 a_position;
+    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.normal}) in vec3 a_normal;
+    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.tangent}) in vec3 a_tangent;
+    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.color}) in vec3 a_color;
+    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.uv}) in vec2 a_uv;
+    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.uv2}) in vec2 a_uv2;
+    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.bone}) in int a_bone;
+    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.weight}) in float a_weight;
+    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.instance_transform}) in mat4 a_instance_transform;`;
 
     protected vertex_array_attributes_map: Map<string, { attribute: Ref<RenderDeviceAttributeBuffer<WebGL2RenderState>>, location: number }> = new Map();
     protected readonly vertex_array_ref: Ref<WebGL2RenderStateVertexArray> = new Ref();
@@ -74,12 +75,16 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
     protected _bbox_pixel_enlargement: number = 0;
     public get bbox_pixel_enlargement() { return this._bbox_pixel_enlargement; }
 
-    private _vertex_count: number | undefined;
-    public get vertex_count() { return this._vertex_count; }
+    public get vertex_count() { return this.has_geometry ? this.vertex_array_ref.expect.count : 0; }
+
     private _primitive_type: RenderStatePrimitiveType | undefined;
     public get primitive_type() { return this._primitive_type; }
 
-    public instance_count: number = 1;
+    private _instance_count: number = 1;
+    public get instance_count() { return this._instance_count; }
+    public set instance_count(count: number) {
+        this._instance_count = Math.max(count, 0);
+    }
 
     // signal
     public readonly singal_bbox_changed: SignalEmitter<(bbox: Box3) => void> = new SignalEmitter();
@@ -94,12 +99,7 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
         for (const [name, attr] of this.vertex_array_attributes_map.entries()) {
             // ignore default matrix
             if (attr.attribute.expect === (this.render_device as RenderServerDevice).identity_transform_attribute_buffer) continue;
-            if ((RenderServerGeometryAttributeLocations as Record<string, number>)[name] !== undefined) {
-                ans[name] = attr.attribute.expect;
-            }
-            else {
-                ans[name] = { attribute: attr.attribute.expect, location: attr.location as never };
-            }
+            ans[name] = { attribute: attr.attribute.expect, location: attr.location as never };
         }
         return ans;
     }
@@ -140,16 +140,10 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
         this.vertex_array_index_ref.clear();
     }
 
-    static readonly #zero_vec3: Vector3 = new Vector3(0, 0, 0);
-
     public clear_Geometry() {
         this.clear_GeometryInternal();
-        this._bbox.set(RenderServerGeometry.#zero_vec3, RenderServerGeometry.#zero_vec3);
+        this._bbox.set(RenderServerGeometry.#const_zero_vec3, RenderServerGeometry.#const_zero_vec3);
         this.singal_bbox_changed.trigger(this._bbox);
-    }
-
-    public clear_Surface(index: number) {
-        this.vertex_array_groups_ref.remove(index);
     }
 
     public set_Geometry(primitive_type: RenderStatePrimitiveType, array: RenderServerGeometryArray<WebGL2RenderState>, index?: IndexAttributeBuffer, vertex_count?: number, bbox?: Box3, default_instance_transform_attribute: boolean = true) {
@@ -157,12 +151,11 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
         if (count === undefined) throw new Error('<RenderServerGeometry> set_Geometry: vertex count is known');
         const vertex_array = this.render_state.create_VertexArray(primitive_type, 0, count).expect();
         this._primitive_type = primitive_type;
-        this._vertex_count = count;
         const vertex_array_attributes_map = new Map();
         for (const [name, attribute] of Object.entries(array)) {
             if (attribute instanceof RenderDeviceAttributeBuffer) {
                 // is system buffer
-                const location: number | undefined = (RenderServerGeometryAttributeLocations as Record<string, number>)[name];
+                const location: number | undefined = (RenderServerGeometry.GeometryAttributeLocations as Record<string, number>)[name];
                 if (location === undefined) throw new Error('<RenderServerGeometry> set_Geometry: attribute\'s location is not system determinded');
                 vertex_array_attributes_map.set(name, { attribute: new Ref(attribute), location });
                 attribute.bound_VertexArray(vertex_array, location);
@@ -176,7 +169,7 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
             }
         }
         if (default_instance_transform_attribute && array.instance_transform === undefined) {
-            const location = RenderServerGeometryAttributeLocations.instance_transform;
+            const location = RenderServerGeometry.GeometryAttributeLocations.instance_transform;
             const attribute = (this.render_device as RenderServerDevice).identity_transform_attribute_buffer;
             vertex_array_attributes_map.set('instance_transform', { attribute: new Ref(attribute), location });
             attribute.bound_VertexArray(vertex_array, location);
@@ -195,15 +188,81 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
             this.set_BBox(bbox);
         }
         else {
-            this._bbox.set(RenderServerGeometry.#zero_vec3, RenderServerGeometry.#zero_vec3);
+            this._bbox.set(RenderServerGeometry.#const_zero_vec3, RenderServerGeometry.#const_zero_vec3);
             this.singal_bbox_changed.trigger(this._bbox);
         }
     }
 
+    public set_EmptyGeometry(primitive_type: RenderStatePrimitiveType, default_instance_transform_attribute: boolean = true) {
+        this._primitive_type = primitive_type;
+        this.clear_GeometryInternal();
+        this.vertex_array_ref.value = this.render_state.create_VertexArray(primitive_type, 0, 0).expect();
+        if (default_instance_transform_attribute) {
+            const location = RenderServerGeometry.GeometryAttributeLocations.instance_transform;
+            const attribute = (this.render_device as RenderServerDevice).identity_transform_attribute_buffer;
+            this.vertex_array_attributes_map.set('instance_transform', { attribute: new Ref(attribute), location });
+            attribute.bound_VertexArray(this.vertex_array_ref.expect, location);
+            attribute.toggle_VertexArray(this.vertex_array_ref.expect, location, true);
+        }
+        this._bbox.set(RenderServerGeometry.#const_zero_vec3, RenderServerGeometry.#const_zero_vec3);
+        this.singal_bbox_changed.trigger(this._bbox);
+    }
+
     public add_Surface(offset: number, length: number) {
-        if (!this.has_geometry) throw new Error('<RenderServerGeometry> add_Surface: no geometry existed');
+        if (!this.has_geometry) throw new Error('<RenderServerGeometry> add_Surface: geometry does not exist, call set_Geometry / set_EmptyGeometry first');
         const vertex_array_view = this.render_state.create_VertexArrayView(this.vertex_array_ref.expect, offset, length).expect();
         this.vertex_array_groups_ref.push(vertex_array_view);
+    }
+
+    public clear_Surface(index: number) {
+        this.vertex_array_groups_ref.remove(index);
+    }
+
+    public set_Attribute(name: string, attribute: RenderDeviceAttributeBuffer<WebGL2RenderState, RenderStateBuffer<WebGL2RenderState>>, location?: number) {
+        if (!this.has_geometry) throw new Error('<RenderServerGeometry> set_Attribute: geometry does not exist, call set_Geometry / set_EmptyGeometry first');
+        const vertex_array = this.vertex_array_ref.expect;
+        let attribute_map: {
+            attribute: Ref<RenderDeviceAttributeBuffer<WebGL2RenderState, RenderStateBuffer<WebGL2RenderState>>>;
+            location: number;
+        };
+        if (this.vertex_array_attributes_map.has(name)) {
+            attribute_map = this.vertex_array_attributes_map.get(name)!;
+        }
+        else {
+            attribute_map = { attribute: new Ref<RenderDeviceAttributeBuffer<WebGL2RenderState, RenderStateBuffer<WebGL2RenderState>>>(), location: -1 };
+            this.vertex_array_attributes_map.set(name, attribute_map);
+        }
+        if (location === undefined) {
+            let _location: number | undefined = attribute_map.location === -1 ? undefined : attribute_map.location;
+            if (_location === undefined) _location = (RenderServerGeometry.GeometryAttributeLocations as Record<string, number>)[name];
+            if (_location === undefined) throw new Error('<RenderServerGeometry> set_Geometry: attribute\'s location is not system determinded');
+
+            if (attribute_map.location === -1) attribute_map.location = _location;
+            else if (attribute_map.location !== _location) throw new Error('<RenderServerGeometry> set_Attribute: attribute\' location conflicts existing one');
+
+            attribute_map.attribute.value = attribute;
+            attribute.bound_VertexArray(vertex_array, _location);
+            attribute.toggle_VertexArray(vertex_array, _location, true);
+        }
+        else {
+            if (attribute_map.location === -1) attribute_map.location = location;
+            else if (attribute_map.location !== location) throw new Error('<RenderServerGeometry> set_Attribute: attribute\' location conflicts existing one');
+
+            attribute_map.attribute.value = attribute;
+            attribute.bound_VertexArray(vertex_array, location);
+            attribute.toggle_VertexArray(vertex_array, location, true);
+        }
+    }
+
+    public set_Index(index: IndexAttributeBuffer) {
+        if (!this.has_geometry) throw new Error('<RenderServerGeometry> set_Index: geometry does not exist, call set_Geometry / set_EmptyGeometry first');
+        this.vertex_array_index_ref.value = index;
+        this.render_state.set_VertexArrayIndexBuffer(this.vertex_array_ref.expect, index.buffer as WebGL2RenderStateBuffer);
+    }
+
+    public set_VertexCount(count: number) {
+        if (!this.has_geometry) throw new Error('<RenderServerGeometry> set_VertexCount: geometry does not exist, call set_Geometry / set_EmptyGeometry first');
+        this.render_state.set_VertexArrayVertexCount(this.vertex_array_ref.expect, count);
     }
 
     public set_BBox(bbox: Box3) {

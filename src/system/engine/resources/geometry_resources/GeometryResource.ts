@@ -44,7 +44,7 @@ export abstract class GeometryResource extends Resource {
             return tri;
         }
         else {
-            const index = this.geometry.vertex_count!;
+            const index = this.geometry.vertex_count;
             const tri: Triangle3[] = [];
             for (let i = 0; i < index; i += 3) {
                 const base0 = i * 3;
@@ -90,7 +90,7 @@ export class MultiGeometryResource extends GeometryResource {
         this.override_geometry_ref.value = geometry;
         const attributes = geometry.geometry.get_AttributeBuffers()!;
         const index = geometry.geometry.get_IndexAttributeBuffer()!;
-        const vertex_count = geometry.geometry.vertex_count!;
+        const vertex_count = geometry.geometry.vertex_count;
         const primitive_type = geometry.geometry.primitive_type!;
         attributes.instance_transform = this.instance_transform_attribute_buffer_ref.expect;
         this._base_bbox.copy(geometry.geometry.bbox);
