@@ -10,7 +10,8 @@ import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2Rend
 import { Color } from "@/system/fivepebble/graphics/Color";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { Node3D } from "../../Node3D";
-import { PrimitiveFragmentPreZShader, PrimitiveFragmentPreZShaderUniforms, PrimitiveVertexShader, PrimitiveVertexShaderUniforms } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
+import { PrimitiveFragmentPreZShader, PrimitiveFragmentPreZShaderUniforms, PrimitiveVertexShader, PrimitiveVertexShaderUniforms } from "@/system/engine/resources/material_resources/Primitives";
+import { GlslPrimitives } from "@/system/engine/resources/material_resources/Primitives";
 
 export class GrabberElement3D<T> extends FixSizeNode3D {
     // signals
@@ -164,18 +165,17 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     uniform int u_hidden;
     uniform highp sampler2D u_scene_depth;
     
-    in vec3 v_world;
-    in vec3 v_normal;
-    in vec2 v_uv;
+    ${GlslPrimitives.FragmentVertexEssentialIns}
 
     ${RenderServerDevice.FrameOutputBufferCode}
 
     void main() {
+        ${GlslPrimitives.FragmentVertexEssentialCalculations}
         float depth = texture(u_scene_depth, gl_FragCoord.xy / screen_size).r;
         vec4 hidden_color = mix(u_color, vec4(0.5, 0.5, 0.5, 1.0), 0.75);
         bool not_hidden = depth >= gl_FragCoord.z;
         o_color = !(u_hidden == 1) || not_hidden ? u_color : hidden_color;
-        o_normal = vec4(normalize(v_normal), 1.0);
+        o_normal = vec4(NORMAL_VIEW, 1.0);
     }`;
     static readonly #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
         u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
@@ -192,20 +192,18 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     uniform vec4 u_color;
     uniform int u_hidden;
     uniform highp sampler2D u_scene_depth;
-    
-    in vec3 v_world;
-    in vec3 v_normal;
-    in vec2 v_uv;
+
+    ${GlslPrimitives.FragmentVertexEssentialIns}
 
     ${RenderServerDevice.FrameOiTOutputBufferCode}
 
     void main() {
+        ${GlslPrimitives.FragmentVertexEssentialCalculations}
         float depth = texture(u_scene_depth, gl_FragCoord.xy / screen_size).r;
         vec4 hidden_color = mix(u_color, vec4(0.5, 0.5, 0.5, u_color.a), 0.75);
         bool not_hidden = depth >= gl_FragCoord.z;
         vec4 color = !(u_hidden == 1) || not_hidden ? u_color : hidden_color;
-
-        o_normal = vec4(v_normal, 1.0);
+        o_normal = vec4(NORMAL_VIEW, 1.0);
         ${RenderServerDevice.OitOutputCode}
     }`;
     static readonly #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {

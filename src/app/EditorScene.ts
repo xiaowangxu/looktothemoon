@@ -9,7 +9,6 @@ import { ShortCut } from "@/system/engine/inputs/ShortCut";
 import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
 import { BoxGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
-import { FlatMaterialResource, NormalMaterialResource, PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { GeometryResource, MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
@@ -18,7 +17,6 @@ import { MultiLineGeometryResource, MultiSegmentGeometryResource } from "@/syste
 import { MultiLineSegmentMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
-import { StandardMaterialResource } from "../system/engine/resources/material_resources/PrimitiveMaterialResource";
 import { ClassLoader } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
 import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
 import { MaterialOverrideResource } from "@/system/engine/resources/material_resources/MaterialResource";
@@ -58,6 +56,9 @@ import { RenderStateBufferUsage, RenderStatePrimitiveType, RenderStateTextureMag
 import { Dom3D } from "@/system/engine/nodes/node3ds/Dom3D";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import { RenderDeviceVector3AttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer, RenderDeviceMatrix4AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
+import { PlainMaterialResource } from "@/system/engine/resources/material_resources/PlainMaterialResource";
+import { NormalMaterialResource } from "@/system/engine/resources/material_resources/NormalMaterialResource";
+import { UvMaterialResource } from "@/system/engine/resources/material_resources/UvMaterialResource";
 
 // import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
 // import png_url2 from 'res://matcap-2.jpg';
@@ -220,8 +221,7 @@ export function createEditor() {
     multi_geometry.commit_InstanceTransforms();
     multi_geometry.update_BBox();
 
-    const material = new StandardMaterialResource(DefaultConfig);
-    material.color = Color.create(1, 1, 1, 1);
+    const material = new UvMaterialResource(DefaultConfig);
 
     const Mesh1 = new MeshInstance3D(DefaultConfig);
     Mesh1.geometry = multi_geometry;
@@ -411,7 +411,8 @@ export function createEditor() {
     const geo = new BoxGeometryResource(DefaultConfig);
     geo.build();
     ground.geometry = geo;
-    const ground_material = new FlatMaterialResource(DefaultConfig);
+    const ground_material = new MatcapMaterialResource(DefaultConfig);
+    ground_material.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/matcaps/matcap-12.lttmbin').expect()
     ground_material.color = Color.create(0.8, 0.8, 0.8);
     ground.material = ground_material;
     ground.local_scale = Vector3.create(1000, 10, 1000);
@@ -422,7 +423,7 @@ export function createEditor() {
     grid_geo.build();
     const grid = new MeshInstance3D(DefaultConfig);
     grid.geometry = grid_geo;
-    const grid_mat = new PlainColorMaterialResource(DefaultConfig);
+    const grid_mat = new MatcapMaterialResource(DefaultConfig);
     grid_mat.color = Color.color8(0, 0, 0, 20);
     grid.material = grid_mat;
     grid.top_level = true;
@@ -535,7 +536,7 @@ export function createEditor() {
 
     const point_geo = new SphereGeometryResource(DefaultConfig);
     point_geo.build();
-    const point_mat = new PlainColorMaterialResource(DefaultConfig);
+    const point_mat = new MatcapMaterialResource(DefaultConfig);
     point_mat.color = Color.color8(0, 0, 0);
     const point_mesh = new MeshInstance3D(DefaultConfig);
     point_mesh.geometry = point_geo;
@@ -586,7 +587,7 @@ export function createEditor() {
     const plane = new SphereGeometryResource(DefaultConfig);
     // plane.width = plane.height = 1;
     plane.build();
-    const plain = new PlainColorMaterialResource(DefaultConfig);
+    const plain = new PlainMaterialResource(DefaultConfig);
     const __plain = new MaterialOverrideResource(DefaultConfig);
     __plain.set_OverrideMaterial(plain);
     const __plain2 = new MaterialOverrideResource(DefaultConfig);

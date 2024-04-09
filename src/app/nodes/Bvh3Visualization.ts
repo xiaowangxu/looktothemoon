@@ -2,7 +2,7 @@ import type { Config } from "@/system/engine/ConfiguredObject";
 import { PackedIndexArray, PackedVector3Array } from "@/system/engine/classes/value_wrappers/PackedArray";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
 import { ArrayGeometryResource } from "@/system/engine/resources/geometry_resources/ArrayGeometryResource";
-import { PlainColorMaterialResource } from "@/system/engine/resources/material_resources/PrimitiveMaterialResource";
+import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/MatcapMaterialResource";
 import type { Bvh3, BvhNode3 } from "@/system/fivepebble/bvh/Bvh3";
 import type { AABB } from "@/system/fivepebble/bvh/BvhLike";
 import type { Box3 } from "@/system/fivepebble/geometries/Box3";
@@ -14,8 +14,8 @@ import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/slive
 export class Bvh3Visualization extends MeshInstance3D {
     constructor(config: Config) {
         super(config);
-        this.material = new PlainColorMaterialResource(config);
-        (this.material as PlainColorMaterialResource).color = Color.create(1, 0, 0, 1);
+        this.material = new MatcapMaterialResource(config);
+        (this.material as MatcapMaterialResource).color = Color.create(1, 0, 0, 1);
     }
 
     private append_AABB(aabb: AABB<Vector3, Matrix3>, points: number[], index: number[]) {

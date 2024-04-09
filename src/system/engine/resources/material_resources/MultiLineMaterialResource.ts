@@ -150,6 +150,7 @@ export const MultiLineSegmentVertexShader = new Cacher((config: Config) => {
     
         v_normal = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0, 0.0, 1.0)) : normalize(camera_world[3].xyz - (is_start ? a_start : a_end));
     }`;
+
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect());
 });
 export const MultiLineSegmentVertexShaderUniforms: UniformInitSet<WebGL2RenderState> = {
@@ -300,6 +301,33 @@ export const MultiLineSegmentFragmentOitShaderUniforms: UniformInitSet<WebGL2Ren
     u_vertex_color: { type: RenderStateUniformType.Uint, default: 1 },
 };
 
+const MultiLineSegmentShader = new Cacher((config: Config) => {
+    const shader = config.render_server.create_Shader();
+    const vertex_shader = MultiLineSegmentVertexShader.get(config).expect;
+    const fragment_prez_shader = MultiLineSegmentFragmentPreZShader.get(config).expect;
+    const fragment_shade_shader = MultiLineSegmentFragmentShadeShader.get(config).expect;
+    const fragment_oit_shader = MultiLineSegmentFragmentOitShader.get(config).expect;
+    shader.set_Shaders(
+        vertex_shader,
+        MultiLineSegmentVertexShaderUniforms,
+        {
+            prez: {
+                shader: fragment_prez_shader,
+                uniforms: MultiLineSegmentFragmentPreZShaderUniforms,
+            },
+            shade: {
+                shader: fragment_shade_shader,
+                uniforms: MultiLineSegmentFragmentShadeShaderUniforms,
+            },
+            oit: {
+                shader: fragment_oit_shader,
+                uniforms: MultiLineSegmentFragmentOitShaderUniforms,
+            }
+        }
+    );
+    return new Ref(shader);
+});
+
 export class MultiLineSegmentMaterialResource extends MaterialResource {
 
     static readonly #uniforms: MaterialReadOnlyUniforms = {
@@ -399,31 +427,8 @@ export class MultiLineSegmentMaterialResource extends MaterialResource {
         this.update_Material();
     }
 
-    public update_Material() {
-        const shader = this.render_server.create_Shader();
-        const vertex_shader = MultiLineSegmentVertexShader.get(this.config).expect;
-        const fragment_prez_shader = MultiLineSegmentFragmentPreZShader.get(this.config).expect;
-        const fragment_shade_shader = MultiLineSegmentFragmentShadeShader.get(this.config).expect;
-        const fragment_oit_shader = MultiLineSegmentFragmentOitShader.get(this.config).expect;
-        shader.set_Shaders(
-            vertex_shader,
-            MultiLineSegmentVertexShaderUniforms,
-            {
-                prez: {
-                    shader: fragment_prez_shader,
-                    uniforms: MultiLineSegmentFragmentPreZShaderUniforms,
-                },
-                shade: {
-                    shader: fragment_shade_shader,
-                    uniforms: MultiLineSegmentFragmentShadeShaderUniforms,
-                },
-                oit: {
-                    shader: fragment_oit_shader,
-                    uniforms: MultiLineSegmentFragmentOitShaderUniforms,
-                }
-            }
-        );
-        this.material.set_Material(shader, MultiLineSegmentMaterialResource.#uniforms);
+    protected update_Material() {
+        this.material.set_Material(MultiLineSegmentShader.get(this.config).expect, MultiLineSegmentMaterialResource.#uniforms);
         this.material.transparent = false;
     }
 }

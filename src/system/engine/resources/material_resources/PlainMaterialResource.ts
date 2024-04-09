@@ -13,7 +13,7 @@ import { Epsilon } from "@/system/fivepebble/Scalar";
 import { Cacher } from "@/system/utils/Cacher";
 import { GlslPrimitives, PrimitiveFragmentPreZShader, PrimitiveFragmentPreZShaderUniforms, PrimitiveVertexShader, PrimitiveVertexShaderUniforms } from "./Primitives";
 
-const MatcapFragmentShadeShader = new Cacher((config: Config) => {
+const PlainFragmentShadeShader = new Cacher((config: Config) => {
     const code = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
@@ -28,26 +28,15 @@ const MatcapFragmentShadeShader = new Cacher((config: Config) => {
 
     ${RenderServerDevice.FrameOutputBufferCode}
 
-    vec2 matcap_uv_compute(vec3 I, vec3 N) {
-        /* Quick creation of an orthonormal basis */
-        float a = 1.0 / (1.0 + I.z);
-        float b = -I.x * I.y * a;
-        vec3 b1 = vec3(1.0 - I.x * I.x * a, b, -I.x);
-        vec3 b2 = vec3(b, 1.0 - I.y * I.y * a, -I.y);
-        vec2 matcap_uv = vec2(dot(b1, N), dot(b2, N));
-        return matcap_uv * 0.496 + 0.5;
-    }
-
     void main() {
         ${GlslPrimitives.FragmentVertexEssentialCalculations}
         o_normal = vec4(NORMAL_VIEW, 1.0);
-        vec2 matcap_uv = matcap_uv_compute(LOOKAT_VIEW, NORMAL_VIEW);
-        o_color = vec4(texture(u_texture, matcap_uv).rgb, 1.0) * u_color;
+        o_color = vec4(texture(u_texture, v_UV).rgb, 1.0) * u_color;
     }`;
 
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());
 });
-const MatcapFragmentShadeShaderUniforms = new Cacher((config: Config) => {
+const PlainFragmentShadeShaderUniforms = new Cacher((config: Config) => {
     return {
         u_texture: {
             type: RenderStateUniformType.Tex2D,
@@ -59,7 +48,7 @@ const MatcapFragmentShadeShaderUniforms = new Cacher((config: Config) => {
     } as UniformInitSet<WebGL2RenderState>;
 });
 
-const MatcapFragmentOitShader = new Cacher((config: Config) => {
+const PlainFragmentOitShader = new Cacher((config: Config) => {
     const code = `#version 300 es
     precision highp float;
     precision highp usampler2DArray;
@@ -74,27 +63,16 @@ const MatcapFragmentOitShader = new Cacher((config: Config) => {
 
     ${RenderServerDevice.FrameOiTOutputBufferCode}
 
-    vec2 matcap_uv_compute(vec3 I, vec3 N) {
-        /* Quick creation of an orthonormal basis */
-        float a = 1.0 / (1.0 + I.z);
-        float b = -I.x * I.y * a;
-        vec3 b1 = vec3(1.0 - I.x * I.x * a, b, -I.x);
-        vec3 b2 = vec3(b, 1.0 - I.y * I.y * a, -I.y);
-        vec2 matcap_uv = vec2(dot(b1, N), dot(b2, N));
-        return matcap_uv * 0.496 + 0.5;
-    }
-
     void main() {
         ${GlslPrimitives.FragmentVertexEssentialCalculations}
         o_normal = vec4(NORMAL_VIEW, 1.0);
-        vec2 matcap_uv = matcap_uv_compute(LOOKAT_VIEW, NORMAL_VIEW);
-        vec4 color = vec4(texture(u_texture, matcap_uv).rgb, 1.0) * u_color;
+        vec4 color = vec4(texture(u_texture, v_UV).rgb, 1.0) * u_color;
         ${RenderServerDevice.OitOutputCode}
     }`;
 
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());
 });
-const MatcapFragmentOitShaderUniforms = new Cacher((config: Config) => {
+const PlainFragmentOitShaderUniforms = new Cacher((config: Config) => {
     return {
         u_texture: {
             type: RenderStateUniformType.Tex2D,
@@ -106,7 +84,7 @@ const MatcapFragmentOitShaderUniforms = new Cacher((config: Config) => {
     } as UniformInitSet<WebGL2RenderState>;
 });
 
-const MatcapShader = new Cacher((config: Config) => {
+const PlainShader = new Cacher((config: Config) => {
     const shader = config.render_server.create_Shader();
     shader.set_Shaders(
         PrimitiveVertexShader.get(config).expect,
@@ -117,19 +95,19 @@ const MatcapShader = new Cacher((config: Config) => {
                 uniforms: PrimitiveFragmentPreZShaderUniforms,
             },
             shade: {
-                shader: MatcapFragmentShadeShader.get(config).expect,
-                uniforms: MatcapFragmentShadeShaderUniforms.get(config),
+                shader: PlainFragmentShadeShader.get(config).expect,
+                uniforms: PlainFragmentShadeShaderUniforms.get(config),
             },
             oit: {
-                shader: MatcapFragmentOitShader.get(config).expect,
-                uniforms: MatcapFragmentOitShaderUniforms.get(config),
+                shader: PlainFragmentOitShader.get(config).expect,
+                uniforms: PlainFragmentOitShaderUniforms.get(config),
             }
         }
     );
     return new Ref(shader);
 });
 
-export class MatcapMaterialResource extends MaterialResource {
+export class PlainMaterialResource extends MaterialResource {
 
     static readonly #uniforms: MaterialReadOnlyUniforms = {
         ...MaterialModelWorldUniform,
@@ -137,7 +115,7 @@ export class MatcapMaterialResource extends MaterialResource {
         u_color: RenderStateUniformType.Vec4,
     };
 
-    public get uniforms() { return MatcapMaterialResource.#uniforms; }
+    public get uniforms() { return PlainMaterialResource.#uniforms; }
 
     private _color: Color = new Vector4(1, 1, 1, 1);
     public get color() { return this._color; }
@@ -165,7 +143,7 @@ export class MatcapMaterialResource extends MaterialResource {
     }
 
     protected update_Material() {
-        this.material.set_Material(MatcapShader.get(this.config).expect, MatcapMaterialResource.#uniforms);
+        this.material.set_Material(PlainShader.get(this.config).expect, PlainMaterialResource.#uniforms);
         this.material.transparent = false;
     }
 
