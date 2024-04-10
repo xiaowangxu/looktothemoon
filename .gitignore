@@ -28,5 +28,6 @@ coverage
 *.sw?
 
 res/*.vfs
+res/*.vfs.gz
 src/system/fivepebble/ok-list.txt
 src/system/filesystem/fs_saver_loader/FileSystemSaverLoader.d.mts

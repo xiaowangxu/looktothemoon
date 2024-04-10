@@ -4,8 +4,11 @@ import { readdirSync, lstatSync, readFileSync, writeFileSync } from 'fs';
 import { save_FileSystem } from '../../src/system/filesystem/fs_saver_loader/FileSystemSaverLoader.mjs';
 import { extname, basename, parse, resolve } from 'path';
 import chalk from 'chalk';
+import { Blob } from 'buffer';
 
 const [, , base_path, out_path] = process.argv;
+
+const gz = extname(out_path).toLowerCase() === '.gz';
 
 function get_MemorySize(byte_length) {
     const size = byte_length / 1024 / 1024;
@@ -87,28 +90,30 @@ function walk(path, root = false, header = '') {
     return subs;
 }
 
-console.log(`${chalk.bold.blueBright('[ build nodes ]')}\n`);
+console.log(`${chalk.bold.blueBright('[ building nodes ]')}\n`);
 walk(base_path, true);
 console.log(`\nloaded ${dirs_count} dir(s), ${files_count} file(s)`);
 
 console.log(`${chalk.bold.blueBright('\n[ encoding data ]')}\n`);
 const buffer = save_FileSystem(nodes, blocks);
 
-console.log(`${chalk.bold.blueBright(`[ write to ${out_path} file ]`)}\n`);
-writeFileSync(out_path, new Uint8Array(buffer));
-console.log(`write to ${out_path} with ${get_MemorySize(buffer.byteLength)}\n`);
+async function compress(buffer) {
+    const ds = new CompressionStream("gzip");
+    const stream = new Blob([buffer]).stream().pipeThrough(ds);
+    return await new Response(stream).arrayBuffer();
+}
 
-// async function compress_Blob(blob) {
-//     console.log(blob);
-//     const ds = new CompressionStream("deflate");
-//     const stream = blob.stream().pipeThrough(ds);
-//     return await new Response(stream).arrayBuffer();
-// }
+let _buffer = buffer;
+if (gz) {
+    console.log(`${chalk.bold.blueBright(`[ compressing data ]`)}\n`);
+    _buffer = await compress(buffer);
+    const old_size = buffer.byteLength;
+    const new_size = _buffer.byteLength;
+    console.log(` compress from ${get_MemorySize(old_size)} to ${get_MemorySize(new_size)} with compression ratio of ${(new_size / old_size * 100).toFixed(2)}%\n`);
+}
 
-// import { Blob } from 'buffer';
-// const compressed = await compress_Blob(new Blob([buffer], {type:'application/octet-stream'}));
-// console.log(compressed);
-// writeFileSync(`${out_path}.gz`, new Uint8Array(compressed));
-// console.log(`write to ${out_path}.gz with ${get_MemorySize(compressed.byteLength)}\n`);
+console.log(`${chalk.bold.blueBright(`[ writing to ${out_path} file ]`)}\n`);
+writeFileSync(out_path, new Uint8Array(_buffer));
+console.log(`write to ${out_path} with ${get_MemorySize(_buffer.byteLength)}\n`);
 
 console.log(`${chalk.bold.greenBright('[ ok ]')}\n`);
