@@ -3,15 +3,14 @@ import type { Config } from "../../ConfiguredObject";
 import { MaterialResource, type MaterialReadOnlyUniforms } from "./MaterialResource";
 import type { TextureResource } from "../texture_resources/TextureResource";
 import { Ref } from "@/system/utils/RefCounted";
-import { MaterialModelWorldUniform } from "../../render_server/RenderServerMaterial";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
-import { RenderServerDevice, RenderServerPlainColorTexture } from "../../render_server/RenderServer";
+import { RenderServerPlainColorTexture } from "../../render_server/RenderServer";
 import type { UniformInitSet } from "../../render_server/RenderServerShader";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { Epsilon } from "@/system/fivepebble/Scalar";
 import { Cacher } from "@/system/utils/Cacher";
-import { GlslPrimitives, PrimitiveFragmentPreZShader, PrimitiveFragmentPreZShaderUniforms, PrimitiveVertexShader, PrimitiveVertexShaderUniforms } from "./Primitives";
+import { GlslPrimitives, PrimitiveFragmentPreZShader, PrimitiveFragmentPreZShaderUniforms, PrimitiveMaterialUniforms, PrimitiveVertexShader, PrimitiveVertexShaderUniforms } from "./Primitives";
 
 const PlainFragmentShadeShader = new Cacher((config: Config) => {
     const code = `#version 300 es
@@ -41,7 +40,7 @@ const PlainFragmentShadeShaderUniforms = new Cacher((config: Config) => {
         u_texture: {
             type: RenderStateUniformType.Tex2D,
             default: {
-                texture: config.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.Empty),
+                texture: config.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.White),
             }
         },
         u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
@@ -77,7 +76,7 @@ const PlainFragmentOitShaderUniforms = new Cacher((config: Config) => {
         u_texture: {
             type: RenderStateUniformType.Tex2D,
             default: {
-                texture: config.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.Empty),
+                texture: config.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.White),
             }
         },
         u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
@@ -110,7 +109,7 @@ const PlainShader = new Cacher((config: Config) => {
 export class PlainMaterialResource extends MaterialResource {
 
     static readonly #uniforms: MaterialReadOnlyUniforms = {
-        ...MaterialModelWorldUniform,
+        ...PrimitiveMaterialUniforms,
         u_texture: RenderStateUniformType.Tex2D,
         u_color: RenderStateUniformType.Vec4,
     };

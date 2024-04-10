@@ -2,12 +2,11 @@ import { RenderStateShaderType } from "@/system/sliverofstraw/RenderState";
 import type { Config } from "../../ConfiguredObject";
 import { MaterialResource, type MaterialReadOnlyUniforms } from "./MaterialResource";
 import { Ref } from "@/system/utils/RefCounted";
-import { MaterialModelWorldUniform } from "../../render_server/RenderServerMaterial";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
-import { RenderServerDevice } from "../../render_server/RenderServer";
 import type { UniformInitSet } from "../../render_server/RenderServerShader";
 import { Cacher } from "@/system/utils/Cacher";
-import { GlslPrimitives, PrimitiveFragmentPreZShader, PrimitiveFragmentPreZShaderUniforms, PrimitiveVertexShader, PrimitiveVertexShaderUniforms } from "./Primitives";
+import { GlslPrimitives, MaterialNormalTextureUniformsDef, PrimitiveFragmentPreZShader, PrimitiveFragmentPreZShaderUniforms, PrimitiveMaterialUniforms, PrimitiveVertexShader, PrimitiveVertexShaderUniforms, ShaderNormalTextureUniformsDef, set_MaterialNormalTexture } from "./Primitives";
+import type { TextureResource } from "../texture_resources/TextureResource";
 
 const NormalFragmentShadeShader = new Cacher((config: Config) => {
     const code = `#version 300 es
@@ -16,6 +15,8 @@ const NormalFragmentShadeShader = new Cacher((config: Config) => {
     precision highp sampler3D;
 
     ${GlslPrimitives.WorldUniforms}
+
+    ${GlslPrimitives.ShaderNormalTextureUniforms}
     
     ${GlslPrimitives.FragmentVertexEssentialIns}
 
@@ -23,13 +24,14 @@ const NormalFragmentShadeShader = new Cacher((config: Config) => {
 
     void main() {
         ${GlslPrimitives.FragmentVertexEssentialCalculations}
+        ${GlslPrimitives.FragmentNormalTextureCalculations}
         o_normal = vec4(NORMAL_VIEW, 1.0);
         o_color = vec4((NORMAL_VIEW + 1.0) / 2.0, 1.0);
     }`;
 
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());
 });
-const NormalFragmentShadeShaderUniforms = {} as UniformInitSet<WebGL2RenderState>;
+const NormalFragmentShadeShaderUniforms = ShaderNormalTextureUniformsDef;
 
 const NormalShader = new Cacher((config: Config) => {
     const shader = config.render_server.create_Shader();
@@ -53,10 +55,20 @@ const NormalShader = new Cacher((config: Config) => {
 export class NormalMaterialResource extends MaterialResource {
 
     static readonly #uniforms: MaterialReadOnlyUniforms = {
-        ...MaterialModelWorldUniform,
+        ...PrimitiveMaterialUniforms,
+        ...MaterialNormalTextureUniformsDef,
     };
 
     public get uniforms() { return NormalMaterialResource.#uniforms; }
+
+    private _normal_texture: Ref<TextureResource> = new Ref();
+    public get normal_texture() { return this._normal_texture.value; }
+    public set normal_texture(normal_texture: TextureResource | undefined) {
+        if (this._normal_texture.value !== normal_texture) {
+            this._normal_texture.value = normal_texture;
+            set_MaterialNormalTexture(this, this._normal_texture.value);
+        }
+    }
 
     constructor(config: Config) {
         super(config);

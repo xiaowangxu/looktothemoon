@@ -238,7 +238,7 @@ export function createEditor() {
     point_light.color = Vector3.create(0, 1, 0);
     point_light.radius = 100.0;
     World.add_Child(point_light);
-    
+
 
     TranslateGrabber.signal_grabbing.connect(pos => {
         // EditorViewport.world_3d?.visual_world.set_LightGlobalPosition(3, pos);
@@ -516,6 +516,7 @@ export function createEditor() {
     const box_mesh = new MeshInstance3D(DefaultConfig);
     box_mesh.geometry = box_geo;
     box_mesh.material = new NormalMaterialResource(DefaultConfig);
+    (box_mesh.material as NormalMaterialResource).normal_texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/normals/normal-1.lttmbin').expect();
     box_mesh.local_position = Vector3.create(400, 100, -100);
     box_mesh.local_rotation = Euler.create(0.32, 0.123, 1.23);
     box_mesh.local_scale = Vector3.create(300, 100, 100);

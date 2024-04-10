@@ -2,12 +2,10 @@ import { RenderStateShaderType } from "@/system/sliverofstraw/RenderState";
 import type { Config } from "../../ConfiguredObject";
 import { MaterialResource, type MaterialReadOnlyUniforms } from "./MaterialResource";
 import { Ref } from "@/system/utils/RefCounted";
-import { MaterialModelWorldUniform } from "../../render_server/RenderServerMaterial";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
-import { RenderServerDevice } from "../../render_server/RenderServer";
 import type { UniformInitSet } from "../../render_server/RenderServerShader";
 import { Cacher } from "@/system/utils/Cacher";
-import { GlslPrimitives, PrimitiveFragmentPreZShader, PrimitiveFragmentPreZShaderUniforms, PrimitiveVertexShader, PrimitiveVertexShaderUniforms } from "./Primitives";
+import { GlslPrimitives, PrimitiveFragmentPreZShader, PrimitiveFragmentPreZShaderUniforms, PrimitiveMaterialUniforms, PrimitiveVertexShader, PrimitiveVertexShaderUniforms } from "./Primitives";
 
 const UvFragmentShadeShader = new Cacher((config: Config) => {
     const code = `#version 300 es
@@ -53,7 +51,7 @@ const UvShader = new Cacher((config: Config) => {
 export class UvMaterialResource extends MaterialResource {
 
     static readonly #uniforms: MaterialReadOnlyUniforms = {
-        ...MaterialModelWorldUniform,
+        ...PrimitiveMaterialUniforms,
     };
 
     public get uniforms() { return UvMaterialResource.#uniforms; }

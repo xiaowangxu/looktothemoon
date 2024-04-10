@@ -4,8 +4,11 @@ import { NodeNotification } from "../../../Node";
 import { RenderServerLightType } from "@/system/engine/render_server/RenderServerLightData";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Pi } from "@/system/fivepebble/Scalar";
+import { Box3 } from "@/system/fivepebble/geometries/Box3";
 
 export class SpotLight3D extends LightInstance3D {
+
+    static #tmp_cullable_box3 = Box3.new;
 
     static readonly #tmp_vector3_0: Vector3 = Vector3.new;
 
@@ -150,6 +153,18 @@ export class SpotLight3D extends LightInstance3D {
         }
     }
 
+    protected update_Cullable() {
+        if (this.light_rid !== undefined) {
+            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            if (visual_world !== undefined) {
+                const h = Math.tan(this._angle) * this._distance;
+                SpotLight3D.#tmp_cullable_box3.min.set(-h, -h, 0);
+                SpotLight3D.#tmp_cullable_box3.max.set(h, h, -this._distance);
+                visual_world.set_LightCullable(this.light_rid, SpotLight3D.#tmp_cullable_box3);
+            }
+        }
+    }
+
     public _notification(what: NodeNotification): void {
         switch (what) {
             case NodeNotification.EnteredTree: {
@@ -169,6 +184,7 @@ export class SpotLight3D extends LightInstance3D {
                         visual_world.set_LightCastShadow(this.light_rid, this._cast_shadow);
                         visual_world.set_LightRenderQueue(this.light_rid, this._render_queue);
                         visual_world.set_LightMask(this.light_rid, this._mask);
+                        this.update_Cullable();
                     }
                 }
                 break;

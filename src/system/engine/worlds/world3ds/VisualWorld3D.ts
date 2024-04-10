@@ -26,10 +26,11 @@ import { Camera3 } from "@/system/fivepebble/graphics/Camera3";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { RenderServerPlainColorTexture } from "../../render_server/RenderServer";
 import type { Viewport } from "../../nodes/Node";
-import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import type { Cloneable } from "@/system/utils/Type";
 import type { Transformable } from "@/system/fivepebble/linear_algebra/VectorLike";
 import type { CameraFrustumLikeCullable } from "@/system/fivepebble/graphics/CameraLike";
+import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 
 // #region sky
 
@@ -338,7 +339,10 @@ export class VisualWorld3DMesh extends WorldObject {
 
 export class VisualWorld3DLight extends WorldObject {
 
-    static #tmp_cullable_affine_transform_matrix = Matrix4.new;
+    static #const_forward_vector3 = Vector3.create(0, 0, -1);
+    static #tmp_cullable_affine_transform_matrix4 = Matrix4.new;
+    static #tmp_cullable_rotate_matrix3 = Matrix3.new;
+    static #tmp_cullable_rotate_quaternion = Quaternion.new;
 
     public type: RenderServerLightType = RenderServerLightType.SpotLight;
     public readonly position: Vector3 = new Vector3();
@@ -380,7 +384,17 @@ export class VisualWorld3DLight extends WorldObject {
 
     private update_Cullable() {
         if (this.cullable !== undefined) {
-            this.cullable.affine_transform(this.cullable_override!, VisualWorld3DLight.#tmp_cullable_affine_transform_matrix.set_Position(this.position));
+            this.cullable.affine_transform(this.cullable_override!,
+                VisualWorld3DLight.#tmp_cullable_affine_transform_matrix4.set_BasisPosition(
+                    VisualWorld3DLight.#tmp_cullable_rotate_matrix3.set_Quaternion(
+                        VisualWorld3DLight.#tmp_cullable_rotate_quaternion.set_Rotate(
+                            VisualWorld3DLight.#const_forward_vector3,
+                            this.direction
+                        )
+                    ),
+                    this.position
+                )
+            );
             this.is_cullable_empty = this.cullable.is_empty;
         }
     }
@@ -406,6 +420,7 @@ export class VisualWorld3DLight extends WorldObject {
 
     public set_GlobalDirection(direction: Vector3) {
         this.direction.copy(direction);
+        this.update_Cullable();
     }
 
     public set_Color(color: Vector3) {

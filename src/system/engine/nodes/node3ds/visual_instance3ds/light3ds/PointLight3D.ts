@@ -6,7 +6,7 @@ import { Sphere3 } from "@/system/fivepebble/geometries/Sphere3";
 
 export class PointLight3D extends LightInstance3D {
 
-    static #tmp_cullable_sphere = Sphere3.new;
+    static #tmp_cullable_sphere3 = Sphere3.new;
 
     private light_rid: Rid | undefined = undefined;
 
@@ -134,8 +134,8 @@ export class PointLight3D extends LightInstance3D {
         if (this.light_rid !== undefined) {
             const visual_world = this.get_Viewport()?.world_3d?.visual_world;
             if (visual_world !== undefined) {
-                PointLight3D.#tmp_cullable_sphere.radius = this.radius;
-                visual_world.set_LightCullable(this.light_rid, PointLight3D.#tmp_cullable_sphere);
+                PointLight3D.#tmp_cullable_sphere3.radius = this._radius;
+                visual_world.set_LightCullable(this.light_rid, PointLight3D.#tmp_cullable_sphere3);
             }
         }
     }
@@ -159,8 +159,7 @@ export class PointLight3D extends LightInstance3D {
                         visual_world.set_LightCastShadow(this.light_rid, this._cast_shadow);
                         visual_world.set_LightRenderQueue(this.light_rid, this._render_queue);
                         visual_world.set_LightMask(this.light_rid, this._mask);
-                        PointLight3D.#tmp_cullable_sphere.radius = this.radius;
-                        visual_world.set_LightCullable(this.light_rid, PointLight3D.#tmp_cullable_sphere);
+                        this.update_Cullable();
                     }
                 }
                 break;
