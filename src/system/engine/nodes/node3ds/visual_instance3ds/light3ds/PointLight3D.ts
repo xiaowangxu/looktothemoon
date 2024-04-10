@@ -179,7 +179,7 @@ export class PointLight3D extends LightInstance3D {
                     if (visual_world === undefined) throw new Error('<PointLight3D> _notification@InternalBeforeRender: cannot find visual world, fail to update mesh instance');
                     if (this.is_global_transform_changed) {
                         this.update_GlobalTransform();
-                        visual_world.set_LightGlobalPosition(this.light_rid, this._global_position);
+                        visual_world.set_LightGlobalPositionDirection(this.light_rid, this._global_position, undefined);
                     }
                     if (this.is_global_visible_changed) {
                         visual_world.set_LightVisibility(this.light_rid, this.global_visible);

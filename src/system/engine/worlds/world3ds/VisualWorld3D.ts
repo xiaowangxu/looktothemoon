@@ -377,8 +377,10 @@ export class VisualWorld3DLight extends WorldObject {
         this.type = type;
     }
 
-    public set_GlobalPosition(position: Vector3) {
-        this.position.copy(position);
+    public set_GlobalPositionDirection(position?: Vector3, direction?: Vector3) {
+        if (position === undefined && direction === undefined) return;
+        if (position) this.position.copy(position);
+        if (direction) this.direction.copy(direction);
         this.update_Cullable();
     }
 
@@ -416,11 +418,6 @@ export class VisualWorld3DLight extends WorldObject {
 
     public set_CullableEnlargement(amount: number) {
         this.cullable_enlargment = Math.max(0, Math.min(65536, amount));
-    }
-
-    public set_GlobalDirection(direction: Vector3) {
-        this.direction.copy(direction);
-        this.update_Cullable();
     }
 
     public set_Color(color: Vector3) {
@@ -815,17 +812,10 @@ export class VisualWorld3D extends ConfiguredObject {
         }
     }
 
-    public set_LightGlobalPosition(rid: Rid, position: Vector3) {
+    public set_LightGlobalPositionDirection(rid: Rid, position?: Vector3, direction?: Vector3) {
         const instance = this.get_Light(rid);
         if (instance) {
-            instance.set_GlobalPosition(position);
-        }
-    }
-
-    public set_LightGlobalDirection(rid: Rid, direction: Vector3) {
-        const instance = this.get_Light(rid);
-        if (instance) {
-            instance.set_GlobalDirection(direction);
+            instance.set_GlobalPositionDirection(position, direction);
         }
     }
 

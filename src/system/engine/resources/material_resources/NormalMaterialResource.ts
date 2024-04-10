@@ -82,6 +82,7 @@ export class NormalMaterialResource extends MaterialResource {
     }
 
     protected dispose(): void {
+        this._normal_texture.clear();
         super.dispose();
     }
 }

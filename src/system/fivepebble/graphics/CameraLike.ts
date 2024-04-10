@@ -44,5 +44,7 @@ export interface CameraFrustumLikeCullable<Proj extends MatrixLike<Proj>, Vec ex
 
     sort_distance_to(camera: CameraLike<Proj, Vec, Mat>, enlargement: number): number;
     
+    // return true if this obj is outside camera frustum
+    // screen size is logic screen_size = screen_size / pixel_ratio in shader uniforms
     cull(camera: CameraLike<Proj, Vec, Mat>, frustum: FrustumLike<Vec, Mat>, screen_size: Vector2, enlargement: number): boolean;
 }

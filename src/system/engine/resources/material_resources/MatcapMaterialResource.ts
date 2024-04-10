@@ -186,6 +186,7 @@ export class MatcapMaterialResource extends MaterialResource {
 
     protected dispose(): void {
         this._texture.clear();
+        this._normal_texture.clear();
         super.dispose();
     }
 }

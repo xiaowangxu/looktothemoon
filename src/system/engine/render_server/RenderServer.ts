@@ -9,7 +9,7 @@ import { RenderServerGeometry } from "./RenderServerGeometry";
 import { RenderServerShader } from "./RenderServerShader";
 import { RenderServerMaterial } from "./RenderServerMaterial";
 import { RenderDeviceMatrix4AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
-import { WebGL2RenderStateFrameBufferAttachmentPoint, type WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
+import { type WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Color } from "@/system/fivepebble/graphics/Color";
 
@@ -25,13 +25,19 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     mat4 camera_view;
     mat4 camera_projection;
     mat4 camera_inv_projection;
+
+    // screen size in renderer, the render_server_scale is transparent, so changing render_server_scale will not affect screen_size
+    // for logic screen_size use (screen_size / pixel_ratio)
     vec2 screen_size;
+
     float time;
     bool camera_is_orthogonal;
     float pixel_ratio;
+
     float _preserved_0;
     float _preserved_1;
     float _preserved_2;
+    
     // environment
     vec4 background_color;
     bool use_sky;

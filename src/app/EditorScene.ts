@@ -57,6 +57,8 @@ import { Dom3D } from "@/system/engine/nodes/node3ds/Dom3D";
 import { PlainMaterialResource } from "@/system/engine/resources/material_resources/PlainMaterialResource";
 import { NormalMaterialResource } from "@/system/engine/resources/material_resources/NormalMaterialResource";
 import { UvMaterialResource } from "@/system/engine/resources/material_resources/UvMaterialResource";
+import { BillboardGeometryResource } from "@/system/engine/resources/geometry_resources/BillboardGeometryResource";
+import { BillboardMaterialResource } from "@/system/engine/resources/material_resources/BillboardMaterialResource";
 
 // import png_url2 from 'res://matcap-2.jpg';
 // import png_url3 from 'res://matcap-3.jpg';
@@ -944,6 +946,14 @@ export function createEditor() {
     //     mesh.render_queue = 0;
     //     World.add_Child(mesh);
     // }
+
+    {
+        const mesh = new MeshInstance3D(DefaultConfig);
+        mesh.geometry = new BillboardGeometryResource(DefaultConfig);
+        mesh.material = new BillboardMaterialResource(DefaultConfig);
+        mesh.local_position = Vector3.create(400, 450, -200);
+        World.add_Child(mesh);
+    }
 
     return EditorSceneTree;
 }

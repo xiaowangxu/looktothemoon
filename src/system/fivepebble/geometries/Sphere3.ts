@@ -6,7 +6,7 @@ import type { Matrix4 } from "../linear_algebra/Matrix4";
 import type { Vector2 } from "../linear_algebra/Vector2";
 import type { Camera3 } from "../graphics/Camera3";
 import { Frustum3 } from "../graphics/Frustum3";
-import type { Transformable } from "./GeometryLike";
+import type { Transformable } from "../linear_algebra/VectorLike";
 import type { Vector4 } from "../linear_algebra/Vector4";
 import { is_ApproxZero } from "../Scalar";
 import { Euler } from "../linear_algebra/Euler";

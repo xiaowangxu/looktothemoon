@@ -136,7 +136,7 @@ export class DirectionalLight3D extends LightInstance3D {
                         vec.affine_transform(vec, this._global_transform);
                         vec.direction_to(this._global_position, vec);
                         vec.negate(vec);
-                        visual_world.set_LightGlobalPosition(this.light_rid, vec);
+                        visual_world.set_LightGlobalPositionDirection(this.light_rid, undefined, vec);
                     }
                     if (this.is_global_visible_changed) {
                         visual_world.set_LightVisibility(this.light_rid, this.global_visible);

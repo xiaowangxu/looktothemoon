@@ -171,7 +171,7 @@ export class EditorRenderer3D extends Renderer3D {
             light_idx = light.fill_LightData(lights_data, light_idx, cam_frustum, cam, this.base_size);
             light_idx++;
         }
-        console.log(light_idx);
+        // console.log(light_idx);
         if (light_idx < lights_data.max_light_count) {
             lights_data.set_Light(light_idx, 0);
         }

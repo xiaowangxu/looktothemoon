@@ -12,7 +12,7 @@ import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
 
-const PositionAttributeBuffer = new Cacher((config: Config) => {
+const MultiLineSegmentPositionAttributeBuffer = new Cacher((config: Config) => {
     return new Ref(new RenderDeviceVector3AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
         Vector3.create(- 1, 2, 0),
         Vector3.create(1, 2, 0),
@@ -25,7 +25,7 @@ const PositionAttributeBuffer = new Cacher((config: Config) => {
     ]));
 });
 
-const UVAttributeBuffer = new Cacher((config: Config) => {
+const MultiLineSegmentUVAttributeBuffer = new Cacher((config: Config) => {
     return new Ref(new RenderDeviceVector2AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
         Vector2.create(- 1, 2),
         Vector2.create(1, 2),
@@ -38,7 +38,7 @@ const UVAttributeBuffer = new Cacher((config: Config) => {
     ]));
 });
 
-const IndexAttributeBuffer = new Cacher((config: Config) => {
+const MultiLineSegmentIndexAttributeBuffer = new Cacher((config: Config) => {
     return new Ref(new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 2, 1, 2, 3, 1, 2, 4, 3, 4, 5, 3, 4, 6, 5, 6, 7, 5]));
 });
 
@@ -86,8 +86,8 @@ export class MultiLineGeometryResource extends GeometryResource {
         this.geometry.set_Geometry(
             RenderStatePrimitiveType.Triangles,
             {
-                position: PositionAttributeBuffer.get(this.config).expect,
-                uv: UVAttributeBuffer.get(this.config).expect,
+                position: MultiLineSegmentPositionAttributeBuffer.get(this.config).expect,
+                uv: MultiLineSegmentUVAttributeBuffer.get(this.config).expect,
                 start: {
                     attribute: this.points_start_attribute_buffer_ref.expect,
                     location: RenderServerGeometry.GeometryAttributeLocations.custom0,
@@ -117,7 +117,7 @@ export class MultiLineGeometryResource extends GeometryResource {
                     location: RenderServerGeometry.GeometryAttributeLocations.instance_transform2,
                 }
             },
-            IndexAttributeBuffer.get(this.config).expect,
+            MultiLineSegmentIndexAttributeBuffer.get(this.config).expect,
             undefined,
             undefined,
             false
@@ -292,8 +292,8 @@ export class MultiSegmentGeometryResource extends GeometryResource {
         this.geometry.set_Geometry(
             RenderStatePrimitiveType.Triangles,
             {
-                position: PositionAttributeBuffer.get(this.config).expect,
-                uv: UVAttributeBuffer.get(this.config).expect,
+                position: MultiLineSegmentPositionAttributeBuffer.get(this.config).expect,
+                uv: MultiLineSegmentUVAttributeBuffer.get(this.config).expect,
                 start: {
                     attribute: this.points_start_attribute_buffer_ref.expect,
                     location: RenderServerGeometry.GeometryAttributeLocations.custom0,
@@ -323,7 +323,7 @@ export class MultiSegmentGeometryResource extends GeometryResource {
                     location: RenderServerGeometry.GeometryAttributeLocations.instance_transform2,
                 }
             },
-            IndexAttributeBuffer.get(this.config).expect,
+            MultiLineSegmentIndexAttributeBuffer.get(this.config).expect,
             undefined,
             undefined,
             false
