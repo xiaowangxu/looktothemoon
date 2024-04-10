@@ -19,14 +19,16 @@ const MatcapFragmentShadeShader = new Cacher((config: Config) => {
     precision highp usampler2DArray;
     precision highp sampler3D;
 
-    ${RenderServerDevice.WorldUniformsCode}
+    ${GlslPrimitives.WorldUniforms}
 
     uniform vec4 u_color;
     uniform sampler2D u_texture;
+    uniform sampler2D u_normal_texture;
+    uniform bool u_has_normal_texture;
     
     ${GlslPrimitives.FragmentVertexEssentialIns}
 
-    ${RenderServerDevice.FrameOutputBufferCode}
+    ${GlslPrimitives.FragmentFrameSolidOuts}
 
     vec2 matcap_uv_compute(vec3 I, vec3 N) {
         /* Quick creation of an orthonormal basis */
@@ -40,6 +42,10 @@ const MatcapFragmentShadeShader = new Cacher((config: Config) => {
 
     void main() {
         ${GlslPrimitives.FragmentVertexEssentialCalculations}
+        if (u_has_normal_texture) {
+            ${GlslPrimitives.FragmentTangentAndTBNCalculations}
+            ${GlslPrimitives.FragmentNormalTextureViewCalculations}
+        }
         o_normal = vec4(NORMAL_VIEW, 1.0);
         vec2 matcap_uv = matcap_uv_compute(LOOKAT_VIEW, NORMAL_VIEW);
         o_color = vec4(texture(u_texture, matcap_uv).rgb, 1.0) * u_color;
@@ -49,13 +55,20 @@ const MatcapFragmentShadeShader = new Cacher((config: Config) => {
 });
 const MatcapFragmentShadeShaderUniforms = new Cacher((config: Config) => {
     return {
+        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
         u_texture: {
             type: RenderStateUniformType.Tex2D,
             default: {
                 texture: config.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.Empty),
             }
         },
-        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
+        u_normal_texture: {
+            type: RenderStateUniformType.Tex2D,
+            default: {
+                texture: config.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.Black),
+            }
+        },
+        u_has_normal_texture: { type: RenderStateUniformType.Uint, default: 0 },
     } as UniformInitSet<WebGL2RenderState>;
 });
 
@@ -65,14 +78,16 @@ const MatcapFragmentOitShader = new Cacher((config: Config) => {
     precision highp usampler2DArray;
     precision highp sampler3D;
 
-    ${RenderServerDevice.WorldUniformsCode}
+    ${GlslPrimitives.WorldUniforms}
 
     uniform vec4 u_color;
     uniform sampler2D u_texture;
+    uniform sampler2D u_normal_texture;
+    uniform bool u_has_normal_texture;
     
     ${GlslPrimitives.FragmentVertexEssentialIns}
 
-    ${RenderServerDevice.FrameOiTOutputBufferCode}
+    ${GlslPrimitives.FragmentFrameTransparentOuts}
 
     vec2 matcap_uv_compute(vec3 I, vec3 N) {
         /* Quick creation of an orthonormal basis */
@@ -86,23 +101,34 @@ const MatcapFragmentOitShader = new Cacher((config: Config) => {
 
     void main() {
         ${GlslPrimitives.FragmentVertexEssentialCalculations}
+        if (u_has_normal_texture) {
+            ${GlslPrimitives.FragmentTangentAndTBNCalculations}
+            ${GlslPrimitives.FragmentNormalTextureViewCalculations}
+        }
         o_normal = vec4(NORMAL_VIEW, 1.0);
         vec2 matcap_uv = matcap_uv_compute(LOOKAT_VIEW, NORMAL_VIEW);
-        vec4 color = vec4(texture(u_texture, matcap_uv).rgb, 1.0) * u_color;
-        ${RenderServerDevice.OitOutputCode}
+        vec4 COLOR = vec4(texture(u_texture, matcap_uv).rgb, 1.0) * u_color;
+        ${GlslPrimitives.FragmentFrameTransparentCalculation}
     }`;
 
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());
 });
 const MatcapFragmentOitShaderUniforms = new Cacher((config: Config) => {
     return {
+        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
         u_texture: {
             type: RenderStateUniformType.Tex2D,
             default: {
                 texture: config.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.Empty),
             }
         },
-        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
+        u_normal_texture: {
+            type: RenderStateUniformType.Tex2D,
+            default: {
+                texture: config.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.Black),
+            }
+        },
+        u_has_normal_texture: { type: RenderStateUniformType.Uint, default: 0 },
     } as UniformInitSet<WebGL2RenderState>;
 });
 
@@ -133,8 +159,10 @@ export class MatcapMaterialResource extends MaterialResource {
 
     static readonly #uniforms: MaterialReadOnlyUniforms = {
         ...MaterialModelWorldUniform,
-        u_texture: RenderStateUniformType.Tex2D,
         u_color: RenderStateUniformType.Vec4,
+        u_texture: RenderStateUniformType.Tex2D,
+        u_normal_texture: RenderStateUniformType.Tex2D,
+        u_has_normal_texture: RenderStateUniformType.Uint,
     };
 
     public get uniforms() { return MatcapMaterialResource.#uniforms; }
@@ -155,6 +183,16 @@ export class MatcapMaterialResource extends MaterialResource {
         if (this._texture.value !== texture) {
             this._texture.value = texture;
             this.set_Uniform('u_texture', this._texture.value?.texture);
+        }
+    }
+
+    private _normal_texture: Ref<TextureResource> = new Ref();
+    public get normal_texture() { return this._normal_texture.value; }
+    public set normal_texture(normal_texture: TextureResource | undefined) {
+        if (this._normal_texture.value !== normal_texture) {
+            this._normal_texture.value = normal_texture;
+            this.set_Uniform('u_normal_texture', this._normal_texture.value?.texture);
+            this.set_Uniform('u_has_normal_texture', this._normal_texture.value !== undefined);
         }
     }
 

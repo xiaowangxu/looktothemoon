@@ -157,14 +157,29 @@ export class EditorRenderer3D extends Renderer3D {
         this.render_server.use_SkyTexture(sky_texture);
         const shadow_texture = world_3d.shadows_texture.expect;
         this.render_server.use_ShadowsTexture(shadow_texture);
-        const lights_data = world_3d.lights_data.expect;
-        this.render_server.use_LightsData(lights_data);
 
         const editor_highlighted = viewport.editor_highlighted;
 
+        // fill up lights data
+        const lights_data = world_3d.lights_data.expect;
+
+        lights_data.clear_Lights();
+        let light_idx = 0;
+        for (const light of world_3d.lights) {
+            if (light_idx >= lights_data.max_light_count) break;
+            if (!light.visible || (light.layer & cam_mask) === 0) continue;
+            light_idx = light.fill_LightData(lights_data, light_idx, cam_frustum, cam, this.base_size);
+            light_idx++;
+        }
+        if (light_idx < lights_data.max_light_count) {
+            lights_data.set_Light(light_idx, 0);
+        }
+        lights_data.commit_AllLightsData();
+
+        this.render_server.use_LightsData(lights_data);
+
         // fill up render queue
 
-        
         let total_objects_count = 0;
         let rendered_objects_count = 0;
         this.render_queue_0.reset();

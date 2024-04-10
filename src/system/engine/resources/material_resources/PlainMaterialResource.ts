@@ -19,14 +19,14 @@ const PlainFragmentShadeShader = new Cacher((config: Config) => {
     precision highp usampler2DArray;
     precision highp sampler3D;
 
-    ${RenderServerDevice.WorldUniformsCode}
+    ${GlslPrimitives.WorldUniforms}
 
     uniform vec4 u_color;
     uniform sampler2D u_texture;
     
     ${GlslPrimitives.FragmentVertexEssentialIns}
 
-    ${RenderServerDevice.FrameOutputBufferCode}
+    ${GlslPrimitives.FragmentFrameSolidOuts}
 
     void main() {
         ${GlslPrimitives.FragmentVertexEssentialCalculations}
@@ -54,20 +54,20 @@ const PlainFragmentOitShader = new Cacher((config: Config) => {
     precision highp usampler2DArray;
     precision highp sampler3D;
 
-    ${RenderServerDevice.WorldUniformsCode}
+    ${GlslPrimitives.WorldUniforms}
 
     uniform vec4 u_color;
     uniform sampler2D u_texture;
     
     ${GlslPrimitives.FragmentVertexEssentialIns}
 
-    ${RenderServerDevice.FrameOiTOutputBufferCode}
+    ${GlslPrimitives.FragmentFrameTransparentOuts}
 
     void main() {
         ${GlslPrimitives.FragmentVertexEssentialCalculations}
         o_normal = vec4(NORMAL_VIEW, 1.0);
-        vec4 color = vec4(texture(u_texture, v_UV).rgb, 1.0) * u_color;
-        ${RenderServerDevice.OitOutputCode}
+        vec4 COLOR = vec4(texture(u_texture, v_UV).rgb, 1.0) * u_color;
+        ${GlslPrimitives.FragmentFrameTransparentCalculation}
     }`;
 
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());

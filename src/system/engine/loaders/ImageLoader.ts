@@ -23,7 +23,7 @@ export class ImageLoader {
         return this.ctx.getImageData(0, 0, w, h);
     }
 
-    public async parse(url: string): Promise<Result<ClassSaver, Error>> {
+    public async parse(url: string, mipmap: 1 | 2 | 4 | 8 = 1, srgb: boolean = true): Promise<Result<ClassSaver, Error>> {
         try {
             const image = await new Promise((resolve: (img: HTMLImageElement) => void, reject) => {
                 const img = new Image();
@@ -35,11 +35,11 @@ export class ImageLoader {
             const class_saver = new ClassSaver();
             const refid = ImageTextureResource.dump_Data(
                 class_saver, 0,
-                1,
-                [{ level: 0, width, height, data, y_flip: true }], false,
+                mipmap,
+                [{ level: 0, width, height, data, y_flip: true }], mipmap !== 1,
                 RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp,
                 RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Linear, RenderStateTextureMagFilter.Linear,
-                8, true
+                8, srgb
             );
             class_saver.set_Root(refid);
             return Result.Ok(class_saver);

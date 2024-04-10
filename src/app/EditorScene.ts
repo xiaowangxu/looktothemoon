@@ -11,7 +11,7 @@ import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds
 import { BoxGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
-import { GeometryResource, MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
+import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { MultiLineGeometryResource, MultiSegmentGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineSegmentGeometryResource";
 import { MultiLineSegmentMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
@@ -33,7 +33,7 @@ import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
 import { Cacher } from "@/system/utils/Cacher";
 import { Ref } from "@/system/utils/RefCounted";
 import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
-import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType, tween_loop, TweenPingPong, tween_pingpong, tween_sequence, tween_wait } from "@/system/engine/Tween";
+import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType } from "@/system/engine/Tween";
 import { InfiniteLine3D } from "@/system/engine/nodes/node3ds/gizmo3ds/InfiniteLine3D";
 import { Bvh3Strategy } from "@/system/fivepebble/bvh/Bvh3";
 import { Bvh3Visualization } from './nodes/Bvh3Visualization';
@@ -52,15 +52,12 @@ import { FixSizeNode3D } from "@/system/engine/nodes/node3ds/gizmo3ds/FixSizeNod
 import { PlaceholderTextureResource } from "@/system/engine/resources/texture_resources/PlaceholderTextureResource";
 import { ImageTextureResource } from "@/system/engine/resources/texture_resources/ImageTextureResource";
 import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/MatcapMaterialResource";
-import { RenderStateBufferUsage, RenderStatePrimitiveType, RenderStateTextureMagFilter, RenderStateTextureMinFilter } from "@/system/sliverofstraw/RenderState";
+import { RenderStateTextureMagFilter, RenderStateTextureMinFilter } from "@/system/sliverofstraw/RenderState";
 import { Dom3D } from "@/system/engine/nodes/node3ds/Dom3D";
-import { Box3 } from "@/system/fivepebble/geometries/Box3";
-import { RenderDeviceVector3AttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer, RenderDeviceMatrix4AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { PlainMaterialResource } from "@/system/engine/resources/material_resources/PlainMaterialResource";
 import { NormalMaterialResource } from "@/system/engine/resources/material_resources/NormalMaterialResource";
 import { UvMaterialResource } from "@/system/engine/resources/material_resources/UvMaterialResource";
 
-// import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
 // import png_url2 from 'res://matcap-2.jpg';
 // import png_url3 from 'res://matcap-3.jpg';
 // import png_url4 from 'res://matcap-4.jpg';
@@ -74,9 +71,11 @@ import { UvMaterialResource } from "@/system/engine/resources/material_resources
 // import png_url12 from 'res://matcap-12.png';
 // import png_url13 from 'res://matcap-13.png';
 // import png_url14 from 'res://matcap-14.png';
+// import normal_texture_url from 'res://normal_texture.png';
+// import normal_texture_url from 'res://normal_texture-0.png';
 // const image_loader = new ImageLoader();
-// image_loader.parse(png_url14).then(r => {
-//     console.log(r.expect().save(undefined, `download://matcap-14.lttmbin`));
+// image_loader.parse(normal_texture_url, 4, false).then(r => {
+//     console.log(r.expect().save(undefined, `download://normal-1.lttmbin`));
 // });
 // let i = 2;
 // for (const url of [png_url2, png_url3, png_url4, png_url5, png_url6, png_url7, png_url8, png_url9]) {
@@ -239,6 +238,7 @@ export function createEditor() {
     point_light.color = Vector3.create(0, 1, 0);
     point_light.radius = 100.0;
     World.add_Child(point_light);
+    
 
     TranslateGrabber.signal_grabbing.connect(pos => {
         // EditorViewport.world_3d?.visual_world.set_LightGlobalPosition(3, pos);
@@ -412,11 +412,16 @@ export function createEditor() {
     geo.build();
     ground.geometry = geo;
     const ground_material = new MatcapMaterialResource(DefaultConfig);
-    ground_material.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/matcaps/matcap-12.lttmbin').expect()
-    ground_material.color = Color.create(0.8, 0.8, 0.8);
+    ground_material.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/matcaps/matcap-13.lttmbin').expect();
+    const normal_texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/normals/normal-1.lttmbin').expect();
+    normal_texture.min_filter = RenderStateTextureMinFilter.LinearMipmapLinear;
+    normal_texture.mag_filter = RenderStateTextureMagFilter.Linear;
+    ground_material.normal_texture = normal_texture;
+    // ground_material.color = Color.create(1.0, 1.0, 1.0, 0.98);
     ground.material = ground_material;
-    ground.local_scale = Vector3.create(1000, 10, 1000);
-    ground.local_position = Vector3.create(0, -100, 0);
+    // ground.top_level = true;
+    ground.local_scale = Vector3.create(1000, 500, 1000);
+    ground.local_position = Vector3.create(0, -400, 0);
     World.add_Child(ground);
 
     const grid_geo = new GridGeometryResource(DefaultConfig);

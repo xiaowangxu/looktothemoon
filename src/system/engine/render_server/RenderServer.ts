@@ -20,7 +20,6 @@ export enum RenderServerColorspace { LinearSRGB, SRGB }
 export class RenderServerDevice extends WebGL2RenderDevice {
 
     // Codes
-    public static readonly ConstantsCode = `const float PI = 3.1415926535;\nconst float TAU = 6.283185307;\nconst float EPSILON = 1e-10;\nconst float SQRT2 = 1.414213562373095;`
     public static readonly WorldUniformsCode = `layout(std140) uniform WorldUniforms {
     mat4 camera_world;
     mat4 camera_view;
@@ -36,16 +35,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     // environment
     vec4 background_color;
     bool use_sky;
-};`
-    public static readonly FrameOutputBufferCode = `layout(location = 0) out vec4 o_color;\nlayout(location = 1) out vec4 o_normal;`
-    public static readonly FrameOiTOutputBufferCode = `layout(location = 0) out vec4 o_color;\nlayout(location = 1) out float o_accum;\nlayout(location = 2) out vec4 o_normal;`
-    public static readonly OitOutputCode = `    // oit
-    color.rgb *= color.a;
-    float _z = gl_FragCoord.z;
-    float _a = color.a;
-    float _w = _a * max(0.01, min(3000.0, 0.03 / (1e-5 + pow(abs(_z) / 200.0, 4.0))));
-    o_color = vec4(color.rgb * _w, color.a);
-    o_accum = color.a * _w;`;
+};`;
 
     // texture layout
     //   |-------|-------|-------|-------|-------|-------|-------|-------|

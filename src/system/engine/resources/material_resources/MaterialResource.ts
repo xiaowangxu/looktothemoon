@@ -32,7 +32,8 @@ export abstract class MaterialResource extends Resource {
 		super(config);
 	}
 
-	protected set_Uniform(uniform: string, value: WebGL2RenderStateTexture | number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined): void {
+	protected set_Uniform(uniform: string, value: WebGL2RenderStateTexture | boolean | number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | undefined): void {
+		if (typeof value === 'boolean') value = value ? 1 : 0;
 		this.material.set_Uniform(uniform, value);
 	}
 

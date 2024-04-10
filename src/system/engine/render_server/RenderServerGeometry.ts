@@ -46,15 +46,6 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
         custom3: 15,
         TotalMax: 15,
     };
-    public static readonly GeometryAttributesCode = `    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.position}) in vec3 a_position;
-    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.normal}) in vec3 a_normal;
-    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.tangent}) in vec3 a_tangent;
-    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.color}) in vec3 a_color;
-    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.uv}) in vec2 a_uv;
-    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.uv2}) in vec2 a_uv2;
-    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.bone}) in int a_bone;
-    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.weight}) in float a_weight;
-    layout(location = ${RenderServerGeometry.GeometryAttributeLocations.instance_transform}) in mat4 a_instance_transform;`;
 
     protected vertex_array_attributes_map: Map<string, { attribute: Ref<RenderDeviceAttributeBuffer<WebGL2RenderState>>, location: number }> = new Map();
     protected readonly vertex_array_ref: Ref<WebGL2RenderStateVertexArray> = new Ref();

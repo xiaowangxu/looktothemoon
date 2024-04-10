@@ -69,8 +69,8 @@ export class Sphere3 implements SphereLike<Vector3, Matrix3>, CameraFrustumLikeC
     }
 
     cull(camera: Camera3, frustum: Frustum3, screen_size: Vector2, enlargement: number): boolean {
-        const _frustum = enlargement === 0 ? frustum : Frustum3.$tmp_frustum3_for_cullable_0.enlarge(frustum, -enlargement);
-        return _frustum.contain_Point(this.center);
+        const _frustum = enlargement === 0 ? Frustum3.$tmp_frustum3_for_cullable_0.enlarge(frustum, -this.radius) : Frustum3.$tmp_frustum3_for_cullable_0.enlarge(frustum, - this.radius + enlargement);
+        return !_frustum.contain_Point(this.center);
     }
 
     // #endregion

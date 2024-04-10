@@ -15,11 +15,11 @@ const UvFragmentShadeShader = new Cacher((config: Config) => {
     precision highp usampler2DArray;
     precision highp sampler3D;
 
-    ${RenderServerDevice.WorldUniformsCode}
+    ${GlslPrimitives.WorldUniforms}
     
     ${GlslPrimitives.FragmentVertexEssentialIns}
 
-    ${RenderServerDevice.FrameOutputBufferCode}
+    ${GlslPrimitives.FragmentFrameSolidOuts}
 
     void main() {
         ${GlslPrimitives.FragmentVertexEssentialCalculations}

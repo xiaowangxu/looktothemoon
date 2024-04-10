@@ -159,7 +159,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     precision highp usampler2DArray;
     precision highp sampler3D;
 
-    ${RenderServerDevice.WorldUniformsCode}
+    ${GlslPrimitives.WorldUniforms}
 
     uniform vec4 u_color;
     uniform int u_hidden;
@@ -167,7 +167,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     
     ${GlslPrimitives.FragmentVertexEssentialIns}
 
-    ${RenderServerDevice.FrameOutputBufferCode}
+    ${GlslPrimitives.FragmentFrameSolidOuts}
 
     void main() {
         ${GlslPrimitives.FragmentVertexEssentialCalculations}
@@ -187,7 +187,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
     precision highp usampler2DArray;
     precision highp sampler3D;
 
-    ${RenderServerDevice.WorldUniformsCode}
+    ${GlslPrimitives.WorldUniforms}
 
     uniform vec4 u_color;
     uniform int u_hidden;
@@ -195,16 +195,16 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
 
     ${GlslPrimitives.FragmentVertexEssentialIns}
 
-    ${RenderServerDevice.FrameOiTOutputBufferCode}
+    ${GlslPrimitives.FragmentFrameTransparentOuts}
 
     void main() {
         ${GlslPrimitives.FragmentVertexEssentialCalculations}
         float depth = texture(u_scene_depth, gl_FragCoord.xy / screen_size).r;
         vec4 hidden_color = mix(u_color, vec4(0.5, 0.5, 0.5, u_color.a), 0.75);
         bool not_hidden = depth >= gl_FragCoord.z;
-        vec4 color = !(u_hidden == 1) || not_hidden ? u_color : hidden_color;
+        vec4 COLOR = !(u_hidden == 1) || not_hidden ? u_color : hidden_color;
         o_normal = vec4(NORMAL_VIEW, 1.0);
-        ${RenderServerDevice.OitOutputCode}
+        ${GlslPrimitives.FragmentFrameTransparentCalculation}
     }`;
     static readonly #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
         u_color: { type: RenderStateUniformType.Vec4, default: Color.new },

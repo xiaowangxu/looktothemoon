@@ -2,8 +2,11 @@ import type { Rid } from "@/system/engine/Rid";
 import { LightInstance3D } from "./LightInstance3D";
 import { NodeNotification } from "../../../Node";
 import { RenderServerLightType } from "@/system/engine/render_server/RenderServerLightData";
+import { Sphere3 } from "@/system/fivepebble/geometries/Sphere3";
 
 export class PointLight3D extends LightInstance3D {
+
+    static #tmp_cullable_sphere = Sphere3.new;
 
     private light_rid: Rid | undefined = undefined;
 
@@ -14,6 +17,7 @@ export class PointLight3D extends LightInstance3D {
         if (this._radius !== radius) {
             this._radius = radius;
             this.on_ParametersChanged();
+            this.update_Cullable();
         }
     }
 
@@ -126,6 +130,16 @@ export class PointLight3D extends LightInstance3D {
         }
     }
 
+    protected update_Cullable() {
+        if (this.light_rid !== undefined) {
+            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            if (visual_world !== undefined) {
+                PointLight3D.#tmp_cullable_sphere.radius = this.radius;
+                visual_world.set_LightCullable(this.light_rid, PointLight3D.#tmp_cullable_sphere);
+            }
+        }
+    }
+
     public _notification(what: NodeNotification): void {
         switch (what) {
             case NodeNotification.EnteredTree: {
@@ -145,6 +159,8 @@ export class PointLight3D extends LightInstance3D {
                         visual_world.set_LightCastShadow(this.light_rid, this._cast_shadow);
                         visual_world.set_LightRenderQueue(this.light_rid, this._render_queue);
                         visual_world.set_LightMask(this.light_rid, this._mask);
+                        PointLight3D.#tmp_cullable_sphere.radius = this.radius;
+                        visual_world.set_LightCullable(this.light_rid, PointLight3D.#tmp_cullable_sphere);
                     }
                 }
                 break;

@@ -256,7 +256,6 @@ export class VisualWorld3DMesh extends WorldObject {
 
     public set_CullableEnlargement(amount: number) {
         this.cullable_enlargment = Math.max(0, Math.min(65536, amount));
-        this.update_Cullable();
     }
 
     public set_EditorHighlighted(highlighted: boolean) {
@@ -339,6 +338,8 @@ export class VisualWorld3DMesh extends WorldObject {
 
 export class VisualWorld3DLight extends WorldObject {
 
+    static #tmp_cullable_affine_transform_matrix = Matrix4.new;
+
     public type: RenderServerLightType = RenderServerLightType.SpotLight;
     public readonly position: Vector3 = new Vector3();
     public readonly direction: Vector3 = new Vector3(0, 0, -1);
@@ -359,6 +360,11 @@ export class VisualWorld3DLight extends WorldObject {
     public shadows: Set<VisualWorld3DLightShadow> = new Set();
     public render_queue: number = 0;
 
+    private cullable: Cullable | undefined = undefined;
+    private cullable_override: Cullable | undefined = undefined;
+    private is_cullable_empty: boolean = true;
+    public cullable_enlargment: number = 0;
+
     constructor(config: Config, rid: Rid) {
         super(config, rid);
     }
@@ -369,6 +375,33 @@ export class VisualWorld3DLight extends WorldObject {
 
     public set_GlobalPosition(position: Vector3) {
         this.position.copy(position);
+        this.update_Cullable();
+    }
+
+    private update_Cullable() {
+        if (this.cullable !== undefined) {
+            this.cullable.affine_transform(this.cullable_override!, VisualWorld3DLight.#tmp_cullable_affine_transform_matrix.set_Position(this.position));
+            this.is_cullable_empty = this.cullable.is_empty;
+        }
+    }
+
+    public set_Cullable(cullable: Cullable | undefined) {
+        if (cullable === undefined) {
+            if (this.cullable_override === undefined) return;
+            this.cullable_override = undefined;
+            this.cullable = undefined;
+            this.is_cullable_empty = true;
+        }
+        else {
+            this.cullable_override = cullable.clone();
+            this.cullable = cullable.clone();
+            this.is_cullable_empty = this.cullable.is_empty;
+        }
+        this.update_Cullable();
+    }
+
+    public set_CullableEnlargement(amount: number) {
+        this.cullable_enlargment = Math.max(0, Math.min(65536, amount));
     }
 
     public set_GlobalDirection(direction: Vector3) {
@@ -454,8 +487,9 @@ export class VisualWorld3DLight extends WorldObject {
 
     static readonly #color: Vector3 = new Vector3();
 
-    public fill_LightData(lights_data: RenderServerLightsData, idx: number): number {
+    public fill_LightData(lights_data: RenderServerLightsData, idx: number, frustum: Frustum3, camera: Camera3, base_size: Vector2): number {
         if (idx >= lights_data.max_light_count) return idx;
+        if (this.cullable !== undefined && (this.is_cullable_empty || this.cullable.cull(camera, frustum, base_size, this.cullable_enlargment))) return idx - 1;
         const color = VisualWorld3DLight.#color;
         color.mult_Number(this.color, this.intensity);
         const data_stride = !this.cast_shadow ? 0 : this.shadows.size;
@@ -563,7 +597,6 @@ export class VisualWorld3D extends ConfiguredObject {
     public render(viewport: Viewport) {
         if (!this.rendered_once) {
             this.update_Sky(viewport.get_SceneTree()?.time ?? 0);
-            this.update_LightsData(viewport.get_Camera3D()?.get_Camera()?.mask ?? 0xffffffff);
         }
         this.rendered_once = true;
     }
@@ -576,22 +609,6 @@ export class VisualWorld3D extends ConfiguredObject {
         this.sky_uniform_time_slot.value = time;
         this.sky_uniform_time_slot.commit();
         this.render_server.render_state.draw_Elements(this.sky_program, this.sky_quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
-    }
-
-    private update_LightsData(mask: number) {
-        const lights_data = this.lights_data.expect;
-        lights_data.clear_Lights();
-        let light_idx = 0;
-        for (const light of this.lights) {
-            if (light_idx >= lights_data.max_light_count) break;
-            if (!light.visible || (light.layer & mask) === 0) continue;
-            light_idx = light.fill_LightData(lights_data, light_idx);
-            light_idx++;
-        }
-        if (light_idx < lights_data.max_light_count) {
-            lights_data.set_Light(light_idx, 0);
-        }
-        lights_data.commit_AllLightsData();
     }
 
     //#region Mesh
@@ -925,6 +942,20 @@ export class VisualWorld3D extends ConfiguredObject {
         const instance = this.get_Light(rid);
         if (instance) {
             instance.set_ShadowOpacity(opacity);
+        }
+    }
+
+    public set_LightCullable(rid: Rid, cullable: Cullable | undefined) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Cullable(cullable);
+        }
+    }
+
+    public set_LightCullableEnlargment(rid: Rid, amount: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_CullableEnlargement(amount);
         }
     }
 

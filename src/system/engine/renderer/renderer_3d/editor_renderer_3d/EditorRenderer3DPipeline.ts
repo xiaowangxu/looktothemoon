@@ -3,7 +3,6 @@ import type { Config } from "../../../ConfiguredObject";
 import type { EditorRenderer3D } from "./EditorRenderer3D";
 import { Renderer3DPipeline } from "../Renderer3DPipeline";
 import type { WebGL2RenderStateFrameBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
-import type { WebGL2RenderStateRenderBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateRenderBuffer";
 import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
 import { RenderStateBufferUsage, RenderStateDataType, RenderStateFrameBufferPart, RenderStatePrimitiveType, RenderStateShaderType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureType, RenderStateTextureWrap } from "@/system/sliverofstraw/RenderState";
 import { WebGL2RenderStateFrameBufferAttachmentPoint } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
@@ -19,6 +18,7 @@ import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { Color } from "@/system/fivepebble/graphics/Color";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { RenderServerGeometry } from "@/system/engine/render_server/RenderServerGeometry";
+import { GlslPrimitives } from "@/system/engine/resources/material_resources/Primitives";
 
 // #region quad surface
 
@@ -64,7 +64,7 @@ const QuadVertexShader = new Cacher((config: Config) => {
 const onscreen_frag_shader_code = `#version 300 es
 precision highp float;
 
-${RenderServerDevice.WorldUniformsCode}
+${GlslPrimitives.WorldUniforms}
 
 in vec2 v_uv;
 
@@ -97,7 +97,7 @@ const OnscreenProgramUniform = new Cacher((config: Config) => {
 const oit_frag_shader_code = `#version 300 es
 precision highp float;
 
-${RenderServerDevice.WorldUniformsCode}
+${GlslPrimitives.WorldUniforms}
 
 uniform sampler2D u_color;
 uniform sampler2D u_accum;
@@ -140,8 +140,8 @@ const OiTPorgramUniform = new Cacher((config: Config) => {
 const highlight_frag_shader_code = `#version 300 es
 precision highp float;
 
-${RenderServerDevice.WorldUniformsCode}
-${RenderServerDevice.ConstantsCode}
+${GlslPrimitives.WorldUniforms}
+${GlslPrimitives.Constants}
 
 in vec2 v_uv;
 
@@ -226,22 +226,24 @@ const float PI = 3.1415926535;
 const float TAU = 6.283185307;
 const float EPSILON = 0.00001;
 
-${RenderServerDevice.WorldUniformsCode}
+${GlslPrimitives.WorldUniforms}
 
 in vec2 v_uv;
 
 uniform sampler2D sky;
 
-${RenderServerDevice.FrameOutputBufferCode}
+${GlslPrimitives.FragmentFrameSolidOuts}
 
 void main() {
-    vec4 dir = mat4(mat3(camera_world)) * inverse(camera_projection) * vec4((v_uv * 2.0 - 1.0), 1.0, 1.0);
+    vec4 view = camera_inv_projection * vec4((v_uv * 2.0 - 1.0), 1.0, 1.0);
+    vec3 NORMAL_VIEW = camera_is_orthogonal ? vec3(0.0, 0.0, 1.0) : -normalize(view.xyz);
+    vec4 dir = mat4(mat3(camera_world)) * view;
     vec3 R = normalize(dir.xyz);
     float theta = atan(R.z, R.x);
     float gamma = acos(R.y);
     vec4 sky_color = texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
     o_color = mix(background_color, sky_color, float(use_sky));
-    o_normal = vec4(-R, 1.0);
+    o_normal = vec4(NORMAL_VIEW, 1.0);
 }
 `;
 
@@ -265,7 +267,7 @@ const SkyDomeProgram = new Cacher((config: Config) => {
 const fxaa_vert_shader_code = `#version 300 es
 precision highp float;
 
-${RenderServerDevice.WorldUniformsCode}
+${GlslPrimitives.WorldUniforms}
 
 layout(location = 0) in vec2 a_position;
 
@@ -294,7 +296,7 @@ void main() {
 const fxaa_frag_shader_code = `#version 300 es
 precision highp float;
 
-${RenderServerDevice.WorldUniformsCode}
+${GlslPrimitives.WorldUniforms}
 
 uniform sampler2D u_screen;
 uniform bool u_colormap;
@@ -391,7 +393,7 @@ void main() {
 
 // // https://www.zhihu.com/question/56111556/answer/2786741301
 
-// ${RenderServerDevice.WorldUniformsCode}
+// ${GlslPrimitives.WorldUniforms}
 
 // const float ContrastThreshold = 0.25;
 // const float RelativeThreshold = 0.15;
@@ -553,9 +555,9 @@ const FxaaProgram = new Cacher((config: Config) => {
 const ssao_frag_shader_code = `#version 300 es
 precision highp float;
 
-${RenderServerDevice.ConstantsCode}
+${GlslPrimitives.Constants}
 
-${RenderServerDevice.WorldUniformsCode}
+${GlslPrimitives.WorldUniforms}
 
 in vec2 v_uv;
 
@@ -715,9 +717,9 @@ const SSAOProgramUniform = new Cacher((config: Config) => {
 const fog_frag_shader_code = `#version 300 es
 precision highp float;
 
-${RenderServerDevice.ConstantsCode}
+${GlslPrimitives.Constants}
 
-${RenderServerDevice.WorldUniformsCode}
+${GlslPrimitives.WorldUniforms}
 
 in vec2 v_uv;
 

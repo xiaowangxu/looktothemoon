@@ -11,6 +11,7 @@ import type { Config } from "../../ConfiguredObject";
 import { Cacher } from "@/system/utils/Cacher";
 import { Ref } from "@/system/utils/RefCounted";
 import { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
+import { GlslPrimitives } from "./Primitives";
 
 export const MultiLineSegmentVertexShader = new Cacher((config: Config) => {
     const code = `#version 300 es
@@ -18,9 +19,9 @@ export const MultiLineSegmentVertexShader = new Cacher((config: Config) => {
     precision highp usampler2DArray;
     precision highp sampler3D;
     
-    ${RenderServerDevice.ConstantsCode}
+    ${GlslPrimitives.Constants}
     
-    ${RenderServerDevice.WorldUniformsCode}
+    ${GlslPrimitives.WorldUniforms}
     
     layout(location = 0) in vec3 a_position;
     layout(location = 5) in vec2 a_uv;
@@ -38,7 +39,7 @@ export const MultiLineSegmentVertexShader = new Cacher((config: Config) => {
     uniform int u_consider_pixel_ratio;
     
     out vec2 v_uv;
-    out vec3 v_normal;
+    out vec3 v_normal_view;
     out vec2 v_screen_start;
     out float v_screen_length;
     out vec4 v_project_position;
@@ -148,7 +149,8 @@ export const MultiLineSegmentVertexShader = new Cacher((config: Config) => {
     
         gl_Position = clip;
     
-        v_normal = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0, 0.0, 1.0)) : normalize(camera_world[3].xyz - (is_start ? a_start : a_end));
+        v_normal_view = camera_is_orthogonal ? vec3(0.0f, 0.0f, 1.0f) : -normalize((is_start ? start.xyz : end.xyz));
+        // v_normal = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0, 0.0, 1.0)) : normalize(camera_world[3].xyz - (is_start ? a_start : a_end));
     }`;
 
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect());
@@ -165,8 +167,8 @@ export const MultiLineSegmentFragmentPreZShader = new Cacher((config: Config) =>
     precision highp usampler2DArray;
     precision highp sampler3D;
 
-    ${RenderServerDevice.WorldUniformsCode}
-    ${RenderServerDevice.ConstantsCode}
+    ${GlslPrimitives.WorldUniforms}
+    ${GlslPrimitives.Constants}
 
     uniform uint u_dashed;
     uniform float u_dash_scale;
@@ -174,11 +176,11 @@ export const MultiLineSegmentFragmentPreZShader = new Cacher((config: Config) =>
     uniform float u_dash_gap;
     
     in vec2 v_uv;
-    in vec3 v_normal;
+    in vec3 v_normal_view;
     in float v_length_percentage;
     in float v_length;
 
-    ${RenderServerDevice.FrameOutputBufferCode}
+    ${GlslPrimitives.FragmentFrameSolidOuts}
 
     void main() {
         if (abs(v_uv.y) > 1.0f) {
@@ -191,7 +193,7 @@ export const MultiLineSegmentFragmentPreZShader = new Cacher((config: Config) =>
             float segment_percentage = mod(percentage + u_dash_offset, 1.0);
             if (segment_percentage >= u_dash_gap || segment_percentage < EPSILON) discard;
         }
-        o_normal = vec4(normalize(v_normal), 1.0);
+        o_normal = vec4(normalize(v_normal_view), 1.0);
     }`;
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());
 });
@@ -208,8 +210,8 @@ export const MultiLineSegmentFragmentShadeShader = new Cacher((config: Config) =
     precision highp usampler2DArray;
     precision highp sampler3D;
 
-    ${RenderServerDevice.WorldUniformsCode}
-    ${RenderServerDevice.ConstantsCode}
+    ${GlslPrimitives.WorldUniforms}
+    ${GlslPrimitives.Constants}
 
     uniform vec4 u_color;
     uniform uint u_dashed;
@@ -220,11 +222,11 @@ export const MultiLineSegmentFragmentShadeShader = new Cacher((config: Config) =
     
     in vec2 v_uv;
     in vec4 v_color;
-    in vec3 v_normal;
+    in vec3 v_normal_view;
     in float v_length_percentage;
     in float v_length;
 
-    ${RenderServerDevice.FrameOutputBufferCode}
+    ${GlslPrimitives.FragmentFrameSolidOuts}
 
     void main() {
         if (abs(v_uv.y) > 1.0f) {
@@ -238,7 +240,7 @@ export const MultiLineSegmentFragmentShadeShader = new Cacher((config: Config) =
             if (segment_percentage >= u_dash_gap || segment_percentage < EPSILON) discard;
         }
         o_color = u_color * mix(vec4(1.0), v_color, float(u_vertex_color));
-        o_normal = vec4(normalize(v_normal), 1.0);
+        o_normal = vec4(normalize(v_normal_view), 1.0);
     }`;
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());
 });
@@ -257,8 +259,8 @@ export const MultiLineSegmentFragmentOitShader = new Cacher((config: Config) => 
     precision highp usampler2DArray;
     precision highp sampler3D;
 
-    ${RenderServerDevice.WorldUniformsCode}
-    ${RenderServerDevice.ConstantsCode}
+    ${GlslPrimitives.WorldUniforms}
+    ${GlslPrimitives.Constants}
 
     uniform vec4 u_color;
     uniform uint u_dashed;
@@ -269,11 +271,11 @@ export const MultiLineSegmentFragmentOitShader = new Cacher((config: Config) => 
     
     in vec2 v_uv;
     in vec4 v_color;
-    in vec3 v_normal;
+    in vec3 v_normal_view;
     in float v_length_percentage;
     in float v_length;
 
-    ${RenderServerDevice.FrameOiTOutputBufferCode}
+    ${GlslPrimitives.FragmentFrameTransparentOuts}
 
     void main() {
         if (abs(v_uv.y) > 1.0f) {
@@ -286,9 +288,9 @@ export const MultiLineSegmentFragmentOitShader = new Cacher((config: Config) => 
             float segment_percentage = mod(percentage + u_dash_offset, 1.0);
             if (segment_percentage >= u_dash_gap || segment_percentage < EPSILON) discard;
         }
-        vec4 color = u_color * mix(vec4(1.0), v_color, float(u_vertex_color));
-        o_normal = vec4(normalize(v_normal), 1.0);
-        ${RenderServerDevice.OitOutputCode}
+        vec4 COLOR = u_color * mix(vec4(1.0), v_color, float(u_vertex_color));
+        o_normal = vec4(normalize(v_normal_view), 1.0);
+        ${GlslPrimitives.FragmentFrameTransparentCalculation}
     }`;
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());
 });
