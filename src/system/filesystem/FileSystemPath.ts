@@ -92,8 +92,9 @@ export class FileSystemPath {
         }
     }
 
-    static readonly #path_regax = /^((?<dir>([^\/^\s^\.]+:\/\/|\/)))?(?<parent>(([^\/^\s^\.]+|\.{1,2})\/)*)((?<file>[^\/^\s^\.]*(\.[^\/^\s^\.]+)*)|(?<folder>\.{1,2}))?$/;
-
+    // static readonly #path_regax = /^((?<dir>([^\/^\s^\.]+:\/\/|\/)))?(?<parent>(([^\/^\s^\.]+|\.{1,2})\/)*)((?<file>[^\/^\s^\.]*(\.[^\/^\s^\.]+)*)|(?<folder>\.{1,2}))?$/;
+    static readonly #path_regax = /^((?<dir>([^\/\.\r\n\t\f\v:]+:\/\/|\/)))?(?<parent>(([^\/\.\r\n\t\f\v:]+|\.{1,2})\/)*)((?<file>[^\/\.\r\n\t\f\v:]*(\.[^\/\.\s:]+)*)|(?<folder>\.{1,2}))?$/;
+    
     public static from_Path(path: string) {
         const result = FileSystemPath.#path_regax.exec(path);
         if (result === null) return new FileSystemPath();
