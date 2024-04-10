@@ -1,4 +1,4 @@
-import { clamp } from "../fivepebble/Scalar";
+import { clamp, is_ApproxEqual, is_ApproxZero } from "../fivepebble/Scalar";
 import { Euler } from "../fivepebble/linear_algebra/Euler";
 import { Vector2 } from "../fivepebble/linear_algebra/Vector2";
 import { Vector3 } from "../fivepebble/linear_algebra/Vector3";
@@ -236,7 +236,7 @@ export function tween_loop(tween: TweenBase, loop_times: number = Infinity) {
 //#region interpolate tweens
 
 export enum TweenTransitionType {
-    Linear, Sine, Quad, Cubic, Quart, Quint, Expo, Back, Elastic, Circle, Bounce
+    Linear, Sine, Quad, Cubic, Quart, Quint, Expo, Back, Elastic, Circle, Bounce, Jump
 }
 
 export enum TweenEasingType {
@@ -408,6 +408,13 @@ export class InterpolateTween extends TweenBase {
                     case TweenEasingType.InOut: return (x < 0.5
                         ? (1 - InterpolateTween.calculate_TransitionEasing(1 - 2 * x, TweenTransitionType.Bounce, TweenEasingType.Out)) / 2
                         : (1 + InterpolateTween.calculate_TransitionEasing(2 * x - 1, TweenTransitionType.Bounce, TweenEasingType.Out)) / 2);
+                }
+            }
+            case TweenTransitionType.Jump: {
+                switch (easing) {
+                    case TweenEasingType.In: return is_ApproxZero(value) ? 0 : 1;
+                    case TweenEasingType.Out: return is_ApproxEqual(value, 1.0) ? 1 : 0;
+                    case TweenEasingType.InOut: return is_ApproxEqual(value, 1.0) ? 1 : 0;
                 }
             }
         }
