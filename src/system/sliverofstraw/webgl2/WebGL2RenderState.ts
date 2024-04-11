@@ -364,6 +364,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         switch (primitive_type) {
             case RenderStatePrimitiveType.Triangles: return this.gl.TRIANGLES;
             case RenderStatePrimitiveType.TriangleStrip: return this.gl.TRIANGLE_STRIP;
+            case RenderStatePrimitiveType.TriangleFan: return this.gl.TRIANGLE_FAN;
             case RenderStatePrimitiveType.LineStrip: return this.gl.LINE_STRIP;
             case RenderStatePrimitiveType.Lines: return this.gl.LINES;
             case RenderStatePrimitiveType.LineLoop: return this.gl.LINE_LOOP;

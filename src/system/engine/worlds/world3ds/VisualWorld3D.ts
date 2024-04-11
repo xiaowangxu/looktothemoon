@@ -601,6 +601,7 @@ export class VisualWorld3D extends ConfiguredObject {
     }
 
     private rendered_once: boolean = true;
+    private sky_rendered: boolean = false;
 
     public trigger_BeforeRender(scene_tree: SceneTree) {
         this.rendered_once = false;
@@ -614,6 +615,8 @@ export class VisualWorld3D extends ConfiguredObject {
     }
 
     private update_Sky(time: number) {
+        if (this.sky_rendered) return;
+        // this.sky_rendered = true;
         this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false);
         this.render_server.render_state.set_ViewportProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
         this.render_server.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);

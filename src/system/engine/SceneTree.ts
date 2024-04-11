@@ -59,7 +59,7 @@ export class SceneTree extends ConfiguredObject {
         this.frame_id = frame_id;
         // console.log("fps: ", (1 / this.delta).toFixed(2));
         // render server resize
-        this.config.render_server.set_PixelRatio(this.config.render_server_pixel_ratio ?? window.devicePixelRatio * (this.config.render_server_scale ?? 1));
+        this.config.render_server.set_PixelRatio(this.config.render_server_pixel_ratio, this.config.render_server_scale);
         if (this.config.render_server_size) {
             this.config.render_server.set_Size(this.config.render_server_size.x, this.config.render_server_size.y);
         }

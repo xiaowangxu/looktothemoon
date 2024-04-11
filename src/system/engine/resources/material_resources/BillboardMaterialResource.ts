@@ -34,7 +34,7 @@ export const BillboardVertexShader = new Cacher((config: Config) => {
         vec4 world_in_view = camera_view * world;           // IN CAMERA SPACE
         vec4 clip = camera_projection * world_in_view;      // IN CLIP SPACE
 
-        const float width = 50.0;
+        const float width = 20.0;
         vec2 offset = vec2(width * 2.0) / screen_size * pixel_ratio;
 
         clip.xyz /= clip.w;
@@ -45,7 +45,7 @@ export const BillboardVertexShader = new Cacher((config: Config) => {
 
         v_NORMAL_VIEW = vec3(0.0, 0.0, 1.0);
         v_LOOKAT_VIEW = vec3(0.0, 0.0, 1.0);
-        v_UV = a_uv;
+        v_UV = a_position.xy + vec2(0.5);
     }`;
 
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect());
@@ -69,8 +69,9 @@ export const BillboardFragmentShadeShader = new Cacher((config: Config) => {
     ${GlslPrimitives.FragmentFrameSolidOuts}
 
     void main() {
-        // if (distance(v_UV, vec2(0.5)) > 0.49) discard;
-        o_color = vec4(v_UV, 0.0, 1.0);
+        float dist = distance(v_UV, vec2(0.5)) * 2.0;
+        vec3 color = mix(vec3(1.0, 0.2140411404715882, 0.0), vec3(0.04), smoothstep(0.6, 0.55, dist));
+        o_color = vec4(color, 1.0);
         o_normal = vec4(v_NORMAL_VIEW, 1.0);
     }`;
 

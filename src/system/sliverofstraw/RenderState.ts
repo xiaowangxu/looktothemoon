@@ -37,7 +37,7 @@ export enum RenderStateBufferUsage {
 }
 
 export enum RenderStatePrimitiveType {
-    Triangles, TriangleStrip, LineStrip, Lines, LineLoop
+    Triangles, TriangleStrip, TriangleFan, LineStrip, Lines, LineLoop
 }
 
 export enum RenderStateDataType {

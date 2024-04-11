@@ -835,3 +835,5 @@ export class Viewport extends Node {
         }
     }
 }
+
+console.log(Vector4.create(1.0, 0.5, 0.0, 1).linear_rgb);

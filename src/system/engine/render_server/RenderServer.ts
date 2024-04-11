@@ -32,6 +32,8 @@ export class RenderServerDevice extends WebGL2RenderDevice {
 
     float time;
     bool camera_is_orthogonal;
+
+    // pixel_ratio is raw pixel_ratio * render_scale
     float pixel_ratio;
 
     float _preserved_0;
@@ -334,11 +336,14 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         this.render_state.update_Buffer(this.world_uniforms_buffer_ref.expect, this.world_uniforms_buffer_environment_data, this.world_uniforms_buffer_environment_data.byteOffset);
     }
 
+    private _raw_pixel_ratio: number = window.devicePixelRatio;
+    public get raw_pixel_ratio() { return this._raw_pixel_ratio; }
     private _pixel_ratio: number = window.devicePixelRatio;
     public get pixel_ratio() { return this._pixel_ratio; }
 
-    public set_PixelRatio(ratio: number) {
-        this._pixel_ratio = ratio;
+    public set_PixelRatio(ratio: number = window.devicePixelRatio, scale: number = 1) {
+        this._raw_pixel_ratio = ratio;
+        this._pixel_ratio = ratio * scale;
     }
 
     private _flushed: boolean = false;

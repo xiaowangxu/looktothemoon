@@ -395,10 +395,11 @@ void main() {
 
 // ${GlslPrimitives.WorldUniforms}
 
-// const float ContrastThreshold = 0.25;
-// const float RelativeThreshold = 0.15;
+// const float ContrastThreshold = 0.05;
+// const float RelativeThreshold = 0.4;
 
 // uniform sampler2D u_screen;
+// uniform bool u_colormap;
 
 // in vec2 v_uv;
 
@@ -410,7 +411,16 @@ void main() {
 // }
 
 // vec4 sample_screen(vec2 uv, float shift_x, float shift_y) {
-//     return texture(u_screen, uv + vec2(shift_x, shift_y));
+//     vec4 color = texture(u_screen, uv + vec2(shift_x, shift_y));
+//     if (u_colormap) {
+//         float r = color.r;
+//         color.r = r <= 0.0031308 ? (12.92 * r) : (1.055 * pow(r, 1.0 / 2.4) - 0.055);
+//         float g = color.g;
+//         color.g = g <= 0.0031308 ? (12.92 * g) : (1.055 * pow(g, 1.0 / 2.4) - 0.055);
+//         float b = color.b;
+//         color.b = b <= 0.0031308 ? (12.92 * b) : (1.055 * pow(b, 1.0 / 2.4) - 0.055);
+//     }
+//     return color;
 // }
 
 // float sample_luminance(vec2 uv, float shift_x, float shift_y)
@@ -510,17 +520,19 @@ void main() {
 // }
 
 // void main() {
-//     // LuminanceData l = sample_luminance_neighborhood(v_uv);
-//     // EdgeData e = determine_edge(l);
-//     // bool skip = skip_pixel(l);
-//     // vec3 color = skip ? vec3(0.0) : e.is_horizontal ? vec3(1.0, 0.0, 0.0) : vec3(1.0);
+//     LuminanceData l = sample_luminance_neighborhood(v_uv);
+//     EdgeData e = determine_edge(l);
+//     bool skip = skip_pixel(l);
+//     vec3 color = skip ? vec3(0.0) : e.is_horizontal ? vec3(1.0, 0.0, 0.0) : vec3(1.0);
+// 	o_color = vec4(color, 1.0);
+
 // 	o_color = fxaa(v_uv);
 // }`;
 
 const FxaaProgram = new Cacher((config: Config) => {
     const fxaa_vert_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, fxaa_vert_shader_code).expect();
     const fxaa_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, fxaa_frag_shader_code).expect();
-    const fxaa_program = config.render_server.render_state.create_Program(fxaa_vert_shader, fxaa_frag_shader).expect();
+    const fxaa_program = config.render_server.render_state.create_Program(fxaa_vert_shader /*QuadVertexShader.get(config).expect*/, fxaa_frag_shader).expect();
     const program = new Ref(fxaa_program);
 
     const uniform_screen_location = config.render_server.render_state.get_ProgramUniformLocation(fxaa_program, 'u_screen');
@@ -760,16 +772,15 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
     //#region Frame Buffer
     private readonly solid_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
     private readonly solid_1_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
-    private readonly solid_copy_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
     //#endregion
 
     //#region Texture
     private readonly solid_color_texture: Ref<WebGL2RenderStateTexture> = new Ref();
     private readonly solid_normal_texture: Ref<WebGL2RenderStateTexture> = new Ref();
     private readonly solid_depth_texture: Ref<WebGL2RenderStateTexture> = new Ref();
-    private readonly solid_color_copy_texture: Ref<WebGL2RenderStateTexture> = new Ref();
-    private readonly solid_normal_copy_texture: Ref<WebGL2RenderStateTexture> = new Ref();
-    private readonly solid_depth_copy_texture: Ref<WebGL2RenderStateTexture> = new Ref();
+    private readonly solid_color_1_texture: Ref<WebGL2RenderStateTexture> = new Ref();
+    private readonly solid_normal_1_texture: Ref<WebGL2RenderStateTexture> = new Ref();
+    private readonly solid_depth_1_texture: Ref<WebGL2RenderStateTexture> = new Ref();
     //#endregion
 
     //#endregion
@@ -778,6 +789,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
     //#region Frame Buffer
     private readonly transparent_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
+    private readonly transparent_1_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
     private readonly transparent_depth_normal_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
     //#endregion
 
@@ -830,17 +842,16 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         // frame buffer
         this.solid_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
         this.solid_1_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
-        this.solid_copy_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
 
         // texture
         this.solid_color_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
         this.solid_normal_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
         this.solid_depth_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.D32F, 0, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-        // copy texture
-        this.solid_color_copy_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-        this.solid_normal_copy_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
-        this.solid_depth_copy_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.D32F, 0, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
 
+        this.solid_color_1_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+        this.solid_normal_1_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+        this.solid_depth_1_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.D32F, 0, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+       
         this.resize_Solid();
 
         // link frame buffer
@@ -849,28 +860,25 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.set_FrameBufferAttachment(this.solid_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, this.solid_depth_texture.expect);
         this.render_server.render_state.enable_FrameBuffer(this.solid_framebuffer.expect);
 
-        this.render_server.render_state.set_FrameBufferAttachment(this.solid_1_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.solid_color_texture.expect);
-        this.render_server.render_state.set_FrameBufferAttachment(this.solid_1_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, this.solid_depth_texture.expect);
+        this.render_server.render_state.set_FrameBufferAttachment(this.solid_1_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.solid_color_1_texture.expect);
+        this.render_server.render_state.set_FrameBufferAttachment(this.solid_1_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color1, this.solid_normal_1_texture.expect);
+        this.render_server.render_state.set_FrameBufferAttachment(this.solid_1_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, this.solid_depth_1_texture.expect);
         this.render_server.render_state.enable_FrameBuffer(this.solid_1_framebuffer.expect);
-
-        this.render_server.render_state.set_FrameBufferAttachment(this.solid_copy_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.solid_color_copy_texture.expect);
-        this.render_server.render_state.set_FrameBufferAttachment(this.solid_copy_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color1, this.solid_normal_copy_texture.expect);
-        this.render_server.render_state.set_FrameBufferAttachment(this.solid_copy_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, this.solid_depth_copy_texture.expect);
-        this.render_server.render_state.enable_FrameBuffer(this.solid_copy_framebuffer.expect);
     }
 
     private resize_Solid() {
         this.render_server.render_state.alloc_Texture2D(this.solid_color_texture.expect, this.size.x, this.size.y, 0, RenderStateTextureDataFormat.RGBA);
         this.render_server.render_state.alloc_Texture2D(this.solid_normal_texture.expect, this.size.x, this.size.y, 0, RenderStateTextureDataFormat.RGBA);
         this.render_server.render_state.alloc_Texture2D(this.solid_depth_texture.expect, this.size.x, this.size.y, 0, RenderStateTextureDataFormat.Depth);
-        this.render_server.render_state.alloc_Texture2D(this.solid_color_copy_texture.expect, this.size.x, this.size.y, 0, RenderStateTextureDataFormat.RGBA);
-        this.render_server.render_state.alloc_Texture2D(this.solid_normal_copy_texture.expect, this.size.x, this.size.y, 0, RenderStateTextureDataFormat.RGBA);
-        this.render_server.render_state.alloc_Texture2D(this.solid_depth_copy_texture.expect, this.size.x, this.size.y, 0, RenderStateTextureDataFormat.Depth);
+        this.render_server.render_state.alloc_Texture2D(this.solid_color_1_texture.expect, this.size.x, this.size.y, 0, RenderStateTextureDataFormat.RGBA);
+        this.render_server.render_state.alloc_Texture2D(this.solid_normal_1_texture.expect, this.size.x, this.size.y, 0, RenderStateTextureDataFormat.RGBA);
+        this.render_server.render_state.alloc_Texture2D(this.solid_depth_1_texture.expect, this.size.x, this.size.y, 0, RenderStateTextureDataFormat.Depth);
     }
 
     private alloc_Transparent() {
         // frame buffer
         this.transparent_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
+        this.transparent_1_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
         this.transparent_depth_normal_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
 
         // texture
@@ -884,6 +892,11 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.set_FrameBufferAttachment(this.transparent_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color1, this.transparent_accum_texture.expect);
         this.render_server.render_state.set_FrameBufferAttachment(this.transparent_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, this.solid_depth_texture.expect);
         this.render_server.render_state.enable_FrameBuffer(this.transparent_framebuffer.expect);
+
+        this.render_server.render_state.set_FrameBufferAttachment(this.transparent_1_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.transparent_color_texture.expect);
+        this.render_server.render_state.set_FrameBufferAttachment(this.transparent_1_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color1, this.transparent_accum_texture.expect);
+        this.render_server.render_state.set_FrameBufferAttachment(this.transparent_1_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, this.solid_depth_1_texture.expect);
+        this.render_server.render_state.enable_FrameBuffer(this.transparent_1_framebuffer.expect);
 
         this.render_server.render_state.set_FrameBufferAttachment(this.transparent_depth_normal_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Depth, this.solid_depth_texture.expect);
         this.render_server.render_state.set_FrameBufferAttachment(this.transparent_depth_normal_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color1, this.solid_normal_texture.expect);
@@ -1159,9 +1172,6 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
     private render_RenderQueue1Solid(renderer: EditorRenderer3D) {
         const { x: width, y: height } = this.size;
 
-        // blit
-        this.render_server.render_state.blit_FrameBuffer(this.solid_framebuffer.expect, this.solid_copy_framebuffer.expect, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth, RenderStateTextureMagFilter.Nearest, 0, 0, width, height);
-
         this.render_server.set_RenderCapabilities(true, true, this.render_server.render_state.gl.LEQUAL, false);
         this.render_server.render_state.set_ViewportProxy(0, 0, width, height);
         this.render_server.render_state.set_ScissorProxy(0, 0, width, height);
@@ -1169,8 +1179,8 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.set_ClearColorProxy(0, 0, 0, 0);
         this.render_server.render_state.clear_FrameBuffer(this.solid_1_framebuffer.expect, RenderStateFrameBufferPart.Color | RenderStateFrameBufferPart.Depth);
 
-        this.render_server.render_state.active_Texture(this.solid_depth_copy_texture.expect, 0);
-        this.render_server.render_state.active_Texture(this.solid_color_copy_texture.expect, 1);
+        this.render_server.render_state.active_Texture(this.solid_depth_texture.expect, 0);
+        this.render_server.render_state.active_Texture(this.solid_color_texture.expect, 1);
 
         // render queue solid
         const render_queue = renderer.render_queue_1;
@@ -1208,7 +1218,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, true, false);
         this.render_server.render_state.gl.blendFunc(this.render_server.render_state.gl.SRC_ALPHA, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
         this.set_CullFace(RenderServerMaterialCullFace.None);
-        this.render_server.render_state.active_Texture(this.solid_color_texture.expect, 0);
+        this.render_server.render_state.active_Texture(this.solid_color_1_texture.expect, 0);
         this.render_server.render_state.draw_Elements(this.screen_quad_solid_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
@@ -1217,10 +1227,10 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.render_server.render_state.gl.blendFuncSeparate(this.render_server.render_state.gl.ONE, this.render_server.render_state.gl.ONE, this.render_server.render_state.gl.ZERO, this.render_server.render_state.gl.ONE_MINUS_SRC_ALPHA);
         this.render_server.render_state.set_CapabilityProxy(this.render_server.render_state.gl.CULL_FACE, true);
         this.render_server.render_state.set_ClearColorProxy(0, 0, 0, 1);
-        this.render_server.render_state.clear_FrameBuffer(this.transparent_framebuffer.expect, RenderStateFrameBufferPart.Color);
+        this.render_server.render_state.clear_FrameBuffer(this.transparent_1_framebuffer.expect, RenderStateFrameBufferPart.Color);
 
-        this.render_server.render_state.active_Texture(this.solid_depth_copy_texture.expect, 0);
-        this.render_server.render_state.active_Texture(this.solid_color_copy_texture.expect, 1);
+        this.render_server.render_state.active_Texture(this.solid_depth_texture.expect, 0);
+        this.render_server.render_state.active_Texture(this.solid_color_texture.expect, 1);
 
         // draw scene
         // render queue transparent
@@ -1403,12 +1413,15 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         // solid
         this.solid_framebuffer.clear();
         this.solid_1_framebuffer.clear();
-        this.solid_copy_framebuffer.clear();
         this.solid_color_texture.clear();
         this.solid_normal_texture.clear();
         this.solid_depth_texture.clear();
+        this.solid_color_1_texture.clear();
+        this.solid_normal_1_texture.clear();
+        this.solid_depth_1_texture.clear();
         // transparent
         this.transparent_framebuffer.clear();
+        this.transparent_1_framebuffer.clear();
         this.transparent_depth_normal_framebuffer.clear();
         this.transparent_color_texture.clear();
         this.transparent_accum_texture.clear();

@@ -141,7 +141,7 @@ export class OrbitCamera3D extends Node3D {
                 }
                 else {
                     this._is_grabbing_rotate = true;
-                    this.rotate((event.get_Relative(OrbitCamera3D.#tmp_vector2_0)));
+                    this.rotate(OrbitCamera3D.#tmp_vector2_0.mult_Number(event.get_Relative(OrbitCamera3D.#tmp_vector2_0), (this.config.render_server.raw_pixel_ratio)));
                 }
                 event.mark_Cancelled();
             }

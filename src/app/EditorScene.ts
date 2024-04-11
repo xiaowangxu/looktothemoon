@@ -57,8 +57,9 @@ import { Dom3D } from "@/system/engine/nodes/node3ds/Dom3D";
 import { PlainMaterialResource } from "@/system/engine/resources/material_resources/PlainMaterialResource";
 import { NormalMaterialResource } from "@/system/engine/resources/material_resources/NormalMaterialResource";
 import { UvMaterialResource } from "@/system/engine/resources/material_resources/UvMaterialResource";
-import { BillboardGeometryResource } from "@/system/engine/resources/geometry_resources/BillboardGeometryResource";
+import { BillboardSquareGeometryResource, BillboardCircleGeometryResource } from "@/system/engine/resources/geometry_resources/BillboardGeometryResource";
 import { BillboardMaterialResource } from "@/system/engine/resources/material_resources/BillboardMaterialResource";
+import { StandardMaterialResource } from "@/system/engine/resources/material_resources/StandardMaterialResource";
 
 // import png_url2 from 'res://matcap-2.jpg';
 // import png_url3 from 'res://matcap-3.jpg';
@@ -138,35 +139,35 @@ export function createEditor() {
     EditorViewport.add_Child(EditorCamera);
     EditorCamera.set_Zoom(0.3);
 
-    // viewport 0
-    const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
-    EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-    const EditorViewport0 = new Viewport(DefaultConfig);
-    const renderer0 = new EditorRenderer3D(DefaultConfig);
-    const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
-    renderer0.render_pipeline = pipeline0;
-    EditorViewport0.renderer_3d = renderer0;
-    // EditorViewport0.transparent = true;
-    EditorViewport0.background_color = bg_color;
-    EditorViewportContainer0.add_Child(EditorViewport0);
-    const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
-    EditorViewport0.add_Child(EditorCamera0);
-    EditorViewport.add_Child(EditorViewportContainer0);
-    // viewport 1
-    const EditorViewportContainer1 = new ViewportDomContainer(DefaultConfig);
-    EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
-    const EditorViewport1 = new Viewport(DefaultConfig);
-    const renderer1 = new EditorRenderer3D(DefaultConfig);
-    const pipeline1 = new EditorRenderer3DPipeline(DefaultConfig);
-    renderer1.render_pipeline = pipeline1;
-    EditorViewport1.renderer_3d = renderer1;
-    // EditorViewport1.transparent = true;
-    EditorViewport1.background_color = bg_color;
-    EditorViewport1.editor_highlight_color = Color.color8(0, 0, 255);
-    EditorViewportContainer1.add_Child(EditorViewport1);
-    const EditorCamera1 = new EditorOrbitCamera3D(DefaultConfig);
-    EditorViewport1.add_Child(EditorCamera1);
-    EditorViewport.add_Child(EditorViewportContainer1);
+    // // viewport 0
+    // const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
+    // EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+    // const EditorViewport0 = new Viewport(DefaultConfig);
+    // const renderer0 = new EditorRenderer3D(DefaultConfig);
+    // const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
+    // renderer0.render_pipeline = pipeline0;
+    // EditorViewport0.renderer_3d = renderer0;
+    // // EditorViewport0.transparent = true;
+    // EditorViewport0.background_color = bg_color;
+    // EditorViewportContainer0.add_Child(EditorViewport0);
+    // const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
+    // EditorViewport0.add_Child(EditorCamera0);
+    // EditorViewport.add_Child(EditorViewportContainer0);
+    // // viewport 1
+    // const EditorViewportContainer1 = new ViewportDomContainer(DefaultConfig);
+    // EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
+    // const EditorViewport1 = new Viewport(DefaultConfig);
+    // const renderer1 = new EditorRenderer3D(DefaultConfig);
+    // const pipeline1 = new EditorRenderer3DPipeline(DefaultConfig);
+    // renderer1.render_pipeline = pipeline1;
+    // EditorViewport1.renderer_3d = renderer1;
+    // // EditorViewport1.transparent = true;
+    // EditorViewport1.background_color = bg_color;
+    // EditorViewport1.editor_highlight_color = Color.color8(0, 0, 255);
+    // EditorViewportContainer1.add_Child(EditorViewport1);
+    // const EditorCamera1 = new EditorOrbitCamera3D(DefaultConfig);
+    // EditorViewport1.add_Child(EditorCamera1);
+    // EditorViewport.add_Child(EditorViewportContainer1);
 
     // World 
     const World = new Node3D(DefaultConfig);
@@ -175,14 +176,14 @@ export function createEditor() {
     ambient_light.intensity = 0.075;
     World.add_Child(ambient_light);
     const directional_light0 = new DirectionalLight3D(DefaultConfig);
-    directional_light0.color = Vector3.create(0.9, 0.9, 1);
+    directional_light0.color = Vector3.create(0.8, 0.9, 1);
     directional_light0.intensity = 0.3;
     directional_light0.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 0, -1), Vector3.new.normalize(Vector3.create(-1, -1, 1))));
     directional_light0.layer = 0xffffffff;
     World.add_Child(directional_light0);
     const directional_light1 = new DirectionalLight3D(DefaultConfig);
     directional_light1.color = Vector3.create(1, 0.9, 0.8);
-    directional_light1.intensity = 0.02;
+    directional_light1.intensity = 0.05;
     directional_light1.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 0, -1), Vector3.new.normalize(Vector3.create(1, 1, -1))));
     World.add_Child(directional_light1);
 
@@ -222,7 +223,8 @@ export function createEditor() {
     multi_geometry.commit_InstanceTransforms();
     multi_geometry.update_BBox();
 
-    const material = new UvMaterialResource(DefaultConfig);
+    const material = new StandardMaterialResource(DefaultConfig); // new UvMaterialResource(DefaultConfig);
+    material.color = Color.create(0.2, 0.4, 0.6, 1.0).linear_rgb;
 
     const Mesh1 = new MeshInstance3D(DefaultConfig);
     Mesh1.geometry = multi_geometry;
@@ -252,6 +254,9 @@ export function createEditor() {
     World.add_Child(TranslateGrabber2);
 
     const spot_light = new SpotLight3D(DefaultConfig);
+    spot_light.intensity = 4;
+    spot_light.distance = 10.0;
+    spot_light.mask = 0x7fffffff;
     spot_light.color = Vector3.create(1, 0, 0);
     World.add_Child(spot_light);
 
@@ -413,17 +418,18 @@ export function createEditor() {
     const geo = new BoxGeometryResource(DefaultConfig);
     geo.build();
     ground.geometry = geo;
-    const ground_material = new MatcapMaterialResource(DefaultConfig);
-    ground_material.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/matcaps/matcap-13.lttmbin').expect();
+    const ground_material = new StandardMaterialResource(DefaultConfig);
+    // ground_material.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/matcaps/matcap-13.lttmbin').expect();
     const normal_texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/normals/normal-1.lttmbin').expect();
     normal_texture.min_filter = RenderStateTextureMinFilter.LinearMipmapLinear;
     normal_texture.mag_filter = RenderStateTextureMagFilter.Linear;
     ground_material.normal_texture = normal_texture;
-    // ground_material.color = Color.create(1.0, 1.0, 1.0, 0.98);
+    ground_material.color = Color.create(0.3, 0.3, 0.3, 1.0).linear_rgb;
     ground.material = ground_material;
     // ground.top_level = true;
     ground.local_scale = Vector3.create(1000, 500, 1000);
     ground.local_position = Vector3.create(0, -400, 0);
+    ground.layer = 0x90000000;
     World.add_Child(ground);
 
     const grid_geo = new GridGeometryResource(DefaultConfig);
@@ -542,31 +548,28 @@ export function createEditor() {
         line_grabber.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), result.normal));
     });
 
-    const point_geo = new SphereGeometryResource(DefaultConfig);
-    point_geo.build();
-    const point_mat = new MatcapMaterialResource(DefaultConfig);
-    point_mat.color = Color.color8(0, 0, 0);
+    const point_geo = new BillboardCircleGeometryResource(DefaultConfig);
+    const point_mat = new BillboardMaterialResource(DefaultConfig);
     const point_mesh = new MeshInstance3D(DefaultConfig);
     point_mesh.geometry = point_geo;
     point_mesh.material = point_mat;
-    const size = new FixSizeNode3D(DefaultConfig);
-    size.unit_pixel_count = 6;
-    size.add_Child(point_mesh);
-    World.add_Child(size);
+    World.add_Child(point_mesh);
     const point_area = new PickingArea3D(DefaultConfig);
     const point_shape = new PickingShape3D(DefaultConfig);
     point_area.add_Child(point_shape);
-    point_shape.shape = new PickingPointResource(DefaultConfig);
+    const point_shape_shape = new PickingPointResource(DefaultConfig);
+    point_shape_shape.radius = 10.0;
+    point_shape.shape = point_shape_shape;
     point_mesh.add_Child(point_area);
-    size.global_position = Vector3.create(6, 1, -1);
+    point_mesh.global_position = Vector3.create(6, 1, -1);
 
     point_area.signal_mouse_entered.connect((evt, result) => {
-        point_mat.color = Color.color8(255, 0, 0);
+        // point_mat.color = Color.color8(255, 0, 0);
         line_grabber.local_position = result.position;
         line_grabber.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), result.normal));
     });
     point_area.signal_mouse_exited.connect(() => {
-        point_mat.color = Color.color8(0, 0, 0);
+        // point_mat.color = Color.color8(0, 0, 0);
     });
 
     // const box_geometry = new BoxGeometryResource(DefaultConfig);
@@ -805,7 +808,7 @@ export function createEditor() {
     // dom.dom.style.fontWeight = 'bold';
     dom.top_level = true;
     dom.local_position = Vector3.create(0, 5, -3);
-    World.add_Child(dom);
+    // World.add_Child(dom);
 
     // {
     //     const half_w = 1 / 2;
@@ -947,13 +950,18 @@ export function createEditor() {
     //     World.add_Child(mesh);
     // }
 
-    {
-        const mesh = new MeshInstance3D(DefaultConfig);
-        mesh.geometry = new BillboardGeometryResource(DefaultConfig);
-        mesh.material = new BillboardMaterialResource(DefaultConfig);
-        mesh.local_position = Vector3.create(400, 450, -200);
-        World.add_Child(mesh);
-    }
+    // {
+    //     for (let i = 0; i < 128; i++) {
+    //         const point = new PointLight3D(DefaultConfig);
+    //         point.top_level = true;
+    //         point.radius = 2.0;
+    //         point.color = Vector3.create(Math.random(), Math.random(), Math.random());
+    //         point.intensity = 0.1;
+    //         point.top_level = true;
+    //         point.local_position = Vector3.create((Math.floor(i / 6) - 3) * 2, 0, (Math.floor(i % 6) - 3) * 2);
+    //         World.add_Child(point);
+    //     }
+    // }
 
     return EditorSceneTree;
 }
