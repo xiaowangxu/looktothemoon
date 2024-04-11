@@ -333,7 +333,7 @@ vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution,
             vec2 v_rgbSW, vec2 v_rgbSE, 
             vec2 v_rgbM) {
     vec4 color;
-    mediump vec2 inverseVP = vec2(1.0 / resolution.x, 1.0 / resolution.y);
+    vec2 inverseVP = vec2(1.0) / resolution;
     vec3 rgbNW = texture(tex, v_rgbNW).xyz;
     vec3 rgbNE = texture(tex, v_rgbNE).xyz;
     vec3 rgbSW = texture(tex, v_rgbSW).xyz;
@@ -349,7 +349,7 @@ vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution,
     float lumaMin = min(lumaM, min(min(lumaNW, lumaNE), min(lumaSW, lumaSE)));
     float lumaMax = max(lumaM, max(max(lumaNW, lumaNE), max(lumaSW, lumaSE)));
     
-    mediump vec2 dir;
+    vec2 dir;
     dir.x = -((lumaNW + lumaNE) - (lumaSW + lumaSE));
     dir.y =  ((lumaNW + lumaSW) - (lumaNE + lumaSE));
     
@@ -828,10 +828,12 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
 
     //#region Frame Buffer
     private readonly postprocessing_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
+    private readonly postprocessing_1_framebuffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
     //#endregion
 
     //#region Texture
     private readonly postprocessing_color_texture: Ref<WebGL2RenderStateTexture> = new Ref();
+    private readonly postprocessing_color_1_texture: Ref<WebGL2RenderStateTexture> = new Ref();
     //#endregion
 
     //#endregion
@@ -947,19 +949,25 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
     private alloc_Postprocessing() {
         // frame buffer
         this.postprocessing_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
+        this.postprocessing_1_framebuffer.value = this.render_server.render_state.create_FrameBuffer().expect();
 
         // texture
         this.postprocessing_color_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
+        this.postprocessing_color_1_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2D, false, RenderStateTextureFormat.RGBA32F, 0, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
 
         this.resize_Postprocessing();
 
         // link frame buffer
         this.render_server.render_state.set_FrameBufferAttachment(this.postprocessing_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.postprocessing_color_texture.expect);
         this.render_server.render_state.enable_FrameBuffer(this.postprocessing_framebuffer.expect);
+
+        this.render_server.render_state.set_FrameBufferAttachment(this.postprocessing_1_framebuffer.expect, WebGL2RenderStateFrameBufferAttachmentPoint.Color0, this.postprocessing_color_1_texture.expect);
+        this.render_server.render_state.enable_FrameBuffer(this.postprocessing_1_framebuffer.expect);
     }
 
     private resize_Postprocessing() {
         this.render_server.render_state.alloc_Texture2D(this.postprocessing_color_texture.expect, this.size.x, this.size.y, 0, RenderStateTextureDataFormat.RGBA);
+        this.render_server.render_state.alloc_Texture2D(this.postprocessing_color_1_texture.expect, this.size.x, this.size.y, 0, RenderStateTextureDataFormat.RGBA);
     }
 
     constructor(config: Config) {
@@ -1368,6 +1376,36 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         this.postprocessing_fxaa_uniform_colormap_slot.value = color_map ? 1 : 0;
         this.postprocessing_fxaa_uniform_colormap_slot.commit();
         this.render_server.render_state.draw_Elements(this.postprocessing_fxaa_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+
+        // this.render_server.render_state.use_FrameBuffer(this.postprocessing_1_framebuffer.expect);
+        // this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false, false);
+        // this.set_CullFace(RenderServerMaterialCullFace.None);
+        // this.render_server.render_state.active_Texture(this.postprocessing_color_texture.expect, 0);
+        // this.render_server.render_state.active_Texture(this.solid_depth_texture.expect, 1);
+        // this.render_server.render_state.active_Texture(this.solid_normal_texture.expect, 2);
+        // this.postprocessing_fxaa_uniform_colormap_slot.value = 0;
+        // this.postprocessing_fxaa_uniform_colormap_slot.commit();
+        // this.render_server.render_state.draw_Elements(this.postprocessing_fxaa_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+
+        // this.render_server.render_state.use_FrameBuffer(this.postprocessing_framebuffer.expect);
+        // this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false, false);
+        // this.set_CullFace(RenderServerMaterialCullFace.None);
+        // this.render_server.render_state.active_Texture(this.postprocessing_color_1_texture.expect, 0);
+        // this.render_server.render_state.active_Texture(this.solid_depth_texture.expect, 1);
+        // this.render_server.render_state.active_Texture(this.solid_normal_texture.expect, 2);
+        // this.postprocessing_fxaa_uniform_colormap_slot.value = 0;
+        // this.postprocessing_fxaa_uniform_colormap_slot.commit();
+        // this.render_server.render_state.draw_Elements(this.postprocessing_fxaa_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
+
+        // this.render_server.render_state.use_FrameBuffer(this.postprocessing_1_framebuffer.expect);
+        // this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false, false);
+        // this.set_CullFace(RenderServerMaterialCullFace.None);
+        // this.render_server.render_state.active_Texture(this.postprocessing_color_texture.expect, 0);
+        // this.render_server.render_state.active_Texture(this.solid_depth_texture.expect, 1);
+        // this.render_server.render_state.active_Texture(this.solid_normal_texture.expect, 2);
+        // this.postprocessing_fxaa_uniform_colormap_slot.value = 0;
+        // this.postprocessing_fxaa_uniform_colormap_slot.commit();
+        // this.render_server.render_state.draw_Elements(this.postprocessing_fxaa_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }
 
     //#endregion
@@ -1434,6 +1472,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         // postprocessing
         this.postprocessing_framebuffer.clear();
         this.postprocessing_color_texture.clear();
-
+        this.postprocessing_1_framebuffer.clear();
+        this.postprocessing_color_1_texture.clear();
     }
 }
