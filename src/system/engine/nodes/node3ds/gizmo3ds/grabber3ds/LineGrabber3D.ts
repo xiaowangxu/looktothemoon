@@ -5,7 +5,6 @@ import { Color } from "@/system/fivepebble/graphics/Color";
 import { clamp, is_ApproxEqual } from "@/system/fivepebble/Scalar";
 import { Cacher } from "@/system/utils/Cacher";
 import { CylinderGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
-import { MaterialOverrideResource } from "@/system/engine/resources/material_resources/MaterialResource";
 import { Ref } from "@/system/utils/RefCounted";
 import type { InputEvent } from "@/system/engine/inputs/InputEvent";
 import { MouseButton, MouseButtonInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseButtonInputEvent";
@@ -40,8 +39,6 @@ const ArrowHeadGeometry = new Cacher((config: Config) => {
     return new Ref(geometry);
 });
 
-const LineGrabberMaterial = new Cacher((config: Config) => new Ref(new GrabberPlainColorMaterialResource(config)));
-
 const LineGrabberPickingShape = new Cacher((config: Config) => {
     const picking_shape = new PickingCylinderResource(config);
     picking_shape.radius = 0.12;
@@ -54,7 +51,7 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
 
     private readonly arrow_tail: MeshInstance3D = new MeshInstance3D(this.config);
     private readonly arrow_head: MeshInstance3D = new MeshInstance3D(this.config);
-    private readonly arrow_material: Ref<MaterialOverrideResource> = new Ref(new MaterialOverrideResource(this.config));
+    private readonly arrow_material: Ref<GrabberPlainColorMaterialResource> = new Ref(new GrabberPlainColorMaterialResource(this.config));
     private readonly area: PickingArea3D = new PickingArea3D(this.config);
     private readonly shape: PickingShape3D = new PickingShape3D(this.config);
 
@@ -162,16 +159,14 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
     private update_Visual() {
         if (this.is_hovering) {
             this.visual_color.set(this._highlight_color.r, this._highlight_color.g, this._highlight_color.b, this._highlight_color.a * this.visual_opacity);
-            this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);
         }
         else if (this.is_grabbing) {
             this.visual_color.set(this._highlight_color.r, this._highlight_color.g, this._highlight_color.b, this._highlight_color.a * this.visual_opacity);
-            this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);
         }
         else {
             this.visual_color.set(this._color.r, this._color.g, this._color.b, this._color.a * this.visual_opacity);
-            this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);
         }
+        this.arrow_material.expect.color = this.visual_color;
     }
 
     private update_Opacity() {
@@ -180,7 +175,7 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         if (viewport === undefined || camera === undefined || this.is_grabbing) {
             this.visual_opacity = 1;
             this.visual_color.set(this.visual_color.r, this.visual_color.g, this.visual_color.b, this.visual_opacity);
-            this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);
+            this.arrow_material.expect.color = this.visual_color;
             this.arrow_material.expect.material.transparent = false;
             this.arrow_head.local_visible = true;
             this.visual_enabled = true;
@@ -197,7 +192,7 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
             const opactiy = (clamp(distance, 0.1, 0.35) - 0.1) * 4;
             this.visual_opacity = opactiy;
             this.visual_color.set(this.visual_color.r, this.visual_color.g, this.visual_color.b, this.visual_opacity);
-            this.arrow_material.expect.set_UniformOverride('u_color', this.visual_color);
+            this.arrow_material.expect.color = this.visual_color;
             this.arrow_material.expect.material.transparent = !is_ApproxEqual(this.visual_opacity, 1);
             if (opactiy < 0.4) {
                 this.visual_enabled = false;
@@ -213,7 +208,6 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         super(config);
 
         this.arrow_tail.geometry = ArrowTailGeometry.get(this.config).expect;
-        this.arrow_material.expect.set_OverrideMaterial(LineGrabberMaterial.get(this.config).expect);
         this.arrow_head.geometry = ArrowHeadGeometry.get(this.config).expect;
         this.arrow_tail.material = this.arrow_head.material = this.arrow_material.expect;
         this.on_RenderQueueChanged();

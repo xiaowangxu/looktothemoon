@@ -19,7 +19,6 @@ import type { Config } from "@/system/engine/ConfiguredObject";
 import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
 import { ClassLoader } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
 import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
-import { MaterialOverrideResource } from "@/system/engine/resources/material_resources/MaterialResource";
 import { EditorRenderer3DPipeline } from "@/system/engine/renderer/renderer_3d/editor_renderer_3d/EditorRenderer3DPipeline";
 import { EditorRenderer3D } from "@/system/engine/renderer/renderer_3d/editor_renderer_3d/EditorRenderer3D";
 import { TranslateGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/TranslateGrabber3D";
@@ -266,31 +265,6 @@ export function createEditor() {
         spot_light.global_position = pos;
     });
 
-    // const mat = new PlainColorMaterialResource(DefaultConfig);
-    // for (let i = 0; i <= 1000; i++) {
-    // 	const Mesh2 = new MeshInstance3D(DefaultConfig);
-    // 	Mesh2.geometry = geometry2;
-    // 	const m = new MaterialOverrideResource(DefaultConfig);
-    // 	m.set_OverrideMaterial(mat);
-    // 	m.set_UniformOverride('u_color', color(0, 0, 0, 0.25));
-    // 	m.material.transparent = true;
-    // 	Mesh2.material = m;
-    // 	Mesh2.local_scale = Vector3.create(1, 100, 100);
-    // 	Mesh2.local_position = Vector3.create(i * 50, 0, 0);
-    // 	World.add_Child(Mesh2);
-    // }
-
-    // for (let i = 0; i <= 100; i++) {
-    // 	for (let j = 0; j <= 100; j++) {
-    // 		const Mesh2 = new MeshInstance3D();
-    // 		Mesh2.geometry = geometry2;
-    // 		Mesh2.material = material1;
-    // 		Mesh2.local_scale = Vector3.create(10, 10, 10);
-    // 		Mesh2.local_position = Vector3.create((i / 100 * 2 - 1) * 2000, (j / 100 * 2 - 1) * 2000, 0);
-    // 		World.add_Child(Mesh2);
-    // 	}
-    // }
-
     const multi_line_geometry = new MultiLineGeometryResource(DefaultConfig);
     const multi_line_material = new MultiLineSegmentMaterialResource(DefaultConfig);
     const points = new Array(120).fill(0).map((i, idx) => {
@@ -452,12 +426,9 @@ export function createEditor() {
         const huli_geo = new ClassLoader(DInstanceCache.get(DefaultConfig)).fetch<ArrayGeometryResource>('sys://huli.geometry.lttmbin').expect();
         const shape = new PickingBvh3Resource(DefaultConfig);
         shape.bvh.build(huli_geo.get_TriFaces()!, undefined, Bvh3Strategy.Center);
-        // const normal_material = new MatcapMaterialResource(DefaultConfig);
 
         for (let i = 0; i <= 14; i++) {
-            const override_material = new MatcapMaterialResource(DefaultConfig); // new MaterialOverrideResource(DefaultConfig);
-            // override_material.set_OverrideMaterial(normal_material);
-            // override_material.set_UniformOverride('u_texture', new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>(`sys://textures/matcaps/matcap-${i}.lttmbin`).expect())
+            const override_material = new MatcapMaterialResource(DefaultConfig);
             override_material.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>(`sys://textures/matcaps/matcap-${i}.lttmbin`).expect();
             const mesh = new MeshInstance3D(DefaultConfig);
             mesh.geometry = huli_geo;
@@ -572,47 +543,42 @@ export function createEditor() {
         // point_mat.color = Color.color8(0, 0, 0);
     });
 
-    // const box_geometry = new BoxGeometryResource(DefaultConfig);
-    // box_geometry.width = 0.05;
-    // box_geometry.build();
-    // const transparent_material = new PlainColorMaterialResource(DefaultConfig);
+    const box_geometry = new BoxGeometryResource(DefaultConfig);
+    box_geometry.width = 0.05;
+    box_geometry.build();
 
     // for (let i = 0; i < 1000; i++) {
-    // const point_light = new PointLight3D(DefaultConfig);
-    // point_light.color = Vector3.create(Math.random(), Math.random(), Math.random());
-    // point_light.local_position = Vector3.create(Math.random() * 600 - 400, Math.random() * 600 - 300, Math.random() * 400 - 400);
-    // World.add_Child(point_light);
-    // const mesh = new MeshInstance3D(DefaultConfig);
-    // const mat = new MaterialOverrideResource(DefaultConfig);
-    // mat.set_OverrideMaterial(transparent_material);
-    // mat.set_UniformOverride('u_color', Color.create(Math.random(), Math.random(), Math.random(), 0.5));
-    // mat.material.transparent = true;
-    // mesh.geometry = box_geometry;
-    // mesh.material = mat;
-    // mesh.local_position = Vector3.create(i / 10, Math.random() * 10 - 5, Math.random() * 10 - 5);
-    // mesh.top_level = true;
-    // World.add_Child(mesh);
-
+    //     const point_light = new PointLight3D(DefaultConfig);
+    //     point_light.color = Vector3.create(Math.random(), Math.random(), Math.random());
+    //     point_light.local_position = Vector3.create(Math.random() * 600 - 400, Math.random() * 600 - 300, Math.random() * 400 - 400);
+    //     World.add_Child(point_light);
+    //     const mesh = new MeshInstance3D(DefaultConfig);
+    //     const mat = new PlainMaterialResource(DefaultConfig);
+    //     mat.color = Color.create(Math.random(), Math.random(), Math.random(), 0.5);
+    //     mat.material.transparent = true;
+    //     mesh.geometry = box_geometry;
+    //     mesh.material = mat;
+    //     mesh.local_position = Vector3.create(i / 10, Math.random() * 10 - 5, Math.random() * 10 - 5);
+    //     mesh.top_level = true;
+    //     World.add_Child(mesh);
     // }
 
     const plane = new SphereGeometryResource(DefaultConfig);
     // plane.width = plane.height = 1;
     plane.build();
     const plain = new PlainMaterialResource(DefaultConfig);
-    const __plain = new MaterialOverrideResource(DefaultConfig);
-    __plain.set_OverrideMaterial(plain);
-    const __plain2 = new MaterialOverrideResource(DefaultConfig);
-    __plain2.set_OverrideMaterial(plain);
+    const __plain = new PlainMaterialResource(DefaultConfig);
+    const __plain2 = new PlainMaterialResource(DefaultConfig);
 
     plain.texture = new PlaceholderTextureResource(DefaultConfig);
     const tex1 = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://f-texture.lttmbin').expect();
     tex1.min_filter = RenderStateTextureMinFilter.Linear;
     tex1.mag_filter = RenderStateTextureMagFilter.Linear;
-    __plain.set_UniformOverride('u_texture', tex1);
+    __plain.texture = tex1;
     const tex2 = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://test-texture.lttmbin').expect();
     tex2.min_filter = RenderStateTextureMinFilter.Linear;
     tex2.mag_filter = RenderStateTextureMagFilter.Linear;
-    __plain2.set_UniformOverride('u_texture', tex2);
+    __plain2.texture = tex2;
 
     console.log(__plain2)
 

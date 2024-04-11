@@ -8,7 +8,6 @@ import { PickingShape3D } from "../../physics3ds/PickingShape3D";
 import { MeshInstance3D } from "../../visual_instance3ds/geometry3ds/MeshInstance3D";
 import { GrabberElement3D, GrabberPlainColorMaterialResource } from "./Grabber3D";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import { MaterialOverrideResource } from "@/system/engine/resources/material_resources/MaterialResource";
 import { Ref } from "@/system/utils/RefCounted";
 import { Cacher } from "@/system/utils/Cacher";
 import type { Config } from "@/system/engine/ConfiguredObject";
@@ -26,8 +25,6 @@ const PointGeometry = new Cacher((config: Config) => {
     return new Ref(geometry);
 });
 
-const PointMaterial = new Cacher((config: Config) => new Ref(new GrabberPlainColorMaterialResource(config)));
-
 const PointPickingShape = new Cacher((config: Config) => {
     const picking_shape = new PickingSphereResource(config);
     picking_shape.radius = 1.5;
@@ -41,7 +38,7 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
     private readonly point: MeshInstance3D = new MeshInstance3D(this.config);
     private readonly area: PickingArea3D = new PickingArea3D(this.config);
     private readonly shape: PickingShape3D = new PickingShape3D(this.config);
-    private readonly material: Ref<MaterialOverrideResource> = new Ref(new MaterialOverrideResource(this.config));
+    private readonly material: Ref<GrabberPlainColorMaterialResource> = new Ref(new GrabberPlainColorMaterialResource(this.config));
 
     private _radius: number = 0.085;
     public get radius() { return this._radius; }
@@ -120,16 +117,14 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
     private update_Visual() {
         if (this.is_hovering) {
             this.visual_color.copy(this._highlight_color);
-            this.material.expect.set_UniformOverride('u_color', this.visual_color);
         }
         else if (this.is_grabbing) {
             this.visual_color.copy(this._highlight_color);
-            this.material.expect.set_UniformOverride('u_color', this.visual_color);
         }
         else {
             this.visual_color.copy(this._color);
-            this.material.expect.set_UniformOverride('u_color', this.visual_color);
         }
+        this.material.expect.color = this.visual_color;
     }
 
     constructor(config: Config) {
@@ -138,7 +133,6 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
         this.on_RenderQueueChanged();
 
         this.point.geometry = PointGeometry.get(this.config).expect;
-        this.material.expect.set_OverrideMaterial(PointMaterial.get(this.config).expect);
         this.point.material = this.material.expect;
 
         this.shape.shape = PointPickingShape.get(this.config).expect;
