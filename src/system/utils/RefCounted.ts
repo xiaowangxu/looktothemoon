@@ -58,15 +58,14 @@ export class Ref<T extends RefCounted> {
 export class RefArray<T extends RefCounted> {
     private refs: Ref<T>[] = [];
 
-    public get value(): (T | undefined)[] { return this.refs.map(r => r.value); }
-    public set value(items: (T | undefined)[]) {
-        const refs = items.map(i => new Ref(i));
-        this.unref_All();
-        this.refs = refs;
-    }
-
     public get length() { return this.refs.length; }
     public get is_empty() { return this.length <= 0; }
+
+    *[Symbol.iterator]() {
+        for (const ref of this.refs) {
+            yield ref.value;
+        }
+    }
 
     public get(index: number, as_ref: true): Ref<T> | undefined
     public get(index: number, as_ref: false): T | undefined
@@ -79,6 +78,11 @@ export class RefArray<T extends RefCounted> {
         }
     }
 
+    public has(index: number): boolean {
+        const ref: Ref<T> | undefined = this.refs[index];
+        return (ref !== undefined) && (!ref.is_empty);
+    }
+
     public set(index: number, value: T | undefined) {
         if (index < 0 || index >= this.length) return;
         this.refs[index].value = value;
@@ -86,19 +90,8 @@ export class RefArray<T extends RefCounted> {
 
     constructor(items: (T | undefined)[] | undefined = undefined) {
         if (items !== undefined) {
-            this.value = items;
+            this.refs = items.map(i => new Ref(i));
         }
-    }
-
-    private unref_All() {
-        for (const ref of this.refs) {
-            ref.clear();
-        }
-    }
-
-    public clear() {
-        this.unref_All();
-        this.refs = [];
     }
 
     public resize(length: number) {
@@ -141,6 +134,96 @@ export class RefArray<T extends RefCounted> {
         for (const ref of item_ref) {
             ref.clear();
         }
+    }
+
+    private unref() {
+        for (const ref of this.refs) {
+            ref.clear();
+        }
+    }
+
+    public clear() {
+        this.unref();
+        this.refs = [];
+    }
+}
+
+export class RefMap<K, T extends RefCounted> {
+    private refs: Map<K, Ref<T>> = new Map();
+
+    private _is_empty: boolean = true;
+    public get size() { return this.refs.size; }
+    public get is_empty() { return this._is_empty; }
+
+    *[Symbol.iterator]() {
+        for (const [index, ref] of this.refs.entries()) {
+            yield [index, ref.expect] as [K, T];
+        }
+    }
+
+    public *entries() {
+        for (const [index, ref] of this.refs.entries()) {
+            yield [index, ref.expect] as [K, T];
+        }
+    }
+
+    public keys() {
+        return this.refs.keys();
+    }
+
+    public *values() {
+        for (const ref of this.refs.values()) {
+            yield ref.expect;
+        }
+    }
+
+    public set(key: K, value: T | undefined): boolean {
+        if (this.refs.has(key)) {
+            const old_ref = this.refs.get(key)!;
+            if (value === undefined) {
+                old_ref.clear();
+                this.refs.delete(key);
+                this._is_empty = this.refs.size <= 0;
+                return true;
+            }
+            else if (old_ref.value !== value) {
+                old_ref.value = value;
+                return true;
+            }
+        }
+        else if (value !== undefined) {
+            this.refs.set(key, new Ref(value));
+            this._is_empty = false;
+            return true;
+        }
+        return false;
+    }
+
+    public get(key: K) {
+        return this.refs.get(key)?.value;
+    }
+
+    public has(key: K) {
+        return this.refs.has(key);
+    }
+
+    public delete(key: K): boolean {
+        if (this.refs.has(key)) {
+            const old_ref = this.refs.get(key)!;
+            old_ref.clear();
+            this.refs.delete(key);
+            this._is_empty = this.refs.size <= 0;
+            return true;
+        }
+        return false;
+    }
+
+    public clear() {
+        for (const ref of this.refs.values()) {
+            ref.clear();
+        }
+        this._is_empty = true;
+        this.refs.clear();
     }
 }
 

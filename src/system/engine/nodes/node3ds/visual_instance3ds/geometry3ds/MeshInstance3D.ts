@@ -4,7 +4,7 @@ import type { ClassReader, ClassRef, ClassWriter } from "../../../../classes/sav
 import type { GeometryResource } from "../../../../resources/geometry_resources/GeometryResource";
 import { MaterialResource } from "../../../../resources/material_resources/MaterialResource";
 import { GeometryInstance3D } from "./GeometryInstance3D";
-import { Ref } from "@/system/utils/RefCounted";
+import { Ref, RefMap } from "@/system/utils/RefCounted";
 
 export class MeshInstance3D extends GeometryInstance3D {
     public static readonly class_name: string = "MeshInstance3D";
@@ -39,18 +39,10 @@ export class MeshInstance3D extends GeometryInstance3D {
         }
     }
 
-    private _surface_materials_map: Map<number, Ref<MaterialResource>> = new Map();
+    private _surface_materials_map: RefMap<number, MaterialResource> = new RefMap();
     public set_SurfaceMaterial(surface_idx: number, material: MaterialResource | undefined) {
         if (surface_idx < 0) return;
-        if (this._surface_materials_map.has(surface_idx)) {
-            const old_material_ref = this._surface_materials_map.get(surface_idx)!;
-            if (material === undefined) {
-                old_material_ref.clear();
-                this._surface_materials_map.delete(surface_idx);
-            }
-            else {
-                old_material_ref.value = material;
-            }
+        if (this._surface_materials_map.set(surface_idx, material)) {
             if (this.mesh_rid !== undefined) {
                 const visual_world = this.get_Viewport()?.world_3d?.visual_world;
                 if (visual_world !== undefined) {
@@ -58,15 +50,16 @@ export class MeshInstance3D extends GeometryInstance3D {
                 }
             }
         }
-        else if (material !== undefined) {
-            this._surface_materials_map.set(surface_idx, new Ref(material));
-            if (this.mesh_rid !== undefined) {
-                const visual_world = this.get_Viewport()?.world_3d?.visual_world;
-                if (visual_world !== undefined) {
-                    visual_world.set_MeshSurfaceMaterial(this.mesh_rid, surface_idx, material);
-                }
+    }
+
+    protected clear_SurfaceMaterials() {
+        const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+        for (const surface_idx of this._surface_materials_map.keys()) {
+            if (this.mesh_rid !== undefined && visual_world !== undefined) {
+                visual_world.set_MeshSurfaceMaterial(this.mesh_rid, surface_idx, undefined);
             }
         }
+        this._surface_materials_map.clear();
     }
 
     protected on_LayerChanged(): void {
@@ -128,7 +121,7 @@ export class MeshInstance3D extends GeometryInstance3D {
                             visual_world.set_MeshMaterialOverride(this.mesh_rid, this.material);
                         }
                         for (const [surface_idx, material] of this._surface_materials_map.entries()) {
-                            visual_world.set_MeshSurfaceMaterial(this.mesh_rid, surface_idx, material.expect);
+                            visual_world.set_MeshSurfaceMaterial(this.mesh_rid, surface_idx, material);
                         }
                         visual_world.set_MeshLayer(this.mesh_rid, this._layer);
                         visual_world.set_MeshRenderQueue(this.mesh_rid, this._render_queue);
@@ -165,9 +158,6 @@ export class MeshInstance3D extends GeometryInstance3D {
             case NodeNotification.Dispose: {
                 this._geometry.clear();
                 this._material_override.clear();
-                for (const value of this._surface_materials_map.values()) {
-                    value.clear();
-                }
                 this._surface_materials_map.clear();
                 break;
             }
@@ -184,7 +174,7 @@ export class MeshInstance3D extends GeometryInstance3D {
         if (this._surface_materials_map.size !== 0) {
             const surface_materials_map = new Map<number, ClassRef>();
             for (const [id, material] of this._surface_materials_map) {
-                const refid = writer.ref(material.expect);
+                const refid = writer.ref(material);
                 surface_materials_map.set(id, refid);
             }
             writer.property('surface_materials', surface_materials_map);

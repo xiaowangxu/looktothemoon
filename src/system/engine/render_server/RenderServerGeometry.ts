@@ -98,7 +98,7 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
     public get_Surfaces() {
         if (!this.has_surface) return [];
         const ans: { offset: number, length: number }[] = [];
-        for (const vertex_array_view of this.vertex_array_groups_ref.value) {
+        for (const vertex_array_view of this.vertex_array_groups_ref) {
             if (vertex_array_view !== undefined) {
                 ans.push({
                     offset: vertex_array_view.offset,

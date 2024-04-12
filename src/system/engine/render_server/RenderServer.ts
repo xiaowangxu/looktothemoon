@@ -36,6 +36,8 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     // pixel_ratio is raw pixel_ratio * render_scale
     float pixel_ratio;
 
+    // mat3 camera_view_normal;
+    
     float _preserved_0;
     float _preserved_1;
     float _preserved_2;

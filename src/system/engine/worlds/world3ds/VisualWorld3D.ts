@@ -5,7 +5,7 @@ import { WebGL2RenderStateFrameBufferAttachmentPoint } from "@/system/sliverofst
 import { WebGL2RenderStateFloatUniformSlot } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 import { RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import type { SceneTree } from "../../SceneTree";
-import { Ref, RefArray } from "@/system/utils/RefCounted";
+import { Ref, RefArray, RefMap } from "@/system/utils/RefCounted";
 import type { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
@@ -168,12 +168,12 @@ export type Cullable = CameraFrustumLikeCullable<Matrix4, Vector3, Matrix3> & Cl
 export class VisualWorld3DMesh extends WorldObject {
 
     public readonly geometry_ref: Ref<RenderServerGeometry> = new Ref();
+    public readonly lod_geometrys_ref: { geometry: Ref<RenderServerGeometry>, distance: number }[] = [];
     public get has_geometry() { return !this.geometry_ref.is_empty && this.geometry_ref.expect.has_geometry; }
 
-    protected readonly surface_materials_ref: RefArray<RenderServerMaterial> = new RefArray();
+    protected readonly surface_materials_ref: RefMap<number, RenderServerMaterial> = new RefMap();
     public readonly material_override_ref: Ref<RenderServerMaterial> = new Ref();
-
-    private is_surface_materials_empty: boolean = false;
+    private get has_surface_materials(): boolean { return !this.surface_materials_ref.is_empty; };
 
     public readonly global_transform: Matrix4 = Matrix4.new;
     public visible: boolean = true;
@@ -211,17 +211,8 @@ export class VisualWorld3DMesh extends WorldObject {
         }
     }
 
-    private update_SurfaceMaterialsEmpty() {
-        const count = this.surface_materials_ref.length;
-        for (let i = 0; i < count; i++) {
-            if (!this.surface_materials_ref.get(i, true)!.is_empty) {
-                this.is_surface_materials_empty = false;
-            }
-        }
-        this.is_surface_materials_empty = true;
-    }
-
     private on_geometry_bbox_changed = (bbox: Box3) => { this.update_Cullable(); }
+
     public set_Geometry(geometry: RenderServerGeometry | undefined) {
         if (!this.geometry_ref.is_empty) {
             this.geometry_ref.expect.singal_bbox_changed.disconnect(this.on_geometry_bbox_changed);
@@ -229,17 +220,30 @@ export class VisualWorld3DMesh extends WorldObject {
         this.geometry_ref.value = geometry;
         if (!this.geometry_ref.is_empty) {
             this.geometry_ref.expect.singal_bbox_changed.connect(this.on_geometry_bbox_changed);
-            const surface_count = this.geometry_ref.expect.surface_count;
-            if (surface_count === 0) this.surface_materials_ref.clear();
-            else {
-                this.surface_materials_ref.resize(surface_count);
+        }
+        this.update_Cullable();
+    }
+
+    public set_LodGeometry(distance: number, geometry: RenderServerGeometry | undefined) {
+        const index = this.lod_geometrys_ref.findIndex(i => i.distance === distance);
+        if (index < 0) {
+            // new lod level
+            if (geometry !== undefined) {
+                this.lod_geometrys_ref.push({
+                    geometry: new Ref(geometry),
+                    distance,
+                });
             }
         }
         else {
-            this.surface_materials_ref.clear();
+            // already has lod
+            if (geometry === undefined) {
+                this.lod_geometrys_ref.splice(index, 1)[0].geometry.clear();
+            }
+            else {
+                this.lod_geometrys_ref[index].geometry.value = geometry;
+            }
         }
-        this.update_SurfaceMaterialsEmpty();
-        this.update_Cullable();
     }
 
     public set_CullableOverride(cullable: Cullable | undefined) {
@@ -265,11 +269,8 @@ export class VisualWorld3DMesh extends WorldObject {
 
     public set_SurfaceMaterial(surface_idx: number, material: RenderServerMaterial | undefined) {
         if (this.geometry_ref.is_empty) return;
-        const geometry = this.geometry_ref.expect;
-        if (surface_idx < 0 || surface_idx >= geometry.surface_count || surface_idx >= this.surface_materials_ref.length) return;
+        if (surface_idx < 0) return;
         this.surface_materials_ref.set(surface_idx, material);
-        if (material === undefined) this.update_SurfaceMaterialsEmpty();
-        else this.is_surface_materials_empty = false;
     }
 
     public set_MaterialOverride(material: RenderServerMaterial | undefined) {
@@ -302,8 +303,10 @@ export class VisualWorld3DMesh extends WorldObject {
             this.geometry_ref.expect.singal_bbox_changed.disconnect(this.on_geometry_bbox_changed);
         }
         this.geometry_ref.clear();
+        for (const { geometry } of this.lod_geometrys_ref) {
+            geometry.clear();
+        }
     }
-
 
     public clear_Materials() {
         this.material_override_ref.clear();
@@ -318,21 +321,20 @@ export class VisualWorld3DMesh extends WorldObject {
         const cullable = this.cullable;
         if (this.is_cullable_empty || cullable.cull(camera, frustum, screen_size, this.cullable_enlargment)) return false;
         const sort_distance = cullable.sort_distance_to(camera, this.cullable_enlargment);
-        if (this.is_surface_materials_empty) {
+        const geometry = this.geometry_ref.expect;
+        if (!geometry.has_surface || !this.has_surface_materials) {
             if (this.material_override_ref.is_empty) return false;
-            const geometry = this.geometry_ref.expect;
             const vertex_array = geometry.get_Geometry();
             if (vertex_array !== undefined) queue.add(vertex_array, this.material_override_ref.expect, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer, sort_distance);
         }
         else {
-            const surface_materials_count = this.surface_materials_ref.length;
-            for (let i = 0; i < surface_materials_count; i++) {
-                let material = this.surface_materials_ref.get(i, false);
+            const surface_count = this.geometry_ref.expect.surface_count;
+            for (let i = 0; i < surface_count; i++) {
+                let material = this.surface_materials_ref.get(i);
                 if (material === undefined) {
                     if (this.material_override_ref.is_empty) continue;
                     else material = this.material_override_ref.expect;
                 }
-                const geometry = this.geometry_ref.expect;
                 const vertex_array_view = geometry.get_Surface(i);
                 if (vertex_array_view !== undefined) queue.add(vertex_array_view, material, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer, sort_distance);
             }
@@ -691,6 +693,18 @@ export class VisualWorld3D extends ConfiguredObject {
             }
             else {
                 instance.set_Geometry(geometry.geometry);
+            }
+        }
+    }
+
+    public set_MeshLodGeometry(rid: Rid, distance: number, geometry: GeometryResource | undefined) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            if (geometry === undefined) {
+                instance.set_LodGeometry(distance, undefined);
+            }
+            else {
+                instance.set_LodGeometry(distance, geometry.geometry);
             }
         }
     }

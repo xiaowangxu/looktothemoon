@@ -32,7 +32,7 @@ import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
 import { Cacher } from "@/system/utils/Cacher";
 import { Ref } from "@/system/utils/RefCounted";
 import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
-import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType } from "@/system/engine/Tween";
+import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType, tween_loop, tween_pingpong, tween_interpolated_property } from "@/system/engine/Tween";
 import { InfiniteLine3D } from "@/system/engine/nodes/node3ds/gizmo3ds/InfiniteLine3D";
 import { Bvh3Strategy } from "@/system/fivepebble/bvh/Bvh3";
 import { Bvh3Visualization } from './nodes/Bvh3Visualization';
@@ -406,6 +406,15 @@ export function createEditor() {
     ground.local_position = Vector3.create(0, -400, 0);
     ground.layer = 0x90000000;
     World.add_Child(ground);
+
+    // const tween = EditorSceneTree.start_Tween(tween_loop(
+    //     tween_pingpong(
+    //         tween_interpolated_property(
+    //             ground, 'local_scale', Vector3.create(1000, 500, 100), 4, TweenTransitionType.Linear, TweenEasingType.InOut,
+    //         )
+    //     ),
+    //     Infinity
+    // ));
 
     const grid_geo = new GridGeometryResource(DefaultConfig);
     grid_geo.build();
@@ -932,16 +941,19 @@ export function createEditor() {
 
     {
         const traffic_light_geo = new ClassLoader(DInstanceCache.get(DefaultConfig)).fetch<ArrayGeometryResource>('sys://traffic-light.geometry.lttmbin').expect();
-        const override_material = new MatcapMaterialResource(DefaultConfig);
+        const override_material = new StandardMaterialResource(DefaultConfig);
         // override_material.color = Color.color8(0, 0, 0);
-        override_material.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>(`sys://textures/matcaps/matcap-6.lttmbin`).expect();
+        // override_material.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>(`sys://textures/matcaps/matcap-6.lttmbin`).expect();
         const mesh = new MeshInstance3D(DefaultConfig);
         mesh.geometry = traffic_light_geo;
         mesh.material = override_material;
-        mesh.local_scale = Vector3.create(1,1,1);
+        mesh.local_scale = Vector3.create(1, 1, 1);
         mesh.local_position = Vector3.create(400, 600, -200);
         World.add_Child(mesh);
     }
+
+    box_mesh.set_SurfaceMaterial(0, new UvMaterialResource(DefaultConfig));
+    box_mesh.set_SurfaceMaterial(2, new PlainMaterialResource(DefaultConfig));
 
     return EditorSceneTree;
 }
