@@ -297,6 +297,14 @@ export class VisualWorld3DMesh extends WorldObject {
         this.cast_shadow = cast;
     }
 
+    protected clear_Geometry() {
+        if (!this.geometry_ref.is_empty) {
+            this.geometry_ref.expect.singal_bbox_changed.disconnect(this.on_geometry_bbox_changed);
+        }
+        this.geometry_ref.clear();
+    }
+
+
     public clear_Materials() {
         this.material_override_ref.clear();
         this.surface_materials_ref.clear();
@@ -304,10 +312,11 @@ export class VisualWorld3DMesh extends WorldObject {
 
     // fill render queue
 
-    public fill_RenderQueue(queue: Renderer3DQueue, frustum: Frustum3, camera: Camera3, base_size: Vector2): boolean {
+    public fill_RenderQueue(queue: Renderer3DQueue, camera: Camera3, frustum: Frustum3, screen_size: Vector2): boolean {
         // cullable test
+        if (!this.visible || (this.layer & camera.mask) === 0 || !this.has_geometry) return false;
         const cullable = this.cullable;
-        if (this.is_cullable_empty || cullable.cull(camera, frustum, base_size, this.cullable_enlargment)) return false;
+        if (this.is_cullable_empty || cullable.cull(camera, frustum, screen_size, this.cullable_enlargment)) return false;
         const sort_distance = cullable.sort_distance_to(camera, this.cullable_enlargment);
         if (this.is_surface_materials_empty) {
             if (this.material_override_ref.is_empty) return false;
@@ -332,7 +341,7 @@ export class VisualWorld3DMesh extends WorldObject {
     }
 
     public dispose(): void {
-        this.geometry_ref.clear();
+        this.clear_Geometry();
         this.clear_Materials();
     }
 }
