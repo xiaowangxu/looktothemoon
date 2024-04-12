@@ -91,6 +91,15 @@ export class ArrayGeometryResource extends GeometryResource {
             }
             const index = reader.get<PackedIndexArray>('index');
             this.set_Geometry(primitive_type, array, index, vertex_count, usage, bbox);
+            const surfaces = reader.get<number[]>('surfaces');
+            if (surfaces) {
+                const length = surfaces.length;
+                for (let i = 0; i < length;) {
+                    const offset = surfaces[i++];
+                    const count = surfaces[i++];
+                    this.add_Surface(offset, count);
+                }
+            }
         }
     }
 
