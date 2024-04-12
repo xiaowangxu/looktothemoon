@@ -40,8 +40,10 @@ export enum NodeNotification {
     ChildAdded,
     ChildRemoving,
     ChildrenChanged,
-    Dispose
+    Dispose,
 }
+
+type NodeConstructor<T> = { new(config: Config): T };
 
 export class Node extends ClassBase {
     public static readonly class_name: string = "Node";
@@ -60,8 +62,9 @@ export class Node extends ClassBase {
     public get ready() { return this.is_ready; }
     private first_time_ready: boolean = true;
 
-    protected block_redundant_before_render: boolean = true;
-    protected propergate_redundant_before_render: boolean = false;
+    protected block_redundant_before_render_notification: boolean = true;
+    protected propergate_redundant_before_render_reset: boolean = false;
+
     public block_input: boolean = false;
     public block_process: boolean = false;
     public block_physics_process: boolean = false;
@@ -177,11 +180,11 @@ export class Node extends ClassBase {
 
     public propagate_InternalBeforeRender(delta: number, redundant: boolean) {
         // internal after process
-        if (!redundant || !(this.block_redundant_before_render)) {
+        if (!redundant || !(this.block_redundant_before_render_notification)) {
             this._notification(NodeNotification.InternalBeforeRender);
         }
         for (const child of this.children) {
-            child.propagate_InternalBeforeRender(delta, redundant && !this.propergate_redundant_before_render);
+            child.propagate_InternalBeforeRender(delta, redundant && !this.propergate_redundant_before_render_reset);
         }
     }
 
@@ -281,6 +284,15 @@ export class Node extends ClassBase {
 
     public get_Parent() {
         return this.parent;
+    }
+
+    public find_Parent_by_Class<T extends Node>(class_type: NodeConstructor<T>): T | undefined {
+        let parent = this.get_Parent();
+        while (parent !== undefined) {
+            if (parent instanceof class_type) return parent;
+            parent = parent.get_Parent();
+        }
+        return undefined;
     }
 
     public get_Index() {
@@ -386,6 +398,9 @@ export class Viewport extends Node {
     public get world_3d() { return this._world_3d.value; }
     public set world_3d(world_3d: World3D | undefined) {
         if (this._world_3d.value !== world_3d) {
+            if (world_3d === undefined) {
+                if (!this._world_3d.expect.is_empty) throw new Error('<Viewport> set world_3d: current World3D is not empty, please remove all related nodes before changing world');
+            }
             this._world_3d.value = world_3d;
         }
     }
@@ -407,7 +422,7 @@ export class Viewport extends Node {
     public transparent: boolean = false;
 
     public use_sky: boolean = false;
-    
+
     private readonly _background_color: Color = Vector4.create(0.9, 0.9, 0.9, 1);
     public get background_color(): Color {
         return this._background_color.clone();
@@ -693,7 +708,6 @@ export class Viewport extends Node {
 
     //#endregion
 
-
     //#region camera3d
 
     public set_ActiveCamera3D(camera: Camera3D) {
@@ -835,5 +849,3 @@ export class Viewport extends Node {
         }
     }
 }
-
-console.log(Vector4.create(1.0, 0.5, 0.0, 1).linear_rgb);

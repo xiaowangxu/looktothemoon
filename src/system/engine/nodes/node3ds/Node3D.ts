@@ -150,6 +150,8 @@ export class Node3D extends Node {
         }
     }
 
+    protected reset_transform_changed_in_physics: boolean = false;
+
     protected propagate_TransformChanged() {
         if (this.is_global_transform_dirty) return;
         for (const child of this.children) {
@@ -161,40 +163,72 @@ export class Node3D extends Node {
         this.is_global_transform_changed = true;
     }
 
+    protected _local_visible: boolean = true;
+    public get local_visible() { return this._local_visible; }
+    public set local_visible(visible: boolean) {
+        if (this._local_visible !== visible) {
+            this._local_visible = visible;
+            this.propagate_VisibilityChanged();
+            this.is_global_visible_dirty = true;
+        }
+    }
+
+    private _global_visible: boolean = true;
+    private is_global_visible_dirty: boolean = false;
+    protected is_global_visible_changed: boolean = false;
+    public get global_visible(): boolean {
+        if (this.is_global_visible_dirty) {
+            const parent = this.get_Parent();
+            if (parent !== undefined && parent instanceof Node3D) {
+                const parent_global_visible = parent.global_visible;
+                this._global_visible = parent_global_visible && this.local_visible;
+                this.is_global_visible_dirty = false;
+            }
+            else {
+                this._global_visible = this.local_visible;
+                this.is_global_visible_dirty = false;
+            }
+        }
+        return this._global_visible;
+    }
+
+    private propagate_VisibilityChanged() {
+        if (this.is_global_visible_dirty) return;
+        for (const child of this.children) {
+            if (child instanceof Node3D) {
+                child.propagate_VisibilityChanged();
+            }
+        }
+        this.is_global_visible_dirty = true;
+        this.is_global_visible_changed = true;
+    }
+
     public _notification(what: NodeNotification): void {
         switch (what) {
             case NodeNotification.Parented: {
                 const parent = this.get_Parent();
                 if (parent !== undefined && parent instanceof Node3D) {
                     this.propagate_TransformChanged();
+                    this.propagate_VisibilityChanged();
                 }
-                return;
+                break;
             }
             case NodeNotification.Unparented: {
                 this.propagate_TransformChanged();
-                return;
+                this.propagate_VisibilityChanged();
+                break;
             }
             case NodeNotification.InternalBeforeRender: {
-                this.is_global_transform_changed = false;
+                this.is_global_visible_changed = false;
+                if (!this.reset_transform_changed_in_physics) this.is_global_transform_changed = false;
+                break;
+            }
+            case NodeNotification.InternalAfterPhysicsProcess: {
+                if (this.reset_transform_changed_in_physics) this.is_global_transform_changed = false;
+                break;
             }
         }
         super._notification(what);
-    }
-
-    protected _notification_IgnoreTransformChange(what: NodeNotification): void {
-        switch (what) {
-            case NodeNotification.Parented: {
-                const parent = this.get_Parent();
-                if (parent !== undefined && parent instanceof Node3D) {
-                    this.propagate_TransformChanged();
-                }
-                return;
-            }
-            case NodeNotification.Unparented: {
-                this.propagate_TransformChanged();
-                return;
-            }
-        }
     }
 
     // apis

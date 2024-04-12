@@ -375,6 +375,7 @@ export function createEditor() {
 
     EditorViewport.signal_input.connect((evt, pro) => {
         if (pro && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed && !evt.echo) {
+            console.log(point_light.find_Parent_by_Class(Viewport));
             EditorSceneTree.start_Tween(
                 tween_parallel(
                     // new MethodTween((v) => {

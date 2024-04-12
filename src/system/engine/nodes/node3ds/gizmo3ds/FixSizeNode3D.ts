@@ -31,12 +31,12 @@ export class FixSizeNode3D extends Node3D {
         if (this._use_active_viewport !== use) {
             this._use_active_viewport = use;
             if (this._use_active_viewport) {
-                this.block_redundant_before_render = true;
-                this.propergate_redundant_before_render = false;
+                this.block_redundant_before_render_notification = true;
+                this.propergate_redundant_before_render_reset = false;
             }
             else {
-                this.block_redundant_before_render = false;
-                this.propergate_redundant_before_render = true;
+                this.block_redundant_before_render_notification = false;
+                this.propergate_redundant_before_render_reset = true;
             }
         }
     }
@@ -44,8 +44,8 @@ export class FixSizeNode3D extends Node3D {
 
     constructor(config: Config) {
         super(config);
-        this.block_redundant_before_render = false;
-        this.propergate_redundant_before_render = true;
+        this.block_redundant_before_render_notification = false;
+        this.propergate_redundant_before_render_reset = true;
     }
 
     protected update_GlobalTransform(): void {

@@ -9,6 +9,8 @@ export class World3D extends Resource {
     public readonly physics_world: PhysicsWorld3D = new PhysicsWorld3D(this.config);
     public readonly picking_world: PickingWorld3D = new PickingWorld3D(this.config);
 
+    public get is_empty(): boolean { return this.visual_world.is_empty && this.physics_world.is_empty && this.picking_world.is_empty; }
+
     public trigger_BeforeRender(scene_tree: SceneTree) {
         this.visual_world.trigger_BeforeRender(scene_tree);
     }

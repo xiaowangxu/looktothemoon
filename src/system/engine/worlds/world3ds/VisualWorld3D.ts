@@ -573,6 +573,10 @@ export class VisualWorld3D extends ConfiguredObject {
     public get lights() { return this.lights_map.values(); }
     public get light_shadows() { return this.light_shadows_map.values(); }
 
+    public get is_empty(): boolean {
+        return this.meshes_map.size <= 0 && this.lights_map.size <= 0 && this.light_shadows_map.size <= 0;
+    }
+
     // light shadow maps
     public readonly lights_data: Ref<RenderServerLightsData> = new Ref(new RenderServerLightsData(this.render_server, 64, 64));
     public readonly shadows_texture: Ref<WebGL2RenderStateTexture> = new Ref(this.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.Empty));

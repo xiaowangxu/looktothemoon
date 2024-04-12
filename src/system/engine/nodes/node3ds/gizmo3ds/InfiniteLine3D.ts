@@ -33,7 +33,7 @@ export class InfiniteLine3D extends MeshInstance3D {
         super(config);
         this.top_level = true;
         this.geometry = LineGeometry.get(this.config).expect;
-        this.block_redundant_before_render = false;
+        this.block_redundant_before_render_notification = false;
     }
 
     public _notification(what: NodeNotification): void {

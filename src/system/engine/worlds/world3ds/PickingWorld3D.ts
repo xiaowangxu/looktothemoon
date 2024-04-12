@@ -85,21 +85,17 @@ export class PickingWorld3D extends ConfiguredObject {
     static readonly #tmp_vector3_1 = Vector3.new;
     static readonly #tmp_matrix4_0 = Matrix4.new;
 
-    private readonly shape_map: Map<Rid, PickingShapeInstance> = new Map();
-    private readonly area_map: Map<Rid, PickingArea> = new Map();
+    private readonly shapes_map: Map<Rid, PickingShapeInstance> = new Map();
+    private readonly areas_map: Map<Rid, PickingArea> = new Map();
 
-    private get_Area(rid: Rid) {
-        return this.area_map.get(rid);
-    }
-
-    private get_Shape(rid: Rid) {
-        return this.shape_map.get(rid);
+    public get is_empty(): boolean {
+        return this.shapes_map.size <= 0 && this.areas_map.size <= 0;
     }
 
     public perform_RayPicking(option: RayPickingOption) {
         const { mask, from, to, camera, viewport, order, side } = option;
         const result: RayPickingResult[] = [];
-        for (const shape_instance of this.shape_map.values()) {
+        for (const shape_instance of this.shapes_map.values()) {
             const _from = PickingWorld3D.#tmp_vector3_0.copy(from);
             const _to = PickingWorld3D.#tmp_vector3_1.copy(to);
             const { shape, distance_offset, area, global_transform, global_transform_inverse, global_normal_transform } = shape_instance;
@@ -141,11 +137,47 @@ export class PickingWorld3D extends ConfiguredObject {
         return result;
     }
 
+    //#region Area
+
+    protected area_getter_cache: [undefined | Rid, PickingArea | undefined] = [undefined, undefined];
+    protected set_AreaGetterCache(rid: Rid, area: PickingArea) {
+        this.area_getter_cache[0] = rid;
+        this.area_getter_cache[1] = area;
+    }
+    protected reset_AreaGetterCache(rid: Rid) {
+        if (this.area_getter_cache[0] === rid) {
+            this.area_getter_cache[0] = undefined;
+            this.area_getter_cache[1] = undefined;
+        }
+    }
+    protected clear_AreaGetterCache() {
+        this.area_getter_cache[0] = undefined;
+        this.area_getter_cache[1] = undefined;
+    }
+
+    private get_Area(rid: Rid) {
+        if (this.area_getter_cache[0] === rid) {
+            return this.area_getter_cache[1];
+        }
+        const area = this.areas_map.get(rid);
+        if (area !== undefined) {
+            this.set_AreaGetterCache(rid, area);
+        }
+        return area;
+    }
+
     public create_PickingArea(area: PickingArea3D): Rid {
         const rid = RID();
         const _area = new PickingArea(this.config, area);
-        this.area_map.set(rid, _area);
+        this.areas_map.set(rid, _area);
         return rid;
+    }
+
+    public free_PickingArea(rid: Rid) {
+        const area = this.get_Area(rid);
+        if (area === undefined) return;
+        this.reset_AreaGetterCache(rid);
+        this.areas_map.delete(rid);
     }
 
     public set_PickingAreaLayer(rid: Rid, layer: number) {
@@ -166,23 +198,49 @@ export class PickingWorld3D extends ConfiguredObject {
         area.enabled = enabled;
     }
 
-    public free_PickingArea(rid: Rid) {
-        const area = this.get_Area(rid);
-        if (area === undefined) return;
-        this.area_map.delete(rid);
+    //#endregion
+
+    //#region Shape
+
+    protected shape_getter_cache: [undefined | Rid, PickingShapeInstance | undefined] = [undefined, undefined];
+    protected set_ShapeGetterCache(rid: Rid, shape: PickingShapeInstance) {
+        this.shape_getter_cache[0] = rid;
+        this.shape_getter_cache[1] = shape;
+    }
+    protected reset_ShapeGetterCache(rid: Rid) {
+        if (this.shape_getter_cache[0] === rid) {
+            this.shape_getter_cache[0] = undefined;
+            this.shape_getter_cache[1] = undefined;
+        }
+    }
+    protected clear_ShapeGetterCache() {
+        this.shape_getter_cache[0] = undefined;
+        this.shape_getter_cache[1] = undefined;
+    }
+
+    private get_Shape(rid: Rid) {
+        if (this.shape_getter_cache[0] === rid) {
+            return this.shape_getter_cache[1];
+        }
+        const shape = this.shapes_map.get(rid);
+        if (shape !== undefined) {
+            this.set_ShapeGetterCache(rid, shape);
+        }
+        return shape;
     }
 
     public create_PickingShapeInstance(): Rid {
         const rid = RID();
         const shape = new PickingShapeInstance(this.config);
-        this.shape_map.set(rid, shape);
+        this.shapes_map.set(rid, shape);
         return rid;
     }
 
     public free_PickingShapeInstance(rid: Rid) {
         const shape = this.get_Shape(rid);
         if (shape === undefined) return;
-        this.shape_map.delete(rid);
+        this.reset_ShapeGetterCache(rid);
+        this.shapes_map.delete(rid);
     }
 
     public set_PickingShapeInstanceGlobalTransform(rid: Rid, global_transform: Matrix4) {
@@ -193,20 +251,19 @@ export class PickingWorld3D extends ConfiguredObject {
         PickingWorld3D.#tmp_matrix4_0.transpose(shape.global_transform_inverse).get_Basis(shape.global_normal_transform);
     }
 
-    public set_PickingShapeInstanceArea(rid: Rid, area_rid: Rid) {
+    public set_PickingShapeInstanceArea(rid: Rid, area_rid: Rid | undefined) {
         const shape = this.get_Shape(rid);
+        if (shape === undefined) return;
+        if (area_rid === undefined) {
+            shape.area = undefined;
+            return;
+        }
         const area = this.get_Area(area_rid);
-        if (shape === undefined || area === undefined) return;
+        if (area === undefined) return;
         shape.area = area;
     }
 
-    public clear_PickingShapeInstanceArea(rid: Rid) {
-        const shape = this.get_Shape(rid);
-        if (shape === undefined) return;
-        shape.area = undefined;
-    }
-
-    public set_PickingShapeInstanceShape(rid: Rid, shape: PickingShape3D) {
+    public set_PickingShapeInstanceShape(rid: Rid, shape: PickingShape3D | undefined) {
         const _shape = this.get_Shape(rid);
         if (_shape === undefined) return;
         _shape.shape = shape;
@@ -218,14 +275,10 @@ export class PickingWorld3D extends ConfiguredObject {
         _shape.distance_offset = distance_offset;
     }
 
-    public clear_PickingShapeInstanceShape(rid: Rid) {
-        const _shape = this.get_Shape(rid);
-        if (_shape === undefined) return;
-        _shape.shape = undefined;
-    }
+    //#endregion
 
     public dispose() {
-        this.area_map.clear();
-        this.shape_map.clear();
+        this.areas_map.clear();
+        this.shapes_map.clear();
     }
 }
