@@ -129,19 +129,18 @@ export class StandardMaterialResource extends MaterialResource {
         float cos2Alpha = NdotH * NdotH;
         float tan2Alpha = (cos2Alpha - 1.0) / cos2Alpha;
         float roughness2 = roughness * roughness;
-        float denom = 3.141592653589793 * roughness2 * cos2Alpha * cos2Alpha;
+        float denom = PI * roughness2 * cos2Alpha * cos2Alpha;
         return exp(tan2Alpha / roughness2) / denom;
     }
     
     void calc_light(const in uint light_type, const in vec3 light_direction, const in vec3 view_direction, const in vec3 normal, const in vec3 light_color, const in float light_attenuation, inout vec3 diffuse, inout vec3 specular) {
         float light_strength = dot(normal, light_direction);
-        if (light_strength > EPSILON) {
-            diffuse += light_strength * light_color * light_attenuation;
-            if (light_type != 1u) {
-                vec3 half_direction = normalize(light_direction + view_direction);  
-                float beckmann = beckmannDistribution(dot(normal, half_direction), 0.4);
-                specular += beckmann * light_color * light_attenuation;
-            }
+        if (light_strength < 1e-6) return;
+        diffuse += light_strength * light_color * light_attenuation;
+        if (light_type != 1u) {
+            vec3 half_direction = normalize(light_direction + view_direction);  
+            float beckmann = beckmannDistribution(dot(normal, half_direction), 0.2);
+            specular += beckmann * light_color * light_attenuation;
         }
     }
 

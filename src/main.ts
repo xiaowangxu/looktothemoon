@@ -5,6 +5,7 @@ import '@/system/filesystem/VirtualFileSystem';
 import sys_vfs from 'res://sys.vfs.gz?url';
 import { VFS } from '@/system/filesystem/VirtualFileSystem';
 import { fspath } from './system/filesystem/FileSystemPath';
+import { StlLoader } from './system/engine/loaders/StlLoader';
 
 createApp(App).mount('#app');
 
@@ -22,6 +23,16 @@ VFS.touch(fspath('user://'));
         .then(res => res.arrayBuffer())
         // .then(buffer => decompress(buffer))
         .then(array_buffer => VFS.load(array_buffer, fspath('sys://')));
+    // http://10.8.20.41:8084/group1/M00/00/11/4ZMEAGMR1iuEMU5fAAAAAK_gSjk753.stl
+    // http://10.8.20.41:8084/group1/M00/00/00/4ZMEAGEcsiuEK-WeAAAAABTJz9I673.stl
+    await fetch('http://10.8.20.41:8084/group1/M00/00/11/4ZMEAGMR1iuEMU5fAAAAAK_gSjk753.stl')
+        .then(res => res.arrayBuffer())
+        .then(buffer => {
+            const stl_loader = new StlLoader();
+            const res = stl_loader.parse(buffer);
+            res.expect().save(undefined, 'sys://traffic-light.geometry.lttmbin');
+        });
+
     (window as any).VFS = VFS;
     (window as any).fspath = fspath;
     (window as any).scenetree = createEditor();

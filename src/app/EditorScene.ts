@@ -172,7 +172,7 @@ export function createEditor() {
     const World = new Node3D(DefaultConfig);
     World.local_scale = Vector3.create(0.01, 0.01, 0.01);
     const ambient_light = new AmbientLight3D(DefaultConfig);
-    ambient_light.intensity = 0.075;
+    ambient_light.intensity = 0;
     World.add_Child(ambient_light);
     const directional_light0 = new DirectionalLight3D(DefaultConfig);
     directional_light0.color = Vector3.create(0.8, 0.9, 1);
@@ -181,8 +181,8 @@ export function createEditor() {
     directional_light0.layer = 0xffffffff;
     World.add_Child(directional_light0);
     const directional_light1 = new DirectionalLight3D(DefaultConfig);
-    directional_light1.color = Vector3.create(1, 0.9, 0.8);
-    directional_light1.intensity = 0.05;
+    directional_light1.color = Vector3.create(0.94, 0.9, 0.9);
+    directional_light1.intensity = 0.16;
     directional_light1.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 0, -1), Vector3.new.normalize(Vector3.create(1, 1, -1))));
     World.add_Child(directional_light1);
 
@@ -929,6 +929,19 @@ export function createEditor() {
     //         World.add_Child(point);
     //     }
     // }
+
+    {
+        const traffic_light_geo = new ClassLoader(DInstanceCache.get(DefaultConfig)).fetch<ArrayGeometryResource>('sys://traffic-light.geometry.lttmbin').expect();
+        const override_material = new MatcapMaterialResource(DefaultConfig);
+        // override_material.color = Color.color8(0, 0, 0);
+        override_material.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>(`sys://textures/matcaps/matcap-6.lttmbin`).expect();
+        const mesh = new MeshInstance3D(DefaultConfig);
+        mesh.geometry = traffic_light_geo;
+        mesh.material = override_material;
+        mesh.local_scale = Vector3.create(1,1,1);
+        mesh.local_position = Vector3.create(400, 600, -200);
+        World.add_Child(mesh);
+    }
 
     return EditorSceneTree;
 }

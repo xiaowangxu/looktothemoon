@@ -13,8 +13,7 @@ import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import type { Out } from "@/system/utils/Type";
 
 export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>, Data = any>
-    extends RenderDeviceObject<T>
-{
+    extends RenderDeviceObject<T> {
     protected readonly buffer_ref: Ref<Buffer | RenderStateBufferView<T, Buffer>> = new Ref();
 
     public readonly per_instance_count: number;
@@ -75,8 +74,7 @@ export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buff
 }
 
 export class RenderDeviceAttributeBufferView<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>, Data = any, AttriBuffer extends RenderDeviceAttributeBuffer<T, Buffer, Data> = RenderDeviceAttributeBuffer<T, Buffer, Data>>
-    extends RenderDeviceAttributeBuffer<T, Buffer, Data>
-{
+    extends RenderDeviceAttributeBuffer<T, Buffer, Data> {
     protected readonly attribute_buffer_ref: Ref<AttriBuffer> = new Ref();
 
     protected get attribute_buffer() { return this.attribute_buffer_ref.expect; }
@@ -128,8 +126,7 @@ export class RenderDeviceAttributeBufferView<T extends RenderState<T>, Buffer ex
 }
 
 export class RenderDeviceVector2AttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
-    extends RenderDeviceAttributeBuffer<T, Buffer, Vector2>
-{
+    extends RenderDeviceAttributeBuffer<T, Buffer, Vector2> {
     public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
     public get per_item_element_count(): number { return 2; }
 
@@ -223,8 +220,7 @@ export class RenderDeviceVector2AttributeBuffer<T extends RenderState<T>, Buffer
 }
 
 export class RenderDeviceVector3AttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
-    extends RenderDeviceAttributeBuffer<T, Buffer, Vector3>
-{
+    extends RenderDeviceAttributeBuffer<T, Buffer, Vector3> {
     public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
     public get per_item_element_count(): number { return 3; }
 
@@ -322,8 +318,7 @@ export class RenderDeviceVector3AttributeBuffer<T extends RenderState<T>, Buffer
 }
 
 export class RenderDeviceVector4AttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
-    extends RenderDeviceAttributeBuffer<T, Buffer, Vector4>
-{
+    extends RenderDeviceAttributeBuffer<T, Buffer, Vector4> {
     public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
     public get per_item_element_count(): number { return 4; }
 
@@ -425,8 +420,7 @@ export class RenderDeviceVector4AttributeBuffer<T extends RenderState<T>, Buffer
 }
 
 export class RenderDeviceIndexAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
-    extends RenderDeviceAttributeBuffer<T, Buffer, number>
-{
+    extends RenderDeviceAttributeBuffer<T, Buffer, number> {
     public get per_element_byte_count(): number { return Uint32Array.BYTES_PER_ELEMENT; }
     public get per_item_element_count(): number { return 1; }
 
@@ -502,8 +496,7 @@ export class RenderDeviceIndexAttributeBuffer<T extends RenderState<T>, Buffer e
 }
 
 export class RenderDeviceUintAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
-    extends RenderDeviceAttributeBuffer<T, Buffer, number>
-{
+    extends RenderDeviceAttributeBuffer<T, Buffer, number> {
     public get per_element_byte_count(): number { return Uint32Array.BYTES_PER_ELEMENT; }
     public get per_item_element_count(): number { return 1; }
 
@@ -579,8 +572,7 @@ export class RenderDeviceUintAttributeBuffer<T extends RenderState<T>, Buffer ex
 }
 
 export class RenderDeviceIntAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
-    extends RenderDeviceAttributeBuffer<T, Buffer, number>
-{
+    extends RenderDeviceAttributeBuffer<T, Buffer, number> {
     public get per_element_byte_count(): number { return Int32Array.BYTES_PER_ELEMENT; }
     public get per_item_element_count(): number { return 1; }
 
@@ -656,8 +648,7 @@ export class RenderDeviceIntAttributeBuffer<T extends RenderState<T>, Buffer ext
 }
 
 export class RenderDeviceFloatAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
-    extends RenderDeviceAttributeBuffer<T, Buffer, number>
-{
+    extends RenderDeviceAttributeBuffer<T, Buffer, number> {
     public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
     public get per_item_element_count(): number { return 1; }
 
@@ -733,8 +724,7 @@ export class RenderDeviceFloatAttributeBuffer<T extends RenderState<T>, Buffer e
 }
 
 export class RenderDeviceMatrix3AttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
-    extends RenderDeviceAttributeBuffer<T, Buffer, Matrix3>
-{
+    extends RenderDeviceAttributeBuffer<T, Buffer, Matrix3> {
     private readonly buffer_slice_row_0: Ref<RenderStateBufferView<T>> = new Ref();
     private readonly buffer_slice_row_1: Ref<RenderStateBufferView<T>> = new Ref();
     private readonly buffer_slice_row_2: Ref<RenderStateBufferView<T>> = new Ref();
@@ -777,9 +767,17 @@ export class RenderDeviceMatrix3AttributeBuffer<T extends RenderState<T>, Buffer
             this._element_count = element_count;
             const float32array = new Float32Array(element_count);
             if (!is_count) {
-                for (let j = 0; j < mat3_count; j++) {
-                    const mat3 = data[j];
-                    float32array.set(mat3.transposed_array, j * 9);
+                for (let i = 0, j = 0; i < element_count;) {
+                    const mat3 = data[j++];
+                    float32array[i++] = mat3.n11;
+                    float32array[i++] = mat3.n21;
+                    float32array[i++] = mat3.n31;
+                    float32array[i++] = mat3.n12;
+                    float32array[i++] = mat3.n22;
+                    float32array[i++] = mat3.n32;
+                    float32array[i++] = mat3.n13;
+                    float32array[i++] = mat3.n23;
+                    float32array[i++] = mat3.n33;
                 }
             }
             this._data = float32array;
@@ -809,12 +807,28 @@ export class RenderDeviceMatrix3AttributeBuffer<T extends RenderState<T>, Buffer
             if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceMatrix3AttributeBuffer> update_Data: data overflow');
             float32array = new Float32Array(this._data.buffer, offset_bytes, element_count);
             if (single) {
-                float32array.set(data.transposed_array, 0);
+                float32array[0] = data.n11;
+                float32array[1] = data.n21;
+                float32array[2] = data.n31;
+                float32array[3] = data.n12;
+                float32array[4] = data.n22;
+                float32array[5] = data.n32;
+                float32array[6] = data.n13;
+                float32array[7] = data.n23;
+                float32array[8] = data.n33;
             }
             else {
-                for (let j = 0; j < mat3_count; j++) {
-                    const mat3 = data[j];
-                    float32array.set(mat3.transposed_array, j * 9);
+                for (let i = 0, j = 0; i < element_count;) {
+                    const mat3 = data[j++];
+                    float32array[i++] = mat3.n11;
+                    float32array[i++] = mat3.n21;
+                    float32array[i++] = mat3.n31;
+                    float32array[i++] = mat3.n12;
+                    float32array[i++] = mat3.n22;
+                    float32array[i++] = mat3.n32;
+                    float32array[i++] = mat3.n13;
+                    float32array[i++] = mat3.n23;
+                    float32array[i++] = mat3.n33;
                 }
             }
         }
@@ -866,8 +880,7 @@ export class RenderDeviceMatrix3AttributeBuffer<T extends RenderState<T>, Buffer
 }
 
 export class RenderDeviceMatrix4AttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
-    extends RenderDeviceAttributeBuffer<T, Buffer, Matrix4>
-{
+    extends RenderDeviceAttributeBuffer<T, Buffer, Matrix4> {
     private readonly buffer_slice_row_0: Ref<RenderStateBufferView<T>> = new Ref();
     private readonly buffer_slice_row_1: Ref<RenderStateBufferView<T>> = new Ref();
     private readonly buffer_slice_row_2: Ref<RenderStateBufferView<T>> = new Ref();
@@ -912,9 +925,24 @@ export class RenderDeviceMatrix4AttributeBuffer<T extends RenderState<T>, Buffer
             this._element_count = element_count;
             const float32array = new Float32Array(element_count);
             if (!is_count) {
-                for (let j = 0; j < mat4_count; j++) {
-                    const mat4 = data[j];
-                    float32array.set(mat4.transposed_array, j * 16);
+                for (let i = 0, j = 0; i < element_count;) {
+                    const mat4 = data[j++];
+                    float32array[i++] = mat4.n11;
+                    float32array[i++] = mat4.n21;
+                    float32array[i++] = mat4.n31;
+                    float32array[i++] = mat4.n41;
+                    float32array[i++] = mat4.n12;
+                    float32array[i++] = mat4.n22;
+                    float32array[i++] = mat4.n32;
+                    float32array[i++] = mat4.n42;
+                    float32array[i++] = mat4.n13;
+                    float32array[i++] = mat4.n23;
+                    float32array[i++] = mat4.n33;
+                    float32array[i++] = mat4.n43;
+                    float32array[i++] = mat4.n14;
+                    float32array[i++] = mat4.n24;
+                    float32array[i++] = mat4.n34;
+                    float32array[i++] = mat4.n44;
                 }
             }
             this._data = float32array;
@@ -944,12 +972,42 @@ export class RenderDeviceMatrix4AttributeBuffer<T extends RenderState<T>, Buffer
             if (offset_bytes + element_bytes > this.byte_count) throw new Error('<RenderDeviceMatrix4AttributeBuffer> update_Data: data overflow');
             float32array = new Float32Array(this._data.buffer, offset_bytes, element_count);
             if (single) {
-                float32array.set(data.transposed_array, 0);
+                float32array[0] = data.n11;
+                float32array[1] = data.n21;
+                float32array[2] = data.n31;
+                float32array[3] = data.n41;
+                float32array[4] = data.n12;
+                float32array[5] = data.n22;
+                float32array[6] = data.n32;
+                float32array[7] = data.n42;
+                float32array[8] = data.n13;
+                float32array[9] = data.n23;
+                float32array[10] = data.n33;
+                float32array[11] = data.n43;
+                float32array[12] = data.n14;
+                float32array[13] = data.n24;
+                float32array[14] = data.n34;
+                float32array[15] = data.n44;
             }
             else {
-                for (let j = 0; j < mat4_count; j++) {
-                    const mat4 = data[j];
-                    float32array.set(mat4.transposed_array, j * 16);
+                for (let i = 0, j = 0; i < element_count;) {
+                    const mat4 = data[j++];
+                    float32array[i++] = mat4.n11;
+                    float32array[i++] = mat4.n21;
+                    float32array[i++] = mat4.n31;
+                    float32array[i++] = mat4.n41;
+                    float32array[i++] = mat4.n12;
+                    float32array[i++] = mat4.n22;
+                    float32array[i++] = mat4.n32;
+                    float32array[i++] = mat4.n42;
+                    float32array[i++] = mat4.n13;
+                    float32array[i++] = mat4.n23;
+                    float32array[i++] = mat4.n33;
+                    float32array[i++] = mat4.n43;
+                    float32array[i++] = mat4.n14;
+                    float32array[i++] = mat4.n24;
+                    float32array[i++] = mat4.n34;
+                    float32array[i++] = mat4.n44;
                 }
             }
         }
