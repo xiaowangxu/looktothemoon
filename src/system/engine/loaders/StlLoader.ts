@@ -137,9 +137,7 @@ export class StlLoader {
         return { position: vertices, normal: normals, color: undefined, bbox: Box3.create(bbox_min, bbox_max) };
     }
 
-    protected static parse_Ascii(data: string): { position: PackedVector3Array, normal: PackedVector3Array, color: PackedVector4Array, bbox: Box3 } {
-
-        throw new Error('');
+    protected static parse_Ascii(data: string): { position: PackedVector3Array, normal: PackedVector3Array, bbox: Box3 } {
 
         const geometry = new BufferGeometry();
         const patternSolid = /solid([\s\S]*?)endsolid/g;
@@ -173,48 +171,30 @@ export class StlLoader {
             groupNames.push(name);
 
             while ((result = patternFace.exec(solid)) !== null) {
-
                 let vertexCountPerFace = 0;
                 let normalCountPerFace = 0;
-
                 const text = result[0];
-
                 while ((result = patternNormal.exec(text)) !== null) {
-
                     normal.x = parseFloat(result[1]);
                     normal.y = parseFloat(result[2]);
                     normal.z = parseFloat(result[3]);
                     normalCountPerFace++;
-
                 }
-
                 while ((result = patternVertex.exec(text)) !== null) {
-
                     vertices.push(parseFloat(result[1]), parseFloat(result[2]), parseFloat(result[3]));
                     normals.push(normal.x, normal.y, normal.z);
                     vertexCountPerFace++;
                     endVertex++;
-
                 }
-
                 // every face have to own ONE valid normal
-
                 if (normalCountPerFace !== 1) {
-
                     console.error('THREE.STLLoader: Something isn\'t right with the normal of face number ' + faceCounter);
-
                 }
-
                 // each face have to own THREE valid vertices
-
                 if (vertexCountPerFace !== 3) {
-
                     console.error('THREE.STLLoader: Something isn\'t right with the vertices of face number ' + faceCounter);
-
                 }
-
                 faceCounter++;
-
             }
 
             const start = startVertex;

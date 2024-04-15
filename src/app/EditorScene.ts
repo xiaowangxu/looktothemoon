@@ -59,6 +59,7 @@ import { UvMaterialResource } from "@/system/engine/resources/material_resources
 import { BillboardSquareGeometryResource, BillboardCircleGeometryResource } from "@/system/engine/resources/geometry_resources/BillboardGeometryResource";
 import { BillboardMaterialResource } from "@/system/engine/resources/material_resources/BillboardMaterialResource";
 import { StandardMaterialResource } from "@/system/engine/resources/material_resources/StandardMaterialResource";
+import { PhongMaterialResource } from "@/system/engine/resources/material_resources/PhongMaterialResource";
 
 // import png_url2 from 'res://matcap-2.jpg';
 // import png_url3 from 'res://matcap-3.jpg';
@@ -393,13 +394,14 @@ export function createEditor() {
     const geo = new BoxGeometryResource(DefaultConfig);
     geo.build();
     ground.geometry = geo;
-    const ground_material = new StandardMaterialResource(DefaultConfig);
+    const ground_material = new PhongMaterialResource(DefaultConfig);
     // ground_material.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/matcaps/matcap-13.lttmbin').expect();
     const normal_texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/normals/normal-1.lttmbin').expect();
     normal_texture.min_filter = RenderStateTextureMinFilter.LinearMipmapLinear;
     normal_texture.mag_filter = RenderStateTextureMagFilter.Linear;
-    ground_material.normal_texture = normal_texture;
-    ground_material.color = Color.create(0.3, 0.3, 0.3, 1.0).linear_rgb;
+    // ground_material.normal_texture = normal_texture;
+    // ground_material.color = Color.create(0.3, 0.3, 0.3, 1.0).linear_rgb;
+    ground_material.color = Color.create(1.0, 1.0, 1.0 , 1.0).linear_rgb;
     ground.material = ground_material;
     // ground.top_level = true;
     ground.local_scale = Vector3.create(1000, 500, 1000);

@@ -68,6 +68,8 @@ out vec3 v_TANGENT;
 out vec3 v_TANGENT_VIEW;
 `;
 
+    public static readonly FragmentEssentialUniforms = `uniform uint layer;`
+
     public static readonly FragmentVertexEssentialIns = `uniform bool has_tangent;
     
 // VERTEX POSITION IN WORLD
@@ -112,8 +114,9 @@ v_UV2 = a_uv2;
 v_TANGENT = a_tangent;
 v_TANGENT_VIEW = normalize(normal_transform * a_tangent);`;
 
-    public static readonly FragmentVertexEssentialCalculations = `vec3 NORMAL = normalize(v_NORMAL);
-vec3 NORMAL_VIEW = normalize(v_NORMAL_VIEW);
+    public static readonly FragmentVertexEssentialCalculations = `float FACING = gl_FrontFacing ? 1.0 : -1.0;
+vec3 NORMAL = normalize(v_NORMAL) * FACING;
+vec3 NORMAL_VIEW = normalize(v_NORMAL_VIEW) * FACING;
 vec3 LOOKAT = normalize(v_LOOKAT);
 vec3 LOOKAT_VIEW = normalize(v_LOOKAT_VIEW);`
 
@@ -147,6 +150,141 @@ uniform bool u_has_normal_texture;`;
     ${GlslPrimitives.FragmentNormalTextureViewCalculations}
 }`;
 
+    public static readonly FragmentLightDataUniformStruct = `uniform usampler2DArray lights;
+
+struct LightData {
+    uint type;
+    uint mask;
+    int stride;
+    vec3 color;
+    float attenuation;
+    vec3 position;
+    float param_0;
+    vec3 direction;
+    float param_1;
+    float param_2;
+    float param_3;
+    float shadow_bias;
+    float shadow_normal_bias;
+    float shadow_opacity;
+};
+
+LightData get_light(const in ivec3 lights_size, const in int i) {
+    int x = i % lights_size.x;
+    int y = i / lights_size.x;
+    uint l_type_id = texelFetch(lights, ivec3(x, y, 0), 0).r;
+    if (l_type_id == 0u) return LightData(0u, 0u, 0, vec3(0.0), 0.0, vec3(0.0), 0.0, vec3(0.0), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    uint l_pos_x = texelFetch(lights, ivec3(x, y, 1), 0).r;
+    uint l_pos_y = texelFetch(lights, ivec3(x, y, 2), 0).r;
+    uint l_pos_z = texelFetch(lights, ivec3(x, y, 3), 0).r;
+    uint l_dir_x = texelFetch(lights, ivec3(x, y, 4), 0).r;
+    uint l_dir_y = texelFetch(lights, ivec3(x, y, 5), 0).r;
+    uint l_dir_z = texelFetch(lights, ivec3(x, y, 6), 0).r;
+    uint l_color_r = texelFetch(lights, ivec3(x, y, 7), 0).r;
+    uint l_color_g = texelFetch(lights, ivec3(x, y, 8), 0).r;
+    uint l_color_b = texelFetch(lights, ivec3(x, y, 9), 0).r;
+    uint _l_attenuation = texelFetch(lights, ivec3(x, y, 10), 0).r;
+    uint l_mask = texelFetch(lights, ivec3(x, y, 11), 0).r;
+    uint _l_param_0 = texelFetch(lights, ivec3(x, y, 12), 0).r;
+    uint _l_param_1 = texelFetch(lights, ivec3(x, y, 13), 0).r;
+    uint _l_param_2 = texelFetch(lights, ivec3(x, y, 14), 0).r;
+    uint _l_param_3 = texelFetch(lights, ivec3(x, y, 15), 0).r;
+    uint _l_shadow_bias = texelFetch(lights, ivec3(x, y, 16), 0).r;
+    uint _l_shadow_normal_bias = texelFetch(lights, ivec3(x, y, 17), 0).r;
+    uint _l_shadow_opacity = texelFetch(lights, ivec3(x, y, 18), 0).r;
+    uint _l_data_stride = texelFetch(lights, ivec3(x, y, 19), 0).r;
+    uint l_type = l_type_id & 0xffffu;
+    vec3 l_position = vec3(uintBitsToFloat(l_pos_x), uintBitsToFloat(l_pos_y), uintBitsToFloat(l_pos_z));
+    vec3 l_direction = vec3(uintBitsToFloat(l_dir_x), uintBitsToFloat(l_dir_y), uintBitsToFloat(l_dir_z));
+    vec3 l_color = vec3(uintBitsToFloat(l_color_r), uintBitsToFloat(l_color_g), uintBitsToFloat(l_color_b));
+    return LightData(l_type, l_mask, int(_l_data_stride), l_color, uintBitsToFloat(_l_attenuation), l_position, uintBitsToFloat(_l_param_0), l_direction, uintBitsToFloat(_l_param_1), uintBitsToFloat(_l_param_2), uintBitsToFloat(_l_param_3), uintBitsToFloat(_l_shadow_bias), uintBitsToFloat(_l_shadow_normal_bias), uintBitsToFloat(_l_shadow_opacity));
+}`;
+
+    /**
+     * input:
+     * 
+     * vec4 ALBEDO
+     * 
+     * output 
+     * 
+     * vec3 DIFFUSE, vec3 SPECULAR, vec4 COLOR
+     */
+    public static FragmentLightCalculations(custom_params?: string[]) {
+        const custom_p = custom_params === undefined ? '' : `${custom_params.join(', ')}, `;
+        return `    vec3 DIFFUSE = vec3(0.0);
+    vec3 SPECULAR = vec3(0.0);
+
+    ivec3 _lights_size_ = textureSize(lights, 0);
+    int _max_lights_count_ = _lights_size_.x * _lights_size_.y;
+    const int _MAX_COUNT_ = 128;
+    int _max_count_ = min(_max_lights_count_, _MAX_COUNT_);
+
+    for(int i = 0; i < _max_count_; i++) {
+        LightData light = get_light(_lights_size_, i);
+        if(light.type == 0u) break;
+        i += light.stride;
+        if((light.mask & layer) == 0u) continue;
+        if(light.type == 1u) {
+            // ambient light
+            calc_light(${custom_p}light.type, NORMAL_VIEW, LOOKAT_VIEW, NORMAL_VIEW, light.color, light.attenuation, DIFFUSE, SPECULAR);
+        }
+        else if(light.type == 2u) {
+            // directional light
+            vec3 LDIR_VIEW = normalize(camera_normal_view * light.direction);
+            calc_light(${custom_p}light.type, LDIR_VIEW, LOOKAT_VIEW, NORMAL_VIEW, light.color, light.attenuation, DIFFUSE, SPECULAR);
+        } 
+        else if(light.type == 3u) {
+            // point light
+            float l_distance = distance(light.position, v_VERTEX);
+            vec3 LDIR_VIEW = normalize(camera_normal_view *  normalize(light.position - v_VERTEX));
+            float near_distance = light.param_0;
+            float far_distance = light.param_1;
+            float distance_w = (l_distance - near_distance) / (far_distance - near_distance);
+            float distance_strength = smoothstep(1.0f, 0.0f, distance_w);
+            float l_atten = distance_strength / pow(max(l_distance, 1.0f), light.attenuation);
+            calc_light(${custom_p}light.type, LDIR_VIEW, LOOKAT_VIEW, NORMAL_VIEW, light.color, l_atten, DIFFUSE, SPECULAR);
+        } 
+        else if(light.type == 4u) {
+            // spot light
+            vec3 l_dir = normalize(light.position - v_VERTEX);
+            float l_dot_dir = dot(l_dir, -normalize(light.direction));
+            float l_distance = distance(light.position, v_VERTEX);
+            float angle_strength = smoothstep(cos(light.param_1), cos(light.param_0), l_dot_dir);
+            float near_distance = light.param_2;
+            float far_distance = light.param_3;
+            float distance_w = (l_distance - near_distance) / (far_distance - near_distance);
+            float distance_strength = smoothstep(1.0f, 0.0f, distance_w);
+            float l_atten = (angle_strength * distance_strength) / pow(max(l_distance, 1.0f), light.attenuation);
+            vec3 LDIR_VIEW = normalize(camera_normal_view * l_dir);
+            calc_light(${custom_p}light.type, LDIR_VIEW, LOOKAT_VIEW, NORMAL_VIEW, light.color, l_atten, DIFFUSE, SPECULAR);
+        }
+    }
+    
+    vec4 COLOR = ALBEDO * vec4(DIFFUSE, 1.0) + vec4(SPECULAR, 0.0);`;
+    }
+
+    /**
+     * inputs: 
+     * 
+     * uint TYPE, vec3 DIRECTION, vec3 VIEW, vec3 NORMAL, vec3 COLOR, float ATTENUATION
+     * 
+     * output: 
+     * 
+     * assign vec3 DIFFUSE, vec3 SPECULAR
+     * 
+     * @param code light shading code 
+     * @returns 
+     */
+    public static FragmentLightFunction(code: string, custom_params?: string[]) {
+        const custom_p = custom_params === undefined ? '' : `${custom_params.join(', ')}, `;
+        return `void calc_light(${custom_p}const in uint TYPE, const in vec3 DIRECTION, const in vec3 VIEW, const in vec3 NORMAL, const in vec3 COLOR, const in float ATTENUATION, inout vec3 _DIFFUSE_, inout vec3 _SPECULAR_) {
+vec3 DIFFUSE = vec3(0.0);
+vec3 SPECULAR = vec3(0.0);
+${code}
+_DIFFUSE_ += DIFFUSE;
+_SPECULAR_ += SPECULAR;
+}`;
+    }
 }
 
 export const ShaderNormalTextureUniformsDef: Readonly<UniformInitSet<WebGL2RenderState>> = {
@@ -160,6 +298,21 @@ export const ShaderNormalTextureUniformsDef: Readonly<UniformInitSet<WebGL2Rende
 export const MaterialNormalTextureUniformsDef: MaterialReadOnlyUniforms = {
     u_normal_texture: RenderStateUniformType.Tex2D,
     u_has_normal_texture: RenderStateUniformType.Uint
+};
+
+export const ShaderLightDataTextureUniformsDef: Readonly<UniformInitSet<WebGL2RenderState>> = {
+    layer: {
+        type: RenderStateUniformType.Uint,
+        default: 0xffffffff,
+    },
+    lights: {
+        type: RenderStateUniformType.Int,
+        default: RenderServerDevice.LightsTextureUnit
+    },
+};
+
+export const MaterialLightDataTextureUniformsDef: MaterialReadOnlyUniforms = {
+    lights: RenderStateUniformType.Tex2D,
 };
 
 export function set_MaterialNormalTexture(material: MaterialResource & { normal_texture: TextureResource | undefined }, normal: TextureResource | undefined) {

@@ -631,8 +631,13 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         return result;
     }
 
-    public bind_UniformBuffer(buffer: WebGL2RenderStateBuffer, index: number) {
-        this.gl.bindBufferBase(this.gl.UNIFORM_BUFFER, index, buffer.buffer);
+    public bind_UniformBuffer(buffer: WebGL2RenderStateBuffer, index: number, offset?: number, size?: number) {
+        if (offset !== undefined && size !== undefined) {
+            this.gl.bindBufferRange(this.gl.UNIFORM_BUFFER, index, buffer.buffer, offset, size);
+        }
+        else {
+            this.gl.bindBufferBase(this.gl.UNIFORM_BUFFER, index, buffer.buffer);
+        }
     }
 
     // Buffer
