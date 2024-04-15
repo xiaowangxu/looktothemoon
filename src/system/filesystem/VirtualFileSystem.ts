@@ -2,6 +2,7 @@ import { Result } from "../utils/Result";
 import { SignalEmitter } from "../utils/SignalEmitter";
 import { FileSystemPath, fspath } from "./FileSystemPath";
 import { save_FileSystem, type FileSystemDataInstance, load_FileSystem } from './fs_saver_loader/FileSystemSaverLoader.mjs';
+import { compress } from '../utils/Compression';
 
 // #region Const
 
@@ -33,6 +34,10 @@ export type VfsQueryResult = {
     name?: string,
     mode: VfsMode,
     subs?: VfsId[],
+}
+
+export interface VfsDumpOptions {
+    compress?: boolean;
 }
 
 // #endregion
@@ -608,7 +613,9 @@ export class VirtualFileSystem {
 
     // #region system
 
-    public dump(root_path: FileSystemPath) {
+    public async dump(root_path: FileSystemPath, option: VfsDumpOptions = {}) {
+        const { compress: compression = true } = option;
+
         const root = this.lookup(root_path);
         if (root.failed) throw new Error('<VirtualFileSystem> load: root path invalid');
 
@@ -670,7 +677,13 @@ export class VirtualFileSystem {
 
         walk(root.expect(), true);
 
-        return save_FileSystem(nodes, blocks);
+        const buffer = save_FileSystem(nodes, blocks);
+
+        if (compression) {
+            return compress(buffer);
+        }
+
+        return Promise.resolve(buffer);
     }
 
     public load(data: ArrayBuffer, root_path: FileSystemPath) {

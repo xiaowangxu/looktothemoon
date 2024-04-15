@@ -250,6 +250,7 @@ void main() {
 const SkyDomeProgram = new Cacher((config: Config) => {
     const skydome_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, skydome_frag_shader_code).expect();
     const skydome_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config).expect, skydome_frag_shader).expect();
+    config.render_server.setup_ProgramUniformBlocks(skydome_program);
     const program = new Ref(skydome_program);
 
     const uniform_sky_location = config.render_server.render_state.get_ProgramUniformLocation(skydome_program, 'sky');

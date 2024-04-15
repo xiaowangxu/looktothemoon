@@ -70,8 +70,7 @@ export enum RenderServerShaderPass {
 
 export type FragmentShaderSetInitSet<Val = { shader: WebGL2RenderStateShader, uniforms: UniformInitSet<WebGL2RenderState> }> = { [K in RenderServerShaderPass]?: Val };
 
-export class RenderServerShader extends RenderDeviceObject<WebGL2RenderState>
-{
+export class RenderServerShader extends RenderDeviceObject<WebGL2RenderState> {
     protected program_prez_ref: Ref<WebGL2RenderStateProgram> = new Ref();
     protected uniform_prez: WebGL2RenderDeviceUniformSet | undefined;
     protected program_shade_ref: Ref<WebGL2RenderStateProgram> = new Ref();
@@ -100,6 +99,11 @@ export class RenderServerShader extends RenderDeviceObject<WebGL2RenderState>
         const world_location = this.render_state.get_ProgramUniformBlockLocation(program, RenderServerDevice.WorldUniformsName);
         if (world_location >= 0) {
             this.render_state.set_ProgramUniformBuffer(program, world_location, RenderServerDevice.WorldUniformsUnit);
+        }
+        // EnvironmentUniforms
+        const env_location = this.render_state.get_ProgramUniformBlockLocation(program, RenderServerDevice.EnvironmentUniformsName);
+        if (env_location >= 0) {
+            this.render_state.set_ProgramUniformBuffer(program, env_location, RenderServerDevice.EnvironmentUniformsUnit);
         }
         const uniform = new WebGL2RenderDeviceUniformSet();
         for (const [name, val] of Object.entries(uniforms)) {

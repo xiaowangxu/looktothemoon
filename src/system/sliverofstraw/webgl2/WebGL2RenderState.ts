@@ -42,6 +42,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     private active_sampled_texture_slot_pointer: number = 0;
 
     private readonly max_framebuffer_attachment: number = 15;
+    private readonly max_uniform_block: number = 24;
 
     // #region state proxy
 
@@ -349,6 +350,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         }
 
         this.max_framebuffer_attachment = this.gl.getParameter(this.gl.MAX_DRAW_BUFFERS);
+        this.max_uniform_block = this.gl.getParameter(this.gl.MAX_UNIFORM_BUFFER_BINDINGS);
         this.default_texture_slot = default_texture_slot;
         this.texture_slot_base = texture_slot_base;
         this.max_texture_slot = this.gl.getParameter(this.gl.MAX_TEXTURE_IMAGE_UNITS);
@@ -630,7 +632,6 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     }
 
     public bind_UniformBuffer(buffer: WebGL2RenderStateBuffer, index: number) {
-        this.bind_BufferProxy(this.gl.UNIFORM_BUFFER, buffer.buffer);
         this.gl.bindBufferBase(this.gl.UNIFORM_BUFFER, index, buffer.buffer);
     }
 

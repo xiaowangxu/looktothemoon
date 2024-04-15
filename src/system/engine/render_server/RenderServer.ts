@@ -12,12 +12,15 @@ import { RenderDeviceMatrix4AttributeBuffer } from "@/system/sliverofstraw/rende
 import { type WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Color } from "@/system/fivepebble/graphics/Color";
+import type { WebGL2RenderStateProgram } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateProgram";
+import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 
 export enum RenderServerPlainColorTexture { Empty, White, Black, Transparent, Grey }
 
-export enum RenderServerColorspace { LinearSRGB, SRGB }
-
 export class RenderServerDevice extends WebGL2RenderDevice {
+
+    static readonly #tmp_matrix4_0: Matrix4 = Matrix4.new;
+    static readonly #tmp_matrix3_0: Matrix3 = Matrix3.new;
 
     // Codes
     public static readonly WorldUniformsCode = `layout(std140) uniform WorldUniforms {
@@ -25,6 +28,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     mat4 camera_view;
     mat4 camera_projection;
     mat4 camera_inv_projection;
+    mat3 camera_normal_view;
 
     // screen size in renderer, the render_server_scale is transparent, so changing render_server_scale will not affect screen_size
     // for logic screen_size use (screen_size / pixel_ratio)
@@ -35,16 +39,19 @@ export class RenderServerDevice extends WebGL2RenderDevice {
 
     // pixel_ratio is raw pixel_ratio * render_scale
     float pixel_ratio;
+    
+    float world_preserved_0;
+    float world_preserved_1;
+    float world_preserved_2;
+};
 
-    // mat3 camera_view_normal;
-    
-    float _preserved_0;
-    float _preserved_1;
-    float _preserved_2;
-    
-    // environment
+layout(std140) uniform EnvironmentUniforms {
     vec4 background_color;
     bool use_sky;
+    
+    float env_preserved_0;
+    float env_preserved_1;
+    float env_preserved_2;
 };`;
 
     // texture layout
@@ -67,7 +74,10 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     public static readonly WorldUniformsName: string = 'WorldUniforms';
     public static readonly WorldUniformsUnit: number = 0;
 
-    // World Uniforms layout std140
+    public static readonly EnvironmentUniformsName: string = 'EnvironmentUniforms';
+    public static readonly EnvironmentUniformsUnit: number = 1;
+
+    // Uniforms Uniforms layout std140
     // 
     //   |-------------|-------------|-------------|-------------|
     //   |    Byte4    |    Byte8    |    Byte12   |    Byte16   |
@@ -108,40 +118,59 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     //   |-------------|-------------|-------------|-------------|                    |
     //   |             |             |             |             |                    |
     //   |-------------|-------------|-------------|-------------| ---- 256 Bytes ----+
-    //   | screen_size |             |     time    | orthogonal  |                    |  16 Bytes
-    //   |     256     |             |     264     |     268     |                    |
-    //   |-------------|-------------|-------------|-------------| ---- 272 Bytes ----+
-    //   | pixel_ratio |      /      |      /      |      /      |                    |  16 Bytes
-    //   |     272     |      /      |      /      |      /      |                    |
-    //   |-------------|-------------|-------------|-------------| ---- 288 Bytes ----+
-    //   |   bg_color  |             |             |             |                    |  16 Bytes
-    //   |     288     |             |             |             |                    |
+    //   | cam_norview |             |             |      /      |                    |
+    //   |     256     |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------|                    |  48 Bytes
+    //   |             |             |             |      /      |                    |
+    //   |-------------|-------------|-------------|-------------|                    |
+    //   |             |             |             |      /      |                    |  
     //   |-------------|-------------|-------------|-------------| ---- 304 Bytes ----+
-    //   |   use_sky   |             |             |             |                    |  16 Bytes
-    //   |     304     |             |             |             |                    |
+    //   | screen_size |             |     time    |  orthogonal |                    |  16 Bytes
+    //   |     304     |             |     312     |     316     |                    |
     //   |-------------|-------------|-------------|-------------| ---- 320 Bytes ----+
-    //                 ^
-    //                 | 308 Bytes
-    //   
-    //   total 308 Bytes => 77 * 4 float32s
+    //   | pixel_ratio |      /      |      /      |      /      |                    |  16 Bytes
+    //   |     320     |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------| ---- 336 Bytes ----+
+    //                                                           ^
+    //                                                           | 336 Bytes
+    //   total 336 Bytes => 84 * 4 float32s
 
     private world_uniforms_buffer_ref: Ref<WebGL2RenderStateBuffer> = new Ref();
 
-    private readonly world_uniforms_buffer_data: Float32Array = new Float32Array(77);
+    private readonly world_uniforms_buffer_data: Float32Array = new Float32Array(84);
 
-    private readonly world_uniforms_buffer_world_data: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 0, 69);
     private readonly world_uniforms_camera_world: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 0, 16);
     private readonly world_uniforms_camera_view: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 64, 16);
     private readonly world_uniforms_camera_projection: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 128, 16);
     private readonly world_uniforms_camera_inv_projection: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 192, 16);
-    private readonly world_uniforms_screen_size: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 256, 2);
-    private readonly world_uniforms_time: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 264, 1);
-    private readonly world_uniforms_camera_is_orthogonal: Uint32Array = new Uint32Array(this.world_uniforms_buffer_data.buffer, 268, 1);
-    private readonly world_uniforms_pixel_ratio: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 272, 1);
+    private readonly world_uniforms_camera_normal_view: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 256, 16);
+    private readonly world_uniforms_screen_size: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 304, 2);
+    private readonly world_uniforms_time: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 312, 1);
+    private readonly world_uniforms_camera_is_orthogonal: Uint32Array = new Uint32Array(this.world_uniforms_buffer_data.buffer, 316, 1);
+    private readonly world_uniforms_pixel_ratio: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 320, 1);
 
-    private readonly world_uniforms_buffer_environment_data: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 288, 5);
-    private readonly world_uniforms_background_color: Float32Array = new Float32Array(this.world_uniforms_buffer_data.buffer, 288, 4);
-    private readonly world_uniforms_use_sky: Uint32Array = new Uint32Array(this.world_uniforms_buffer_data.buffer, 304, 1);
+    // Environment Uniforms layout std140
+    // 
+    //   |-------------|-------------|-------------|-------------|
+    //   |    Byte4    |    Byte8    |    Byte12   |    Byte16   |
+    //   |-------------|-------------|-------------|-------------| ---- 0 Bytes ------+
+    //   |   bg_color  |             |             |             |                    |  16 Bytes
+    //   |     288     |             |             |             |                    |
+    //   |-------------|-------------|-------------|-------------| ---- 16 Bytes ----+
+    //   |   use_sky   |      /      |      /      |      /      |                    |  16 Bytes
+    //   |     304     |      /      |      /      |      /      |                    |
+    //   |-------------|-------------|-------------|-------------| ---- 32 Bytes ----+
+    //                                                           ^
+    //                                                           | 32 Bytes
+    //   
+    //   total 32 Bytes => 8 * 4 float32s
+
+    private env_uniforms_buffer_ref: Ref<WebGL2RenderStateBuffer> = new Ref();
+
+    private readonly env_uniforms_buffer_data: Float32Array = new Float32Array(8);
+
+    private readonly env_uniforms_background_color: Float32Array = new Float32Array(this.env_uniforms_buffer_data.buffer, 0, 4);
+    private readonly env_uniforms_use_sky: Uint32Array = new Uint32Array(this.env_uniforms_buffer_data.buffer, 16, 1);
 
     // default values
 
@@ -168,6 +197,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         if (this.render_state.user_texture_slot_count < 8) throw new Error('<RenderServerDevice> constructor: not enough user texture slot');
         this.setup_IdentityTransformAttributeBuffer();
         this.setup_WorldUniformsBuffer();
+        this.setup_EnvironmentUniformsBuffer();
         this.setup_PlainColorTextures();
     }
 
@@ -181,6 +211,25 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         this.world_uniforms_buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Uniform, RenderStateBufferUsage.DynamicDraw, 1, RenderStateDataType.Float, false, 0).expect();
         this.render_state.alloc_Buffer(this.world_uniforms_buffer_ref.expect, this.world_uniforms_buffer_data.byteLength);
         this.render_state.bind_UniformBuffer(this.world_uniforms_buffer_ref.expect, RenderServerDevice.WorldUniformsUnit);
+    }
+
+    private setup_EnvironmentUniformsBuffer() {
+        this.env_uniforms_buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Uniform, RenderStateBufferUsage.DynamicDraw, 1, RenderStateDataType.Float, false, 0).expect();
+        this.render_state.alloc_Buffer(this.env_uniforms_buffer_ref.expect, this.env_uniforms_buffer_data.byteLength);
+        this.render_state.bind_UniformBuffer(this.env_uniforms_buffer_ref.expect, RenderServerDevice.EnvironmentUniformsUnit);
+    }
+
+    public setup_ProgramUniformBlocks(program: WebGL2RenderStateProgram) {
+        // World Uniforms
+        const world_location = this.render_state.get_ProgramUniformBlockLocation(program, RenderServerDevice.WorldUniformsName);
+        if (world_location >= 0) {
+            this.render_state.set_ProgramUniformBuffer(program, world_location, RenderServerDevice.WorldUniformsUnit);
+        }
+        // Environment Uniforms
+        const env_location = this.render_state.get_ProgramUniformBlockLocation(program, RenderServerDevice.EnvironmentUniformsName);
+        if (env_location >= 0) {
+            this.render_state.set_ProgramUniformBuffer(program, env_location, RenderServerDevice.EnvironmentUniformsUnit);
+        }
     }
 
     private setup_PlainColorTextures() {
@@ -222,8 +271,6 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         }
     }
 
-    static readonly #matrix: Matrix4 = Matrix4.new;
-
     public set_WorldUniforms(camera_world: Matrix4, camera_projection: Matrix4, camera_is_orthogonal: boolean, screen_width: number, screen_height: number, time: number, pixel_ratio_override?: number) {
         // camera world
         {
@@ -246,7 +293,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         }
         // camera view
         {
-            const matrix = RenderServerDevice.#matrix.inverse(camera_world);
+            const matrix = RenderServerDevice.#tmp_matrix4_0.inverse(camera_world);
             this.world_uniforms_camera_view[0] = matrix.n11;
             this.world_uniforms_camera_view[1] = matrix.n21;
             this.world_uniforms_camera_view[2] = matrix.n31;
@@ -263,6 +310,24 @@ export class RenderServerDevice extends WebGL2RenderDevice {
             this.world_uniforms_camera_view[13] = matrix.n24;
             this.world_uniforms_camera_view[14] = matrix.n34;
             this.world_uniforms_camera_view[15] = matrix.n44;
+        }
+        // camera normal view
+        {
+            // transpose( inverse( mat3( inverse( camera_world ) ) ) )
+            const matrix = RenderServerDevice.#tmp_matrix4_0.get_Basis(RenderServerDevice.#tmp_matrix3_0);
+            matrix.inverse(matrix);
+            this.world_uniforms_camera_normal_view[0] = matrix.n11;
+            this.world_uniforms_camera_normal_view[1] = matrix.n12;
+            this.world_uniforms_camera_normal_view[2] = matrix.n13;
+            this.world_uniforms_camera_normal_view[3] = 0;
+            this.world_uniforms_camera_normal_view[4] = matrix.n21;
+            this.world_uniforms_camera_normal_view[5] = matrix.n22;
+            this.world_uniforms_camera_normal_view[6] = matrix.n23;
+            this.world_uniforms_camera_normal_view[7] = 0;
+            this.world_uniforms_camera_normal_view[8] = matrix.n31;
+            this.world_uniforms_camera_normal_view[9] = matrix.n32;
+            this.world_uniforms_camera_normal_view[10] = matrix.n33;
+            this.world_uniforms_camera_normal_view[11] = 0;
         }
         // camera projection
         {
@@ -285,7 +350,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         }
         // camera inv projection
         {
-            const matrix = RenderServerDevice.#matrix.inverse(camera_projection);
+            const matrix = RenderServerDevice.#tmp_matrix4_0.inverse(camera_projection);
             this.world_uniforms_camera_inv_projection[0] = matrix.n11;
             this.world_uniforms_camera_inv_projection[1] = matrix.n21;
             this.world_uniforms_camera_inv_projection[2] = matrix.n31;
@@ -320,22 +385,22 @@ export class RenderServerDevice extends WebGL2RenderDevice {
         {
             this.world_uniforms_pixel_ratio[0] = pixel_ratio_override ?? this._pixel_ratio;
         }
-        this.render_state.update_Buffer(this.world_uniforms_buffer_ref.expect, this.world_uniforms_buffer_world_data, this.world_uniforms_buffer_world_data.byteOffset);
+        this.render_state.update_Buffer(this.world_uniforms_buffer_ref.expect, this.world_uniforms_buffer_data);
     }
 
     public set_EnvironmentUniforms(background_color: Color, use_sky: boolean) {
         // background color
         {
-            this.world_uniforms_background_color[0] = background_color.r;
-            this.world_uniforms_background_color[1] = background_color.g;
-            this.world_uniforms_background_color[2] = background_color.b;
-            this.world_uniforms_background_color[3] = background_color.a;
+            this.env_uniforms_background_color[0] = background_color.r;
+            this.env_uniforms_background_color[1] = background_color.g;
+            this.env_uniforms_background_color[2] = background_color.b;
+            this.env_uniforms_background_color[3] = background_color.a;
         }
         // use sky
         {
-            this.world_uniforms_use_sky[0] = use_sky ? 1 : 0;
+            this.env_uniforms_use_sky[0] = use_sky ? 1 : 0;
         }
-        this.render_state.update_Buffer(this.world_uniforms_buffer_ref.expect, this.world_uniforms_buffer_environment_data, this.world_uniforms_buffer_environment_data.byteOffset);
+        this.render_state.update_Buffer(this.env_uniforms_buffer_ref.expect, this.env_uniforms_buffer_data);
     }
 
     private _raw_pixel_ratio: number = window.devicePixelRatio;

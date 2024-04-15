@@ -12,12 +12,6 @@ createApp(App).mount('#app');
 VFS.touch(fspath('sys://'));
 VFS.touch(fspath('user://'));
 
-// async function decompress(buffer: ArrayBuffer) {
-//     const ds = new DecompressionStream("gzip");
-//     const stream = new Blob([buffer]).stream().pipeThrough(ds);
-//     return await new Response(stream).arrayBuffer();
-// }
-
 (async () => {
     await fetch(sys_vfs)
         .then(res => res.arrayBuffer())

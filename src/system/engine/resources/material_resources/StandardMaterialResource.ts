@@ -169,13 +169,13 @@ export class StandardMaterialResource extends MaterialResource {
             }
             else if(light.type == 2u) {
                 // directional light
-                vec3 LDIR_VIEW = normalize(v_NORMAL_VIEW_MATRIX * light.direction);
+                vec3 LDIR_VIEW = normalize(camera_normal_view * light.direction);
                 calc_light(light.type, LDIR_VIEW, LOOKAT_VIEW, NORMAL_VIEW, light.color, light.attenuation, diffuse, specular);
             } 
             else if(light.type == 3u) {
 	    	    // point light
                 float l_distance = distance(light.position, v_VERTEX);
-                vec3 LDIR_VIEW = normalize(v_NORMAL_VIEW_MATRIX *  normalize(light.position - v_VERTEX));
+                vec3 LDIR_VIEW = normalize(camera_normal_view *  normalize(light.position - v_VERTEX));
                 float near_distance = light.param_0;
                 float far_distance = light.param_1;
                 float distance_w = (l_distance - near_distance) / (far_distance - near_distance);
@@ -194,7 +194,7 @@ export class StandardMaterialResource extends MaterialResource {
                 float distance_w = (l_distance - near_distance) / (far_distance - near_distance);
                 float distance_strength = smoothstep(1.0f, 0.0f, distance_w);
                 float l_atten = (angle_strength * distance_strength) / pow(max(l_distance, 1.0f), light.attenuation);
-                vec3 LDIR_VIEW = normalize(v_NORMAL_VIEW_MATRIX * l_dir);
+                vec3 LDIR_VIEW = normalize(camera_normal_view * l_dir);
                 calc_light(light.type, LDIR_VIEW, LOOKAT_VIEW, NORMAL_VIEW, light.color, l_atten, diffuse, specular);
             }
         }

@@ -50,8 +50,6 @@ o_accum = COLOR.a * _w;`;
 out vec3 v_VERTEX;
 // VERTEX POSITION IN VIEW, CAMERA SPACE
 out vec3 v_VERTEX_VIEW;
-// NORMAL VIEW MATRIX, TURN A DIRECTION FROM WORLD TO VIEW
-out mat3 v_NORMAL_VIEW_MATRIX;
 // NORMAL IN WORLD
 out vec3 v_NORMAL;
 // NORMAL IN VIEW, CAMERA SPACE
@@ -76,8 +74,6 @@ out vec3 v_TANGENT_VIEW;
 in vec3 v_VERTEX;
 // VERTEX POSITION IN VIEW, CAMERA SPACE
 in vec3 v_VERTEX_VIEW;
-// NORMAL VIEW MATRIX, TURN A DIRECTION FROM WORLD TO VIEW
-in mat3 v_NORMAL_VIEW_MATRIX;
 // NORMAL IN WORLD
 in vec3 v_NORMAL;
 // NORMAL IN VIEW, CAMERA SPACE
@@ -106,7 +102,6 @@ gl_Position = camera_projection * world_in_view;
 v_NORMAL = normalize(transpose(inverse(mat3(_model_world))) * a_normal);
 mat3 normal_transform = transpose(inverse(mat3(_model_view)));
 v_NORMAL_VIEW = normalize(normal_transform * a_normal);
-v_NORMAL_VIEW_MATRIX = transpose(inverse(mat3(camera_view)));
 // LOOKAT
 v_LOOKAT = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0f, 0.0f, 1.0f)) : normalize(camera_world[3].xyz - v_VERTEX);
 v_LOOKAT_VIEW = camera_is_orthogonal ? vec3(0.0f, 0.0f, 1.0f) : -normalize(v_VERTEX_VIEW);
