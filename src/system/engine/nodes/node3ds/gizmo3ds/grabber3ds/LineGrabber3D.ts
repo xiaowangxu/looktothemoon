@@ -4,7 +4,7 @@ import { MeshInstance3D } from "../../visual_instance3ds/geometry3ds/MeshInstanc
 import { Color } from "@/system/fivepebble/graphics/Color";
 import { clamp, is_ApproxEqual } from "@/system/fivepebble/Scalar";
 import { Cacher } from "@/system/utils/Cacher";
-import { CylinderGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
+import { CylinderGeometryResource } from "@/system/engine/resources/geometry_resources/primitive_geometry_resources/PrimitiveGeometryResource";
 import { Ref } from "@/system/utils/RefCounted";
 import type { InputEvent } from "@/system/engine/inputs/InputEvent";
 import { MouseButton, MouseButtonInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseButtonInputEvent";

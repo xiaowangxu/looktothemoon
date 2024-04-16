@@ -7,7 +7,8 @@ import { KeyInputEvent } from "@/system/engine/inputs/events/KeyInputEvent";
 import { MouseButton, MouseButtonInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseButtonInputEvent";
 import { ShortCut } from "@/system/engine/inputs/ShortCut";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
-import { BoxGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
+import { SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/primitive_geometry_resources/PrimitiveGeometryResource";
+import { BoxGeometryResource } from "@/system/engine/resources/geometry_resources/primitive_geometry_resources/BoxGeometryResource";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/MultiGeometryResource";
@@ -404,7 +405,7 @@ export function createEditor() {
     const normal_texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/normals/normal-1.lttmbin').expect();
     normal_texture.min_filter = RenderStateTextureMinFilter.LinearMipmapLinear;
     normal_texture.mag_filter = RenderStateTextureMagFilter.Linear;
-    // ground_material.normal_texture = normal_texture;
+    ground_material.normal_texture = normal_texture;
     ground_material.color = Color.create(0.3, 0.3, 0.3, 1.0).linear_rgb;
     // ground_material.color = Color.create(1.0, 1.0, 1.0, 1.0).linear_rgb;
     ground.material = ground_material;

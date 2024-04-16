@@ -1,6 +1,7 @@
 import { Node } from "../../nodes/Node";
 import { Node3D } from "../../nodes/node3ds/Node3D";
-import { BoxGeometryResource, CylinderGeometryResource, SphereGeometryResource, TorusGeometryResource } from "../../resources/geometry_resources/PrimitiveGeometryResource";
+import { CylinderGeometryResource, SphereGeometryResource, TorusGeometryResource } from "../../resources/geometry_resources/primitive_geometry_resources/PrimitiveGeometryResource";
+import { BoxGeometryResource } from "../../resources/geometry_resources/primitive_geometry_resources/BoxGeometryResource";
 import { type Config } from "../../ConfiguredObject";
 import { ClassBase } from "./ClassBase";
 import { MeshInstance3D } from "../../nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";

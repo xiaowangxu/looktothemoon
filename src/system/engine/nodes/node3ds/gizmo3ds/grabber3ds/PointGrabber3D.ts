@@ -13,7 +13,7 @@ import { Cacher } from "@/system/utils/Cacher";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
-import { SphereGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
+import { SphereGeometryResource } from "@/system/engine/resources/geometry_resources/primitive_geometry_resources/PrimitiveGeometryResource";
 import type { InputEvent } from "@/system/engine/inputs/InputEvent";
 import { Plane3 } from "@/system/fivepebble/geometries/Plane3";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
