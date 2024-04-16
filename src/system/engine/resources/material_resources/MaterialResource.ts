@@ -1,4 +1,4 @@
-import { Ref, type Refed } from "@/system/utils/RefCounted";
+import { Ref } from "@/system/utils/RefCounted";
 import { Resource } from "../Resource";
 import type { RenderServerMaterial, RenderServerMaterialCullFace, RenderServerMaterialUniforms } from "../../render_server/RenderServerMaterial";
 import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
@@ -8,7 +8,6 @@ import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Config } from "../../ConfiguredObject";
-import { TextureResource } from "../texture_resources/TextureResource";
 
 export type MaterialReadOnlyUniforms = Readonly<RenderServerMaterialUniforms>;
 

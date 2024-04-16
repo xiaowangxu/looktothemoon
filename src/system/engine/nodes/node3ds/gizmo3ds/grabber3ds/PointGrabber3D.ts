@@ -2,7 +2,7 @@ import { MouseButtonInputEvent, MouseButton } from "@/system/engine/inputs/event
 import { MouseEnterLeaveInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseEnterLeaveInputEvent";
 import type { MouseInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseInputEvent";
 import { MouseMotionInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseMotionInputEvent";
-import { PickingSphereResource } from "@/system/engine/resources/picking_shape_resources/PickingShapeResource";
+import { PickingSphereResource } from "@/system/engine/resources/picking_shape_resources/PickingSphereResource";
 import { PickingArea3D } from "../../physics3ds/PickingArea3D";
 import { PickingShape3D } from "../../physics3ds/PickingShape3D";
 import { MeshInstance3D } from "../../visual_instance3ds/geometry3ds/MeshInstance3D";

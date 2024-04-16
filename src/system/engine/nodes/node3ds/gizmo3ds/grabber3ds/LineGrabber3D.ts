@@ -14,7 +14,7 @@ import type { MouseInputEvent } from "@/system/engine/inputs/events/mouse_events
 import { NodeNotification } from "../../../Node";
 import { PickingArea3D } from "../../physics3ds/PickingArea3D";
 import { PickingShape3D } from "../../physics3ds/PickingShape3D";
-import { PickingCylinderResource } from "@/system/engine/resources/picking_shape_resources/PickingShapeResource";
+import { PickingCylinderResource } from "@/system/engine/resources/picking_shape_resources/PickingCylinderResource";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";

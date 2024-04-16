@@ -6,12 +6,11 @@ import { ViewportDomContainer } from "@/system/engine/nodes/ViewportDomContainer
 import { KeyInputEvent } from "@/system/engine/inputs/events/KeyInputEvent";
 import { MouseButton, MouseButtonInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseButtonInputEvent";
 import { ShortCut } from "@/system/engine/inputs/ShortCut";
-import { EditorOrbitCamera3D } from "./nodes/EditorOrbitCamera3D";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
 import { BoxGeometryResource, SphereGeometryResource, TorusGeometryResource } from "@/system/engine/resources/geometry_resources/PrimitiveGeometryResource";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
-import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
+import { MultiGeometryResource } from "@/system/engine/resources/geometry_resources/MultiGeometryResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { MultiLineGeometryResource, MultiSegmentGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineSegmentGeometryResource";
 import { MultiLineSegmentMaterialResource } from "@/system/engine/resources/material_resources/MultiLineMaterialResource";
@@ -44,7 +43,10 @@ import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { GridGeometryResource } from "@/system/engine/resources/geometry_resources/HelperGeometryResource";
 import { PickingArea3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingArea3D";
-import { PickingBoxResource, PickingBvh3Resource, PickingPointResource, PickingPolyLineResource } from "@/system/engine/resources/picking_shape_resources/PickingShapeResource";
+import { PickingPolyLineResource } from "@/system/engine/resources/picking_shape_resources/PickingPolyLineResource";
+import { PickingBvh3Resource } from "@/system/engine/resources/picking_shape_resources/PickingBvh3Resource";
+import { PickingPointResource } from "@/system/engine/resources/picking_shape_resources/PickingPointResource";
+import { PickingBoxResource } from "@/system/engine/resources/picking_shape_resources/PickingBoxResource";
 import { PickingShape3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingShape3D";
 import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/LineGrabber3D";
 import { FixSizeNode3D } from "@/system/engine/nodes/node3ds/gizmo3ds/FixSizeNode3D";
@@ -60,6 +62,7 @@ import { BillboardSquareGeometryResource, BillboardCircleGeometryResource } from
 import { BillboardMaterialResource } from "@/system/engine/resources/material_resources/BillboardMaterialResource";
 import { StandardMaterialResource } from "@/system/engine/resources/material_resources/StandardMaterialResource";
 import { PhongMaterialResource } from "@/system/engine/resources/material_resources/PhongMaterialResource";
+import { OrbitCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/OrbitCamera3D";
 
 // import png_url2 from 'res://matcap-2.jpg';
 // import png_url3 from 'res://matcap-3.jpg';
@@ -135,39 +138,39 @@ export function createEditor() {
     // EditorViewport.transparent = true;
     EditorViewportContainer.add_Child(EditorViewport);
     // camera
-    const EditorCamera = new EditorOrbitCamera3D(DefaultConfig);
+    const EditorCamera = new OrbitCamera3D(DefaultConfig);
     EditorViewport.add_Child(EditorCamera);
     EditorCamera.set_Zoom(0.3);
 
-    // viewport 0
-    const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
-    EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-    const EditorViewport0 = new Viewport(DefaultConfig);
-    const renderer0 = new EditorRenderer3D(DefaultConfig);
-    const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
-    renderer0.render_pipeline = pipeline0;
-    EditorViewport0.renderer_3d = renderer0;
-    // EditorViewport0.transparent = true;
-    EditorViewport0.background_color = bg_color;
-    EditorViewportContainer0.add_Child(EditorViewport0);
-    const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
-    EditorViewport0.add_Child(EditorCamera0);
-    EditorViewport.add_Child(EditorViewportContainer0);
-    // viewport 1
-    const EditorViewportContainer1 = new ViewportDomContainer(DefaultConfig);
-    EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
-    const EditorViewport1 = new Viewport(DefaultConfig);
-    const renderer1 = new EditorRenderer3D(DefaultConfig);
-    const pipeline1 = new EditorRenderer3DPipeline(DefaultConfig);
-    renderer1.render_pipeline = pipeline1;
-    EditorViewport1.renderer_3d = renderer1;
-    // EditorViewport1.transparent = true;
-    EditorViewport1.background_color = bg_color;
-    EditorViewport1.editor_highlight_color = Color.color8(0, 0, 255);
-    EditorViewportContainer1.add_Child(EditorViewport1);
-    const EditorCamera1 = new EditorOrbitCamera3D(DefaultConfig);
-    EditorViewport1.add_Child(EditorCamera1);
-    EditorViewport.add_Child(EditorViewportContainer1);
+    // // viewport 0
+    // const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
+    // EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+    // const EditorViewport0 = new Viewport(DefaultConfig);
+    // const renderer0 = new EditorRenderer3D(DefaultConfig);
+    // const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
+    // renderer0.render_pipeline = pipeline0;
+    // EditorViewport0.renderer_3d = renderer0;
+    // // EditorViewport0.transparent = true;
+    // EditorViewport0.background_color = bg_color;
+    // EditorViewportContainer0.add_Child(EditorViewport0);
+    // const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
+    // EditorViewport0.add_Child(EditorCamera0);
+    // EditorViewport.add_Child(EditorViewportContainer0);
+    // // viewport 1
+    // const EditorViewportContainer1 = new ViewportDomContainer(DefaultConfig);
+    // EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
+    // const EditorViewport1 = new Viewport(DefaultConfig);
+    // const renderer1 = new EditorRenderer3D(DefaultConfig);
+    // const pipeline1 = new EditorRenderer3DPipeline(DefaultConfig);
+    // renderer1.render_pipeline = pipeline1;
+    // EditorViewport1.renderer_3d = renderer1;
+    // // EditorViewport1.transparent = true;
+    // EditorViewport1.background_color = bg_color;
+    // EditorViewport1.editor_highlight_color = Color.color8(0, 0, 255);
+    // EditorViewportContainer1.add_Child(EditorViewport1);
+    // const EditorCamera1 = new EditorOrbitCamera3D(DefaultConfig);
+    // EditorViewport1.add_Child(EditorCamera1);
+    // EditorViewport.add_Child(EditorViewportContainer1);
 
     // World 
     const World = new Node3D(DefaultConfig);

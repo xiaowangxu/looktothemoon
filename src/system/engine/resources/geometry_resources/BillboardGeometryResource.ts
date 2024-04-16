@@ -7,7 +7,6 @@ import { Ref } from "@/system/utils/RefCounted";
 import { GeometryResource } from "./GeometryResource";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import { Tau } from "@/system/fivepebble/Scalar";
 
 const BillboardSquarePositionAttributeBuffer = new Cacher((config: Config) => {
     return new Ref(new RenderDeviceVector2AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
