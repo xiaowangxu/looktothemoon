@@ -10,6 +10,8 @@ export class Vector3 implements VectorLike<Vector3, Matrix3>, Transformable<Vect
 
     public static get new() { return new Vector3(); }
     public static create(x: number = 0, y: number = 0, z: number = 0) { return new Vector3(x, y, z); }
+    static readonly #tmp = new Vector3();
+    public static tmp(x: number = 0, y: number = 0, z: number = 0) { return Vector3.#tmp.set(x, y, z); }
 
     //#endregion
 

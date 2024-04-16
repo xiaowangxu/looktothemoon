@@ -1262,7 +1262,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     }
 
     public draw_Arrays(program: WebGL2RenderStateProgram, vertex_array: WebGL2RenderStateVertexArray | WebGL2RenderStateVertexArrayView, instance_count: number): void {
-        if (instance_count <= 0) return;
+        if (instance_count <= 0 || vertex_array.count <= 0) return;
         this.use_ProgramProxy(program.program);
         this.bind_VertexArrayProxy(vertex_array.vertex_array);
         if (instance_count <= 1) {
@@ -1274,7 +1274,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     }
 
     public draw_Elements(program: WebGL2RenderStateProgram, vertex_array: WebGL2RenderStateVertexArray | WebGL2RenderStateVertexArrayView, index_data_type: RenderStateDataType, instance_count: number): void {
-        if (instance_count <= 0) return;
+        if (instance_count <= 0 || vertex_array.count <= 0) return;
         this.use_ProgramProxy(program.program);
         this.bind_VertexArrayProxy(vertex_array.vertex_array);
         if (instance_count <= 1) {

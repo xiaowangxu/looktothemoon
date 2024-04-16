@@ -6,6 +6,7 @@ import sys_vfs from 'res://sys.vfs.gz?url';
 import { VFS } from '@/system/filesystem/VirtualFileSystem';
 import { fspath } from './system/filesystem/FileSystemPath';
 import { StlLoader } from './system/engine/loaders/StlLoader';
+import { ObjLoader } from './system/engine/loaders/ObjLoader';
 
 createApp(App).mount('#app');
 
@@ -60,4 +61,17 @@ VFS.touch(fspath('user://'));
 // shape.reverse_Face(f0);
 
 // console.log(shape.get_FaceEdges(f0));
+
+
+// import road from 'res://jd.obj?url';
+// (async () => {
+//     await fetch(road)
+//         .then(res => res.text())
+//         .then(text => {
+//             // console.log(text);
+//             const obj_loader = new ObjLoader();
+//             const res = obj_loader.parse(text);
+//             res.expect().save(undefined, 'download://traffic-light.geometry.lttmbin');
+//         });
+// })();
 

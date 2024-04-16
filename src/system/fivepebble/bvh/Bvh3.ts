@@ -37,7 +37,8 @@ enum Bvh3Axis {
 };
 
 export enum Bvh3Strategy {
-    Center, Average, SAH,
+    Center, Average, 
+    // SAH,
     X, Y, Z,
 }
 
@@ -509,9 +510,11 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
         }
     }
 
-    public traverse(func: (aabb: AABB3) => boolean, max_depth: number = Infinity) {
+    //#region query
+
+    public traverse(func: (aabb: AABB3) => boolean, max_depth: number = Infinity, target: BvhShape3[] = []) {
         if (this.root === undefined) return Bvh3.#const_empty_shapes;
-        return this.traverse_Internal(this.root, func, 0, max_depth, []);
+        return this.traverse_Internal(this.root, func, 0, max_depth, target);
     }
 
     private traverse_Internal(node: BvhNode3, func: (aabb: AABB3) => boolean, depth: number = 0, max_depth: number = Infinity, result: BvhShape3[] = []) {
@@ -525,6 +528,25 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
         if (node.left !== undefined) this.traverse_Internal(node.left, func, children_depth, max_depth, result);
         if (node.right !== undefined) this.traverse_Internal(node.right, func, children_depth, max_depth, result);
         return result;
+    }
+
+    public traverse_Callback<S extends BvhShape3 = BvhShape3>(func: (aabb: AABB3) => boolean, callback: (shape: S)=>void, max_depth: number = Infinity) {
+        if (this.root === undefined) return;
+        return this.traverse_CallbackInternal<S>(this.root, func, callback, 0, max_depth);
+    }
+
+    private traverse_CallbackInternal<S extends BvhShape3 = BvhShape3>(node: BvhNode3, func: (aabb: AABB3) => boolean, callback: (shape: S)=>void, depth: number = 0, max_depth: number = Infinity) {
+        const hit = func(node.aabb);
+        if (!hit) return;
+        if (node.is_leaf || depth >= max_depth) {
+            for (const shape of node.shapes) {
+                callback(shape as S);
+            }
+            return;
+        }
+        const children_depth = depth + 1;
+        if (node.left !== undefined) this.traverse_CallbackInternal(node.left, func, callback, children_depth, max_depth);
+        if (node.right !== undefined) this.traverse_CallbackInternal(node.right, func, callback, children_depth, max_depth);
     }
 
     public *traverse_Iterator<S extends BvhShape3 = BvhShape3>(func: (aabb: AABB3) => boolean, max_depth: number = Infinity) {
@@ -545,4 +567,6 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
         if (node.left !== undefined) yield* this.traverse_IteratorInternal(node.left, func, children_depth, max_depth);
         if (node.right !== undefined) yield* this.traverse_IteratorInternal(node.right, func, children_depth, max_depth);
     }
+
+    //#endregion
 }

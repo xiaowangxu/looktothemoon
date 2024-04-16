@@ -8,12 +8,27 @@ export class Matrix4 implements MatrixLike<Matrix4> {
     //#region init
 
     static get new() { return new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1); }
-    static create(n11: number = 0, n12: number = 0, n13: number = 0, n14: number = 0,
+    static create(
+        n11: number = 0, n12: number = 0, n13: number = 0, n14: number = 0,
         n21: number = 0, n22: number = 0, n23: number = 0, n24: number = 0,
         n31: number = 0, n32: number = 0, n33: number = 0, n34: number = 0,
         n41: number = 0, n42: number = 0, n43: number = 0, n44: number = 0,
     ) {
         return new Matrix4(
+            n11, n12, n13, n14,
+            n21, n22, n23, n24,
+            n31, n32, n33, n34,
+            n41, n42, n43, n44,
+        );
+    }
+    static readonly #tmp = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+    public static tmp(
+        n11: number = 0, n12: number = 0, n13: number = 0, n14: number = 0,
+        n21: number = 0, n22: number = 0, n23: number = 0, n24: number = 0,
+        n31: number = 0, n32: number = 0, n33: number = 0, n34: number = 0,
+        n41: number = 0, n42: number = 0, n43: number = 0, n44: number = 0,
+    ) {
+        return Matrix4.#tmp.set(
             n11, n12, n13, n14,
             n21, n22, n23, n24,
             n31, n32, n33, n34,

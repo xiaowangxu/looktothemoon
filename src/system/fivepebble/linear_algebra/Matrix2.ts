@@ -7,8 +7,23 @@ export class Matrix2 implements MatrixLike<Matrix2> {
     //#region init
 
     static get new() { return new Matrix2(1, 0, 0, 1); }
-    static create(n11: number, n12: number, n21: number, n22: number) {
-        return new Matrix2(n11, n12, n21, n22);
+    static create(
+        n11: number, n12: number,
+        n21: number, n22: number,
+    ) {
+        return new Matrix2(
+            n11, n12,
+            n21, n22,
+        );
+    }
+    static readonly #tmp = new Matrix2(1, 0, 0, 1);
+    public static tmp(
+        n11: number, n12: number,
+        n21: number, n22: number,) {
+        return Matrix2.#tmp.set(
+            n11, n12,
+            n21, n22,
+        );
     }
 
     //#endregion

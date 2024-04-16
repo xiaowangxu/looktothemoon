@@ -13,6 +13,8 @@ export class Quaternion implements Cloneable<Quaternion>, Copyable<Quaternion>, 
     static create(x: number = 0, y: number = 0, z: number = 0, w: number = 0) {
         return new Quaternion(x, y, z, w);
     }
+    static readonly #tmp = new Quaternion();
+    public static tmp(x: number = 0, y: number = 0, z: number = 0, w: number = 0) { return Quaternion.#tmp.set(x, y, z, w); }
 
     //#endregion
 

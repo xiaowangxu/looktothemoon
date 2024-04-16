@@ -177,7 +177,7 @@ export function createEditor() {
     const World = new Node3D(DefaultConfig);
     World.local_scale = Vector3.create(0.01, 0.01, 0.01);
     const ambient_light = new AmbientLight3D(DefaultConfig);
-    ambient_light.intensity = 0;
+    ambient_light.intensity = 0.1;
     World.add_Child(ambient_light);
     const directional_light0 = new DirectionalLight3D(DefaultConfig);
     directional_light0.color = Vector3.create(0, 0, 1);

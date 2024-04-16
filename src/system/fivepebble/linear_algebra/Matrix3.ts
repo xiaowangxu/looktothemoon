@@ -11,10 +11,28 @@ export class Matrix3 implements MatrixLike<Matrix3> {
     //#region init
 
     static get new() { return new Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1); }
-    static create(n11: number = 0, n12: number = 0, n13: number = 0,
+    static create(
+        n11: number = 0, n12: number = 0, n13: number = 0,
         n21: number = 0, n22: number = 0, n23: number = 0,
-        n31: number = 0, n32: number = 0, n33: number = 0) {
-        return new Matrix3(n11, n12, n13, n21, n22, n23, n31, n32, n33);
+        n31: number = 0, n32: number = 0, n33: number = 0,
+    ) {
+        return new Matrix3(
+            n11, n12, n13,
+            n21, n22, n23,
+            n31, n32, n33,
+        );
+    }
+    static readonly #tmp = new Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    public static tmp(
+        n11: number = 0, n12: number = 0, n13: number = 0,
+        n21: number = 0, n22: number = 0, n23: number = 0,
+        n31: number = 0, n32: number = 0, n33: number = 0,
+    ) {
+        return Matrix3.#tmp.set(
+            n11, n12, n13,
+            n21, n22, n23,
+            n31, n32, n33,
+        );
     }
 
     //#endregion

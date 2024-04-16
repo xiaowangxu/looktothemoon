@@ -15,6 +15,8 @@ export class Euler implements Cloneable<Euler>, Copyable<Euler>, Equality<Euler>
     static create(x: number = 0, y: number = 0, z: number = 0, order: EulerOrder = EulerOrder.XYZ) {
         return new Euler(x, y, z, order);
     }
+    static readonly #tmp = new Euler();
+    public static tmp(x: number = 0, y: number = 0, z: number = 0, order: EulerOrder = EulerOrder.XYZ) { return Euler.#tmp.set(x, y, z, order); }
 
     //#endregion
 

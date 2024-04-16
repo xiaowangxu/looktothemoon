@@ -9,6 +9,8 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
 
     public static get new() { return new Vector4(); }
     public static create(x: number = 0, y: number = 0, z: number = 0, w: number = 0) { return new Vector4(x, y, z, w); }
+    static readonly #tmp = new Vector4();
+    public static tmp(x: number = 0, y: number = 0, z: number = 0, w: number = 0) { return Vector4.#tmp.set(x, y, z, w); }
 
     //#endregion
 

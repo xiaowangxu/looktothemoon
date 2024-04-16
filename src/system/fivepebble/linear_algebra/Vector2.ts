@@ -9,6 +9,8 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
 
     public static get new() { return new Vector2(0, 0); }
     public static create(x: number = 0, y: number = 0) { return new Vector2(x, y); }
+    static readonly #tmp = new Vector2();
+    public static tmp(x: number = 0, y: number = 0) { return Vector2.#tmp.set(x, y); }
 
     //#endregion
 
