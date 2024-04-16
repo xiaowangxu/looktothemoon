@@ -20,22 +20,22 @@ export const BillboardVertexShader = new Cacher((config: Config) => {
     
     ${GlslPrimitives.VertexBuiltinAttributes}
 
-    uniform mat4 model_world;
+    uniform mat4 MODEL_WORLD;
 
     out vec3 v_NORMAL_VIEW;
     out vec3 v_LOOKAT_VIEW;
     out vec2 v_UV;
     
     void main() {
-        mat4 _model_world = model_world * a_instance_transform;
-        mat4 _model_view = camera_view * _model_world;
+        mat4 _model_world = MODEL_WORLD * a_instance_transform;
+        mat4 _model_view = CAMERA_VIEW * _model_world;
 
         vec4 world = _model_world * vec4(0.0, 0.0, 0.0, 1.0); // WORLD SPACE
-        vec4 world_in_view = camera_view * world;           // IN CAMERA SPACE
-        vec4 clip = camera_projection * world_in_view;      // IN CLIP SPACE
+        vec4 world_in_view = CAMERA_VIEW * world;           // IN CAMERA SPACE
+        vec4 clip = CAMERA_PROJECTION * world_in_view;      // IN CLIP SPACE
 
         const float width = 20.0;
-        vec2 offset = vec2(width * 2.0) / screen_size * pixel_ratio;
+        vec2 offset = vec2(width * 2.0) / SCREEN_SIZE * PIXEL_RATIO;
 
         clip.xyz /= clip.w;
         clip.w = 1.0;
@@ -51,7 +51,7 @@ export const BillboardVertexShader = new Cacher((config: Config) => {
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect());
 });
 export const BillboardVertexShaderUniforms: Readonly<UniformInitSet<WebGL2RenderState>> = {
-    model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.new },
+    MODEL_WORLD: { type: RenderStateUniformType.Mat4, default: Matrix4.new },
 };
 
 export const BillboardFragmentShadeShader = new Cacher((config: Config) => {

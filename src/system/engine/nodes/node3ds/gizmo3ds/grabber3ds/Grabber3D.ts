@@ -149,7 +149,7 @@ export class Grabber3D<T> extends Node3D {
 export class GrabberPlainColorMaterialResource extends MaterialResource {
 
     static readonly #uniforms: MaterialReadOnlyUniforms = {
-        model_world: RenderStateUniformType.Mat4,
+        MODEL_WORLD: RenderStateUniformType.Mat4,
         u_color: RenderStateUniformType.Vec4,
         u_hidden: RenderStateUniformType.Int,
     };
@@ -171,7 +171,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
 
     void main() {
         ${GlslPrimitives.FragmentVertexEssentialCalculations}
-        float depth = texture(u_scene_depth, gl_FragCoord.xy / screen_size).r;
+        float depth = texture(u_scene_depth, gl_FragCoord.xy / SCREEN_SIZE).r;
         vec4 hidden_color = mix(u_color, vec4(0.5, 0.5, 0.5, 1.0), 0.75);
         bool not_hidden = depth >= gl_FragCoord.z;
         o_color = !(u_hidden == 1) || not_hidden ? u_color : hidden_color;
@@ -199,7 +199,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
 
     void main() {
         ${GlslPrimitives.FragmentVertexEssentialCalculations}
-        float depth = texture(u_scene_depth, gl_FragCoord.xy / screen_size).r;
+        float depth = texture(u_scene_depth, gl_FragCoord.xy / SCREEN_SIZE).r;
         vec4 hidden_color = mix(u_color, vec4(0.5, 0.5, 0.5, u_color.a), 0.75);
         bool not_hidden = depth >= gl_FragCoord.z;
         vec4 COLOR = !(u_hidden == 1) || not_hidden ? u_color : hidden_color;

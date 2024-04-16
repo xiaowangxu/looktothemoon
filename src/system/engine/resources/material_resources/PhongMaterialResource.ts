@@ -10,7 +10,7 @@ import { Color } from "@/system/fivepebble/graphics/Color";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { Epsilon } from "@/system/fivepebble/Scalar";
 import { Cacher } from "@/system/utils/Cacher";
-import { GlslPrimitives, MaterialLightDataTextureUniformsDef, PrimitiveFragmentPreZShader, PrimitiveFragmentPreZShaderUniforms, PrimitiveMaterialUniforms, PrimitiveVertexShader, PrimitiveVertexShaderUniforms, ShaderLightDataTextureUniformsDef } from "./Primitives";
+import { GlslPrimitives, MaterialLightDataTextureUniformsDef, MaterialNormalTextureUniformsDef, PrimitiveFragmentPreZShader, PrimitiveFragmentPreZShaderUniforms, PrimitiveMaterialUniforms, PrimitiveVertexShader, PrimitiveVertexShaderUniforms, ShaderLightDataTextureUniformsDef, ShaderNormalTextureUniformsDef, set_MaterialNormalTexture } from "./Primitives";
 
 const PhongFragmentShadeShader = new Cacher((config: Config) => {
     const code = `#version 300 es
@@ -19,8 +19,11 @@ const PhongFragmentShadeShader = new Cacher((config: Config) => {
     precision highp sampler3D;
 
     ${GlslPrimitives.WorldUniforms}
+    ${GlslPrimitives.Constants}
 
     ${GlslPrimitives.FragmentEssentialUniforms}
+
+    ${GlslPrimitives.ShaderNormalTextureUniforms}
 
     uniform vec4 u_color;
     uniform sampler2D u_texture;
@@ -31,24 +34,37 @@ const PhongFragmentShadeShader = new Cacher((config: Config) => {
 
     ${GlslPrimitives.FragmentLightDataUniformStruct}
 
+    float ndf_blinnphong(in vec3 l, in vec3 v, in vec3 n, in float power, in float gloss) {
+        vec3 h = normalize(l + v);
+        float distribution = pow(max(dot(n, h), 0.0), gloss) * power;
+        distribution *= (2.0 + power) / TAU;
+        return distribution;
+    }
+
+    vec4 sample_Sky(sampler2D sky, vec3 normal) {
+        float theta = atan(normal.z, normal.x);
+        float gamma = acos(normal.y);
+        return texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
+    }
+
     ${GlslPrimitives.FragmentLightFunction(`
         float strength = dot(NORMAL, DIRECTION);
         if (strength < 1e-6) return;
         DIFFUSE = strength * COLOR * ATTENUATION;
-        vec3 R = reflect(DIRECTION, NORMAL);
-        float refl = dot(R, VIEW);
-        SPECULAR = vec3(0.0);
+        if (TYPE != 1u) {
+            SPECULAR = ndf_blinnphong(DIRECTION, VIEW, NORMAL, 2.0, 500.0) * COLOR * ATTENUATION;
+        }
     `)}
 
     void main() {
         ${GlslPrimitives.FragmentVertexEssentialCalculations}
         ${GlslPrimitives.FragmentTangentAndTBNCalculations}
-        vec4 ALBEDO = u_color;
+        ${GlslPrimitives.FragmentNormalTextureCalculations}
+        vec4 ALBEDO = u_color;// * sample_Sky(SKY, reflect(-LOOKAT, NORMAL));
         ${GlslPrimitives.FragmentLightCalculations()}
         o_color = COLOR;
         o_normal = vec4(NORMAL_VIEW, 1.0);
     }`;
-    console.log(code);
 
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());
 });
@@ -62,6 +78,7 @@ const PhongFragmentShadeShaderUniforms = new Cacher((config: Config) => {
         },
         u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
         ...ShaderLightDataTextureUniformsDef,
+        ...ShaderNormalTextureUniformsDef,
     } as UniformInitSet<WebGL2RenderState>;
 });
 
@@ -131,6 +148,7 @@ export class PhongMaterialResource extends MaterialResource {
         ...MaterialLightDataTextureUniformsDef,
         u_texture: RenderStateUniformType.Tex2D,
         u_color: RenderStateUniformType.Vec4,
+        ...MaterialNormalTextureUniformsDef,
     };
 
     public get uniforms() { return PhongMaterialResource.#uniforms; }
@@ -151,6 +169,16 @@ export class PhongMaterialResource extends MaterialResource {
         if (this._texture.value !== texture) {
             this._texture.value = texture;
             this.set_Uniform('u_texture', this._texture.value?.texture);
+        }
+    }
+
+    private _normal_texture: Ref<TextureResource> = new Ref();
+    public get normal_texture() { return this._normal_texture.value; }
+    public set normal_texture(normal_texture: TextureResource | undefined) {
+        if (this._normal_texture.value !== normal_texture) {
+            this._normal_texture.value = normal_texture;
+            console.log(this);
+            set_MaterialNormalTexture(this, this._normal_texture.value);
         }
     }
 

@@ -102,8 +102,8 @@ export class ShadowRenderer3D extends OffscreenRenderer3D {
             const program = material.get_Program(RenderServerShaderPass.PreZ);
             if (geometry !== undefined && program !== undefined) {
                 this.set_CullFace(material.cull_face);
-                material.set_Uniform('model_world', transform);
-                material.set_Uniform('layer', layer);
+                material.set_Uniform('MODEL_WORLD', transform);
+                material.set_Uniform('LAYER', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.PreZ);
                 if (indexed) {
                     this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
@@ -124,8 +124,8 @@ export class ShadowRenderer3D extends OffscreenRenderer3D {
             const program = material.get_Program(RenderServerShaderPass.PreZ);
             if (geometry !== undefined && program !== undefined) {
                 this.set_CullFace(material.cull_face);
-                material.set_Uniform('model_world', transform);
-                material.set_Uniform('layer', layer);
+                material.set_Uniform('MODEL_WORLD', transform);
+                material.set_Uniform('LAYER', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.PreZ);
                 if (indexed) {
                     this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);

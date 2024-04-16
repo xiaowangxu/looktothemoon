@@ -33,7 +33,7 @@ const PrimitiveVertexShader = new Cacher((config: Config) => {
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect());
 });
 const PrimitiveVertexShaderUniforms: UniformInitSet<WebGL2RenderState> = {
-    model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.new },
+    MODEL_WORLD: { type: RenderStateUniformType.Mat4, default: Matrix4.new },
 };
 
 export class StandardMaterialResource extends MaterialResource {
@@ -58,7 +58,7 @@ export class StandardMaterialResource extends MaterialResource {
 
     uniform vec4 u_color;
     uniform sampler2D sky;
-    uniform uint layer;
+    uniform uint LAYER;
     
     ${GlslPrimitives.FragmentVertexEssentialIns}
 
@@ -96,7 +96,7 @@ export class StandardMaterialResource extends MaterialResource {
         o_normal = vec4(NORMAL_VIEW, 1.0);
     }`;
     static readonly #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
-        layer: { type: RenderStateUniformType.Uint, default: 0xffffffff },
+        LAYER: { type: RenderStateUniformType.Uint, default: 0xffffffff },
         lights: { type: RenderStateUniformType.Int, default: RenderServerDevice.LightsTextureUnit },
         sky: { type: RenderStateUniformType.Int, default: RenderServerDevice.SkyTextureUnit },
         u_color: { type: RenderStateUniformType.Vec4, default: Color.new },

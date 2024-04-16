@@ -254,10 +254,12 @@ export function createEditor() {
     World.add_Child(TranslateGrabber2);
 
     const spot_light = new SpotLight3D(DefaultConfig);
-    spot_light.intensity = 4;
+    spot_light.angle = Pi / 6;
+    spot_light.intensity = 10;
     spot_light.distance = 10.0;
     spot_light.mask = 0x7fffffff;
     spot_light.color = Vector3.create(1, 0, 0);
+    spot_light.local_rotation = Euler.create(-Pi / 3, 0.0, 0.0);
     World.add_Child(spot_light);
 
     TranslateGrabber2.signal_grabbing.connect(pos => {
@@ -400,13 +402,12 @@ export function createEditor() {
     normal_texture.min_filter = RenderStateTextureMinFilter.LinearMipmapLinear;
     normal_texture.mag_filter = RenderStateTextureMagFilter.Linear;
     // ground_material.normal_texture = normal_texture;
-    // ground_material.color = Color.create(0.3, 0.3, 0.3, 1.0).linear_rgb;
-    ground_material.color = Color.create(1.0, 1.0, 1.0 , 1.0).linear_rgb;
+    ground_material.color = Color.create(0.3, 0.3, 0.3, 1.0).linear_rgb;
+    // ground_material.color = Color.create(1.0, 1.0, 1.0, 1.0).linear_rgb;
     ground.material = ground_material;
     // ground.top_level = true;
     ground.local_scale = Vector3.create(1000, 500, 1000);
     ground.local_position = Vector3.create(0, -400, 0);
-    ground.layer = 0x90000000;
     World.add_Child(ground);
 
     // const tween = EditorSceneTree.start_Tween(tween_loop(
@@ -761,8 +762,8 @@ export function createEditor() {
 
         const box_geo = new SphereGeometryResource(DefaultConfig);
         box_geo.build();
-        const box_mat = new MatcapMaterialResource(DefaultConfig);
-        box_mat.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/matcaps/matcap-11.lttmbin').expect();
+        const box_mat = new PhongMaterialResource(DefaultConfig);
+        // box_mat.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/matcaps/matcap-11.lttmbin').expect();
         const box_mesh = new MeshInstance3D(DefaultConfig);
         box_mesh.geometry = box_geo;
         box_mesh.material = box_mat;

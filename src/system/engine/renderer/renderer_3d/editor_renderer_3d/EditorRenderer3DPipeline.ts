@@ -108,7 +108,7 @@ in vec2 v_uv;
 layout(location = 0) out vec4 o_color;
 
 void main() {
-	ivec2 uv = ivec2(v_uv * screen_size);
+	ivec2 uv = ivec2(v_uv * SCREEN_SIZE);
 	vec4 color = texelFetch(u_color, uv, 0);
 	float color_a = 1.0 - color.a;
 	float a = texelFetch(u_accum, uv, 0).r;
@@ -157,9 +157,9 @@ bool is_visible(const vec2 uv) {
 }
 
 void main() {
-    vec2 pixel_uv_size = vec2(1.0, 1.0) / screen_size;
+    vec2 pixel_uv_size = vec2(1.0, 1.0) / SCREEN_SIZE;
     bool base_visible = is_visible(v_uv);
-    float line_width = u_line_width * pixel_ratio;
+    float line_width = u_line_width * PIXEL_RATIO;
     float line_width_sqrt = line_width * SQRT2 / 2.0;
     float line_width_cos = 0.92387953251 * line_width;
     float line_width_sin = 0.38268343236 * line_width;
@@ -235,14 +235,14 @@ uniform sampler2D sky;
 ${GlslPrimitives.FragmentFrameSolidOuts}
 
 void main() {
-    vec4 view = camera_inv_projection * vec4((v_uv * 2.0 - 1.0), 1.0, 1.0);
-    vec3 NORMAL_VIEW = camera_is_orthogonal ? vec3(0.0, 0.0, 1.0) : -normalize(view.xyz);
-    vec4 dir = mat4(mat3(camera_world)) * view;
+    vec4 view = CAMERA_INV_PROJECTION * vec4((v_uv * 2.0 - 1.0), 1.0, 1.0);
+    vec3 NORMAL_VIEW = CAMERA_IS_ORTH ? vec3(0.0, 0.0, 1.0) : -normalize(view.xyz);
+    vec4 dir = mat4(mat3(CAMERA_WORLD)) * view;
     vec3 R = normalize(dir.xyz);
     float theta = atan(R.z, R.x);
     float gamma = acos(R.y);
     vec4 sky_color = texture(sky, vec2(theta / TAU + 0.5, gamma / PI));
-    o_color = mix(background_color, sky_color, float(use_sky));
+    o_color = mix(BACKGROUND_COLOR, sky_color, float(USE_SKY));
     o_normal = vec4(NORMAL_VIEW, 1.0);
 }
 `;
@@ -289,8 +289,8 @@ void texcoords(vec2 fragCoord, vec2 resolution, out vec2 v_rgbNW, out vec2 v_rgb
 }
 
 void main() {
-    v_frag_coord = (a_position + 1.0) / 2.0 * screen_size;
-    texcoords(v_frag_coord, screen_size , v_rgbNW, v_rgbNE, v_rgbSW, v_rgbSE, v_rgbM);
+    v_frag_coord = (a_position + 1.0) / 2.0 * SCREEN_SIZE;
+    texcoords(v_frag_coord, SCREEN_SIZE , v_rgbNW, v_rgbNE, v_rgbSW, v_rgbSE, v_rgbM);
 	  gl_Position = vec4(a_position, 1.0, 1.0);
 }`;
 
@@ -378,7 +378,7 @@ vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution,
 }
 
 void main() {
-	o_color = fxaa(u_screen, v_frag_coord, screen_size, v_rgbNW, v_rgbNE, v_rgbSW, v_rgbSE, v_rgbM);
+	o_color = fxaa(u_screen, v_frag_coord, SCREEN_SIZE, v_rgbNW, v_rgbNE, v_rgbSW, v_rgbSE, v_rgbM);
     if (u_colormap) {
         float r = o_color.r;
         o_color.r = r <= 0.0031308 ? (12.92 * r) : (1.055 * pow(r, 1.0 / 2.4) - 0.055);
@@ -436,7 +436,7 @@ void main() {
 // };
 
 // LuminanceData sample_luminance_neighborhood(vec2 uv) {
-//     vec2 pixel_size = 1.0 / screen_size;
+//     vec2 pixel_size = 1.0 / SCREEN_SIZE;
 
 //     LuminanceData l;
 
@@ -493,7 +493,7 @@ void main() {
 
 //     e.is_horizontal = horizontal >= vertical;
 
-//     vec2 pixel_size = 1.0 / screen_size;
+//     vec2 pixel_size = 1.0 / SCREEN_SIZE;
 //     e.pixel_step = e.is_horizontal ? pixel_size.y : pixel_size.x;
 //     float positive = abs((e.is_horizontal ? l.n : l.e) - l.m);
 //     float negative = abs((e.is_horizontal ? l.s : l.w) - l.m);
@@ -651,19 +651,19 @@ layout(location = 0) out vec4 o_color;
 
 vec3 get_world_pos(in vec2 uv, float depth) {
     vec4 clip_pos = vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
-    vec4 view_pos = camera_inv_projection * clip_pos;
+    vec4 view_pos = CAMERA_INV_PROJECTION * clip_pos;
 
     view_pos /= view_pos.w;
 
-    vec4 world_pos = camera_world * view_pos;
+    vec4 world_pos = CAMERA_WORLD * view_pos;
 
     return world_pos.xyz;
 }
 
 //generating noise/pattern texture for dithering
 vec3 rand(vec2 coord) {
-    float width = screen_size.x;
-    float height = screen_size.y;
+    float width = SCREEN_SIZE.x;
+    float height = SCREEN_SIZE.y;
     float noiseX = ((fract(1.0-coord.s*(width/2.0))*0.25)+(fract(coord.t*(height/2.0))*0.75))*2.0-1.0;
     float noiseY = ((fract(1.0-coord.s*(width/2.0))*0.75)+(fract(coord.t*(height/2.0))*0.25))*2.0-1.0;
     float noiseZ = ((fract(1.0-coord.s*(width/2.0))*0.5)+(fract(coord.t*(height/2.0))*0.5))*2.0-1.0;
@@ -674,7 +674,7 @@ vec3 rand(vec2 coord) {
 }
 
 void main() {
-    vec2 noiseScale = screen_size / 4.0; // screen = 800x600
+    vec2 noiseScale = SCREEN_SIZE / 4.0; // screen = 800x600
     
     float depth = texture(u_depth, v_uv).r;
     float sampleDepth = depth * 2.0 - 1.0;
@@ -694,7 +694,7 @@ void main() {
         samplePos = fragPos + samplePos * radius; 
 
         vec4 offset = vec4(samplePos, 1.0);
-        offset      = camera_projection * camera_view * offset;    // from view to clip-space
+        offset      = CAMERA_PROJECTION * CAMERA_VIEW * offset;    // from view to clip-space
         offset.xyz /= offset.w;               // perspective divide
         offset.xyz  = offset.xyz * 0.5 + 0.5; // transform to range 0.0 - 1.0
 
@@ -1061,9 +1061,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
                 if (material.polygon_offset) {
                     this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
                 }
-                material.set_Uniform('model_world', transform);
-                material.set_Uniform('has_tangent', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
-                material.set_Uniform('layer', layer);
+                material.set_Uniform('MODEL_WORLD', transform);
+                material.set_Uniform('HAS_TANGENT', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
+                material.set_Uniform('LAYER', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.Shade);
                 if (indexed) {
                     this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
@@ -1117,9 +1117,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
                 if (material.polygon_offset) {
                     this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
                 }
-                material.set_Uniform('model_world', transform);
-                material.set_Uniform('has_tangent', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
-                material.set_Uniform('layer', layer);
+                material.set_Uniform('MODEL_WORLD', transform);
+                material.set_Uniform('HAS_TANGENT', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
+                material.set_Uniform('LAYER', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.OiT);
                 if (indexed) {
                     this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
@@ -1150,9 +1150,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
                 if (material.polygon_offset) {
                     this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
                 }
-                material.set_Uniform('model_world', transform);
-                material.set_Uniform('has_tangent', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
-                material.set_Uniform('layer', layer);
+                material.set_Uniform('MODEL_WORLD', transform);
+                material.set_Uniform('HAS_TANGENT', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
+                material.set_Uniform('LAYER', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.PreZ);
                 if (indexed) {
                     this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
@@ -1208,9 +1208,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
                 if (material.polygon_offset) {
                     this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
                 }
-                material.set_Uniform('model_world', transform);
-                material.set_Uniform('has_tangent', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
-                material.set_Uniform('layer', layer);
+                material.set_Uniform('MODEL_WORLD', transform);
+                material.set_Uniform('HAS_TANGENT', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
+                material.set_Uniform('LAYER', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.Shade);
                 if (indexed) {
                     this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
@@ -1259,9 +1259,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
                 if (material.polygon_offset) {
                     this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
                 }
-                material.set_Uniform('model_world', transform);
-                material.set_Uniform('has_tangent', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
-                material.set_Uniform('layer', layer);
+                material.set_Uniform('MODEL_WORLD', transform);
+                material.set_Uniform('HAS_TANGENT', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
+                material.set_Uniform('LAYER', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.OiT);
                 if (indexed) {
                     this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
@@ -1312,9 +1312,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
                 if (material.polygon_offset) {
                     this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
                 }
-                material.set_Uniform('model_world', transform);
-                material.set_Uniform('has_tangent', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
-                material.set_Uniform('layer', layer);
+                material.set_Uniform('MODEL_WORLD', transform);
+                material.set_Uniform('HAS_TANGENT', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
+                material.set_Uniform('LAYER', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.PreZ);
                 if (indexed) {
                     this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);
@@ -1339,9 +1339,9 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
                 if (material.polygon_offset) {
                     this.render_server.render_state.set_PolygonOffsetProxy(material.polygon_offset_factor, material.polygon_offset_units);
                 }
-                material.set_Uniform('model_world', transform);
-                material.set_Uniform('has_tangent', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
-                material.set_Uniform('layer', layer);
+                material.set_Uniform('MODEL_WORLD', transform);
+                material.set_Uniform('HAS_TANGENT', geometry.has_AttributeLocation(RenderServerGeometry.GeometryAttributeLocations.tangent) ? 1 : 0);
+                material.set_Uniform('LAYER', layer);
                 material.commit_AllUniforms(RenderServerShaderPass.PreZ);
                 if (indexed) {
                     this.render_server.render_state.draw_Elements(program, geometry, RenderStateDataType.UnsignedInt, instance_count);

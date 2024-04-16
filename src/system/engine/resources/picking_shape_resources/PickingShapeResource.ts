@@ -392,13 +392,13 @@ export class PickingPointResource extends PickingShape3DResource {
         const frustum = camera.get_Frustum(PickingPointResource.#tmp_frustum3_0);
         const point = global_transform.get_Position(PickingPointResource.#tmp_vector3_0);
         if (!frustum.contain_Point(point)) return undefined;
-        const screen_size = viewport.get_Size(PickingPointResource.#tmp_vector2_0);
+        const SCREEN_SIZE = viewport.get_Size(PickingPointResource.#tmp_vector2_0);
         const screen_point = camera.project_Point(point, PickingPointResource.#tmp_vector2_1);
         const screen_point_normalized = PickingPointResource.#tmp_vector2_3.copy(screen_point);
-        screen_point.mult(screen_point, screen_size);
+        screen_point.mult(screen_point, SCREEN_SIZE);
         screen_point.div_Number(screen_point, 2);
         const screen_mouse = camera.project_Point(from, PickingPointResource.#tmp_vector2_2);
-        screen_mouse.mult(screen_mouse, screen_size);
+        screen_mouse.mult(screen_mouse, SCREEN_SIZE);
         screen_mouse.div_Number(screen_mouse, 2);
         const distance = screen_point.distance_to(screen_mouse);
         if (distance > this._radius) return undefined;

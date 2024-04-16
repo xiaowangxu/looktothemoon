@@ -44,7 +44,7 @@ float _w = _a * max(0.01, min(3000.0, 0.03 / (1e-5 + pow(abs(_z) / 200.0, 4.0)))
 o_color = vec4(COLOR.rgb * _w, COLOR.a);
 o_accum = COLOR.a * _w;`;
 
-    public static readonly VertexEssentialOuts = `uniform mat4 model_world;
+    public static readonly VertexEssentialOuts = `uniform mat4 MODEL_WORLD;
 
 // VERTEX POSITION IN WORLD
 out vec3 v_VERTEX;
@@ -68,9 +68,9 @@ out vec3 v_TANGENT;
 out vec3 v_TANGENT_VIEW;
 `;
 
-    public static readonly FragmentEssentialUniforms = `uniform uint layer;`
+    public static readonly FragmentEssentialUniforms = `uniform uint LAYER;`
 
-    public static readonly FragmentVertexEssentialIns = `uniform bool has_tangent;
+    public static readonly FragmentVertexEssentialIns = `uniform bool HAS_TANGENT;
     
 // VERTEX POSITION IN WORLD
 in vec3 v_VERTEX;
@@ -92,27 +92,27 @@ in vec2 v_UV2;
 in vec3 v_TANGENT;
 in vec3 v_TANGENT_VIEW;`;
 
-    public static readonly VertexEssentialCalculations = `mat4 _model_world = model_world * a_instance_transform;
-mat4 _model_view = camera_view * _model_world;
+    public static readonly VertexEssentialCalculations = `mat4 _model_world = MODEL_WORLD * a_instance_transform;
+mat4 _model_view = CAMERA_VIEW * _model_world;
 // VERTEX
 vec4 world = _model_world * vec4(a_position, 1.0f); // WORLD SPACE
 v_VERTEX = world.xyz;
-vec4 world_in_view = camera_view * world; // IN CAMERA SPACE
+vec4 world_in_view = CAMERA_VIEW * world; // IN CAMERA SPACE
 v_VERTEX_VIEW = world_in_view.xyz;
-gl_Position = camera_projection * world_in_view;
+gl_Position = CAMERA_PROJECTION * world_in_view;
 // NORMAL
-v_NORMAL = normalize(transpose(inverse(mat3(_model_world))) * a_normal);
+v_NORMAL = transpose(inverse(mat3(_model_world))) * a_normal;
 mat3 normal_transform = transpose(inverse(mat3(_model_view)));
-v_NORMAL_VIEW = normalize(normal_transform * a_normal);
+v_NORMAL_VIEW = normal_transform * a_normal;
 // LOOKAT
-v_LOOKAT = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0f, 0.0f, 1.0f)) : normalize(camera_world[3].xyz - v_VERTEX);
-v_LOOKAT_VIEW = camera_is_orthogonal ? vec3(0.0f, 0.0f, 1.0f) : -normalize(v_VERTEX_VIEW);
+v_LOOKAT = CAMERA_IS_ORTH ? normalize(mat3(CAMERA_WORLD) * vec3(0.0f, 0.0f, 1.0f)) : (CAMERA_WORLD[3].xyz - v_VERTEX);
+v_LOOKAT_VIEW = CAMERA_IS_ORTH ? vec3(0.0f, 0.0f, 1.0f) : -v_VERTEX_VIEW;
 // UV
 v_UV = a_uv;
 v_UV2 = a_uv2;
 // TANGENT
 v_TANGENT = a_tangent;
-v_TANGENT_VIEW = normalize(normal_transform * a_tangent);`;
+v_TANGENT_VIEW = normal_transform * a_tangent;`;
 
     public static readonly FragmentVertexEssentialCalculations = `float FACING = gl_FrontFacing ? 1.0 : -1.0;
 vec3 NORMAL = normalize(v_NORMAL) * FACING;
@@ -122,7 +122,7 @@ vec3 LOOKAT_VIEW = normalize(v_LOOKAT_VIEW);`
 
     public static readonly FragmentTangentAndTBNCalculations = `vec3 TANGENT_VIEW = normalize(v_TANGENT_VIEW);
 mat3 TBN;
-if (!has_tangent) {
+if (!HAS_TANGENT) {
     vec3 q0 = dFdx(v_VERTEX_VIEW);
 	vec3 q1 = dFdy(v_VERTEX_VIEW);
 	vec2 st0 = dFdx(v_UV.st);
@@ -150,7 +150,8 @@ uniform bool u_has_normal_texture;`;
     ${GlslPrimitives.FragmentNormalTextureViewCalculations}
 }`;
 
-    public static readonly FragmentLightDataUniformStruct = `uniform usampler2DArray lights;
+    public static readonly FragmentLightDataUniformStruct = `uniform usampler2DArray LIGHTS;
+uniform sampler2D SKY;
 
 struct LightData {
     uint type;
@@ -172,27 +173,27 @@ struct LightData {
 LightData get_light(const in ivec3 lights_size, const in int i) {
     int x = i % lights_size.x;
     int y = i / lights_size.x;
-    uint l_type_id = texelFetch(lights, ivec3(x, y, 0), 0).r;
+    uint l_type_id = texelFetch(LIGHTS, ivec3(x, y, 0), 0).r;
     if (l_type_id == 0u) return LightData(0u, 0u, 0, vec3(0.0), 0.0, vec3(0.0), 0.0, vec3(0.0), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    uint l_pos_x = texelFetch(lights, ivec3(x, y, 1), 0).r;
-    uint l_pos_y = texelFetch(lights, ivec3(x, y, 2), 0).r;
-    uint l_pos_z = texelFetch(lights, ivec3(x, y, 3), 0).r;
-    uint l_dir_x = texelFetch(lights, ivec3(x, y, 4), 0).r;
-    uint l_dir_y = texelFetch(lights, ivec3(x, y, 5), 0).r;
-    uint l_dir_z = texelFetch(lights, ivec3(x, y, 6), 0).r;
-    uint l_color_r = texelFetch(lights, ivec3(x, y, 7), 0).r;
-    uint l_color_g = texelFetch(lights, ivec3(x, y, 8), 0).r;
-    uint l_color_b = texelFetch(lights, ivec3(x, y, 9), 0).r;
-    uint _l_attenuation = texelFetch(lights, ivec3(x, y, 10), 0).r;
-    uint l_mask = texelFetch(lights, ivec3(x, y, 11), 0).r;
-    uint _l_param_0 = texelFetch(lights, ivec3(x, y, 12), 0).r;
-    uint _l_param_1 = texelFetch(lights, ivec3(x, y, 13), 0).r;
-    uint _l_param_2 = texelFetch(lights, ivec3(x, y, 14), 0).r;
-    uint _l_param_3 = texelFetch(lights, ivec3(x, y, 15), 0).r;
-    uint _l_shadow_bias = texelFetch(lights, ivec3(x, y, 16), 0).r;
-    uint _l_shadow_normal_bias = texelFetch(lights, ivec3(x, y, 17), 0).r;
-    uint _l_shadow_opacity = texelFetch(lights, ivec3(x, y, 18), 0).r;
-    uint _l_data_stride = texelFetch(lights, ivec3(x, y, 19), 0).r;
+    uint l_pos_x = texelFetch(LIGHTS, ivec3(x, y, 1), 0).r;
+    uint l_pos_y = texelFetch(LIGHTS, ivec3(x, y, 2), 0).r;
+    uint l_pos_z = texelFetch(LIGHTS, ivec3(x, y, 3), 0).r;
+    uint l_dir_x = texelFetch(LIGHTS, ivec3(x, y, 4), 0).r;
+    uint l_dir_y = texelFetch(LIGHTS, ivec3(x, y, 5), 0).r;
+    uint l_dir_z = texelFetch(LIGHTS, ivec3(x, y, 6), 0).r;
+    uint l_color_r = texelFetch(LIGHTS, ivec3(x, y, 7), 0).r;
+    uint l_color_g = texelFetch(LIGHTS, ivec3(x, y, 8), 0).r;
+    uint l_color_b = texelFetch(LIGHTS, ivec3(x, y, 9), 0).r;
+    uint _l_attenuation = texelFetch(LIGHTS, ivec3(x, y, 10), 0).r;
+    uint l_mask = texelFetch(LIGHTS, ivec3(x, y, 11), 0).r;
+    uint _l_param_0 = texelFetch(LIGHTS, ivec3(x, y, 12), 0).r;
+    uint _l_param_1 = texelFetch(LIGHTS, ivec3(x, y, 13), 0).r;
+    uint _l_param_2 = texelFetch(LIGHTS, ivec3(x, y, 14), 0).r;
+    uint _l_param_3 = texelFetch(LIGHTS, ivec3(x, y, 15), 0).r;
+    uint _l_shadow_bias = texelFetch(LIGHTS, ivec3(x, y, 16), 0).r;
+    uint _l_shadow_normal_bias = texelFetch(LIGHTS, ivec3(x, y, 17), 0).r;
+    uint _l_shadow_opacity = texelFetch(LIGHTS, ivec3(x, y, 18), 0).r;
+    uint _l_data_stride = texelFetch(LIGHTS, ivec3(x, y, 19), 0).r;
     uint l_type = l_type_id & 0xffffu;
     vec3 l_position = vec3(uintBitsToFloat(l_pos_x), uintBitsToFloat(l_pos_y), uintBitsToFloat(l_pos_z));
     vec3 l_direction = vec3(uintBitsToFloat(l_dir_x), uintBitsToFloat(l_dir_y), uintBitsToFloat(l_dir_z));
@@ -214,7 +215,7 @@ LightData get_light(const in ivec3 lights_size, const in int i) {
         return `    vec3 DIFFUSE = vec3(0.0);
     vec3 SPECULAR = vec3(0.0);
 
-    ivec3 _lights_size_ = textureSize(lights, 0);
+    ivec3 _lights_size_ = textureSize(LIGHTS, 0);
     int _max_lights_count_ = _lights_size_.x * _lights_size_.y;
     const int _MAX_COUNT_ = 128;
     int _max_count_ = min(_max_lights_count_, _MAX_COUNT_);
@@ -223,25 +224,25 @@ LightData get_light(const in ivec3 lights_size, const in int i) {
         LightData light = get_light(_lights_size_, i);
         if(light.type == 0u) break;
         i += light.stride;
-        if((light.mask & layer) == 0u) continue;
+        if((light.mask & LAYER) == 0u) continue;
         if(light.type == 1u) {
             // ambient light
             calc_light(${custom_p}light.type, NORMAL_VIEW, LOOKAT_VIEW, NORMAL_VIEW, light.color, light.attenuation, DIFFUSE, SPECULAR);
         }
         else if(light.type == 2u) {
             // directional light
-            vec3 LDIR_VIEW = normalize(camera_normal_view * light.direction);
+            vec3 LDIR_VIEW = normalize(CAMERA_NORMAL_VIEW * light.direction);
             calc_light(${custom_p}light.type, LDIR_VIEW, LOOKAT_VIEW, NORMAL_VIEW, light.color, light.attenuation, DIFFUSE, SPECULAR);
         } 
         else if(light.type == 3u) {
             // point light
             float l_distance = distance(light.position, v_VERTEX);
-            vec3 LDIR_VIEW = normalize(camera_normal_view *  normalize(light.position - v_VERTEX));
+            vec3 LDIR_VIEW = normalize(CAMERA_NORMAL_VIEW *  normalize(light.position - v_VERTEX));
             float near_distance = light.param_0;
             float far_distance = light.param_1;
             float distance_w = (l_distance - near_distance) / (far_distance - near_distance);
             float distance_strength = smoothstep(1.0f, 0.0f, distance_w);
-            float l_atten = distance_strength / pow(max(l_distance, 1.0f), light.attenuation);
+            float l_atten = distance_strength / pow(l_distance, light.attenuation);
             calc_light(${custom_p}light.type, LDIR_VIEW, LOOKAT_VIEW, NORMAL_VIEW, light.color, l_atten, DIFFUSE, SPECULAR);
         } 
         else if(light.type == 4u) {
@@ -254,8 +255,8 @@ LightData get_light(const in ivec3 lights_size, const in int i) {
             float far_distance = light.param_3;
             float distance_w = (l_distance - near_distance) / (far_distance - near_distance);
             float distance_strength = smoothstep(1.0f, 0.0f, distance_w);
-            float l_atten = (angle_strength * distance_strength) / pow(max(l_distance, 1.0f), light.attenuation);
-            vec3 LDIR_VIEW = normalize(camera_normal_view * l_dir);
+            float l_atten = (angle_strength * distance_strength) / pow(l_distance, light.attenuation);
+            vec3 LDIR_VIEW = normalize(CAMERA_NORMAL_VIEW * l_dir);
             calc_light(${custom_p}light.type, LDIR_VIEW, LOOKAT_VIEW, NORMAL_VIEW, light.color, l_atten, DIFFUSE, SPECULAR);
         }
     }
@@ -301,18 +302,22 @@ export const MaterialNormalTextureUniformsDef: MaterialReadOnlyUniforms = {
 };
 
 export const ShaderLightDataTextureUniformsDef: Readonly<UniformInitSet<WebGL2RenderState>> = {
-    layer: {
+    LAYER: {
         type: RenderStateUniformType.Uint,
         default: 0xffffffff,
     },
-    lights: {
+    LIGHTS: {
         type: RenderStateUniformType.Int,
-        default: RenderServerDevice.LightsTextureUnit
+        default: RenderServerDevice.LightsTextureUnit,
+    },
+    SKY: {
+        type: RenderStateUniformType.Int,
+        default: RenderServerDevice.SkyTextureUnit,
     },
 };
 
 export const MaterialLightDataTextureUniformsDef: MaterialReadOnlyUniforms = {
-    lights: RenderStateUniformType.Tex2D,
+    LIGHTS: RenderStateUniformType.Tex2D,
 };
 
 export function set_MaterialNormalTexture(material: MaterialResource & { normal_texture: TextureResource | undefined }, normal: TextureResource | undefined) {
@@ -321,9 +326,9 @@ export function set_MaterialNormalTexture(material: MaterialResource & { normal_
 }
 
 export const PrimitiveMaterialUniforms: MaterialReadOnlyUniforms = {
-    model_world: RenderStateUniformType.Mat4,
-    has_tangent: RenderStateUniformType.Uint,
-    layer: RenderStateUniformType.Uint,
+    MODEL_WORLD: RenderStateUniformType.Mat4,
+    HAS_TANGENT: RenderStateUniformType.Uint,
+    LAYER: RenderStateUniformType.Uint,
 }
 
 export const PrimitiveVertexShader = new Cacher((config: Config) => {
@@ -347,7 +352,7 @@ export const PrimitiveVertexShader = new Cacher((config: Config) => {
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect());
 });
 export const PrimitiveVertexShaderUniforms: Readonly<UniformInitSet<WebGL2RenderState>> = {
-    model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.new },
+    MODEL_WORLD: { type: RenderStateUniformType.Mat4, default: Matrix4.new },
 };
 
 export const PrimitiveFragmentPreZShader = new Cacher((config: Config) => {

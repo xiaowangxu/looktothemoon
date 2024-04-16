@@ -24,34 +24,34 @@ export class RenderServerDevice extends WebGL2RenderDevice {
 
     // Codes
     public static readonly WorldUniformsCode = `layout(std140) uniform WorldUniforms {
-    mat4 camera_world;
-    mat4 camera_view;
-    mat4 camera_projection;
-    mat4 camera_inv_projection;
-    mat3 camera_normal_view;
+    mat4 CAMERA_WORLD;
+    mat4 CAMERA_VIEW;
+    mat4 CAMERA_PROJECTION;
+    mat4 CAMERA_INV_PROJECTION;
+    mat3 CAMERA_NORMAL_VIEW;
 
     // screen size in renderer, the render_server_scale is transparent, so changing render_server_scale will not affect screen_size
     // for logic screen_size use (screen_size / pixel_ratio)
-    vec2 screen_size;
+    vec2 SCREEN_SIZE;
 
-    float time;
-    bool camera_is_orthogonal;
+    float TIME;
+    bool CAMERA_IS_ORTH;
 
     // pixel_ratio is raw pixel_ratio * render_scale
-    float pixel_ratio;
+    float PIXEL_RATIO;
     
-    float world_preserved_0;
-    float world_preserved_1;
-    float world_preserved_2;
+    float _world_preserved_0;
+    float _world_preserved_1;
+    float _world_preserved_2;
 };
 
 layout(std140) uniform EnvironmentUniforms {
-    vec4 background_color;
-    bool use_sky;
+    vec4 BACKGROUND_COLOR;
+    bool USE_SKY;
     
-    float env_preserved_0;
-    float env_preserved_1;
-    float env_preserved_2;
+    float _env_preserved_0;
+    float _env_preserved_1;
+    float _env_preserved_2;
 };`;
 
     // texture layout

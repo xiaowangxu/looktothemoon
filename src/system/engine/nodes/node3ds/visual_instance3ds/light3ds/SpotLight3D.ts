@@ -3,7 +3,7 @@ import { LightInstance3D } from "./LightInstance3D";
 import { NodeNotification } from "../../../Node";
 import { RenderServerLightType } from "@/system/engine/render_server/RenderServerLightData";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import { Pi } from "@/system/fivepebble/Scalar";
+import { Pi, clamp } from "@/system/fivepebble/Scalar";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 
 export class SpotLight3D extends LightInstance3D {
@@ -17,7 +17,7 @@ export class SpotLight3D extends LightInstance3D {
     protected _angle: number = Pi / 4;
     public get angle() { return this._angle; }
     public set angle(angle: number) {
-        angle = Math.max(0, angle);
+        angle = clamp(angle, 0, Pi / 2);
         if (this._angle !== angle) {
             this._angle = angle;
             this.on_ParametersChanged();

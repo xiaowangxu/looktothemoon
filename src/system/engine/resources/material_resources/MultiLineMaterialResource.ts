@@ -33,7 +33,7 @@ export const MultiLineSegmentVertexShader = new Cacher((config: Config) => {
     layout(location = ${RenderServerGeometry.GeometryAttributeLocations.instance_transform1}) in vec4 a_color_start;
     layout(location = ${RenderServerGeometry.GeometryAttributeLocations.instance_transform2}) in vec4 a_color_end;
     
-    uniform mat4 model_world;
+    uniform mat4 MODEL_WORLD;
 
     uniform float u_linewidth;
     uniform int u_consider_pixel_ratio;
@@ -51,25 +51,25 @@ export const MultiLineSegmentVertexShader = new Cacher((config: Config) => {
     void trimSegment(const in vec4 start, inout vec4 end) {
         // trim end segment so it terminates between the camera plane and the near plane
         // conservative estimate of the near plane
-        float a = camera_projection[2][2]; // 3nd entry in 3th column
-        float b = camera_projection[3][2]; // 3nd entry in 4th column
+        float a = CAMERA_PROJECTION[2][2]; // 3nd entry in 3th column
+        float b = CAMERA_PROJECTION[3][2]; // 3nd entry in 4th column
         float nearEstimate = -0.5 * b / a;
         float alpha = (nearEstimate - start.z) / (end.z - start.z);
         end.xyz = mix(start.xyz, end.xyz, alpha);
     }
     
     void main() {
-        float scalex = length(model_world[0].xyz);
-        float scaley = length(model_world[1].xyz);
-        float scalez = length(model_world[2].xyz);
+        float scalex = length(MODEL_WORLD[0].xyz);
+        float scaley = length(MODEL_WORLD[1].xyz);
+        float scalez = length(MODEL_WORLD[2].xyz);
         float scale = max(scalex, max(scaley, scalez));
-        v_length = a_total_length * scale / (bool(u_consider_pixel_ratio) ? pixel_ratio : 1.0);
+        v_length = a_total_length * scale / (bool(u_consider_pixel_ratio) ? PIXEL_RATIO : 1.0);
         
-        vec2 screen = screen_size;
+        vec2 screen = SCREEN_SIZE;
         float aspect = screen.x / screen.y;
     
-        mat4 _model_world = model_world;
-        mat4 model_view = camera_view * _model_world;
+        mat4 _model_world = MODEL_WORLD;
+        mat4 model_view = CAMERA_VIEW * _model_world;
     
         // camera space
         vec4 start = model_view * vec4(a_start, 1.0f);
@@ -82,7 +82,7 @@ export const MultiLineSegmentVertexShader = new Cacher((config: Config) => {
         // but we need to perform ndc-space calculations in the shader, so we must address this issue directly
         // perhaps there is a more elegant solution -- WestLangley
     
-        bool perspective = !camera_is_orthogonal; // 4th entry in the 3rd column
+        bool perspective = !CAMERA_IS_ORTH; // 4th entry in the 3rd column
     
         if(perspective) {
             if(start.z < 0.0f && end.z >= 0.0f) {
@@ -93,8 +93,8 @@ export const MultiLineSegmentVertexShader = new Cacher((config: Config) => {
         }
     
         // clip space
-        vec4 clip_start = camera_projection * start;
-        vec4 clip_end = camera_projection * end;
+        vec4 clip_start = CAMERA_PROJECTION * start;
+        vec4 clip_end = CAMERA_PROJECTION * end;
     
         // ndc space
         vec3 ndcStart = clip_start.xyz / clip_start.w;
@@ -102,8 +102,8 @@ export const MultiLineSegmentVertexShader = new Cacher((config: Config) => {
     
         // direction
         vec2 dir = ndcEnd.xy - ndcStart.xy;
-        v_screen_start = (ndcStart.xy + vec2(1.0)) / 2.0 * screen_size;
-        vec2 v_end = (ndcEnd.xy + vec2(1.0)) / 2.0 * screen_size;
+        v_screen_start = (ndcStart.xy + vec2(1.0)) / 2.0 * SCREEN_SIZE;
+        vec2 v_end = (ndcEnd.xy + vec2(1.0)) / 2.0 * SCREEN_SIZE;
         vec2 start_to_end = v_end - v_screen_start;
         v_screen_length = length(start_to_end);
     
@@ -129,7 +129,7 @@ export const MultiLineSegmentVertexShader = new Cacher((config: Config) => {
         }
     
         // adjust for linewidth
-        offset *= u_linewidth * (bool(u_consider_pixel_ratio) ? pixel_ratio : 1.0);
+        offset *= u_linewidth * (bool(u_consider_pixel_ratio) ? PIXEL_RATIO : 1.0);
     
         // adjust for clip-space to screen-space conversion // maybe resolution should be based on viewport ...
         offset /= screen.y;
@@ -149,14 +149,14 @@ export const MultiLineSegmentVertexShader = new Cacher((config: Config) => {
     
         gl_Position = clip;
     
-        v_normal_view = camera_is_orthogonal ? vec3(0.0f, 0.0f, 1.0f) : -normalize((is_start ? start.xyz : end.xyz));
-        // v_normal = camera_is_orthogonal ? normalize(mat3(camera_world) * vec3(0.0, 0.0, 1.0)) : normalize(camera_world[3].xyz - (is_start ? a_start : a_end));
+        v_normal_view = CAMERA_IS_ORTH ? vec3(0.0f, 0.0f, 1.0f) : -normalize((is_start ? start.xyz : end.xyz));
+        // v_normal = CAMERA_IS_ORTH ? normalize(mat3(CAMERA_WORLD) * vec3(0.0, 0.0, 1.0)) : normalize(CAMERA_WORLD[3].xyz - (is_start ? a_start : a_end));
     }`;
 
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect());
 });
 export const MultiLineSegmentVertexShaderUniforms: UniformInitSet<WebGL2RenderState> = {
-    model_world: { type: RenderStateUniformType.Mat4, default: Matrix4.new },
+    MODEL_WORLD: { type: RenderStateUniformType.Mat4, default: Matrix4.new },
     u_linewidth: { type: RenderStateUniformType.Float, default: 2 },
     u_consider_pixel_ratio: { type: RenderStateUniformType.Int, default: 1 },
 };
@@ -333,7 +333,7 @@ const MultiLineSegmentShader = new Cacher((config: Config) => {
 export class MultiLineSegmentMaterialResource extends MaterialResource {
 
     static readonly #uniforms: MaterialReadOnlyUniforms = {
-        model_world: RenderStateUniformType.Mat4,
+        MODEL_WORLD: RenderStateUniformType.Mat4,
         u_color: RenderStateUniformType.Vec4,
         u_linewidth: RenderStateUniformType.Float,
         u_consider_pixel_ratio: RenderStateUniformType.Int,
