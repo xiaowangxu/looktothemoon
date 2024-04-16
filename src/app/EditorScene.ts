@@ -139,35 +139,35 @@ export function createEditor() {
     EditorViewport.add_Child(EditorCamera);
     EditorCamera.set_Zoom(0.3);
 
-    // // viewport 0
-    // const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
-    // EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-    // const EditorViewport0 = new Viewport(DefaultConfig);
-    // const renderer0 = new EditorRenderer3D(DefaultConfig);
-    // const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
-    // renderer0.render_pipeline = pipeline0;
-    // EditorViewport0.renderer_3d = renderer0;
-    // // EditorViewport0.transparent = true;
-    // EditorViewport0.background_color = bg_color;
-    // EditorViewportContainer0.add_Child(EditorViewport0);
-    // const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
-    // EditorViewport0.add_Child(EditorCamera0);
-    // EditorViewport.add_Child(EditorViewportContainer0);
-    // // viewport 1
-    // const EditorViewportContainer1 = new ViewportDomContainer(DefaultConfig);
-    // EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
-    // const EditorViewport1 = new Viewport(DefaultConfig);
-    // const renderer1 = new EditorRenderer3D(DefaultConfig);
-    // const pipeline1 = new EditorRenderer3DPipeline(DefaultConfig);
-    // renderer1.render_pipeline = pipeline1;
-    // EditorViewport1.renderer_3d = renderer1;
-    // // EditorViewport1.transparent = true;
-    // EditorViewport1.background_color = bg_color;
-    // EditorViewport1.editor_highlight_color = Color.color8(0, 0, 255);
-    // EditorViewportContainer1.add_Child(EditorViewport1);
-    // const EditorCamera1 = new EditorOrbitCamera3D(DefaultConfig);
-    // EditorViewport1.add_Child(EditorCamera1);
-    // EditorViewport.add_Child(EditorViewportContainer1);
+    // viewport 0
+    const EditorViewportContainer0 = new ViewportDomContainer(DefaultConfig);
+    EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+    const EditorViewport0 = new Viewport(DefaultConfig);
+    const renderer0 = new EditorRenderer3D(DefaultConfig);
+    const pipeline0 = new EditorRenderer3DPipeline(DefaultConfig);
+    renderer0.render_pipeline = pipeline0;
+    EditorViewport0.renderer_3d = renderer0;
+    // EditorViewport0.transparent = true;
+    EditorViewport0.background_color = bg_color;
+    EditorViewportContainer0.add_Child(EditorViewport0);
+    const EditorCamera0 = new EditorOrbitCamera3D(DefaultConfig);
+    EditorViewport0.add_Child(EditorCamera0);
+    EditorViewport.add_Child(EditorViewportContainer0);
+    // viewport 1
+    const EditorViewportContainer1 = new ViewportDomContainer(DefaultConfig);
+    EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
+    const EditorViewport1 = new Viewport(DefaultConfig);
+    const renderer1 = new EditorRenderer3D(DefaultConfig);
+    const pipeline1 = new EditorRenderer3DPipeline(DefaultConfig);
+    renderer1.render_pipeline = pipeline1;
+    EditorViewport1.renderer_3d = renderer1;
+    // EditorViewport1.transparent = true;
+    EditorViewport1.background_color = bg_color;
+    EditorViewport1.editor_highlight_color = Color.color8(0, 0, 255);
+    EditorViewportContainer1.add_Child(EditorViewport1);
+    const EditorCamera1 = new EditorOrbitCamera3D(DefaultConfig);
+    EditorViewport1.add_Child(EditorCamera1);
+    EditorViewport.add_Child(EditorViewportContainer1);
 
     // World 
     const World = new Node3D(DefaultConfig);
@@ -176,13 +176,13 @@ export function createEditor() {
     ambient_light.intensity = 0;
     World.add_Child(ambient_light);
     const directional_light0 = new DirectionalLight3D(DefaultConfig);
-    directional_light0.color = Vector3.create(0.8, 0.9, 1);
+    directional_light0.color = Vector3.create(0, 0, 1);
     directional_light0.intensity = 0.3;
     directional_light0.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 0, -1), Vector3.new.normalize(Vector3.create(-1, -1, 1))));
     directional_light0.layer = 0xffffffff;
     World.add_Child(directional_light0);
     const directional_light1 = new DirectionalLight3D(DefaultConfig);
-    directional_light1.color = Vector3.create(0.94, 0.9, 0.9);
+    directional_light1.color = Vector3.create(0, 1, 0);
     directional_light1.intensity = 0.16;
     directional_light1.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 0, -1), Vector3.new.normalize(Vector3.create(1, 1, -1))));
     World.add_Child(directional_light1);

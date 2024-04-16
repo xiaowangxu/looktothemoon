@@ -73,7 +73,7 @@ export class GrabberElement3D<T> extends FixSizeNode3D {
     }
 
     protected set_ViewportCursorStyle(viewport: Viewport, cursor_style: CursorStyle) {
-        viewport.cursor_style = cursor_style;
+        viewport.set_CursorStyle(this.rid, cursor_style);
     }
 
     constructor(config: Config) {

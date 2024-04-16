@@ -22,6 +22,7 @@ import { Line3 } from "@/system/fivepebble/geometries/Line3";
 import { MouseMotionInputEvent } from "../inputs/events/mouse_events/MouseMotionInputEvent";
 import type { Color } from "@/system/fivepebble/graphics/Color";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import type { Rid } from "../Rid";
 
 export enum NodeNotification {
     ExitingTree,
@@ -571,6 +572,20 @@ export class Viewport extends Node {
         if (this._cursor_style !== cursor_style) {
             this._cursor_style = cursor_style;
             this.canvas.style.cursor = this._cursor_style;
+        }
+    }
+
+    private cursor_style_cache: Rid | undefined = undefined;
+    public set_CursorStyle(id: Rid, cursor_style: CursorStyle | undefined) {
+        cursor_style ??= 'default';
+        if (cursor_style === 'default') {
+            if (this.cursor_style_cache === id) {
+                this.cursor_style = cursor_style;
+            }
+        }
+        else {
+            this.cursor_style_cache = id;
+            this.cursor_style = cursor_style;
         }
     }
 

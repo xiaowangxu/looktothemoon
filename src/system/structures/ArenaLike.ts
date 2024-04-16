@@ -9,7 +9,7 @@ export interface ArenaLike<T extends NotNull, Arr> {
     set(index: number, value: T): void;
 
     /**
-     * @returns the iten moved to this index
+     * @returns the item moved to this index
      */
     delete(index: number): number | undefined;
 

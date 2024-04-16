@@ -61,7 +61,7 @@ export class StlLoader {
 
     static #tmp_vector3_0 = Vector3.new;
 
-    protected static parse_Binary(data: ArrayBuffer): { position: PackedVector3Array, normal: PackedVector3Array, color: PackedVector4Array | undefined, bbox: Box3 } {
+    protected static parse_Binary(data: ArrayBuffer): { position: PackedVector3Array, normal: PackedVector3Array, color?: PackedVector4Array | undefined, bbox: Box3 } {
         const reader = new DataView(data);
         const faces_count = reader.getUint32(80, true);
 
@@ -137,9 +137,8 @@ export class StlLoader {
         return { position: vertices, normal: normals, color: undefined, bbox: Box3.create(bbox_min, bbox_max) };
     }
 
-    protected static parse_Ascii(data: string): { position: PackedVector3Array, normal: PackedVector3Array, bbox: Box3 } {
+    protected static parse_Ascii(data: string): { position: PackedVector3Array, normal: PackedVector3Array, color?: PackedVector4Array | undefined, bbox: Box3 } {
 
-        const geometry = new BufferGeometry();
         const patternSolid = /solid([\s\S]*?)endsolid/g;
         const patternFace = /facet([\s\S]*?)endfacet/g;
         const patternName = /solid\s(.+)/;

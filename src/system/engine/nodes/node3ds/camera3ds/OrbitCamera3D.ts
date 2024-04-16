@@ -96,9 +96,11 @@ export class OrbitCamera3D extends Node3D {
             this._is_grabbing = is_grabbing;
             if (this._is_grabbing) {
                 this.get_SceneTree()?.get_Singleton(GrabbingSingleton)?.on_GrabStart();
+                this.get_Viewport()!.set_CursorStyle(this.rid, 'move');
             }
             else {
                 this.get_SceneTree()?.get_Singleton(GrabbingSingleton)?.on_GrabEnd();
+                this.get_Viewport()!.set_CursorStyle(this.rid, undefined);
             }
         }
     }
