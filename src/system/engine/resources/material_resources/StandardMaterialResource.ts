@@ -57,8 +57,6 @@ export class StandardMaterialResource extends MaterialResource {
     ${GlslPrimitives.ShaderNormalTextureUniforms}
 
     uniform vec4 u_color;
-    uniform sampler2D sky;
-    uniform uint LAYER;
     
     ${GlslPrimitives.FragmentVertexEssentialIns}
 

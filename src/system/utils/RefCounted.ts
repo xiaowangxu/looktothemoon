@@ -4,6 +4,11 @@ export interface RefCounted {
     unref(): void;
 }
 
+export interface RefCountedLike {
+    ref(): void;
+    unref(): void;
+}
+
 export type Refed<T> = T extends Ref<infer V> ? Ref<V> : (T extends RefCounted ? Ref<T> : T);
 export type Unrefed<T> = T extends Ref<infer V> ? V : T;
 
@@ -12,18 +17,18 @@ export function unref<V>(item: Refed<V>): V {
     return item as V;
 }
 
-export class Ref<T extends RefCounted> {
+export class Ref<T extends RefCountedLike> {
     private ref: T | undefined = undefined;
 
     public get value() { return this.ref; }
     public set value(item: T | undefined) {
         if (this.ref === item) return;
         if (this.ref !== undefined) {
-            this._unref(this.ref);
+            this.ref.unref();
         }
         this.ref = item;
         if (this.ref !== undefined) {
-            this._ref(this.ref);
+            this.ref.ref();
         }
     }
 
@@ -38,14 +43,6 @@ export class Ref<T extends RefCounted> {
         this.value = item;
     }
 
-    protected _unref(target: RefCounted) {
-        target.unref();
-    }
-
-    protected _ref(target: RefCounted) {
-        target.ref();
-    }
-
     public borrow() {
         return new Ref(this.ref);
     }
@@ -55,7 +52,7 @@ export class Ref<T extends RefCounted> {
     }
 }
 
-export class RefArray<T extends RefCounted> {
+export class RefArray<T extends RefCountedLike> {
     private refs: Ref<T>[] = [];
 
     public get length() { return this.refs.length; }
@@ -148,7 +145,7 @@ export class RefArray<T extends RefCounted> {
     }
 }
 
-export class RefMap<K, T extends RefCounted> {
+export class RefMap<K, T extends RefCountedLike> {
     private refs: Map<K, Ref<T>> = new Map();
 
     private _is_empty: boolean = true;

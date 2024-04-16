@@ -40,6 +40,7 @@ export class RenderServerDevice extends WebGL2RenderDevice {
     // pixel_ratio is raw pixel_ratio * render_scale
     float PIXEL_RATIO;
     
+    // paddings
     float _world_preserved_0;
     float _world_preserved_1;
     float _world_preserved_2;
@@ -48,7 +49,8 @@ export class RenderServerDevice extends WebGL2RenderDevice {
 layout(std140) uniform EnvironmentUniforms {
     vec4 BACKGROUND_COLOR;
     bool USE_SKY;
-    
+
+    // paddings
     float _env_preserved_0;
     float _env_preserved_1;
     float _env_preserved_2;

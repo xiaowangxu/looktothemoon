@@ -21,8 +21,6 @@ const PhongFragmentShadeShader = new Cacher((config: Config) => {
     ${GlslPrimitives.WorldUniforms}
     ${GlslPrimitives.Constants}
 
-    ${GlslPrimitives.FragmentEssentialUniforms}
-
     ${GlslPrimitives.ShaderNormalTextureUniforms}
 
     uniform vec4 u_color;

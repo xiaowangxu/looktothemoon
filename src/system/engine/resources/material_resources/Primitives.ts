@@ -68,8 +68,6 @@ out vec3 v_TANGENT;
 out vec3 v_TANGENT_VIEW;
 `;
 
-    public static readonly FragmentEssentialUniforms = `uniform uint LAYER;`
-
     public static readonly FragmentVertexEssentialIns = `uniform bool HAS_TANGENT;
     
 // VERTEX POSITION IN WORLD
@@ -151,6 +149,7 @@ uniform bool u_has_normal_texture;`;
 }`;
 
     public static readonly FragmentLightDataUniformStruct = `uniform usampler2DArray LIGHTS;
+uniform uint LAYER;
 uniform sampler2D SKY;
 
 struct LightData {
@@ -317,7 +316,7 @@ export const ShaderLightDataTextureUniformsDef: Readonly<UniformInitSet<WebGL2Re
 };
 
 export const MaterialLightDataTextureUniformsDef: MaterialReadOnlyUniforms = {
-    LIGHTS: RenderStateUniformType.Tex2D,
+    LAYER: RenderStateUniformType.Uint,
 };
 
 export function set_MaterialNormalTexture(material: MaterialResource & { normal_texture: TextureResource | undefined }, normal: TextureResource | undefined) {

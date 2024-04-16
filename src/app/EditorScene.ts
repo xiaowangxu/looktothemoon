@@ -408,6 +408,7 @@ export function createEditor() {
     // ground.top_level = true;
     ground.local_scale = Vector3.create(1000, 500, 1000);
     ground.local_position = Vector3.create(0, -400, 0);
+    // ground.layer = 0x80000000;
     World.add_Child(ground);
 
     // const tween = EditorSceneTree.start_Tween(tween_loop(
