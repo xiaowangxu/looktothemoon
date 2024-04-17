@@ -222,7 +222,7 @@ export class EditorRenderer3D extends Renderer3D {
             const delta = viewport.get_SceneTree()!.delta;
             const debug = document.getElementById('render-server-debug');
             if (debug) {
-                debug.innerHTML = `FPS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ${(1 / delta).toFixed(3)}<br>FrameDelta: ${(delta * 1000).toFixed(4)} ms<br>RenderObjs: ${rendered_objects_count} / ${total_objects_count}<br>Solid Objs: ${this.render_queue_0.solid_pointer + 1 + this.render_queue_1.solid_pointer + 1}<br>Trans Objs: ${this.render_queue_0.transparent_pointer + 1 + this.render_queue_1.transparent_pointer + 1}<br>Draw Calls: ${'???'}<br>Tweens : ${viewport.get_SceneTree()!.tween_processing_count}`;
+                debug.innerHTML = `FPS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ${(1 / delta).toFixed(3)}<br>FrameDelta: ${(delta * 1000).toFixed(4)} ms<br>RenderObjs: ${rendered_objects_count} / ${total_objects_count}<br>Solid Objs: ${this.render_queue_0.solid_pointer + 1 + this.render_queue_1.solid_pointer + 1}<br>Trans Objs: ${this.render_queue_0.transparent_pointer + 1 + this.render_queue_1.transparent_pointer + 1}<br>Lights&nbsp;&nbsp;&nbsp;&nbsp;: ${light_idx}<br>Tweens : ${viewport.get_SceneTree()!.tween_processing_count}`;
             }
         }
     }

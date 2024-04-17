@@ -32,7 +32,7 @@ import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
 import { Cacher } from "@/system/utils/Cacher";
 import { Ref } from "@/system/utils/RefCounted";
 import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
-import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType, tween_loop, tween_pingpong, tween_interpolated_property } from "@/system/engine/Tween";
+import { tween_parallel, PropertyTween, TweenTransitionType, TweenEasingType, tween_loop, tween_pingpong, tween_interpolated_property, tween_sequence, tween_wait, tween_call } from "@/system/engine/Tween";
 import { InfiniteLine3D } from "@/system/engine/nodes/node3ds/gizmo3ds/InfiniteLine3D";
 import { Bvh3Strategy } from "@/system/fivepebble/bvh/Bvh3";
 import { Bvh3Visualization } from './nodes/Bvh3Visualization';
@@ -769,8 +769,8 @@ export function createEditor() {
 
         const box_geo = new SphereGeometryResource(DefaultConfig);
         box_geo.build();
-        const box_mat = new PhongMaterialResource(DefaultConfig);
-        // box_mat.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/matcaps/matcap-11.lttmbin').expect();
+        const box_mat = new MatcapMaterialResource(DefaultConfig);
+        box_mat.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>('sys://textures/matcaps/matcap-11.lttmbin').expect();
         const box_mesh = new MeshInstance3D(DefaultConfig);
         box_mesh.geometry = box_geo;
         box_mesh.material = box_mat;
@@ -942,7 +942,7 @@ export function createEditor() {
     //         point.top_level = true;
     //         point.radius = 2.0;
     //         point.color = Vector3.create(Math.random(), Math.random(), Math.random());
-    //         point.intensity = 0.1;
+    //         point.intensity = 1;
     //         point.top_level = true;
     //         point.local_position = Vector3.create((Math.floor(i / 6) - 3) * 2, 0, (Math.floor(i % 6) - 3) * 2);
     //         World.add_Child(point);
@@ -973,7 +973,7 @@ export function createEditor() {
         mesh.material = override_material;
         // mesh.local_scale = Vector3.create(100, 100, 100);
         mesh.local_position = Vector3.create(20000, 0, 0);
-        // World.add_Child(mesh);
+        World.add_Child(mesh);
     }
 
     box_mesh.set_SurfaceMaterial(0, new UvMaterialResource(DefaultConfig));
