@@ -326,7 +326,7 @@ export function set_MaterialNormalTexture(material: MaterialResource & { normal_
 
 export const PrimitiveMaterialUniforms: MaterialReadOnlyUniforms = {
     MODEL_WORLD: RenderStateUniformType.Mat4,
-    HAS_TANGENT: RenderStateUniformType.Uint,
+    HAS_TANGENT: RenderStateUniformType.Bool,
     LAYER: RenderStateUniformType.Uint,
 }
 

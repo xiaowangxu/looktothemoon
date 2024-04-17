@@ -1,6 +1,6 @@
 import { Result } from "@/system/utils/Result";
 import type { RenderDevice } from "../RenderDevice";
-import { RenderState, RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateUniformType, RenderStateTextureWrap, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureFormat, RenderStateTextureType, type RenderStateUniformSlotTypeMap, type RenderStateInitOption as RenderStateInitOption, RenderStateTextureDataFormat, RenderStateFrameBufferPart } from "../RenderState";
+import { RenderState, RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateUniformType, RenderStateTextureWrap, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureFormat, RenderStateTextureType, type RenderStateInitOption as RenderStateInitOption, RenderStateTextureDataFormat, RenderStateFrameBufferPart } from "../RenderState";
 import { WebGL2RenderStateBuffer, WebGL2RenderStateBufferView } from "./webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import { WebGL2RenderStateShader } from "./webgl2_render_state_objects/WebGL2RenderStateShader";
 import { WebGL2RenderStateProgram } from "./webgl2_render_state_objects/WebGL2RenderStateProgram";
@@ -9,8 +9,14 @@ import { WebGL2RenderStateSampledTexture, WebGL2RenderStateTexture, WebGL2Render
 import { WeakRef } from "@/system/utils/RefCounted";
 import { WebGL2RenderStateFrameBuffer } from "./webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
 import { type FrameBufferAttachment } from "../render_state_objects/RenderStateFrameBuffer";
-import type { WebGL2RenderStateTextureUniformSlot } from "./webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
+import { WebGL2RenderStateBoolUniformSlot, WebGL2RenderStateFloatUniformSlot, WebGL2RenderStateIntUniformSlot, WebGL2RenderStateMat3UniformSlot, WebGL2RenderStateMat4UniformSlot, WebGL2RenderStateTextureUniformSlot, WebGL2RenderStateUintUniformSlot, WebGL2RenderStateVec2UniformSlot, WebGL2RenderStateVec3UniformSlot, WebGL2RenderStateVec4UniformSlot, type WebGL2RenderStateUniform } from "./webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 import { WebGL2RenderStateRenderBuffer } from "./webgl2_render_state_objects/WebGL2RenderStateRenderBuffer";
+import type { RenderStateUniformSlot, RenderStateUniformTypeMap } from "../render_state_objects/RenderStateUniformSlot";
+import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
+import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 
 export interface WebGL2RenderStateInitOption extends RenderStateInitOption {
     preserve_texture_count: number,
@@ -905,8 +911,6 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         }
     }
 
-    // Cube Map
-
     // end setting texture
 
     public generate_Mipmap(texture: WebGL2RenderStateTexture) {
@@ -1161,88 +1165,56 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
     }
 
     // Uniform
-    static readonly #matrix3_array: number[] = new Array(9);
-    static readonly #matrix4_array: number[] = new Array(16);
-    public set_ProgramUniform<Val extends RenderStateUniformType>(program: WebGL2RenderStateProgram, uniform_location: WebGLUniformLocation, uniform_type: Val, data: RenderStateUniformSlotTypeMap<WebGL2RenderState, Val>): void {
-        this.use_ProgramProxy(program.program);
-        switch (uniform_type) {
+
+    public create_ProgramUniform<VT extends RenderStateUniformType>(program: WebGL2RenderStateProgram, name: string, type: VT, default_value: RenderStateUniformTypeMap<WebGL2RenderState, VT>): Result<WebGL2RenderStateUniform<VT>, Error> {
+        const location = this.get_ProgramUniformLocation(program, name);
+        if (location === null) return Result.Error(new Error(`<WebGL2RenderState> create_ProgramUniform: failed to locate uniform '${name}' in program`));
+        switch (type) {
+            case RenderStateUniformType.Bool: {
+                return Result.Ok(new WebGL2RenderStateBoolUniformSlot(this.render_state, program, location, name, default_value as boolean) as unknown as WebGL2RenderStateUniform<VT>);
+            }
             case RenderStateUniformType.Uint: {
-                this.gl.uniform1ui(uniform_location, (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Uint>).result);
-                return;
+                return Result.Ok(new WebGL2RenderStateUintUniformSlot(this.render_state, program, location, name, default_value as number) as unknown as WebGL2RenderStateUniform<VT>);
             }
             case RenderStateUniformType.Int: {
-                this.gl.uniform1i(uniform_location, (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Int>).result);
-                return;
+                return Result.Ok(new WebGL2RenderStateIntUniformSlot(this.render_state, program, location, name, default_value as number) as unknown as WebGL2RenderStateUniform<VT>);
             }
             case RenderStateUniformType.Float: {
-                this.gl.uniform1f(uniform_location, (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Int>).result);
-                return;
+                return Result.Ok(new WebGL2RenderStateFloatUniformSlot(this.render_state, program, location, name, default_value as number) as unknown as WebGL2RenderStateUniform<VT>);
             }
             case RenderStateUniformType.Vec2: {
-                const vec2 = (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Vec2>).result;
-                this.gl.uniform2f(uniform_location, vec2.x, vec2.y);
-                return;
+                return Result.Ok(new WebGL2RenderStateVec2UniformSlot(this.render_state, program, location, name, default_value as Vector2) as unknown as WebGL2RenderStateUniform<VT>);
             }
             case RenderStateUniformType.Vec3: {
-                const vec3 = (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Vec3>).result;
-                this.gl.uniform3f(uniform_location, vec3.x, vec3.y, vec3.z);
-                return;
+                return Result.Ok(new WebGL2RenderStateVec3UniformSlot(this.render_state, program, location, name, default_value as Vector3) as unknown as WebGL2RenderStateUniform<VT>);
             }
             case RenderStateUniformType.Vec4: {
-                const vec4 = (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Vec4>).result;
-                this.gl.uniform4f(uniform_location, vec4.x, vec4.y, vec4.z, vec4.w);
-                return;
+                return Result.Ok(new WebGL2RenderStateVec4UniformSlot(this.render_state, program, location, name, default_value as Vector4) as unknown as WebGL2RenderStateUniform<VT>);
             }
             case RenderStateUniformType.Mat3: {
-                const mat3 = (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Mat3>).result;
-                WebGL2RenderState.#matrix3_array[0] = mat3.n11;
-                WebGL2RenderState.#matrix3_array[1] = mat3.n12;
-                WebGL2RenderState.#matrix3_array[2] = mat3.n13;
-                WebGL2RenderState.#matrix3_array[3] = mat3.n21;
-                WebGL2RenderState.#matrix3_array[4] = mat3.n22;
-                WebGL2RenderState.#matrix3_array[5] = mat3.n23;
-                WebGL2RenderState.#matrix3_array[6] = mat3.n31;
-                WebGL2RenderState.#matrix3_array[7] = mat3.n32;
-                WebGL2RenderState.#matrix3_array[8] = mat3.n33;
-                this.gl.uniformMatrix3fv(uniform_location, true, WebGL2RenderState.#matrix3_array);
-                return;
+                return Result.Ok(new WebGL2RenderStateMat3UniformSlot(this.render_state, program, location, name, default_value as Matrix3) as unknown as WebGL2RenderStateUniform<VT>);
             }
             case RenderStateUniformType.Mat4: {
-                const mat4 = (data as RenderStateUniformSlotTypeMap<WebGL2RenderState, RenderStateUniformType.Mat4>).result;
-                WebGL2RenderState.#matrix4_array[0] = mat4.n11;
-                WebGL2RenderState.#matrix4_array[1] = mat4.n12;
-                WebGL2RenderState.#matrix4_array[2] = mat4.n13;
-                WebGL2RenderState.#matrix4_array[3] = mat4.n14;
-                WebGL2RenderState.#matrix4_array[4] = mat4.n21;
-                WebGL2RenderState.#matrix4_array[5] = mat4.n22;
-                WebGL2RenderState.#matrix4_array[6] = mat4.n23;
-                WebGL2RenderState.#matrix4_array[7] = mat4.n24;
-                WebGL2RenderState.#matrix4_array[8] = mat4.n31;
-                WebGL2RenderState.#matrix4_array[9] = mat4.n32;
-                WebGL2RenderState.#matrix4_array[10] = mat4.n33;
-                WebGL2RenderState.#matrix4_array[11] = mat4.n34;
-                WebGL2RenderState.#matrix4_array[12] = mat4.n41;
-                WebGL2RenderState.#matrix4_array[13] = mat4.n42;
-                WebGL2RenderState.#matrix4_array[14] = mat4.n43;
-                WebGL2RenderState.#matrix4_array[15] = mat4.n44;
-                this.gl.uniformMatrix4fv(uniform_location, true, WebGL2RenderState.#matrix4_array);
-                return;
+                return Result.Ok(new WebGL2RenderStateMat4UniformSlot(this.render_state, program, location, name, default_value as Matrix4) as unknown as WebGL2RenderStateUniform<VT>);
             }
             case RenderStateUniformType.Tex2D:
-            case RenderStateUniformType.Tex3D:
-            case RenderStateUniformType.Tex2DArray: {
-                const uniform = data as WebGL2RenderStateTextureUniformSlot;
-                const sampled_texture = uniform.sampled_texture;
-                const slot = this.get_SampledTextureSlot(sampled_texture);
-                // console.log("use texture slot", slot);
-                this.gl.uniform1i(uniform_location, slot);
-                return;
+            case RenderStateUniformType.Tex2DArray:
+            case RenderStateUniformType.Tex3D: {
+                return Result.Ok(new WebGL2RenderStateTextureUniformSlot(this.render_state, program, type, location, name, default_value as { texture: WebGL2RenderStateTexture | undefined, sampler: WebGL2RenderStateTextureSampler | undefined }) as unknown as WebGL2RenderStateUniform<VT>);
             }
             default: {
-                const n: never = uniform_type;
+                const n: never = type;
                 return n;
             }
         }
+    }
+
+    public set_ProgramUniform(uniform: RenderStateUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType, any>): void {
+        uniform.commit();
+    }
+
+    public delete_ProgramUniform(uniform: RenderStateUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType, any>): void {
+        return;
     }
 
     public set_ProgramUniformBuffer(program: WebGL2RenderStateProgram, uniform_location: number, index: number) {

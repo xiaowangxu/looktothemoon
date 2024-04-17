@@ -1,4 +1,4 @@
-import { RenderDeviceObject } from "@/system/sliverofstraw/RenderDeviceObject";
+import { RenderDeviceObject } from "@/system/sliverofstraw/render_device_objects/RenderDeviceObject";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { type RenderServerDevice } from "./RenderServer";
 import type { WebGL2RenderStateVertexArray, WebGL2RenderStateVertexArrayView } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateVertexArray";

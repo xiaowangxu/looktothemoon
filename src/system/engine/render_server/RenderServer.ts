@@ -1,6 +1,5 @@
-import type { RenderDeviceCanvas } from "@/system/sliverofstraw/RenderDevice";
+import { RenderDevice, type RenderDeviceCanvas, type RenderDeviceInitOption } from "@/system/sliverofstraw/RenderDevice";
 import { RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType } from "@/system/sliverofstraw/RenderState";
-import { WebGL2RenderDevice } from "@/system/sliverofstraw/webgl2/WebGL2RenderDevice";
 import type { WebGL2RenderStateBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
 import { Ref } from "@/system/utils/RefCounted";
@@ -9,7 +8,7 @@ import { RenderServerGeometry } from "./RenderServerGeometry";
 import { RenderServerShader } from "./RenderServerShader";
 import { RenderServerMaterial } from "./RenderServerMaterial";
 import { RenderDeviceMatrix4AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
-import { type WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
+import { WebGL2RenderState, type WebGL2RenderStateInitOption } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Color } from "@/system/fivepebble/graphics/Color";
 import type { WebGL2RenderStateProgram } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateProgram";
@@ -17,7 +16,7 @@ import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 
 export enum RenderServerPlainColorTexture { Empty, White, Black, Transparent, Grey }
 
-export class RenderServerDevice extends WebGL2RenderDevice {
+export class RenderServerDevice extends RenderDevice<WebGL2RenderState, WebGL2RenderStateInitOption> {
 
     static readonly #tmp_matrix4_0: Matrix4 = Matrix4.new;
     static readonly #tmp_matrix3_0: Matrix3 = Matrix3.new;
@@ -195,7 +194,7 @@ layout(std140) uniform EnvironmentUniforms {
     public readonly sky_texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();
 
     constructor(canvas: RenderDeviceCanvas) {
-        super(canvas, { preserve_texture_count: 8, texture_slot_base: 3, default_texture_slot: 3, canvas_antialias: false, canvas_preserve_drawing_buffer: true });
+        super(canvas, WebGL2RenderState, { preserve_texture_count: 8, texture_slot_base: 3, default_texture_slot: 3, canvas_antialias: false, canvas_preserve_drawing_buffer: true });
         if (this.render_state.user_texture_slot_count < 8) throw new Error('<RenderServerDevice> constructor: not enough user texture slot');
         this.setup_IdentityTransformAttributeBuffer();
         this.setup_WorldUniformsBuffer();

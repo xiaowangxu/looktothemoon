@@ -1,20 +1,68 @@
 import { Ref } from "@/system/utils/RefCounted";
-import type { RenderState, RenderStateTextureUniformType, RenderStateUniformVectorType, RenderStateUniformType } from "../RenderState";
-import { RenderStateObject } from "../RenderStateObject";
+import type { RenderState, RenderStateUniformType } from "../RenderState";
+import { RenderStateObject } from "./RenderStateObject";
 import type { RenderStateProgram } from "./RenderStateProgram";
 import type { RenderStateTexture, RenderStateTextureSampler } from "./RenderStateTexture";
+import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
+import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 
-export abstract class RenderStateUniformSlot<RS extends RenderState<RS>, VT extends RenderStateUniformType> extends RenderStateObject<RS> {
+export type RenderStateValueUniformType = RenderStateUniformType.Uint | RenderStateUniformType.Int | RenderStateUniformType.Float | RenderStateUniformType.Vec2 | RenderStateUniformType.Vec3 | RenderStateUniformType.Vec4 | RenderStateUniformType.Mat3 | RenderStateUniformType.Mat4;
+export type RenderStateTextureUniformType = RenderStateUniformType.Tex2D | RenderStateUniformType.Tex2DArray | RenderStateUniformType.Tex3D;
+
+export interface RenderStateUniformTypeSlotMap<RS extends RenderState<RS>> {
+    Bool: [boolean, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Bool, boolean>],
+    Uint: [number, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Uint, number>],
+    Int: [number, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Int, number>],
+    Float: [number, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Float, number>],
+    Vec2: [Vector2, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Vec2, Vector2>],
+    Vec3: [Vector3, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Vec3, Vector3>],
+    Vec4: [Vector4, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Vec4, Vector4>],
+    Mat3: [Matrix3, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Mat3, Matrix3>],
+    Mat4: [Matrix4, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Mat4, Matrix4>],
+    Tex2D: [
+        { texture?: RenderStateTexture<RS> | undefined, sampler?: RenderStateTextureSampler<RS> | undefined },
+        RenderStateTextureUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Tex2D, RenderStateTexture<RS>, RenderStateTextureSampler<RS>>
+    ],
+    Tex2DArray: [
+        { texture?: RenderStateTexture<RS> | undefined, sampler?: RenderStateTextureSampler<RS> | undefined },
+        RenderStateTextureUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Tex2DArray, RenderStateTexture<RS>, RenderStateTextureSampler<RS>>
+    ],
+    Tex3D: [
+        { texture?: RenderStateTexture<RS> | undefined, sampler?: RenderStateTextureSampler<RS> | undefined },
+        RenderStateTextureUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Tex3D, RenderStateTexture<RS>, RenderStateTextureSampler<RS>>
+    ],
+}
+
+type ValueOf<T> = T[keyof T];
+export type RenderStateUniformTypeMap<RS extends RenderState<RS>, T extends RenderStateUniformType> = RenderStateUniformTypeSlotMap<RS>[Extract<ValueOf<{
+    [K in keyof typeof RenderStateUniformType]: [K, typeof RenderStateUniformType[K]]
+}>, [any, T]>[0]][0];
+
+export type RenderStateUniform<RS extends RenderState<RS>, VT extends RenderStateUniformType = RenderStateUniformType> =
+    VT extends RenderStateUniformType.Tex2D | RenderStateUniformType.Tex3D | RenderStateUniformType.Tex2DArray ?
+    RenderStateTextureUniformSlot<RS, RenderStateProgram<RS>, VT, RenderStateTexture<RS>, RenderStateTextureSampler<RS>> :
+    RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, VT, RenderStateUniformTypeMap<RS, VT>>;
+
+// uniform slots
+
+export abstract class RenderStateUniformSlot<RS extends RenderState<RS>, P extends RenderStateProgram<RS>, VT extends RenderStateUniformType, V> extends RenderStateObject<RS> {
+    protected readonly name: string;
     protected readonly type: VT;
 
-    protected readonly program_ref: Ref<RenderStateProgram<RS>> = new Ref();
+    protected readonly program_ref: Ref<P> = new Ref();
     protected get program() { return this.program_ref.expect; }
 
-    constructor(render_state: RS, program: RenderStateProgram<RS>, type: VT) {
+    constructor(render_state: RS, program: P, type: VT, name: string) {
         super(render_state);
+        this.name = name;
         this.type = type;
         this.program_ref.value = program;
     }
+
+    public abstract set_Value(value: V | undefined, commit?: boolean): void;
 
     public abstract commit(): void;
 
@@ -23,71 +71,35 @@ export abstract class RenderStateUniformSlot<RS extends RenderState<RS>, VT exte
     }
 }
 
-export abstract class RenderStateValueUniformSlot<
-    RS extends RenderState<RS>,
-    VT extends RenderStateUniformType,
-    V,
-    AT extends RenderStateUniformVectorType
-> extends RenderStateUniformSlot<RS, VT>
-{
-    protected _value: V | undefined;
-    protected default_value: V;
+export abstract class RenderStateValueUniformSlot<RS extends RenderState<RS>, P extends RenderStateProgram<RS>, VT extends RenderStateUniformType, V> extends RenderStateUniformSlot<RS, P, VT, V> {
+    protected abstract get default_value(): V;
 
-    protected changed: boolean = true;
+    public abstract get value(): V;
 
-    public get result(): V { return this.value ?? this.default_value; }
-
-    public abstract get value(): V | undefined;
-    public abstract set value(value: V | undefined);
-
-    constructor(render_state: RS, program: RenderStateProgram<RS>, type: VT, default_value: V) {
-        super(render_state, program, type);
-        this.default_value = default_value;
+    constructor(render_state: RS, program: P, type: VT, name: string) {
+        super(render_state, program, type, name);
     }
 }
 
-export abstract class RenderStateTextureUniformSlot<
-    RS extends RenderState<RS>,
-    VT extends RenderStateTextureUniformType,
-    TT extends RenderStateTexture<RS>,
-    ST extends RenderStateTextureSampler<RS>,
-> extends RenderStateUniformSlot<RS, VT>
-{
-    protected _texture: Ref<TT> = new Ref();
-    protected default_texture: Ref<TT> = new Ref();
+export abstract class RenderStateTextureUniformSlot<RS extends RenderState<RS>, P extends RenderStateProgram<RS>, VT extends RenderStateTextureUniformType, TT extends RenderStateTexture<RS>, ST extends RenderStateTextureSampler<RS>> extends RenderStateUniformSlot<RS, P, VT, { texture: TT | undefined, sampler: ST | undefined }> {
 
-    protected _sampler: Ref<ST> = new Ref();
-    protected default_sampler: Ref<ST> = new Ref();
+    protected abstract get default_texture(): TT | undefined;
+    public abstract get texture(): TT | undefined;
 
-    protected changed: boolean = true;
+    protected abstract get default_sampler(): ST | undefined;
+    public abstract get sampler(): ST | undefined;
 
-    public get texture() { return this._texture.value ?? this.default_texture.value }
-    public set texture(value: TT | undefined) {
-        if (this._texture.value !== value) {
-            this._texture.value = value;
-            this.changed = true;
-        }
+    public abstract set_Texture(value: TT | undefined, commit?: boolean): void;
+    public abstract set_Sampler(value: ST | undefined, commit?: boolean): void;
+
+    public set_Value(value: { texture: TT | undefined, sampler: ST | undefined } | undefined, commit?: boolean): void {
+        const tex = value?.texture;
+        const sam = value?.sampler;
+        this.set_Texture(tex, false);
+        this.set_Sampler(sam, commit);
     }
 
-    public get sampler() { return this._sampler.value ?? this.default_sampler.value; }
-    public set sampler(sampler: ST | undefined) {
-        if (this._sampler.value !== sampler) {
-            this._sampler.value = sampler;
-            this.changed = true;
-        }
-    }
-
-    constructor(render_state: RS, program: RenderStateProgram<RS>, type: VT, default_texture: TT | undefined, default_sampler: ST | undefined) {
-        super(render_state, program, type);
-        this.default_texture.value = default_texture;
-        this.default_sampler.value = default_sampler;
-    }
-
-    public dispose(): void {
-        this._texture.clear();
-        this.default_texture.clear();
-        this._sampler.clear();
-        this.default_sampler.clear();
-        super.dispose();
+    constructor(render_state: RS, program: P, type: VT, name: string) {
+        super(render_state, program, type, name);
     }
 }

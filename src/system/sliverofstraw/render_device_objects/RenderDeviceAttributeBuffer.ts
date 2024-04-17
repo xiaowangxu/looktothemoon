@@ -1,5 +1,5 @@
 import { Ref } from "@/system/utils/RefCounted";
-import { RenderDeviceObject } from "../RenderDeviceObject";
+import { RenderDeviceObject } from "./RenderDeviceObject";
 import { RenderStateDataType, type RenderState, RenderStateBufferType, RenderStateBufferUsage } from "../RenderState";
 import type { RenderStateBuffer, RenderStateBufferView } from "../render_state_objects/RenderStateBuffer";
 import type { RenderDevice } from "../RenderDevice";

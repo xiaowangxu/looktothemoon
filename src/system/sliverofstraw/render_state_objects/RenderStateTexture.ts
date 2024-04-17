@@ -1,5 +1,5 @@
 import type { RenderState } from "../RenderState";
-import { RenderStateObject } from "../RenderStateObject";
+import { RenderStateObject } from "./RenderStateObject";
 
 export abstract class RenderStateTexture<T extends RenderState<T>> extends RenderStateObject<T> {
     public width: number = 0;

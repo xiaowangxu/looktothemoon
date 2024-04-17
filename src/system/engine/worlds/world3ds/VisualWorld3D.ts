@@ -636,7 +636,7 @@ export class VisualWorld3D extends ConfiguredObject {
         this.render_server.render_state.set_ViewportProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
         this.render_server.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
         this.render_server.render_state.use_FrameBuffer(this.sky_frame_buffer.expect);
-        this.sky_uniform_time_slot.value = time;
+        this.sky_uniform_time_slot._value = time;
         this.sky_uniform_time_slot.commit();
         this.render_server.render_state.draw_Elements(this.sky_program, this.sky_quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }

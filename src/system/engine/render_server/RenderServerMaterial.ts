@@ -1,4 +1,4 @@
-import { RenderDeviceObject } from "@/system/sliverofstraw/RenderDeviceObject";
+import { RenderDeviceObject } from "@/system/sliverofstraw/render_device_objects/RenderDeviceObject";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { Ref } from "@/system/utils/RefCounted";
 import type { RenderServerShader, RenderServerShaderPass } from "./RenderServerShader";
@@ -57,6 +57,7 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
         const uniform_override: Map<string, { type: RenderStateUniformType, value: UniformType | undefined }> = new Map();
         for (const [name, type] of Object.entries(uniforms)) {
             switch (type) {
+                case RenderStateUniformType.Bool:
                 case RenderStateUniformType.Uint:
                 case RenderStateUniformType.Int:
                 case RenderStateUniformType.Float:
@@ -88,11 +89,12 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
         return this.uniforms_map.has(uniform);
     }
 
-    public set_Uniform(uniform: string, value: number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | WebGL2RenderStateTexture | undefined): void {
+    public set_Uniform(uniform: string, value: boolean | number | Vector2 | Vector3 | Vector4 | Matrix3 | Matrix4 | WebGL2RenderStateTexture | undefined): void {
         if (!this.has_Uniform(uniform)) return;
         const uniform_override = this.uniforms_map.get(uniform)!
         const type = uniform_override.type;
         switch (type) {
+            case RenderStateUniformType.Bool:
             case RenderStateUniformType.Uint:
             case RenderStateUniformType.Int:
             case RenderStateUniformType.Float: {
@@ -144,6 +146,7 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
         const shader = this.shader_ref.expect;
         for (const [name, { type, value }] of this.uniforms_map.entries()) {
             switch (type) {
+                case RenderStateUniformType.Bool:
                 case RenderStateUniformType.Uint:
                 case RenderStateUniformType.Int:
                 case RenderStateUniformType.Float:

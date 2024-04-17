@@ -1,7 +1,7 @@
 import type { Viewport } from "../../../nodes/Node";
 import { World3D } from "../../../worlds/world3ds/World3D";
 import { RenderServerDevice } from "../../../render_server/RenderServer";
-import { RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType } from "../../../../sliverofstraw/RenderState";
+import { RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateUniformType } from "../../../../sliverofstraw/RenderState";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer } from "../../../../sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { Vector2 } from "../../../../fivepebble/linear_algebra/Vector2";
 import { WebGL2RenderStateIntUniformSlot, WebGL2RenderStateUintUniformSlot } from "../../../../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
@@ -75,12 +75,13 @@ void main() {
 const OnscreenProgram = new Cacher((config: Config) => {
     const onscreen_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, onscreen_frag_shader_code).expect();
     const onscreen_program = config.render_server.render_state.create_Program(QuadVertexShader.get(config).expect, onscreen_frag_shader).expect();
+    const program = new Ref(onscreen_program);
 
-    const uniform_screen_location = config.render_server.render_state.get_ProgramUniformLocation(onscreen_program, 'u_screen');
-    const uniform_screen_slot = new WebGL2RenderStateIntUniformSlot(config.render_server.render_state, onscreen_program, uniform_screen_location!, 0);
+    const uniform_screen_slot = config.render_server.render_state.create_ProgramUniform(onscreen_program, 'u_screen', RenderStateUniformType.Int, 0).expect();
     uniform_screen_slot.commit();
+    uniform_screen_slot.dispose();
 
-    return new Ref(onscreen_program);
+    return program;
 });
 
 //#endregion

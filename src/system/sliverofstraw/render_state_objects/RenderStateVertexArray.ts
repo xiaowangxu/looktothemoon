@@ -1,5 +1,5 @@
 import { Ref } from "@/system/utils/RefCounted";
-import { RenderStateObject } from "../RenderStateObject";
+import { RenderStateObject } from "./RenderStateObject";
 import type { RenderState } from "../RenderState";
 
 export class RenderStateVertexArray<T extends RenderState<T>> extends RenderStateObject<T> {

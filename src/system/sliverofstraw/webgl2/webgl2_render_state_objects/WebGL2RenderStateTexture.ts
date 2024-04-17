@@ -1,6 +1,6 @@
 import type { WebGL2RenderState } from "../WebGL2RenderState";
 import { RenderStateTexture, RenderStateTextureSampler } from "../../render_state_objects/RenderStateTexture";
-import { RenderStateObject } from "../../RenderStateObject";
+import { RenderStateObject } from "../../render_state_objects/RenderStateObject";
 import { Ref } from "@/system/utils/RefCounted";
 
 export class WebGL2RenderStateTexture extends RenderStateTexture<WebGL2RenderState> {

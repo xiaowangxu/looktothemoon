@@ -1,6 +1,6 @@
-import { type RefCounted } from "../utils/RefCounted";
-import type { RenderDevice } from "./RenderDevice";
-import type { RenderState } from "./RenderState";
+import { type RefCounted } from "../../utils/RefCounted";
+import type { RenderDevice } from "../RenderDevice";
+import type { RenderState } from "../RenderState";
 
 let id = 0;
 

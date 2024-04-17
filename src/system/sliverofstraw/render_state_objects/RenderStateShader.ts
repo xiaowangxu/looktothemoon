@@ -1,4 +1,4 @@
-import { RenderStateObject } from "../RenderStateObject";
+import { RenderStateObject } from "./RenderStateObject";
 import type { RenderState } from "../RenderState";
 
 export abstract class RenderStateShader<T extends RenderState<T>> extends RenderStateObject<T> {
