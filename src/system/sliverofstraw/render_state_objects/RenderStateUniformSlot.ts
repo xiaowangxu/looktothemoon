@@ -48,7 +48,7 @@ export type RenderStateUniform<RS extends RenderState<RS>, VT extends RenderStat
 
 // uniform slots
 
-export abstract class RenderStateUniformSlot<RS extends RenderState<RS>, P extends RenderStateProgram<RS>, VT extends RenderStateUniformType, V> extends RenderStateObject<RS> {
+export abstract class RenderStateUniformSlot<RS extends RenderState<RS>, P extends RenderStateProgram<RS>, VT extends RenderStateUniformType> extends RenderStateObject<RS> {
     protected readonly name: string;
     protected readonly type: VT;
 
@@ -62,8 +62,6 @@ export abstract class RenderStateUniformSlot<RS extends RenderState<RS>, P exten
         this.program_ref.value = program;
     }
 
-    public abstract set_Value(value: V | undefined, commit?: boolean): void;
-
     public abstract commit(): void;
 
     public dispose(): void {
@@ -71,17 +69,19 @@ export abstract class RenderStateUniformSlot<RS extends RenderState<RS>, P exten
     }
 }
 
-export abstract class RenderStateValueUniformSlot<RS extends RenderState<RS>, P extends RenderStateProgram<RS>, VT extends RenderStateUniformType, V> extends RenderStateUniformSlot<RS, P, VT, V> {
+export abstract class RenderStateValueUniformSlot<RS extends RenderState<RS>, P extends RenderStateProgram<RS>, VT extends RenderStateUniformType, V> extends RenderStateUniformSlot<RS, P, VT> {
     protected abstract get default_value(): V;
 
     public abstract get value(): V;
+
+    public abstract set_Value(value: V | undefined, commit?: boolean): void;
 
     constructor(render_state: RS, program: P, type: VT, name: string) {
         super(render_state, program, type, name);
     }
 }
 
-export abstract class RenderStateTextureUniformSlot<RS extends RenderState<RS>, P extends RenderStateProgram<RS>, VT extends RenderStateTextureUniformType, TT extends RenderStateTexture<RS>, ST extends RenderStateTextureSampler<RS>> extends RenderStateUniformSlot<RS, P, VT, { texture: TT | undefined, sampler: ST | undefined }> {
+export abstract class RenderStateTextureUniformSlot<RS extends RenderState<RS>, P extends RenderStateProgram<RS>, VT extends RenderStateTextureUniformType, TT extends RenderStateTexture<RS>, ST extends RenderStateTextureSampler<RS>> extends RenderStateUniformSlot<RS, P, VT> {
 
     protected abstract get default_texture(): TT | undefined;
     public abstract get texture(): TT | undefined;

@@ -178,9 +178,9 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     public abstract create_ProgramUniform<VT extends RenderStateUniformType>(program: RenderStateProgram<T>, name: string, type: VT, default_value: RenderStateUniformTypeMap<T, VT>): Result<RenderStateUniform<T, VT>, Error>;
 
-    public abstract set_ProgramUniform(uniform: RenderStateUniformSlot<T, RenderStateProgram<T>, RenderStateUniformType, any>): void;
+    public abstract set_ProgramUniform(uniform: RenderStateUniformSlot<T, RenderStateProgram<T>, RenderStateUniformType>): void;
 
-    public abstract delete_ProgramUniform(uniform: RenderStateUniformSlot<T, RenderStateProgram<T>, RenderStateUniformType, any>): void;
+    public abstract delete_ProgramUniform(uniform: RenderStateUniformSlot<T, RenderStateProgram<T>, RenderStateUniformType>): void;
 
     // draw
 

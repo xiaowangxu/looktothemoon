@@ -180,13 +180,15 @@ export function createEditor() {
     ambient_light.intensity = 0.1;
     World.add_Child(ambient_light);
     const directional_light0 = new DirectionalLight3D(DefaultConfig);
-    directional_light0.color = Vector3.create(0, 0, 1);
+    directional_light0.color = Vector3.create(0.8, 0.9, 1);
+    // directional_light0.color = Vector3.create(0, 0, 1);
     directional_light0.intensity = 0.3;
     directional_light0.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 0, -1), Vector3.new.normalize(Vector3.create(-1, -1, 1))));
     directional_light0.layer = 0xffffffff;
     World.add_Child(directional_light0);
     const directional_light1 = new DirectionalLight3D(DefaultConfig);
-    directional_light1.color = Vector3.create(0, 1, 0);
+    directional_light1.color = Vector3.create(0.94, 0.9, 0.9);
+    // directional_light1.color = Vector3.create(0, 1, 0);
     directional_light1.intensity = 0.16;
     directional_light1.local_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 0, -1), Vector3.new.normalize(Vector3.create(1, 1, -1))));
     World.add_Child(directional_light1);
@@ -957,6 +959,20 @@ export function createEditor() {
         mesh.material = override_material;
         mesh.local_scale = Vector3.create(1, 1, 1);
         mesh.local_position = Vector3.create(400, 600, -200);
+        World.add_Child(mesh);
+    }
+
+    {
+        const js_road_geo = new ClassLoader(DInstanceCache.get(DefaultConfig)).fetch<ArrayGeometryResource>('sys://geometries/jd-road.geometry.lttmbin').expect();
+        const override_material = new PhongMaterialResource(DefaultConfig);
+        // override_material.color = Color.color8(0, 0, 0);
+        // override_material.texture = new ClassLoader(DefaultResourceCache).fetch<ImageTextureResource>(`sys://textures/matcaps/matcap-6.lttmbin`).expect();
+        override_material.normal_texture = normal_texture;
+        const mesh = new MeshInstance3D(DefaultConfig);
+        mesh.geometry = js_road_geo;
+        mesh.material = override_material;
+        // mesh.local_scale = Vector3.create(100, 100, 100);
+        mesh.local_position = Vector3.create(20000, 0, 0);
         World.add_Child(mesh);
     }
 

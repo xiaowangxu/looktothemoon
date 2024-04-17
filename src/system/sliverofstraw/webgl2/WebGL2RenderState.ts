@@ -1209,11 +1209,11 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         }
     }
 
-    public set_ProgramUniform(uniform: RenderStateUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType, any>): void {
+    public set_ProgramUniform(uniform: RenderStateUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType>): void {
         uniform.commit();
     }
 
-    public delete_ProgramUniform(uniform: RenderStateUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType, any>): void {
+    public delete_ProgramUniform(uniform: RenderStateUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType>): void {
         return;
     }
 
