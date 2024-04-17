@@ -973,7 +973,7 @@ export function createEditor() {
         mesh.material = override_material;
         // mesh.local_scale = Vector3.create(100, 100, 100);
         mesh.local_position = Vector3.create(20000, 0, 0);
-        World.add_Child(mesh);
+        // World.add_Child(mesh);
     }
 
     box_mesh.set_SurfaceMaterial(0, new UvMaterialResource(DefaultConfig));
