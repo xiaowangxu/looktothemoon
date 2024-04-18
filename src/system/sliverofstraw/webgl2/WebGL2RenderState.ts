@@ -582,15 +582,15 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         console.log("delete shader", shader.id);
     }
 
-    public create_Program(vert_shader: WebGL2RenderStateShader, frag_shader?: WebGL2RenderStateShader, vert_attributes_locations?: { [key: string]: number }):
+    public create_Program(vert_shader: WebGL2RenderStateShader, frag_shader: WebGL2RenderStateShader | undefined, option: { attributes: { [key: string]: number } } | undefined = undefined):
         Result<WebGL2RenderStateProgram, Error> {
         const gl = this.gl;
         const program = gl.createProgram();
         if (program === null) return Result.Error(new Error('<WebGL2RenderState> create_Program: failed to create render state program'));
         gl.attachShader(program, vert_shader.shader);
         if (frag_shader !== undefined) gl.attachShader(program, frag_shader.shader);
-        if (vert_attributes_locations !== undefined) {
-            for (const [attribute, location] of Object.entries(vert_attributes_locations)) {
+        if (option !== undefined) {
+            for (const [attribute, location] of Object.entries(option.attributes)) {
                 gl.bindAttribLocation(program, location, attribute);
             }
         }
@@ -1167,7 +1167,7 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
 
     // Uniform
 
-    public create_ProgramUniform<VT extends RenderStateUniformType>(program: WebGL2RenderStateProgram, name: string, type: VT, default_value: RenderStateUniformTypeMap<WebGL2RenderState, VT>): Result<WebGL2RenderStateUniform<VT>, Error> {
+    public create_ProgramUniform<VT extends RenderStateUniformType>(program: WebGL2RenderStateProgram, name: string, type: VT, default_value: RenderStateUniformTypeMap<WebGL2RenderState, VT>, option: undefined = undefined): Result<WebGL2RenderStateUniform<VT>, Error> {
         const location = this.get_ProgramUniformLocation(program, name);
         if (location === null) return Result.Error(new Error(`<WebGL2RenderState> create_ProgramUniform: failed to locate uniform '${name}' in program`));
         switch (type) {

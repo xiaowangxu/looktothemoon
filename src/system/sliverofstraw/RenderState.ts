@@ -9,7 +9,13 @@ import type { RenderStateBuffer, RenderStateBufferView } from "./render_state_ob
 import { Result } from "../utils/Result";
 import type { RenderStateRenderBuffer } from "./render_state_objects/RenderStateRenderBuffer";
 
+//#region options
+
 export interface RenderStateInitOption { }
+
+//#endregion
+
+//#region enum and constansts
 
 export enum RenderStateShaderType {
     Vertex, Fragment,
@@ -85,6 +91,8 @@ export enum RenderStateTextureMinFilter {
     LinearMipmapLinear
 }
 
+//#endregion
+
 export abstract class RenderState<T extends RenderState<T>> {
     public readonly render_device: RenderDevice<T>;
     public get render_state() { return this.render_device.render_state; }
@@ -100,7 +108,7 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     public abstract delete_Shader(shader: RenderStateShader<T>): void;
 
-    public abstract create_Program(vert_shader: RenderStateShader<T>, frag_shader?: RenderStateShader<T>):
+    public abstract create_Program(vert_shader: RenderStateShader<T>, frag_shader: RenderStateShader<T> | undefined, option: any):
         Result<RenderStateProgram<T>, Error>;
 
     public abstract delete_Program(program: RenderStateProgram<T>): void;
@@ -189,7 +197,7 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     // uniform
 
-    public abstract create_ProgramUniform<VT extends RenderStateUniformType>(program: RenderStateProgram<T>, name: string, type: VT, default_value: RenderStateUniformTypeMap<T, VT>, location?: number): Result<RenderStateUniform<T, VT>, Error>;
+    public abstract create_ProgramUniform<VT extends RenderStateUniformType>(program: RenderStateProgram<T>, name: string, type: VT, default_value: RenderStateUniformTypeMap<T, VT>, option: any): Result<RenderStateUniform<T, VT>, Error>;
 
     public abstract set_ProgramUniform(uniform: RenderStateUniformSlot<T, RenderStateProgram<T>, RenderStateUniformType>): void;
 
@@ -205,3 +213,20 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     public abstract draw_Elements(program: RenderStateProgram<T>, vertex_array: RenderStateVertexArray<T> | RenderStateVertexArrayView<T>, index_data_type: RenderStateDataType, instance_count: number): void;
 }
+
+//#region type helper
+
+export type RenderStateProgramOptionParameterType<T extends RenderState<T>> =
+    T extends {
+        create_Program(vert_shader: RenderStateShader<T>, frag_shader: RenderStateShader<T> | undefined, option: infer R): Result<RenderStateProgram<T>, Error>
+    } ? R : never;
+
+export type RenderStateProgramUniformOptionParameterType<T extends RenderState<T>> =
+    T extends {
+        create_ProgramUniform<VT extends RenderStateUniformType>(program: RenderStateProgram<T>, name: string, type: VT, default_value: RenderStateUniformTypeMap<T, VT>, option: infer R): Result<RenderStateUniform<T, VT>, Error>
+    } ? R : never;
+
+// import { type WebGL2RenderState } from "./webgl2/WebGL2RenderState";
+// const a: RenderStateProgramAttributesParameterType<WebGL2RenderState>;
+
+//#endregion

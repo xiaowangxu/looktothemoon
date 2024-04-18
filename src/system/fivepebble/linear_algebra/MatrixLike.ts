@@ -1,5 +1,8 @@
 import type { Cloneable, Copyable, Equality } from "@/system/utils/Type";
 
+// matrix is row major as math
+// but in opengl / matel / vulkan / webgpu they are column major
+
 export interface MatrixLike<Mat extends MatrixLike<Mat>>
     extends Cloneable<Mat>, Copyable<Mat>, Equality<Mat> {
     get row_dimension(): number;
