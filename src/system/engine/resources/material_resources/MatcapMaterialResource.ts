@@ -50,7 +50,7 @@ const MatcapFragmentShadeShader = new Cacher((config: Config) => {
 });
 const MatcapFragmentShadeShaderUniforms = new Cacher((config: Config) => {
     return {
-        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
+        u_color: { type: RenderStateUniformType.Vector4, default: Color.new },
         u_texture: {
             type: RenderStateUniformType.Tex2D,
             default: {
@@ -100,7 +100,7 @@ const MatcapFragmentOitShader = new Cacher((config: Config) => {
 });
 const MatcapFragmentOitShaderUniforms = new Cacher((config: Config) => {
     return {
-        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
+        u_color: { type: RenderStateUniformType.Vector4, default: Color.new },
         u_texture: {
             type: RenderStateUniformType.Tex2D,
             default: {
@@ -138,7 +138,7 @@ export class MatcapMaterialResource extends MaterialResource {
 
     static readonly #uniforms: MaterialReadOnlyUniforms = {
         ...PrimitiveMaterialUniforms,
-        u_color: RenderStateUniformType.Vec4,
+        u_color: RenderStateUniformType.Vector4,
         u_texture: RenderStateUniformType.Tex2D,
         ...MaterialNormalTextureUniformsDef,
     };

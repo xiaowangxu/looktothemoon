@@ -325,7 +325,7 @@ export function set_MaterialNormalTexture(material: MaterialResource & { normal_
 }
 
 export const PrimitiveMaterialUniforms: MaterialReadOnlyUniforms = {
-    MODEL_WORLD: RenderStateUniformType.Mat4,
+    MODEL_WORLD: RenderStateUniformType.Matrix4,
     HAS_TANGENT: RenderStateUniformType.Bool,
     LAYER: RenderStateUniformType.Uint,
 }
@@ -351,7 +351,7 @@ export const PrimitiveVertexShader = new Cacher((config: Config) => {
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect());
 });
 export const PrimitiveVertexShaderUniforms: Readonly<UniformInitSet<WebGL2RenderState>> = {
-    MODEL_WORLD: { type: RenderStateUniformType.Mat4, default: Matrix4.new },
+    MODEL_WORLD: { type: RenderStateUniformType.Matrix4, default: Matrix4.new },
 };
 
 export const PrimitiveFragmentPreZShader = new Cacher((config: Config) => {

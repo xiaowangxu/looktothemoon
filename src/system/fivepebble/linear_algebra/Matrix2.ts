@@ -49,7 +49,7 @@ export class Matrix2 implements MatrixLike<Matrix2> {
         return [this.n11, this.n21, this.n12, this.n22];
     }
 
-    constructor(n11: number, n12: number, n21: number, n22: number) {
+    constructor(n11: number = 1, n12: number = 0, n21: number = 0, n22: number = 1) {
         this.n11 = n11; this.n12 = n12;
         this.n21 = n21; this.n22 = n22;
     }

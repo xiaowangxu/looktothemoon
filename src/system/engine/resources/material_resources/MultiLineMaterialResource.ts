@@ -156,7 +156,7 @@ export const MultiLineSegmentVertexShader = new Cacher((config: Config) => {
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect());
 });
 export const MultiLineSegmentVertexShaderUniforms: UniformInitSet<WebGL2RenderState> = {
-    MODEL_WORLD: { type: RenderStateUniformType.Mat4, default: Matrix4.new },
+    MODEL_WORLD: { type: RenderStateUniformType.Matrix4, default: Matrix4.new },
     u_linewidth: { type: RenderStateUniformType.Float, default: 2 },
     u_consider_pixel_ratio: { type: RenderStateUniformType.Int, default: 1 },
 };
@@ -245,7 +245,7 @@ export const MultiLineSegmentFragmentShadeShader = new Cacher((config: Config) =
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());
 });
 export const MultiLineSegmentFragmentShadeShaderUniforms: UniformInitSet<WebGL2RenderState> = {
-    u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
+    u_color: { type: RenderStateUniformType.Vector4, default: Color.new },
     u_dashed: { type: RenderStateUniformType.Uint, default: 0 },
     u_dash_scale: { type: RenderStateUniformType.Float, default: 1.0 },
     u_dash_offset: { type: RenderStateUniformType.Float, default: 0.0 },
@@ -295,7 +295,7 @@ export const MultiLineSegmentFragmentOitShader = new Cacher((config: Config) => 
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, code).expect());
 });
 export const MultiLineSegmentFragmentOitShaderUniforms: UniformInitSet<WebGL2RenderState> = {
-    u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
+    u_color: { type: RenderStateUniformType.Vector4, default: Color.new },
     u_dashed: { type: RenderStateUniformType.Uint, default: 0 },
     u_dash_scale: { type: RenderStateUniformType.Float, default: 1.0 },
     u_dash_offset: { type: RenderStateUniformType.Float, default: 0.0 },
@@ -333,8 +333,8 @@ const MultiLineSegmentShader = new Cacher((config: Config) => {
 export class MultiLineSegmentMaterialResource extends MaterialResource {
 
     static readonly #uniforms: MaterialReadOnlyUniforms = {
-        MODEL_WORLD: RenderStateUniformType.Mat4,
-        u_color: RenderStateUniformType.Vec4,
+        MODEL_WORLD: RenderStateUniformType.Matrix4,
+        u_color: RenderStateUniformType.Vector4,
         u_linewidth: RenderStateUniformType.Float,
         u_consider_pixel_ratio: RenderStateUniformType.Int,
         u_dashed: RenderStateUniformType.Uint,
@@ -350,7 +350,7 @@ export class MultiLineSegmentMaterialResource extends MaterialResource {
     public get color() { return this._color; }
     public set color(color: Color) {
         if (!this._color.equal(color)) {
-            this._color = color;
+            this._color.copy(color);
             this.material.set_Uniform('u_color', this._color);
             this.material.transparent = this._color.a < (1.0 - Epsilon);
         }

@@ -19,15 +19,14 @@ import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 
 const QuadGeometry = new Cacher((config: Config) => {
     const quad_position = new RenderDeviceVector2AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
-        /* 0 */ Vector2.create(-1, 1),
-        /* 1 */ Vector2.create(-1, -1),
-        /* 2 */ Vector2.create(1, 1),
-        /* 3 */ Vector2.create(1, -1), //  -1  1 ------ 3
-        /*                        */ //     -1 ------ 1
+		/* 0 */Vector2.create(0, 4),			//   1  0 
+		/* 1 */Vector2.create(0, 0),		    //   |  | \
+		/* 2 */Vector2.create(4, 0),			//  -1  1 - 2
+        /*                                     *///    -1 -- 1
     ]);
-    const quad_index = new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 1, 2, 3]);
+    const quad_index = new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 1, 2]);
     const quad_surface = config.render_server.create_Geometry();
-    quad_surface.set_Geometry(RenderStatePrimitiveType.TriangleStrip, { position: quad_position }, quad_index);
+    quad_surface.set_Geometry(RenderStatePrimitiveType.Triangles, { position: quad_position }, quad_index);
     return new Ref(quad_surface);
 });
 
@@ -43,8 +42,8 @@ layout(location = 0) in vec2 a_position;
 out vec2 v_uv;
 
 void main() {
-	gl_Position = vec4(a_position, 1.0, 1.0);
-	v_uv = (a_position + 1.0) / 2.0;
+	gl_Position = vec4(a_position - vec2(1.0), 1.0, 1.0);
+	v_uv = a_position / 2.0;
 }`;
 
 const QuadVertexShader = new Cacher((config: Config) => {
@@ -207,7 +206,9 @@ export class EditorRenderer3D extends Renderer3D {
 
         pipeline.set_Size(size);
 
+        // console.time("GPU");
         pipeline.render(this, world, viewport, once);
+        // console.timeEnd("GPU");
 
         this.render_OnScreen(pipeline.texture, x, y, width, height);
 

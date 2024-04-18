@@ -7,7 +7,7 @@ import type { WebGL2RenderStateShader } from "@/system/sliverofstraw/webgl2/webg
 import { type WebGL2RenderStateUniform } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 import type { WebGL2RenderStateTexture, WebGL2RenderStateTextureSampler } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
 import { Ref } from "@/system/utils/RefCounted";
-import type { RenderStateUniformTypeSlotMap, RenderStateValueUniformType, RenderStateUniformTypeMap, RenderStateTextureUniformType } from "@/system/sliverofstraw/render_state_objects/RenderStateUniformSlot";
+import type { RenderStateUniformTypeSlotMap, RenderStateValueUniformType, RenderStateUniformTypeMap, RenderStateTextureUniformType, RenderStateUniform } from "@/system/sliverofstraw/render_state_objects/RenderStateUniformSlot";
 
 export class WebGL2RenderDeviceUniformSet {
     protected uniforms: Map<string, Ref<WebGL2RenderStateUniform>> = new Map();
@@ -23,13 +23,14 @@ export class WebGL2RenderDeviceUniformSet {
 
     public commit_Uniform(name: string) {
         if (this.uniforms.has(name)) {
-            this.uniforms.get(name)!.expect.commit();
+            const uniform = this.uniforms.get(name)!.expect;
+            uniform.render_state.set_ProgramUniform(uniform);
         }
     }
 
     public commit_AllUniform() {
         for (const obj of this.uniforms.values()) {
-            obj.expect.commit();
+            obj.expect.render_state.set_ProgramUniform(obj.expect);
         }
     }
 

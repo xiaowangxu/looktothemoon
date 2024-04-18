@@ -11,7 +11,7 @@ import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { ArrayBuffer as MD5 } from 'spark-md5';
 import type { ClassExchangeData, ClassInstanceData } from "../ClassSaverLoader";
 import { ValueDataType } from "../../ValueDataType";
-import { PackedFloatArray, PackedIndexArray, PackedIntArray, PackedMatrix3Array, PackedMatrix4Array, PackedUintArray, PackedVector2Array, PackedVector3Array, PackedVector4Array } from "../../value_wrappers/PackedArray";
+import { PackedFloatArray, PackedIndexArray, PackedIntArray, PackedMatrix2Array, PackedMatrix3Array, PackedMatrix4Array, PackedUintArray, PackedVector2Array, PackedVector3Array, PackedVector4Array } from "../../value_wrappers/PackedArray";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 
 // Lttm Bin format
@@ -221,6 +221,7 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEnc
             case ValueDataType.PackedVector2Array:
             case ValueDataType.PackedVector3Array:
             case ValueDataType.PackedVector4Array:
+            case ValueDataType.PackedMatrix2Array:
             case ValueDataType.PackedMatrix3Array:
             case ValueDataType.PackedMatrix4Array:
             case ValueDataType.PackedUintArray:
@@ -276,6 +277,7 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEnc
         if (value instanceof PackedVector2Array) return ValueDataType.PackedVector2Array;
         if (value instanceof PackedVector3Array) return ValueDataType.PackedVector3Array;
         if (value instanceof PackedVector4Array) return ValueDataType.PackedVector4Array;
+        if (value instanceof PackedMatrix2Array) return ValueDataType.PackedMatrix2Array;
         if (value instanceof PackedMatrix3Array) return ValueDataType.PackedMatrix3Array;
         if (value instanceof PackedMatrix4Array) return ValueDataType.PackedMatrix4Array;
         if (value instanceof PackedUintArray) return ValueDataType.PackedUintArray;
@@ -586,6 +588,9 @@ export class ClassBinaryDecoder extends ClassDecoder<ArrayBuffer, ClassBinaryDec
             }
             case ValueDataType.PackedVector4Array: {
                 return new PackedVector4Array(this.get_TypedArray(Float32Array));
+            }
+            case ValueDataType.PackedMatrix2Array: {
+                return new PackedMatrix2Array(this.get_TypedArray(Float32Array));
             }
             case ValueDataType.PackedMatrix3Array: {
                 return new PackedMatrix3Array(this.get_TypedArray(Float32Array));

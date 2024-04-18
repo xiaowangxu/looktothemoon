@@ -149,8 +149,8 @@ export class Grabber3D<T> extends Node3D {
 export class GrabberPlainColorMaterialResource extends MaterialResource {
 
     static readonly #uniforms: MaterialReadOnlyUniforms = {
-        MODEL_WORLD: RenderStateUniformType.Mat4,
-        u_color: RenderStateUniformType.Vec4,
+        MODEL_WORLD: RenderStateUniformType.Matrix4,
+        u_color: RenderStateUniformType.Vector4,
         u_hidden: RenderStateUniformType.Int,
     };
 
@@ -178,7 +178,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
         o_normal = vec4(NORMAL_VIEW, 1.0);
     }`;
     static readonly #fragment_shade_uniforms: UniformInitSet<WebGL2RenderState> = {
-        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
+        u_color: { type: RenderStateUniformType.Vector4, default: Color.new },
         u_hidden: { type: RenderStateUniformType.Int, default: 1 },
         u_scene_depth: { type: RenderStateUniformType.Int, default: 0 },
     };
@@ -207,7 +207,7 @@ export class GrabberPlainColorMaterialResource extends MaterialResource {
         ${GlslPrimitives.FragmentFrameTransparentCalculation}
     }`;
     static readonly #fragment_oit_uniforms: UniformInitSet<WebGL2RenderState> = {
-        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
+        u_color: { type: RenderStateUniformType.Vector4, default: Color.new },
         u_hidden: { type: RenderStateUniformType.Int, default: 1 },
         u_scene_depth: { type: RenderStateUniformType.Int, default: 0 },
     };

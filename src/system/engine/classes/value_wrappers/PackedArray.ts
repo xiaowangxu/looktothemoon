@@ -1,3 +1,4 @@
+import type { Matrix2 } from "@/system/fivepebble/linear_algebra/Matrix2";
 import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
@@ -5,7 +6,7 @@ import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { RenderDevice } from "@/system/sliverofstraw/RenderDevice";
 import type { RenderState, RenderStateBufferUsage } from "@/system/sliverofstraw/RenderState";
-import { RenderDeviceVector2AttributeBuffer, type RenderDeviceAttributeBuffer, RenderDeviceVector3AttributeBuffer, RenderDeviceVector4AttributeBuffer, RenderDeviceMatrix4AttributeBuffer, RenderDeviceIndexAttributeBuffer, RenderDeviceMatrix3AttributeBuffer, RenderDeviceFloatAttributeBuffer, RenderDeviceIntAttributeBuffer, RenderDeviceUintAttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
+import { RenderDeviceVector2AttributeBuffer, type RenderDeviceAttributeBuffer, RenderDeviceVector3AttributeBuffer, RenderDeviceVector4AttributeBuffer, RenderDeviceMatrix4AttributeBuffer, RenderDeviceIndexAttributeBuffer, RenderDeviceMatrix3AttributeBuffer, RenderDeviceFloatAttributeBuffer, RenderDeviceIntAttributeBuffer, RenderDeviceUintAttributeBuffer, RenderDeviceMatrix2AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 
 export abstract class PackedArray<Data = any> {
     public abstract get data(): ArrayBufferView;
@@ -469,6 +470,70 @@ export class PackedVector4Array extends PackedArray<Vector4> {
 
     public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceVector4AttributeBuffer<T> {
         return new RenderDeviceVector4AttributeBuffer(render_device, usage, this.data);
+    }
+}
+
+export class PackedMatrix2Array extends PackedArray<Matrix2> {
+    public readonly data: Float32Array;
+
+    public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
+    public get per_item_element_count(): number { return 4; }
+    public get element_count(): number { return this.data.length; }
+
+    constructor(length: number)
+    constructor(array: Float32Array)
+    constructor(data: Float32Array | number) {
+        super();
+        if (data instanceof Float32Array) {
+            if (data.length % 4 !== 0) throw new Error('<PackedMatrix2Array> constructor@array: array is not a valid PackedMatrix2Array');
+            this.data = data;
+        }
+        else {
+            this.data = new Float32Array(data * 4);
+        }
+    }
+
+    public update_Data(data: Matrix2[], offset: number): void;
+    public update_Data(data: Float32Array, offset: number): void;
+    public update_Data(data: Matrix2, offset: number): void;
+    public update_Data(data: Matrix2[] | Float32Array | Matrix2, offset: number): void {
+        let float32array: Float32Array;
+        let offset_bytes: number;
+        if (data instanceof Float32Array) {
+            offset_bytes = offset * this.per_element_byte_count;
+            const element_bytes = data.byteLength;
+            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedMatrix2Array> update_Data: data overflow');
+            float32array = new Float32Array(this.data.buffer, offset_bytes, data.length);
+            float32array.set(data);
+        }
+        else {
+            const single = !(data instanceof Array);
+            offset_bytes = offset * 4 * this.per_element_byte_count;
+            const mat3_count = single ? 1 : data.length;
+            const element_count = mat3_count * 4;
+            const element_bytes = element_count * this.per_element_byte_count;
+            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedMatrix2Array> update_Data: data overflow');
+            float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
+            if (single) {
+                float32array[0] = data.n11;
+                float32array[1] = data.n21;
+                float32array[3] = data.n12;
+                float32array[4] = data.n22;
+            }
+            else {
+                for (let i = 0, j = 0; i < element_count;) {
+                    const mat3 = data[j++];
+                    float32array[i++] = mat3.n11;
+                    float32array[i++] = mat3.n21;
+                    float32array[i++] = mat3.n12;
+                    float32array[i++] = mat3.n22;
+                }
+            }
+        }
+    }
+
+    public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceMatrix2AttributeBuffer<T> {
+        return new RenderDeviceMatrix2AttributeBuffer(render_device, usage, this.data);
     }
 }
 

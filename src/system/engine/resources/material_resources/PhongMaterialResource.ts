@@ -74,7 +74,7 @@ const PhongFragmentShadeShaderUniforms = new Cacher((config: Config) => {
                 texture: config.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.White),
             }
         },
-        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
+        u_color: { type: RenderStateUniformType.Vector4, default: Color.new },
         ...ShaderLightDataTextureUniformsDef,
         ...ShaderNormalTextureUniformsDef,
     } as UniformInitSet<WebGL2RenderState>;
@@ -112,7 +112,7 @@ const PhongFragmentOitShaderUniforms = new Cacher((config: Config) => {
                 texture: config.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.White),
             }
         },
-        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
+        u_color: { type: RenderStateUniformType.Vector4, default: Color.new },
     } as UniformInitSet<WebGL2RenderState>;
 });
 
@@ -145,7 +145,7 @@ export class PhongMaterialResource extends MaterialResource {
         ...PrimitiveMaterialUniforms,
         ...MaterialLightDataTextureUniformsDef,
         u_texture: RenderStateUniformType.Tex2D,
-        u_color: RenderStateUniformType.Vec4,
+        u_color: RenderStateUniformType.Vector4,
         ...MaterialNormalTextureUniformsDef,
     };
 

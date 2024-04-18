@@ -13,7 +13,7 @@ export class WebGL2RenderStateBuffer extends RenderStateBuffer<WebGL2RenderState
 export class WebGL2RenderStateBufferView extends RenderStateBufferView<WebGL2RenderState> {
     public get buffer() { return (this.buffer_ref.expect as WebGL2RenderStateBuffer).buffer; }
 
-    constructor(render_state: WebGL2RenderState, buffer: WebGL2RenderStateBuffer, data_size: number, data_stride: number, data_offset: number, divisor: number) {
+    constructor(render_state: WebGL2RenderState, buffer: WebGL2RenderStateBuffer, data_size: number, data_stride: number, data_offset: number, divisor: number | undefined) {
         super(render_state, buffer, data_size, data_stride, data_offset, divisor);
     }
 }

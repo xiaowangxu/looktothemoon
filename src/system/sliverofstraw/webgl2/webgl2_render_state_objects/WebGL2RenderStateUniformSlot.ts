@@ -9,15 +9,20 @@ import { RenderStateTextureUniformSlot, RenderStateUniformSlot, RenderStateValue
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { WebGL2RenderStateSampledTexture, type WebGL2RenderStateTexture, type WebGL2RenderStateTextureSampler } from "./WebGL2RenderStateTexture";
 import { Ref } from "@/system/utils/RefCounted";
+import { Matrix2 } from "@/system/fivepebble/linear_algebra/Matrix2";
+
+interface WebGL2RenderStateUniformSlotCommitable {
+    commit(): void;
+}
 
 export type WebGL2RenderStateUniform<VT extends RenderStateUniformType = RenderStateUniformType> =
-    VT extends RenderStateUniformType.Tex2D | RenderStateUniformType.Tex3D | RenderStateUniformType.Tex2DArray ?
-    RenderStateTextureUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, VT, WebGL2RenderStateTexture, WebGL2RenderStateTextureSampler> :
-    RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, VT, RenderStateUniformTypeMap<WebGL2RenderState, VT>>;
+    VT extends RenderStateTextureUniformType ?
+    RenderStateTextureUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, VT, WebGL2RenderStateTexture, WebGL2RenderStateTextureSampler> & WebGL2RenderStateUniformSlotCommitable :
+    RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, VT, RenderStateUniformTypeMap<WebGL2RenderState, VT>> & WebGL2RenderStateUniformSlotCommitable;
 
 // Bool, Uint, Int, Float, Vec2, Vec3, Vec4, Mat3, Mat4
 
-export class WebGL2RenderStateBoolUniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Bool, boolean> {
+export class WebGL2RenderStateBoolUniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Bool, boolean> implements WebGL2RenderStateUniformSlotCommitable {
 
     protected readonly location: WebGLUniformLocation;
 
@@ -42,7 +47,7 @@ export class WebGL2RenderStateBoolUniformSlot extends RenderStateValueUniformSlo
         if (commit) this.commit();
     }
 
-    public commit(): void {
+    commit(): void {
         if (this.changed) {
             this.render_state.use_ProgramProxy(this.program.program);
             this.render_state.gl.uniform1ui(this.location, this._value ? 1 : 0);
@@ -58,7 +63,7 @@ export class WebGL2RenderStateBoolUniformSlot extends RenderStateValueUniformSlo
     }
 }
 
-export class WebGL2RenderStateUintUniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Uint, number> {
+export class WebGL2RenderStateUintUniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Uint, number> implements WebGL2RenderStateUniformSlotCommitable {
 
     protected readonly location: WebGLUniformLocation;
 
@@ -83,7 +88,7 @@ export class WebGL2RenderStateUintUniformSlot extends RenderStateValueUniformSlo
         if (commit) this.commit();
     }
 
-    public commit(): void {
+    commit(): void {
         if (this.changed) {
             this.render_state.use_ProgramProxy(this.program.program);
             this.render_state.gl.uniform1ui(this.location, this._value);
@@ -99,7 +104,7 @@ export class WebGL2RenderStateUintUniformSlot extends RenderStateValueUniformSlo
     }
 }
 
-export class WebGL2RenderStateIntUniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Int, number> {
+export class WebGL2RenderStateIntUniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Int, number> implements WebGL2RenderStateUniformSlotCommitable {
 
     protected readonly location: WebGLUniformLocation;
 
@@ -124,7 +129,7 @@ export class WebGL2RenderStateIntUniformSlot extends RenderStateValueUniformSlot
         if (commit) this.commit();
     }
 
-    public commit(): void {
+    commit(): void {
         if (this.changed) {
             this.render_state.use_ProgramProxy(this.program.program);
             this.render_state.gl.uniform1i(this.location, this._value);
@@ -140,7 +145,7 @@ export class WebGL2RenderStateIntUniformSlot extends RenderStateValueUniformSlot
     }
 }
 
-export class WebGL2RenderStateFloatUniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Float, number> {
+export class WebGL2RenderStateFloatUniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Float, number> implements WebGL2RenderStateUniformSlotCommitable {
 
     protected readonly location: WebGLUniformLocation;
 
@@ -165,7 +170,7 @@ export class WebGL2RenderStateFloatUniformSlot extends RenderStateValueUniformSl
         if (commit) this.commit();
     }
 
-    public commit(): void {
+    commit(): void {
         if (this.changed) {
             this.render_state.use_ProgramProxy(this.program.program);
             this.render_state.gl.uniform1f(this.location, this._value);
@@ -181,7 +186,7 @@ export class WebGL2RenderStateFloatUniformSlot extends RenderStateValueUniformSl
     }
 }
 
-export class WebGL2RenderStateVec2UniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Vec2, Vector2> {
+export class WebGL2RenderStateVector2UniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Vector2, Vector2> implements WebGL2RenderStateUniformSlotCommitable {
 
     protected readonly location: WebGLUniformLocation;
 
@@ -206,7 +211,7 @@ export class WebGL2RenderStateVec2UniformSlot extends RenderStateValueUniformSlo
         if (commit) this.commit();
     }
 
-    public commit(): void {
+    commit(): void {
         if (this.changed) {
             this.render_state.use_ProgramProxy(this.program.program);
             this.render_state.gl.uniform2f(this.location, this._value.x, this._value.y);
@@ -215,14 +220,14 @@ export class WebGL2RenderStateVec2UniformSlot extends RenderStateValueUniformSlo
     }
 
     constructor(render_state: WebGL2RenderState, program: WebGL2RenderStateProgram, location: WebGLUniformLocation, name: string, default_value: Vector2) {
-        super(render_state, program, RenderStateUniformType.Vec2, name);
+        super(render_state, program, RenderStateUniformType.Vector2, name);
         this.location = location;
         this.default_value.copy(default_value);
         this._value.copy(default_value);
     }
 }
 
-export class WebGL2RenderStateVec3UniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Vec3, Vector3> {
+export class WebGL2RenderStateVector3UniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Vector3, Vector3> implements WebGL2RenderStateUniformSlotCommitable {
 
     protected readonly location: WebGLUniformLocation;
 
@@ -247,7 +252,7 @@ export class WebGL2RenderStateVec3UniformSlot extends RenderStateValueUniformSlo
         if (commit) this.commit();
     }
 
-    public commit(): void {
+    commit(): void {
         if (this.changed) {
             this.render_state.use_ProgramProxy(this.program.program);
             this.render_state.gl.uniform3f(this.location, this._value.x, this._value.y, this._value.z);
@@ -256,14 +261,14 @@ export class WebGL2RenderStateVec3UniformSlot extends RenderStateValueUniformSlo
     }
 
     constructor(render_state: WebGL2RenderState, program: WebGL2RenderStateProgram, location: WebGLUniformLocation, name: string, default_value: Vector3) {
-        super(render_state, program, RenderStateUniformType.Vec3, name);
+        super(render_state, program, RenderStateUniformType.Vector3, name);
         this.location = location;
         this.default_value.copy(default_value);
         this._value.copy(default_value);
     }
 }
 
-export class WebGL2RenderStateVec4UniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Vec4, Vector4> {
+export class WebGL2RenderStateVector4UniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Vector4, Vector4> implements WebGL2RenderStateUniformSlotCommitable {
 
     protected readonly location: WebGLUniformLocation;
 
@@ -288,7 +293,7 @@ export class WebGL2RenderStateVec4UniformSlot extends RenderStateValueUniformSlo
         if (commit) this.commit();
     }
 
-    public commit(): void {
+    commit(): void {
         if (this.changed) {
             this.render_state.use_ProgramProxy(this.program.program);
             this.render_state.gl.uniform4f(this.location, this._value.x, this._value.y, this._value.z, this._value.w);
@@ -297,14 +302,62 @@ export class WebGL2RenderStateVec4UniformSlot extends RenderStateValueUniformSlo
     }
 
     constructor(render_state: WebGL2RenderState, program: WebGL2RenderStateProgram, location: WebGLUniformLocation, name: string, default_value: Vector4) {
-        super(render_state, program, RenderStateUniformType.Vec4, name);
+        super(render_state, program, RenderStateUniformType.Vector4, name);
         this.location = location;
         this.default_value.copy(default_value);
         this._value.copy(default_value);
     }
 }
 
-export class WebGL2RenderStateMat3UniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Mat3, Matrix3> {
+export class WebGL2RenderStateMatrix2UniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Matrix2, Matrix2> implements WebGL2RenderStateUniformSlotCommitable {
+
+    static #tmp_float32array_0 = new Float32Array(4);
+
+    protected default_value: Matrix2 = new Matrix2();
+
+    protected readonly location: WebGLUniformLocation;
+
+    protected _value: Matrix2 = new Matrix2();
+    public get value() { return this._value.clone(); }
+
+    protected changed: boolean = true;
+
+    public set_Value(value: Matrix2 | undefined, commit: boolean = false): void {
+        if (value === undefined) {
+            if (!this._value.equal(this.default_value)) {
+                this._value.copy(this.default_value);
+                this.changed = true;
+            }
+        }
+        else if (!this._value.equal(value)) {
+            this._value.copy(value);
+            this.changed = true;
+        }
+        if (commit) this.commit();
+    }
+
+    commit(): void {
+        if (this.changed) {
+            const float32array = WebGL2RenderStateMatrix2UniformSlot.#tmp_float32array_0;
+            float32array[0] = this._value.n11;
+            float32array[1] = this._value.n21;
+            float32array[2] = this._value.n12;
+            float32array[3] = this._value.n22;
+            this.render_state.use_ProgramProxy(this.program.program);
+            this.render_state.gl.uniformMatrix2fv(this.location, false, float32array);
+            this.changed = false;
+        }
+    }
+
+    constructor(render_state: WebGL2RenderState, program: WebGL2RenderStateProgram, location: WebGLUniformLocation, name: string, default_value: Matrix2) {
+        super(render_state, program, RenderStateUniformType.Matrix2, name);
+        this.location = location;
+        this.default_value.copy(default_value);
+        this._value.copy(default_value);
+    }
+}
+
+export class WebGL2RenderStateMatrix3UniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Matrix3, Matrix3> implements WebGL2RenderStateUniformSlotCommitable {
 
     static #tmp_float32array_0 = new Float32Array(9);
 
@@ -331,9 +384,9 @@ export class WebGL2RenderStateMat3UniformSlot extends RenderStateValueUniformSlo
         if (commit) this.commit();
     }
 
-    public commit(): void {
+    commit(): void {
         if (this.changed) {
-            const float32array = WebGL2RenderStateMat3UniformSlot.#tmp_float32array_0;
+            const float32array = WebGL2RenderStateMatrix3UniformSlot.#tmp_float32array_0;
             float32array[0] = this._value.n11;
             float32array[1] = this._value.n21;
             float32array[2] = this._value.n31;
@@ -350,14 +403,14 @@ export class WebGL2RenderStateMat3UniformSlot extends RenderStateValueUniformSlo
     }
 
     constructor(render_state: WebGL2RenderState, program: WebGL2RenderStateProgram, location: WebGLUniformLocation, name: string, default_value: Matrix3) {
-        super(render_state, program, RenderStateUniformType.Mat3, name);
+        super(render_state, program, RenderStateUniformType.Matrix3, name);
         this.location = location;
         this.default_value.copy(default_value);
         this._value.copy(default_value);
     }
 }
 
-export class WebGL2RenderStateMat4UniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Mat4, Matrix4> {
+export class WebGL2RenderStateMatrix4UniformSlot extends RenderStateValueUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateUniformType.Matrix4, Matrix4> implements WebGL2RenderStateUniformSlotCommitable {
 
     static #tmp_float32array_0 = new Float32Array(16);
 
@@ -384,9 +437,9 @@ export class WebGL2RenderStateMat4UniformSlot extends RenderStateValueUniformSlo
         if (commit) this.commit();
     }
 
-    public commit(): void {
+    commit(): void {
         if (this.changed) {
-            const float32array = WebGL2RenderStateMat4UniformSlot.#tmp_float32array_0;
+            const float32array = WebGL2RenderStateMatrix4UniformSlot.#tmp_float32array_0;
             float32array[0] = this._value.n11;
             float32array[1] = this._value.n21;
             float32array[2] = this._value.n31;
@@ -410,7 +463,7 @@ export class WebGL2RenderStateMat4UniformSlot extends RenderStateValueUniformSlo
     }
 
     constructor(render_state: WebGL2RenderState, program: WebGL2RenderStateProgram, location: WebGLUniformLocation, name: string, default_value: Matrix4) {
-        super(render_state, program, RenderStateUniformType.Mat4, name);
+        super(render_state, program, RenderStateUniformType.Matrix4, name);
         this.location = location;
         this.default_value.copy(default_value);
         this._value.copy(default_value);
@@ -419,7 +472,7 @@ export class WebGL2RenderStateMat4UniformSlot extends RenderStateValueUniformSlo
 
 // Tex2D, Tex2DArray, Tex3D
 
-export class WebGL2RenderStateTextureUniformSlot extends RenderStateTextureUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateTextureUniformType, WebGL2RenderStateTexture, WebGL2RenderStateTextureSampler> {
+export class WebGL2RenderStateTextureUniformSlot extends RenderStateTextureUniformSlot<WebGL2RenderState, WebGL2RenderStateProgram, RenderStateTextureUniformType, WebGL2RenderStateTexture, WebGL2RenderStateTextureSampler> implements WebGL2RenderStateUniformSlotCommitable {
 
     protected readonly location: WebGLUniformLocation;
 
@@ -466,7 +519,7 @@ export class WebGL2RenderStateTextureUniformSlot extends RenderStateTextureUnifo
         if (commit) this.commit();
     }
 
-    public commit(): void {
+    commit(): void {
         if (this.changed || this.sampled_texture.is_empty) {
             this.sampled_texture.value = this.render_state.create_SampledTexture(this.texture, this.sampler);
         }

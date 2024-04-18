@@ -8,20 +8,56 @@ import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import type { Matrix2 } from "@/system/fivepebble/linear_algebra/Matrix2";
 
-export type RenderStateValueUniformType = RenderStateUniformType.Uint | RenderStateUniformType.Int | RenderStateUniformType.Float | RenderStateUniformType.Vec2 | RenderStateUniformType.Vec3 | RenderStateUniformType.Vec4 | RenderStateUniformType.Mat3 | RenderStateUniformType.Mat4;
-export type RenderStateTextureUniformType = RenderStateUniformType.Tex2D | RenderStateUniformType.Tex2DArray | RenderStateUniformType.Tex3D;
+export type RenderStateValueUniformType =
+    RenderStateUniformType.Bool | RenderStateUniformType.Uint | RenderStateUniformType.Int | RenderStateUniformType.Float |
+    RenderStateUniformType.Vector2 | RenderStateUniformType.Vector3 | RenderStateUniformType.Vector4 |
+    RenderStateUniformType.Matrix2 | RenderStateUniformType.Matrix3 | RenderStateUniformType.Matrix4;
+
+export type RenderStateTextureUniformType = RenderStateUniformType.Tex2D | RenderStateUniformType.Tex2DArray | RenderStateUniformType.Tex3D | RenderStateUniformType.TexCubeMap;
 
 export interface RenderStateUniformTypeSlotMap<RS extends RenderState<RS>> {
-    Bool: [boolean, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Bool, boolean>],
-    Uint: [number, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Uint, number>],
-    Int: [number, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Int, number>],
-    Float: [number, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Float, number>],
-    Vec2: [Vector2, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Vec2, Vector2>],
-    Vec3: [Vector3, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Vec3, Vector3>],
-    Vec4: [Vector4, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Vec4, Vector4>],
-    Mat3: [Matrix3, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Mat3, Matrix3>],
-    Mat4: [Matrix4, RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Mat4, Matrix4>],
+    Bool: [
+        boolean,
+        RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Bool, boolean>
+    ],
+    Uint: [
+        number,
+        RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Uint, number>
+    ],
+    Int: [
+        number,
+        RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Int, number>
+    ],
+    Float: [
+        number,
+        RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Float, number>
+    ],
+    Vector2: [
+        Vector2,
+        RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Vector2, Vector2>
+    ],
+    Vector3: [
+        Vector3,
+        RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Vector3, Vector3>
+    ],
+    Vector4: [
+        Vector4,
+        RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Vector4, Vector4>
+    ],
+    Matrix2: [
+        Matrix3,
+        RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Matrix2, Matrix2>
+    ],
+    Matrix3: [
+        Matrix3,
+        RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Matrix3, Matrix3>
+    ],
+    Matrix4: [
+        Matrix4,
+        RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Matrix4, Matrix4>
+    ],
     Tex2D: [
         { texture?: RenderStateTexture<RS> | undefined, sampler?: RenderStateTextureSampler<RS> | undefined },
         RenderStateTextureUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Tex2D, RenderStateTexture<RS>, RenderStateTextureSampler<RS>>
@@ -34,6 +70,10 @@ export interface RenderStateUniformTypeSlotMap<RS extends RenderState<RS>> {
         { texture?: RenderStateTexture<RS> | undefined, sampler?: RenderStateTextureSampler<RS> | undefined },
         RenderStateTextureUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.Tex3D, RenderStateTexture<RS>, RenderStateTextureSampler<RS>>
     ],
+    TexCubeMap: [
+        { texture?: RenderStateTexture<RS> | undefined, sampler?: RenderStateTextureSampler<RS> | undefined },
+        RenderStateTextureUniformSlot<RS, RenderStateProgram<RS>, RenderStateUniformType.TexCubeMap, RenderStateTexture<RS>, RenderStateTextureSampler<RS>>
+    ],
 }
 
 type ValueOf<T> = T[keyof T];
@@ -42,7 +82,7 @@ export type RenderStateUniformTypeMap<RS extends RenderState<RS>, T extends Rend
 }>, [any, T]>[0]][0];
 
 export type RenderStateUniform<RS extends RenderState<RS>, VT extends RenderStateUniformType = RenderStateUniformType> =
-    VT extends RenderStateUniformType.Tex2D | RenderStateUniformType.Tex3D | RenderStateUniformType.Tex2DArray ?
+    VT extends RenderStateTextureUniformType ?
     RenderStateTextureUniformSlot<RS, RenderStateProgram<RS>, VT, RenderStateTexture<RS>, RenderStateTextureSampler<RS>> :
     RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, VT, RenderStateUniformTypeMap<RS, VT>>;
 
@@ -61,8 +101,6 @@ export abstract class RenderStateUniformSlot<RS extends RenderState<RS>, P exten
         this.type = type;
         this.program_ref.value = program;
     }
-
-    public abstract commit(): void;
 
     public dispose(): void {
         this.program_ref.clear();

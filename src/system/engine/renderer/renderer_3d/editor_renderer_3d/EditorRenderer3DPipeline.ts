@@ -8,7 +8,7 @@ import { RenderStateBufferUsage, RenderStateDataType, RenderStateFrameBufferPart
 import { WebGL2RenderStateFrameBufferAttachmentPoint } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { Cacher } from "@/system/utils/Cacher";
 import { RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
-import { WebGL2RenderStateFloatUniformSlot, WebGL2RenderStateIntUniformSlot, WebGL2RenderStateUintUniformSlot, WebGL2RenderStateVec4UniformSlot } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
+import { WebGL2RenderStateFloatUniformSlot, WebGL2RenderStateIntUniformSlot, WebGL2RenderStateUintUniformSlot, WebGL2RenderStateVector4UniformSlot } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 import { RenderServerDevice } from "../../../render_server/RenderServer";
 import { RenderServerShaderPass } from "../../../render_server/RenderServerShader";
 import { RenderServerMaterialCullFace } from "../../../render_server/RenderServerMaterial";
@@ -24,15 +24,14 @@ import { GlslPrimitives } from "@/system/engine/resources/material_resources/Pri
 
 const QuadGeometry = new Cacher((config: Config) => {
     const quad_position = new RenderDeviceVector2AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
-		/* 0 */Vector2.create(-1, 1),			//   1  0 ------ 2
-		/* 1 */Vector2.create(-1, -1),		//   |  |        |
-		/* 2 */Vector2.create(1, 1),			//   |  |        |
-		/* 3 */Vector2.create(1, -1),			//  -1  1 ------ 3
-        /*                        *///     -1 ------ 1
+		/* 0 */Vector2.create(0, 4),			//   1  0 
+		/* 1 */Vector2.create(0, 0),		    //   |  | \
+		/* 2 */Vector2.create(4, 0),			//  -1  1 - 2
+        /*                                     *///    -1 -- 1
     ]);
-    const quad_index = new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 1, 2, 3]);
+    const quad_index = new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 1, 2]);
     const quad_surface = config.render_server.create_Geometry();
-    quad_surface.set_Geometry(RenderStatePrimitiveType.TriangleStrip, { position: quad_position }, quad_index);
+    quad_surface.set_Geometry(RenderStatePrimitiveType.Triangles, { position: quad_position }, quad_index);
     return new Ref(quad_surface);
 });
 
@@ -48,8 +47,8 @@ layout(location = 0) in vec2 a_position;
 out vec2 v_uv;
 
 void main() {
-	gl_Position = vec4(a_position, 1.0, 1.0);
-	v_uv = (a_position + 1.0) / 2.0;
+	gl_Position = vec4(a_position - vec2(1.0), 1.0, 1.0);
+	v_uv = a_position / 2.0;
 }`;
 
 const QuadVertexShader = new Cacher((config: Config) => {
@@ -197,7 +196,7 @@ const HighlightProgramUniform = new Cacher((config: Config) => {
     // uniform_screen_slot.commit();
     // uniform_screen_slot.dispose();
 
-    const uniform_color_slot = config.render_server.render_state.create_ProgramUniform(highlight_program, 'u_color', RenderStateUniformType.Vec4, Vector4.create(1.0, 0.0, 0.0, 1.0)).expect();
+    const uniform_color_slot = config.render_server.render_state.create_ProgramUniform(highlight_program, 'u_color', RenderStateUniformType.Vector4, Vector4.create(1.0, 0.0, 0.0, 1.0)).expect();
     uniform_color_slot.commit();
 
     const uniform_line_width_slot = config.render_server.render_state.create_ProgramUniform(highlight_program, 'u_line_width', RenderStateUniformType.Float, 2.0).expect();
@@ -265,6 +264,7 @@ ${GlslPrimitives.WorldUniforms}
 layout(location = 0) in vec2 a_position;
 
 out vec2 v_frag_coord;
+out vec2 v_uv;
 out vec2 v_rgbNW;
 out vec2 v_rgbNE;
 out vec2 v_rgbSW;
@@ -281,9 +281,11 @@ void texcoords(vec2 fragCoord, vec2 resolution, out vec2 v_rgbNW, out vec2 v_rgb
 }
 
 void main() {
-    v_frag_coord = (a_position + 1.0) / 2.0 * SCREEN_SIZE;
+    vec2 position = a_position - vec2(1.0);
+    v_uv = a_position / 2.0;
+    v_frag_coord = v_uv * SCREEN_SIZE;
     texcoords(v_frag_coord, SCREEN_SIZE , v_rgbNW, v_rgbNE, v_rgbSW, v_rgbSE, v_rgbM);
-	  gl_Position = vec4(a_position, 1.0, 1.0);
+	gl_Position = vec4(position, 1.0, 1.0);
 }`;
 
 const fxaa_frag_shader_code = `#version 300 es
@@ -295,6 +297,7 @@ uniform sampler2D u_screen;
 uniform bool u_colormap;
 
 in vec2 v_frag_coord;
+in vec2 v_uv;
 in vec2 v_rgbNW;
 in vec2 v_rgbNE;
 in vec2 v_rgbSW;
@@ -1374,7 +1377,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         // this.render_server.render_state.active_Texture(this.postprocessing_color_texture.expect, 0);
         // this.render_server.render_state.active_Texture(this.solid_depth_texture.expect, 1);
         // this.render_server.render_state.active_Texture(this.solid_normal_texture.expect, 2);
-        // this.postprocessing_fxaa_uniform_colormap_slot.value = 0;
+        // this.postprocessing_fxaa_uniform_colormap_slot.set_Value(false);
         // this.postprocessing_fxaa_uniform_colormap_slot.commit();
         // this.render_server.render_state.draw_Elements(this.postprocessing_fxaa_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
 
@@ -1384,7 +1387,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         // this.render_server.render_state.active_Texture(this.postprocessing_color_1_texture.expect, 0);
         // this.render_server.render_state.active_Texture(this.solid_depth_texture.expect, 1);
         // this.render_server.render_state.active_Texture(this.solid_normal_texture.expect, 2);
-        // this.postprocessing_fxaa_uniform_colormap_slot.value = 0;
+        // this.postprocessing_fxaa_uniform_colormap_slot.set_Value(false);
         // this.postprocessing_fxaa_uniform_colormap_slot.commit();
         // this.render_server.render_state.draw_Elements(this.postprocessing_fxaa_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
 
@@ -1394,7 +1397,7 @@ export class EditorRenderer3DPipeline extends Renderer3DPipeline {
         // this.render_server.render_state.active_Texture(this.postprocessing_color_texture.expect, 0);
         // this.render_server.render_state.active_Texture(this.solid_depth_texture.expect, 1);
         // this.render_server.render_state.active_Texture(this.solid_normal_texture.expect, 2);
-        // this.postprocessing_fxaa_uniform_colormap_slot.value = 0;
+        // this.postprocessing_fxaa_uniform_colormap_slot.set_Value(false);
         // this.postprocessing_fxaa_uniform_colormap_slot.commit();
         // this.render_server.render_state.draw_Elements(this.postprocessing_fxaa_program, this.quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }

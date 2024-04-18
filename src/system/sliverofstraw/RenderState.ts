@@ -41,11 +41,13 @@ export enum RenderStateDataType {
 }
 
 export enum RenderStateUniformType {
-    Bool, Uint, Int, Float, Vec2, Vec3, Vec4, Mat3, Mat4, Tex2D, Tex2DArray, Tex3D
+    Bool, Uint, Int, Float,
+    Vector2, Vector3, Vector4, Matrix2, Matrix3, Matrix4,
+    Tex2D, Tex2DArray, Tex3D, TexCubeMap
 }
 
 export enum RenderStateTextureType {
-    Tex2D, CubeMap, Tex3D, Tex2DArray
+    Tex2D, TexCubeMap, Tex3D, Tex2DArray
 }
 
 export enum RenderStateTextureFormat {
@@ -60,17 +62,28 @@ export enum RenderStateTextureDataFormat {
     RGB, RGBA, RInt, Red,
     Alpha,
     Luminance, LuminanceAlpha,
-    // SRGB, SRGBA, 
     Depth, DepthStencil,
 }
 
-export enum RenderStateTextureWrap { Clamp, Repeat, MirrorRepeat }
+export enum RenderStateTextureWrap {
+    Clamp,
+    Repeat,
+    MirrorRepeat
+}
 
-export enum RenderStateTextureMagFilter { Linear, Nearest }
+export enum RenderStateTextureMagFilter {
+    Linear,
+    Nearest
+}
 
-export enum RenderStateTextureMinFilter { Linear, Nearest, NearestMipmapNearest, LinearMipmapNearest, NearestMipmapLinear, LinearMipmapLinear }
-
-export type RenderStateUniformVectorType = Uint8Array | Uint16Array | Uint32Array | Int8Array | Int16Array | Int32Array | Float32Array | Float64Array;
+export enum RenderStateTextureMinFilter {
+    Linear,
+    Nearest,
+    NearestMipmapNearest,
+    LinearMipmapNearest,
+    NearestMipmapLinear,
+    LinearMipmapLinear
+}
 
 export abstract class RenderState<T extends RenderState<T>> {
     public readonly render_device: RenderDevice<T>;
@@ -103,7 +116,7 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     public abstract delete_Buffer(buffer: RenderStateBuffer<T>): void;
 
-    public abstract create_BufferView(buffer: RenderStateBuffer<T>, data_size: number, data_stride: number, data_offset: number, divisor: number):
+    public abstract create_BufferView(buffer: RenderStateBuffer<T>, data_size: number, data_stride: number, data_offset: number, divisor: number | undefined):
         Result<RenderStateBufferView<T>, Error>;
 
     // Vertex Array
@@ -176,7 +189,7 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     // uniform
 
-    public abstract create_ProgramUniform<VT extends RenderStateUniformType>(program: RenderStateProgram<T>, name: string, type: VT, default_value: RenderStateUniformTypeMap<T, VT>): Result<RenderStateUniform<T, VT>, Error>;
+    public abstract create_ProgramUniform<VT extends RenderStateUniformType>(program: RenderStateProgram<T>, name: string, type: VT, default_value: RenderStateUniformTypeMap<T, VT>, location?: number): Result<RenderStateUniform<T, VT>, Error>;
 
     public abstract set_ProgramUniform(uniform: RenderStateUniformSlot<T, RenderStateProgram<T>, RenderStateUniformType>): void;
 

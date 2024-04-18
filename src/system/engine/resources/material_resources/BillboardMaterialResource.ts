@@ -51,7 +51,7 @@ export const BillboardVertexShader = new Cacher((config: Config) => {
     return new Ref(config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, code).expect());
 });
 export const BillboardVertexShaderUniforms: Readonly<UniformInitSet<WebGL2RenderState>> = {
-    MODEL_WORLD: { type: RenderStateUniformType.Mat4, default: Matrix4.new },
+    MODEL_WORLD: { type: RenderStateUniformType.Matrix4, default: Matrix4.new },
 };
 
 export const BillboardFragmentShadeShader = new Cacher((config: Config) => {

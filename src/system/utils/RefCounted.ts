@@ -68,7 +68,7 @@ export class RefArray<T extends RefCountedLike> {
     public get(index: number, as_ref: false): T | undefined
     public get(index: number, as_ref: true | false = true): Ref<T> | T | undefined {
         const ref: Ref<T> | undefined = this.refs[index];
-        if (as_ref) return ref;
+        if (as_ref) return ref.borrow();
         if (ref === undefined) return undefined;
         else {
             return ref.value;

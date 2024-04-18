@@ -41,13 +41,13 @@ export abstract class RenderStateBufferView<T extends RenderState<T>, Buffer ext
     public readonly data_offset: number;
     public readonly divisor: number;
 
-    constructor(render_state: T, buffer: Buffer, data_size: number, data_stride: number, data_offset: number, divisor: number) {
+    constructor(render_state: T, buffer: Buffer, data_size: number, data_stride: number, data_offset: number, divisor: number | undefined) {
         super(render_state);
         this.buffer_ref.value = buffer;
         this.data_size = data_size;
         this.data_stride = data_stride;
         this.data_offset = data_offset;
-        this.divisor = divisor;
+        this.divisor = divisor ?? this.buffer_ref.expect.divisor;
     }
 
     public dispose() {

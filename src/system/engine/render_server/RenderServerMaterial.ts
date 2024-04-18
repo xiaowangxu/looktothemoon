@@ -61,11 +61,11 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
                 case RenderStateUniformType.Uint:
                 case RenderStateUniformType.Int:
                 case RenderStateUniformType.Float:
-                case RenderStateUniformType.Vec2:
-                case RenderStateUniformType.Vec3:
-                case RenderStateUniformType.Vec4:
-                case RenderStateUniformType.Mat3:
-                case RenderStateUniformType.Mat4: {
+                case RenderStateUniformType.Vector2:
+                case RenderStateUniformType.Vector3:
+                case RenderStateUniformType.Vector4:
+                case RenderStateUniformType.Matrix3:
+                case RenderStateUniformType.Matrix4: {
                     uniform_override.set(name, { type, value: undefined });
                     break;
                 }
@@ -102,27 +102,27 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
                 uniform_override.value = value;
                 return;
             }
-            case RenderStateUniformType.Vec2: {
+            case RenderStateUniformType.Vector2: {
                 if (value !== undefined && !(value instanceof Vector2)) return;
                 uniform_override.value = value;
                 return;
             }
-            case RenderStateUniformType.Vec3: {
+            case RenderStateUniformType.Vector3: {
                 if (value !== undefined && !(value instanceof Vector3)) return;
                 uniform_override.value = value;
                 return;
             }
-            case RenderStateUniformType.Vec4: {
+            case RenderStateUniformType.Vector4: {
                 if (value !== undefined && !(value instanceof Vector4)) return;
                 uniform_override.value = value;
                 return;
             }
-            case RenderStateUniformType.Mat3: {
+            case RenderStateUniformType.Matrix3: {
                 if (value !== undefined && !(value instanceof Matrix3)) return;
                 uniform_override.value = value;
                 return;
             }
-            case RenderStateUniformType.Mat4: {
+            case RenderStateUniformType.Matrix4: {
                 if (value !== undefined && !(value instanceof Matrix4)) return;
                 uniform_override.value = value;
                 return;
@@ -150,11 +150,11 @@ export class RenderServerMaterial extends RenderDeviceObject<WebGL2RenderState> 
                 case RenderStateUniformType.Uint:
                 case RenderStateUniformType.Int:
                 case RenderStateUniformType.Float:
-                case RenderStateUniformType.Vec2:
-                case RenderStateUniformType.Vec3:
-                case RenderStateUniformType.Vec4:
-                case RenderStateUniformType.Mat3:
-                case RenderStateUniformType.Mat4: {
+                case RenderStateUniformType.Vector2:
+                case RenderStateUniformType.Vector3:
+                case RenderStateUniformType.Vector4:
+                case RenderStateUniformType.Matrix3:
+                case RenderStateUniformType.Matrix4: {
                     shader.set_ValueUniform(stage, name, value as UniformValueType);
                     break;
                 }

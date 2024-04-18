@@ -43,7 +43,7 @@ const PlainFragmentShadeShaderUniforms = new Cacher((config: Config) => {
                 texture: config.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.White),
             }
         },
-        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
+        u_color: { type: RenderStateUniformType.Vector4, default: Color.new },
     } as UniformInitSet<WebGL2RenderState>;
 });
 
@@ -79,7 +79,7 @@ const PlainFragmentOitShaderUniforms = new Cacher((config: Config) => {
                 texture: config.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.White),
             }
         },
-        u_color: { type: RenderStateUniformType.Vec4, default: Color.new },
+        u_color: { type: RenderStateUniformType.Vector4, default: Color.new },
     } as UniformInitSet<WebGL2RenderState>;
 });
 
@@ -111,7 +111,7 @@ export class PlainMaterialResource extends MaterialResource {
     static readonly #uniforms: MaterialReadOnlyUniforms = {
         ...PrimitiveMaterialUniforms,
         u_texture: RenderStateUniformType.Tex2D,
-        u_color: RenderStateUniformType.Vec4,
+        u_color: RenderStateUniformType.Vector4,
     };
 
     public get uniforms() { return PlainMaterialResource.#uniforms; }
