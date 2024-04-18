@@ -1,6 +1,6 @@
 import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
 import type { WebGL2RenderStateFrameBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
-import { RenderStateTextureType, RenderStateTextureFormat, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureDataFormat, RenderStateDataType, RenderStateShaderType, RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
+import { RenderStateTextureType, RenderStateTextureFormat, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureDataFormat, RenderStateDataType, RenderStateShaderType, RenderStateBufferUsage, RenderStatePrimitiveType, RenderStateUniformType } from "@/system/sliverofstraw/RenderState";
 import { WebGL2RenderStateFrameBufferAttachmentPoint } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { WebGL2RenderStateFloatUniformSlot } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 import { RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
@@ -156,8 +156,7 @@ const SkyProgramUniform = new Cacher((config: Config) => {
     const quad_vert_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, quad_vert_shader_code).expect();
     const quad_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, sky_frag_shader_code).expect();
     const sky_program = config.render_server.render_state.create_Program(quad_vert_shader, quad_frag_shader).expect();
-    const uniform_time_location = config.render_server.render_state.get_ProgramUniformLocation(sky_program, 'time');
-    const uniform_time_slot = new WebGL2RenderStateFloatUniformSlot(config.render_server.render_state, sky_program, uniform_time_location!, 0);
+    const uniform_time_slot = config.render_server.render_state.create_ProgramUniform(sky_program, 'time', RenderStateUniformType.Float, 0.0).expect();
     return { sky_program: new Ref(sky_program), uniform_time_slot: new Ref(uniform_time_slot) };
 });
 
@@ -608,7 +607,7 @@ export class VisualWorld3D extends ConfiguredObject {
         this.sky_quad_geometry = SkyQuadGeometry.get(this.config).expect;
         const { sky_program, uniform_time_slot } = SkyProgramUniform.get(this.config);
         this.sky_program = sky_program.expect;
-        this.sky_uniform_time_slot = uniform_time_slot.expect;
+        this.sky_uniform_time_slot = uniform_time_slot.expect as WebGL2RenderStateFloatUniformSlot;
 
         // shadows texture
         this.shadows_texture.value = this.render_server.render_state.create_Texture(RenderStateTextureType.Tex2DArray, false, RenderStateTextureFormat.D32F, 0, undefined, undefined, undefined, RenderStateTextureMinFilter.Nearest, RenderStateTextureMagFilter.Nearest).expect();
@@ -636,7 +635,7 @@ export class VisualWorld3D extends ConfiguredObject {
         this.render_server.render_state.set_ViewportProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
         this.render_server.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
         this.render_server.render_state.use_FrameBuffer(this.sky_frame_buffer.expect);
-        this.sky_uniform_time_slot._value = time;
+        this.sky_uniform_time_slot.set_Value(time);
         this.sky_uniform_time_slot.commit();
         this.render_server.render_state.draw_Elements(this.sky_program, this.sky_quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     }

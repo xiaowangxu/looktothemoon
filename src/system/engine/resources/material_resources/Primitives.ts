@@ -226,12 +226,12 @@ LightData get_light(const in ivec3 lights_size, const in int i) {
         if((light.mask & LAYER) == 0u) continue;
         if(light.type == 1u) {
             // ambient light
-            calc_light(${custom_p}light.type, NORMAL_VIEW, LOOKAT_VIEW, NORMAL_VIEW, light.color, light.attenuation, DIFFUSE, SPECULAR);
+            calc_light(${custom_p}light.type, NORMAL_VIEW, LOOKAT_VIEW, NORMAL_VIEW, light.color, 1.0, DIFFUSE, SPECULAR);
         }
         else if(light.type == 2u) {
             // directional light
             vec3 LDIR_VIEW = normalize(CAMERA_NORMAL_VIEW * light.direction);
-            calc_light(${custom_p}light.type, LDIR_VIEW, LOOKAT_VIEW, NORMAL_VIEW, light.color, light.attenuation, DIFFUSE, SPECULAR);
+            calc_light(${custom_p}light.type, LDIR_VIEW, LOOKAT_VIEW, NORMAL_VIEW, light.color, 1.0, DIFFUSE, SPECULAR);
         } 
         else if(light.type == 3u) {
             // point light
