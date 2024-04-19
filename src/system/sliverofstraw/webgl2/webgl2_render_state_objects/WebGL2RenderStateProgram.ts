@@ -1,4 +1,4 @@
-import { RenderStateProgram } from "../../render_state_objects/RenderStateProgram";
+import { RenderStateProgram } from "../../render_state_objects/pipeline/RenderStateProgram";
 import type { WebGL2RenderState } from "../WebGL2RenderState";
 import type { WebGL2RenderStateShader } from "./WebGL2RenderStateShader";
 

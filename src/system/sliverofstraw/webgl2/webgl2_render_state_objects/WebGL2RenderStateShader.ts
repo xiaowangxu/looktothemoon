@@ -1,4 +1,4 @@
-import { RenderStateShader } from "../../render_state_objects/RenderStateShader";
+import { RenderStateShader } from "../../render_state_objects/pipeline/RenderStateShader";
 import type { WebGL2RenderState } from "../WebGL2RenderState";
 
 export class WebGL2RenderStateShader extends RenderStateShader<WebGL2RenderState> {

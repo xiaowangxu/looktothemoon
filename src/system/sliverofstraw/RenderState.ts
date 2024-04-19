@@ -1,13 +1,16 @@
 import type { RenderDevice } from "./RenderDevice";
 import type { FrameBufferAttachment, RenderStateFrameBuffer } from "./render_state_objects/RenderStateFrameBuffer";
-import type { RenderStateShader } from "./render_state_objects/RenderStateShader";
+import type { RenderStateShader } from "./render_state_objects/pipeline/RenderStateShader";
 import type { RenderStateTexture, RenderStateTextureSampler } from "./render_state_objects/RenderStateTexture";
 import type { RenderStateUniform, RenderStateUniformSlot, RenderStateUniformTypeMap } from "./render_state_objects/RenderStateUniformSlot";
 import type { RenderStateVertexArray, RenderStateVertexArrayView } from "./render_state_objects/RenderStateVertexArray";
-import type { RenderStateProgram } from "./render_state_objects/RenderStateProgram";
-import type { RenderStateBuffer, RenderStateBufferView } from "./render_state_objects/RenderStateBuffer";
+import type { RenderStateProgram } from "./render_state_objects/pipeline/RenderStateProgram";
+import type { RenderStateBuffer } from "./render_state_objects/buffer/RenderStateBuffer";
+import type { RenderStateBufferView } from "./render_state_objects/buffer/RenderStateBufferView";
 import { Result } from "../utils/Result";
 import type { RenderStateRenderBuffer } from "./render_state_objects/RenderStateRenderBuffer";
+import type { RenderStateProgramState } from "./render_state_objects/pipeline/RenderStateProgramState";
+import type { RenderStatePipeline } from "./render_state_objects/pipeline/RenderStatePipeline";
 
 //#region options
 
@@ -94,6 +97,7 @@ export enum RenderStateTextureMinFilter {
 //#endregion
 
 export abstract class RenderState<T extends RenderState<T>> {
+
     public readonly render_device: RenderDevice<T>;
     public get render_state() { return this.render_device.render_state; }
 
@@ -101,22 +105,29 @@ export abstract class RenderState<T extends RenderState<T>> {
         this.render_device = render_device;
     }
 
-    // Shader
+    //#region pipeline
 
-    public abstract create_Shader(type: RenderStateShaderType, source: string):
-        Result<RenderStateShader<T>, Error>;
+    public abstract create_Shader(type: RenderStateShaderType, source: string): Result<RenderStateShader<T>, Error>;
 
     public abstract delete_Shader(shader: RenderStateShader<T>): void;
 
-    public abstract create_Program(vert_shader: RenderStateShader<T>, frag_shader: RenderStateShader<T> | undefined, option: any):
-        Result<RenderStateProgram<T>, Error>;
+    public abstract create_Program(vert_shader: RenderStateShader<T>, frag_shader: RenderStateShader<T> | undefined, option: any): Result<RenderStateProgram<T>, Error>;
 
     public abstract delete_Program(program: RenderStateProgram<T>): void;
 
+    public abstract create_ProgramState(): RenderStateProgramState<T>;
+
+    public abstract delete_ProgramState(program_state: RenderStateProgramState<T>): void;
+
+    public abstract create_Pipeline(program: RenderStateProgram<T>, program_state: RenderStateProgramState<T>): Result<RenderStatePipeline<T>, Error>;
+
+    public abstract delete_Pipeline(pipeline: RenderStatePipeline<T>): void;
+
+    //#endregion
+
     // Buffer
 
-    public abstract create_Buffer(type: RenderStateBufferType, usage: RenderStateBufferUsage, data_size: number, data_type: RenderStateDataType, data_normalize: boolean, divisor: number):
-        Result<RenderStateBuffer<T>, Error>;
+    public abstract create_Buffer(type: RenderStateBufferType, usage: RenderStateBufferUsage, data_size: number, data_type: RenderStateDataType, data_normalize: boolean, divisor: number): Result<RenderStateBuffer<T>, Error>;
 
     public abstract alloc_Buffer(buffer: RenderStateBuffer<T>, byte_count: number, data?: ArrayBufferView): void;
 
@@ -124,8 +135,7 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     public abstract delete_Buffer(buffer: RenderStateBuffer<T>): void;
 
-    public abstract create_BufferView(buffer: RenderStateBuffer<T>, data_size: number, data_stride: number, data_offset: number, divisor: number | undefined):
-        Result<RenderStateBufferView<T>, Error>;
+    public abstract create_BufferView(buffer: RenderStateBuffer<T>, data_size: number, data_stride: number, data_offset: number, divisor: number | undefined): Result<RenderStateBufferView<T>, Error>;
 
     // Vertex Array
 

@@ -1,7 +1,7 @@
 import { Ref } from "@/system/utils/RefCounted";
 import type { RenderState, RenderStateUniformType } from "../RenderState";
 import { RenderStateObject } from "./RenderStateObject";
-import type { RenderStateProgram } from "./RenderStateProgram";
+import type { RenderStateProgram } from "./pipeline/RenderStateProgram";
 import type { RenderStateTexture, RenderStateTextureSampler } from "./RenderStateTexture";
 import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";

@@ -1,7 +1,8 @@
 import { Ref, RefArray } from "@/system/utils/RefCounted";
 import { RenderDeviceObject } from "./RenderDeviceObject";
 import { RenderStateDataType, type RenderState, RenderStateBufferType, RenderStateBufferUsage } from "../RenderState";
-import type { RenderStateBuffer, RenderStateBufferView } from "../render_state_objects/RenderStateBuffer";
+import type { RenderStateBuffer } from "../render_state_objects/buffer/RenderStateBuffer";
+import type { RenderStateBufferView } from "../render_state_objects/buffer/RenderStateBufferView";
 import type { RenderDevice } from "../RenderDevice";
 import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";

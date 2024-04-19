@@ -1,4 +1,5 @@
-import { RenderStateBuffer, RenderStateBufferView } from "../../render_state_objects/RenderStateBuffer";
+import { RenderStateBuffer } from "../../render_state_objects/buffer/RenderStateBuffer";
+import { RenderStateBufferView } from "../../render_state_objects/buffer/RenderStateBufferView";
 import type { WebGL2RenderState } from "../WebGL2RenderState";
 
 export class WebGL2RenderStateBuffer extends RenderStateBuffer<WebGL2RenderState> {
