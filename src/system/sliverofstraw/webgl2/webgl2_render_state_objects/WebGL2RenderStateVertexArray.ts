@@ -1,4 +1,5 @@
-import { RenderStateVertexArray, RenderStateVertexArrayView } from "../../render_state_objects/RenderStateVertexArray";
+import { RenderStateVertexArray } from "../../render_state_objects/vertex_array/RenderStateVertexArray";
+import { RenderStateVertexArrayView } from "../../render_state_objects/vertex_array/RenderStateVertexArrayView";
 import type { WebGL2RenderState } from "../WebGL2RenderState";
 
 export class WebGL2RenderStateVertexArray extends RenderStateVertexArray<WebGL2RenderState> {

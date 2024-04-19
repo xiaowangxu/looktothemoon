@@ -2,12 +2,12 @@ import { Ref, RefArray } from "@/system/utils/RefCounted";
 import { RenderDeviceObject } from "./RenderDeviceObject";
 import { RenderStateDataType, type RenderState, RenderStateBufferType, RenderStateBufferUsage } from "../RenderState";
 import type { RenderStateBuffer } from "../render_state_objects/buffer/RenderStateBuffer";
-import type { RenderStateBufferView } from "../render_state_objects/buffer/RenderStateBufferView";
+import type { RenderStateVertexArrayAttributeBufferAdaptor } from "../render_state_objects/vertex_array/RenderStateVertexArrayAttributeBufferAdaptor";
 import type { RenderDevice } from "../RenderDevice";
 import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
-import type { RenderStateVertexArray } from "../render_state_objects/RenderStateVertexArray";
+import type { RenderStateVertexArray } from "../render_state_objects/vertex_array/RenderStateVertexArray";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { PackedVector2Array, type PackedArray, PackedVector3Array, PackedVector4Array, PackedMatrix4Array, PackedIndexArray, PackedMatrix3Array, PackedFloatArray, PackedIntArray, PackedUintArray, PackedMatrix2Array } from "@/system/engine/classes/value_wrappers/PackedArray";
 import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
@@ -15,7 +15,7 @@ import type { Matrix2 } from "@/system/fivepebble/linear_algebra/Matrix2";
 
 export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>, Data = any>
     extends RenderDeviceObject<T> {
-    protected readonly buffer_ref: Ref<Buffer | RenderStateBufferView<T, Buffer>> = new Ref();
+    protected readonly buffer_ref: Ref<Buffer | RenderStateVertexArrayAttributeBufferAdaptor<T, Buffer>> = new Ref();
 
     public readonly per_instance_count: number;
 
@@ -78,7 +78,7 @@ export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buff
 export class RenderDeviceAttributeBufferView<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>, Data = any, AttriBuffer extends RenderDeviceAttributeBuffer<T, Buffer, Data> = RenderDeviceAttributeBuffer<T, Buffer, Data>>
     extends RenderDeviceAttributeBuffer<T, Buffer, Data> {
     protected readonly attribute_buffer_ref: Ref<AttriBuffer> = new Ref();
-    protected readonly attribute_buffer_row_refs: RefArray<RenderStateBufferView<T>> = new RefArray();
+    protected readonly attribute_buffer_row_refs: RefArray<RenderStateVertexArrayAttributeBufferAdaptor<T>> = new RefArray();
 
     protected get attribute_buffer() { return this.attribute_buffer_ref.expect; }
 
@@ -99,7 +99,7 @@ export class RenderDeviceAttributeBufferView<T extends RenderState<T>, Buffer ex
         const stride_in_bytes = stride_count * bytes_per_item;
         const offset_in_bytes = offset_count * bytes_per_item;
         this._element_count = Math.ceil((attribute_buffer.item_count - offset_count) / Math.max(1.0, stride_count));
-        this.buffer_ref.value = this.render_state.create_BufferView(attribute_buffer.buffer, attribute_buffer.per_item_element_count, stride_in_bytes, offset_in_bytes, this.per_instance_count).expect() as RenderStateBufferView<T, Buffer>;
+        this.buffer_ref.value = this.render_state.create_BufferView(attribute_buffer.buffer, attribute_buffer.per_item_element_count, stride_in_bytes, offset_in_bytes, this.per_instance_count).expect() as RenderStateVertexArrayAttributeBufferAdaptor<T, Buffer>;
         const row_count = attribute_buffer.row_count;
         if (row_count > 1) {
             const row_elements_count = this.per_item_element_count / row_count;
@@ -763,8 +763,8 @@ export class RenderDeviceVector4AttributeBuffer<T extends RenderState<T>, Buffer
 
 export class RenderDeviceMatrix2AttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
     extends RenderDeviceAttributeBuffer<T, Buffer, Matrix2> {
-    private readonly buffer_slice_row_0: Ref<RenderStateBufferView<T>> = new Ref();
-    private readonly buffer_slice_row_1: Ref<RenderStateBufferView<T>> = new Ref();
+    private readonly buffer_slice_row_0: Ref<RenderStateVertexArrayAttributeBufferAdaptor<T>> = new Ref();
+    private readonly buffer_slice_row_1: Ref<RenderStateVertexArrayAttributeBufferAdaptor<T>> = new Ref();
 
     public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
     public get per_item_element_count(): number { return 4; }
@@ -893,9 +893,9 @@ export class RenderDeviceMatrix2AttributeBuffer<T extends RenderState<T>, Buffer
 
 export class RenderDeviceMatrix3AttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
     extends RenderDeviceAttributeBuffer<T, Buffer, Matrix3> {
-    private readonly buffer_slice_row_0: Ref<RenderStateBufferView<T>> = new Ref();
-    private readonly buffer_slice_row_1: Ref<RenderStateBufferView<T>> = new Ref();
-    private readonly buffer_slice_row_2: Ref<RenderStateBufferView<T>> = new Ref();
+    private readonly buffer_slice_row_0: Ref<RenderStateVertexArrayAttributeBufferAdaptor<T>> = new Ref();
+    private readonly buffer_slice_row_1: Ref<RenderStateVertexArrayAttributeBufferAdaptor<T>> = new Ref();
+    private readonly buffer_slice_row_2: Ref<RenderStateVertexArrayAttributeBufferAdaptor<T>> = new Ref();
 
     public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
     public get per_item_element_count(): number { return 9; }
@@ -1050,10 +1050,10 @@ export class RenderDeviceMatrix3AttributeBuffer<T extends RenderState<T>, Buffer
 
 export class RenderDeviceMatrix4AttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>>
     extends RenderDeviceAttributeBuffer<T, Buffer, Matrix4> {
-    private readonly buffer_slice_row_0: Ref<RenderStateBufferView<T>> = new Ref();
-    private readonly buffer_slice_row_1: Ref<RenderStateBufferView<T>> = new Ref();
-    private readonly buffer_slice_row_2: Ref<RenderStateBufferView<T>> = new Ref();
-    private readonly buffer_slice_row_3: Ref<RenderStateBufferView<T>> = new Ref();
+    private readonly buffer_slice_row_0: Ref<RenderStateVertexArrayAttributeBufferAdaptor<T>> = new Ref();
+    private readonly buffer_slice_row_1: Ref<RenderStateVertexArrayAttributeBufferAdaptor<T>> = new Ref();
+    private readonly buffer_slice_row_2: Ref<RenderStateVertexArrayAttributeBufferAdaptor<T>> = new Ref();
+    private readonly buffer_slice_row_3: Ref<RenderStateVertexArrayAttributeBufferAdaptor<T>> = new Ref();
 
     public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
     public get per_item_element_count(): number { return 16; }

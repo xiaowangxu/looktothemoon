@@ -74,7 +74,5 @@ export class RenderStateProgramState<T extends RenderState<T>> extends RenderSta
 
     //#endregion
 
-    public dispose(): void {
-        this.render_state.delete_ProgramState(this);
-    }
+    public dispose(): void { }
 }

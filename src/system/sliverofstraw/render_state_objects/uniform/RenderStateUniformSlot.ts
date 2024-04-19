@@ -1,8 +1,9 @@
 import { Ref } from "@/system/utils/RefCounted";
-import type { RenderState, RenderStateUniformType } from "../RenderState";
-import { RenderStateObject } from "./RenderStateObject";
-import type { RenderStateProgram } from "./pipeline/RenderStateProgram";
-import type { RenderStateTexture, RenderStateTextureSampler } from "./RenderStateTexture";
+import type { RenderState, RenderStateUniformType } from "../../RenderState";
+import { RenderStateObjectRefCounted } from "../RenderStateObject";
+import type { RenderStateProgram } from "../pipeline/RenderStateProgram";
+import type { RenderStateTexture } from "../texture/RenderStateTexture";
+import type { RenderStateTextureSampler } from "../texture/RenderStateTextureSampler";
 import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
@@ -86,9 +87,7 @@ export type RenderStateUniform<RS extends RenderState<RS>, VT extends RenderStat
     RenderStateTextureUniformSlot<RS, RenderStateProgram<RS>, VT, RenderStateTexture<RS>, RenderStateTextureSampler<RS>> :
     RenderStateValueUniformSlot<RS, RenderStateProgram<RS>, VT, RenderStateUniformTypeMap<RS, VT>>;
 
-// uniform slots
-
-export abstract class RenderStateUniformSlot<RS extends RenderState<RS>, P extends RenderStateProgram<RS>, VT extends RenderStateUniformType> extends RenderStateObject<RS> {
+export abstract class RenderStateUniformSlot<RS extends RenderState<RS>, P extends RenderStateProgram<RS>, VT extends RenderStateUniformType> extends RenderStateObjectRefCounted<RS> {
     protected readonly name: string;
     protected readonly type: VT;
 
@@ -101,6 +100,8 @@ export abstract class RenderStateUniformSlot<RS extends RenderState<RS>, P exten
         this.type = type;
         this.program_ref.value = program;
     }
+
+    public abstract commit(): void;
 
     public dispose(): void {
         this.program_ref.clear();

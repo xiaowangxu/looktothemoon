@@ -1,10 +1,14 @@
-import { RenderStateObject } from "../RenderStateObject";
+import { RenderStateObjectRefCounted } from "../RenderStateObject";
 import type { RenderState } from "../../RenderState";
 
-export abstract class RenderStateShader<T extends RenderState<T>> extends RenderStateObject<T> {
-    public readonly type: number;
+export enum RenderStateShaderType {
+    Vertex, Fragment, Compute,
+}
 
-    constructor(render_state: T, type: number) {
+export abstract class RenderStateShader<T extends RenderState<T>> extends RenderStateObjectRefCounted<T> {
+    public readonly type: RenderStateShaderType;
+
+    constructor(render_state: T, type: RenderStateShaderType) {
         super(render_state);
         this.type = type;
     }

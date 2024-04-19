@@ -1,6 +1,7 @@
 import type { WebGL2RenderState } from "../WebGL2RenderState";
-import { RenderStateTexture, RenderStateTextureSampler } from "../../render_state_objects/RenderStateTexture";
-import { RenderStateObject } from "../../render_state_objects/RenderStateObject";
+import { RenderStateTexture } from "../../render_state_objects/texture/RenderStateTexture";
+import { RenderStateTextureSampler } from "../../render_state_objects/texture/RenderStateTextureSampler";
+import { RenderStateObjectRefCounted } from "../../render_state_objects/RenderStateObject";
 import { Ref } from "@/system/utils/RefCounted";
 
 export class WebGL2RenderStateTexture extends RenderStateTexture<WebGL2RenderState> {
@@ -26,7 +27,7 @@ export class WebGL2RenderStateTextureSampler extends RenderStateTextureSampler<W
     }
 }
 
-export class WebGL2RenderStateSampledTexture extends RenderStateObject<WebGL2RenderState> {
+export class WebGL2RenderStateSampledTexture extends RenderStateObjectRefCounted<WebGL2RenderState> {
     public slot: number | undefined = undefined;
 
     private readonly texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();

@@ -5,7 +5,7 @@ import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
-import { RenderStateTextureUniformSlot, RenderStateUniformSlot, RenderStateValueUniformSlot, type RenderStateTextureUniformType, type RenderStateUniformTypeMap } from "../../render_state_objects/RenderStateUniformSlot";
+import { RenderStateTextureUniformSlot, RenderStateUniformSlot, RenderStateValueUniformSlot, type RenderStateTextureUniformType, type RenderStateUniformTypeMap } from "../../render_state_objects/uniform/RenderStateUniformSlot";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { WebGL2RenderStateSampledTexture, type WebGL2RenderStateTexture, type WebGL2RenderStateTextureSampler } from "./WebGL2RenderStateTexture";
 import { Ref } from "@/system/utils/RefCounted";

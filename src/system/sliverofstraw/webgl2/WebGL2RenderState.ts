@@ -8,10 +8,10 @@ import { WebGL2RenderStateVertexArray, WebGL2RenderStateVertexArrayView } from "
 import { WebGL2RenderStateSampledTexture, WebGL2RenderStateTexture, WebGL2RenderStateTextureSampler } from "./webgl2_render_state_objects/WebGL2RenderStateTexture";
 import { WeakRef } from "@/system/utils/RefCounted";
 import { WebGL2RenderStateFrameBuffer } from "./webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
-import { type FrameBufferAttachment } from "../render_state_objects/RenderStateFrameBuffer";
+import { type FrameBufferAttachment } from "../render_state_objects/frame_buffer/RenderStateFrameBuffer";
 import { WebGL2RenderStateBoolUniformSlot, WebGL2RenderStateFloatUniformSlot, WebGL2RenderStateIntUniformSlot, WebGL2RenderStateMatrix2UniformSlot, WebGL2RenderStateMatrix3UniformSlot, WebGL2RenderStateMatrix4UniformSlot, WebGL2RenderStateTextureUniformSlot, WebGL2RenderStateUintUniformSlot, WebGL2RenderStateVector2UniformSlot, WebGL2RenderStateVector3UniformSlot, WebGL2RenderStateVector4UniformSlot, type WebGL2RenderStateUniform } from "./webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 import { WebGL2RenderStateRenderBuffer } from "./webgl2_render_state_objects/WebGL2RenderStateRenderBuffer";
-import type { RenderStateUniformSlot, RenderStateUniformTypeMap } from "../render_state_objects/RenderStateUniformSlot";
+import type { RenderStateUniformSlot, RenderStateUniformTypeMap } from "../render_state_objects/uniform/RenderStateUniformSlot";
 import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
@@ -1024,16 +1024,16 @@ export class WebGL2RenderState extends RenderState<WebGL2RenderState> {
         const gl = this.gl;
         const s = sampler.sampler;
         if (wrap_s) {
-            sampler.wrap_s = this.get_TextureWrap(wrap_s);
-            gl.samplerParameteri(s, gl.TEXTURE_WRAP_S, sampler.wrap_s);
+            sampler.wrap_u = this.get_TextureWrap(wrap_s);
+            gl.samplerParameteri(s, gl.TEXTURE_WRAP_S, sampler.wrap_u);
         }
         if (wrap_t) {
-            sampler.wrap_t = this.get_TextureWrap(wrap_t);
-            gl.samplerParameteri(s, gl.TEXTURE_WRAP_T, sampler.wrap_t);
+            sampler.wrap_v = this.get_TextureWrap(wrap_t);
+            gl.samplerParameteri(s, gl.TEXTURE_WRAP_T, sampler.wrap_v);
         }
         if (wrap_r) {
-            sampler.wrap_r = this.get_TextureWrap(wrap_r);
-            gl.samplerParameteri(s, gl.TEXTURE_WRAP_R, sampler.wrap_r);
+            sampler.wrap_w = this.get_TextureWrap(wrap_r);
+            gl.samplerParameteri(s, gl.TEXTURE_WRAP_R, sampler.wrap_w);
         }
         if (min_filter) {
             sampler.min_filter = this.get_TextureFilter(min_filter);

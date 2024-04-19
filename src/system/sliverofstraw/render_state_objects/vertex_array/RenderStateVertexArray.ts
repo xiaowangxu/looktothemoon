@@ -1,0 +1,44 @@
+import { RenderStateObjectRefCounted } from "../RenderStateObject";
+import type { RenderState } from "../../RenderState";
+import type { RenderStateVertexArrayAttributeBufferAdaptor } from "./RenderStateVertexArrayAttributeBufferAdaptor";
+import { RenderStateVertexArrayView } from "./RenderStateVertexArrayView";
+import type { RenderStateBuffer } from "../buffer/RenderStateBuffer";
+
+export enum RenderStatePrimitiveType {
+    Triangles, TriangleStrip, TriangleFan, LineStrip, Lines, LineLoop
+}
+
+export abstract class RenderStateVertexArray<T extends RenderState<T>> extends RenderStateObjectRefCounted<T> {
+
+    public readonly primitive_type: RenderStatePrimitiveType;
+    public readonly offset: number;
+    public readonly count: number;
+
+    public abstract get is_indexed(): boolean;
+
+    constructor(render_state: T, primitive_type: RenderStatePrimitiveType, offset: number, count: number) {
+        super(render_state);
+        this.primitive_type = primitive_type;
+        this.offset = offset;
+        this.count = count;
+    }
+
+    public abstract set_Buffer(location: number, buffer: RenderStateBuffer<T> | RenderStateVertexArrayAttributeBufferAdaptor<T>, per_instance: boolean): void;
+
+    public abstract clear_Buffer(location: number): void;
+
+    public abstract clear_Buffers(): void;
+
+    public abstract set_Index(buffer: RenderStateBuffer<T> | RenderStateVertexArrayAttributeBufferAdaptor<T>): void;
+
+    public abstract clear_Index(): void;
+
+    public create_View(offset: number, count: number) {
+        const view = new RenderStateVertexArrayView<T>(this.render_state, this, offset, count);
+        return view;
+    }
+
+    public dispose(): void {
+        this.render_state.delete_VertexArray(this);
+    }
+}

@@ -1,9 +1,9 @@
 import { Ref } from "@/system/utils/RefCounted";
-import { RenderStateObject } from "../RenderStateObject";
+import { RenderStateObjectRefCounted } from "../RenderStateObject";
 import type { RenderState } from "../../RenderState";
 import type { RenderStateShader } from "./RenderStateShader";
 
-export class RenderStateProgram<T extends RenderState<T>> extends RenderStateObject<T> {
+export abstract class RenderStateProgram<T extends RenderState<T>> extends RenderStateObjectRefCounted<T> {
 
     public readonly vert_shader_ref: Ref<RenderStateShader<T>> = new Ref();
     public readonly frag_shader_ref: Ref<RenderStateShader<T>> = new Ref();

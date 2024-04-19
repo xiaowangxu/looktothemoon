@@ -1,6 +1,6 @@
 import type { Ref } from "@/system/utils/RefCounted";
-import { RenderStateFrameBuffer } from "../../render_state_objects/RenderStateFrameBuffer";
-import type { RenderStateTexture } from "../../render_state_objects/RenderStateTexture";
+import { RenderStateFrameBuffer } from "../../render_state_objects/frame_buffer/RenderStateFrameBuffer";
+import type { RenderStateTexture } from "../../render_state_objects/texture/RenderStateTexture";
 import type { WebGL2RenderState } from "../WebGL2RenderState";
 
 export class WebGL2RenderStateFrameBuffer extends RenderStateFrameBuffer<WebGL2RenderState> {
