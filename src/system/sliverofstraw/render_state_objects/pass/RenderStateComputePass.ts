@@ -12,7 +12,7 @@ export abstract class RenderStateComputePass<T extends RenderState<T>> extends R
         super(render_state);
     }
 
-    public abstract compute(): void;
+    public abstract compute(pipeline: RenderStatePipeline<T>, uniforms: any, workgroup_x_count: number, workgroup_y_count?: number, workgroup_z_count?: number): void;
 
     public abstract finish(): void;
 }

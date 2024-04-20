@@ -7,12 +7,14 @@ import type { RenderStateProgramState } from "./RenderStateProgramState";
 export abstract class RenderStatePipeline<T extends RenderState<T>> extends RenderStateObjectRefCounted<T> {
 
     public readonly program_ref: Ref<RenderStateProgram<T>> = new Ref();
-    public readonly program_state: RenderStateProgramState<T>;
+    public readonly program_state: RenderStateProgramState<T> | undefined;
+    public readonly is_compute_pipeline: boolean;
 
-    constructor(render_state: T, program: RenderStateProgram<T>, program_state: RenderStateProgramState<T>) {
+    constructor(render_state: T, program: RenderStateProgram<T>, program_state?: RenderStateProgramState<T>) {
         super(render_state);
         this.program_ref.value = program;
         this.program_state = program_state;
+        this.is_compute_pipeline = program.is_compute_program;
     }
 
     public dispose(): void {

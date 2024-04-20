@@ -62,13 +62,13 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     public abstract delete_Shader(shader: RenderStateShader<T>): void;
 
-    public abstract create_Program(vert_shader: RenderStateShader<T>, frag_shader: RenderStateShader<T> | undefined, option: any): Result<RenderStateProgram<T>, Error>;
+    public abstract create_Program(vertex_or_compute_shader: RenderStateShader<T>, frag_shader: RenderStateShader<T> | undefined, option: any): Result<RenderStateProgram<T>, Error>;
 
     public abstract delete_Program(program: RenderStateProgram<T>): void;
 
     public abstract create_ProgramState(): RenderStateProgramState<T>;
 
-    public abstract create_Pipeline(program: RenderStateProgram<T>, program_state: RenderStateProgramState<T>): Result<RenderStatePipeline<T>, Error>;
+    public abstract create_Pipeline(program: RenderStateProgram<T>, program_state?: RenderStateProgramState<T>): Result<RenderStatePipeline<T>, Error>;
 
     public abstract delete_Pipeline(pipeline: RenderStatePipeline<T>): void;
 
