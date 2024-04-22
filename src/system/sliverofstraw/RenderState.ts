@@ -4,15 +4,18 @@ import type { RenderStateFrameBuffer } from "./render_state_objects/frame_buffer
 import type { RenderStateShader, RenderStateShaderType } from "./render_state_objects/pipeline/RenderStateShader";
 import type { RenderStateTexture, RenderStateTextureDimension, RenderStateTextureFormat, RenderStateTextureUsage } from "./render_state_objects/texture/RenderStateTexture";
 import type { RenderStateTextureFilter, RenderStateTextureSampler, RenderStateTextureWrap } from "./render_state_objects/texture/RenderStateTextureSampler";
-import type { RenderStateUniform, RenderStateUniformSlot, RenderStateUniformTypeMap } from "./render_state_objects/uniform/RenderStateUniformSlot";
 import type { RenderStateVertexArray } from "./render_state_objects/vertex_array/RenderStateVertexArray";
-import type { RenderStateVertexArrayView } from "./render_state_objects/vertex_array/RenderStateVertexArrayView";
 import type { RenderStateProgram } from "./render_state_objects/pipeline/RenderStateProgram";
 import type { RenderStateBuffer, RenderStateBufferDataType, RenderStateBufferType, RenderStateBufferUsage } from "./render_state_objects/buffer/RenderStateBuffer";
 import type { RenderStateMultiSampleTexture } from "./render_state_objects/texture/RenderStateMultiSampleTexture";
 import type { RenderStateDepthCompareFunc, RenderStateProgramState } from "./render_state_objects/pipeline/RenderStateProgramState";
-import type { RenderStatePipeline } from "./render_state_objects/pipeline/RenderStatePipeline";
 import type { RenderStatePassCollection } from "./render_state_objects/pass/RenderStatePassCollection";
+import type { RenderStateUniformLayout } from "./render_state_objects/uniform/RenderStateUniformLayout";
+import type { RenderStateTextureView } from "./render_state_objects/texture/RenderStateTextureView";
+import type { RenderStateUniformGroup } from "./render_state_objects/uniform/RenderStateUniformGroup";
+import type { RenderStateAttributeLayout } from "./render_state_objects/pipeline/RenderStateAttributeLayout";
+import type { RenderStateComputePipeline } from "./render_state_objects/pipeline/RenderStateComputePipeline";
+import type { RenderStateRenderPipeline } from "./render_state_objects/pipeline/RenderStateRenderPipeline";
 
 //#region options
 
@@ -62,15 +65,19 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     public abstract delete_Shader(shader: RenderStateShader<T>): void;
 
-    public abstract create_Program(vertex_or_compute_shader: RenderStateShader<T>, frag_shader: RenderStateShader<T> | undefined, option: any): Result<RenderStateProgram<T>, Error>;
+    public abstract create_Program(vertex_or_compute_shader: RenderStateShader<T>, frag_shader: RenderStateShader<T> | undefined): Result<RenderStateProgram<T>, Error>;
 
     public abstract delete_Program(program: RenderStateProgram<T>): void;
 
     public abstract create_ProgramState(): RenderStateProgramState<T>;
 
-    public abstract create_Pipeline(program: RenderStateProgram<T>, program_state?: RenderStateProgramState<T>): Result<RenderStatePipeline<T>, Error>;
+    public abstract create_ComputePipeline(program: RenderStateProgram<T>, uniform_layouts: Iterable<RenderStateUniformLayout<T>>): Result<RenderStateRenderPipeline<T>, Error>;
 
-    public abstract delete_Pipeline(pipeline: RenderStatePipeline<T>): void;
+    public abstract create_RenderPipeline(program: RenderStateProgram<T>, program_state: RenderStateProgramState<T>, uniform_layouts: Iterable<RenderStateUniformLayout<T>>, attribute_layouts: Iterable<RenderStateAttributeLayout>): Result<RenderStateRenderPipeline<T>, Error>;
+
+    public abstract delete_RenderPipeline(pipeline: RenderStateRenderPipeline<T>): void;
+
+    public abstract delete_ComputePipeline(pipeline: RenderStateComputePipeline<T>): void;
 
     //#endregion
 
@@ -134,6 +141,8 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     public abstract delete_Texture(texture: RenderStateTexture<T>): void;
 
+    public abstract delete_TextureView(texture: RenderStateTextureView<T>): void;
+
     //#endregion
 
     //#region multi sample texture
@@ -143,36 +152,15 @@ export abstract class RenderState<T extends RenderState<T>> {
         width: number, height: number, sample_count: number
     ): Result<RenderStateMultiSampleTexture<T>, Error>;
 
-
     public abstract delete_MultiSampleTexture(render_buffer: RenderStateMultiSampleTexture<T>): void;
 
     //#endregion
 
+    // #region uniform
 
+    public abstract create_UniformLayout(): RenderStateUniformLayout<T>;
 
-    //#region uniform
-
-    public abstract create_ProgramUniform<VT extends RenderStateUniformType>(program: RenderStateProgram<T>, name: string, type: VT, default_value: RenderStateUniformTypeMap<T, VT>, option: any): Result<RenderStateUniform<T, VT>, Error>;
-
-    public abstract delete_ProgramUniform(uniform: RenderStateUniformSlot<T, RenderStateProgram<T>, RenderStateUniformType>): void;
+    public abstract delete_UniformGroup(group: RenderStateUniformGroup<T>): void;
 
     //#endregion
-
 }
-
-//#region type helper
-
-export type RenderStateProgramOptionParameterType<T extends RenderState<T>> =
-    T extends {
-        create_Program(vert_shader: RenderStateShader<T>, frag_shader: RenderStateShader<T> | undefined, option: infer R): Result<RenderStateProgram<T>, Error>
-    } ? R : never;
-
-export type RenderStateProgramUniformOptionParameterType<T extends RenderState<T>> =
-    T extends {
-        create_ProgramUniform<VT extends RenderStateUniformType>(program: RenderStateProgram<T>, name: string, type: VT, default_value: RenderStateUniformTypeMap<T, VT>, option: infer R): Result<RenderStateUniform<T, VT>, Error>
-    } ? R : never;
-
-// import { type WebGL2RenderState } from "./webgl2/WebGL2RenderState";
-// const a: RenderStateProgramAttributesParameterType<WebGL2RenderState>;
-
-//#endregion

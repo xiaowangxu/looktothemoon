@@ -23,10 +23,24 @@ export abstract class RenderStateVertexArray<T extends RenderState<T>> extends R
         this.count = count;
     }
 
-    public abstract set_Buffer(location: number, buffer: RenderStateBuffer<T> | RenderStateVertexArrayAttributeBufferAdaptor<T>, per_instance: boolean): void;
+    /**
+     * set vertex array's attribute buffer
+     * @param location attribute location
+     * @param buffer the buffer can be RenderStateBuffer or RenderStateVertexArrayAttributeBufferAdaptor
+     * @param buffer_views if needs to be split into rows, pass in each row as RenderStateVertexArrayAttributeBufferAdaptor, each RS will use this accordingly
+     * @param per_instance is per instance step mode buffer
+     */
+    public abstract set_Buffer(location: number, buffer: RenderStateBuffer<T> | RenderStateVertexArrayAttributeBufferAdaptor<T>, buffer_views: Iterable<RenderStateVertexArrayAttributeBufferAdaptor<T>> | undefined, per_instance: boolean): void;
 
+    /**
+     * clear one vertex array's attribute buffer
+     * @param location clear buffer's base location, will consider rows
+     */
     public abstract clear_Buffer(location: number): void;
 
+    /**
+     * clear all attribute buffers
+     */
     public abstract clear_Buffers(): void;
 
     public abstract set_Index(buffer: RenderStateBuffer<T> | RenderStateVertexArrayAttributeBufferAdaptor<T>): void;

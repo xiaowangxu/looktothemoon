@@ -19,5 +19,6 @@ export abstract class RenderStateTextureView<T extends RenderState<T>> extends R
 
     public dispose(): void {
         this.texture_ref.clear();
+        this.render_state.delete_TextureView(this);
     }
 }
