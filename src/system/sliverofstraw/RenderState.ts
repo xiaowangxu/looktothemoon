@@ -96,7 +96,7 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     public abstract create_PassCollection(): RenderStatePassCollection<T>;
 
-    public abstract submit_PassCollections(pass_colls: Iterable<RenderStatePassCollection<T>>): void;
+    public abstract submit_PassCollections(pass_collections: Iterable<RenderStatePassCollection<T>>): void;
 
     //#endregion
 

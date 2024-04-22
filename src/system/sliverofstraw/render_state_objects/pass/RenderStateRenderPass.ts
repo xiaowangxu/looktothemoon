@@ -11,6 +11,12 @@ export abstract class RenderStateRenderPass<T extends RenderState<T>> extends Re
         super(render_state);
     }
 
+    public abstract set_Viewport(x: number, y: number, width: number, height: number, min_depth?: number, max_depth?: number): void;
+
+    public abstract set_Scissor(x: number, y: number, width: number, height: number): void;
+
+    public abstract set_BlendConstant(r: number, g: number, b: number, a: number): void;
+
     public abstract draw(pipeline: RenderStatePipeline<T>, vertex_array: RenderStateVertexArray<T> | RenderStateVertexArrayView<T>, uniforms: any, instance_count: number): void;
 
     public abstract finish(): void;

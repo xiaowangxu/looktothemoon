@@ -33,8 +33,8 @@ export abstract class RenderStateVertexArray<T extends RenderState<T>> extends R
 
     public abstract clear_Index(): void;
 
-    public create_View(offset: number, count: number) {
-        const view = new RenderStateVertexArrayView<T>(this.render_state, this, offset, count);
+    public create_View(vertex_offset: number, vertex_count: number) {
+        const view: RenderStateVertexArrayView<T> = new RenderStateVertexArrayView(this.render_state, this, vertex_offset, vertex_count);
         return view;
     }
 

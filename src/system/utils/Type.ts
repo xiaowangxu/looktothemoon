@@ -4,7 +4,7 @@ export type Self<T> = T;
 
 export type New<T> = T;
 
-export type NotNull = Exclude<any, null | undefined>;
+export type NotNull<T = any> = Exclude<T, null | undefined>;
 
 export class Out<T> {
 

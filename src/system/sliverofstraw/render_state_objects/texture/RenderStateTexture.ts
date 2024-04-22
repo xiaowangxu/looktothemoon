@@ -66,7 +66,7 @@ export abstract class RenderStateTexture<T extends RenderState<T>> extends Rende
     /**
      * update a portion of this texture, but the size of the buffer can not be altered, use RenderState.create_Texture() instead
      * @throw do as much data check as you can
-     * @param dst an enumerated value defining which aspects of the texture to write the data to, mainly for depth stencil texture, if omitted isRendetStateTextureDestination.All
+     * @param dst_destination an enumerated value defining which aspects of the texture to write the data to, mainly for depth stencil texture, if omitted isRendetStateTextureDestination.All
      * @param dst_mipmap_level the mip-map level of the texture to write the data to, if omitted is 0
      * @param dst_x the texture origin x to copy in, if omitted is 0
      * @param dst_y the texture origin y to copy in, if omitted is 0, ignored in D1 texture
@@ -80,7 +80,7 @@ export abstract class RenderStateTexture<T extends RenderState<T>> extends Rende
      * @param data_offset data offset in bytes, if omitted is 0
      */
     public abstract update_Data(
-        dst: RendetStateTextureDestination | undefined,
+        dst_destination: RendetStateTextureDestination | undefined,
         dst_mipmap_level: number | undefined,
         dst_x: number | undefined, dst_y: number | undefined, dst_z: number | undefined,
         dst_w: number | undefined, dst_h: number | undefined, dst_d: number | undefined,

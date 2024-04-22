@@ -44,7 +44,7 @@ export abstract class RenderStateBuffer<T extends RenderState<T>> extends Render
      * @param data_element_offset data offset where copyed data starts from, if is TypedArray in element count, else in bytes
      * @param data_element_length total data size to be copyed from, if is TypedArray in element count, else in bytes, if omitted will be (data.length - dst_offset)
      */
-    public abstract update_Data(data: RenderStateBufferData, dst_offset: number, data_element_offset: number, data_element_length?: number): void;
+    public abstract update_Data(dst_offset: number, data: RenderStateBufferData, data_element_offset: number, data_element_length?: number): void;
 
     public create_AttributeBufferAdaptor(element_size: number, offset: number, stride: number): RenderStateVertexArrayAttributeBufferAdaptor<T> {
         return new RenderStateVertexArrayAttributeBufferAdaptor<T>(this.render_state, this, element_size, offset, stride)

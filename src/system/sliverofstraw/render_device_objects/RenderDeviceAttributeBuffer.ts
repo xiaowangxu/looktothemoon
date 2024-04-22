@@ -15,9 +15,9 @@ import type { Matrix2 } from "@/system/fivepebble/linear_algebra/Matrix2";
 
 export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buffer extends RenderStateBuffer<T> = RenderStateBuffer<T>, Data = any>
     extends RenderDeviceObject<T> {
-    protected readonly buffer_ref: Ref<Buffer | RenderStateVertexArrayAttributeBufferAdaptor<T, Buffer>> = new Ref();
+    protected readonly buffer_ref: Ref<Buffer> = new Ref();
 
-    public readonly per_instance_count: number;
+    public readonly per_instance: boolean;
 
     public get buffer() { return this.buffer_ref.expect; }
 
@@ -29,17 +29,17 @@ export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buff
     public get item_count() { return this.element_count / this.per_item_element_count; }
     public get byte_count() { return this.data.byteLength };
 
-    public abstract get data(): ArrayBufferView;
+    public abstract get data(): ArrayBuffer;
 
-    constructor(render_device: RenderDevice<T>, per_instance_count: number = 0) {
+    constructor(render_device: RenderDevice<T>, per_instance_count: boolean = false) {
         super(render_device);
-        this.per_instance_count = per_instance_count;
+        this.per_instance = per_instance_count;
     }
 
-    public abstract alloc_Data(data: Data[]): void;
-    public abstract alloc_Data(data: ArrayBufferView): void;
-    public abstract alloc_Data(count: number): void;
-    public abstract alloc_Data(data: Data[] | ArrayBufferView | number): void;
+    protected abstract alloc_Data(data: Data[]): void;
+    protected abstract alloc_Data(data: ArrayBufferView): void;
+    protected abstract alloc_Data(count: number): void;
+    protected abstract alloc_Data(data: Data[] | ArrayBufferView | number): void;
 
     public abstract update_Data(data: Data, offset: number, commit?: boolean): void;
     public abstract update_Data(data: ArrayBufferView, offset: number, commit?: boolean): void;
@@ -50,10 +50,10 @@ export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buff
     public commit_Data(offset: number, lenght?: number): void;
     public commit_Data(offset?: number, lenght?: number): void {
         if (offset === undefined || lenght === undefined) {
-            this.render_state.update_Buffer(this.buffer_ref.expect, this.data, 0);
+            this.buffer.update_Data(this.data, 0, 0);
         }
         else {
-            this.render_state.update_Buffer(this.buffer_ref.expect, this.data, offset, offset, lenght);
+            this.buffer.update_Data(this.data, );
         }
     }
 
@@ -62,11 +62,7 @@ export abstract class RenderDeviceAttributeBuffer<T extends RenderState<T>, Buff
     public abstract get_PackedArray(): PackedArray;
 
     public bound_VertexArray(vertex_array: RenderStateVertexArray<T>, attribute_location: number) {
-        this.render_state.set_VertexArrayAttributeBuffer(vertex_array, attribute_location, this.buffer);
-    }
-
-    public toggle_VertexArray(vertex_array: RenderStateVertexArray<T>, attribute_location: number, enable: boolean) {
-        this.render_state.toggle_VertexArrayAttribute(vertex_array, attribute_location, enable);
+        vertex_array.set_Buffer(attribute_location, this.buffer, this.per_instance);
     }
 
     public dispose(): void {
@@ -93,19 +89,19 @@ export class RenderDeviceAttributeBufferView<T extends RenderState<T>, Buffer ex
     public get data(): ArrayBufferView { throw new Error('<RenderDeviceAttributeBufferView> data: can not get data of an buffer view'); }
 
     constructor(render_device: RenderDevice<T>, attribute_buffer: AttriBuffer, stride_count: number, offset_count: number, per_instance_count: number | undefined) {
-        super(render_device, per_instance_count ?? attribute_buffer.per_instance_count);
+        super(render_device, per_instance_count ?? attribute_buffer.per_instance);
         this.attribute_buffer_ref.value = attribute_buffer;
         const bytes_per_item = attribute_buffer.per_item_element_count * attribute_buffer.per_element_byte_count;
         const stride_in_bytes = stride_count * bytes_per_item;
         const offset_in_bytes = offset_count * bytes_per_item;
         this._element_count = Math.ceil((attribute_buffer.item_count - offset_count) / Math.max(1.0, stride_count));
-        this.buffer_ref.value = this.render_state.create_BufferView(attribute_buffer.buffer, attribute_buffer.per_item_element_count, stride_in_bytes, offset_in_bytes, this.per_instance_count).expect() as RenderStateVertexArrayAttributeBufferAdaptor<T, Buffer>;
+        this.buffer_ref.value = this.render_state.create_BufferView(attribute_buffer.buffer, attribute_buffer.per_item_element_count, stride_in_bytes, offset_in_bytes, this.per_instance).expect() as RenderStateVertexArrayAttributeBufferAdaptor<T, Buffer>;
         const row_count = attribute_buffer.row_count;
         if (row_count > 1) {
             const row_elements_count = this.per_item_element_count / row_count;
             const bytes_per_row = row_elements_count * this.per_element_byte_count;
             for (let i = 0; i < row_count; i++) {
-                this.attribute_buffer_row_refs.push(this.render_state.create_BufferView(attribute_buffer.buffer, row_elements_count, stride_in_bytes, offset_in_bytes + i * bytes_per_row, this.per_instance_count).expect());
+                this.attribute_buffer_row_refs.push(this.render_state.create_BufferView(attribute_buffer.buffer, row_elements_count, stride_in_bytes, offset_in_bytes + i * bytes_per_row, this.per_instance).expect());
             }
         }
     }
@@ -253,7 +249,7 @@ export class RenderDeviceUintAttributeBuffer<T extends RenderState<T>, Buffer ex
 
     constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: number[] | Uint32Array | number, per_instance_count: number = 0) {
         super(render_device, per_instance_count);
-        this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 1, RenderStateDataType.UnsignedInt, false, this.per_instance_count).expect() as Buffer;
+        this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 1, RenderStateDataType.UnsignedInt, false, this.per_instance).expect() as Buffer;
         if (data !== undefined) this.alloc_Data(data as any);
     }
 
@@ -329,7 +325,7 @@ export class RenderDeviceIntAttributeBuffer<T extends RenderState<T>, Buffer ext
 
     constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: number[] | Int32Array | number, per_instance_count: number = 0) {
         super(render_device, per_instance_count);
-        this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 1, RenderStateDataType.Int, false, this.per_instance_count).expect() as Buffer;
+        this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 1, RenderStateDataType.Int, false, this.per_instance).expect() as Buffer;
         if (data !== undefined) this.alloc_Data(data as any);
     }
 
@@ -405,7 +401,7 @@ export class RenderDeviceFloatAttributeBuffer<T extends RenderState<T>, Buffer e
 
     constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: number[] | Float32Array | number, per_instance_count: number = 0) {
         super(render_device, per_instance_count);
-        this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 1, RenderStateDataType.Float, false, this.per_instance_count).expect() as Buffer;
+        this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 1, RenderStateDataType.Float, false, this.per_instance).expect() as Buffer;
         if (data !== undefined) this.alloc_Data(data as any);
     }
 
@@ -481,7 +477,7 @@ export class RenderDeviceVector2AttributeBuffer<T extends RenderState<T>, Buffer
 
     constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Vector2[] | Float32Array | number, per_instance_count: number = 0) {
         super(render_device, per_instance_count);
-        this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 2, RenderStateDataType.Float, false, this.per_instance_count).expect() as Buffer;
+        this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 2, RenderStateDataType.Float, false, this.per_instance).expect() as Buffer;
         if (data !== undefined) this.alloc_Data(data as any);
     }
 
@@ -575,7 +571,7 @@ export class RenderDeviceVector3AttributeBuffer<T extends RenderState<T>, Buffer
 
     constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Vector3[] | Float32Array | number, per_instance_count: number = 0) {
         super(render_device, per_instance_count);
-        this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 3, RenderStateDataType.Float, false, this.per_instance_count).expect() as Buffer;
+        this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 3, RenderStateDataType.Float, false, this.per_instance).expect() as Buffer;
         if (data !== undefined) this.alloc_Data(data as any);
     }
 
@@ -673,7 +669,7 @@ export class RenderDeviceVector4AttributeBuffer<T extends RenderState<T>, Buffer
 
     constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Vector4[] | Float32Array | number, per_instance_count: number = 0) {
         super(render_device, per_instance_count);
-        this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 4, RenderStateDataType.Float, false, this.per_instance_count).expect() as Buffer;
+        this.buffer_ref.value = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 4, RenderStateDataType.Float, false, this.per_instance).expect() as Buffer;
         if (data !== undefined) this.alloc_Data(data as any);
     }
 
@@ -779,7 +775,7 @@ export class RenderDeviceMatrix2AttributeBuffer<T extends RenderState<T>, Buffer
 
     constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Matrix2[] | Float32Array | number, per_instance_count: number = 0) {
         super(render_device, per_instance_count);
-        const buffer = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 4, RenderStateDataType.Float, false, this.per_instance_count).expect() as Buffer;
+        const buffer = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 4, RenderStateDataType.Float, false, this.per_instance).expect() as Buffer;
         this.buffer_ref.value = buffer;
         const bytes_per_row = 2 * this.per_element_byte_count;
         const bytes_per_matrix = 2 * bytes_per_row;
@@ -910,7 +906,7 @@ export class RenderDeviceMatrix3AttributeBuffer<T extends RenderState<T>, Buffer
 
     constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Matrix3[] | Float32Array | number, per_instance_count: number = 0) {
         super(render_device, per_instance_count);
-        const buffer = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 9, RenderStateDataType.Float, false, this.per_instance_count).expect() as Buffer;
+        const buffer = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 9, RenderStateDataType.Float, false, this.per_instance).expect() as Buffer;
         this.buffer_ref.value = buffer;
         const bytes_per_row = 3 * this.per_element_byte_count;
         const bytes_per_matrix = 3 * bytes_per_row;
@@ -1068,7 +1064,7 @@ export class RenderDeviceMatrix4AttributeBuffer<T extends RenderState<T>, Buffer
 
     constructor(render_device: RenderDevice<T>, usage: RenderStateBufferUsage, data?: Matrix4[] | Float32Array | number, per_instance_count: number = 0) {
         super(render_device, per_instance_count);
-        const buffer = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 16, RenderStateDataType.Float, false, this.per_instance_count).expect() as Buffer;
+        const buffer = this.render_state.create_Buffer(RenderStateBufferType.Array, usage, 16, RenderStateDataType.Float, false, this.per_instance).expect() as Buffer;
         this.buffer_ref.value = buffer;
         const bytes_per_row = 4 * this.per_element_byte_count;
         const bytes_per_matrix = 4 * bytes_per_row;
