@@ -16,7 +16,8 @@ export abstract class RenderStateMultiSampleTexture<T extends RenderState<T>> ex
     public get mipmap_level_count(): number { return 1; }
     public readonly sample_count: number;
 
-    constructor(render_state: T,
+    constructor(
+        render_state: T,
         usage: RenderStateTextureUsage, format: RenderStateTextureFormat,
         width: number, height: number, sample_count: number,
     ) {

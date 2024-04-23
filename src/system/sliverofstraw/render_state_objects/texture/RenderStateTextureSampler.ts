@@ -23,12 +23,13 @@ export abstract class RenderStateTextureSampler<T extends RenderState<T>> extend
     public readonly max_lod: number = 32;
     public readonly anisotropy: number = 1;
 
-    constructor(render_state: T,
+    constructor(
+        render_state: T,
         wrap_u: RenderStateTextureWrap, wrap_v: RenderStateTextureWrap, wrap_w: RenderStateTextureWrap,
         min_filter: RenderStateTextureFilter, mag_filter: RenderStateTextureFilter, mipmap_filter: RenderStateTextureFilter,
         compare: RenderStateDepthCompareFunc | undefined = undefined,
         min_lod: number = 1, max_lod: number = 32,
-        anisotropy: number = 1
+        anisotropy: number = 1,
     ) {
         super(render_state);
         this.wrap_u = wrap_u;

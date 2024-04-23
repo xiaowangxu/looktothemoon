@@ -15,6 +15,9 @@
             "ES2021",
             "DOM"
         ],
+        "types": [
+            "@webgpu/types",
+        ],
         "moduleDetection": "force",
         "composite": true,
         "baseUrl": ".",

@@ -5,6 +5,9 @@ import type { RenderStateTextureView } from "../texture/RenderStateTextureView";
 
 export abstract class RenderStateFrameBuffer<T extends RenderState<T>> extends RenderStateObjectRefCounted<T> {
 
+    public abstract get blend_constant(): Vector4;
+    public abstract set blend_constant(constant: Vector4);
+
     /**
      * add a ***color_attachment*** to this frame_buffer, the index will always grow linearly without holes, you may not alter the attachments' order or total
      * 

@@ -12,11 +12,14 @@ export enum RenderStateTextureDimension {
 
 export enum RenderStateTextureFormat {
     RGBA32F,
+    RGBA16F,
     R32U,
     RGBA32U,
 
     RGBA8, // rgba8unorm
+    BGRA8,
     SRGBA8, // rgba8unorm-srgb
+    SBGRA8,
 
     D24,
     D24S8,
@@ -48,7 +51,8 @@ export abstract class RenderStateTexture<T extends RenderState<T>> extends Rende
 
     public readonly mipmap_level_count: number = 1;
 
-    constructor(render_state: T,
+    constructor(
+        render_state: T,
         usage: RenderStateTextureUsage, format: RenderStateTextureFormat,
         dimension: RenderStateTextureDimension, width: number, height: number, depth: number,
         mipmap_level_count: number = 1,

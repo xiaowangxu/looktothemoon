@@ -1,7 +1,7 @@
 import { Result } from "../utils/Result";
 import type { RenderDevice } from "./RenderDevice";
 import type { RenderStateFrameBuffer } from "./render_state_objects/frame_buffer/RenderStateFrameBuffer";
-import type { RenderStateShader, RenderStateShaderType } from "./render_state_objects/pipeline/RenderStateShader";
+import { RenderStateShaderType, type RenderStateShader } from "./render_state_objects/pipeline/RenderStateShader";
 import type { RenderStateTexture, RenderStateTextureDimension, RenderStateTextureFormat, RenderStateTextureUsage } from "./render_state_objects/texture/RenderStateTexture";
 import type { RenderStateTextureFilter, RenderStateTextureSampler, RenderStateTextureWrap } from "./render_state_objects/texture/RenderStateTextureSampler";
 import type { RenderStateVertexArray } from "./render_state_objects/vertex_array/RenderStateVertexArray";
@@ -16,37 +16,12 @@ import type { RenderStateUniformGroup } from "./render_state_objects/uniform/Ren
 import type { RenderStateAttributeLayout } from "./render_state_objects/pipeline/RenderStateAttributeLayout";
 import type { RenderStateComputePipeline } from "./render_state_objects/pipeline/RenderStateComputePipeline";
 import type { RenderStateRenderPipeline } from "./render_state_objects/pipeline/RenderStateRenderPipeline";
+import { RenderStatePrimitiveType } from "./render_state_objects/vertex_array/RenderStateVertexArray";
+import type { RenderStateOutputState } from "./render_state_objects/pipeline/RenderStateOutputState";
 
 //#region options
 
 export interface RenderStateInitOption { }
-
-//#endregion
-
-//#region enum and constansts
-
-export enum RenderStatePrimitiveType {
-    Triangles, TriangleStrip, TriangleFan, LineStrip, Lines, LineLoop
-}
-
-export enum RenderStateUniformType {
-    Bool, Uint, Int, Float,
-    Vector2, Vector3, Vector4, Matrix2, Matrix3, Matrix4,
-    Tex2D, Tex2DArray, Tex3D, TexCubeMap
-}
-
-export enum RenderStateTextureType {
-    Tex2D, TexCubeMap, Tex3D, Tex2DArray
-}
-
-
-
-export enum RenderStateTextureDataFormat {
-    RGB, RGBA, RInt, Red,
-    Alpha,
-    Luminance, LuminanceAlpha,
-    Depth, DepthStencil,
-}
 
 //#endregion
 
@@ -59,7 +34,19 @@ export abstract class RenderState<T extends RenderState<T>> {
         this.render_device = render_device;
     }
 
+    public async init(): Promise<boolean> {
+        return true;
+    }
+
     //#region pipeline
+
+    public static is_VertexShader(type: RenderStateShaderType) { return (type & RenderStateShaderType.Vertex) !== 0; }
+
+    public static is_FragmentShader(type: RenderStateShaderType) { return (type & RenderStateShaderType.Vertex) !== 0; }
+
+    public static is_ComputeShader(type: RenderStateShaderType) { return (type & RenderStateShaderType.Vertex) !== 0; }
+
+    public static is_StripPrimitiveType(type: RenderStatePrimitiveType) { return type === RenderStatePrimitiveType.LineStrip || type === RenderStatePrimitiveType.TriangleStrip || type === RenderStatePrimitiveType.TriangleFan; }
 
     public abstract create_Shader(type: RenderStateShaderType, source: string, defines?: { [key: string]: string }): Result<RenderStateShader<T>, Error>;
 
@@ -73,7 +60,7 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     public abstract create_ComputePipeline(program: RenderStateProgram<T>, uniform_layouts: Iterable<RenderStateUniformLayout<T>>): Result<RenderStateRenderPipeline<T>, Error>;
 
-    public abstract create_RenderPipeline(program: RenderStateProgram<T>, program_state: RenderStateProgramState<T>, uniform_layouts: Iterable<RenderStateUniformLayout<T>>, attribute_layouts: Iterable<RenderStateAttributeLayout>): Result<RenderStateRenderPipeline<T>, Error>;
+    public abstract create_RenderPipeline(program: RenderStateProgram<T>, program_state: RenderStateProgramState<T>, output_state: RenderStateOutputState, uniform_layouts: Iterable<RenderStateUniformLayout<T>>, attribute_layouts: Iterable<RenderStateAttributeLayout>): Result<RenderStateRenderPipeline<T>, Error>;
 
     public abstract delete_RenderPipeline(pipeline: RenderStateRenderPipeline<T>): void;
 
@@ -140,6 +127,7 @@ export abstract class RenderState<T extends RenderState<T>> {
     public abstract get_TextureFormatTexelBytes(format: RenderStateTextureFormat): number;
 
     public abstract delete_Texture(texture: RenderStateTexture<T>): void;
+
 
     public abstract delete_TextureView(texture: RenderStateTextureView<T>): void;
 
