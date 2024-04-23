@@ -220,6 +220,7 @@ async function init() {
         if (canvas.width === canvas_width && canvas.height === canvas_height) return;
         canvas.width = canvas_width;
         canvas.height = canvas_height;
+        (renderPassDescriptor.colorAttachments as any[])[0]!.resolveTarget = canvas_ctx.getCurrentTexture().createView();
         color_multisampled_texture = rs.create_MultiSampleTexture(RenderStateTextureUsage.Attchment, RenderStateTextureFormat.BGRA8, canvas_width, canvas_height, 4).expect();
         (renderPassDescriptor.colorAttachments as any[])[0]!.view = color_multisampled_texture.multi_sample_texture.createView();
         depth_texture = rs.device.createTexture({
@@ -233,7 +234,6 @@ async function init() {
 
     function render() {
         resize();
-        (renderPassDescriptor.colorAttachments as any[])[0]!.resolveTarget = canvas_ctx.getCurrentTexture().createView();
         const commandEncoder = rs.device.createCommandEncoder();
         const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
         passEncoder.setPipeline(pipeline.pipeline);
