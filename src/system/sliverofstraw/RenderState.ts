@@ -61,7 +61,7 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     //#region pipeline
 
-    public abstract create_Shader(type: RenderStateShaderType, source: string): Result<RenderStateShader<T>, Error>;
+    public abstract create_Shader(type: RenderStateShaderType, source: string, defines?: { [key: string]: string }): Result<RenderStateShader<T>, Error>;
 
     public abstract delete_Shader(shader: RenderStateShader<T>): void;
 
