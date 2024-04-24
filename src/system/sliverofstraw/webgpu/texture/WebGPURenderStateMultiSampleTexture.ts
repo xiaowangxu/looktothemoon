@@ -1,6 +1,6 @@
-import { RenderStateMultiSampleTexture } from "../../render_state_objects/texture/RenderStateMultiSampleTexture";
-import { RenderStateTextureUsage, RenderStateTextureDimension, RenderStateTextureFormat } from "../../render_state_objects/texture/RenderStateTexture";
-import type { RenderStateTextureView } from "../../render_state_objects/texture/RenderStateTextureView";
+import { RenderStateMultiSampleTexture } from "../../render_state/texture/RenderStateMultiSampleTexture";
+import { RenderStateTextureUsage, RenderStateTextureDimension, RenderStateTextureFormat } from "../../render_state/texture/RenderStateTexture";
+import type { RenderStateTextureView } from "../../render_state/texture/RenderStateTextureView";
 import type { WebGPURenderState } from "../WebGPURenderState";
 
 export class WebGPURenderStateMultiSampleTexture extends RenderStateMultiSampleTexture<WebGPURenderState> {

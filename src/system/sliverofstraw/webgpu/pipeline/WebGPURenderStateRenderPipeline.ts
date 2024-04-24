@@ -1,7 +1,7 @@
-import type { RenderStateAttributeLayout } from "../../render_state_objects/pipeline/RenderStateAttributeLayout";
-import type { RenderStateProgramState } from "../../render_state_objects/pipeline/RenderStateProgramState";
-import { RenderStateRenderPipeline } from "../../render_state_objects/pipeline/RenderStateRenderPipeline";
-import type { RenderStateUniformLayout } from "../../render_state_objects/uniform/RenderStateUniformLayout";
+import type { RenderStateAttributeLayout } from "../../render_state/pipeline/RenderStateAttributeLayout";
+import type { RenderStateProgramState } from "../../render_state/pipeline/RenderStateProgramState";
+import { RenderStateRenderPipeline } from "../../render_state/pipeline/RenderStateRenderPipeline";
+import type { RenderStateUniformLayout } from "../../render_state/uniform/RenderStateUniformLayout";
 import type { WebGPURenderState } from "../WebGPURenderState";
 import type { WebGPURenderStateProgram } from "./WebGPURenderStateProgram";
 

@@ -9,7 +9,7 @@ import { Ref } from "@/system/utils/RefCounted";
 import type { Config } from "@/system/engine/ConfiguredObject";
 import { WebGL2RenderStateFrameBufferAttachmentPoint } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { RenderServerShaderPass } from "@/system/engine/render_server/RenderServerShader";
-import { RenderStateFrameBufferPart, RenderStateDataType } from "@/system/sliverofstraw/render_state_objects/RenderState";
+import { RenderStateFrameBufferPart, RenderStateDataType } from "@/system/sliverofstraw/render_state/RenderState";
 import { RenderServerMaterialCullFace } from "@/system/engine/render_server/RenderServerMaterial";
 
 export class ShadowRenderer3D extends OffscreenRenderer3D {

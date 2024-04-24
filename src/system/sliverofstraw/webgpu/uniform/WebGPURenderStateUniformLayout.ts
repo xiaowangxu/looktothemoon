@@ -1,7 +1,7 @@
 import type { Result } from "@/system/utils/Result";
-import type { RenderStateShaderType } from "../../render_state_objects/pipeline/RenderStateShader";
-import type { RenderStateUniformGroup } from "../../render_state_objects/uniform/RenderStateUniformGroup";
-import { RenderStateBufferUniformType, RenderStateSamplerUniformType, RenderStateTextureUniformSampleType, RenderStateTextureUniformType, RenderStateUniformLayout } from "../../render_state_objects/uniform/RenderStateUniformLayout";
+import type { RenderStateShaderType } from "../../render_state/pipeline/RenderStateShader";
+import type { RenderStateUniformGroup } from "../../render_state/uniform/RenderStateUniformGroup";
+import { RenderStateBufferUniformType, RenderStateSamplerUniformType, RenderStateTextureUniformSampleType, RenderStateTextureUniformType, RenderStateUniformLayout } from "../../render_state/uniform/RenderStateUniformLayout";
 import { WebGPURenderState } from "../WebGPURenderState";
 
 export class WebGPURenderStateUniformLayout extends RenderStateUniformLayout<WebGPURenderState> {

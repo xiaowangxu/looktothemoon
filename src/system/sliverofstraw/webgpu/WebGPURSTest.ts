@@ -1,9 +1,9 @@
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
-import { RenderStateShaderType } from "../render_state_objects/pipeline/RenderStateShader";
-import { RenderStateTextureDimension, RenderStateTextureFormat, RenderStateTextureUsage } from "../render_state_objects/texture/RenderStateTexture";
+import { RenderStateShaderType } from "../render_state/pipeline/RenderStateShader";
+import { RenderStateTextureDimension, RenderStateTextureFormat, RenderStateTextureUsage } from "../render_state/texture/RenderStateTexture";
 import { WebGPURenderState } from "./WebGPURenderState";
-import { RenderStateAttributeRowType } from "../render_state_objects/pipeline/RenderStateAttributeLayout";
-import { RenderStateBufferUniformType, RenderStateSamplerUniformType, RenderStateTextureUniformSampleType, RenderStateTextureUniformType } from "../render_state_objects/uniform/RenderStateUniformLayout";
+import { RenderStateAttributeRowType } from "../render_state/pipeline/RenderStateAttributeLayout";
+import { RenderStateBufferUniformType, RenderStateSamplerUniformType, RenderStateTextureUniformSampleType, RenderStateTextureUniformType } from "../render_state/uniform/RenderStateUniformLayout";
 
 async function init() {
 

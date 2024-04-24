@@ -1,5 +1,5 @@
 import { RenderDevice, type RenderDeviceCanvas, type RenderDeviceInitOption } from "@/system/sliverofstraw/render_device/RenderDevice";
-import { RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType } from "@/system/sliverofstraw/render_state_objects/RenderState";
+import { RenderStateBufferType, RenderStateBufferUsage, RenderStateDataType, RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType } from "@/system/sliverofstraw/render_state/RenderState";
 import type { WebGL2RenderStateBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
 import { Ref } from "@/system/utils/RefCounted";

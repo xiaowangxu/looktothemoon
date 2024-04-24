@@ -1,4 +1,4 @@
-import { RenderStateShader, RenderStateShaderType } from "../../render_state_objects/pipeline/RenderStateShader";
+import { RenderStateShader, RenderStateShaderType } from "../../render_state/pipeline/RenderStateShader";
 import type { WebGPURenderState } from "../WebGPURenderState";
 
 export class WebGPURenderStateShader extends RenderStateShader<WebGPURenderState> {

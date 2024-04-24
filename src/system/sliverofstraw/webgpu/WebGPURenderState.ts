@@ -1,19 +1,19 @@
 import { Result } from "@/system/utils/Result";
-import { RenderState, type RenderStateInitOption } from "../render_state_objects/RenderState";
-import type { RenderStateBufferDataType, RenderStateBuffer } from "../render_state_objects/buffer/RenderStateBuffer";
-import type { RenderStateFrameBuffer } from "../render_state_objects/frame_buffer/RenderStateFrameBuffer";
-import type { RenderStatePassCollection } from "../render_state_objects/pass/RenderStatePassCollection";
-import { RenderStateAttributeRowType, type RenderStateAttributeLayout } from "../render_state_objects/pipeline/RenderStateAttributeLayout";
-import type { RenderStateComputePipeline } from "../render_state_objects/pipeline/RenderStateComputePipeline";
-import { RenderStateCullMode, RenderStateDepthCompareFunc, RenderStateFacing, RenderStateProgramState } from "../render_state_objects/pipeline/RenderStateProgramState";
-import type { RenderStateRenderPipeline } from "../render_state_objects/pipeline/RenderStateRenderPipeline";
-import type { RenderStateShaderType, RenderStateShader } from "../render_state_objects/pipeline/RenderStateShader";
-import { RenderStateTextureUsage, RenderStateTextureFormat, type RenderStateTextureDimension, type RenderStateTexture } from "../render_state_objects/texture/RenderStateTexture";
-import { RenderStateTextureFilter, RenderStateTextureWrap, type RenderStateTextureSampler } from "../render_state_objects/texture/RenderStateTextureSampler";
-import type { RenderStateTextureView } from "../render_state_objects/texture/RenderStateTextureView";
-import type { RenderStateUniformGroup } from "../render_state_objects/uniform/RenderStateUniformGroup";
-import { RenderStateSamplerUniformType, RenderStateTextureUniformSampleType, RenderStateTextureUniformType, type RenderStateUniformLayout } from "../render_state_objects/uniform/RenderStateUniformLayout";
-import { RenderStatePrimitiveType, type RenderStateVertexArray } from "../render_state_objects/vertex_array/RenderStateVertexArray";
+import { RenderState, type RenderStateInitOption } from "../render_state/RenderState";
+import type { RenderStateBufferDataType, RenderStateBuffer } from "../render_state/buffer/RenderStateBuffer";
+import type { RenderStateFrameBuffer } from "../render_state/frame_buffer/RenderStateFrameBuffer";
+import type { RenderStatePassCollection } from "../render_state/pass/RenderStatePassCollection";
+import { RenderStateAttributeRowType, type RenderStateAttributeLayout } from "../render_state/pipeline/RenderStateAttributeLayout";
+import type { RenderStateComputePipeline } from "../render_state/pipeline/RenderStateComputePipeline";
+import { RenderStateCullMode, RenderStateDepthCompareFunc, RenderStateFacing, RenderStateProgramState } from "../render_state/pipeline/RenderStateProgramState";
+import type { RenderStateRenderPipeline } from "../render_state/pipeline/RenderStateRenderPipeline";
+import type { RenderStateShaderType, RenderStateShader } from "../render_state/pipeline/RenderStateShader";
+import { RenderStateTextureUsage, RenderStateTextureFormat, type RenderStateTextureDimension, type RenderStateTexture } from "../render_state/texture/RenderStateTexture";
+import { RenderStateTextureFilter, RenderStateTextureWrap, type RenderStateTextureSampler } from "../render_state/texture/RenderStateTextureSampler";
+import type { RenderStateTextureView } from "../render_state/texture/RenderStateTextureView";
+import type { RenderStateUniformGroup } from "../render_state/uniform/RenderStateUniformGroup";
+import { RenderStateSamplerUniformType, RenderStateTextureUniformSampleType, RenderStateTextureUniformType, type RenderStateUniformLayout } from "../render_state/uniform/RenderStateUniformLayout";
+import { RenderStatePrimitiveType, type RenderStateVertexArray } from "../render_state/vertex_array/RenderStateVertexArray";
 import type { RenderDevice } from "../render_device/RenderDevice";
 import { WebGPURenderStateMultiSampleTexture } from "./texture/WebGPURenderStateMultiSampleTexture";
 import { WebGPURenderStateShader } from "./pipeline/WebGPURenderStateShader";
@@ -22,7 +22,7 @@ import { WebGPURenderStateProgram } from "./pipeline/WebGPURenderStateProgram";
 import { WebGPURenderStateRenderPipeline } from "./pipeline/WebGPURenderStateRenderPipeline";
 import { WebGPURenderStateUniformLayout } from "./uniform/WebGPURenderStateUniformLayout";
 import { WebGPURenderStateTextureSampler } from "./texture/WebGPURenderStateTextureSampler";
-import { RenderStateBlendFactor, RenderStateBlendOperator, type RenderStateOutputState } from "../render_state_objects/pipeline/RenderStateOutputState";
+import { RenderStateBlendFactor, RenderStateBlendOperator, type RenderStateOutputState } from "../render_state/pipeline/RenderStateOutputState";
 
 export class WebGPURenderState extends RenderState<WebGPURenderState> {
 

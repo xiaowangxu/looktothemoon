@@ -1,4 +1,4 @@
-import { RenderStateProgram } from "../../render_state_objects/pipeline/RenderStateProgram";
+import { RenderStateProgram } from "../../render_state/pipeline/RenderStateProgram";
 import type { WebGPURenderState } from "../WebGPURenderState";
 import type { WebGPURenderStateShader } from "./WebGPURenderStateShader";
 

@@ -3,7 +3,7 @@ import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import { RenderDeviceMatrix4AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import type { WebGL2RenderStateBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
-import { RenderStateBufferUsage } from "@/system/sliverofstraw/render_state_objects/RenderState";
+import { RenderStateBufferUsage } from "@/system/sliverofstraw/render_state/RenderState";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Config } from "../../ConfiguredObject";
 import { GeometryResource } from "./GeometryResource";

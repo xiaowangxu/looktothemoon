@@ -3,7 +3,7 @@ import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2Rend
 import { Ref } from "@/system/utils/RefCounted";
 import type { RenderServerShader, RenderServerShaderPass } from "./RenderServerShader";
 import { type RenderServerDevice } from "./RenderServer";
-import { RenderStateUniformType } from "@/system/sliverofstraw/render_state_objects/RenderState";
+import { RenderStateUniformType } from "@/system/sliverofstraw/render_state/RenderState";
 import { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";

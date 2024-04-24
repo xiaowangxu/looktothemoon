@@ -1,4 +1,4 @@
-import { RenderStateUniformType, RenderStateShaderType } from "@/system/sliverofstraw/render_state_objects/RenderState";
+import { RenderStateUniformType, RenderStateShaderType } from "@/system/sliverofstraw/render_state/RenderState";
 import type { Config } from "../../ConfiguredObject";
 import { MaterialResource, type MaterialReadOnlyUniforms } from "./MaterialResource";
 import type { TextureResource } from "../texture_resources/TextureResource";

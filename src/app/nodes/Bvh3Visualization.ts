@@ -9,7 +9,7 @@ import type { Box3 } from "@/system/fivepebble/geometries/Box3";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { type Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_objects/RenderState";
+import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/render_state/RenderState";
 
 export class Bvh3Visualization extends MeshInstance3D {
     constructor(config: Config) {

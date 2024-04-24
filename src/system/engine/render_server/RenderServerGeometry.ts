@@ -2,11 +2,11 @@ import { RenderDeviceObject } from "@/system/sliverofstraw/render_device/RenderD
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { type RenderServerDevice } from "./RenderServer";
 import type { WebGL2RenderStateVertexArray, WebGL2RenderStateVertexArrayView } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateVertexArray";
-import type { RenderStateBuffer } from "@/system/sliverofstraw/render_state_objects/buffer/RenderStateBuffer";
+import type { RenderStateBuffer } from "@/system/sliverofstraw/render_state/buffer/RenderStateBuffer";
 import type { WebGL2RenderStateBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateBuffer";
 import { Ref, RefArray } from "@/system/utils/RefCounted";
 import { type RenderDeviceIndexAttributeBuffer, RenderDeviceAttributeBuffer, RenderDeviceAttributeBufferView } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
-import { RenderStatePrimitiveType, type RenderState } from "@/system/sliverofstraw/render_state_objects/RenderState";
+import { RenderStatePrimitiveType, type RenderState } from "@/system/sliverofstraw/render_state/RenderState";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";

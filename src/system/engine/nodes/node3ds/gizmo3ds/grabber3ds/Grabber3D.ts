@@ -5,7 +5,7 @@ import { MaterialResource, type MaterialReadOnlyUniforms } from "@/system/engine
 import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
 import type { UniformInitSet } from "@/system/engine/render_server/RenderServerShader";
 import { Epsilon } from "@/system/fivepebble/Scalar";
-import { RenderStateUniformType, RenderStateShaderType } from "@/system/sliverofstraw/render_state_objects/RenderState";
+import { RenderStateUniformType, RenderStateShaderType } from "@/system/sliverofstraw/render_state/RenderState";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import type { Config } from "@/system/engine/ConfiguredObject";

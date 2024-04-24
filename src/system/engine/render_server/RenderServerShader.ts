@@ -1,13 +1,13 @@
 import { RenderDeviceObject } from "@/system/sliverofstraw/render_device/RenderDeviceObject";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
-import { RenderStateUniformType, type RenderState } from "@/system/sliverofstraw/render_state_objects/RenderState";
+import { RenderStateUniformType, type RenderState } from "@/system/sliverofstraw/render_state/RenderState";
 import type { WebGL2RenderStateProgram } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateProgram";
 import { RenderServerDevice } from "./RenderServer";
 import type { WebGL2RenderStateShader } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateShader";
 import { type WebGL2RenderStateUniform } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 import type { WebGL2RenderStateTexture, WebGL2RenderStateTextureSampler } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
 import { Ref } from "@/system/utils/RefCounted";
-import type { RenderStateUniformTypeSlotMap, RenderStateValueUniformType, RenderStateUniformTypeMap, RenderStateTextureUniformType, RenderStateUniform } from "@/system/sliverofstraw/render_state_objects/uniform/RenderStateUniformSlot";
+import type { RenderStateUniformTypeSlotMap, RenderStateValueUniformType, RenderStateUniformTypeMap, RenderStateTextureUniformType, RenderStateUniform } from "@/system/sliverofstraw/render_state/uniform/RenderStateUniformSlot";
 
 export class WebGL2RenderDeviceUniformSet {
     protected uniforms: Map<string, Ref<WebGL2RenderStateUniform>> = new Map();

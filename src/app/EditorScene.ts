@@ -54,7 +54,7 @@ import { FixSizeNode3D } from "@/system/engine/nodes/node3ds/gizmo3ds/FixSizeNod
 import { PlaceholderTextureResource } from "@/system/engine/resources/texture_resources/PlaceholderTextureResource";
 import { ImageTextureResource } from "@/system/engine/resources/texture_resources/ImageTextureResource";
 import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/MatcapMaterialResource";
-import { RenderStateTextureMagFilter, RenderStateTextureMinFilter } from "@/system/sliverofstraw/render_state_objects/RenderState";
+import { RenderStateTextureMagFilter, RenderStateTextureMinFilter } from "@/system/sliverofstraw/render_state/RenderState";
 import { Dom3D } from "@/system/engine/nodes/node3ds/Dom3D";
 import { PlainMaterialResource } from "@/system/engine/resources/material_resources/PlainMaterialResource";
 import { NormalMaterialResource } from "@/system/engine/resources/material_resources/NormalMaterialResource";

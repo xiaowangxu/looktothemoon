@@ -2,7 +2,7 @@ import { Ref } from "@/system/utils/RefCounted";
 import { Resource } from "../Resource";
 import type { Config } from "../../ConfiguredObject";
 import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
-import { RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureWrap } from "@/system/sliverofstraw/render_state_objects/RenderState";
+import { RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureWrap } from "@/system/sliverofstraw/render_state/RenderState";
 
 export abstract class TextureResource extends Resource {
     protected readonly texture_ref: Ref<WebGL2RenderStateTexture> = new Ref();

@@ -5,7 +5,7 @@ import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { RenderDevice } from "@/system/sliverofstraw/render_device/RenderDevice";
-import type { RenderState, RenderStateBufferUsage } from "@/system/sliverofstraw/render_state_objects/RenderState";
+import type { RenderState, RenderStateBufferUsage } from "@/system/sliverofstraw/render_state/RenderState";
 import { RenderDeviceVector2AttributeBuffer, type RenderDeviceAttributeBuffer, RenderDeviceVector3AttributeBuffer, RenderDeviceVector4AttributeBuffer, RenderDeviceMatrix4AttributeBuffer, RenderDeviceIndexAttributeBuffer, RenderDeviceMatrix3AttributeBuffer, RenderDeviceFloatAttributeBuffer, RenderDeviceIntAttributeBuffer, RenderDeviceUintAttributeBuffer, RenderDeviceMatrix2AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 
 export abstract class PackedArray<Data = any> {

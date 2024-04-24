@@ -12,7 +12,7 @@ import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { TextureResource } from "../texture_resources/TextureResource";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import type { WebGL2RenderStateShader } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateShader";
-import { RenderStateShaderType } from "@/system/sliverofstraw/render_state_objects/RenderState";
+import { RenderStateShaderType } from "@/system/sliverofstraw/render_state/RenderState";
 
 export class ShaderResource extends Resource {
     protected shader_ref: Ref<RenderServerShader> = new Ref();

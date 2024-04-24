@@ -1,7 +1,7 @@
 import { Result } from "@/system/utils/Result";
 import { ClassSaver } from "../classes/saver_loader/ClassSaverLoader";
 import { ImageTextureResource } from "../resources/texture_resources/ImageTextureResource";
-import { RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureWrap } from "@/system/sliverofstraw/render_state_objects/RenderState";
+import { RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureWrap } from "@/system/sliverofstraw/render_state/RenderState";
 
 export class ImageLoader {
     private readonly canvas: HTMLCanvasElement = document.createElement('canvas');

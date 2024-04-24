@@ -1,6 +1,6 @@
 import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
 import type { WebGL2RenderStateFrameBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
-import { RenderStateTextureType, RenderStateTextureFormat, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureDataFormat, RenderStateDataType, RenderStateShaderType, RenderStateBufferUsage, RenderStatePrimitiveType, RenderStateUniformType } from "@/system/sliverofstraw/render_state_objects/RenderState";
+import { RenderStateTextureType, RenderStateTextureFormat, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureDataFormat, RenderStateDataType, RenderStateShaderType, RenderStateBufferUsage, RenderStatePrimitiveType, RenderStateUniformType } from "@/system/sliverofstraw/render_state/RenderState";
 import { WebGL2RenderStateFrameBufferAttachmentPoint } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { WebGL2RenderStateFloatUniformSlot } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 import { RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";

@@ -3,7 +3,7 @@ import { Vector3 } from '@/system/fivepebble/linear_algebra/Vector3';
 import { Result } from '@/system/utils/Result';
 import { ClassSaver } from '../classes/saver_loader/ClassSaverLoader';
 import { ArrayGeometryResource } from '../resources/geometry_resources/ArrayGeometryResource';
-import { RenderStateBufferUsage, RenderStatePrimitiveType } from '@/system/sliverofstraw/render_state_objects/RenderState';
+import { RenderStateBufferUsage, RenderStatePrimitiveType } from '@/system/sliverofstraw/render_state/RenderState';
 import { PackedIndexArray, PackedVector2Array, PackedVector3Array } from '../classes/value_wrappers/PackedArray';
 
 const WHITESPACE_RE = /\s+/;

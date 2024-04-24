@@ -1,5 +1,5 @@
-import type { RenderStateDepthCompareFunc } from "../../render_state_objects/pipeline/RenderStateProgramState";
-import { RenderStateTextureFilter, RenderStateTextureSampler, RenderStateTextureWrap } from "../../render_state_objects/texture/RenderStateTextureSampler";
+import type { RenderStateDepthCompareFunc } from "../../render_state/pipeline/RenderStateProgramState";
+import { RenderStateTextureFilter, RenderStateTextureSampler, RenderStateTextureWrap } from "../../render_state/texture/RenderStateTextureSampler";
 import type { WebGPURenderState } from "../WebGPURenderState";
 
 export class WebGPURenderStateTextureSampler extends RenderStateTextureSampler<WebGPURenderState> {
