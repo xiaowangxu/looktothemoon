@@ -19,10 +19,6 @@ export class WebGPURenderStateTexture extends RenderStateTexture<WebGPURenderSta
         this.texture = texture;
     }
 
-    public create_View(part: RendetStateTextureDestination | undefined, dimension: RenderStateTextureDimension, base_layer: number, layer_count: number, base_mipmap: number, mipmap_count: number): RenderStateTextureView<WebGPURenderState> {
-        throw new Error("Method not implemented.");
-    }
-
     public update_Data(dst_destination: RendetStateTextureDestination | undefined, dst_mipmap_level: number | undefined, dst_x: number | undefined, dst_y: number | undefined, dst_z: number | undefined, dst_w: number | undefined, dst_h: number | undefined, dst_d: number | undefined, data: RenderStateBufferData, data_w: number | undefined, data_h: number | undefined, data_offset: number | undefined): void {
         throw new Error("Method not implemented.");
     }

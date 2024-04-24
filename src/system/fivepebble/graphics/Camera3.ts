@@ -11,6 +11,8 @@ import type { Line3 } from "../geometries/Line3";
 
 export class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
 
+    static WebGPUSystem: boolean = true;
+
     static readonly #tmp_matrix3_0: Matrix3 = Matrix3.new;
     static readonly #tmp_matrix4_0: Matrix4 = Matrix4.new;
     static readonly #tmp_vector3_0: Vector3 = Vector3.new;
@@ -80,7 +82,7 @@ export class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
     }
     get mask() { return this._mask; }
 
-    public get is_orthogonal(): boolean {return false;};
+    public get is_orthogonal(): boolean { return false; };
 
     project_Point(point: Vector3, target: Vector2): Vector2 {
         const p = Camera3.#tmp_vector3_0;
@@ -175,7 +177,7 @@ export class OrthographicCamera3 extends Camera3 {
     protected update() {
         const half_width = this.width / (2 * this.zoom);
         const half_height = this.height / (2 * this.zoom);
-        this._projection.set_OrthogonalProjection(-half_width, half_width, half_height, -half_height, this.near, this.far);
+        this._projection.set_OrthogonalProjection(-half_width, half_width, half_height, -half_height, this.near, this.far, Camera3.WebGPUSystem);
         this.update_Frustum();
     }
 
@@ -269,7 +271,7 @@ export class PerspectiveCamera3 extends Camera3 {
     }
 
     protected update() {
-        this._projection.set_PerspectiveFovProjection(this.fov, this.aspect, this.near, this.far);
+        this._projection.set_PerspectiveFovProjection(this.fov, this.aspect, this.near, this.far, Camera3.WebGPUSystem);
         this.update_Frustum();
     }
 

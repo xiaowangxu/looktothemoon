@@ -92,22 +92,6 @@ export abstract class RenderStateTexture<T extends RenderState<T>> extends Rende
         data_w: number | undefined, data_h: number | undefined, data_offset: number | undefined,
     ): void;
 
-    /**
-     * create texture's view
-     * @param part an enumerated value specifying which aspect(s) of the texture are accessible to the texture view. Possible values are:
-     * @param dimension an enumerated value specifying the format to view the texture as
-     * @param base_layer slice of texture depth
-     * @param layer_count slice of texture depth
-     * @param base_mipmap slice of texture mipmap
-     * @param mipmap_count slice of texture mipmap
-     */
-    public abstract create_View(
-        part: RendetStateTextureDestination | undefined,
-        dimension: RenderStateTextureDimension,
-        base_layer: number, layer_count: number,
-        base_mipmap: number, mipmap_count: number
-    ): RenderStateTextureView<T>;
-
     public dispose() {
         this.render_state.delete_Texture(this);
     }

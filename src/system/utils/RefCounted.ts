@@ -64,6 +64,15 @@ export class RefArray<T extends RefCountedLike> {
         }
     }
 
+    public set value(items: (T | undefined)[] | undefined) {
+        if (items === undefined) this.unref();
+        else {
+            const refs = items.map(i => new Ref(i));
+            this.unref();
+            this.refs = refs;
+        }
+    }
+
     public get(index: number, as_ref: true): Ref<T> | undefined
     public get(index: number, as_ref: false): T | undefined
     public get(index: number, as_ref: true | false = true): Ref<T> | T | undefined {

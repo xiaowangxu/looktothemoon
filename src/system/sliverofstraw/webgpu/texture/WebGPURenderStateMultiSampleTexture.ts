@@ -5,7 +5,7 @@ import type { WebGPURenderState } from "../WebGPURenderState";
 
 export class WebGPURenderStateMultiSampleTexture extends RenderStateMultiSampleTexture<WebGPURenderState> {
 
-    public readonly multi_sample_texture: GPUTexture;
+    public readonly texture: GPUTexture;
 
     constructor(
         render_state: WebGPURenderState,
@@ -14,7 +14,7 @@ export class WebGPURenderStateMultiSampleTexture extends RenderStateMultiSampleT
         multi_sample_texture: GPUTexture,
     ) {
         super(render_state, usage, format, width, height, sample_count);
-        this.multi_sample_texture = multi_sample_texture;
+        this.texture = multi_sample_texture;
     }
 
     public create_View(): RenderStateTextureView<WebGPURenderState> {

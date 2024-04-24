@@ -8,13 +8,11 @@ export abstract class RenderStateTextureView<T extends RenderState<T>> extends R
 
     public readonly dimension: RenderStateTextureDimension;
     public readonly texture_ref: Ref<RenderStateTexture<T> | RenderStateMultiSampleTexture<T>> = new Ref();
-    public readonly is_multi_sampled: boolean;
 
-    constructor(render_state: T, texture: RenderStateTexture<T> | RenderStateMultiSampleTexture<T>, dimension: RenderStateTextureDimension, is_multi_sampled: boolean) {
+    constructor(render_state: T, texture: RenderStateTexture<T> | RenderStateMultiSampleTexture<T>, dimension: RenderStateTextureDimension) {
         super(render_state);
         this.texture_ref.value = texture;
         this.dimension = dimension;
-        this.is_multi_sampled = is_multi_sampled;
     }
 
     public dispose(): void {

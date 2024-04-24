@@ -1,9 +1,9 @@
 export enum RenderStateAttributeRowType {
     Bool, Int, Uint, Float,
-    Vec2, Vec3, Vec4,
-    Mat2Row, Mat3Row, Mat4Row,
-    IVec2, IVec3, IVec4,
-    UVec2, UVec3, UVec4,
+    Vector2, Vector3, Vector4,
+    Matrix2Row, Matrix3Row, Matrix4Row,
+    IVector2, IVector3, IVector4,
+    UVector2, UVector3, UVector4,
 }
 
 export interface RenderStateAttributeLayout {

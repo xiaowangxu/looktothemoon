@@ -3,18 +3,25 @@ import type { RenderState } from "../RenderState";
 import { RenderStateVertexArrayAttributeBufferAdaptor } from "../vertex_array/RenderStateVertexArrayAttributeBufferAdaptor";
 
 export enum RenderStateBufferType {
-    Index, VertexArray, Uniform, Storage, QueryResult,
+    Index = 0x0010,
+    VertexArray = 0x0020,
+    Uniform = 0x0040,
+    Storage = 0x0080,
+    QueryResult = 0x0200,
+    IndirectCommand = 0x0100,
 }
 
 export enum RenderStateBufferDataType {
     Float, Int, Byte, Short,
-    UnsignedInt, UnsignedByte, UnsignedShort,
+    Uint, Ushort,
 }
 
 export enum RenderStateBufferUsage {
-    StaticCopy, StaticDraw, StaticRead,
-    DynamicCopy, DynamicDraw, DynamicRead,
-    StreamCopy, StreamDraw, StreamRead,
+    None = 0x0000,
+    CopySrc = 0x0004,
+    CopyDst = 0x0008,
+    MapRead = 0x0001,
+    MapWrite = 0x0002,
 }
 
 export type RenderStateBufferData = ArrayBuffer | ArrayBufferView;
@@ -39,12 +46,12 @@ export abstract class RenderStateBuffer<T extends RenderState<T>> extends Render
     /**
      * update a portion of this buffer, but the size of the buffer can not be altered, use RenderState.create_Buffer(type, usage, size) instead
      * @throws data overflow error
-     * @param data an ArrayBuffer, TypedArray, or DataView
      * @param dst_offset buffer offset where the data copyed into, in bytes
+     * @param data an ArrayBuffer, TypedArray, or DataView
      * @param data_element_offset data offset where copyed data starts from, if is TypedArray in element count, else in bytes
      * @param data_element_length total data size to be copyed from, if is TypedArray in element count, else in bytes, if omitted will be (data.length - dst_offset)
      */
-    public abstract update_Data(dst_offset: number, data: RenderStateBufferData, data_element_offset: number, data_element_length?: number): void;
+    public abstract update_Data(dst_offset: number, data: RenderStateBufferData, data_element_offset?: number, data_element_length?: number): void;
 
     public create_AttributeBufferAdaptor(element_size: number, offset: number, stride: number): RenderStateVertexArrayAttributeBufferAdaptor<T> {
         return new RenderStateVertexArrayAttributeBufferAdaptor<T>(this.render_state, this, element_size, offset, stride)

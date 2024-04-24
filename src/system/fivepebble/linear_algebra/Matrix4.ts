@@ -185,13 +185,20 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         return this;
     }
 
-    public set_PrespectiveProjection(left: number, right: number, top: number, bottom: number, near: number, far: number) {
+    public set_PrespectiveProjection(left: number, right: number, top: number, bottom: number, near: number, far: number, webgpu_system: boolean = false) {
         const x = 2 * near / (right - left);
         const y = 2 * near / (top - bottom);
         const a = (right + left) / (right - left);
         const b = (top + bottom) / (top - bottom);
-        const c = - (far + near) / (far - near);
-        const d = (- 2 * far * near) / (far - near);
+        let c, d;
+        if (webgpu_system) {
+            c = -far / (far - near);
+            d = (-far * near) / (far - near);
+        }
+        else {
+            c = -(far + near) / (far - near);
+            d = (-2 * far * near) / (far - near);
+        }
         this.n11 = x; this.n12 = 0; this.n13 = a; this.n14 = 0;
         this.n21 = 0; this.n22 = y; this.n23 = b; this.n24 = 0;
         this.n31 = 0; this.n32 = 0; this.n33 = c; this.n34 = d;
@@ -199,22 +206,29 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         return this;
     }
 
-    public set_PerspectiveFovProjection(fov: number, aspect: number, near: number, far: number) {
+    public set_PerspectiveFovProjection(fov: number, aspect: number, near: number, far: number, webgpu_system: boolean = false) {
         const top = near * Math.tan(fov / 2);
         const height = 2 * top;
         const width = aspect * height;
         const left = - 0.5 * width;
-        return this.set_PrespectiveProjection(left, left + width, top, top - height, near, far);
+        return this.set_PrespectiveProjection(left, left + width, top, top - height, near, far, webgpu_system);
     }
 
-    public set_OrthogonalProjection(left: number, right: number, top: number, bottom: number, near: number, far: number) {
+    public set_OrthogonalProjection(left: number, right: number, top: number, bottom: number, near: number, far: number, webgpu_system: boolean = false) {
         const w = 1.0 / (right - left);
         const h = 1.0 / (top - bottom);
         const p = 1.0 / (far - near);
         const x = (right + left) * w;
         const y = (top + bottom) * h;
-        const z = (far + near) * p;
-        const z_inverse = - 2 * p;
+        let z, z_inverse;
+        if (webgpu_system) {
+            z = near * p;
+            z_inverse = -1 * p;
+        }
+        else {
+            z = (far + near) * p;
+            z_inverse = -2 * p;
+        }
         this.n11 = 2 * w; this.n12 = 0; /**/this.n13 = 0; /*   */ this.n14 = - x;
         this.n21 = 0; /**/this.n22 = 2 * h; this.n23 = 0; /*   */ this.n24 = - y;
         this.n31 = 0; /**/this.n32 = 0; /**/this.n33 = z_inverse; this.n34 = - z;

@@ -2,7 +2,7 @@ import { Result } from "../../utils/Result";
 import type { RenderDevice } from "../render_device/RenderDevice";
 import type { RenderStateFrameBuffer } from "./frame_buffer/RenderStateFrameBuffer";
 import { RenderStateShaderType, type RenderStateShader } from "./pipeline/RenderStateShader";
-import type { RenderStateTexture, RenderStateTextureDimension, RenderStateTextureFormat, RenderStateTextureUsage } from "./texture/RenderStateTexture";
+import type { RenderStateTexture, RenderStateTextureDimension, RenderStateTextureFormat, RenderStateTextureUsage, RendetStateTextureDestination } from "./texture/RenderStateTexture";
 import type { RenderStateTextureFilter, RenderStateTextureSampler, RenderStateTextureWrap } from "./texture/RenderStateTextureSampler";
 import type { RenderStateVertexArray } from "./vertex_array/RenderStateVertexArray";
 import type { RenderStateProgram } from "./pipeline/RenderStateProgram";
@@ -70,9 +70,7 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     //#region buffer
 
-    public abstract create_Buffer(type: number, usage: number, data_type: RenderStateBufferDataType, element_size: number, size: number): Result<RenderStateBuffer<T>, Error>;
-
-    public abstract get_BufferDataTypeBytes(format: RenderStateBufferDataType): number;
+    public abstract create_Buffer(type: RenderStateBufferType, usage: RenderStateBufferUsage, data_type: RenderStateBufferDataType, element_size: number, size: number): Result<RenderStateBuffer<T>, Error>;
 
     public abstract delete_Buffer(buffer: RenderStateBuffer<T>): void;
 
@@ -128,9 +126,6 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     public abstract delete_Texture(texture: RenderStateTexture<T>): void;
 
-
-    public abstract delete_TextureView(texture: RenderStateTextureView<T>): void;
-
     //#endregion
 
     //#region multi sample texture
@@ -144,9 +139,35 @@ export abstract class RenderState<T extends RenderState<T>> {
 
     //#endregion
 
+    //#region texture view
+
+    /**
+     * create texture's view
+     * @param texture base texture
+     * @param part an enumerated value specifying which aspect(s) of the texture are accessible to the texture view. Possible values are:
+     * @param dimension an enumerated value specifying the format to view the texture as
+     * @param base_layer slice of texture depth
+     * @param layer_count slice of texture depth
+     * @param base_mipmap slice of texture mipmap
+     * @param mipmap_count slice of texture mipmap
+     */
+    public abstract create_TextureView(
+        texture: RenderStateTexture<T> | RenderStateMultiSampleTexture<T>,
+        dimension: RenderStateTextureDimension,
+        part: RendetStateTextureDestination,
+        base_layer: number, layer_count: number,
+        base_mipmap: number, mipmap_count: number
+    ): Result<RenderStateTextureView<T>, Error>;
+
+    public abstract delete_TextureView(texture_view: RenderStateTextureView<T>): void;
+
     // #region uniform
 
     public abstract create_UniformLayout(): RenderStateUniformLayout<T>;
+
+    public abstract delete_UniformLayout(layout: RenderStateUniformLayout<T>): void;
+
+    public abstract create_UniformGroup(layout: RenderStateUniformLayout<T>): Result<RenderStateUniformGroup<T>, Error>;
 
     public abstract delete_UniformGroup(group: RenderStateUniformGroup<T>): void;
 

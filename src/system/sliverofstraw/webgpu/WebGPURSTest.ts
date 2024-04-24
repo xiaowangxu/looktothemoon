@@ -4,6 +4,48 @@ import { RenderStateTextureDimension, RenderStateTextureFormat, RenderStateTextu
 import { WebGPURenderState } from "./WebGPURenderState";
 import { RenderStateAttributeRowType } from "../render_state/pipeline/RenderStateAttributeLayout";
 import { RenderStateBufferUniformType, RenderStateSamplerUniformType, RenderStateTextureUniformSampleType, RenderStateTextureUniformType } from "../render_state/uniform/RenderStateUniformLayout";
+import type { WebGPURenderStateMultiSampleTexture } from "./texture/WebGPURenderStateMultiSampleTexture";
+import { Ref } from "@/system/utils/RefCounted";
+import type { WebGPURenderStateTextureView } from "./texture/WebGPURenderStateTextureView";
+import type { WebGPURenderStateUniformGroup } from "./uniform/WebGPURenderStateUniformGroup";
+import type { WebGPURenderStateBuffer } from "./buffer/WebGPURenderStateBuffer";
+import { RenderStateBufferDataType, RenderStateBufferType, RenderStateBufferUsage } from "../render_state/buffer/RenderStateBuffer";
+
+console.log(WebGPURenderState.RenderStateMemoryLayout(
+    {
+        type: 'struct',
+        members: [
+            RenderStateBufferUniformType.Vector2,
+            RenderStateBufferUniformType.Vector3,
+            RenderStateBufferUniformType.Float,
+            RenderStateBufferUniformType.Float,
+            {
+                type: 'struct',
+                members: [
+                    RenderStateBufferUniformType.Float,
+                    RenderStateBufferUniformType.Float,
+                    RenderStateBufferUniformType.Vector2,
+                    RenderStateBufferUniformType.Float,
+                ]
+            },
+            RenderStateBufferUniformType.Vector3,
+            {
+                type: 'array',
+                member: {
+                    type: 'struct',
+                    members: [
+                        RenderStateBufferUniformType.Float,
+                        RenderStateBufferUniformType.Float,
+                        RenderStateBufferUniformType.Vector2,
+                        RenderStateBufferUniformType.Float,
+                    ]
+                },
+                length: 3
+            },
+            RenderStateBufferUniformType.Int,
+        ]
+    }
+));
 
 async function init() {
 
@@ -19,20 +61,25 @@ async function init() {
 
     const width = canvas.width, height = canvas.height;
 
-    let color_multisampled_texture = rs.create_MultiSampleTexture(RenderStateTextureUsage.Attchment, RenderStateTextureFormat.RGBA16F, width, height, 4).expect();
-    // const depth_texture = rs.create_Texture(RenderStateTextureUsage.Attchment, RenderStateTextureFormat.D32F, RenderStateTextureDimension.D2, width, height, 1, 1).expect();
+    const color_texture_ref = new Ref<WebGPURenderStateMultiSampleTexture>();
+    const depth_texture_ref = new Ref<WebGPURenderStateMultiSampleTexture>();
+
+    const color_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
+    const depth_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
+
+    color_texture_ref.value = rs.create_MultiSampleTexture(RenderStateTextureUsage.Attchment, RenderStateTextureFormat.RGBA16F, width, height, 4).expect();
+    depth_texture_ref.value = rs.create_MultiSampleTexture(RenderStateTextureUsage.Attchment, RenderStateTextureFormat.D32F, width, height, 4).expect();
+
+    color_texture_view_ref.value = rs.create_TextureView(color_texture_ref.expect).expect();
+    depth_texture_view_ref.value = rs.create_TextureView(depth_texture_ref.expect).expect();
 
     const shader_code = `
-    struct VSUniforms {
-      worldViewProjection: mat4x4f,
-      worldInverseTranspose: mat4x4f,
-    };
-    @group(0) @binding(0) var<uniform> vsUniforms: VSUniforms;
-  
     struct MyVSInput {
         @location(0) position: vec4f,
         @location(1) color: vec3f,
     };
+
+    @group(0) @binding(0) var<uniform> rotate: f32;
   
     struct MyVSOutput {
       @builtin(position) position: vec4f,
@@ -41,23 +88,20 @@ async function init() {
   
     @vertex
     fn vs_main(v: MyVSInput) -> MyVSOutput {
+      var pos = vec2f(v.position.x, v.position.y);
+      var rot = mat2x2f(vec2f(cos(rotate), sin(rotate)), vec2f(-sin(rotate), cos(rotate)));
+      pos *= rot;
       var vsOut: MyVSOutput;
-      vsOut.position = v.position;
+      vsOut.position = vec4f(pos.x, pos.y, v.position.z, 1.0);
       vsOut.color = v.color;
       return vsOut;
     }
   
-    struct FSUniforms {
-      lightDirection: vec3f,
-    };
-  
-    @group(0) @binding(1) var<uniform> fsUniforms: FSUniforms;
-    @group(0) @binding(2) var diffuseSampler: sampler;
-    @group(0) @binding(3) var diffuseTexture: texture_2d<f32>;
+    @group(0) @binding(1) var<uniform> blend_factor: f32;
   
     @fragment
     fn fs_main(v: MyVSOutput) -> @location(0) vec4f {
-      return vec4f(v.color, 1.0);
+      return vec4f(v.color * blend_factor, 1.0);
     }
     `;
 
@@ -67,13 +111,10 @@ async function init() {
 
     const program_state = rs.create_ProgramState();
 
-    const uniform_layout = rs.create_UniformLayout();
+    const uniform_group_0_layout = rs.create_UniformLayout();
 
-    uniform_layout.add_BufferUniform('vertex_uniform', RenderStateShaderType.Vertex, 0);
-    uniform_layout.add_Uniform('fragment_light', RenderStateBufferUniformType.Vector3, RenderStateShaderType.Fragment, 1);
-    uniform_layout.add_Sampler('fragment_tex_sampler', RenderStateSamplerUniformType.Filter, RenderStateShaderType.Fragment, 2);
-    uniform_layout.add_Texture('fragment_tex', RenderStateTextureUniformType.Tex2D, RenderStateTextureUniformSampleType.Float, RenderStateShaderType.Fragment, 3);
-    uniform_layout.finish();
+    uniform_group_0_layout.add_BufferUniform(RenderStateShaderType.Vertex, 0);
+    uniform_group_0_layout.add_BufferUniform(RenderStateShaderType.Fragment, 1);
 
     const pipeline = rs.create_RenderPipeline(program, program_state,
         {
@@ -88,7 +129,7 @@ async function init() {
             ],
         },
         [
-            uniform_layout,
+            uniform_group_0_layout,
         ],
         [
             // positions
@@ -96,7 +137,7 @@ async function init() {
                 stride: 3 * 4, // 3 floats, 4 bytes each
                 per_instance: false,
                 rows: [
-                    { location: 0, offset: 0, type: RenderStateAttributeRowType.Vec3 },
+                    { location: 0, offset: 0, type: RenderStateAttributeRowType.Vector3 },
                 ],
             },
             // colors
@@ -104,12 +145,10 @@ async function init() {
                 stride: 3 * 4, // 3 floats, 4 bytes each
                 per_instance: false,
                 rows: [
-                    { location: 1, offset: 0, type: RenderStateAttributeRowType.Vec3 },
+                    { location: 1, offset: 0, type: RenderStateAttributeRowType.Vector3 },
                 ],
             },
         ]).expect();
-
-    const sampler = rs.create_TextureSampler().expect();
 
     function createBuffer(device: GPUDevice, data: Float32Array | Uint32Array, usage: number) {
         const buffer = device.createBuffer({
@@ -125,9 +164,10 @@ async function init() {
 
     const positions = new Float32Array(
         [
-            0, 0.75, 0,
-            -0.75, -0.75, 0,
-            0.75, -0.75, 0,
+            -0.5, 0.5, 0,
+            -0.5, -0.5, 0,
+            0.5, -0.5, 0,
+            0.5, 0.5, 0,
         ]
     );
     const colors = new Float32Array(
@@ -135,71 +175,36 @@ async function init() {
             1, 0, 0,
             0, 1, 0,
             0, 0, 1,
+            1, 1, 1,
         ]
     );
-    const indices = new Uint32Array([0, 1, 2]);
+    const indices = new Uint32Array([0, 1, 2, 2, 3, 0]);
 
-    const positionBuffer = createBuffer(rs.device, positions, GPUBufferUsage.VERTEX);
-    const colorBuffer = createBuffer(rs.device, colors, GPUBufferUsage.VERTEX);
-    const indicesBuffer = createBuffer(rs.device, indices, GPUBufferUsage.INDEX);
+    const positionBuffer = rs.create_Buffer(RenderStateBufferType.VertexArray, RenderStateBufferUsage.CopyDst, RenderStateBufferDataType.Float, 3, positions.byteLength).expect();
+    positionBuffer.update_Data(0, positions);
+    const colorBuffer = rs.create_Buffer(RenderStateBufferType.VertexArray, RenderStateBufferUsage.CopyDst, RenderStateBufferDataType.Float, 3, colors.byteLength).expect();
+    colorBuffer.update_Data(0, colors);
+    const indicesBuffer = rs.create_Buffer(RenderStateBufferType.Index, RenderStateBufferUsage.CopyDst, RenderStateBufferDataType.Uint, 1, indices.byteLength).expect();
+    indicesBuffer.update_Data(0, indices);
 
-    const tex = rs.device.createTexture({
-        size: [2, 2],
-        format: 'rgba8unorm',
-        usage: GPUTextureUsage.TEXTURE_BINDING |
-            GPUTextureUsage.COPY_DST,
-    });
-    rs.device.queue.writeTexture(
-        { texture: tex },
-        new Uint8Array([
-            255, 255, 128, 255,
-            128, 255, 255, 255,
-            255, 128, 255, 255,
-            255, 128, 128, 255,
-        ]),
-        { bytesPerRow: 8, rowsPerImage: 2 },
-        { width: 2, height: 2 },
-    );
+    const bind_group_0_ref = new Ref<WebGPURenderStateUniformGroup>();
 
-    const vUniformBufferSize = 2 * 16 * 4; // 2 mat4s * 16 floats per mat * 4 bytes per float
-    const fUniformBufferSize = 3 * 4;      // 1 vec3 * 3 floats per vec3 * 4 bytes per float
+    bind_group_0_ref.value = rs.create_UniformGroup(uniform_group_0_layout).expect();
 
-    const vsUniformBuffer = rs.device.createBuffer({
-        size: Math.max(16, vUniformBufferSize),
-        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    });
-
-    const fsUniformBuffer = rs.device.createBuffer({
-        size: Math.max(16, fUniformBufferSize),
-        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    });
-    const vsUniformValues = new Float32Array(2 * 16); // 2 mat4s
-    const worldViewProjection = vsUniformValues.subarray(0, 16);
-    const worldInverseTranspose = vsUniformValues.subarray(16, 32);
-    const fsUniformValues = new Float32Array(3);  // 1 vec3
-    const lightDirection = fsUniformValues.subarray(0, 3);
-
-    const bindGroup = rs.device.createBindGroup({
-        layout: uniform_layout.layout!,
-        entries: [
-            { binding: 0, resource: { buffer: vsUniformBuffer } },
-            { binding: 1, resource: { buffer: fsUniformBuffer } },
-            { binding: 2, resource: sampler.sampler },
-            { binding: 3, resource: tex.createView() },
-        ],
-    });
-
-    let depth_texture = rs.device.createTexture({
-        size: [width, height],
-        format: 'depth32float',
-        sampleCount: 4,
-        usage: GPUTextureUsage.RENDER_ATTACHMENT,
-    });
+    const uniform_buffer_0_ref = new Ref<WebGPURenderStateBuffer>();
+    const uniform_buffer_0_data = new Float32Array(1);
+    uniform_buffer_0_ref.value = rs.create_Buffer(RenderStateBufferType.Uniform, RenderStateBufferUsage.CopyDst, RenderStateBufferDataType.Float, 1, 4).expect();
+    bind_group_0_ref.expect.set_BufferUniform(0, uniform_buffer_0_ref.expect);
+    
+    const uniform_buffer_1_ref = new Ref<WebGPURenderStateBuffer>();
+    const uniform_buffer_1_data = new Float32Array(1);
+    uniform_buffer_1_ref.value = rs.create_Buffer(RenderStateBufferType.Uniform, RenderStateBufferUsage.CopyDst, RenderStateBufferDataType.Float, 1, 4).expect();
+    bind_group_0_ref.expect.set_BufferUniform(1, uniform_buffer_1_ref.expect);
 
     const renderPassDescriptor: GPURenderPassDescriptor = {
         colorAttachments: [
             {
-                view: color_multisampled_texture.multi_sample_texture.createView(), // Assigned later
+                view: color_texture_view_ref.expect.texture_view, // Assigned later
                 resolveTarget: canvas_ctx.getCurrentTexture().createView(), // Assigned Later
                 clearValue: { r: 0.2, g: 0.2, b: 0.2, a: 1.0 },
                 loadOp: 'clear',
@@ -207,7 +212,7 @@ async function init() {
             },
         ],
         depthStencilAttachment: {
-            view: depth_texture.createView(),  // Assigned later
+            view: depth_texture_view_ref.expect.texture_view,  // Assigned later
             depthClearValue: 1,
             depthLoadOp: 'clear',
             depthStoreOp: 'store',
@@ -220,27 +225,30 @@ async function init() {
         if (canvas.width === canvas_width && canvas.height === canvas_height) return;
         canvas.width = canvas_width;
         canvas.height = canvas_height;
-        color_multisampled_texture = rs.create_MultiSampleTexture(RenderStateTextureUsage.Attchment, RenderStateTextureFormat.RGBA16F, canvas_width, canvas_height, 4).expect();
-        (renderPassDescriptor.colorAttachments as any[])[0]!.view = color_multisampled_texture.multi_sample_texture.createView();
-        depth_texture = rs.device.createTexture({
-            size: [canvas_width, canvas_height],
-            format: 'depth32float',
-            sampleCount: 4,
-            usage: GPUTextureUsage.RENDER_ATTACHMENT,
-        });
-        (renderPassDescriptor.depthStencilAttachment as any).view = depth_texture.createView();
+        color_texture_ref.value = rs.create_MultiSampleTexture(RenderStateTextureUsage.Attchment, RenderStateTextureFormat.RGBA16F, canvas_width, canvas_height, 4).expect();
+        color_texture_view_ref.value = rs.create_TextureView(color_texture_ref.expect).expect();
+        (renderPassDescriptor.colorAttachments as any[])[0]!.view = color_texture_view_ref.expect.texture_view;
+        depth_texture_ref.value = rs.create_MultiSampleTexture(RenderStateTextureUsage.Attchment, RenderStateTextureFormat.D32F, canvas_width, canvas_height, 4).expect();
+        depth_texture_view_ref.value = rs.create_TextureView(depth_texture_ref.expect).expect();
+        (renderPassDescriptor.depthStencilAttachment as any).view = depth_texture_view_ref.expect.texture_view;
     }
-    
+
+    let time = 0;
     function render() {
+        time += 0.016;
+        uniform_buffer_0_data[0] = time;
+        uniform_buffer_0_ref.expect.update_Data(0, uniform_buffer_0_data);
+        uniform_buffer_1_data[0] = (Math.sin(time) + 1.0) / 2.0;
+        uniform_buffer_1_ref.expect.update_Data(0, uniform_buffer_1_data);
         resize();
         (renderPassDescriptor.colorAttachments as any[])[0]!.resolveTarget = canvas_ctx.getCurrentTexture().createView();
         const commandEncoder = rs.device.createCommandEncoder();
         const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
         passEncoder.setPipeline(pipeline.pipeline);
-        passEncoder.setBindGroup(0, bindGroup);
-        passEncoder.setVertexBuffer(0, positionBuffer);
-        passEncoder.setVertexBuffer(1, colorBuffer);
-        passEncoder.setIndexBuffer(indicesBuffer, 'uint32');
+        passEncoder.setBindGroup(0, bind_group_0_ref.expect.binding_group);
+        passEncoder.setVertexBuffer(0, positionBuffer.buffer);
+        passEncoder.setVertexBuffer(1, colorBuffer.buffer);
+        passEncoder.setIndexBuffer(indicesBuffer.buffer, 'uint32');
         passEncoder.drawIndexed(indices.length);
         passEncoder.end();
         rs.device.queue.submit([commandEncoder.finish()]);

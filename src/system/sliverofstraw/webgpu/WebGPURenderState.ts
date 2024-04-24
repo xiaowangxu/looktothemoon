@@ -1,18 +1,17 @@
 import { Result } from "@/system/utils/Result";
 import { RenderState, type RenderStateInitOption } from "../render_state/RenderState";
-import type { RenderStateBufferDataType, RenderStateBuffer } from "../render_state/buffer/RenderStateBuffer";
+import { type RenderStateBufferDataType, RenderStateBufferType, RenderStateBufferUsage } from "../render_state/buffer/RenderStateBuffer";
 import type { RenderStateFrameBuffer } from "../render_state/frame_buffer/RenderStateFrameBuffer";
 import type { RenderStatePassCollection } from "../render_state/pass/RenderStatePassCollection";
 import { RenderStateAttributeRowType, type RenderStateAttributeLayout } from "../render_state/pipeline/RenderStateAttributeLayout";
 import type { RenderStateComputePipeline } from "../render_state/pipeline/RenderStateComputePipeline";
 import { RenderStateCullMode, RenderStateDepthCompareFunc, RenderStateFacing, RenderStateProgramState } from "../render_state/pipeline/RenderStateProgramState";
 import type { RenderStateRenderPipeline } from "../render_state/pipeline/RenderStateRenderPipeline";
-import type { RenderStateShaderType, RenderStateShader } from "../render_state/pipeline/RenderStateShader";
-import { RenderStateTextureUsage, RenderStateTextureFormat, type RenderStateTextureDimension, type RenderStateTexture } from "../render_state/texture/RenderStateTexture";
-import { RenderStateTextureFilter, RenderStateTextureWrap, type RenderStateTextureSampler } from "../render_state/texture/RenderStateTextureSampler";
+import type { RenderStateShaderType } from "../render_state/pipeline/RenderStateShader";
+import { RenderStateTextureUsage, RenderStateTextureFormat, RenderStateTextureDimension, RenderStateTexture, RendetStateTextureDestination } from "../render_state/texture/RenderStateTexture";
+import { RenderStateTextureFilter, RenderStateTextureWrap } from "../render_state/texture/RenderStateTextureSampler";
 import type { RenderStateTextureView } from "../render_state/texture/RenderStateTextureView";
-import type { RenderStateUniformGroup } from "../render_state/uniform/RenderStateUniformGroup";
-import { RenderStateSamplerUniformType, RenderStateTextureUniformSampleType, RenderStateTextureUniformType, type RenderStateUniformLayout } from "../render_state/uniform/RenderStateUniformLayout";
+import { RenderStateBufferUniformType, RenderStateSamplerUniformType, RenderStateTextureUniformSampleType, RenderStateTextureUniformType, type RenderStateUniformLayout, type RenderStateUniformType } from "../render_state/uniform/RenderStateUniformLayout";
 import { RenderStatePrimitiveType, type RenderStateVertexArray } from "../render_state/vertex_array/RenderStateVertexArray";
 import type { RenderDevice } from "../render_device/RenderDevice";
 import { WebGPURenderStateMultiSampleTexture } from "./texture/WebGPURenderStateMultiSampleTexture";
@@ -23,6 +22,13 @@ import { WebGPURenderStateRenderPipeline } from "./pipeline/WebGPURenderStateRen
 import { WebGPURenderStateUniformLayout } from "./uniform/WebGPURenderStateUniformLayout";
 import { WebGPURenderStateTextureSampler } from "./texture/WebGPURenderStateTextureSampler";
 import { RenderStateBlendFactor, RenderStateBlendOperator, type RenderStateOutputState } from "../render_state/pipeline/RenderStateOutputState";
+import { WebGPURenderStateUniformGroup, type WebGPURenderStateUniformGroupEntry } from "./uniform/WebGPURenderStateUniformGroup";
+import { WebGPURenderStateBuffer } from "./buffer/WebGPURenderStateBuffer";
+import { WebGPURenderStateTextureView } from "./texture/WebGPURenderStateTextureView";
+
+type WebGPURenderStateMemoryLayoutMemberType = RenderStateUniformType | { type: 'array', member: WebGPURenderStateMemoryLayoutMemberType, length: number } | { type: 'struct', members: WebGPURenderStateMemoryLayoutMemberType[] } | { type: 'layout', size: number, align: number };
+
+type WebGPURenderStateMemoryLayoutType = { type: 'primitive', size: number, align: number, offset: number } | { type: 'array', size: number, align: number, offset: number, member: WebGPURenderStateMemoryLayoutType, length: number } | { type: 'struct', size: number, align: number, offset: number, members: WebGPURenderStateMemoryLayoutType[] };
 
 export class WebGPURenderState extends RenderState<WebGPURenderState> {
 
@@ -72,18 +78,18 @@ export class WebGPURenderState extends RenderState<WebGPURenderState> {
             case RenderStateAttributeRowType.Int: return 'sint32';
             case RenderStateAttributeRowType.Uint: return 'uint32';
             case RenderStateAttributeRowType.Float: return 'float32';
-            case RenderStateAttributeRowType.Vec2: return 'float32x2';
-            case RenderStateAttributeRowType.Vec3: return 'float32x3';
-            case RenderStateAttributeRowType.Vec4: return 'float32x4';
-            case RenderStateAttributeRowType.Mat2Row: return 'float32x2';
-            case RenderStateAttributeRowType.Mat3Row: return 'float32x3';
-            case RenderStateAttributeRowType.Mat4Row: return 'float32x4';
-            case RenderStateAttributeRowType.IVec2: return 'sint32x2';
-            case RenderStateAttributeRowType.IVec3: return 'sint32x3';
-            case RenderStateAttributeRowType.IVec4: return 'sint32x4';
-            case RenderStateAttributeRowType.UVec2: return 'uint32x2';
-            case RenderStateAttributeRowType.UVec3: return 'uint32x3';
-            case RenderStateAttributeRowType.UVec4: return 'uint32x4';
+            case RenderStateAttributeRowType.Vector2: return 'float32x2';
+            case RenderStateAttributeRowType.Vector3: return 'float32x3';
+            case RenderStateAttributeRowType.Vector4: return 'float32x4';
+            case RenderStateAttributeRowType.Matrix2Row: return 'float32x2';
+            case RenderStateAttributeRowType.Matrix3Row: return 'float32x3';
+            case RenderStateAttributeRowType.Matrix4Row: return 'float32x4';
+            case RenderStateAttributeRowType.IVector2: return 'sint32x2';
+            case RenderStateAttributeRowType.IVector3: return 'sint32x3';
+            case RenderStateAttributeRowType.IVector4: return 'sint32x4';
+            case RenderStateAttributeRowType.UVector2: return 'uint32x2';
+            case RenderStateAttributeRowType.UVector3: return 'uint32x3';
+            case RenderStateAttributeRowType.UVector4: return 'uint32x4';
             default: {
                 const n: never = type;
                 throw new Error('<WebGPURenderState> RenderStateAttributeRowType: unreachable');
@@ -246,6 +252,108 @@ export class WebGPURenderState extends RenderState<WebGPURenderState> {
         }
     }
 
+    public static RenderStateTextureDimension(type: RenderStateTextureDimension): GPUTextureDimension {
+        switch (type) {
+            case RenderStateTextureDimension.D1: return '1d';
+            case RenderStateTextureDimension.D2: return '2d';
+            case RenderStateTextureDimension.D2Array: return '2d';
+            case RenderStateTextureDimension.CubeMap: return '2d';
+            case RenderStateTextureDimension.CubeMapArray: return '2d';
+            case RenderStateTextureDimension.D3: return '3d';
+            default: {
+                const n: never = type;
+                throw new Error('<WebGPURenderState> RenderStateTextureDimension: unreachable');
+            }
+        }
+    }
+
+    public static RenderStateTextureViewDimension(type: RenderStateTextureDimension): GPUTextureViewDimension {
+        switch (type) {
+            case RenderStateTextureDimension.D1: return '1d';
+            case RenderStateTextureDimension.D2: return '2d';
+            case RenderStateTextureDimension.D2Array: return '2d-array';
+            case RenderStateTextureDimension.CubeMap: return 'cube';
+            case RenderStateTextureDimension.CubeMapArray: return 'cube-array';
+            case RenderStateTextureDimension.D3: return '3d';
+            default: {
+                const n: never = type;
+                throw new Error('<WebGPURenderState> RenderStateTextureViewDimension: unreachable');
+            }
+        }
+    }
+
+    public static RendetStateTextureDestination(type: RendetStateTextureDestination): GPUTextureAspect {
+        switch (type) {
+            case RendetStateTextureDestination.All: return 'all';
+            case RendetStateTextureDestination.Depth: return 'depth-only';
+            case RendetStateTextureDestination.Stencil: return 'stencil-only';
+            default: {
+                const n: never = type;
+                throw new Error('<WebGPURenderState> RendetStateTextureDestination: unreachable');
+            }
+        }
+    }
+
+    public static RenderStateMemoryLayout(type: WebGPURenderStateMemoryLayoutMemberType): WebGPURenderStateMemoryLayoutType {
+
+        // WebGPU specs see https://www.w3.org/TR/WGSL/#alignment-and-size
+
+        if (typeof type === 'object') {
+            if (type.type === 'layout') {
+                return { type: 'primitive', size: type.size, align: type.align, offset: 0 };
+            }
+            else if (type.type === 'array') {
+                const size_align_offset = WebGPURenderState.RenderStateMemoryLayout(type.member);
+                const { size, align } = size_align_offset;
+                // N × roundUp(AlignOf(E), SizeOf(E))
+                return { type: 'array', size: type.length * (Math.ceil(size / align) * align), align: align, offset: 0, member: size_align_offset, length: type.length };
+            }
+            else {
+                // align = max(AlignOfMember(S,1), ... , AlignOfMember(S,N))
+                let align_max: number = 0;
+                const entries: WebGPURenderStateMemoryLayoutType[] = [];
+                let i = 0;
+                for (const member of type.members) {
+                    const size_align_offset = WebGPURenderState.RenderStateMemoryLayout(member);
+                    align_max = Math.max(align_max, size_align_offset.align);
+                    const offset_i_1 = i === 0 ? 0 : entries[i - 1].offset;
+                    const size_i_1 = i === 0 ? 0 : entries[i - 1].size;
+                    const offset_i = Math.ceil((offset_i_1 + size_i_1) / size_align_offset.align) * size_align_offset.align;
+                    entries.push({ ...size_align_offset, offset: offset_i });
+                    i++;
+                }
+                // size = roundUp(AlignOf(S), justPastLastMember) where justPastLastMember = OffsetOfMember(S,N) + SizeOfMember(S,N)
+                const { size: last_size, offset: last_offset } = entries[type.members.length - 1];
+                const just_pass_last_member = last_offset + last_size;
+                const size = Math.ceil(just_pass_last_member / align_max) * align_max;
+                return { type: 'struct', size, align: align_max, offset: 0, members: entries };
+            }
+        }
+        else {
+            switch (type) {
+                case RenderStateBufferUniformType.Bool: return { type: 'primitive', size: 4, align: 4, offset: 0 };
+                case RenderStateBufferUniformType.Uint: return { type: 'primitive', size: 4, align: 4, offset: 0 };
+                case RenderStateBufferUniformType.Int: return { type: 'primitive', size: 4, align: 4, offset: 0 };
+                case RenderStateBufferUniformType.Float: return { type: 'primitive', size: 4, align: 4, offset: 0 };
+                case RenderStateBufferUniformType.Vector2: return { type: 'primitive', size: 8, align: 8, offset: 0 };
+                case RenderStateBufferUniformType.Vector3: return { type: 'primitive', size: 12, align: 16, offset: 0 };
+                case RenderStateBufferUniformType.Vector4: return { type: 'primitive', size: 16, align: 16, offset: 0 };
+                case RenderStateBufferUniformType.Matrix2: return { type: 'primitive', size: 16, align: 8, offset: 0 };
+                case RenderStateBufferUniformType.Matrix3: return { type: 'primitive', size: 48, align: 16, offset: 0 };
+                case RenderStateBufferUniformType.Matrix4: return { type: 'primitive', size: 64, align: 16, offset: 0 };
+                case RenderStateBufferUniformType.IVector2: return { type: 'primitive', size: 8, align: 8, offset: 0 };
+                case RenderStateBufferUniformType.IVector3: return { type: 'primitive', size: 12, align: 16, offset: 0 };
+                case RenderStateBufferUniformType.IVector4: return { type: 'primitive', size: 16, align: 16, offset: 0 };
+                case RenderStateBufferUniformType.UVector2: return { type: 'primitive', size: 8, align: 8, offset: 0 };
+                case RenderStateBufferUniformType.UVector3: return { type: 'primitive', size: 12, align: 16, offset: 0 };
+                case RenderStateBufferUniformType.UVector4: return { type: 'primitive', size: 16, align: 16, offset: 0 };
+                default: {
+                    throw new Error('<WebGPURenderStateUniformLayout> RenderStateBufferUniformTypeBufferSize: unreachable');
+                }
+            }
+        }
+    }
+
     //#endregion
 
     //#region pipeline
@@ -377,7 +485,7 @@ export class WebGPURenderState extends RenderState<WebGPURenderState> {
         }
 
         const pipeline = this.device.createRenderPipeline(desc);
-        return Result.Ok(new WebGPURenderStateRenderPipeline(this, program, pipeline));
+        return Result.Ok(new WebGPURenderStateRenderPipeline(this, program, pipeline, uniform_layouts));
     }
 
     public delete_RenderPipeline(pipeline: WebGPURenderStateRenderPipeline): void {
@@ -412,12 +520,22 @@ export class WebGPURenderState extends RenderState<WebGPURenderState> {
     }
 
     public delete_MultiSampleTexture(texture: WebGPURenderStateMultiSampleTexture): void {
-        texture.multi_sample_texture.destroy();
+        texture.texture.destroy();
     }
 
     //#endregion
 
     //#region texture
+
+    public create_Texture(usage: RenderStateTextureUsage, format: RenderStateTextureFormat, dimension: RenderStateTextureDimension, width: number, height: number = 1, depth: number = 1, mipmap_level_count: number = 1): Result<WebGPURenderStateTexture, Error> {
+        const texture = this.device.createTexture({
+            dimension: WebGPURenderState.RenderStateTextureDimension(dimension),
+            size: [width, height, depth],
+            format: WebGPURenderState.RenderStateTextureFormat(format),
+            usage: usage,
+        });
+        return Result.Ok(new WebGPURenderStateTexture(this, usage, format, dimension, width, height, depth, mipmap_level_count, texture));
+    }
 
     public delete_Texture(texture: WebGPURenderStateTexture): void {
         texture.texture.destroy();
@@ -454,8 +572,26 @@ export class WebGPURenderState extends RenderState<WebGPURenderState> {
         return;
     }
 
-    public delete_TextureView(texture: RenderStateTextureView<WebGPURenderState>): void {
-        throw new Error("Method not implemented.");
+    //#endregion
+
+    //#region texture view
+
+    public create_TextureView(texture: WebGPURenderStateTexture | WebGPURenderStateMultiSampleTexture, dimension: RenderStateTextureDimension | undefined = undefined, part: RendetStateTextureDestination | undefined = RendetStateTextureDestination.All, base_layer: number = 0, layer_count: number | undefined = undefined, base_mipmap: number | undefined = undefined, mipmap_count: number | undefined = undefined): Result<WebGPURenderStateTextureView, Error> {
+        dimension ??= texture.dimension;
+        const texture_view = texture.texture.createView({
+            dimension: WebGPURenderState.RenderStateTextureViewDimension(dimension),
+            aspect: WebGPURenderState.RendetStateTextureDestination(part),
+            baseArrayLayer: base_layer,
+            arrayLayerCount: layer_count,
+            baseMipLevel: base_mipmap,
+            mipLevelCount: mipmap_count
+        });
+        return Result.Ok(new WebGPURenderStateTextureView(this, texture, dimension, texture_view));
+    }
+
+
+    public delete_TextureView(texture_view: WebGPURenderStateTextureView): void {
+        return;
     }
 
     //#endregion
@@ -466,6 +602,43 @@ export class WebGPURenderState extends RenderState<WebGPURenderState> {
         return new WebGPURenderStateUniformLayout(this);
     }
 
+    public delete_UniformLayout(layout: WebGPURenderStateUniformLayout): void {
+        return;
+    }
+
+    public create_UniformGroup(layout: WebGPURenderStateUniformLayout): Result<WebGPURenderStateUniformGroup, Error> {
+        const bind_group_layout = layout.layout;
+        if (bind_group_layout === undefined) return Result.Error(new Error('<WebGPURenderState> create_UniformGroup: WebGPURenderStateUniformLayout needs to be built before creating a group'));
+        const entries: WebGPURenderStateUniformGroupEntry[] = [];
+        for (const entry of layout.entries) {
+            entries.push({
+                type: entry.type,
+                binding: entry.binding,
+            })
+        }
+        return Result.Ok(new WebGPURenderStateUniformGroup(this, bind_group_layout, entries));
+    }
+
+    public delete_UniformGroup(group: WebGPURenderStateUniformGroup): void {
+        return;
+    }
+
+    //#endregion
+
+    //#region buffer
+
+    public create_Buffer(type: RenderStateBufferType, usage: RenderStateBufferUsage, data_type: RenderStateBufferDataType, element_size: number, size: number): Result<WebGPURenderStateBuffer, Error> {
+        const buffer = this.device.createBuffer({
+            size: size,
+            usage: type | usage,
+        });
+        return Result.Ok(new WebGPURenderStateBuffer(this, type, usage, data_type, element_size, size, buffer));
+    }
+
+    public delete_Buffer(buffer: WebGPURenderStateBuffer): void {
+        buffer.buffer.destroy();
+    }
+
     //#endregion
 
 
@@ -484,16 +657,6 @@ export class WebGPURenderState extends RenderState<WebGPURenderState> {
 
 
 
-
-    public create_Buffer(type: number, usage: number, data_type: RenderStateBufferDataType, element_size: number, size: number): Result<RenderStateBuffer<WebGPURenderState>, Error> {
-        throw new Error("Method not implemented.");
-    }
-    public get_BufferDataTypeBytes(format: RenderStateBufferDataType): number {
-        throw new Error("Method not implemented.");
-    }
-    public delete_Buffer(buffer: RenderStateBuffer<WebGPURenderState>): void {
-        throw new Error("Method not implemented.");
-    }
     public create_VertexArray(primitive_type: RenderStatePrimitiveType, offset: number, count: number): Result<RenderStateVertexArray<WebGPURenderState>, Error> {
         throw new Error("Method not implemented.");
     }
@@ -512,13 +675,7 @@ export class WebGPURenderState extends RenderState<WebGPURenderState> {
     public delete_FrameBuffer(frame_buffer: RenderStateFrameBuffer<WebGPURenderState>): void {
         throw new Error("Method not implemented.");
     }
-    public create_Texture(usage: RenderStateTextureUsage, format: RenderStateTextureFormat, dimension: RenderStateTextureDimension, width: number, height: number, depth: number, mipmap_level_count: number): Result<RenderStateTexture<WebGPURenderState>, Error> {
-        throw new Error("Method not implemented.");
-    }
     public get_TextureFormatTexelBytes(format: RenderStateTextureFormat): number {
-        throw new Error("Method not implemented.");
-    }
-    public delete_UniformGroup(group: RenderStateUniformGroup<WebGPURenderState>): void {
         throw new Error("Method not implemented.");
     }
 

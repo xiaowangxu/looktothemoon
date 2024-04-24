@@ -1,17 +1,19 @@
 import type { RenderState } from "../RenderState";
-import { RenderStateObject } from "../RenderStateObject";
+import { RenderStateObjectRefCounted } from "../RenderStateObject";
 import type { RenderStateShaderType } from "../pipeline/RenderStateShader";
-import type { RenderStateUniformGroup } from "./RenderStateUniformGroup";
 
 export enum RenderStateBufferUniformType {
     Bool, Uint, Int, Float,
-    Vector2, Vector3, Vector4, Matrix2, Matrix3, Matrix4,
+    Vector2, Vector3, Vector4,
+    Matrix2, Matrix3, Matrix4,
+    IVector2, IVector3, IVector4,
+    UVector2, UVector3, UVector4,
 }
 
 export enum RenderStateTextureUniformType {
-    Tex1D, 
-    Tex2D, Tex2DArray, 
-    Tex3D, 
+    Tex1D,
+    Tex2D, Tex2DArray,
+    Tex3D,
     TexCubeMap, TexCubeMapArray,
 }
 
@@ -27,19 +29,23 @@ export enum RenderStateSamplerUniformType {
 
 export type RenderStateUniformType = RenderStateBufferUniformType | RenderStateTextureUniformType;
 
-export abstract class RenderStateUniformLayout<T extends RenderState<T>> extends RenderStateObject<T> {
+export enum RenderStateUniformBindingType {
+    StorageBuffer, Buffer, Texture, Sampler,
+}
 
-    public abstract add_Storage(name: string, readonly: boolean, visibility: RenderStateShaderType, location: number | undefined): void;
+export abstract class RenderStateUniformLayout<T extends RenderState<T>> extends RenderStateObjectRefCounted<T> {
 
-    public abstract add_BufferUniform(name: string, visibility: RenderStateShaderType, location: number | undefined): void;
+    public abstract add_Storage(readonly: boolean, visibility: RenderStateShaderType, binding: number | undefined): void;
 
-    public abstract add_Uniform(name: string, type: RenderStateBufferUniformType, visibility: RenderStateShaderType, location: number | undefined): void;
+    public abstract add_BufferUniform(size: number, visibility: RenderStateShaderType, binding: number | undefined): void;
 
-    public abstract add_Texture(name: string, type: RenderStateTextureUniformType, sample: RenderStateTextureUniformSampleType, visibility: RenderStateShaderType, location: number | undefined): void;
+    public abstract add_Texture(type: RenderStateTextureUniformType, sample: RenderStateTextureUniformSampleType, visibility: RenderStateShaderType, binding: number | undefined): void;
 
-    public abstract add_MultiSampleTexture(name: string, sample: RenderStateTextureUniformSampleType, visibility: RenderStateShaderType, location: number | undefined): void;
+    public abstract add_MultiSampleTexture(sample: RenderStateTextureUniformSampleType, visibility: RenderStateShaderType, binding: number | undefined): void;
 
-    public abstract add_Sampler(name: string, type: RenderStateSamplerUniformType, visibility: RenderStateShaderType, location: number | undefined): void;
+    public abstract add_Sampler(type: RenderStateSamplerUniformType, visibility: RenderStateShaderType, binding: number | undefined): void;
 
-    public abstract create_Group(): RenderStateUniformGroup<T>;
+    public dispose(): void {
+        this.render_state.delete_UniformLayout(this);
+    }
 }
