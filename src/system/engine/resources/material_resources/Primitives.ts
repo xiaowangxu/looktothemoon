@@ -1,4 +1,4 @@
-import { RenderStateShaderType, RenderStateUniformType } from "@/system/sliverofstraw/RenderState";
+import { RenderStateShaderType, RenderStateUniformType } from "@/system/sliverofstraw/render_state_objects/RenderState";
 import { RenderServerDevice, RenderServerPlainColorTexture } from "../../render_server/RenderServer";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import type { UniformInitSet } from "../../render_server/RenderServerShader";

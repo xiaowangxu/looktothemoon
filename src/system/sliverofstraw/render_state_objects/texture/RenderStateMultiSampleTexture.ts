@@ -1,4 +1,4 @@
-import type { RenderState } from "../../RenderState";
+import type { RenderState } from "../RenderState";
 import { RenderStateObjectRefCounted } from "../RenderStateObject";
 import { type RenderStateTextureUsage, RenderStateTextureDimension, type RenderStateTextureFormat, RendetStateTextureDestination } from "./RenderStateTexture";
 import type { RenderStateTextureView } from "./RenderStateTextureView";

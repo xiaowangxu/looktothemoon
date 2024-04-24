@@ -1,6 +1,6 @@
 import { Ref } from "@/system/utils/RefCounted";
 import { RenderStateObjectRefCounted } from "../RenderStateObject";
-import type { RenderState } from "../../RenderState";
+import type { RenderState } from "../RenderState";
 import { type RenderStateShader } from "./RenderStateShader";
 
 export abstract class RenderStateProgram<T extends RenderState<T>> extends RenderStateObjectRefCounted<T> {

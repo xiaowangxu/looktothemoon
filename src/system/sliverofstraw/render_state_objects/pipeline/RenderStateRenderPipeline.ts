@@ -1,5 +1,5 @@
 import { Ref } from "@/system/utils/RefCounted";
-import type { RenderState } from "../../RenderState";
+import type { RenderState } from "../RenderState";
 import { RenderStateObjectRefCounted } from "../RenderStateObject";
 import type { RenderStateProgram } from "./RenderStateProgram";
 import type { RenderStateProgramState } from "./RenderStateProgramState";

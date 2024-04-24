@@ -2,7 +2,7 @@ import { Ref } from "@/system/utils/RefCounted";
 import type { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
 import { Resource } from "../Resource";
 import { RenderDeviceVector3AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
-import { RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
+import { RenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_objects/RenderState";
 import type { Config } from "../../ConfiguredObject";
 import { Triangle3 } from "@/system/fivepebble/geometries/Triangle3";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";

@@ -1,5 +1,5 @@
 import { Epsilon, clamp } from "@/system/fivepebble/Scalar";
-import { RenderStateUniformType, RenderStateShaderType } from "@/system/sliverofstraw/RenderState";
+import { RenderStateUniformType, RenderStateShaderType } from "@/system/sliverofstraw/render_state_objects/RenderState";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { RenderServerDevice } from "../../render_server/RenderServer";
 import type { UniformInitSet } from "../../render_server/RenderServerShader";

@@ -1,6 +1,6 @@
-import { RenderDeviceObject } from "@/system/sliverofstraw/render_device_objects/RenderDeviceObject";
+import { RenderDeviceObject } from "@/system/sliverofstraw/render_device/RenderDeviceObject";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
-import { RenderStateUniformType, type RenderState } from "@/system/sliverofstraw/RenderState";
+import { RenderStateUniformType, type RenderState } from "@/system/sliverofstraw/render_state_objects/RenderState";
 import type { WebGL2RenderStateProgram } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateProgram";
 import { RenderServerDevice } from "./RenderServer";
 import type { WebGL2RenderStateShader } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateShader";

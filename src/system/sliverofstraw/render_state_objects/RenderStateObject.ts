@@ -1,5 +1,5 @@
 import { type RefCounted } from "../../utils/RefCounted";
-import type { RenderState } from "../RenderState";
+import type { RenderState } from "./RenderState";
 
 let id = 0;
 

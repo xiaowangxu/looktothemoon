@@ -1,4 +1,4 @@
-import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
+import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_objects/RenderState";
 import { PrimitiveGeometryResource } from "./primitive_geometry_resources/PrimitiveGeometryResource";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector3AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";

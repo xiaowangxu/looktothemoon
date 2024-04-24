@@ -1,4 +1,4 @@
-import { RenderStateBufferUsage, type RenderState, type RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
+import { RenderStateBufferUsage, type RenderState, type RenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_objects/RenderState";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { type RenderServerGeometryArray } from "../../render_server/RenderServerGeometry";
 import { GeometryResource } from "./GeometryResource";

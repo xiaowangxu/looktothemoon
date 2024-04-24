@@ -52,7 +52,7 @@
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Result } from "@/system/utils/Result";
 import { ClassSaver } from "../classes/saver_loader/ClassSaverLoader";
-import { RenderStatePrimitiveType, RenderStateBufferUsage } from "@/system/sliverofstraw/RenderState";
+import { RenderStatePrimitiveType, RenderStateBufferUsage } from "@/system/sliverofstraw/render_state_objects/RenderState";
 import { PackedVector3Array, PackedVector2Array, PackedIndexArray, PackedVector4Array } from "../classes/value_wrappers/PackedArray";
 import { ArrayGeometryResource } from "../resources/geometry_resources/ArrayGeometryResource";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";

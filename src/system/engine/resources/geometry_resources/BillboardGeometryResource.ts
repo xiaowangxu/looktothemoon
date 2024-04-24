@@ -1,7 +1,7 @@
 import { Cacher } from "@/system/utils/Cacher";
 import type { Config } from "../../ConfiguredObject";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
-import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
+import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_objects/RenderState";
 import { RenderDeviceVector2AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { Ref } from "@/system/utils/RefCounted";
 import { GeometryResource } from "./GeometryResource";

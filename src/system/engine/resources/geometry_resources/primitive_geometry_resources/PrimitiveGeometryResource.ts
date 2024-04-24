@@ -1,6 +1,6 @@
 import { GeometryResource } from "../GeometryResource";
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceVector3AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
-import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
+import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_objects/RenderState";
 import { Pi, Tau, clamp } from '@/system/fivepebble/Scalar';
 import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
 import type { Config } from "../../../ConfiguredObject";

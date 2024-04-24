@@ -1,5 +1,5 @@
 import { RenderStateObjectRefCounted } from "../RenderStateObject";
-import type { RenderState } from "../../RenderState";
+import type { RenderState } from "../RenderState";
 
 export enum RenderStateShaderType {
     Vertex = 0x01,

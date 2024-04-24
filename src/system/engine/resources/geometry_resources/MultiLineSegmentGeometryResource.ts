@@ -1,6 +1,6 @@
 import { RenderDeviceAttributeBufferView, RenderDeviceFloatAttributeBuffer, RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceVector3AttributeBuffer, RenderDeviceVector4AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
 import { Cacher } from "@/system/utils/Cacher";
-import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
+import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_objects/RenderState";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { GeometryResource } from "./GeometryResource";
 import { Ref } from "@/system/utils/RefCounted";

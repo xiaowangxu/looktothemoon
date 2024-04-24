@@ -1,4 +1,4 @@
-import type { RenderState } from "../../RenderState";
+import type { RenderState } from "../RenderState";
 import { RenderStateObject } from "../RenderStateObject";
 import type { RenderStateShaderType } from "../pipeline/RenderStateShader";
 import type { RenderStateUniformGroup } from "./RenderStateUniformGroup";

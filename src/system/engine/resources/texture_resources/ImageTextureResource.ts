@@ -1,5 +1,5 @@
 import type { Config } from "../../ConfiguredObject";
-import { RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateTextureWrap } from "@/system/sliverofstraw/RenderState";
+import { RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType, RenderStateTextureWrap } from "@/system/sliverofstraw/render_state_objects/RenderState";
 import { ParameterMutableTextureResource } from "./TextureResource";
 import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
 import type { ClassSaver } from "../../classes/saver_loader/ClassSaverLoader";

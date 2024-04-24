@@ -1,12 +1,12 @@
 import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
 import { Ref } from "@/system/utils/RefCounted";
 import { RenderServerDevice } from "./RenderServer";
-import { RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType } from "@/system/sliverofstraw/RenderState";
+import { RenderStateTextureDataFormat, RenderStateTextureFormat, RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureType } from "@/system/sliverofstraw/render_state_objects/RenderState";
 import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
-import { RenderDeviceObject } from "@/system/sliverofstraw/render_device_objects/RenderDeviceObject";
+import { RenderDeviceObject } from "@/system/sliverofstraw/render_device/RenderDeviceObject";
 
 export enum RenderServerLightType {
     None = 0,

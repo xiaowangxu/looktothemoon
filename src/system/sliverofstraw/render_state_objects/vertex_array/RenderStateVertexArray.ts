@@ -1,5 +1,5 @@
 import { RenderStateObjectRefCounted } from "../RenderStateObject";
-import type { RenderState } from "../../RenderState";
+import type { RenderState } from "../RenderState";
 import type { RenderStateVertexArrayAttributeBufferAdaptor } from "./RenderStateVertexArrayAttributeBufferAdaptor";
 import { RenderStateVertexArrayView } from "./RenderStateVertexArrayView";
 import type { RenderStateBuffer } from "../buffer/RenderStateBuffer";

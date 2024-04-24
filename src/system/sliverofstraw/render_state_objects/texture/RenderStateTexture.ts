@@ -1,5 +1,5 @@
 import type { Result } from "@/system/utils/Result";
-import type { RenderState } from "../../RenderState";
+import type { RenderState } from "../RenderState";
 import { RenderStateObjectRefCounted } from "../RenderStateObject";
 import type { RenderStateBufferData } from "../buffer/RenderStateBuffer";
 import type { RenderStateTextureView } from "./RenderStateTextureView";

@@ -14,12 +14,12 @@ async function init() {
     const canvas_ctx = canvas.getContext('webgpu')!;
     canvas_ctx.configure({
         device: rs.device,
-        format: navigator.gpu.getPreferredCanvasFormat()
+        format: 'rgba16float'
     });
 
     const width = canvas.width, height = canvas.height;
 
-    let color_multisampled_texture = rs.create_MultiSampleTexture(RenderStateTextureUsage.Attchment, RenderStateTextureFormat.BGRA8, width, height, 4).expect();
+    let color_multisampled_texture = rs.create_MultiSampleTexture(RenderStateTextureUsage.Attchment, RenderStateTextureFormat.RGBA16F, width, height, 4).expect();
     // const depth_texture = rs.create_Texture(RenderStateTextureUsage.Attchment, RenderStateTextureFormat.D32F, RenderStateTextureDimension.D2, width, height, 1, 1).expect();
 
     const shader_code = `
@@ -82,7 +82,7 @@ async function init() {
             alpha_to_coverage: false,
             attachments: [
                 {
-                    format: RenderStateTextureFormat.BGRA8,
+                    format: RenderStateTextureFormat.RGBA16F,
                     blend: false,
                 }
             ],
@@ -220,8 +220,7 @@ async function init() {
         if (canvas.width === canvas_width && canvas.height === canvas_height) return;
         canvas.width = canvas_width;
         canvas.height = canvas_height;
-        (renderPassDescriptor.colorAttachments as any[])[0]!.resolveTarget = canvas_ctx.getCurrentTexture().createView();
-        color_multisampled_texture = rs.create_MultiSampleTexture(RenderStateTextureUsage.Attchment, RenderStateTextureFormat.BGRA8, canvas_width, canvas_height, 4).expect();
+        color_multisampled_texture = rs.create_MultiSampleTexture(RenderStateTextureUsage.Attchment, RenderStateTextureFormat.RGBA16F, canvas_width, canvas_height, 4).expect();
         (renderPassDescriptor.colorAttachments as any[])[0]!.view = color_multisampled_texture.multi_sample_texture.createView();
         depth_texture = rs.device.createTexture({
             size: [canvas_width, canvas_height],
@@ -231,9 +230,10 @@ async function init() {
         });
         (renderPassDescriptor.depthStencilAttachment as any).view = depth_texture.createView();
     }
-
+    
     function render() {
         resize();
+        (renderPassDescriptor.colorAttachments as any[])[0]!.resolveTarget = canvas_ctx.getCurrentTexture().createView();
         const commandEncoder = rs.device.createCommandEncoder();
         const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
         passEncoder.setPipeline(pipeline.pipeline);

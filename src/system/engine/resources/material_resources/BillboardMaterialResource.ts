@@ -1,5 +1,5 @@
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
-import { RenderStateShaderType, RenderStateUniformType } from "@/system/sliverofstraw/RenderState";
+import { RenderStateShaderType, RenderStateUniformType } from "@/system/sliverofstraw/render_state_objects/RenderState";
 import type { WebGL2RenderState } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
 import { Cacher } from "@/system/utils/Cacher";
 import type { Config } from "../../ConfiguredObject";

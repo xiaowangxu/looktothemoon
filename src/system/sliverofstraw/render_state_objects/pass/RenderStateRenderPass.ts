@@ -1,4 +1,4 @@
-import type { RenderState } from "../../RenderState";
+import type { RenderState } from "../RenderState";
 import { RenderStateObject } from "../RenderStateObject";
 import type { RenderStateFrameBuffer } from "../frame_buffer/RenderStateFrameBuffer";
 import type { RenderStateRenderPipeline } from "../pipeline/RenderStateRenderPipeline";

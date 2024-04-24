@@ -1,5 +1,5 @@
 import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
-import type { RenderState } from "../../RenderState";
+import type { RenderState } from "../RenderState";
 import { RenderStateObjectRefCounted } from "../RenderStateObject";
 import type { RenderStateTextureView } from "../texture/RenderStateTextureView";
 

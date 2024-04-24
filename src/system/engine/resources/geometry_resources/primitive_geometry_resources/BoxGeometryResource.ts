@@ -1,5 +1,5 @@
 import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer, RenderDeviceVector3AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
-import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/RenderState";
+import { RenderStateBufferUsage, RenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_objects/RenderState";
 import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
 import type { Config } from "../../../ConfiguredObject";
 import { Ref } from "@/system/utils/RefCounted";
