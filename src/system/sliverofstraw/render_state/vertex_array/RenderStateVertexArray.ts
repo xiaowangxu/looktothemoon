@@ -1,7 +1,6 @@
 import { RenderStateObjectRefCounted } from "../RenderStateObject";
 import type { RenderState } from "../RenderState";
 import type { RenderStateVertexArrayAttributeBufferAdaptor } from "./RenderStateVertexArrayAttributeBufferAdaptor";
-import { RenderStateVertexArrayView } from "./RenderStateVertexArrayView";
 import type { RenderStateBuffer } from "../buffer/RenderStateBuffer";
 
 export enum RenderStatePrimitiveType {
@@ -9,6 +8,8 @@ export enum RenderStatePrimitiveType {
 }
 
 export abstract class RenderStateVertexArray<T extends RenderState<T>> extends RenderStateObjectRefCounted<T> {
+
+    static readonly MaxAttributeLocationCount = 20;
 
     public readonly primitive_type: RenderStatePrimitiveType;
     public readonly offset: number;
@@ -27,14 +28,13 @@ export abstract class RenderStateVertexArray<T extends RenderState<T>> extends R
      * set vertex array's attribute buffer
      * @param location attribute location
      * @param buffer the buffer can be RenderStateBuffer or RenderStateVertexArrayAttributeBufferAdaptor
-     * @param buffer_views if needs to be split into rows, pass in each row as RenderStateVertexArrayAttributeBufferAdaptor, each RS will use this accordingly
      * @param per_instance is per instance step mode buffer
      */
-    public abstract set_Buffer(location: number, buffer: RenderStateBuffer<T> | RenderStateVertexArrayAttributeBufferAdaptor<T>, buffer_views: Iterable<RenderStateVertexArrayAttributeBufferAdaptor<T>> | undefined, per_instance: boolean): void;
+    public abstract set_Buffer(location: number, buffer: RenderStateBuffer<T> | RenderStateVertexArrayAttributeBufferAdaptor<T>, per_instance: boolean): void;
 
     /**
      * clear one vertex array's attribute buffer
-     * @param location clear buffer's base location, will consider rows
+     * @param location clear buffer's base location
      */
     public abstract clear_Buffer(location: number): void;
 
@@ -46,11 +46,6 @@ export abstract class RenderStateVertexArray<T extends RenderState<T>> extends R
     public abstract set_Index(buffer: RenderStateBuffer<T> | RenderStateVertexArrayAttributeBufferAdaptor<T>): void;
 
     public abstract clear_Index(): void;
-
-    public create_View(vertex_offset: number, vertex_count: number) {
-        const view: RenderStateVertexArrayView<T> = new RenderStateVertexArrayView(this.render_state, this, vertex_offset, vertex_count);
-        return view;
-    }
 
     public dispose(): void {
         this.render_state.delete_VertexArray(this);

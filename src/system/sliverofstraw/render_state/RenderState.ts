@@ -18,6 +18,7 @@ import type { RenderStateComputePipeline } from "./pipeline/RenderStateComputePi
 import type { RenderStateRenderPipeline } from "./pipeline/RenderStateRenderPipeline";
 import { RenderStatePrimitiveType } from "./vertex_array/RenderStateVertexArray";
 import type { RenderStateOutputState } from "./pipeline/RenderStateOutputState";
+import type { RenderStateVertexArrayView } from "./vertex_array/RenderStateVertexArrayView";
 
 //#region options
 
@@ -79,6 +80,8 @@ export abstract class RenderState<T extends RenderState<T>> {
     //#region vertex array
 
     public abstract create_VertexArray(primitive_type: RenderStatePrimitiveType, offset: number, count: number): Result<RenderStateVertexArray<T>, Error>;
+
+    public abstract create_VertexArrayView(vertex_array: RenderStateVertexArray<T>, offset: number, count: number): Result<RenderStateVertexArrayView<T>, Error>;
 
     public abstract delete_VertexArray(vertex_array: RenderStateVertexArray<T>): void;
 

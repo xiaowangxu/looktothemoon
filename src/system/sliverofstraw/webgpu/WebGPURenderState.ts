@@ -25,6 +25,10 @@ import { RenderStateBlendFactor, RenderStateBlendOperator, type RenderStateOutpu
 import { WebGPURenderStateUniformGroup, type WebGPURenderStateUniformGroupEntry } from "./uniform/WebGPURenderStateUniformGroup";
 import { WebGPURenderStateBuffer } from "./buffer/WebGPURenderStateBuffer";
 import { WebGPURenderStateTextureView } from "./texture/WebGPURenderStateTextureView";
+import { WebGPURenderStateComputePipeline } from "./pipeline/WebGPURenderStateComputePipeline";
+import type { RenderStateVertexArrayView } from "../render_state/vertex_array/RenderStateVertexArrayView";
+import { WebGPURenderStateVertexArray } from "./vertex_array/WebGPURenderStateVertexArray";
+import { WebGPURenderStateVertexArrayView } from "./vertex_array/WebGPURenderStateVertexArrayView";
 
 type WebGPURenderStateMemoryLayoutMemberType = RenderStateUniformType | { type: 'array', member: WebGPURenderStateMemoryLayoutMemberType, length: number } | { type: 'struct', members: WebGPURenderStateMemoryLayoutMemberType[] } | { type: 'layout', size: number, align: number };
 
@@ -485,24 +489,42 @@ export class WebGPURenderState extends RenderState<WebGPURenderState> {
         }
 
         const pipeline = this.device.createRenderPipeline(desc);
-        return Result.Ok(new WebGPURenderStateRenderPipeline(this, program, pipeline, uniform_layouts));
+        return Result.Ok(new WebGPURenderStateRenderPipeline(this, program, pipeline));
     }
 
     public delete_RenderPipeline(pipeline: WebGPURenderStateRenderPipeline): void {
         return;
     }
 
+    public create_ComputePipeline(program: WebGPURenderStateProgram, uniform_layouts: Iterable<WebGPURenderStateUniformLayout>): Result<WebGPURenderStateComputePipeline, Error> {
+        if (!RenderState.is_ComputeShader(program.vertex_or_compute_shader_ref.expect.type)) {
+            return Result.Error(new Error('<WebGPURenderState> create_ComputePipeline: program does not have Compute shader'));
+        }
 
+        // binding group layouts
+        const layouts: GPUBindGroupLayout[] = [];
+        for (const layout of uniform_layouts) {
+            const bind_group_layout = layout.layout;
+            if (bind_group_layout === undefined) return Result.Error(new Error('<WebGPURenderState> create_ComputePipeline: WebGPURenderStateUniformLayout needs to be built before creating a pipeline'));
+            layouts.push(bind_group_layout);
+        }
 
+        const desc: GPUComputePipelineDescriptor = {
+            layout: this.device.createPipelineLayout({
+                bindGroupLayouts: layouts,
+            }),
+            compute: {
+                module: (program.vertex_or_compute_shader_ref.expect as WebGPURenderStateShader).shader,
+                entryPoint: 'main',
+            }
+        };
 
-
-
-    public create_ComputePipeline(program: WebGPURenderStateProgram, uniform_layouts: Iterable<RenderStateUniformLayout<WebGPURenderState>>): Result<RenderStateRenderPipeline<WebGPURenderState>, Error> {
-        throw new Error("Method not implemented.");
+        const pipeline = this.device.createComputePipeline(desc);
+        return Result.Ok(new WebGPURenderStateComputePipeline(this, program, pipeline));
     }
 
-    public delete_ComputePipeline(pipeline: RenderStateComputePipeline<WebGPURenderState>): void {
-        throw new Error("Method not implemented.");
+    public delete_ComputePipeline(pipeline: WebGPURenderStateComputePipeline): void {
+        return;
     }
 
     //#endregion
@@ -641,28 +663,37 @@ export class WebGPURenderState extends RenderState<WebGPURenderState> {
 
     //#endregion
 
+    //#region vertex array
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    public create_VertexArray(primitive_type: RenderStatePrimitiveType, offset: number, count: number): Result<RenderStateVertexArray<WebGPURenderState>, Error> {
-        throw new Error("Method not implemented.");
+    public create_VertexArray(primitive_type: RenderStatePrimitiveType, offset: number, count: number): Result<WebGPURenderStateVertexArray, Error> {
+        return Result.Ok(new WebGPURenderStateVertexArray(this, primitive_type, offset, count));
     }
-    public delete_VertexArray(vertex_array: RenderStateVertexArray<WebGPURenderState>): void {
-        throw new Error("Method not implemented.");
+
+    public create_VertexArrayView(vertex_array: WebGPURenderStateVertexArray, offset: number, count: number): Result<RenderStateVertexArrayView<WebGPURenderState>, Error> {
+        return Result.Ok(new WebGPURenderStateVertexArrayView(this, vertex_array, offset, count));
     }
+
+    public delete_VertexArray(vertex_array: WebGPURenderStateVertexArray): void {
+        return;
+    }
+
+    //#endregion
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     public create_PassCollection(): RenderStatePassCollection<WebGPURenderState> {
         throw new Error("Method not implemented.");
     }

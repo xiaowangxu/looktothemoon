@@ -69,6 +69,27 @@ export function bitmask_keep(bm: number, length: number, base: number) {
 }
 
 /**
+ * keep bitmask to appear in a range [base, base + length]
+ * 
+ * from 
+ *  
+ *            0b 00001111 1111111 0 00010011 00110010
+ * 
+ * to
+ *   
+ *            0b 00001111 1100000 0 00000001 00110010
+ *                          +--- range ---+
+ * 
+ * @param bm origin bitmask
+ * @param length
+ * @param base
+ * @returns 
+ */
+export function bitmask_clear(bm: number, length: number, base: number) {
+    return bm & (~(bitmask(length, base)));
+}
+
+/**
  * enable value in a range [base, base + length] to a number literial, overflow bits will be ignored
  * 
  * from 

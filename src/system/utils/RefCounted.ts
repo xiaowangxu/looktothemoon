@@ -53,7 +53,7 @@ export class Ref<T extends RefCountedLike> {
 }
 
 export class RefArray<T extends RefCountedLike> {
-    private refs: Ref<T>[] = [];
+    private refs: Ref<T>[];
 
     public get length() { return this.refs.length; }
     public get is_empty() { return this.length <= 0; }
@@ -70,6 +70,22 @@ export class RefArray<T extends RefCountedLike> {
             const refs = items.map(i => new Ref(i));
             this.unref();
             this.refs = refs;
+        }
+    }
+
+    constructor(items: (T | undefined)[] | undefined | number = undefined) {
+        if (items !== undefined) {
+            if (typeof items === 'number') {
+                const arr = new Array(items);
+                for (let i = 0; i < items; i++) arr[i] = new Ref();
+                this.refs = arr;
+            }
+            else {
+                this.refs = items.map(i => new Ref(i));
+            }
+        }
+        else {
+            this.refs = [];
         }
     }
 
@@ -92,12 +108,6 @@ export class RefArray<T extends RefCountedLike> {
     public set(index: number, value: T | undefined) {
         if (index < 0 || index >= this.length) return;
         this.refs[index].value = value;
-    }
-
-    constructor(items: (T | undefined)[] | undefined = undefined) {
-        if (items !== undefined) {
-            this.refs = items.map(i => new Ref(i));
-        }
     }
 
     public resize(length: number) {
@@ -150,7 +160,6 @@ export class RefArray<T extends RefCountedLike> {
 
     public clear() {
         this.unref();
-        this.refs = [];
     }
 }
 

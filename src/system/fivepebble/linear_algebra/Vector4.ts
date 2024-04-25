@@ -1,6 +1,5 @@
 import { lerp } from "../Scalar";
 import type { Matrix4 } from "./Matrix4";
-import type { MatrixLike } from "./MatrixLike";
 import type { VectorLike } from "./VectorLike";
 
 export class Vector4 implements VectorLike<Vector4, Matrix4> {

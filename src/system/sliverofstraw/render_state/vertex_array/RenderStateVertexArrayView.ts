@@ -9,14 +9,14 @@ export class RenderStateVertexArrayView<T extends RenderState<T>> extends Render
     public readonly vertex_array_ref: Ref<RenderStateVertexArray<T>> = new Ref();
 
     public get primitive_type() { return this.vertex_array_ref.expect.primitive_type; }
-    public readonly vertex_offset: number;
-    public readonly vertex_count: number;
+    public readonly offset: number;
+    public readonly count: number;
 
-    constructor(render_state: T, vertex_array: RenderStateVertexArray<T>, vertex_offset: number, vertex_count: number) {
+    constructor(render_state: T, vertex_array: RenderStateVertexArray<T>, offset: number, count: number) {
         super(render_state);
         this.vertex_array_ref.value = vertex_array;
-        this.vertex_offset = vertex_offset;
-        this.vertex_count = vertex_count;
+        this.offset = offset;
+        this.count = count;
     }
 
     public dispose() {
