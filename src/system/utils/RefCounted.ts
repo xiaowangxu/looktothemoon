@@ -32,6 +32,16 @@ export class Ref<T extends RefCountedLike> {
         }
     }
 
+    public set move(ref_item: Ref<T> | undefined) {
+        if (ref_item === undefined) {
+            this.value = undefined
+        }
+        else {
+            this.value = ref_item.value;
+            ref_item.clear();
+        }
+    }
+
     public get expect() {
         if (this.ref === undefined) throw new Error('<Ref> expect: failed to get ref counted object');
         return this.ref;
@@ -53,35 +63,41 @@ export class Ref<T extends RefCountedLike> {
 }
 
 export class RefArray<T extends RefCountedLike> {
-    private refs: Ref<T>[];
+    private refs: (T | undefined)[];
 
     public get length() { return this.refs.length; }
     public get is_empty() { return this.length <= 0; }
 
-    *[Symbol.iterator]() {
-        for (const ref of this.refs) {
-            yield ref.value;
-        }
-    }
+    [Symbol.iterator]() { return this.refs[Symbol.iterator](); }
 
-    public set value(items: (T | undefined)[] | undefined) {
-        if (items === undefined) this.unref();
-        else {
-            const refs = items.map(i => new Ref(i));
-            this.unref();
-            this.refs = refs;
+    private ref(index: number, value: T | undefined) {
+        const item = this.refs[index];
+        if (item === value) return;
+        if (item !== undefined) {
+            item.unref();
+        }
+        this.refs[index] = value;
+        if (value !== undefined) {
+            value.ref();
         }
     }
 
     constructor(items: (T | undefined)[] | undefined | number = undefined) {
         if (items !== undefined) {
             if (typeof items === 'number') {
-                const arr = new Array(items);
-                for (let i = 0; i < items; i++) arr[i] = new Ref();
+                const arr = new Array(items).fill(undefined);
                 this.refs = arr;
             }
             else {
-                this.refs = items.map(i => new Ref(i));
+                const length = items.length;
+                const arr = new Array(length).fill(undefined);
+                this.refs = arr;
+                for (let i = 0; i < length; i++) {
+                    const item = items[i];
+                    if (item !== undefined) {
+                        this.ref(i, item);
+                    }
+                }
             }
         }
         else {
@@ -89,25 +105,21 @@ export class RefArray<T extends RefCountedLike> {
         }
     }
 
-    public get(index: number, as_ref: true): Ref<T> | undefined
-    public get(index: number, as_ref: false): T | undefined
-    public get(index: number, as_ref: true | false = true): Ref<T> | T | undefined {
-        const ref: Ref<T> | undefined = this.refs[index];
-        if (as_ref) return ref.borrow();
-        if (ref === undefined) return undefined;
-        else {
-            return ref.value;
-        }
+    public get(index: number, target?: Ref<T>): T | undefined {
+        if (index < 0 || index >= this.length) undefined;
+        const item = this.refs[index];
+        if (target !== undefined) target.value = item;
+        return item;
     }
 
     public has(index: number): boolean {
-        const ref: Ref<T> | undefined = this.refs[index];
-        return (ref !== undefined) && (!ref.is_empty);
+        if (index < 0 || index >= this.length) return false;
+        return this.refs[index] !== undefined;
     }
 
     public set(index: number, value: T | undefined) {
         if (index < 0 || index >= this.length) return;
-        this.refs[index].value = value;
+        this.ref(index, value);
     }
 
     public resize(length: number) {
@@ -124,98 +136,94 @@ export class RefArray<T extends RefCountedLike> {
     }
 
     public push(item: T | undefined) {
-        this.refs.push(new Ref(item));
+        const index = this.length;
+        this.refs.push(undefined);
+        if (item !== undefined) this.ref(index, item);
     }
 
-    public pop(as_ref: true): Ref<T> | undefined
-    public pop(as_ref: false): T | undefined
-    public pop(as_ref: true | false = true): Ref<T> | T | undefined {
-        const ref = this.refs.pop();
-        if (as_ref) return ref;
-        if (ref === undefined) return undefined;
-        else {
-            const item = ref.value;
-            ref.value = undefined;
-            return item;
-        }
+    public pop(target: Ref<T>): T | undefined {
+        const index = this.length - 1;
+        if (index < 0) return undefined;
+        const item: T | undefined = this.refs[index];
+        target.value = item;
+        this.ref(index, undefined);
+        this.refs.pop();
+        return item;
     }
 
     public slice(start?: number, end?: number): RefArray<T> {
         const slice_refs = this.refs.slice(start, end);
-        return new RefArray<T>(slice_refs.map(i => i.expect));
+        return new RefArray<T>(slice_refs);
     }
 
     public remove(start: number, count: number = 1) {
-        const item_ref = this.refs.splice(start, count);
-        for (const ref of item_ref) {
-            ref.clear();
+        const end = start + count;
+        for (let i = start; i < end; i++) {
+            this.ref(i, undefined);
         }
-    }
-
-    private unref() {
-        for (const ref of this.refs) {
-            ref.clear();
-        }
+        this.refs.splice(start, count);
     }
 
     public clear() {
-        this.unref();
+        const length = this.length;
+        for (let i = 0; i < length; i++) {
+            this.ref(i, undefined);
+        }
     }
 }
 
 export class RefMap<K, T extends RefCountedLike> {
-    private refs: Map<K, Ref<T>> = new Map();
+    private refs: Map<K, T> = new Map();
 
     private _is_empty: boolean = true;
     public get size() { return this.refs.size; }
     public get is_empty() { return this._is_empty; }
 
-    *[Symbol.iterator]() {
-        for (const [index, ref] of this.refs.entries()) {
-            yield [index, ref.expect] as [K, T];
+    [Symbol.iterator]() { return this.refs.entries(); }
+
+    public entries() { return this.refs.entries(); }
+
+    public keys() { return this.refs.keys(); }
+
+    public values() { return this.refs.values(); }
+
+    private ref(item: T | undefined, value: T | undefined) {
+        if (item === value) return;
+        if (item !== undefined) {
+            item.unref();
         }
-    }
-
-    public *entries() {
-        for (const [index, ref] of this.refs.entries()) {
-            yield [index, ref.expect] as [K, T];
-        }
-    }
-
-    public keys() {
-        return this.refs.keys();
-    }
-
-    public *values() {
-        for (const ref of this.refs.values()) {
-            yield ref.expect;
+        if (value !== undefined) {
+            value.ref();
         }
     }
 
     public set(key: K, value: T | undefined): boolean {
         if (this.refs.has(key)) {
-            const old_ref = this.refs.get(key)!;
+            const old_item = this.refs.get(key)!;
             if (value === undefined) {
-                old_ref.clear();
+                this.ref(old_item, undefined);
                 this.refs.delete(key);
                 this._is_empty = this.refs.size <= 0;
                 return true;
             }
-            else if (old_ref.value !== value) {
-                old_ref.value = value;
+            else if (old_item !== value) {
+                this.ref(old_item, value);
                 return true;
             }
         }
         else if (value !== undefined) {
-            this.refs.set(key, new Ref(value));
+            this.refs.set(key, value);
+            this.ref(undefined, value);
             this._is_empty = false;
             return true;
         }
         return false;
     }
 
-    public get(key: K) {
-        return this.refs.get(key)?.value;
+    public get(key: K, target?: Ref<T>): T | undefined {
+        const value = this.refs.get(key);
+        if (target !== undefined) target.value = value;
+        return value;
     }
 
     public has(key: K) {
@@ -224,8 +232,8 @@ export class RefMap<K, T extends RefCountedLike> {
 
     public delete(key: K): boolean {
         if (this.refs.has(key)) {
-            const old_ref = this.refs.get(key)!;
-            old_ref.clear();
+            const old_item = this.refs.get(key)!;
+            this.ref(old_item, undefined);
             this.refs.delete(key);
             this._is_empty = this.refs.size <= 0;
             return true;
@@ -234,8 +242,8 @@ export class RefMap<K, T extends RefCountedLike> {
     }
 
     public clear() {
-        for (const ref of this.refs.values()) {
-            ref.clear();
+        for (const item of this.refs.values()) {
+            this.ref(item, undefined);
         }
         this._is_empty = true;
         this.refs.clear();
@@ -266,3 +274,30 @@ export class WeakRef<T extends RefCounted> {
         this.value = item;
     }
 }
+
+/* 
+class RefTest implements RefCounted {
+    static i = 0;
+    public readonly idx = RefTest.i++;
+    private _ref_count: number = 0;
+    public get ref_count() { return this._ref_count; }
+    public ref() {
+        if (this._disposed) throw new Error('${this.idx} already disposed');
+        this._ref_count++;
+        console.log('ref', this.idx, `(${this._ref_count})`);
+    }
+    public unref() {
+        if (this._ref_count === 0) return;
+        this._ref_count--;
+        console.log('unref', this.idx, `(${this._ref_count})`);
+        if (this._ref_count === 0) {
+            this.dispose();
+        }
+    }
+    private _disposed: boolean = false;
+    public dispose() {
+        this._disposed = true;
+        console.log('dispose', this.idx);
+    }
+}
+*/

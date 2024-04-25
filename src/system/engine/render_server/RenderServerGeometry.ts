@@ -53,7 +53,7 @@ export class RenderServerGeometry extends RenderDeviceObject<WebGL2RenderState> 
     protected readonly vertex_array_groups_ref: RefArray<WebGL2RenderStateVertexArrayView> = new RefArray();
 
     public get_Geometry() { return this.vertex_array_ref.value; }
-    public get_Surface(index: number) { return this.vertex_array_groups_ref.get(index, false); }
+    public get_Surface(index: number) { return this.vertex_array_groups_ref.get(index); }
 
     public get is_indexed() { return !this.vertex_array_index_ref.is_empty; }
     public get has_geometry() { return !this.vertex_array_ref.is_empty; }
