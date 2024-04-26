@@ -5,7 +5,6 @@ import type { RenderStateTextureView } from "../texture/RenderStateTextureView";
 
 export abstract class RenderStateFrameBuffer<T extends RenderState<T>> extends RenderStateObjectRefCounted<T> {
 
-    public abstract get blend_constant(): Vector4;
     public abstract set blend_constant(constant: Vector4);
 
     /**
@@ -21,7 +20,7 @@ export abstract class RenderStateFrameBuffer<T extends RenderState<T>> extends R
     public abstract set_DepthStencilAttachment(
         attchment: RenderStateTextureView<T>,
         depth_clear: boolean, depth_clear_value: number, depth_write: boolean,
-        stencil_clear: boolean, stencil_clear_value: number, stencil_write: boolean,
+        stencil_clear: boolean | undefined, stencil_clear_value: number | undefined, stencil_write: boolean | undefined,
     ): void;
 
     /**

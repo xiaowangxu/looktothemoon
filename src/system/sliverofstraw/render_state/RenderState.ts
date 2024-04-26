@@ -125,8 +125,6 @@ export abstract class RenderState<T extends RenderState<T>> {
         mipmap_level_count: number
     ): Result<RenderStateTexture<T>, Error>;
 
-    public abstract get_TextureFormatTexelBytes(format: RenderStateTextureFormat): number;
-
     public abstract delete_Texture(texture: RenderStateTexture<T>): void;
 
     //#endregion

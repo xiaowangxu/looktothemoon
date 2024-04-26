@@ -169,6 +169,7 @@ export class RefArray<T extends RefCountedLike> {
         for (let i = 0; i < length; i++) {
             this.ref(i, undefined);
         }
+        this.refs = [];
     }
 }
 

@@ -16,8 +16,4 @@ export class WebGPURenderStateMultiSampleTexture extends RenderStateMultiSampleT
         super(render_state, usage, format, width, height, sample_count);
         this.texture = multi_sample_texture;
     }
-
-    public create_View(): RenderStateTextureView<WebGPURenderState> {
-        throw new Error();
-    }
 }

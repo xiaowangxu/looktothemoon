@@ -29,11 +29,6 @@ export abstract class RenderStateMultiSampleTexture<T extends RenderState<T>> ex
         this.sample_count = sample_count;
     }
 
-    /**
-     * create multi sampled texture's view
-     */
-    public abstract create_View(): RenderStateTextureView<T>;
-
     public dispose(): void {
         this.render_state.delete_MultiSampleTexture(this);
     }

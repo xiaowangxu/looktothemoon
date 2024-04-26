@@ -1,8 +1,6 @@
 import type { RenderStateBufferData } from "../../render_state/buffer/RenderStateBuffer";
-import { RenderStateMultiSampleTexture } from "../../render_state/texture/RenderStateMultiSampleTexture";
 import { RenderStateTextureUsage, RenderStateTextureDimension, RenderStateTextureFormat, RenderStateTexture, RendetStateTextureDestination } from "../../render_state/texture/RenderStateTexture";
-import type { RenderStateTextureView } from "../../render_state/texture/RenderStateTextureView";
-import type { WebGPURenderState } from "../WebGPURenderState";
+import { WebGPURenderState } from "../WebGPURenderState";
 
 export class WebGPURenderStateTexture extends RenderStateTexture<WebGPURenderState> {
 
@@ -20,6 +18,24 @@ export class WebGPURenderStateTexture extends RenderStateTexture<WebGPURenderSta
     }
 
     public update_Data(dst_destination: RendetStateTextureDestination | undefined, dst_mipmap_level: number | undefined, dst_x: number | undefined, dst_y: number | undefined, dst_z: number | undefined, dst_w: number | undefined, dst_h: number | undefined, dst_d: number | undefined, data: RenderStateBufferData, data_w: number | undefined, data_h: number | undefined, data_offset: number | undefined): void {
-        throw new Error("Method not implemented.");
+        this.render_state.device.queue.writeTexture(
+            {
+                texture: this.texture,
+                mipLevel: dst_mipmap_level,
+                origin: { x: dst_x, y: dst_y, z: dst_z },
+                aspect: WebGPURenderState.RendetStateTextureDestination(dst_destination ?? RendetStateTextureDestination.All),
+            },
+            data,
+            {
+                offset: data_offset,
+                bytesPerRow: data_w === undefined ? undefined : data_w * this.render_state.get_TextureFormatTexelBytes(this.format),
+                rowsPerImage: data_h,
+            },
+            {
+                width: dst_w ?? this.width,
+                height: dst_h ?? this.height,
+                depthOrArrayLayers: dst_d ?? this.depth,
+            }
+        );
     }
 }

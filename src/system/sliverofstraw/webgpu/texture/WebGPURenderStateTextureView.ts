@@ -6,10 +6,11 @@ import type { WebGPURenderStateTexture } from "./WebGPURenderStateTexture";
 
 export class WebGPURenderStateTextureView extends RenderStateTextureView<WebGPURenderState> {
 
-    public readonly texture_view: GPUTextureView;
+    private _texture_view: GPUTextureView;
+    public get texture_view() { return this._texture_view };
 
     constructor(render_state: WebGPURenderState, texture: WebGPURenderStateTexture | WebGPURenderStateMultiSampleTexture, dimension: RenderStateTextureDimension, texture_view: GPUTextureView) {
         super(render_state, texture, dimension);
-        this.texture_view = texture_view;
+        this._texture_view = texture_view;
     }
 }

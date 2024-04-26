@@ -1,9 +1,9 @@
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { RenderStateShaderType } from "../render_state/pipeline/RenderStateShader";
-import { RenderStateTextureDimension, RenderStateTextureFormat, RenderStateTextureUsage } from "../render_state/texture/RenderStateTexture";
+import { RenderStateTextureFormat, RenderStateTextureUsage } from "../render_state/texture/RenderStateTexture";
 import { WebGPURenderState } from "./WebGPURenderState";
 import { RenderStateAttributeRowType } from "../render_state/pipeline/RenderStateAttributeLayout";
-import { RenderStateBufferUniformType, RenderStateSamplerUniformType, RenderStateTextureUniformSampleType, RenderStateTextureUniformType } from "../render_state/uniform/RenderStateUniformLayout";
+import { RenderStateBufferUniformType } from "../render_state/uniform/RenderStateUniformLayout";
 import type { WebGPURenderStateMultiSampleTexture } from "./texture/WebGPURenderStateMultiSampleTexture";
 import { Ref } from "@/system/utils/RefCounted";
 import type { WebGPURenderStateTextureView } from "./texture/WebGPURenderStateTextureView";
@@ -58,6 +58,8 @@ async function init() {
         device: rs.device,
         format: 'rgba16float'
     });
+
+    const canvas_texture_view_ref = new Ref(rs.create_CanvasTextureView(canvas_ctx).expect());
 
     const width = canvas.width, height = canvas.height;
 
@@ -150,18 +152,6 @@ async function init() {
             },
         ]).expect();
 
-    function createBuffer(device: GPUDevice, data: Float32Array | Uint32Array, usage: number) {
-        const buffer = device.createBuffer({
-            size: data.byteLength,
-            usage,
-            mappedAtCreation: true,
-        });
-        const dst = new (data.constructor as any)(buffer.getMappedRange());
-        dst.set(data);
-        buffer.unmap();
-        return buffer;
-    }
-
     const positions = new Float32Array(
         [
             -0.5, 0.5, 0,
@@ -195,29 +185,23 @@ async function init() {
     const uniform_buffer_0_data = new Float32Array(1);
     uniform_buffer_0_ref.value = rs.create_Buffer(RenderStateBufferType.Uniform, RenderStateBufferUsage.CopyDst, RenderStateBufferDataType.Float, 1, 4).expect();
     bind_group_0_ref.expect.set_BufferUniform(0, uniform_buffer_0_ref.expect);
-    
+
     const uniform_buffer_1_ref = new Ref<WebGPURenderStateBuffer>();
     const uniform_buffer_1_data = new Float32Array(1);
     uniform_buffer_1_ref.value = rs.create_Buffer(RenderStateBufferType.Uniform, RenderStateBufferUsage.CopyDst, RenderStateBufferDataType.Float, 1, 4).expect();
     bind_group_0_ref.expect.set_BufferUniform(1, uniform_buffer_1_ref.expect);
 
-    const renderPassDescriptor: GPURenderPassDescriptor = {
-        colorAttachments: [
-            {
-                view: color_texture_view_ref.expect.texture_view, // Assigned later
-                resolveTarget: canvas_ctx.getCurrentTexture().createView(), // Assigned Later
-                clearValue: { r: 0.2, g: 0.2, b: 0.2, a: 1.0 },
-                loadOp: 'clear',
-                storeOp: 'store',
-            },
-        ],
-        depthStencilAttachment: {
-            view: depth_texture_view_ref.expect.texture_view,  // Assigned later
-            depthClearValue: 1,
-            depthLoadOp: 'clear',
-            depthStoreOp: 'store',
-        },
-    };
+    const frame_buffer_ref = new Ref(rs.create_FrameBuffer().expect());
+
+    frame_buffer_ref.expect.add_Attachment(
+        color_texture_view_ref.expect,
+        true, new Vector4(0.2, 0.2, 0.2, 1.0), true,
+        canvas_texture_view_ref.expect
+    );
+    frame_buffer_ref.expect.set_DepthStencilAttachment(
+        depth_texture_view_ref.expect,
+        true, 1, true,
+    );
 
     function resize() {
         const canvas_width = window.innerWidth;
@@ -227,10 +211,19 @@ async function init() {
         canvas.height = canvas_height;
         color_texture_ref.value = rs.create_MultiSampleTexture(RenderStateTextureUsage.Attchment, RenderStateTextureFormat.RGBA16F, canvas_width, canvas_height, 4).expect();
         color_texture_view_ref.value = rs.create_TextureView(color_texture_ref.expect).expect();
-        (renderPassDescriptor.colorAttachments as any[])[0]!.view = color_texture_view_ref.expect.texture_view;
         depth_texture_ref.value = rs.create_MultiSampleTexture(RenderStateTextureUsage.Attchment, RenderStateTextureFormat.D32F, canvas_width, canvas_height, 4).expect();
         depth_texture_view_ref.value = rs.create_TextureView(depth_texture_ref.expect).expect();
-        (renderPassDescriptor.depthStencilAttachment as any).view = depth_texture_view_ref.expect.texture_view;
+        frame_buffer_ref.expect.clear_Attachments();
+        frame_buffer_ref.expect.clear_DepthStencilAttachment();
+        frame_buffer_ref.expect.add_Attachment(
+            color_texture_view_ref.expect,
+            true, new Vector4(0.2, 0.2, 0.2, 1.0), true,
+            canvas_texture_view_ref.expect
+        );
+        frame_buffer_ref.expect.set_DepthStencilAttachment(
+            depth_texture_view_ref.expect,
+            true, 1, true,
+        );
     }
 
     let time = 0;
@@ -241,9 +234,9 @@ async function init() {
         uniform_buffer_1_data[0] = (Math.sin(time) + 1.0) / 2.0;
         uniform_buffer_1_ref.expect.update_Data(0, uniform_buffer_1_data);
         resize();
-        (renderPassDescriptor.colorAttachments as any[])[0]!.resolveTarget = canvas_ctx.getCurrentTexture().createView();
+        frame_buffer_ref.expect.refresh_CanvasTextureView();
         const commandEncoder = rs.device.createCommandEncoder();
-        const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+        const passEncoder = commandEncoder.beginRenderPass(frame_buffer_ref.expect.frame_buffer_desc);
         passEncoder.setPipeline(pipeline.pipeline);
         passEncoder.setBindGroup(0, bind_group_0_ref.expect.binding_group);
         passEncoder.setVertexBuffer(0, positionBuffer.buffer);

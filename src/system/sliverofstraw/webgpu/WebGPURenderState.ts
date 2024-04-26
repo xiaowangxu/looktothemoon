@@ -29,6 +29,8 @@ import { WebGPURenderStateComputePipeline } from "./pipeline/WebGPURenderStateCo
 import type { RenderStateVertexArrayView } from "../render_state/vertex_array/RenderStateVertexArrayView";
 import { WebGPURenderStateVertexArray } from "./vertex_array/WebGPURenderStateVertexArray";
 import { WebGPURenderStateVertexArrayView } from "./vertex_array/WebGPURenderStateVertexArrayView";
+import { WebGPURenderStateFrameBuffer } from "./frame_buffer/WebGPURenderStateFrameBuffer";
+import { WebGPURenderStateCanvasTextureView } from "./texture/WebGPURenderStateCanvasTextureView";
 
 type WebGPURenderStateMemoryLayoutMemberType = RenderStateUniformType | { type: 'array', member: WebGPURenderStateMemoryLayoutMemberType, length: number } | { type: 'struct', members: WebGPURenderStateMemoryLayoutMemberType[] } | { type: 'layout', size: number, align: number };
 
@@ -549,6 +551,27 @@ export class WebGPURenderState extends RenderState<WebGPURenderState> {
 
     //#region texture
 
+    public get_TextureFormatTexelBytes(format: RenderStateTextureFormat): number {
+        switch (format) {
+            case RenderStateTextureFormat.RGBA32F: return 16;
+            case RenderStateTextureFormat.RGBA16F: return 8;
+            case RenderStateTextureFormat.R32U: return 4;
+            case RenderStateTextureFormat.RGBA32U: return 16;
+            case RenderStateTextureFormat.RGBA8: return 4;
+            case RenderStateTextureFormat.BGRA8: return 4;
+            case RenderStateTextureFormat.SRGBA8: return 4;
+            case RenderStateTextureFormat.SBGRA8: return 4;
+            case RenderStateTextureFormat.D24: return 3;
+            case RenderStateTextureFormat.D24S8: return 4;
+            case RenderStateTextureFormat.D32F: return 4;
+            case RenderStateTextureFormat.D32FS8: return 5;
+            default: {
+                const n: never = format;
+                throw new Error('<WebGPURenderState> get_TextureFormatTexelBytes: unreachable');
+            }
+        }
+    }
+
     public create_Texture(usage: RenderStateTextureUsage, format: RenderStateTextureFormat, dimension: RenderStateTextureDimension, width: number, height: number = 1, depth: number = 1, mipmap_level_count: number = 1): Result<WebGPURenderStateTexture, Error> {
         const texture = this.device.createTexture({
             dimension: WebGPURenderState.RenderStateTextureDimension(dimension),
@@ -561,6 +584,14 @@ export class WebGPURenderState extends RenderState<WebGPURenderState> {
 
     public delete_Texture(texture: WebGPURenderStateTexture): void {
         texture.texture.destroy();
+    }
+
+    public create_CanvasTextureView(canvas: GPUCanvasContext): Result<WebGPURenderStateCanvasTextureView, Error> {
+        return Result.Ok(new WebGPURenderStateCanvasTextureView(this, canvas));
+    }
+
+    public delete_CanvasTextureView(canvas_texture_view: WebGPURenderStateCanvasTextureView): void {
+        return;
     }
 
     public create_TextureSampler(
@@ -679,7 +710,17 @@ export class WebGPURenderState extends RenderState<WebGPURenderState> {
 
     //#endregion
 
+    //#region frame buffer
 
+    public create_FrameBuffer(): Result<WebGPURenderStateFrameBuffer, Error> {
+        return Result.Ok(new WebGPURenderStateFrameBuffer(this));
+    }
+
+    public delete_FrameBuffer(frame_buffer: WebGPURenderStateFrameBuffer): void {
+        return;
+    }
+
+    //#endregion
 
 
 
@@ -698,15 +739,6 @@ export class WebGPURenderState extends RenderState<WebGPURenderState> {
         throw new Error("Method not implemented.");
     }
     public submit_PassCollections(pass_collections: Iterable<RenderStatePassCollection<WebGPURenderState>>): void {
-        throw new Error("Method not implemented.");
-    }
-    public create_FrameBuffer(): Result<RenderStateFrameBuffer<WebGPURenderState>, Error> {
-        throw new Error("Method not implemented.");
-    }
-    public delete_FrameBuffer(frame_buffer: RenderStateFrameBuffer<WebGPURenderState>): void {
-        throw new Error("Method not implemented.");
-    }
-    public get_TextureFormatTexelBytes(format: RenderStateTextureFormat): number {
         throw new Error("Method not implemented.");
     }
 
