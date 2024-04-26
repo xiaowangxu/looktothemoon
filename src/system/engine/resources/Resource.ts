@@ -1,4 +1,4 @@
-import { Ref, unref, type RefCounted, type Refed } from '../../utils/RefCounted';
+import { Ref, type RefCounted, type Refed } from '../../utils/RefCounted';
 import { SignalEmitter } from '../../utils/SignalEmitter';
 import { ConfiguredObject, type Config } from '../ConfiguredObject';
 import { ClassBase } from "../classes/class_database/ClassBase";

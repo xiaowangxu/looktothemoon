@@ -12,10 +12,10 @@ export interface RefCountedLike {
 export type Refed<T> = T extends Ref<infer V> ? Ref<V> : (T extends RefCounted ? Ref<T> : T);
 export type Unrefed<T> = T extends Ref<infer V> ? V : T;
 
-export function unref<V>(item: Refed<V>): V {
-    if (item instanceof Ref) return item.expect;
-    return item as V;
-}
+// export function unref<V>(item: Refed<V>): V {
+//     if (item instanceof Ref) return item.expect;
+//     return item as V;
+// }
 
 export class Ref<T extends RefCountedLike> {
     private ref: T | undefined = undefined;
@@ -172,12 +172,12 @@ export class RefArray<T extends RefCountedLike> {
     }
 }
 
-export class RefMap<K, T extends RefCountedLike> {
-    private refs: Map<K, T> = new Map();
+export class RefMap<K extends Exclude<any, RefCountedLike>, T extends RefCountedLike> {
+    private readonly refs: Map<K, T> = new Map();
 
     private _is_empty: boolean = true;
-    public get size() { return this.refs.size; }
     public get is_empty() { return this._is_empty; }
+    public get size() { return this.refs.size; }
 
     [Symbol.iterator]() { return this.refs.entries(); }
 
@@ -248,6 +248,147 @@ export class RefMap<K, T extends RefCountedLike> {
         this._is_empty = true;
         this.refs.clear();
     }
+
+    public static groupby<V extends RefCountedLike, U extends Exclude<any, RefCountedLike>>(items: Iterable<V>, fn: (element: V, index: number) => U): Map<U, RefArray<V>> {
+        const result = new Map<U, RefArray<V>>();
+        let i = 0;
+        for (const item of items) {
+            const key = fn(item, i++);
+            if (result.has(key)) {
+                result.get(key)!.push(item);
+            }
+            else {
+                result.set(key, new RefArray([item]));
+            }
+        }
+        return result;
+    }
+}
+
+export class RefSet<T extends RefCountedLike> {
+    private readonly refs: Set<T> = new Set();
+
+    private _is_empty: boolean = true;
+    public get is_empty() { return this._is_empty; }
+    public get size() { return this.refs.size; }
+
+    [Symbol.iterator]() { return this.refs[Symbol.iterator](); }
+
+    public entries() { return this.refs.entries(); }
+
+    public keys() { return this.refs.keys(); }
+
+    public values() { return this.refs.values(); }
+
+    private ref(item: T | undefined, value: T | undefined) {
+        if (item === value) return;
+        if (item !== undefined) {
+            item.unref();
+        }
+        if (value !== undefined) {
+            value.ref();
+        }
+    }
+
+    constructor(items?: Iterable<T> | null) {
+        if (items !== null && items !== undefined) {
+            for (const item of items) {
+                if (this.refs.has(item)) continue;
+                this.refs.add(item);
+                this.ref(undefined, item);
+                this._is_empty = false;
+            }
+        }
+    }
+
+    public has(item: T) {
+        return this.refs.has(item);
+    }
+
+    public add(item: T) {
+        if (this.refs.has(item)) return;
+        this.refs.add(item);
+        this.ref(undefined, item);
+        this._is_empty = false;
+    }
+
+    public delete(item: T) {
+        if (!this.refs.has(item)) return;
+        this.refs.delete(item);
+        this.ref(item, undefined);
+        this._is_empty = this.refs.size <= 0;
+    }
+
+    public clear() {
+        for (const item of this.refs) {
+            this.ref(item, undefined);
+        }
+        this.refs.clear();
+        this._is_empty = true;
+    }
+
+    public difference(other: RefSet<T> | Set<T>) {
+        const result = new RefSet<T>();
+        for (const item of this.refs) {
+            if (other.has(item)) continue;
+            result.add(item);
+        }
+        return result;
+    }
+
+    public union(other: RefSet<T> | Set<T>) {
+        const result = new RefSet<T>();
+        for (const item of this.refs) {
+            result.add(item);
+        }
+        for (const item of other) {
+            result.add(item);
+        }
+        return result;
+    }
+
+    public intersection(other: RefSet<T> | Set<T>) {
+        const result = new RefSet<T>();
+        for (const item of this.refs) {
+            if (!other.has(item)) continue;
+            result.add(item);
+        }
+        return result;
+    }
+
+    public symmetric_difference(other: RefSet<T> | Set<T>) {
+        const result = new RefSet<T>();
+        for (const item of this.refs) {
+            if (other.has(item)) continue;
+            result.add(item);
+        }
+        for (const item of other) {
+            if (this.has(item)) continue;
+            result.add(item);
+        }
+        return result;
+    }
+
+    public is_Disjoint(other: RefSet<T> | Set<T>) {
+        for (const item of this.refs) {
+            if (other.has(item)) return false;
+        }
+        return true;
+    }
+
+    public is_Subset(other: RefSet<T> | Set<T>) {
+        for (const item of this.refs) {
+            if (!other.has(item)) return false;
+        }
+        return true;
+    }
+
+    public is_Superset(other: RefSet<T> | Set<T>) {
+        for (const item of other) {
+            if (!this.has(item)) return false;
+        }
+        return true;
+    }
 }
 
 export class WeakRef<T extends RefCounted> {
@@ -275,7 +416,7 @@ export class WeakRef<T extends RefCounted> {
     }
 }
 
-/* 
+/*
 class RefTest implements RefCounted {
     static i = 0;
     public readonly idx = RefTest.i++;
