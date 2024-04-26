@@ -81,4 +81,4 @@ VFS.touch(fspath('user://'));
 //         });
 // })();
 
-import '@/system/sliverofstraw/webgpu/WebGPURSTest';
+import '@/system/sliverofstraw/WebGPURSTest';
