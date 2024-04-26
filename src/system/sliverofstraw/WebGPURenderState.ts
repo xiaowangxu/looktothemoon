@@ -18,9 +18,16 @@ import { WebGPURenderStateBlendFactor, WebGPURenderStateBlendOperator, type WebG
 import { WebGPURenderStateDepthCompareFunc, WebGPURenderStateProgramState } from "./pipeline/WebGPURenderStateProgramState";
 import { WebGPURenderStateMultiSampleTexture } from "./texture/WebGPURenderStateMultiSampleTexture";
 
-type WebGPURenderStateMemoryLayoutMemberType = WebGPURenderStateUniformType | { type: 'array', member: WebGPURenderStateMemoryLayoutMemberType, length: number } | { type: 'struct', members: WebGPURenderStateMemoryLayoutMemberType[] } | { type: 'layout', size: number, align: number };
+type WebGPURenderStateMemoryLayoutMemberType =
+    WebGPURenderStateUniformType |
+    { type: 'array', member: WebGPURenderStateMemoryLayoutMemberType, length: number } |
+    { type: 'struct', members: WebGPURenderStateMemoryLayoutMemberType[] } |
+    { type: 'layout', size: number, align: number };
 
-type WebGPURenderStateMemoryLayoutType = { type: 'primitive', size: number, align: number, offset: number } | { type: 'array', size: number, align: number, offset: number, member: WebGPURenderStateMemoryLayoutType, length: number } | { type: 'struct', size: number, align: number, offset: number, members: WebGPURenderStateMemoryLayoutType[] };
+type WebGPURenderStateMemoryLayoutType =
+    { type: 'primitive', size: number, align: number, offset: number } |
+    { type: 'array', size: number, align: number, offset: number, member: WebGPURenderStateMemoryLayoutType, length: number } |
+    { type: 'struct', size: number, align: number, offset: number, members: WebGPURenderStateMemoryLayoutType[] };
 
 export class WebGPURenderState {
 
