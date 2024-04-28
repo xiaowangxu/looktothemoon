@@ -1,5 +1,5 @@
-import type { WebGPURenderState } from "../WebGPURenderState";
-import { WebGPURenderStateObjectRefCounted } from "../WebGPURenderStateObject";
+import type { WebGPURenderState } from "../../WebGPURenderState";
+import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 
 export enum WebGPURenderStateShaderType {
     Vertex = 0x01,
@@ -7,7 +7,7 @@ export enum WebGPURenderStateShaderType {
     Compute = 0x04,
 }
 
-export class WebGPURenderStateShader extends WebGPURenderStateObjectRefCounted {
+export class WebGPURenderStateShader extends WebGPURenderObjectRefCounted {
 
     public readonly type: WebGPURenderStateShaderType;
 

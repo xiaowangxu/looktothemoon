@@ -1,5 +1,5 @@
-import { WebGPURenderState } from "../WebGPURenderState";
-import { WebGPURenderStateObjectRefCounted } from "../WebGPURenderStateObject";
+import { WebGPURenderState } from "../../WebGPURenderState";
+import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import type { WebGPURenderStateShaderType } from "../pipeline/WebGPURenderStateShader";
 
 export enum WebGPURenderStateBufferUniformType {
@@ -43,7 +43,7 @@ interface WebGPURenderStateUniformLayoutEntry extends GPUBindGroupLayoutEntry {
     type: WebGPURenderStateUniformBindingType
 }
 
-export class WebGPURenderStateUniformLayout extends WebGPURenderStateObjectRefCounted {
+export class WebGPURenderStateUniformLayout extends WebGPURenderObjectRefCounted {
 
     public readonly entries: WebGPURenderStateUniformLayoutEntry[] = [];
 

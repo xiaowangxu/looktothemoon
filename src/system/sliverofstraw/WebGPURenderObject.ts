@@ -3,7 +3,7 @@ import type { WebGPURenderState } from "./WebGPURenderState";
 
 let id = 0;
 
-export abstract class WebGPURenderStateObject {
+export abstract class WebGPURenderObject {
 
     public readonly id: number = id++;
     public readonly render_state: WebGPURenderState;
@@ -13,7 +13,7 @@ export abstract class WebGPURenderStateObject {
     }
 }
 
-export abstract class WebGPURenderStateObjectRefCounted extends WebGPURenderStateObject implements RefCounted {
+export abstract class WebGPURenderObjectRefCounted extends WebGPURenderObject implements RefCounted {
 
     private _ref_count: number = 0;
 

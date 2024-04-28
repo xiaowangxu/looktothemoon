@@ -1,5 +1,5 @@
-import { WebGPURenderState } from "../WebGPURenderState";
-import { WebGPURenderStateObjectRefCounted } from "../WebGPURenderStateObject";
+import { WebGPURenderState } from "../../WebGPURenderState";
+import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import type { WebGPURenderStateBufferData } from "../buffer/WebGPURenderStateBuffer";
 
 export enum WebGPURenderStateTextureDimension {
@@ -40,7 +40,7 @@ export enum WebGPURendetStateTextureDestination {
     Stencil = 'stencil-only',
 }
 
-export class WebGPURenderStateTexture extends WebGPURenderStateObjectRefCounted {
+export class WebGPURenderStateTexture extends WebGPURenderObjectRefCounted {
 
     public readonly texture: GPUTexture;
 

@@ -1,27 +1,31 @@
 import { bitmask_disable, bitmask_enable } from "@/system/utils/BitMask";
-import type { WebGPURenderState } from "../WebGPURenderState";
+import type { WebGPURenderState } from "../../WebGPURenderState";
 import { Ref, RefArray } from "@/system/utils/RefCounted";
 import type { WebGPURenderStateBuffer } from "../buffer/WebGPURenderStateBuffer";
-import { WebGPURenderStateObjectRefCounted } from "../WebGPURenderStateObject";
+import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 
 export enum WebGPURenderStatePrimitiveType {
-    Triangles = 'triangle-list',
-    TriangleStrip = 'triangle-strip',
-    LineStrip = 'line-strip',
-    Lines = 'line-strip',
-    Points = 'point-list',
+    Triangles,
+    TriangleStrip,
+    LineStrip,
+    Lines,
+    Points,
 }
 
-export class WebGPURenderStateVertexArray extends WebGPURenderStateObjectRefCounted {
+export class WebGPURenderStateVertexArray extends WebGPURenderObjectRefCounted {
 
     static readonly MaxAttributeLocationCount = 20;
-
     public readonly primitive_type: WebGPURenderStatePrimitiveType;
+
     public readonly offset: number;
     public readonly count: number;
 
     protected attribute_buffer_refs: RefArray<WebGPURenderStateBuffer> = new RefArray(WebGPURenderStateVertexArray.MaxAttributeLocationCount);
     protected index_buffer_ref: Ref<WebGPURenderStateBuffer> = new Ref();
+
+    public get is_indexed(): boolean {
+        return !this.index_buffer_ref.is_empty;
+    }
 
     protected _attribute_location_bitmask = 0x00000000;
     public get attribute_location_bitmask() { return this._attribute_location_bitmask; }
@@ -36,10 +40,6 @@ export class WebGPURenderStateVertexArray extends WebGPURenderStateObjectRefCoun
 
     protected clear_AttributeLocationBits() {
         this._attribute_location_bitmask = 0x00000000;
-    }
-
-    public get is_indexed(): boolean {
-        return !this.index_buffer_ref.is_empty;
     }
 
     constructor(render_state: WebGPURenderState, primitive_type: WebGPURenderStatePrimitiveType, offset: number, count: number) {
@@ -72,6 +72,27 @@ export class WebGPURenderStateVertexArray extends WebGPURenderStateObjectRefCoun
 
     public clear_Index(): void {
         this.index_buffer_ref.value = undefined;
+    }
+
+    public bind_Buffers(pass: GPURenderPassEncoder) {
+        let i = 0;
+        for (const buffer of this.attribute_buffer_refs) {
+            if (buffer !== undefined) {
+                pass.setVertexBuffer(i++, buffer.buffer);
+            }
+        }
+        if (this.is_indexed) {
+            pass.setIndexBuffer(this.index_buffer_ref.expect.buffer, 'uint32');
+        }
+    }
+
+    public draw(pass: GPURenderPassEncoder, instance_count: number = 1, instance_offset: number = 0) {
+        if (this.is_indexed) {
+            pass.drawIndexed(this.count, instance_count, undefined, undefined, instance_offset);
+        }
+        else {
+            pass.draw(this.count, instance_count, undefined, instance_offset);
+        }
     }
 
     public dispose(): void {

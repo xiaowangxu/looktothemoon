@@ -3,9 +3,10 @@ import { Ref, RefArray, RefMap } from "@/system/utils/RefCounted";
 import type { WebGPURenderStateTextureView } from "../texture/WebGPURenderStateTextureView";
 import { WebGPURenderStateCanvasTextureView } from "../texture/WebGPURenderStateCanvasTextureView";
 import { bitmask_check, bitmask_enable, bitmask_keep, bitmask_set, bitmask_test } from "@/system/utils/BitMask";
-import { WebGPURenderStateObjectRefCounted } from "../WebGPURenderStateObject";
+import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
+import { WebGPURenderStateMultiSampleCount } from "../texture/WebGPURenderStateMultiSampleTexture";
 
-export class WebGPURenderStateFrameBuffer extends WebGPURenderStateObjectRefCounted {
+export class WebGPURenderStateFrameBuffer extends WebGPURenderObjectRefCounted {
 
     public _blend_constant: Vector4 = new Vector4();
     public set blend_constant(constant: Vector4) {
@@ -24,7 +25,11 @@ export class WebGPURenderStateFrameBuffer extends WebGPURenderStateObjectRefCoun
         depthStencilAttachment: undefined,
     }
 
-    public add_Attachment(attchment: WebGPURenderStateTextureView | WebGPURenderStateCanvasTextureView, clear: boolean, clear_color: Vector4, write: boolean, resolve: WebGPURenderStateTextureView | WebGPURenderStateCanvasTextureView | undefined): void {
+    protected _multi_sample_count: WebGPURenderStateMultiSampleCount = WebGPURenderStateMultiSampleCount.None;
+    public get multi_sample_count() { return this._multi_sample_count; }
+
+    public add_Attachment(attchment: WebGPURenderStateTextureView | WebGPURenderStateCanvasTextureView, clear: boolean, clear_color: Vector4, write: boolean, resolve: WebGPURenderStateTextureView | WebGPURenderStateCanvasTextureView | undefined = undefined): void {
+        this._multi_sample_count = attchment.multi_sample_count;
         const index = this.color_attachment_entries.length;
         const is_view_canvas = attchment instanceof WebGPURenderStateCanvasTextureView;
         const is_resolve_canvas = resolve instanceof WebGPURenderStateCanvasTextureView;
@@ -49,6 +54,7 @@ export class WebGPURenderStateFrameBuffer extends WebGPURenderStateObjectRefCoun
     }
 
     public set_DepthStencilAttachment(attchment: WebGPURenderStateTextureView, depth_clear: boolean, depth_clear_value: number, depth_write: boolean, stencil_clear: boolean | undefined = undefined, stencil_clear_value: number | undefined = undefined, stencil_write: boolean | undefined = undefined): void {
+        this._multi_sample_count = attchment.multi_sample_count;
         this.depth_stencil_attachment_ref.value = attchment;
         this.frame_buffer_desc.depthStencilAttachment = {
             view: attchment.texture_view,
@@ -67,11 +73,13 @@ export class WebGPURenderStateFrameBuffer extends WebGPURenderStateObjectRefCoun
         this.canvas_texture_refs.clear();
         this.color_attachment_refs.clear();
         this.color_attachment_entries = [];
+        this._multi_sample_count = WebGPURenderStateMultiSampleCount.None;
         this.frame_buffer_desc.colorAttachments = this.color_attachment_entries;
     }
 
     public clear_DepthStencilAttachment(): void {
         this.depth_stencil_attachment_ref.clear();
+        this._multi_sample_count = WebGPURenderStateMultiSampleCount.None;
         this.frame_buffer_desc.depthStencilAttachment = undefined;
     }
 

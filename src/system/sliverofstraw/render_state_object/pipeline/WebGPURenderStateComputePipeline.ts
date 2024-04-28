@@ -1,7 +1,7 @@
-import type { WebGPURenderState } from "../WebGPURenderState";
-import { WebGPURenderStateObjectRefCounted } from "../WebGPURenderStateObject";
+import type { WebGPURenderState } from "../../WebGPURenderState";
+import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 
-export class WebGPURenderStateComputePipeline extends WebGPURenderStateObjectRefCounted {
+export class WebGPURenderStateComputePipeline extends WebGPURenderObjectRefCounted {
 
     public readonly pipeline: GPUComputePipeline;
 

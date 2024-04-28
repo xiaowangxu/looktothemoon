@@ -1,22 +1,23 @@
 import { Result } from "@/system/utils/Result";
-import { WebGPURenderStateShader, WebGPURenderStateShaderType } from "./pipeline/WebGPURenderStateShader";
-import { WebGPURenderStateTexture, WebGPURenderStateTextureDimension, WebGPURenderStateTextureFormat, WebGPURenderStateTextureUsage, WebGPURendetStateTextureDestination } from "./texture/WebGPURenderStateTexture";
-import { WebGPURenderStateProgram } from "./pipeline/WebGPURenderStateProgram";
-import { WebGPURenderStateRenderPipeline } from "./pipeline/WebGPURenderStateRenderPipeline";
-import { WebGPURenderStateBufferUniformType, WebGPURenderStateUniformLayout, type WebGPURenderStateUniformType } from "./uniform/WebGPURenderStateUniformLayout";
-import { WebGPURenderStateTextureFilter, WebGPURenderStateTextureSampler, WebGPURenderStateTextureWrap } from "./texture/WebGPURenderStateTextureSampler";
-import { WebGPURenderStateUniformGroup, type WebGPURenderStateUniformGroupEntry } from "./uniform/WebGPURenderStateUniformGroup";
-import { WebGPURenderStateBuffer, WebGPURenderStateBufferDataType, WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "./buffer/WebGPURenderStateBuffer";
-import { WebGPURenderStateTextureView } from "./texture/WebGPURenderStateTextureView";
-import { WebGPURenderStateComputePipeline } from "./pipeline/WebGPURenderStateComputePipeline";
-import { WebGPURenderStatePrimitiveType, WebGPURenderStateVertexArray } from "./vertex_array/WebGPURenderStateVertexArray";
-import { WebGPURenderStateVertexArrayView } from "./vertex_array/WebGPURenderStateVertexArrayView";
-import { WebGPURenderStateFrameBuffer } from "./frame_buffer/WebGPURenderStateFrameBuffer";
-import { WebGPURenderStateCanvasTextureView } from "./texture/WebGPURenderStateCanvasTextureView";
-import { type WebGPURenderStateAttributeLayout } from "./pipeline/WebGPURenderStateAttributeLayout";
-import { WebGPURenderStateBlendFactor, WebGPURenderStateBlendOperator, type WebGPURenderStateOutputState } from "./pipeline/WebGPURenderStateOutputState";
-import { WebGPURenderStateDepthCompareFunc, WebGPURenderStateProgramState } from "./pipeline/WebGPURenderStateProgramState";
-import { WebGPURenderStateMultiSampleTexture } from "./texture/WebGPURenderStateMultiSampleTexture";
+import { WebGPURenderStateShader, WebGPURenderStateShaderType } from "./render_state_object/pipeline/WebGPURenderStateShader";
+import { WebGPURenderStateTexture, WebGPURenderStateTextureDimension, WebGPURenderStateTextureFormat, WebGPURenderStateTextureUsage, WebGPURendetStateTextureDestination } from "./render_state_object/texture/WebGPURenderStateTexture";
+import { WebGPURenderStateProgram } from "./render_state_object/pipeline/WebGPURenderStateProgram";
+import { WebGPURenderStateRenderPipeline } from "./render_state_object/pipeline/WebGPURenderStateRenderPipeline";
+import { WebGPURenderStateBufferUniformType, WebGPURenderStateUniformLayout, type WebGPURenderStateUniformType } from "./render_state_object/uniform/WebGPURenderStateUniformLayout";
+import { WebGPURenderStateTextureFilter, WebGPURenderStateTextureSampler, WebGPURenderStateTextureWrap } from "./render_state_object/texture/WebGPURenderStateTextureSampler";
+import { WebGPURenderStateUniformGroup, type WebGPURenderStateUniformGroupEntry } from "./render_state_object/uniform/WebGPURenderStateUniformGroup";
+import { WebGPURenderStateBuffer, WebGPURenderStateBufferDataType, WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "./render_state_object/buffer/WebGPURenderStateBuffer";
+import { WebGPURenderStateTextureView } from "./render_state_object/texture/WebGPURenderStateTextureView";
+import { WebGPURenderStateComputePipeline } from "./render_state_object/pipeline/WebGPURenderStateComputePipeline";
+import { WebGPURenderStatePrimitiveType, WebGPURenderStateVertexArray } from "./render_state_object/vertex_array/WebGPURenderStateVertexArray";
+import { WebGPURenderStateVertexArrayView } from "./render_state_object/vertex_array/WebGPURenderStateVertexArrayView";
+import { WebGPURenderStateFrameBuffer } from "./render_state_object/frame_buffer/WebGPURenderStateFrameBuffer";
+import { WebGPURenderStateCanvasTextureView } from "./render_state_object/texture/WebGPURenderStateCanvasTextureView";
+import { type WebGPURenderStateAttributeLayout } from "./render_state_object/pipeline/WebGPURenderStateAttributeLayout";
+import { WebGPURenderStateBlendFactor, WebGPURenderStateBlendOperator, type WebGPURenderStateOutputState } from "./render_state_object/pipeline/WebGPURenderStateOutputState";
+import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, type WebGPURenderStateProgramState } from "./render_state_object/pipeline/WebGPURenderStateProgramState";
+import { WebGPURenderStateMultiSampleCount, WebGPURenderStateMultiSampleTexture } from "./render_state_object/texture/WebGPURenderStateMultiSampleTexture";
+import { WebGPURenderElementRenderPipelineCache } from "./render_element_object/pipeline/WebGPURenderElementRenderPipelineCache";
 
 type WebGPURenderStateMemoryLayoutMemberType =
     WebGPURenderStateUniformType |
@@ -57,6 +58,62 @@ export class WebGPURenderState {
             default: {
                 const n: never = type;
                 throw new Error('<WebGPURenderState> RenderStateTextureDimension: unreachable');
+            }
+        }
+    }
+
+    public static RenderStateDepthCompareFunc(type: WebGPURenderStateDepthCompareFunc): GPUCompareFunction {
+        switch (type) {
+            case WebGPURenderStateDepthCompareFunc.Never: return 'never';
+            case WebGPURenderStateDepthCompareFunc.Always: return 'always';
+            case WebGPURenderStateDepthCompareFunc.Less: return 'less';
+            case WebGPURenderStateDepthCompareFunc.Equal: return 'equal';
+            case WebGPURenderStateDepthCompareFunc.Greater: return 'greater';
+            case WebGPURenderStateDepthCompareFunc.NotEqual: return 'not-equal';
+            case WebGPURenderStateDepthCompareFunc.LessEqual: return 'less-equal';
+            case WebGPURenderStateDepthCompareFunc.GreaterEqual: return 'greater-equal';
+            default: {
+                const n: never = type;
+                throw new Error('<WebGPURenderState> RenderStateDepthCompareFunc: unreachable');
+            }
+        }
+    }
+
+    public static RenderStatePrimitiveType(type: WebGPURenderStatePrimitiveType): GPUPrimitiveTopology {
+        switch (type) {
+            case WebGPURenderStatePrimitiveType.Triangles: return 'triangle-list';
+            case WebGPURenderStatePrimitiveType.TriangleStrip: return 'triangle-strip';
+            case WebGPURenderStatePrimitiveType.LineStrip: return 'line-strip';
+            case WebGPURenderStatePrimitiveType.Lines: return 'line-list';
+            case WebGPURenderStatePrimitiveType.Points: return 'point-list';
+            default: {
+                const n: never = type;
+                throw new Error('<WebGPURenderState> RenderStatePrimitiveType: unreachable');
+            }
+        }
+    }
+
+    public static RenderStateCullMode(type: WebGPURenderStateCullMode): GPUCullMode {
+        switch (type) {
+            case WebGPURenderStateCullMode.Front: return 'front';
+            case WebGPURenderStateCullMode.Back: return 'back';
+            case WebGPURenderStateCullMode.None: return 'none';
+            default: {
+                const n: never = type;
+                throw new Error('<WebGPURenderState> RenderStateCullMode: unreachable');
+            }
+        }
+    }
+
+    public static RenderStateMultiSampleCount(type: WebGPURenderStateMultiSampleCount): number {
+        switch (type) {
+            case WebGPURenderStateMultiSampleCount.None: return 1;
+            case WebGPURenderStateMultiSampleCount.MS2: return 2;
+            case WebGPURenderStateMultiSampleCount.MS4: return 4;
+            case WebGPURenderStateMultiSampleCount.MS8: return 8;
+            default: {
+                const n: never = type;
+                throw new Error('<WebGPURenderState> RenderStateMultiSampleCount: unreachable');
             }
         }
     }
@@ -137,7 +194,6 @@ export class WebGPURenderState {
 
     public static is_StripPrimitiveType(type: WebGPURenderStatePrimitiveType) { return type === WebGPURenderStatePrimitiveType.LineStrip || type === WebGPURenderStatePrimitiveType.TriangleStrip; }
 
-
     public create_Shader(type: WebGPURenderStateShaderType, source: string, defines?: { [key: string]: string; } | undefined): Result<WebGPURenderStateShader, Error> {
         const shader = this.device.createShaderModule({ code: source });
         return Result.Ok(new WebGPURenderStateShader(this, type, shader));
@@ -169,11 +225,19 @@ export class WebGPURenderState {
         return;
     }
 
-    public create_ProgramState(): WebGPURenderStateProgramState {
-        return new WebGPURenderStateProgramState(this);
+    public create_RenderPipeline(program: WebGPURenderStateProgram, program_state: WebGPURenderStateProgramState, output_state: WebGPURenderStateOutputState, uniform_layouts: Iterable<WebGPURenderStateUniformLayout>, attribute_layouts: Iterable<WebGPURenderStateAttributeLayout>): Result<WebGPURenderStateRenderPipeline, Error> {
+        // binding group layouts
+        const layouts: GPUBindGroupLayout[] = [];
+        for (const layout of uniform_layouts) {
+            const bind_group_layout = layout.layout;
+            if (bind_group_layout === undefined) return Result.Error(new Error('<WebGPURenderState> create_RenderPipeline: WebGPURenderStateUniformLayout needs to be built before creating a pipeline'));
+            layouts.push(bind_group_layout);
+        }
+        const uniform_layout = this.device.createPipelineLayout({ bindGroupLayouts: layouts });
+        return this.create_RenderPipeline_with_Layout(program, program_state, output_state, uniform_layout, attribute_layouts);
     }
 
-    public create_RenderPipeline(program: WebGPURenderStateProgram, program_state: WebGPURenderStateProgramState, output_state: WebGPURenderStateOutputState, uniform_layouts: Iterable<WebGPURenderStateUniformLayout>, attribute_layouts: Iterable<WebGPURenderStateAttributeLayout>): Result<WebGPURenderStateRenderPipeline, Error> {
+    public create_RenderPipeline_with_Layout(program: WebGPURenderStateProgram, program_state: WebGPURenderStateProgramState, output_state: WebGPURenderStateOutputState, uniform_layout: GPUPipelineLayout, attribute_layouts: Iterable<WebGPURenderStateAttributeLayout>): Result<WebGPURenderStateRenderPipeline, Error> {
         if (!WebGPURenderState.is_VertexShader(program.vertex_or_compute_shader_ref.expect.type)) {
             return Result.Error(new Error('<WebGPURenderState> create_RenderPipeline: program does not have Vertex shader'));
         }
@@ -196,18 +260,8 @@ export class WebGPURenderState {
             });
         }
 
-        // binding group layouts
-        const layouts: GPUBindGroupLayout[] = [];
-        for (const layout of uniform_layouts) {
-            const bind_group_layout = layout.layout;
-            if (bind_group_layout === undefined) return Result.Error(new Error('<WebGPURenderState> create_RenderPipeline: WebGPURenderStateUniformLayout needs to be built before creating a pipeline'));
-            layouts.push(bind_group_layout);
-        }
-
         const desc: GPURenderPipelineDescriptor = {
-            layout: this.device.createPipelineLayout({
-                bindGroupLayouts: layouts,
-            }),
+            layout: uniform_layout,
             vertex: {
                 module: (program.vertex_or_compute_shader_ref.expect as WebGPURenderStateShader).shader,
                 entryPoint: 'vs_main',
@@ -216,14 +270,14 @@ export class WebGPURenderState {
             depthStencil: {
                 format: output_state.depth_stencil_format,
                 depthWriteEnabled: program_state.depth_write,
-                depthCompare: program_state.depth_compare_func,
+                depthCompare: WebGPURenderState.RenderStateDepthCompareFunc(program_state.depth_compare_func),
                 depthBias: program_state.depth_bias,
                 depthBiasSlopeScale: program_state.depth_bias_slope_scale,
             },
             primitive: {
-                topology: program_state.primitive,
-                stripIndexFormat: WebGPURenderState.is_StripPrimitiveType(program_state.primitive) ? 'uint32' : undefined,
-                cullMode: program_state.cull_mode,
+                topology: WebGPURenderState.RenderStatePrimitiveType(program_state.primitive_type),
+                stripIndexFormat: WebGPURenderState.is_StripPrimitiveType(program_state.primitive_type) ? 'uint32' : undefined,
+                cullMode: WebGPURenderState.RenderStateCullMode(program_state.cull_mode),
                 frontFace: program_state.facing,
             }
         };
@@ -307,14 +361,14 @@ export class WebGPURenderState {
 
     //#region multi sample texture
 
-    public create_MultiSampleTexture(usage: WebGPURenderStateTextureUsage, format: WebGPURenderStateTextureFormat, width: number, height: number, sample_count: number): Result<WebGPURenderStateMultiSampleTexture, Error> {
+    public create_MultiSampleTexture(usage: WebGPURenderStateTextureUsage, format: WebGPURenderStateTextureFormat, width: number, height: number, multi_sample_count: WebGPURenderStateMultiSampleCount): Result<WebGPURenderStateMultiSampleTexture, Error> {
         const multi_sample_texture = this.device.createTexture({
             size: [width, height],
             format: format,
-            sampleCount: sample_count,
+            sampleCount: WebGPURenderState.RenderStateMultiSampleCount(multi_sample_count),
             usage: usage,
         });
-        return Result.Ok(new WebGPURenderStateMultiSampleTexture(this, usage, format, width, height, sample_count, multi_sample_texture));
+        return Result.Ok(new WebGPURenderStateMultiSampleTexture(this, usage, format, width, height, multi_sample_count, multi_sample_texture));
     }
 
     public delete_MultiSampleTexture(texture: WebGPURenderStateMultiSampleTexture): void {
@@ -389,7 +443,7 @@ export class WebGPURenderState {
             mipmapFilter: mipmap_filter,
             lodMinClamp: min_lod,
             lodMaxClamp: max_lod,
-            compare: compare === undefined ? undefined : compare,
+            compare: compare === undefined ? undefined : WebGPURenderState.RenderStateDepthCompareFunc(compare),
             maxAnisotropy: anisotropy,
         });
         return Result.Ok(new WebGPURenderStateTextureSampler(this, wrap_u, wrap_v, wrap_w, min_filter, mag_filter, mipmap_filter, compare, min_lod, max_lod, anisotropy, sampler));
@@ -413,7 +467,8 @@ export class WebGPURenderState {
             baseMipLevel: base_mipmap,
             mipLevelCount: mipmap_count
         });
-        return Result.Ok(new WebGPURenderStateTextureView(this, texture, dimension, texture_view));
+        const multi_sample_count = texture instanceof WebGPURenderStateTexture ? 1 : texture.multi_sample_count;
+        return Result.Ok(new WebGPURenderStateTextureView(this, texture, dimension, multi_sample_count, texture_view));
     }
 
 
@@ -471,8 +526,8 @@ export class WebGPURenderState {
 
     //#region vertex array
 
-    public create_VertexArray(primitive_type: WebGPURenderStatePrimitiveType, offset: number, count: number): Result<WebGPURenderStateVertexArray, Error> {
-        return Result.Ok(new WebGPURenderStateVertexArray(this, primitive_type, offset, count));
+    public create_VertexArray(primitive_type: WebGPURenderStatePrimitiveType, offset: number, count: number): WebGPURenderStateVertexArray {
+        return new WebGPURenderStateVertexArray(this, primitive_type, offset, count);
     }
 
     public create_VertexArrayView(vertex_array: WebGPURenderStateVertexArray, offset: number, count: number): Result<WebGPURenderStateVertexArrayView, Error> {
@@ -496,5 +551,4 @@ export class WebGPURenderState {
     }
 
     //#endregion
-
 }

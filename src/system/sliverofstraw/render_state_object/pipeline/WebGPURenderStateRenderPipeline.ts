@@ -1,7 +1,7 @@
-import type { WebGPURenderState } from "../WebGPURenderState";
-import { WebGPURenderStateObjectRefCounted } from "../WebGPURenderStateObject";
+import type { WebGPURenderState } from "../../WebGPURenderState";
+import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 
-export class WebGPURenderStateRenderPipeline extends WebGPURenderStateObjectRefCounted {
+export class WebGPURenderStateRenderPipeline extends WebGPURenderObjectRefCounted {
 
     public readonly pipeline: GPURenderPipeline;
 

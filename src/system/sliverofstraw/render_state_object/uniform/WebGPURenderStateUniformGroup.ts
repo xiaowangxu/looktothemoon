@@ -1,14 +1,14 @@
 import { Ref } from "@/system/utils/RefCounted";
-import type { WebGPURenderState } from "../WebGPURenderState";
+import type { WebGPURenderState } from "../../WebGPURenderState";
 import type { WebGPURenderStateTextureSampler } from "../texture/WebGPURenderStateTextureSampler";
-import { WebGPURenderStateObjectRefCounted } from "../WebGPURenderStateObject";
+import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import type { WebGPURenderStateBuffer } from "../buffer/WebGPURenderStateBuffer";
 import type { WebGPURenderStateTextureView } from "../texture/WebGPURenderStateTextureView";
 import { WebGPURenderStateUniformBindingType } from "./WebGPURenderStateUniformLayout";
 
 export type WebGPURenderStateUniformGroupEntry = { type: WebGPURenderStateUniformBindingType, binding: number };
 
-interface WebGPURenderStateUniformGroupEntryGeneric<T extends WebGPURenderStateUniformBindingType, R extends WebGPURenderStateObjectRefCounted> extends GPUBindGroupEntry {
+interface WebGPURenderStateUniformGroupEntryGeneric<T extends WebGPURenderStateUniformBindingType, R extends WebGPURenderObjectRefCounted> extends GPUBindGroupEntry {
     type: T,
     ref: Ref<R>,
 }
@@ -19,7 +19,7 @@ export type WebGPURenderStateUniformGroupResourceEntry =
     WebGPURenderStateUniformGroupEntryGeneric<WebGPURenderStateUniformBindingType.Texture, WebGPURenderStateTextureView> |
     WebGPURenderStateUniformGroupEntryGeneric<WebGPURenderStateUniformBindingType.Sampler, WebGPURenderStateTextureSampler>;
 
-export class WebGPURenderStateUniformGroup extends WebGPURenderStateObjectRefCounted {
+export class WebGPURenderStateUniformGroup extends WebGPURenderObjectRefCounted {
 
     protected readonly binding_layout: GPUBindGroupLayout;
 

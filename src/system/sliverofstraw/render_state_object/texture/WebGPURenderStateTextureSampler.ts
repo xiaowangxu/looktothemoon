@@ -1,6 +1,6 @@
 import type { WebGPURenderStateDepthCompareFunc } from "../pipeline/WebGPURenderStateProgramState";
-import type { WebGPURenderState } from "../WebGPURenderState";
-import { WebGPURenderStateObjectRefCounted } from "../WebGPURenderStateObject";
+import type { WebGPURenderState } from "../../WebGPURenderState";
+import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 
 export enum WebGPURenderStateTextureWrap {
     Clamp = 'clamp-to-edge',
@@ -13,7 +13,7 @@ export enum WebGPURenderStateTextureFilter {
     Linear = 'linear',
 }
 
-export class WebGPURenderStateTextureSampler extends WebGPURenderStateObjectRefCounted {
+export class WebGPURenderStateTextureSampler extends WebGPURenderObjectRefCounted {
 
     public readonly sampler: GPUSampler;
 

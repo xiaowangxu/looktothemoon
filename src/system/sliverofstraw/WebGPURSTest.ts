@@ -1,13 +1,17 @@
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { WebGPURenderState } from "./WebGPURenderState";
-import { WebGPURenderStateAttributeRowType } from "./pipeline/WebGPURenderStateAttributeLayout";
-import type { WebGPURenderStateMultiSampleTexture } from "./texture/WebGPURenderStateMultiSampleTexture";
+import { WebGPURenderStateAttributeRowType } from "./render_state_object/pipeline/WebGPURenderStateAttributeLayout";
+import { WebGPURenderStateMultiSampleCount, type WebGPURenderStateMultiSampleTexture } from "./render_state_object/texture/WebGPURenderStateMultiSampleTexture";
 import { Ref } from "@/system/utils/RefCounted";
-import type { WebGPURenderStateTextureView } from "./texture/WebGPURenderStateTextureView";
-import type { WebGPURenderStateUniformGroup } from "./uniform/WebGPURenderStateUniformGroup";
-import { WebGPURenderStateBufferDataType, WebGPURenderStateBufferType, WebGPURenderStateBufferUsage, type WebGPURenderStateBuffer } from "./buffer/WebGPURenderStateBuffer";
-import { WebGPURenderStateTextureFormat, WebGPURenderStateTextureUsage } from "./texture/WebGPURenderStateTexture";
-import { WebGPURenderStateShaderType } from "./pipeline/WebGPURenderStateShader";
+import type { WebGPURenderStateTextureView } from "./render_state_object/texture/WebGPURenderStateTextureView";
+import type { WebGPURenderStateUniformGroup } from "./render_state_object/uniform/WebGPURenderStateUniformGroup";
+import { WebGPURenderStateBufferDataType, WebGPURenderStateBufferType, WebGPURenderStateBufferUsage, type WebGPURenderStateBuffer } from "./render_state_object/buffer/WebGPURenderStateBuffer";
+import { WebGPURenderStateTextureFormat, WebGPURenderStateTextureUsage } from "./render_state_object/texture/WebGPURenderStateTexture";
+import { WebGPURenderStateShaderType } from "./render_state_object/pipeline/WebGPURenderStateShader";
+import { bitmask_check, bitmask_set } from "../utils/BitMask";
+import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, WebGPURenderStateFacing, type WebGPURenderStateProgramState } from "./render_state_object/pipeline/WebGPURenderStateProgramState";
+import { WebGPURenderStatePrimitiveType, WebGPURenderStateVertexArray } from "./render_state_object/vertex_array/WebGPURenderStateVertexArray";
+import { WebGPURenderElementRenderPipelineCache, WebGPURenderElementRenderPipelineDepthOffset } from "./render_element_object/pipeline/WebGPURenderElementRenderPipelineCache";
 
 async function init() {
 
@@ -31,8 +35,8 @@ async function init() {
     const color_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
     const depth_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
 
-    color_texture_ref.value = rs.create_MultiSampleTexture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.RGBA16F, width, height, 4).expect();
-    depth_texture_ref.value = rs.create_MultiSampleTexture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.D32F, width, height, 4).expect();
+    color_texture_ref.value = rs.create_MultiSampleTexture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.RGBA16F, width, height, WebGPURenderStateMultiSampleCount.MS4).expect();
+    depth_texture_ref.value = rs.create_MultiSampleTexture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.D32F, width, height, WebGPURenderStateMultiSampleCount.MS4).expect();
 
     color_texture_view_ref.value = rs.create_TextureView(color_texture_ref.expect).expect();
     depth_texture_view_ref.value = rs.create_TextureView(depth_texture_ref.expect).expect();
@@ -73,25 +77,32 @@ async function init() {
 
     const program = rs.create_Program(shader, shader).expect();
 
-    const program_state = rs.create_ProgramState();
+    const program_state: WebGPURenderStateProgramState = {
+        primitive_type: WebGPURenderStatePrimitiveType.Triangles,
+        cull_mode: WebGPURenderStateCullMode.Back,
+        facing: WebGPURenderStateFacing.CounterClockwise,
+        depth_bias: 0,
+        depth_bias_slope_scale: 0,
+        depth_compare_func: WebGPURenderStateDepthCompareFunc.LessEqual,
+        depth_write: true,
+    };
 
     const uniform_group_0_layout = rs.create_UniformLayout();
 
     uniform_group_0_layout.add_BufferUniform(WebGPURenderStateShaderType.Vertex, 0);
     uniform_group_0_layout.add_BufferUniform(WebGPURenderStateShaderType.Fragment, 1);
 
-    const pipeline = rs.create_RenderPipeline(program, program_state,
-        {
-            depth_stencil_format: WebGPURenderStateTextureFormat.D32F,
-            multi_sample_count: 4,
-            alpha_to_coverage: false,
-            attachments: [
-                {
-                    format: WebGPURenderStateTextureFormat.RGBA16F,
-                    blend: false,
-                }
-            ],
-        },
+    const pipeline_cache_ref = new Ref(new WebGPURenderElementRenderPipelineCache(rs, program, program_state, {
+        depth_stencil_format: WebGPURenderStateTextureFormat.D32F,
+        multi_sample_count: 4,
+        alpha_to_coverage: false,
+        attachments: [
+            {
+                format: WebGPURenderStateTextureFormat.RGBA16F,
+                blend: false,
+            }
+        ],
+    },
         [
             uniform_group_0_layout,
         ],
@@ -112,7 +123,7 @@ async function init() {
                     { location: 1, offset: 0, type: WebGPURenderStateAttributeRowType.Vector3 },
                 ],
             },
-        ]).expect();
+        ]));
 
     const positions = new Float32Array(
         [
@@ -132,12 +143,22 @@ async function init() {
     );
     const indices = new Uint32Array([0, 1, 2, 2, 3, 0]);
 
-    const positionBuffer = rs.create_Buffer(WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, WebGPURenderStateBufferDataType.Float, 3, positions.byteLength).expect();
+    const positionBuffer = rs.create_Buffer(WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, WebGPURenderStateBufferDataType.Float, positions.byteLength).expect();
     positionBuffer.update_Data(0, positions);
-    const colorBuffer = rs.create_Buffer(WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, WebGPURenderStateBufferDataType.Float, 3, colors.byteLength).expect();
+    const colorBuffer = rs.create_Buffer(WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, WebGPURenderStateBufferDataType.Float, colors.byteLength).expect();
     colorBuffer.update_Data(0, colors);
-    const indicesBuffer = rs.create_Buffer(WebGPURenderStateBufferType.Index, WebGPURenderStateBufferUsage.CopyDst, WebGPURenderStateBufferDataType.Uint, 1, indices.byteLength).expect();
+    const indicesBuffer = rs.create_Buffer(WebGPURenderStateBufferType.Index, WebGPURenderStateBufferUsage.CopyDst, WebGPURenderStateBufferDataType.Uint, indices.byteLength).expect();
     indicesBuffer.update_Data(0, indices);
+
+    const vertex_array_ref = new Ref(rs.create_VertexArray(WebGPURenderStatePrimitiveType.Triangles, 0, 6));
+    vertex_array_ref.expect.set_Buffer(0, positionBuffer);
+    vertex_array_ref.expect.set_Buffer(1, colorBuffer);
+    vertex_array_ref.expect.set_Index(indicesBuffer);
+
+    const vertex_array2_ref = new Ref(rs.create_VertexArray(WebGPURenderStatePrimitiveType.LineStrip, 0, 6));
+    vertex_array2_ref.expect.set_Buffer(0, positionBuffer);
+    vertex_array2_ref.expect.set_Buffer(1, colorBuffer);
+    vertex_array2_ref.expect.set_Index(indicesBuffer);
 
     const bind_group_0_ref = new Ref<WebGPURenderStateUniformGroup>();
 
@@ -145,12 +166,12 @@ async function init() {
 
     const uniform_buffer_0_ref = new Ref<WebGPURenderStateBuffer>();
     const uniform_buffer_0_data = new Float32Array(1);
-    uniform_buffer_0_ref.value = rs.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, WebGPURenderStateBufferDataType.Float, 1, 4).expect();
+    uniform_buffer_0_ref.value = rs.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, WebGPURenderStateBufferDataType.Float, 4).expect();
     bind_group_0_ref.expect.set_BufferUniform(0, uniform_buffer_0_ref.expect);
 
     const uniform_buffer_1_ref = new Ref<WebGPURenderStateBuffer>();
     const uniform_buffer_1_data = new Float32Array(1);
-    uniform_buffer_1_ref.value = rs.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, WebGPURenderStateBufferDataType.Float, 1, 4).expect();
+    uniform_buffer_1_ref.value = rs.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, WebGPURenderStateBufferDataType.Float, 4).expect();
     bind_group_0_ref.expect.set_BufferUniform(1, uniform_buffer_1_ref.expect);
 
     const frame_buffer_ref = new Ref(rs.create_FrameBuffer().expect());
@@ -171,9 +192,9 @@ async function init() {
         if (canvas.width === canvas_width && canvas.height === canvas_height) return;
         canvas.width = canvas_width;
         canvas.height = canvas_height;
-        color_texture_ref.value = rs.create_MultiSampleTexture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.RGBA16F, canvas_width, canvas_height, 4).expect();
+        color_texture_ref.value = rs.create_MultiSampleTexture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.RGBA16F, canvas_width, canvas_height, WebGPURenderStateMultiSampleCount.MS4).expect();
         color_texture_view_ref.value = rs.create_TextureView(color_texture_ref.expect).expect();
-        depth_texture_ref.value = rs.create_MultiSampleTexture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.D32F, canvas_width, canvas_height, 4).expect();
+        depth_texture_ref.value = rs.create_MultiSampleTexture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.D32F, canvas_width, canvas_height, WebGPURenderStateMultiSampleCount.MS4).expect();
         depth_texture_view_ref.value = rs.create_TextureView(depth_texture_ref.expect).expect();
         frame_buffer_ref.expect.clear_Attachments();
         frame_buffer_ref.expect.clear_DepthStencilAttachment();
@@ -198,14 +219,14 @@ async function init() {
         resize();
         frame_buffer_ref.expect.refresh_CanvasTextureView();
         const commandEncoder = rs.device.createCommandEncoder();
-        const passEncoder = commandEncoder.beginRenderPass(frame_buffer_ref.expect.frame_buffer_desc);
-        passEncoder.setPipeline(pipeline.pipeline);
-        passEncoder.setBindGroup(0, bind_group_0_ref.expect.binding_group);
-        passEncoder.setVertexBuffer(0, positionBuffer.buffer);
-        passEncoder.setVertexBuffer(1, colorBuffer.buffer);
-        passEncoder.setIndexBuffer(indicesBuffer.buffer, 'uint32');
-        passEncoder.drawIndexed(indices.length);
-        passEncoder.end();
+        const render_pass_encoder = commandEncoder.beginRenderPass(frame_buffer_ref.expect.frame_buffer_desc);
+        const s = (time % 3.0) > 1.5;
+        const pipeline = pipeline_cache_ref.expect.get(s ? vertex_array2_ref.expect : vertex_array_ref.expect, frame_buffer_ref.expect, WebGPURenderStateCullMode.Back, WebGPURenderElementRenderPipelineDepthOffset.None, s ? WebGPURenderStateDepthCompareFunc.Always : WebGPURenderStateDepthCompareFunc.LessEqual);
+        render_pass_encoder.setPipeline(pipeline.pipeline);
+        render_pass_encoder.setBindGroup(0, bind_group_0_ref.expect.binding_group);
+        vertex_array_ref.expect.bind_Buffers(render_pass_encoder);
+        vertex_array_ref.expect.draw(render_pass_encoder);
+        render_pass_encoder.end();
         rs.device.queue.submit([commandEncoder.finish()]);
         requestAnimationFrame(render);
     }

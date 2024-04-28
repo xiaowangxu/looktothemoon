@@ -1,9 +1,9 @@
 import { Ref } from "@/system/utils/RefCounted";
-import type { WebGPURenderState } from "../WebGPURenderState";
-import { WebGPURenderStateObjectRefCounted } from "../WebGPURenderStateObject";
+import type { WebGPURenderState } from "../../WebGPURenderState";
+import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import type { WebGPURenderStateShader } from "./WebGPURenderStateShader";
 
-export class WebGPURenderStateProgram extends WebGPURenderStateObjectRefCounted {
+export class WebGPURenderStateProgram extends WebGPURenderObjectRefCounted {
 
     public readonly vertex_or_compute_shader_ref: Ref<WebGPURenderStateShader> = new Ref();
     public readonly fragment_shader_ref: Ref<WebGPURenderStateShader> = new Ref();

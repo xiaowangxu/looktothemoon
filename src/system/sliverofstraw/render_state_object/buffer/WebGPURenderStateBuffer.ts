@@ -1,5 +1,5 @@
-import type { WebGPURenderState } from "../WebGPURenderState";
-import { WebGPURenderStateObjectRefCounted } from "../WebGPURenderStateObject";
+import type { WebGPURenderState } from "../../WebGPURenderState";
+import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 
 export enum WebGPURenderStateBufferType {
     NotSpecified = 0x0000,
@@ -26,7 +26,7 @@ export enum WebGPURenderStateBufferUsage {
 
 export type WebGPURenderStateBufferData = ArrayBuffer | ArrayBufferView;
 
-export class WebGPURenderStateBuffer extends WebGPURenderStateObjectRefCounted {
+export class WebGPURenderStateBuffer extends WebGPURenderObjectRefCounted {
 
     public readonly buffer: GPUBuffer;
 

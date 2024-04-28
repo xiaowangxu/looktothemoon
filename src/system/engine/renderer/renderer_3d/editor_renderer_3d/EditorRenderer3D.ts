@@ -2,7 +2,7 @@ import type { Viewport } from "../../../nodes/Node";
 import { World3D } from "../../../worlds/world3ds/World3D";
 import { RenderServerDevice } from "../../../render_server/RenderServer";
 import { RenderStateBufferUsage, RenderStateDataType, RenderStatePrimitiveType, RenderStateShaderType, RenderStateUniformType } from "../../../../sliverofstraw/render_state/RenderState";
-import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer } from "../../../../sliverofstraw/render_device/RenderDeviceAttributeBuffer";
+import { RenderDeviceIndexAttributeBuffer, RenderDeviceVector2AttributeBuffer } from "../../../../sliverofstraw/render_element_object/RenderDeviceAttributeBuffer";
 import { Vector2 } from "../../../../fivepebble/linear_algebra/Vector2";
 import { WebGL2RenderStateIntUniformSlot, WebGL2RenderStateUintUniformSlot } from "../../../../sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
 import { Ref } from "../../../../utils/RefCounted";

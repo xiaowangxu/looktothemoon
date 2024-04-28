@@ -1,10 +1,10 @@
 import { Ref } from "@/system/utils/RefCounted";
-import type { WebGPURenderState } from "../WebGPURenderState";
-import { WebGPURenderStateObject, WebGPURenderStateObjectRefCounted } from "../WebGPURenderStateObject";
+import type { WebGPURenderState } from "../../WebGPURenderState";
+import { WebGPURenderObject, WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import { WebGPURenderStateBufferDataType, WebGPURenderStateBufferType, WebGPURenderStateBufferUsage, type WebGPURenderStateBuffer } from "./WebGPURenderStateBuffer";
 import { align } from "@/system/fivepebble/Scalar";
 
-class WebGPURenderStateBufferStagingChunk extends WebGPURenderStateObject {
+class WebGPURenderStateBufferStagingChunk extends WebGPURenderObject {
 
     public readonly buffer_ref: Ref<WebGPURenderStateBuffer> = new Ref();
 
@@ -25,7 +25,7 @@ class WebGPURenderStateBufferStagingChunk extends WebGPURenderStateObject {
     }
 }
 
-export class WebGPURenderStateBufferStagingBelt extends WebGPURenderStateObjectRefCounted {
+export class WebGPURenderStateBufferStagingBelt extends WebGPURenderObjectRefCounted {
 
     protected readonly chunk_length: number;
 
@@ -42,7 +42,7 @@ export class WebGPURenderStateBufferStagingBelt extends WebGPURenderStateObjectR
     /**
      * chunks that are back from the GPU and ready to be mapped for write and put into active_chunks
      */
-    protected readonly free_chunks: WebGPURenderStateBufferStagingChunk[] = [];
+    protected free_chunks: WebGPURenderStateBufferStagingChunk[] = [];
 
 
     constructor(render_state: WebGPURenderState, chunk_length: number) {
@@ -57,7 +57,9 @@ export class WebGPURenderStateBufferStagingBelt extends WebGPURenderStateObjectR
     ) {
         const active_index = this.active_chunks.findIndex(chunk => chunk === undefined ? false : (chunk.offset + data_length) <= chunk.length);
         let chunk: WebGPURenderStateBufferStagingChunk;
+        // no more avaliable range in active chunks
         if (active_index <= 0) {
+            // find in free chunks
             const free_index = this.free_chunks.findIndex(chunk => chunk === undefined ? false : chunk?.length <= data_length);
             if (free_index <= 0) {
                 const length = Math.max(this.chunk_length, data_length);
@@ -71,6 +73,8 @@ export class WebGPURenderStateBufferStagingBelt extends WebGPURenderStateObjectR
                 this.active_chunks.push(free_chunk);
                 chunk = free_chunk;
             }
+            // no more avaliable range in active chunks
+            // create a new buffer big enough to contain the data
             else {
                 const free_chunk = this.free_chunks[free_index];
                 this.active_chunks.push(free_chunk);
@@ -101,6 +105,7 @@ export class WebGPURenderStateBufferStagingBelt extends WebGPURenderStateObjectR
      * copying the data from them
      */
     public finish() {
+        // unmap all active chunks' buffer
         for (const chunk of this.active_chunks) {
             if (chunk === undefined) continue;
             chunk.buffer.unmap();

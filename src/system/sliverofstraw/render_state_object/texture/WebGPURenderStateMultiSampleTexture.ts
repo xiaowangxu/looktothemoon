@@ -1,8 +1,12 @@
-import type { WebGPURenderState } from "../WebGPURenderState";
-import { WebGPURenderStateObjectRefCounted } from "../WebGPURenderStateObject";
+import type { WebGPURenderState } from "../../WebGPURenderState";
+import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import { WebGPURenderStateTextureDimension, type WebGPURenderStateTextureFormat, type WebGPURenderStateTextureUsage } from "./WebGPURenderStateTexture";
 
-export class WebGPURenderStateMultiSampleTexture extends WebGPURenderStateObjectRefCounted {
+export enum WebGPURenderStateMultiSampleCount {
+    None, MS2, MS4, MS8,
+}
+
+export class WebGPURenderStateMultiSampleTexture extends WebGPURenderObjectRefCounted {
 
     public readonly texture: GPUTexture;
 
@@ -15,12 +19,12 @@ export class WebGPURenderStateMultiSampleTexture extends WebGPURenderStateObject
     public get depth() { return 1; };
 
     public get mipmap_level_count(): number { return 1; }
-    public readonly sample_count: number;
+    public readonly multi_sample_count: WebGPURenderStateMultiSampleCount;
 
     constructor(
         render_state: WebGPURenderState,
         usage: WebGPURenderStateTextureUsage, format: WebGPURenderStateTextureFormat,
-        width: number, height: number, sample_count: number,
+        width: number, height: number, multi_sample_count: WebGPURenderStateMultiSampleCount,
         multi_sample_texture: GPUTexture,
     ) {
         super(render_state);
@@ -28,7 +32,7 @@ export class WebGPURenderStateMultiSampleTexture extends WebGPURenderStateObject
         this.format = format;
         this.width = width;
         this.height = height;
-        this.sample_count = sample_count;
+        this.multi_sample_count = multi_sample_count;
         this.texture = multi_sample_texture;
     }
 
