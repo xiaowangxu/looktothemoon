@@ -18,6 +18,7 @@ import { WebGPURenderStateBlendFactor, WebGPURenderStateBlendOperator, type WebG
 import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, type WebGPURenderStateProgramState } from "./render_state_object/pipeline/WebGPURenderStateProgramState";
 import { WebGPURenderStateMultiSampleCount, WebGPURenderStateMultiSampleTexture } from "./render_state_object/texture/WebGPURenderStateMultiSampleTexture";
 import { WebGPURenderElementRenderPipelineCache } from "./render_element_object/pipeline/WebGPURenderElementRenderPipelineCache";
+import { WebGPURenderStateVertexArrayBufferView } from "./render_state_object/vertex_array/WebGPURenderStateVertexArrayBufferView";
 
 type WebGPURenderStateMemoryLayoutMemberType =
     WebGPURenderStateUniformType |
@@ -526,12 +527,18 @@ export class WebGPURenderState {
 
     //#region vertex array
 
-    public create_VertexArray(primitive_type: WebGPURenderStatePrimitiveType, offset: number, count: number): WebGPURenderStateVertexArray {
-        return new WebGPURenderStateVertexArray(this, primitive_type, offset, count);
+    public create_VertexArray(primitive_type: WebGPURenderStatePrimitiveType, offset: number, length: number): WebGPURenderStateVertexArray {
+        return new WebGPURenderStateVertexArray(this, primitive_type, offset, length);
     }
 
-    public create_VertexArrayView(vertex_array: WebGPURenderStateVertexArray, offset: number, count: number): Result<WebGPURenderStateVertexArrayView, Error> {
-        return Result.Ok(new WebGPURenderStateVertexArrayView(this, vertex_array, offset, count));
+    public create_VertexArrayBufferView(buffer: WebGPURenderStateBuffer, offset: number, length: number | undefined = undefined): Result<WebGPURenderStateVertexArrayBufferView, Error> {
+        length ??= Math.max(0, buffer.length - offset);
+        if (offset + length > buffer.length) return Result.Error(new Error(`<WebGPURenderState> create_VertexArrayBufferView: view range out of bound, buffer range is [0, ${buffer.length}), but the view range is [${offset}, ${offset + length})`));
+        return Result.Ok(new WebGPURenderStateVertexArrayBufferView(this, buffer, offset, length));
+    }
+
+    public create_VertexArrayView(vertex_array: WebGPURenderStateVertexArray, offset: number, count: number): WebGPURenderStateVertexArrayView {
+        return new WebGPURenderStateVertexArrayView(this, vertex_array, offset, count);
     }
 
     public delete_VertexArray(vertex_array: WebGPURenderStateVertexArray): void {

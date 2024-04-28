@@ -3,6 +3,7 @@ import type { WebGPURenderState } from "../../WebGPURenderState";
 import { Ref, RefArray } from "@/system/utils/RefCounted";
 import type { WebGPURenderStateBuffer } from "../buffer/WebGPURenderStateBuffer";
 import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
+import type { WebGPURenderStateVertexArrayBufferView } from "./WebGPURenderStateVertexArrayBufferView";
 
 export enum WebGPURenderStatePrimitiveType {
     Triangles,
@@ -12,16 +13,18 @@ export enum WebGPURenderStatePrimitiveType {
     Points,
 }
 
+type WebGPURenderStateVertexArrayBuffer = WebGPURenderStateBuffer | WebGPURenderStateVertexArrayBufferView;
+
 export class WebGPURenderStateVertexArray extends WebGPURenderObjectRefCounted {
 
     static readonly MaxAttributeLocationCount = 20;
     public readonly primitive_type: WebGPURenderStatePrimitiveType;
 
     public readonly offset: number;
-    public readonly count: number;
+    public readonly length: number;
 
-    protected attribute_buffer_refs: RefArray<WebGPURenderStateBuffer> = new RefArray(WebGPURenderStateVertexArray.MaxAttributeLocationCount);
-    protected index_buffer_ref: Ref<WebGPURenderStateBuffer> = new Ref();
+    protected attribute_buffer_refs: RefArray<WebGPURenderStateVertexArrayBuffer> = new RefArray(WebGPURenderStateVertexArray.MaxAttributeLocationCount);
+    protected index_buffer_ref: Ref<WebGPURenderStateVertexArrayBuffer> = new Ref();
 
     public get is_indexed(): boolean {
         return !this.index_buffer_ref.is_empty;
@@ -42,14 +45,14 @@ export class WebGPURenderStateVertexArray extends WebGPURenderObjectRefCounted {
         this._attribute_location_bitmask = 0x00000000;
     }
 
-    constructor(render_state: WebGPURenderState, primitive_type: WebGPURenderStatePrimitiveType, offset: number, count: number) {
+    constructor(render_state: WebGPURenderState, primitive_type: WebGPURenderStatePrimitiveType, offset: number, length: number) {
         super(render_state);
         this.primitive_type = primitive_type;
         this.offset = offset;
-        this.count = count;
+        this.length = length;
     }
 
-    public set_Buffer(location: number, buffer: WebGPURenderStateBuffer): void {
+    public set_Buffer(location: number, buffer: WebGPURenderStateVertexArrayBuffer): void {
         if (location < 0 || location >= WebGPURenderStateVertexArray.MaxAttributeLocationCount) throw new Error('<WebGPURenderStateVertexArray> set_Buffer: attribute location out of bound');
         this.attribute_buffer_refs.set(location, buffer);
         this.enable_AttributeLocationBit(location);
@@ -66,7 +69,7 @@ export class WebGPURenderStateVertexArray extends WebGPURenderObjectRefCounted {
         this.clear_AttributeLocationBits();
     }
 
-    public set_Index(buffer: WebGPURenderStateBuffer): void {
+    public set_Index(buffer: WebGPURenderStateVertexArrayBuffer): void {
         this.index_buffer_ref.value = buffer;
     }
 
@@ -78,20 +81,21 @@ export class WebGPURenderStateVertexArray extends WebGPURenderObjectRefCounted {
         let i = 0;
         for (const buffer of this.attribute_buffer_refs) {
             if (buffer !== undefined) {
-                pass.setVertexBuffer(i++, buffer.buffer);
+                pass.setVertexBuffer(i++, buffer.buffer, buffer.offset, buffer.length);
             }
         }
         if (this.is_indexed) {
-            pass.setIndexBuffer(this.index_buffer_ref.expect.buffer, 'uint32');
+            const buffer = this.index_buffer_ref.expect;
+            pass.setIndexBuffer(buffer.buffer, 'uint32', buffer.offset, buffer.length);
         }
     }
 
     public draw(pass: GPURenderPassEncoder, instance_count: number = 1, instance_offset: number = 0) {
         if (this.is_indexed) {
-            pass.drawIndexed(this.count, instance_count, undefined, undefined, instance_offset);
+            pass.drawIndexed(this.length, instance_count, undefined, undefined, instance_offset);
         }
         else {
-            pass.draw(this.count, instance_count, undefined, instance_offset);
+            pass.draw(this.length, instance_count, undefined, instance_offset);
         }
     }
 

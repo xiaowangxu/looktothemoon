@@ -35,6 +35,9 @@ export class WebGPURenderStateBuffer extends WebGPURenderObjectRefCounted {
     public readonly data_type: WebGPURenderStateBufferDataType;
     public readonly length: number;
 
+    // dummy value to cop with WebGPURenderStateVertexArrayBufferView
+    public readonly offset: number = 0;
+
     constructor(render_state: WebGPURenderState, type: number, usage: number, data_type: WebGPURenderStateBufferDataType, length: number, buffer: GPUBuffer) {
         super(render_state);
         this.type = type;

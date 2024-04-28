@@ -139,6 +139,11 @@ async function init() {
             0, 1, 0,
             0, 0, 1,
             1, 1, 1,
+
+            1, 1, 0,
+            0, 1, 1,
+            1, 0, 1,
+            1, 1, 1,
         ]
     );
     const indices = new Uint32Array([0, 1, 2, 2, 3, 0]);
@@ -147,12 +152,13 @@ async function init() {
     positionBuffer.update_Data(0, positions);
     const colorBuffer = rs.create_Buffer(WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, WebGPURenderStateBufferDataType.Float, colors.byteLength).expect();
     colorBuffer.update_Data(0, colors);
+    const color_view_ref = rs.create_VertexArrayBufferView(colorBuffer, 4 * 12).expect();
     const indicesBuffer = rs.create_Buffer(WebGPURenderStateBufferType.Index, WebGPURenderStateBufferUsage.CopyDst, WebGPURenderStateBufferDataType.Uint, indices.byteLength).expect();
     indicesBuffer.update_Data(0, indices);
 
     const vertex_array_ref = new Ref(rs.create_VertexArray(WebGPURenderStatePrimitiveType.Triangles, 0, 6));
     vertex_array_ref.expect.set_Buffer(0, positionBuffer);
-    vertex_array_ref.expect.set_Buffer(1, colorBuffer);
+    vertex_array_ref.expect.set_Buffer(1, color_view_ref);
     vertex_array_ref.expect.set_Index(indicesBuffer);
 
     const vertex_array2_ref = new Ref(rs.create_VertexArray(WebGPURenderStatePrimitiveType.LineStrip, 0, 6));
@@ -221,11 +227,11 @@ async function init() {
         const commandEncoder = rs.device.createCommandEncoder();
         const render_pass_encoder = commandEncoder.beginRenderPass(frame_buffer_ref.expect.frame_buffer_desc);
         const s = (time % 3.0) > 1.5;
-        const pipeline = pipeline_cache_ref.expect.get(s ? vertex_array2_ref.expect : vertex_array_ref.expect, frame_buffer_ref.expect, WebGPURenderStateCullMode.Back, WebGPURenderElementRenderPipelineDepthOffset.None, s ? WebGPURenderStateDepthCompareFunc.Always : WebGPURenderStateDepthCompareFunc.LessEqual);
+        const pipeline = pipeline_cache_ref.expect.get(s ? vertex_array2_ref.expect : vertex_array_ref.expect, frame_buffer_ref.expect, WebGPURenderStateCullMode.Back, WebGPURenderElementRenderPipelineDepthOffset.None, WebGPURenderStateDepthCompareFunc.LessEqual);
         render_pass_encoder.setPipeline(pipeline.pipeline);
         render_pass_encoder.setBindGroup(0, bind_group_0_ref.expect.binding_group);
-        vertex_array_ref.expect.bind_Buffers(render_pass_encoder);
-        vertex_array_ref.expect.draw(render_pass_encoder);
+        (s ? vertex_array2_ref.expect : vertex_array_ref.expect).bind_Buffers(render_pass_encoder);
+        (s ? vertex_array2_ref.expect : vertex_array_ref.expect).draw(render_pass_encoder);
         render_pass_encoder.end();
         rs.device.queue.submit([commandEncoder.finish()]);
         requestAnimationFrame(render);
