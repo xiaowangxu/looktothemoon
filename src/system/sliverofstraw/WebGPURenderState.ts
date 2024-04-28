@@ -454,12 +454,13 @@ export class WebGPURenderState {
 
     //#region buffer
 
-    public create_Buffer(type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, data_type: WebGPURenderStateBufferDataType, element_size: number, size: number): Result<WebGPURenderStateBuffer, Error> {
+    public create_Buffer(type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, data_type: WebGPURenderStateBufferDataType, length: number, map: boolean = false): Result<WebGPURenderStateBuffer, Error> {
         const buffer = this.device.createBuffer({
-            size: size,
+            size: length,
             usage: type | usage,
+            mappedAtCreation: map,
         });
-        return Result.Ok(new WebGPURenderStateBuffer(this, type, usage, data_type, element_size, size, buffer));
+        return Result.Ok(new WebGPURenderStateBuffer(this, type, usage, data_type, length, buffer));
     }
 
     public delete_Buffer(buffer: WebGPURenderStateBuffer): void {

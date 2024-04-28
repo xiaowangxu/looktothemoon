@@ -2,6 +2,7 @@ import type { WebGPURenderState } from "../WebGPURenderState";
 import { WebGPURenderStateObjectRefCounted } from "../WebGPURenderStateObject";
 
 export enum WebGPURenderStateBufferType {
+    NotSpecified = 0x0000,
     Index = 0x0010,
     VertexArray = 0x0020,
     Uniform = 0x0040,
@@ -32,16 +33,14 @@ export class WebGPURenderStateBuffer extends WebGPURenderStateObjectRefCounted {
     public readonly type: WebGPURenderStateBufferType;
     public readonly usage: WebGPURenderStateBufferUsage;
     public readonly data_type: WebGPURenderStateBufferDataType;
-    public readonly element_size: number;
-    public readonly size: number;
+    public readonly length: number;
 
-    constructor(render_state: WebGPURenderState, type: number, usage: number, data_type: WebGPURenderStateBufferDataType, element_size: number, size: number, buffer: GPUBuffer) {
+    constructor(render_state: WebGPURenderState, type: number, usage: number, data_type: WebGPURenderStateBufferDataType, length: number, buffer: GPUBuffer) {
         super(render_state);
         this.type = type;
         this.usage = usage;
         this.data_type = data_type;
-        this.element_size = element_size;
-        this.size = size;
+        this.length = length;
         this.buffer = buffer;
     }
 

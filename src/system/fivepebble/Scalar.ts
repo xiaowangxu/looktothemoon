@@ -19,3 +19,13 @@ export function is_ApproxEqual(a: number, b: number, epsilon = Epsilon) {
 export function is_ApproxZero(value: number, epsilon = Epsilon) {
     return -epsilon <= value && value <= epsilon;
 }
+
+export function align(value: number, alignment: number) {
+    const remainder = value % alignment;
+    if (remainder === 0) {
+        return value;
+    }
+    else {
+        return value + alignment - remainder;
+    }
+}

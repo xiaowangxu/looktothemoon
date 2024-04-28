@@ -70,6 +70,10 @@ export class RefArray<T extends RefCountedLike> {
 
     [Symbol.iterator]() { return this.refs[Symbol.iterator](); }
 
+    public find(fn: (item: T | undefined, index: number) => boolean) {
+        return this.refs.findIndex(fn);
+    }
+
     private ref(index: number, value: T | undefined) {
         const item = this.refs[index];
         if (item === value) return;
