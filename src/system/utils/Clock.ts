@@ -11,7 +11,6 @@ export class Clock {
         this._running = running;
     }
 
-    private start_time: number = 0;
     private last_time: number = 0;
 
     private _delta: number = 0;
@@ -22,8 +21,7 @@ export class Clock {
     constructor() { }
 
     public start() {
-        this.start_time = now();
-        this.last_time = this.start_time;
+        this.last_time = now();
         this._delta = 0;
         this._duration = 0;
         this.running = true;
@@ -37,13 +35,18 @@ export class Clock {
         this.running = true;
     }
 
-    public tick() {
+    public tick(delta?: number) {
+        const new_time = now();
         if (this.running) {
-            const new_time = now();
-            this._delta = (new_time - this.last_time) / 1000;
+            if (delta === undefined) {
+                this._delta = (new_time - this.last_time) / 1000;
+            }
+            else {
+                this._delta = delta;
+            }
             this._duration += this._delta;
-            this.last_time = new_time;
         }
+        this.last_time = new_time;
         return this._delta;
     }
 }

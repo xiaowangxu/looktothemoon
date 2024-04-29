@@ -1,15 +1,84 @@
 import { clamp, is_ApproxEqual, is_ApproxZero } from "../fivepebble/Scalar";
+import { Matrix3 } from "../fivepebble/linear_algebra/Matrix3"; // for import Euler
 import { Euler } from "../fivepebble/linear_algebra/Euler";
+import { Quaternion } from "../fivepebble/linear_algebra/Quaternion";
 import { Vector2 } from "../fivepebble/linear_algebra/Vector2";
 import { Vector3 } from "../fivepebble/linear_algebra/Vector3";
-import { Quaternion } from "../fivepebble/linear_algebra/Quaternion";
-import { SignalEmitter } from "../utils/SignalEmitter";
 import { Vector4 } from "../fivepebble/linear_algebra/Vector4";
+import { SignalEmitter } from "../utils/SignalEmitter";
 
-export class TweenBase {
+export class TweenManager {
+
+    private readonly tweens: Set<Tween> = new Set();
+    public get tween_processing_count() { return this.tweens.size; }
+
+    public process_Tweens(delta: number) {
+        for (const tween of this.tweens) {
+            tween.process(delta);
+            if (tween.finished) {
+                this.tweens.delete(tween);
+            }
+        }
+    }
+
+    public start_Tween(tween: Tween) {
+        console.warn("start");
+        tween.start();
+        if (!tween.finished) {
+            this.tweens.add(tween);
+            return tween;
+        }
+        return undefined;
+    }
+
+    public stop_Tween(tween: Tween) {
+        if (this.tweens.has(tween)) {
+            tween.stop();
+            this.tweens.delete(tween);
+        }
+    }
+
+    public clear_Tweens() {
+        this.tweens.clear();
+    }
+}
+
+//#region tween interfaces
+
+export interface Tween {
+    get started(): boolean;
+    get finished(): boolean;
+    get running(): boolean;
+
+    signal_finished: SignalEmitter<() => void>;
+
+    start(): void;
+    process(delta: number): void;
+    stop(): void;
+}
+
+export interface ResverseableTween extends Tween {
+    get reversed(): boolean;
+    set reversed(reversed: boolean);
+}
+
+export interface InterpolateableTween extends ResverseableTween {
+    /**
+     * value in range [ 0, 1 ]
+     */
+    get value(): number;
+}
+
+//#endregion
+
+//#region tweens
+
+export abstract class TweenBase implements Tween {
+
     protected _started: boolean = false;
     public get started() { return this._started; }
     protected set started(started: boolean) { this._started = started; }
+
     protected _finished: boolean = false;
     public get finished() { return this._finished; }
     protected set finished(finished: boolean) {
@@ -18,36 +87,301 @@ export class TweenBase {
             this.trigger_Finished();
         }
     }
+
     public get running() { return this.started && !this.finished; }
 
     // signals
     public readonly signal_finished: SignalEmitter<() => void> = new SignalEmitter();
 
-    constructor() {
-
-    }
-
     protected trigger_Finished() {
         this.signal_finished.trigger();
     }
 
-    public start() { }
+    public abstract start(): void;
 
-    public process(delta: number) { }
+    public abstract process(delta: number): void;
 
     public stop() {
         this.finished = true;
     }
 }
 
-//#region structure tweens
+export class CallbackTween extends TweenBase {
+
+    private readonly callback: () => void;
+
+    constructor(callback: () => void) {
+        super();
+        this.callback = callback;
+    }
+
+    public start(): void {
+        this.callback();
+        this.finished = true;
+    }
+
+    public process(delta: number): void {
+        return;
+    }
+}
+
+export class TimerTween extends TweenBase {
+
+    private readonly duration: number;
+
+    private _current: number = 0;
+    public get current() { return this._current; }
+
+    constructor(duration: number) {
+        super();
+        this.duration = Math.max(0, duration);
+    }
+
+    public start() {
+        if (this.duration === 0) {
+            this._current = 1;
+            this.started = true;
+            this.finished = true;
+        }
+        else {
+            this._current = 0;
+            this.started = true;
+            this.finished = false;
+        }
+    }
+
+    public process(delta: number) {
+        if (this.running) {
+            this._current = clamp(this._current + delta, 0, this.duration);
+            this.finished = this._current >= this.duration;
+        }
+    }
+}
+
+export enum InterpolateTweenTransitionType {
+    Linear, Sine, Quad, Cubic, Quart, Quint, Expo, Back, Elastic, Circle, Bounce, Jump
+}
+
+export enum InterpolateTweenEasingType {
+    In, Out, InOut
+}
+
+export class InterpolateTween extends TweenBase implements InterpolateableTween {
+    private readonly duration: number;
+    private readonly transition: InterpolateTweenTransitionType;
+    private readonly easing: InterpolateTweenEasingType;
+    public reversed: boolean = false;
+
+    private _current: number = 0;
+    public get current() { return this._current; }
+    private _value: number = 0;
+    public get value() { return this.reversed ? (1 - this._value) : this._value; }
+
+    constructor(duration: number, transition: InterpolateTweenTransitionType, easing: InterpolateTweenEasingType, reversed: boolean = false) {
+        super();
+        this.duration = Math.max(0, duration);
+        this.transition = transition;
+        this.easing = easing;
+        this.reversed = reversed;
+    }
+
+    public start() {
+        if (this.duration === 0) {
+            this._current = 1;
+            this._value = 1;
+            this.started = true;
+            this.finished = true;
+        }
+        else {
+            this._current = 0;
+            this._value = 0;
+            this.started = true;
+            this.finished = false;
+        }
+    }
+
+    public process(delta: number) {
+        if (this.running) {
+            this._current = clamp(this._current + delta, 0, this.duration);
+            this._value = InterpolateTween.calculate_TransitionEasing(this._current / this.duration, this.transition, this.easing);
+            this.finished = this._current >= this.duration;
+        }
+    }
+
+    static calculate_TransitionEasing(value: number, transition: InterpolateTweenTransitionType, easing: InterpolateTweenEasingType): number {
+        const x = clamp(value, 0, 1);
+        switch (transition) {
+            case InterpolateTweenTransitionType.Linear: {
+                return x;
+            }
+            case InterpolateTweenTransitionType.Sine: {
+                switch (easing) {
+                    case InterpolateTweenEasingType.In: return 1 - Math.cos((x * Math.PI) / 2);
+                    case InterpolateTweenEasingType.Out: return Math.sin((x * Math.PI) / 2);
+                    case InterpolateTweenEasingType.InOut: return -(Math.cos(Math.PI * x) - 1) / 2;
+                }
+            }
+            case InterpolateTweenTransitionType.Quad: {
+                switch (easing) {
+                    case InterpolateTweenEasingType.In: return x * x
+                    case InterpolateTweenEasingType.Out: return 1 - (1 - x) * (1 - x);
+                    case InterpolateTweenEasingType.InOut: return (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+                }
+            }
+            case InterpolateTweenTransitionType.Cubic: {
+                switch (easing) {
+                    case InterpolateTweenEasingType.In: return x * x * x;
+                    case InterpolateTweenEasingType.Out: return 1 - Math.pow(1 - x, 3);
+                    case InterpolateTweenEasingType.InOut: return (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+                }
+            }
+            case InterpolateTweenTransitionType.Quart: {
+                switch (easing) {
+                    case InterpolateTweenEasingType.In: return x * x * x * x;
+                    case InterpolateTweenEasingType.Out: return 1 - Math.pow(1 - x, 4);
+                    case InterpolateTweenEasingType.InOut: return (x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2);
+                }
+            }
+            case InterpolateTweenTransitionType.Quint: {
+                switch (easing) {
+                    case InterpolateTweenEasingType.In: return x * x * x * x * x;
+                    case InterpolateTweenEasingType.Out: return 1 - Math.pow(1 - x, 5);
+                    case InterpolateTweenEasingType.InOut: return (x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2);
+                }
+            }
+            case InterpolateTweenTransitionType.Expo: {
+                switch (easing) {
+                    case InterpolateTweenEasingType.In: return (x === 0 ? 0 : Math.pow(2, 10 * x - 10));
+                    case InterpolateTweenEasingType.Out: return (x === 1 ? 1 : 1 - Math.pow(2, -10 * x));
+                    case InterpolateTweenEasingType.InOut: return (x === 0
+                        ? 0
+                        : x === 1
+                            ? 1
+                            : x < 0.5 ? Math.pow(2, 20 * x - 10) / 2
+                                : (2 - Math.pow(2, -20 * x + 10)) / 2);
+                }
+            }
+            case InterpolateTweenTransitionType.Circle: {
+                switch (easing) {
+                    case InterpolateTweenEasingType.In: return 1 - Math.sqrt(1 - Math.pow(x, 2));
+                    case InterpolateTweenEasingType.Out: return Math.sqrt(1 - Math.pow(x - 1, 2));
+                    case InterpolateTweenEasingType.InOut: return (x < 0.5
+                        ? (1 - Math.sqrt(1 - Math.pow(2 * x, 2))) / 2
+                        : (Math.sqrt(1 - Math.pow(-2 * x + 2, 2)) + 1) / 2);
+                }
+            }
+            case InterpolateTweenTransitionType.Back: {
+                const c1 = 1.70158;
+                const c2 = c1 * 1.525;
+                const c3 = c1 + 1;
+                switch (easing) {
+                    case InterpolateTweenEasingType.In: return c3 * x * x * x - c1 * x * x;
+                    case InterpolateTweenEasingType.Out: return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+                    case InterpolateTweenEasingType.InOut: return (x < 0.5
+                        ? (Math.pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2)) / 2
+                        : (Math.pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2);
+                }
+            }
+            case InterpolateTweenTransitionType.Elastic: {
+                const c4 = (2 * Math.PI) / 3;
+                const c5 = (2 * Math.PI) / 4.5;
+                switch (easing) {
+                    case InterpolateTweenEasingType.In: return (x === 0
+                        ? 0
+                        : x === 1
+                            ? 1
+                            : -Math.pow(2, 10 * x - 10) * Math.sin((x * 10 - 10.75) * c4));
+                    case InterpolateTweenEasingType.Out: return (x === 0
+                        ? 0
+                        : x === 1
+                            ? 1
+                            : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1);
+                    case InterpolateTweenEasingType.InOut: return (x === 0
+                        ? 0
+                        : x === 1
+                            ? 1
+                            : x < 0.5
+                                ? -(Math.pow(2, 20 * x - 10) * Math.sin((20 * x - 11.125) * c5)) / 2
+                                : (Math.pow(2, -20 * x + 10) * Math.sin((20 * x - 11.125) * c5)) / 2 + 1);
+                }
+            }
+            case InterpolateTweenTransitionType.Bounce: {
+                switch (easing) {
+                    case InterpolateTweenEasingType.In: return 1 - InterpolateTween.calculate_TransitionEasing(x, InterpolateTweenTransitionType.Bounce, InterpolateTweenEasingType.Out);
+                    case InterpolateTweenEasingType.Out: {
+                        const n1 = 7.5625;
+                        const d1 = 2.75;
+                        let _x = x;
+                        if (_x < 1 / d1) {
+                            return n1 * _x * _x;
+                        } else if (_x < 2 / d1) {
+                            return n1 * (_x -= 1.5 / d1) * _x + 0.75;
+                        } else if (_x < 2.5 / d1) {
+                            return n1 * (_x -= 2.25 / d1) * _x + 0.9375;
+                        } else {
+                            return n1 * (_x -= 2.625 / d1) * _x + 0.984375;
+                        }
+                    }
+                    case InterpolateTweenEasingType.InOut: return (x < 0.5
+                        ? (1 - InterpolateTween.calculate_TransitionEasing(1 - 2 * x, InterpolateTweenTransitionType.Bounce, InterpolateTweenEasingType.Out)) / 2
+                        : (1 + InterpolateTween.calculate_TransitionEasing(2 * x - 1, InterpolateTweenTransitionType.Bounce, InterpolateTweenEasingType.Out)) / 2);
+                }
+            }
+            case InterpolateTweenTransitionType.Jump: {
+                switch (easing) {
+                    case InterpolateTweenEasingType.In: return is_ApproxZero(value) ? 0 : 1;
+                    case InterpolateTweenEasingType.Out: return is_ApproxEqual(value, 1.0) ? 1 : 0;
+                    case InterpolateTweenEasingType.InOut: return is_ApproxEqual(value, 1.0) ? 1 : 0;
+                }
+            }
+        }
+    }
+}
+
+export class ExponentialSmoothingInterpolateTween extends TweenBase implements InterpolateableTween {
+    private readonly speed: number;
+
+    public reversed: boolean = false;
+
+    private _value: number = 0;
+    public get value() { return this.reversed ? (1 - this._value) : this._value; }
+
+    constructor(speed: number, initial: number = 0.0, reversed: boolean = false) {
+        super();
+        this._value = clamp(initial, 0.0, 1.0);
+        this.speed = Math.max(0, speed);
+        this.reversed = reversed;
+    }
+
+    public start() {
+        this._value = 0;
+        this.started = true;
+        this.finished = false;
+    }
+
+    public process(delta: number) {
+        if (this.running) {
+            this._value += (this._value - 1.0) * Math.expm1(-this.speed * delta);
+            this._value = clamp(this._value, 0, 1);
+            const finished = is_ApproxEqual(this._value, 1);
+            if (finished) this._value = 1.0;
+            this.finished = finished;
+        }
+    }
+}
+
+//#endregion
+
+//#region structure
 
 export class TweenSequence extends TweenBase {
-    private readonly tweens: TweenBase[] = [];
-    private current_tween_idx: number = 0;
-    private current_tween: TweenBase | undefined = undefined;
 
-    constructor(tweens: TweenBase[]) {
+    private readonly tweens: Tween[] = [];
+
+    private current_tween_idx: number = 0;
+    private current_tween: Tween | undefined = undefined;
+
+    constructor(tweens: Tween[]) {
         super();
         this.tweens = tweens;
     }
@@ -85,7 +419,7 @@ export class TweenSequence extends TweenBase {
         return true;
     }
 
-    public process(delta: number): void {
+    public process(delta: number) {
         if (this.running) {
             this.current_tween!.process(delta);
             if (this.current_tween!.finished) {
@@ -102,15 +436,12 @@ export class TweenSequence extends TweenBase {
     }
 }
 
-export function tween_sequence(...tweens: TweenBase[]) {
-    return new TweenSequence(tweens);
-}
-
 export class TweenParallel extends TweenBase {
-    private readonly tweens: TweenBase[] = [];
-    private running_tweens: Set<TweenBase> = new Set();
 
-    constructor(tweens: TweenBase[]) {
+    private readonly tweens: Tween[] = [];
+    private running_tweens: Set<Tween> = new Set();
+
+    constructor(tweens: Tween[]) {
         super();
         this.tweens = tweens;
     }
@@ -161,18 +492,15 @@ export class TweenParallel extends TweenBase {
     }
 }
 
-export function tween_parallel(...tweens: TweenBase[]) {
-    return new TweenParallel(tweens);
-}
-
 export class TweenLoop extends TweenBase {
-    private readonly tween: TweenBase;
+
+    private readonly tween: Tween;
     private readonly loop_times: number;
     private current_loop_idx: number = 0;
 
     public readonly signal_looped: SignalEmitter<(loop: number, total: number) => void> = new SignalEmitter();
 
-    constructor(tween: TweenBase, loop_times: number) {
+    constructor(tween: Tween, loop_times: number) {
         super();
         this.tween = tween;
         this.loop_times = loop_times;
@@ -227,240 +555,62 @@ export class TweenLoop extends TweenBase {
     }
 }
 
-export function tween_loop(tween: TweenBase, loop_times: number = Infinity) {
-    return new TweenLoop(tween, loop_times);
-}
-
 //#endregion
 
-//#region interpolate tweens
+//#region adaptor
 
-export enum TweenTransitionType {
-    Linear, Sine, Quad, Cubic, Quart, Quint, Expo, Back, Elastic, Circle, Bounce, Jump
-}
+export class MethodTweenAdaptor implements ResverseableTween {
 
-export enum TweenEasingType {
-    In, Out, InOut
-}
+    get reversed(): boolean { return this.tween.reversed; }
+    set reversed(reversed: boolean) { this.tween.reversed = reversed; }
+    get started(): boolean { return this.tween.started; }
+    get finished(): boolean { return this.tween.finished; }
+    get running(): boolean { return this.tween.running; }
 
-export class InterpolateTween extends TweenBase {
-    private readonly duration: number;
-    private readonly transition: TweenTransitionType;
-    private readonly easing: TweenEasingType;
-    public reversed: boolean = false;
+    get signal_finished() { return this.tween.signal_finished; }
 
-    private _current: number = 0;
-    public get current() { return this._current; }
-    private _value: number = 0;
-    public get value() { return this.reversed ? (1 - this._value) : this._value; }
-
-    constructor(duration: number, transition: TweenTransitionType, easing: TweenEasingType, reversed: boolean = false) {
-        super();
-        this.duration = Math.max(0, duration);
-        this.transition = transition;
-        this.easing = easing;
-        this.reversed = reversed;
-    }
-
-    public start() {
-        if (this.duration === 0) {
-            this._current = 1;
-            this._value = 1;
-            this.started = true;
-            this.finished = true;
-        }
-        else {
-            this._current = 0;
-            this._value = 0;
-            this.started = true;
-            this.finished = false;
-        }
-    }
-
-    public process(delta: number) {
-        if (this.running) {
-            const finished = this._current >= this.duration;
-            if (finished) {
-                this.finished = true;
-            }
-            else {
-                const c = this._current + delta;
-                this._current = clamp(c, 0, this.duration);
-                this._value = InterpolateTween.calculate_TransitionEasing(this._current / this.duration, this.transition, this.easing);
-            }
-        }
-    }
-
-    static calculate_TransitionEasing(value: number, transition: TweenTransitionType, easing: TweenEasingType): number {
-        const x = clamp(value, 0, 1);
-        switch (transition) {
-            case TweenTransitionType.Linear: {
-                return x;
-            }
-            case TweenTransitionType.Sine: {
-                switch (easing) {
-                    case TweenEasingType.In: return 1 - Math.cos((x * Math.PI) / 2);
-                    case TweenEasingType.Out: return Math.sin((x * Math.PI) / 2);
-                    case TweenEasingType.InOut: return -(Math.cos(Math.PI * x) - 1) / 2;
-                }
-            }
-            case TweenTransitionType.Quad: {
-                switch (easing) {
-                    case TweenEasingType.In: return x * x
-                    case TweenEasingType.Out: return 1 - (1 - x) * (1 - x);
-                    case TweenEasingType.InOut: return (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
-                }
-            }
-            case TweenTransitionType.Cubic: {
-                switch (easing) {
-                    case TweenEasingType.In: return x * x * x;
-                    case TweenEasingType.Out: return 1 - Math.pow(1 - x, 3);
-                    case TweenEasingType.InOut: return (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
-                }
-            }
-            case TweenTransitionType.Quart: {
-                switch (easing) {
-                    case TweenEasingType.In: return x * x * x * x;
-                    case TweenEasingType.Out: return 1 - Math.pow(1 - x, 4);
-                    case TweenEasingType.InOut: return (x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2);
-                }
-            }
-            case TweenTransitionType.Quint: {
-                switch (easing) {
-                    case TweenEasingType.In: return x * x * x * x * x;
-                    case TweenEasingType.Out: return 1 - Math.pow(1 - x, 5);
-                    case TweenEasingType.InOut: return (x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2);
-                }
-            }
-            case TweenTransitionType.Expo: {
-                switch (easing) {
-                    case TweenEasingType.In: return (x === 0 ? 0 : Math.pow(2, 10 * x - 10));
-                    case TweenEasingType.Out: return (x === 1 ? 1 : 1 - Math.pow(2, -10 * x));
-                    case TweenEasingType.InOut: return (x === 0
-                        ? 0
-                        : x === 1
-                            ? 1
-                            : x < 0.5 ? Math.pow(2, 20 * x - 10) / 2
-                                : (2 - Math.pow(2, -20 * x + 10)) / 2);
-                }
-            }
-            case TweenTransitionType.Circle: {
-                switch (easing) {
-                    case TweenEasingType.In: return 1 - Math.sqrt(1 - Math.pow(x, 2));
-                    case TweenEasingType.Out: return Math.sqrt(1 - Math.pow(x - 1, 2));
-                    case TweenEasingType.InOut: return (x < 0.5
-                        ? (1 - Math.sqrt(1 - Math.pow(2 * x, 2))) / 2
-                        : (Math.sqrt(1 - Math.pow(-2 * x + 2, 2)) + 1) / 2);
-                }
-            }
-            case TweenTransitionType.Back: {
-                const c1 = 1.70158;
-                const c2 = c1 * 1.525;
-                const c3 = c1 + 1;
-                switch (easing) {
-                    case TweenEasingType.In: return c3 * x * x * x - c1 * x * x;
-                    case TweenEasingType.Out: return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
-                    case TweenEasingType.InOut: return (x < 0.5
-                        ? (Math.pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2)) / 2
-                        : (Math.pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2);
-                }
-            }
-            case TweenTransitionType.Elastic: {
-                const c4 = (2 * Math.PI) / 3;
-                const c5 = (2 * Math.PI) / 4.5;
-                switch (easing) {
-                    case TweenEasingType.In: return (x === 0
-                        ? 0
-                        : x === 1
-                            ? 1
-                            : -Math.pow(2, 10 * x - 10) * Math.sin((x * 10 - 10.75) * c4));
-                    case TweenEasingType.Out: return (x === 0
-                        ? 0
-                        : x === 1
-                            ? 1
-                            : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1);
-                    case TweenEasingType.InOut: return (x === 0
-                        ? 0
-                        : x === 1
-                            ? 1
-                            : x < 0.5
-                                ? -(Math.pow(2, 20 * x - 10) * Math.sin((20 * x - 11.125) * c5)) / 2
-                                : (Math.pow(2, -20 * x + 10) * Math.sin((20 * x - 11.125) * c5)) / 2 + 1);
-                }
-            }
-            case TweenTransitionType.Bounce: {
-                switch (easing) {
-                    case TweenEasingType.In: return 1 - InterpolateTween.calculate_TransitionEasing(x, TweenTransitionType.Bounce, TweenEasingType.Out);
-                    case TweenEasingType.Out: {
-                        const n1 = 7.5625;
-                        const d1 = 2.75;
-                        let _x = x;
-                        if (_x < 1 / d1) {
-                            return n1 * _x * _x;
-                        } else if (_x < 2 / d1) {
-                            return n1 * (_x -= 1.5 / d1) * _x + 0.75;
-                        } else if (_x < 2.5 / d1) {
-                            return n1 * (_x -= 2.25 / d1) * _x + 0.9375;
-                        } else {
-                            return n1 * (_x -= 2.625 / d1) * _x + 0.984375;
-                        }
-                    }
-                    case TweenEasingType.InOut: return (x < 0.5
-                        ? (1 - InterpolateTween.calculate_TransitionEasing(1 - 2 * x, TweenTransitionType.Bounce, TweenEasingType.Out)) / 2
-                        : (1 + InterpolateTween.calculate_TransitionEasing(2 * x - 1, TweenTransitionType.Bounce, TweenEasingType.Out)) / 2);
-                }
-            }
-            case TweenTransitionType.Jump: {
-                switch (easing) {
-                    case TweenEasingType.In: return is_ApproxZero(value) ? 0 : 1;
-                    case TweenEasingType.Out: return is_ApproxEqual(value, 1.0) ? 1 : 0;
-                    case TweenEasingType.InOut: return is_ApproxEqual(value, 1.0) ? 1 : 0;
-                }
-            }
-        }
-    }
-}
-
-export function tween_interpolate(duration: number, transition: TweenTransitionType, easing: TweenEasingType, reversed: boolean = false) {
-    return new InterpolateTween(duration, transition, easing, reversed);
-}
-
-export class MethodTween extends InterpolateTween {
+    private readonly tween: InterpolateableTween;
     private readonly method: (value: number) => void;
 
-    constructor(method: (value: number) => void, duration: number, transition: TweenTransitionType, easing: TweenEasingType, reversed: boolean = false) {
-        super(duration, transition, easing, reversed);
+    constructor(tween: InterpolateableTween, method: (value: number) => void) {
+        this.tween = tween;
         this.method = method;
     }
 
     public start(): void {
-        super.start();
-        if (this.finished) {
-            this.method(this.value);
-        }
+        this.tween.start();
+        this.method(this.tween.value);
     }
 
     public process(delta: number): void {
-        if (this.running) {
-            this.method(this.value);
-        }
-        super.process(delta);
+        this.tween.process(delta);
+        this.method(this.tween.value);
+    }
+
+    public stop(): void {
+        this.tween.stop();
     }
 }
 
-export function tween_interpolated_method(method: (value: number) => void, duration: number, transition: TweenTransitionType, easing: TweenEasingType, reversed: boolean = false) {
-    return new MethodTween(method, duration, transition, easing, reversed);
-}
+export class PropertyTweenAdaptor<Obj extends Object, Key extends keyof Obj, Val extends Obj[Key]> implements ResverseableTween {
 
-export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extends Obj[Key]> extends InterpolateTween {
+    get reversed(): boolean { return this.tween.reversed; }
+    set reversed(reversed: boolean) { this.tween.reversed = reversed; }
+    get started(): boolean { return this.tween.started; }
+    get finished(): boolean { return this.tween.finished; }
+    get running(): boolean { return this.tween.running; }
+
+    get signal_finished() { return this.tween.signal_finished; }
+
+    private readonly tween: InterpolateableTween;
     public readonly object: Obj;
     public readonly key: Key;
     public readonly initial: Val;
     public readonly target: Val;
     private readonly lerp: (a: any, b: any, v: number) => any;
 
-    constructor(object: Obj, key: Key, target: Val, duration: number, transition: TweenTransitionType, easing: TweenEasingType, initial: Val | undefined = undefined, reversed: boolean = false, lerp: ((a: Val, b: Val, v: number) => Val) | undefined = undefined) {
-        super(duration, transition, easing, reversed);
+    constructor(tween: InterpolateableTween, object: Obj, key: Key, target: Val, initial: Val | undefined = undefined, lerp: ((a: Val, b: Val, v: number) => Val) | undefined = undefined) {
+        this.tween = tween;
         this.object = object;
         this.key = key;
         this.initial = initial ?? (this.object[this.key] as Val);
@@ -471,46 +621,46 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
         }
         else {
             if (typeof (this.target) === 'number') {
-                this.lerp = PropertyTween.LerpFuncs.Number;
+                this.lerp = PropertyTweenAdaptor.LerpFuncs.Number;
             }
             else if (typeof (this.target) === 'boolean') {
-                this.lerp = PropertyTween.LerpFuncs.Boolean;
+                this.lerp = PropertyTweenAdaptor.LerpFuncs.Boolean;
             }
             else if (this.target instanceof Euler) {
-                this.lerp = PropertyTween.LerpFuncs.Euler;
+                this.lerp = PropertyTweenAdaptor.LerpFuncs.Euler;
             }
             else if (this.target instanceof Quaternion) {
-                this.lerp = PropertyTween.LerpFuncs.Quaternion;
+                this.lerp = PropertyTweenAdaptor.LerpFuncs.Quaternion;
             }
             else if (this.target instanceof Vector2) {
-                this.lerp = PropertyTween.LerpFuncs.Vector2;
+                this.lerp = PropertyTweenAdaptor.LerpFuncs.Vector2;
             }
             else if (this.target instanceof Vector3) {
-                this.lerp = PropertyTween.LerpFuncs.Vector3;
+                this.lerp = PropertyTweenAdaptor.LerpFuncs.Vector3;
             }
             else if (this.target instanceof Vector4) {
-                this.lerp = PropertyTween.LerpFuncs.Vector4;
+                this.lerp = PropertyTweenAdaptor.LerpFuncs.Vector4;
             }
             else {
-                throw new Error(`<PropertyTween> constructor: property '${String(this.key)}' is not lerpable`);
+                throw new Error(`<PropertyTweenAdaptor> constructor: property '${String(this.key)}' is not lerpable`);
             }
         }
     }
 
     public start(): void {
-        super.start();
-        if (this.finished) {
-            const v = this.lerp(this.initial, this.target, this.value);
-            this.object[this.key] = v as Val;
-        }
+        this.tween.start();
+        const v = this.lerp(this.initial, this.target, this.tween.value);
+        this.object[this.key] = v as Val;
     }
 
     public process(delta: number): void {
-        if (this.running) {
-            const v = this.lerp(this.initial, this.target, this.value);
-            this.object[this.key] = v as Val;
-        }
-        super.process(delta);
+        this.tween.process(delta);
+        const v = this.lerp(this.initial, this.target, this.tween.value);
+        this.object[this.key] = v as Val;
+    }
+
+    public stop(): void {
+        this.tween.stop();
     }
 
     public static LerpFuncs = {
@@ -528,123 +678,8 @@ export class PropertyTween<Obj extends Object, Key extends keyof Obj, Val extend
     }
 }
 
-export function tween_interpolated_property<Obj extends Object, Key extends keyof Obj, Val extends Obj[Key]>(
-    object: Obj, key: Key, target: Val, duration: number, transition: TweenTransitionType, easing: TweenEasingType, initial: Val | undefined = undefined, reversed: boolean = false, lerp: ((a: Val, b: Val, v: number) => Val) | undefined = undefined
-) {
-    return new PropertyTween(object, key, target, duration, transition, easing, initial, reversed, lerp);
-}
+export class PingPongTweenAdaptor extends TweenBase {
 
-export class PropertyMethodTween<T> extends TweenBase {
-    private _property_tween: PropertyTween<PropertyMethodTween<T>, 'tween_value', T>;
-    private _initial_value: T;
-
-    public get tween_value(): T { return this._initial_value; };
-    public set tween_value(value: T) {
-        this.method(value);
-    }
-
-    private readonly method: (value: T) => void;
-
-    constructor(method: (value: T) => void, start: T, end: T, duration: number, transition: TweenTransitionType, easing: TweenEasingType, reversed: boolean = false, lerp: ((a: T, b: T, v: number) => T) | undefined = undefined) {
-        super();
-        this.method = method;
-        this._initial_value = start;
-        this._property_tween = new PropertyTween(this, 'tween_value', end, duration, transition, easing, undefined, reversed, lerp);
-    }
-
-    public start(): void {
-        this._property_tween.start();
-        this.started = true;
-        if (this._property_tween.finished) {
-            this.finished = true;
-        }
-    }
-
-    public process(delta: number): void {
-        this._property_tween.process(delta);
-        if (this._property_tween.finished) {
-            this.finished = true;
-        }
-    }
-}
-
-export function tween_interpolated_property_method<T>(
-    method: (value: T) => void, start: T, end: T, duration: number, transition: TweenTransitionType, easing: TweenEasingType, reversed: boolean = false, lerp: ((a: T, b: T, v: number) => T) | undefined = undefined
-) {
-    return new PropertyMethodTween(method, start, end, duration, transition, easing, reversed, lerp);
-}
-
-//#endregion
-
-//#region trigger tweens
-
-export class CallbackTween extends TweenBase {
-    private readonly callback: () => void;
-
-    constructor(callback: () => void) {
-        super();
-        this.callback = callback;
-    }
-
-    public start(): void {
-        this.callback();
-        this.finished = true;
-    }
-}
-
-export function tween_call(callback: () => void) {
-    return new CallbackTween(callback);
-}
-
-export class TimerTween extends TweenBase {
-    private readonly duration: number;
-
-    private _current: number = 0;
-    public get current() { return this._current; }
-
-    constructor(duration: number) {
-        super();
-        this.duration = Math.max(0, duration);
-    }
-
-    public start() {
-        if (this.duration === 0) {
-            this._current = 1;
-            this.started = true;
-            this.finished = true;
-        }
-        else {
-            this._current = 0;
-            this.started = true;
-            this.finished = false;
-        }
-    }
-
-    public process(delta: number) {
-        if (this.running) {
-            const finished = this._current >= this.duration;
-            if (finished) {
-                this.finished = true;
-            }
-            else {
-                const c = this._current + delta;
-                this._current = clamp(c, 0, this.duration);
-            }
-        }
-    }
-}
-
-export function tween_wait(duration: number) {
-    return new TimerTween(duration);
-}
-
-//#endregion
-
-//#region adaptor tweens
-
-type ResverseableTween = TweenBase & { reversed: boolean };
-
-export class TweenPingPong extends TweenBase {
     private readonly tween: ResverseableTween;
 
     private ping: boolean = true;
@@ -668,15 +703,9 @@ export class TweenPingPong extends TweenBase {
     }
 
     public process(delta: number): void {
-        if (this.running) {
-            this.tween.process(delta);
-            this.finished = this.tween.finished;
-        }
+        this.tween.process(delta);
+        this.finished = this.tween.finished;
     }
-}
-
-export function tween_pingpong(tween: ResverseableTween) {
-    return new TweenPingPong(tween);
 }
 
 //#endregion

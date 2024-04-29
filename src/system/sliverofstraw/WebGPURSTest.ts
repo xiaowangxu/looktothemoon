@@ -11,6 +11,7 @@ import { WebGPURenderStateShaderType } from "./render_state_object/pipeline/WebG
 import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, WebGPURenderStateFacing, type WebGPURenderStateProgramState } from "./render_state_object/pipeline/WebGPURenderStateProgramState";
 import { WebGPURenderStatePrimitiveType } from "./render_state_object/vertex_array/WebGPURenderStateVertexArray";
 import { WebGPURenderElementRenderPipelineCache, WebGPURenderElementRenderPipelineDepthOffset } from "./render_element_object/pipeline/WebGPURenderElementRenderPipelineCache";
+import { setAnimationInterval } from '../utils/AnimationInterval';
 
 async function init() {
 
@@ -215,8 +216,8 @@ async function init() {
     }
 
     let time = 0;
-    function render() {
-        time += 0.016;
+    function render(delta: number) {
+        time += delta;
         uniform_buffer_0_data[0] = time;
         uniform_buffer_0_ref.expect.update_Data(0, uniform_buffer_0_data);
         uniform_buffer_1_data[0] = (Math.sin(time) + 1.0) / 2.0;
@@ -233,10 +234,12 @@ async function init() {
         (s ? vertex_array2_ref.expect : vertex_array_ref.expect).draw(render_pass_encoder);
         render_pass_encoder.end();
         rs.device.queue.submit([commandEncoder.finish()]);
-        requestAnimationFrame(render);
     }
 
-    requestAnimationFrame(render);
+    setAnimationInterval((delta) => {
+        render(delta / 1000);
+    }, 0);
+
 }
 
 init();

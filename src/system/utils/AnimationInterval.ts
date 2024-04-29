@@ -2,17 +2,27 @@ const AnimationIntervalCancellerMap: Map<number, { clear: () => void, set: (time
 
 let AnimationIntervalId = 0;
 
-export function setAnimationInterval(func: (delta: number) => void, timeout: number) {
+const NowClass = typeof performance === 'undefined' ? Date : performance;
+
+function now() {
+    return NowClass.now();
+}
+
+export function setAnimationInterval(func: (delta_ms: number) => void, timeout_ms: number) {
     const id = AnimationIntervalId++;
-    let interval = timeout;
+    let interval = timeout_ms;
+    const last_date = now();
     let last_time: DOMHighResTimeStamp | undefined = undefined;
     let frame: number;
     const on = (time: DOMHighResTimeStamp) => {
-        let should_call = false;
         let delta = 0;
-        if (last_time === undefined) should_call = true;
-        else if ((delta = (time - last_time)) >= interval) should_call = true;
-        if (should_call) {
+        if (last_time === undefined) {
+            delta = now() - last_date;
+        }
+        else {
+            delta = time - last_time;
+        }
+        if (delta >= interval) {
             last_time = time;
             func(delta);
         }
@@ -23,8 +33,8 @@ export function setAnimationInterval(func: (delta: number) => void, timeout: num
         clear: () => {
             cancelAnimationFrame(frame);
         },
-        set: (timeout: number) => {
-            interval = timeout;
+        set: (timeout_ms: number) => {
+            interval = timeout_ms;
         }
     });
     return id;
@@ -38,9 +48,9 @@ export function clearAnimationInterval(id: number | undefined) {
     }
 }
 
-export function changeAnimationInterval(id: number | undefined, timeout: number) {
+export function changeAnimationInterval(id: number | undefined, timeout_ms: number) {
     if (id === undefined) return;
     if (AnimationIntervalCancellerMap.has(id)) {
-        AnimationIntervalCancellerMap.get(id)!.set(timeout);
+        AnimationIntervalCancellerMap.get(id)!.set(timeout_ms);
     }
 }

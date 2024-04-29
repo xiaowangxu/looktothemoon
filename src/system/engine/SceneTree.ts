@@ -1,14 +1,14 @@
-import type { TweenBase } from "./Tween";
 import { Clock } from "../utils/Clock";
 import { ShortCutActionMap } from "./inputs/InputActionMap";
 import { Singletion } from "./singletions/Singletion";
 import { Node, Viewport } from "./nodes/Node";
-import type { World3D } from "./worlds/world3ds/World3D";
 import { ConfiguredObject, type Config } from "./ConfiguredObject";
 import { Ref } from "../utils/RefCounted";
 import { clearAnimationInterval, setAnimationInterval } from "../utils/AnimationInterval";
+import { TweenManager, type Tween } from "./Tween";
 
 export class SceneTree extends ConfiguredObject {
+
     private readonly input_action_map: Ref<ShortCutActionMap> = new Ref(new ShortCutActionMap(this.config));
     private readonly root: Node;
     private readonly clock: Clock = new Clock();
@@ -24,10 +24,9 @@ export class SceneTree extends ConfiguredObject {
     public physics_time: number = 0;
     public physics_delta: number = 0;
 
-    private readonly singletions: Map<string, Singletion> = new Map();
+    private readonly tween_manager: TweenManager = new TweenManager();
 
-    private readonly tweens: Set<TweenBase> = new Set();
-    public get tween_processing_count() { return this.tweens.size; }
+    private readonly singletions: Map<string, Singletion> = new Map();
 
     private readonly viewports: Set<Viewport> = new Set();
 
@@ -47,8 +46,8 @@ export class SceneTree extends ConfiguredObject {
     public notify_TreeChange() { }
 
     private _loop_func = this.loop.bind(this);
-    private loop() {
-        this.clock.tick();
+    private loop(delta_ms: number) {
+        this.clock.tick(delta_ms / 1000);
         this.process_Loop(this.clock.duration, this.clock.delta, this.frame_id + 1);
     }
 
@@ -68,7 +67,7 @@ export class SceneTree extends ConfiguredObject {
         }
         // internal process process
         this.root.propagate_Process(this.delta);
-        this.process_Tween(this.delta);
+        this.tween_manager.process_Tweens(delta);
         this.root.propagate_InternalAfterProcess(this.delta);
         for (const viewport of this.viewports) {
             viewport.trigger_BeforeRender();
@@ -102,15 +101,6 @@ export class SceneTree extends ConfiguredObject {
         // loop linked trees
         for (const tree of this.linked_trees) {
             tree.process_Loop(time, delta, frame_id);
-        }
-    }
-
-    private process_Tween(delta: number) {
-        for (const tween of [...this.tweens]) {
-            tween.process(delta);
-            if (tween.finished) {
-                this.tweens.delete(tween);
-            }
         }
     }
 
@@ -230,24 +220,16 @@ export class SceneTree extends ConfiguredObject {
         return this.root;
     }
 
-    public start_Tween(tween: TweenBase) {
-        tween.start();
-        if (!tween.finished) {
-            this.tweens.add(tween);
-            return tween;
-        }
-        return undefined;
+    public start_Tween(tween: Tween) {
+        return this.tween_manager.start_Tween(tween);
     }
 
-    public stop_Tween(tween: TweenBase) {
-        if (this.tweens.has(tween)) {
-            tween.stop();
-            this.tweens.delete(tween);
-        }
+    public stop_Tween(tween: Tween) {
+        this.tween_manager.stop_Tween(tween);
     }
 
     public clear_Tweens() {
-        this.tweens.clear();
+        this.tween_manager.clear_Tweens();
     }
 
     public dispose() {
