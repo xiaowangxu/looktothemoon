@@ -6,7 +6,7 @@ import type { WebGPURenderStateVertexArrayView } from "../../render_state_object
 import type { WebGPURenderStateFrameBuffer } from "../../render_state_object/frame_buffer/WebGPURenderStateFrameBuffer";
 import type { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, WebGPURenderStateProgramState } from "../../render_state_object/pipeline/WebGPURenderStateProgramState";
 import { bitmask_check, bitmask_keep, bitmask_set } from "@/system/utils/BitMask";
-import type { WebGPURenderStateProgram } from "../../render_state_object/pipeline/WebGPURenderStateProgram";
+import { WebGPURenderStateProgram } from "../../render_state_object/pipeline/WebGPURenderStateProgram";
 import type { WebGPURenderStateOutputState } from "../../render_state_object/pipeline/WebGPURenderStateOutputState";
 import type { WebGPURenderStateUniformLayout } from "../../render_state_object/uniform/WebGPURenderStateUniformLayout";
 import type { WebGPURenderStateAttributeLayout } from "../../render_state_object/pipeline/WebGPURenderStateAttributeLayout";
@@ -16,37 +16,48 @@ export enum WebGPURenderElementRenderPipelineDepthOffset {
     None, Front, Back,
 }
 
+// hash bitmask 32bit uint
+// 
+// 0b 00 00 00 000 000 0000 0000 0000 0000 0000
+//    ^^ ^^ ^^ ^^^ ^^^ |                      |     
+//    || || || ||| ||| +---- vertex attrs ----+     
+//    || || || ||| |||        
+//    || || || ||| primitive type       
+//    || || || |||         
+//    || || || depth compare func      
+//    || || ||          
+//    || || depth offset
+//    || || 
+//    || cull mode
+//    ||
+//    frame buffer  
+export type WebGPURenderElementRenderPipelineCacheHash = number;
+
+export type WebGPURenderElementRenderPipelineCacheGetterFn = (hash: WebGPURenderElementRenderPipelineCacheHash) => WebGPURenderStateProgram;
+
 export class WebGPURenderElementRenderPipelineCache extends WebGPURenderObjectRefCounted {
 
-    protected readonly program_ref: Ref<WebGPURenderStateProgram> = new Ref();
+    protected readonly program_ref: Ref<WebGPURenderStateProgram> | undefined;
+    protected readonly program_fn: WebGPURenderElementRenderPipelineCacheGetterFn | undefined;
+    
     protected readonly program_state: WebGPURenderStateProgramState;
     protected readonly output_state: WebGPURenderStateOutputState;
     protected readonly uniform_layouts: RefArray<WebGPURenderStateUniformLayout>;
     protected readonly attribute_layouts: WebGPURenderStateAttributeLayout[];
 
     protected readonly pipeline_layout: GPUPipelineLayout;
+    protected readonly pipeline_refs: RefMap<WebGPURenderElementRenderPipelineCacheHash, WebGPURenderStateRenderPipeline> = new RefMap();
 
-    // hash bitmask 32bit uint
-    // 
-    // 0b 00 00 00 000 000 0000 0000 0000 0000 0000
-    //    ^^ ^^ ^^ ^^^ ^^^ |                      |     
-    //    || || || ||| ||| +---- vertex attrs ----+     
-    //    || || || ||| |||        
-    //    || || || ||| primitive type       
-    //    || || || |||         
-    //    || || || depth compare func      
-    //    || || ||          
-    //    || || depth offset
-    //    || || 
-    //    || cull mode
-    //    ||
-    //    frame buffer   
-
-    protected readonly pipeline_refs: RefMap<number, WebGPURenderStateRenderPipeline> = new RefMap();
-
-    constructor(render_state: WebGPURenderState, program: WebGPURenderStateProgram, program_state: WebGPURenderStateProgramState, output_state: WebGPURenderStateOutputState, uniform_layouts: Iterable<WebGPURenderStateUniformLayout>, attribute_layouts: Iterable<WebGPURenderStateAttributeLayout>) {
+    constructor(render_state: WebGPURenderState, program: WebGPURenderStateProgram | WebGPURenderElementRenderPipelineCacheGetterFn, program_state: WebGPURenderStateProgramState, output_state: WebGPURenderStateOutputState, uniform_layouts: Iterable<WebGPURenderStateUniformLayout>, attribute_layouts: Iterable<WebGPURenderStateAttributeLayout>) {
         super(render_state);
-        this.program_ref.value = program;
+        if (program instanceof WebGPURenderStateProgram) {
+            this.program_ref = new Ref(program);
+            this.program_fn = undefined;
+        }
+        else {
+            this.program_ref = undefined;
+            this.program_fn = program;
+        }
         this.program_state = program_state;
         this.output_state = output_state;
         this.uniform_layouts = new RefArray([...uniform_layouts]);
@@ -95,7 +106,7 @@ export class WebGPURenderElementRenderPipelineCache extends WebGPURenderObjectRe
         }
         else {
             const pipeline = this.render_state.create_RenderPipeline_with_Layout(
-                this.program_ref.expect,
+                this.program_ref !== undefined ? this.program_ref.expect : this.program_fn!(bitmask),
                 {
                     ...this.program_state,
                     cull_mode: cull_mode,
@@ -117,7 +128,9 @@ export class WebGPURenderElementRenderPipelineCache extends WebGPURenderObjectRe
     }
 
     public dispose(): void {
-        this.program_ref.clear();
+        if (this.program_ref !== undefined) {
+            this.program_ref.clear();
+        }
         this.pipeline_refs.clear();
     }
 }

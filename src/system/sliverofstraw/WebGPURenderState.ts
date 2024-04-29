@@ -17,7 +17,6 @@ import { type WebGPURenderStateAttributeLayout } from "./render_state_object/pip
 import { WebGPURenderStateBlendFactor, WebGPURenderStateBlendOperator, type WebGPURenderStateOutputState } from "./render_state_object/pipeline/WebGPURenderStateOutputState";
 import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, type WebGPURenderStateProgramState } from "./render_state_object/pipeline/WebGPURenderStateProgramState";
 import { WebGPURenderStateMultiSampleCount, WebGPURenderStateMultiSampleTexture } from "./render_state_object/texture/WebGPURenderStateMultiSampleTexture";
-import { WebGPURenderElementRenderPipelineCache } from "./render_element_object/pipeline/WebGPURenderElementRenderPipelineCache";
 import { WebGPURenderStateVertexArrayBufferView } from "./render_state_object/vertex_array/WebGPURenderStateVertexArrayBufferView";
 
 type WebGPURenderStateMemoryLayoutMemberType =

@@ -8,9 +8,8 @@ import type { WebGPURenderStateUniformGroup } from "./render_state_object/unifor
 import { WebGPURenderStateBufferDataType, WebGPURenderStateBufferType, WebGPURenderStateBufferUsage, type WebGPURenderStateBuffer } from "./render_state_object/buffer/WebGPURenderStateBuffer";
 import { WebGPURenderStateTextureFormat, WebGPURenderStateTextureUsage } from "./render_state_object/texture/WebGPURenderStateTexture";
 import { WebGPURenderStateShaderType } from "./render_state_object/pipeline/WebGPURenderStateShader";
-import { bitmask_check, bitmask_set } from "../utils/BitMask";
 import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, WebGPURenderStateFacing, type WebGPURenderStateProgramState } from "./render_state_object/pipeline/WebGPURenderStateProgramState";
-import { WebGPURenderStatePrimitiveType, WebGPURenderStateVertexArray } from "./render_state_object/vertex_array/WebGPURenderStateVertexArray";
+import { WebGPURenderStatePrimitiveType } from "./render_state_object/vertex_array/WebGPURenderStateVertexArray";
 import { WebGPURenderElementRenderPipelineCache, WebGPURenderElementRenderPipelineDepthOffset } from "./render_element_object/pipeline/WebGPURenderElementRenderPipelineCache";
 
 async function init() {
