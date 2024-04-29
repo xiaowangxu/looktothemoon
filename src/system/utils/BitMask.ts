@@ -194,3 +194,42 @@ export function bitmask_disable(bm: number, channel: number) {
 export function bitmask_toggle(bm: number, channel: number) {
     return bm ^ (1 << channel | 0);
 }
+
+/**
+ * bm1 | bm2
+ * @param bm1 
+ * @param bm2 
+ * @returns 
+ */
+export function bitmask_or(bm1: number, bm2: number) {
+    return bm1 | bm2;
+}
+
+/**
+ * bm1 & bm2
+ * @param bm1 
+ * @param bm2 
+ * @returns 
+ */
+export function bitmask_and(bm1: number, bm2: number) {
+    return bm1 & bm2;
+}
+
+/**
+ * ~bm
+ * @param bm 
+ * @returns 
+ */
+export function bitmask_not(bm: number) {
+    return ~bm;
+}
+
+/**
+ * bm1 & bm2
+ * @param bm1 
+ * @param bm2 
+ * @returns 
+ */
+export function bitmask_xor(bm1: number, bm2: number) {
+    return bm1 ^ bm2;
+}
