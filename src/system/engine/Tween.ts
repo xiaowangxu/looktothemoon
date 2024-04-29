@@ -62,7 +62,7 @@ export interface ResverseableTween extends Tween {
     set reversed(reversed: boolean);
 }
 
-export interface InterpolateableTween extends ResverseableTween {
+export interface InterpolatableTween extends ResverseableTween {
     /**
      * value in range [ 0, 1 ]
      */
@@ -166,7 +166,7 @@ export enum InterpolateTweenEasingType {
     In, Out, InOut
 }
 
-export class InterpolateTween extends TweenBase implements InterpolateableTween {
+export class InterpolateTween extends TweenBase implements InterpolatableTween {
     private readonly duration: number;
     private readonly transition: InterpolateTweenTransitionType;
     private readonly easing: InterpolateTweenEasingType;
@@ -338,7 +338,7 @@ export class InterpolateTween extends TweenBase implements InterpolateableTween 
     }
 }
 
-export class ExponentialSmoothingInterpolateTween extends TweenBase implements InterpolateableTween {
+export class ExponentialSmoothingInterpolateTween extends TweenBase implements InterpolatableTween {
     private readonly speed: number;
 
     public reversed: boolean = false;
@@ -569,10 +569,10 @@ export class MethodTweenAdaptor implements ResverseableTween {
 
     get signal_finished() { return this.tween.signal_finished; }
 
-    private readonly tween: InterpolateableTween;
+    private readonly tween: InterpolatableTween;
     private readonly method: (value: number) => void;
 
-    constructor(tween: InterpolateableTween, method: (value: number) => void) {
+    constructor(tween: InterpolatableTween, method: (value: number) => void) {
         this.tween = tween;
         this.method = method;
     }
@@ -602,14 +602,14 @@ export class PropertyTweenAdaptor<Obj extends Object, Key extends keyof Obj, Val
 
     get signal_finished() { return this.tween.signal_finished; }
 
-    private readonly tween: InterpolateableTween;
+    private readonly tween: InterpolatableTween;
     public readonly object: Obj;
     public readonly key: Key;
     public readonly initial: Val;
     public readonly target: Val;
     private readonly lerp: (a: any, b: any, v: number) => any;
 
-    constructor(tween: InterpolateableTween, object: Obj, key: Key, target: Val, initial: Val | undefined = undefined, lerp: ((a: Val, b: Val, v: number) => Val) | undefined = undefined) {
+    constructor(tween: InterpolatableTween, object: Obj, key: Key, target: Val, initial: Val | undefined = undefined, lerp: ((a: Val, b: Val, v: number) => Val) | undefined = undefined) {
         this.tween = tween;
         this.object = object;
         this.key = key;
