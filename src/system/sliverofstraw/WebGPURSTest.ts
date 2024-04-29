@@ -16,6 +16,7 @@ import { WebGPURenderElementTextureSamplerCache } from './render_element_object/
 import { WebGPURenderElementVector3Buffer } from "./render_element_object/buffer/WebGPURenderElementVectorBuffer";
 import { Vector3 } from "../fivepebble/linear_algebra/Vector3";
 import { bitmask_check } from "../utils/BitMask";
+import { WebGPURenderElemenIndexBuffer } from "./render_element_object/buffer/WebGPURenderElementBuffer";
 
 async function init() {
 
@@ -203,8 +204,11 @@ async function init() {
     );
     const colorBuffer = rs.create_Buffer(WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, colors.byteLength).expect();
     colorBuffer.update_Data(0, colors);
-    const indicesBuffer = rs.create_Buffer(WebGPURenderStateBufferType.Index, WebGPURenderStateBufferUsage.CopyDst, indices.byteLength).expect();
-    indicesBuffer.update_Data(0, indices);
+    const indicesBuffer = new WebGPURenderElemenIndexBuffer(rs, WebGPURenderStateBufferType.Index, WebGPURenderStateBufferUsage.None,
+        [
+            0, 1, 2, 2, 3, 0
+        ]
+    );
 
     const test_buffer = new WebGPURenderElementVector3Buffer(rs, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst,
         [
@@ -218,13 +222,13 @@ async function init() {
     const vertex_array_ref = new Ref(rs.create_VertexArray(WebGPURenderStatePrimitiveType.Triangles, 0, 6));
     vertex_array_ref.expect.set_Buffer(0, positionBuffer_ref.buffer);
     vertex_array_ref.expect.set_Buffer(1, colorBuffer);
-    vertex_array_ref.expect.set_Index(indicesBuffer);
+    vertex_array_ref.expect.set_Index(indicesBuffer.buffer);
 
     const vertex_array2_ref = new Ref(rs.create_VertexArray(WebGPURenderStatePrimitiveType.LineStrip, 0, 6));
     vertex_array2_ref.expect.set_Buffer(0, positionBuffer_ref.buffer);
     vertex_array2_ref.expect.set_Buffer(1, colorBuffer);
     vertex_array2_ref.expect.set_Buffer(2, test_buffer.buffer);
-    vertex_array2_ref.expect.set_Index(indicesBuffer);
+    vertex_array2_ref.expect.set_Index(indicesBuffer.buffer);
 
     const bind_group_0_ref = new Ref<WebGPURenderStateUniformGroup>();
 
