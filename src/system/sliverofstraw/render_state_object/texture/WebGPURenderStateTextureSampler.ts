@@ -3,14 +3,14 @@ import type { WebGPURenderState } from "../../WebGPURenderState";
 import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 
 export enum WebGPURenderStateTextureWrap {
-    Clamp = 'clamp-to-edge',
-    Repeat = 'repeat',
-    MirrorRepeat = 'mirror-repeat',
+    Clamp,
+    Repeat,
+    MirrorRepeat,
 }
 
 export enum WebGPURenderStateTextureFilter {
-    Nearest = 'nearest',
-    Linear = 'linear',
+    Nearest,
+    Linear,
 }
 
 export class WebGPURenderStateTextureSampler extends WebGPURenderObjectRefCounted {

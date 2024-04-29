@@ -1,5 +1,6 @@
 import type { WebGPURenderState } from "../../WebGPURenderState";
 import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
+import type { WebGPURenderElementRenderPipelineCacheHash } from "../../render_element_object/pipeline/WebGPURenderElementRenderPipelineCache";
 
 export class WebGPURenderStateRenderPipeline extends WebGPURenderObjectRefCounted {
 

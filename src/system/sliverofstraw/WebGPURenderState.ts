@@ -18,6 +18,7 @@ import { WebGPURenderStateBlendFactor, WebGPURenderStateBlendOperator, type WebG
 import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, type WebGPURenderStateProgramState } from "./render_state_object/pipeline/WebGPURenderStateProgramState";
 import { WebGPURenderStateMultiSampleCount, WebGPURenderStateMultiSampleTexture } from "./render_state_object/texture/WebGPURenderStateMultiSampleTexture";
 import { WebGPURenderStateVertexArrayBufferView } from "./render_state_object/vertex_array/WebGPURenderStateVertexArrayBufferView";
+import type { WebGPURenderElementRenderPipelineCacheHash } from "./render_element_object/pipeline/WebGPURenderElementRenderPipelineCache";
 
 type WebGPURenderStateMemoryLayoutMemberType =
     WebGPURenderStateUniformType |
@@ -75,6 +76,29 @@ export class WebGPURenderState {
             default: {
                 const n: never = type;
                 throw new Error('<WebGPURenderState> RenderStateDepthCompareFunc: unreachable');
+            }
+        }
+    }
+
+    public static RenderStateTextureWrap(type: WebGPURenderStateTextureWrap): GPUAddressMode {
+        switch (type) {
+            case WebGPURenderStateTextureWrap.Clamp: return 'clamp-to-edge';
+            case WebGPURenderStateTextureWrap.Repeat: return 'repeat';
+            case WebGPURenderStateTextureWrap.MirrorRepeat: return 'mirror-repeat';
+            default: {
+                const n: never = type;
+                throw new Error('<WebGPURenderState> RenderStateTextureDimension: unreachable');
+            }
+        }
+    }
+
+    public static RenderStateTextureFilter(type: WebGPURenderStateTextureFilter): GPUFilterMode {
+        switch (type) {
+            case WebGPURenderStateTextureFilter.Nearest: return 'nearest';
+            case WebGPURenderStateTextureFilter.Linear: return 'linear';
+            default: {
+                const n: never = type;
+                throw new Error('<WebGPURenderState> RenderStateTextureFilter: unreachable');
             }
         }
     }
@@ -435,12 +459,12 @@ export class WebGPURenderState {
         anisotropy: number = 1,
     ): Result<WebGPURenderStateTextureSampler, Error> {
         const sampler = this.device.createSampler({
-            addressModeU: wrap_u,
-            addressModeV: wrap_v,
-            addressModeW: wrap_w,
-            minFilter: min_filter,
-            magFilter: mag_filter,
-            mipmapFilter: mipmap_filter,
+            addressModeU: WebGPURenderState.RenderStateTextureWrap(wrap_u),
+            addressModeV: WebGPURenderState.RenderStateTextureWrap(wrap_v),
+            addressModeW: WebGPURenderState.RenderStateTextureWrap(wrap_w),
+            minFilter: WebGPURenderState.RenderStateTextureFilter(min_filter),
+            magFilter: WebGPURenderState.RenderStateTextureFilter(mag_filter),
+            mipmapFilter: WebGPURenderState.RenderStateTextureFilter(mipmap_filter),
             lodMinClamp: min_lod,
             lodMaxClamp: max_lod,
             compare: compare === undefined ? undefined : WebGPURenderState.RenderStateDepthCompareFunc(compare),
@@ -509,13 +533,13 @@ export class WebGPURenderState {
 
     //#region buffer
 
-    public create_Buffer(type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, data_type: WebGPURenderStateBufferDataType, length: number, map: boolean = false): Result<WebGPURenderStateBuffer, Error> {
+    public create_Buffer(type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, length: number, map: boolean = false): Result<WebGPURenderStateBuffer, Error> {
         const buffer = this.device.createBuffer({
             size: length,
             usage: type | usage,
             mappedAtCreation: map,
         });
-        return Result.Ok(new WebGPURenderStateBuffer(this, type, usage, data_type, length, buffer));
+        return Result.Ok(new WebGPURenderStateBuffer(this, type, usage, length, buffer));
     }
 
     public delete_Buffer(buffer: WebGPURenderStateBuffer): void {

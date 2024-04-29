@@ -28,26 +28,6 @@ export function bitmask(length: number = 32, base: number = 0) {
 }
 
 /**
- * set one of the bitmask's 32 channel
- * 
- * from 
- *  
- *            0b 00001111 1111111 0 00000000 00000000
- * 
- * to
- *   
- *            0b 00001111 1111111 0 00000100 00000000
- *                                       + channel 10
- * 
- * @param bm origin bitmask
- * @param channel [0-31]
- * @returns 
- */
-export function bitmask_enable(bm: number, channel: number) {
-    return bm | (1 << channel | 0);
-}
-
-/**
  * keep bitmask to appear in a range [base, base + length]
  * 
  * from 
@@ -147,6 +127,26 @@ export function bitmask_equal(bm: number, mask: number) {
 }
 
 /**
+ * set one of the bitmask's 32 channel
+ * 
+ * from 
+ *  
+ *            0b 00001111 1111111 0 00000000 00000000
+ * 
+ * to
+ *   
+ *            0b 00001111 1111111 0 00000100 00000000
+ *                                       + channel 10
+ * 
+ * @param bm origin bitmask
+ * @param channel [0-31]
+ * @returns 
+ */
+export function bitmask_enable(bm: number, channel: number) {
+    return bm | (1 << channel | 0);
+}
+
+/**
  * disable one of the bitmask's 32 channel
  * 
  * from 
@@ -164,6 +164,18 @@ export function bitmask_equal(bm: number, mask: number) {
  */
 export function bitmask_disable(bm: number, channel: number) {
     return bm & (~(1 << channel | 0));
+}
+
+/**
+ * set one of the bitmask's 32 channel, call bitmask_enable or bitmask_disable base on enable
+ * 
+ * @param bm origin bitmask
+ * @param channel [0-31]
+ * @param enable 
+ * @returns 
+ */
+export function bitmask_bitset(bm: number, channel: number, enable: boolean) {
+    return enable ? (bm | (1 << channel | 0)) : (bm & (~(1 << channel | 0)));
 }
 
 /**

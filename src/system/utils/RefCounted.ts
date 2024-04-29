@@ -12,11 +12,6 @@ export interface RefCountedLike {
 export type Refed<T> = T extends Ref<infer V> ? Ref<V> : (T extends RefCounted ? Ref<T> : T);
 export type Unrefed<T> = T extends Ref<infer V> ? V : T;
 
-// export function unref<V>(item: Refed<V>): V {
-//     if (item instanceof Ref) return item.expect;
-//     return item as V;
-// }
-
 export class Ref<T extends RefCountedLike> {
     private ref: T | undefined = undefined;
 
@@ -59,6 +54,30 @@ export class Ref<T extends RefCountedLike> {
 
     public clear() {
         this.value = undefined;
+    }
+}
+
+/**
+ * once created can not change Ref<T>
+ * 
+ * this guarantees ref.value === ref.expect and can never be undefined 
+ */
+export class ReadonlyRef<T extends RefCountedLike> {
+    private ref: T;
+
+    public get value() { return this.ref; }
+    public get expect() { return this.ref; }
+
+    public get is_empty() { return this.ref === undefined; }
+
+    constructor(item: T) {
+        this.ref = item;
+        this.ref.ref();
+    }
+
+    public clear() {
+        this.ref.unref();
+        this.ref = undefined!;
     }
 }
 

@@ -1,4 +1,4 @@
-import { Ref } from "@/system/utils/RefCounted";
+import { ReadonlyRef } from "@/system/utils/RefCounted";
 import type { WebGPURenderState } from "../../WebGPURenderState";
 import { WebGPURenderObject, WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import { WebGPURenderStateBufferDataType, WebGPURenderStateBufferType, WebGPURenderStateBufferUsage, type WebGPURenderStateBuffer } from "./WebGPURenderStateBuffer";
@@ -6,7 +6,7 @@ import { align } from "@/system/fivepebble/Scalar";
 
 class WebGPURenderStateBufferStagingChunk extends WebGPURenderObject {
 
-    public readonly buffer_ref: Ref<WebGPURenderStateBuffer> = new Ref();
+    public readonly buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
     public get buffer() { return this.buffer_ref.expect.buffer; }
 
@@ -15,7 +15,7 @@ class WebGPURenderStateBufferStagingChunk extends WebGPURenderObject {
 
     constructor(render_state: WebGPURenderState, buffer: WebGPURenderStateBuffer, offset: number, length: number) {
         super(render_state);
-        this.buffer_ref.value = buffer;
+        this.buffer_ref = new ReadonlyRef(buffer);
         this.length = length;
         this.offset = offset;
     }
@@ -66,7 +66,6 @@ export class WebGPURenderStateBufferStagingBelt extends WebGPURenderObjectRefCou
                 const buffer = this.render_state.create_Buffer(
                     WebGPURenderStateBufferType.NotSpecified,
                     WebGPURenderStateBufferUsage.MapWrite | WebGPURenderStateBufferUsage.CopySrc,
-                    WebGPURenderStateBufferDataType.Byte,
                     length, true
                 ).expect();
                 const free_chunk = new WebGPURenderStateBufferStagingChunk(this.render_state, buffer, 0, length);

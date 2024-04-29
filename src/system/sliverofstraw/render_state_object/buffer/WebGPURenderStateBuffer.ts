@@ -1,5 +1,6 @@
 import type { WebGPURenderState } from "../../WebGPURenderState";
 import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
+import type { WebGPURenderStateBufferStagingBelt } from "./WebGPURenderStateBufferStagingBelt";
 
 export enum WebGPURenderStateBufferType {
     NotSpecified = 0x0000,
@@ -32,23 +33,28 @@ export class WebGPURenderStateBuffer extends WebGPURenderObjectRefCounted {
 
     public readonly type: WebGPURenderStateBufferType;
     public readonly usage: WebGPURenderStateBufferUsage;
-    public readonly data_type: WebGPURenderStateBufferDataType;
     public readonly length: number;
 
     // dummy value to cop with WebGPURenderStateVertexArrayBufferView
     public readonly offset: number = 0;
 
-    constructor(render_state: WebGPURenderState, type: number, usage: number, data_type: WebGPURenderStateBufferDataType, length: number, buffer: GPUBuffer) {
+    constructor(render_state: WebGPURenderState, type: number, usage: number, length: number, buffer: GPUBuffer) {
         super(render_state);
         this.type = type;
         this.usage = usage;
-        this.data_type = data_type;
         this.length = length;
         this.buffer = buffer;
     }
 
     public update_Data(dst_offset: number, data: WebGPURenderStateBufferData, data_element_offset?: number | undefined, data_element_length?: number | undefined): void {
         this.render_state.device.queue.writeBuffer(this.buffer, dst_offset, data, data_element_offset, data_element_length);
+    }
+
+    public update_Data_by_StagingBelt(
+        staging_belt: WebGPURenderStateBufferStagingBelt, encoder: GPUCommandEncoder,
+        dst_offset: number, data: ArrayBuffer, data_offset: number, data_length: number,
+    ) {
+        staging_belt.write_Buffer(encoder, this, dst_offset, data, data_offset, data_length);
     }
 
     public dispose() {

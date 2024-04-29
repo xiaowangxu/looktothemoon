@@ -1,4 +1,3 @@
-import { WebGPURenderObject } from "../../WebGPURenderObject";
 import { WebGPURenderStatePrimitiveType } from "../vertex_array/WebGPURenderStateVertexArray";
 
 export enum WebGPURenderStateCullMode {

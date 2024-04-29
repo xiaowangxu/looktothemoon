@@ -4,6 +4,7 @@ import { Ref, RefArray } from "@/system/utils/RefCounted";
 import type { WebGPURenderStateBuffer } from "../buffer/WebGPURenderStateBuffer";
 import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import type { WebGPURenderStateVertexArrayBufferView } from "./WebGPURenderStateVertexArrayBufferView";
+import type { WebGPURenderElementRenderPipelineCacheHash } from "../../render_element_object/pipeline/WebGPURenderElementRenderPipelineCache";
 
 export enum WebGPURenderStatePrimitiveType {
     Triangles,
@@ -17,7 +18,7 @@ type WebGPURenderStateVertexArrayBuffer = WebGPURenderStateBuffer | WebGPURender
 
 export class WebGPURenderStateVertexArray extends WebGPURenderObjectRefCounted {
 
-    static readonly MaxAttributeLocationCount = 20;
+    static readonly MaxAttributeLocationCount = 8;
     public readonly primitive_type: WebGPURenderStatePrimitiveType;
 
     public readonly offset: number;
@@ -30,19 +31,19 @@ export class WebGPURenderStateVertexArray extends WebGPURenderObjectRefCounted {
         return !this.index_buffer_ref.is_empty;
     }
 
-    protected _attribute_location_bitmask = 0x00000000;
-    public get attribute_location_bitmask() { return this._attribute_location_bitmask; }
+    protected _attribute_bitmask: WebGPURenderElementRenderPipelineCacheHash = 0;
+    public get attribute_bitmask(): WebGPURenderElementRenderPipelineCacheHash { return this._attribute_bitmask; }
 
     protected enable_AttributeLocationBit(location: number) {
-        this._attribute_location_bitmask = bitmask_enable(this._attribute_location_bitmask, location);
+        this._attribute_bitmask = bitmask_enable(this._attribute_bitmask, location);
     }
 
     protected disable_AttributeLocationBit(location: number) {
-        this._attribute_location_bitmask = bitmask_disable(this._attribute_location_bitmask, location);
+        this._attribute_bitmask = bitmask_disable(this._attribute_bitmask, location);
     }
 
     protected clear_AttributeLocationBits() {
-        this._attribute_location_bitmask = 0x00000000;
+        this._attribute_bitmask = 0x00000000;
     }
 
     constructor(render_state: WebGPURenderState, primitive_type: WebGPURenderStatePrimitiveType, offset: number, length: number) {
