@@ -221,6 +221,7 @@ async function init() {
     geometry_0.set_IndexBuffer(indicesBuffer_ref.buffer);
     geometry_0.set_PrimitiveType(WebGPURenderStatePrimitiveType.Triangles);
     geometry_0.set_VertexLength(6);
+    geometry_0.add_Surface(0, 3);
 
     const geometry_1 = new WebGPURenderElementGeometry(rs);
     geometry_1.set_AttributeBuffer(WebGPURenderElementGeometryAttributeLayoutBuffer.Position, positionBuffer_ref.buffer);
@@ -291,7 +292,7 @@ async function init() {
         const command_encoder = rs.device.createCommandEncoder();
         const render_pass_encoder = command_encoder.beginRenderPass(frame_buffer_ref.expect.frame_buffer_desc);
         const s = (time % 3.0) > 1.5;
-        const vertex_array = s ? geometry_1.vertex_array_ref.expect : geometry_0.vertex_array_ref.expect;
+        const vertex_array = s ? geometry_1.vertex_array_ref.expect : geometry_0.vertex_array_view_refs.index(0);
         const pipeline = pipeline_cache_ref.expect.get(vertex_array, frame_buffer_ref.expect, WebGPURenderStateCullMode.Back, s ? 1.0 : 0.0, 0, WebGPURenderStateDepthCompareFunc.LessEqual);
         if (pipeline) {
             render_pass_encoder.setPipeline(pipeline.pipeline);
