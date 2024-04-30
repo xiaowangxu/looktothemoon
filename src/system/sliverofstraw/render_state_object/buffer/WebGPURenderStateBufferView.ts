@@ -3,7 +3,7 @@ import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import type { WebGPURenderStateBuffer } from "../buffer/WebGPURenderStateBuffer";
 import type { WebGPURenderState } from "../../WebGPURenderState";
 
-export class WebGPURenderStateVertexArrayBufferView extends WebGPURenderObjectRefCounted {
+export class WebGPURenderStateBufferView extends WebGPURenderObjectRefCounted {
 
     public readonly buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
     public get buffer() { return this.buffer_ref.expect.buffer; }

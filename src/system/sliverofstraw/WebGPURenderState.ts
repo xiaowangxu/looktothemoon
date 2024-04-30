@@ -17,8 +17,7 @@ import { type WebGPURenderStateAttributeLayout } from "./render_state_object/pip
 import { WebGPURenderStateBlendFactor, WebGPURenderStateBlendOperator, type WebGPURenderStateOutputState } from "./render_state_object/pipeline/WebGPURenderStateOutputState";
 import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, type WebGPURenderStateProgramState } from "./render_state_object/pipeline/WebGPURenderStateProgramState";
 import { WebGPURenderStateMultiSampleCount, WebGPURenderStateMultiSampleTexture } from "./render_state_object/texture/WebGPURenderStateMultiSampleTexture";
-import { WebGPURenderStateVertexArrayBufferView } from "./render_state_object/vertex_array/WebGPURenderStateVertexArrayBufferView";
-import type { WebGPURenderElementRenderPipelineCacheHash } from "./render_element_object/pipeline/WebGPURenderElementRenderPipelineCache";
+import { WebGPURenderStateBufferView } from "./render_state_object/buffer/WebGPURenderStateBufferView";
 
 type WebGPURenderStateMemoryLayoutMemberType =
     WebGPURenderStateUniformType |
@@ -542,6 +541,13 @@ export class WebGPURenderState {
         return Result.Ok(new WebGPURenderStateBuffer(this, type, usage, length, buffer));
     }
 
+    public create_BufferView(buffer: WebGPURenderStateBuffer, offset: number, length: number | undefined = undefined): Result<WebGPURenderStateBufferView, Error> {
+        if (offset % 4 !== 0) return Result.Error(new Error(`<WebGPURenderState> create_BufferView: view offset should align with 4`));
+        length ??= Math.max(0, buffer.length - offset);
+        if (offset + length > buffer.length) return Result.Error(new Error(`<WebGPURenderState> create_BufferView: view range out of bound, buffer range is [0, ${buffer.length}), but the view range is [${offset}, ${offset + length})`));
+        return Result.Ok(new WebGPURenderStateBufferView(this, buffer, offset, length));
+    }
+
     public delete_Buffer(buffer: WebGPURenderStateBuffer): void {
         buffer.buffer.destroy();
     }
@@ -552,12 +558,6 @@ export class WebGPURenderState {
 
     public create_VertexArray(primitive_type: WebGPURenderStatePrimitiveType, offset: number, length: number): WebGPURenderStateVertexArray {
         return new WebGPURenderStateVertexArray(this, primitive_type, offset, length);
-    }
-
-    public create_VertexArrayBufferView(buffer: WebGPURenderStateBuffer, offset: number, length: number | undefined = undefined): Result<WebGPURenderStateVertexArrayBufferView, Error> {
-        length ??= Math.max(0, buffer.length - offset);
-        if (offset + length > buffer.length) return Result.Error(new Error(`<WebGPURenderState> create_VertexArrayBufferView: view range out of bound, buffer range is [0, ${buffer.length}), but the view range is [${offset}, ${offset + length})`));
-        return Result.Ok(new WebGPURenderStateVertexArrayBufferView(this, buffer, offset, length));
     }
 
     public create_VertexArrayView(vertex_array: WebGPURenderStateVertexArray, offset: number, count: number): WebGPURenderStateVertexArrayView {

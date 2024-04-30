@@ -3,8 +3,8 @@ import type { WebGPURenderState } from "../../WebGPURenderState";
 import { Ref, RefArray } from "@/system/utils/RefCounted";
 import type { WebGPURenderStateBuffer } from "../buffer/WebGPURenderStateBuffer";
 import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
-import type { WebGPURenderStateVertexArrayBufferView } from "./WebGPURenderStateVertexArrayBufferView";
 import type { WebGPURenderElementRenderPipelineCacheHash } from "../../render_element_object/pipeline/WebGPURenderElementRenderPipelineCache";
+import type { WebGPURenderStateBufferView } from "../buffer/WebGPURenderStateBufferView";
 
 export enum WebGPURenderStatePrimitiveType {
     Triangles,
@@ -14,7 +14,7 @@ export enum WebGPURenderStatePrimitiveType {
     Points,
 }
 
-type WebGPURenderStateVertexArrayBuffer = WebGPURenderStateBuffer | WebGPURenderStateVertexArrayBufferView;
+type WebGPURenderStateVertexArrayBuffer = WebGPURenderStateBuffer | WebGPURenderStateBufferView;
 
 export class WebGPURenderStateVertexArray extends WebGPURenderObjectRefCounted {
 
