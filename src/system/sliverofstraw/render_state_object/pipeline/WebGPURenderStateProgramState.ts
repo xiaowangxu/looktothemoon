@@ -1,4 +1,10 @@
-import { WebGPURenderStatePrimitiveType } from "../vertex_array/WebGPURenderStateVertexArray";
+export enum WebGPURenderStatePrimitiveType {
+    Triangles,
+    TriangleStrip,
+    LineStrip,
+    Lines,
+    Points,
+}
 
 export enum WebGPURenderStateCullMode {
     Front,

@@ -9,13 +9,11 @@ import { WebGPURenderStateUniformGroup, type WebGPURenderStateUniformGroupEntry 
 import { WebGPURenderStateBuffer, WebGPURenderStateBufferDataType, WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "./render_state_object/buffer/WebGPURenderStateBuffer";
 import { WebGPURenderStateTextureView } from "./render_state_object/texture/WebGPURenderStateTextureView";
 import { WebGPURenderStateComputePipeline } from "./render_state_object/pipeline/WebGPURenderStateComputePipeline";
-import { WebGPURenderStatePrimitiveType, WebGPURenderStateVertexArray } from "./render_state_object/vertex_array/WebGPURenderStateVertexArray";
-import { WebGPURenderStateVertexArrayView } from "./render_state_object/vertex_array/WebGPURenderStateVertexArrayView";
 import { WebGPURenderStateFrameBuffer } from "./render_state_object/frame_buffer/WebGPURenderStateFrameBuffer";
 import { WebGPURenderStateCanvasTextureView } from "./render_state_object/texture/WebGPURenderStateCanvasTextureView";
 import { type WebGPURenderStateAttributeLayout } from "./render_state_object/pipeline/WebGPURenderStateAttributeLayout";
 import { WebGPURenderStateBlendFactor, WebGPURenderStateBlendOperator, type WebGPURenderStateOutputState } from "./render_state_object/pipeline/WebGPURenderStateOutputState";
-import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, type WebGPURenderStateProgramState } from "./render_state_object/pipeline/WebGPURenderStateProgramState";
+import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, WebGPURenderStatePrimitiveType, type WebGPURenderStateProgramState } from "./render_state_object/pipeline/WebGPURenderStateProgramState";
 import { WebGPURenderStateMultiSampleCount, WebGPURenderStateMultiSampleTexture } from "./render_state_object/texture/WebGPURenderStateMultiSampleTexture";
 import { WebGPURenderStateBufferView } from "./render_state_object/buffer/WebGPURenderStateBufferView";
 
@@ -550,22 +548,6 @@ export class WebGPURenderState {
 
     public delete_Buffer(buffer: WebGPURenderStateBuffer): void {
         buffer.buffer.destroy();
-    }
-
-    //#endregion
-
-    //#region vertex array
-
-    public create_VertexArray(primitive_type: WebGPURenderStatePrimitiveType, offset: number, length: number): WebGPURenderStateVertexArray {
-        return new WebGPURenderStateVertexArray(this, primitive_type, offset, length);
-    }
-
-    public create_VertexArrayView(vertex_array: WebGPURenderStateVertexArray, offset: number, count: number): WebGPURenderStateVertexArrayView {
-        return new WebGPURenderStateVertexArrayView(this, vertex_array, offset, count);
-    }
-
-    public delete_VertexArray(vertex_array: WebGPURenderStateVertexArray): void {
-        return;
     }
 
     //#endregion

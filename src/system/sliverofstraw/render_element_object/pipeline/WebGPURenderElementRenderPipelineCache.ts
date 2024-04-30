@@ -1,8 +1,8 @@
 import { RefArray, RefMap, type RefCountedLike } from "@/system/utils/RefCounted";
 import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import type { WebGPURenderStateRenderPipeline } from "../../render_state_object/pipeline/WebGPURenderStateRenderPipeline";
-import type { WebGPURenderStateVertexArray } from "../../render_state_object/vertex_array/WebGPURenderStateVertexArray";
-import type { WebGPURenderStateVertexArrayView } from "../../render_state_object/vertex_array/WebGPURenderStateVertexArrayView";
+import type { WebGPURenderElementVertexArray } from "../vertex_array/WebGPURenderElementVertexArray";
+import type { WebGPURenderElementVertexArrayView } from "../vertex_array/WebGPURenderElementVertexArrayView";
 import type { WebGPURenderStateFrameBuffer } from "../../render_state_object/frame_buffer/WebGPURenderStateFrameBuffer";
 import type { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, WebGPURenderStateProgramState } from "../../render_state_object/pipeline/WebGPURenderStateProgramState";
 import { bitmask_check, bitmask_keep, bitmask_set } from "@/system/utils/BitMask";
@@ -79,11 +79,10 @@ export class WebGPURenderElementRenderPipelineCache extends WebGPURenderObjectRe
         this.pipeline_layout = this.render_state.device.createPipelineLayout({
             bindGroupLayouts: this.uniform_layouts.map(item => item!.layout),
         });
-        console.log(this);
     }
 
     public get(
-        vertex_array: WebGPURenderStateVertexArray | WebGPURenderStateVertexArrayView,
+        vertex_array: WebGPURenderElementVertexArray | WebGPURenderElementVertexArrayView,
         frame_buffer: WebGPURenderStateFrameBuffer,
         cull_mode: WebGPURenderStateCullMode,
         depth_bias: number, depth_bias_slope_scale: number,

@@ -8,15 +8,16 @@ import type { WebGPURenderStateUniformGroup } from "./render_state_object/unifor
 import { WebGPURenderStateBufferDataType, WebGPURenderStateBufferType, WebGPURenderStateBufferUsage, type WebGPURenderStateBuffer } from "./render_state_object/buffer/WebGPURenderStateBuffer";
 import { WebGPURenderStateTextureFormat, WebGPURenderStateTextureUsage } from "./render_state_object/texture/WebGPURenderStateTexture";
 import { WebGPURenderStateShaderType } from "./render_state_object/pipeline/WebGPURenderStateShader";
-import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, WebGPURenderStateFacing, type WebGPURenderStateProgramState } from "./render_state_object/pipeline/WebGPURenderStateProgramState";
-import { WebGPURenderStatePrimitiveType } from "./render_state_object/vertex_array/WebGPURenderStateVertexArray";
+import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, WebGPURenderStateFacing, WebGPURenderStatePrimitiveType, type WebGPURenderStateProgramState } from "./render_state_object/pipeline/WebGPURenderStateProgramState";
 import { WebGPURenderElementRenderPipelineCache } from "./render_element_object/pipeline/WebGPURenderElementRenderPipelineCache";
 import { setAnimationInterval } from '../utils/AnimationInterval';
 import { WebGPURenderElementTextureSamplerCache } from './render_element_object/texture_sampler/WebGPURenderElementTextureSamplerCache';
 import { WebGPURenderElementVector3Buffer } from "./render_element_object/buffer/WebGPURenderElementVectorBuffer";
 import { Vector3 } from "../fivepebble/linear_algebra/Vector3";
 import { bitmask_check } from "../utils/BitMask";
-import { WebGPURenderElemenIndexBuffer } from "./render_element_object/buffer/WebGPURenderElementBuffer";
+import { WebGPURenderElementIndexBuffer } from "./render_element_object/buffer/WebGPURenderElementBuffer";
+import { WebGPURenderElementGeometry } from "./render_element_object/geometry/WebGPURenderElementGeometry";
+import { WebGPURenderElementGeometryAttributeLayoutBuffer } from "./render_element_object/geometry/WebGPURenderElementGeometryDefination";
 
 async function init() {
 
@@ -179,21 +180,6 @@ async function init() {
         ])
     );
 
-    const colors = new Float32Array(
-        [
-            1, 0, 0,
-            0, 1, 0,
-            0, 0, 1,
-            1, 1, 1,
-
-            1, 1, 0,
-            0, 1, 1,
-            1, 0, 1,
-            1, 1, 1,
-        ]
-    );
-    const indices = new Uint32Array([0, 1, 2, 2, 3, 0]);
-
     const positionBuffer_ref = new WebGPURenderElementVector3Buffer(rs, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst,
         [
             Vector3.create(-0.5, 0.5, 0),
@@ -202,15 +188,25 @@ async function init() {
             Vector3.create(0.5, 0.5, 0),
         ]
     );
-    const colorBuffer = rs.create_Buffer(WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, colors.byteLength).expect();
-    colorBuffer.update_Data(0, colors);
-    const indicesBuffer = new WebGPURenderElemenIndexBuffer(rs, WebGPURenderStateBufferType.Index, WebGPURenderStateBufferUsage.None,
+    const colorBuffer_ref = new WebGPURenderElementVector3Buffer(rs, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst,
+        [
+            Vector3.create(1, 0, 0),
+            Vector3.create(0, 1, 0),
+            Vector3.create(0, 0, 1),
+            Vector3.create(1, 1, 1),
+
+            Vector3.create(1, 1, 0),
+            Vector3.create(0, 1, 1),
+            Vector3.create(1, 0, 1),
+            Vector3.create(1, 1, 1),
+        ]
+    );
+    const indicesBuffer_ref = new WebGPURenderElementIndexBuffer(rs, WebGPURenderStateBufferType.Index, WebGPURenderStateBufferUsage.None,
         [
             0, 1, 2, 2, 3, 0
         ]
     );
-
-    const test_buffer = new WebGPURenderElementVector3Buffer(rs, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst,
+    const testBuffer_ref = new WebGPURenderElementVector3Buffer(rs, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst,
         [
             Vector3.create(1, 0, 1),
             Vector3.create(1, 0, 1),
@@ -219,16 +215,20 @@ async function init() {
         ]
     );
 
-    const vertex_array_ref = new Ref(rs.create_VertexArray(WebGPURenderStatePrimitiveType.Triangles, 0, 6));
-    vertex_array_ref.expect.set_Buffer(0, positionBuffer_ref.buffer);
-    vertex_array_ref.expect.set_Buffer(1, colorBuffer);
-    vertex_array_ref.expect.set_Index(indicesBuffer.buffer);
+    const geometry_0 = new WebGPURenderElementGeometry(rs);
+    geometry_0.set_AttributeBuffer(WebGPURenderElementGeometryAttributeLayoutBuffer.Position, positionBuffer_ref.buffer);
+    geometry_0.set_AttributeBuffer(WebGPURenderElementGeometryAttributeLayoutBuffer.Normal, colorBuffer_ref.buffer);
+    geometry_0.set_IndexBuffer(indicesBuffer_ref.buffer);
+    geometry_0.set_PrimitiveType(WebGPURenderStatePrimitiveType.Triangles);
+    geometry_0.set_VertexLength(6);
 
-    const vertex_array2_ref = new Ref(rs.create_VertexArray(WebGPURenderStatePrimitiveType.LineStrip, 0, 6));
-    vertex_array2_ref.expect.set_Buffer(0, positionBuffer_ref.buffer);
-    vertex_array2_ref.expect.set_Buffer(1, colorBuffer);
-    vertex_array2_ref.expect.set_Buffer(2, test_buffer.buffer);
-    vertex_array2_ref.expect.set_Index(indicesBuffer.buffer);
+    const geometry_1 = new WebGPURenderElementGeometry(rs);
+    geometry_1.set_AttributeBuffer(WebGPURenderElementGeometryAttributeLayoutBuffer.Position, positionBuffer_ref.buffer);
+    geometry_1.set_AttributeBuffer(WebGPURenderElementGeometryAttributeLayoutBuffer.Normal, colorBuffer_ref.buffer);
+    geometry_1.set_AttributeBuffer(WebGPURenderElementGeometryAttributeLayoutBuffer.Tangent, testBuffer_ref.buffer);
+    geometry_1.set_IndexBuffer(indicesBuffer_ref.buffer);
+    geometry_1.set_PrimitiveType(WebGPURenderStatePrimitiveType.LineStrip);
+    geometry_1.set_VertexLength(6);
 
     const bind_group_0_ref = new Ref<WebGPURenderStateUniformGroup>();
 
@@ -291,12 +291,13 @@ async function init() {
         const command_encoder = rs.device.createCommandEncoder();
         const render_pass_encoder = command_encoder.beginRenderPass(frame_buffer_ref.expect.frame_buffer_desc);
         const s = (time % 3.0) > 1.5;
-        const pipeline = pipeline_cache_ref.expect.get(s ? vertex_array2_ref.expect : vertex_array_ref.expect, frame_buffer_ref.expect, WebGPURenderStateCullMode.Back, s ? 1.0 : 0.0, 0, WebGPURenderStateDepthCompareFunc.LessEqual);
+        const vertex_array = s ? geometry_1.vertex_array_ref.expect : geometry_0.vertex_array_ref.expect;
+        const pipeline = pipeline_cache_ref.expect.get(vertex_array, frame_buffer_ref.expect, WebGPURenderStateCullMode.Back, s ? 1.0 : 0.0, 0, WebGPURenderStateDepthCompareFunc.LessEqual);
         if (pipeline) {
             render_pass_encoder.setPipeline(pipeline.pipeline);
             render_pass_encoder.setBindGroup(0, bind_group_0_ref.expect.binding_group);
-            (s ? vertex_array2_ref.expect : vertex_array_ref.expect).bind_Buffers(render_pass_encoder);
-            (s ? vertex_array2_ref.expect : vertex_array_ref.expect).draw(render_pass_encoder);
+            vertex_array.bind_Buffers(render_pass_encoder);
+            vertex_array.draw(render_pass_encoder);
         }
         render_pass_encoder.end();
         rs.device.queue.submit([command_encoder.finish()]);

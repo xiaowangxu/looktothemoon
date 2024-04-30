@@ -1,30 +1,23 @@
 import { bitmask_disable, bitmask_enable } from "@/system/utils/BitMask";
 import type { WebGPURenderState } from "../../WebGPURenderState";
 import { Ref, RefArray } from "@/system/utils/RefCounted";
-import type { WebGPURenderStateBuffer } from "../buffer/WebGPURenderStateBuffer";
+import type { WebGPURenderStateBuffer } from "../../render_state_object/buffer/WebGPURenderStateBuffer";
 import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
-import type { WebGPURenderElementRenderPipelineCacheHash } from "../../render_element_object/pipeline/WebGPURenderElementRenderPipelineCache";
-import type { WebGPURenderStateBufferView } from "../buffer/WebGPURenderStateBufferView";
+import type { WebGPURenderElementRenderPipelineCacheHash } from "../pipeline/WebGPURenderElementRenderPipelineCache";
+import type { WebGPURenderStateBufferView } from "../../render_state_object/buffer/WebGPURenderStateBufferView";
+import type { WebGPURenderStatePrimitiveType } from "../../render_state_object/pipeline/WebGPURenderStateProgramState";
 
-export enum WebGPURenderStatePrimitiveType {
-    Triangles,
-    TriangleStrip,
-    LineStrip,
-    Lines,
-    Points,
-}
+export type WebGPURenderStateVertexArrayBuffer = WebGPURenderStateBuffer | WebGPURenderStateBufferView;
 
-type WebGPURenderStateVertexArrayBuffer = WebGPURenderStateBuffer | WebGPURenderStateBufferView;
-
-export class WebGPURenderStateVertexArray extends WebGPURenderObjectRefCounted {
+export class WebGPURenderElementVertexArray extends WebGPURenderObjectRefCounted {
 
     static readonly MaxAttributeLocationCount = 8;
-    public readonly primitive_type: WebGPURenderStatePrimitiveType;
 
-    public readonly offset: number;
-    public readonly length: number;
-
-    protected attribute_buffer_refs: RefArray<WebGPURenderStateVertexArrayBuffer> = new RefArray(WebGPURenderStateVertexArray.MaxAttributeLocationCount);
+    public primitive_type: WebGPURenderStatePrimitiveType;
+    public offset: number;
+    public length: number;
+    
+    protected attribute_buffer_refs: RefArray<WebGPURenderStateVertexArrayBuffer> = new RefArray(WebGPURenderElementVertexArray.MaxAttributeLocationCount);
     protected index_buffer_ref: Ref<WebGPURenderStateVertexArrayBuffer> = new Ref();
 
     public get is_indexed(): boolean {
@@ -54,13 +47,13 @@ export class WebGPURenderStateVertexArray extends WebGPURenderObjectRefCounted {
     }
 
     public set_Buffer(location: number, buffer: WebGPURenderStateVertexArrayBuffer): void {
-        if (location < 0 || location >= WebGPURenderStateVertexArray.MaxAttributeLocationCount) throw new Error('<WebGPURenderStateVertexArray> set_Buffer: attribute location out of bound');
+        if (location < 0 || location >= WebGPURenderElementVertexArray.MaxAttributeLocationCount) throw new Error('<WebGPURenderStateVertexArray> set_Buffer: attribute location out of bound');
         this.attribute_buffer_refs.set(location, buffer);
         this.enable_AttributeLocationBit(location);
     }
 
     public clear_Buffer(location: number): void {
-        if (location < 0 || location >= WebGPURenderStateVertexArray.MaxAttributeLocationCount) throw new Error('<WebGPURenderStateVertexArray> set_Buffer: attribute location out of bound');
+        if (location < 0 || location >= WebGPURenderElementVertexArray.MaxAttributeLocationCount) throw new Error('<WebGPURenderStateVertexArray> set_Buffer: attribute location out of bound');
         this.attribute_buffer_refs.set(location, undefined);
         this.disable_AttributeLocationBit(location);
     }
@@ -103,6 +96,5 @@ export class WebGPURenderStateVertexArray extends WebGPURenderObjectRefCounted {
     public dispose(): void {
         this.clear_Buffers();
         this.clear_Index();
-        this.render_state.delete_VertexArray(this);
     }
 }
