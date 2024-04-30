@@ -134,6 +134,10 @@ export class RefArray<T extends RefCountedLike> {
         }
     }
 
+    public index(index: number): T {
+        return this.refs[index] as T;
+    }
+
     public get(index: number, target?: Ref<T>): T | undefined {
         if (index < 0 || index >= this.length) undefined;
         const item = this.refs[index];
@@ -176,6 +180,20 @@ export class RefArray<T extends RefCountedLike> {
         const item: T | undefined = this.refs[index];
         target.value = item;
         this.ref(index, undefined);
+        this.refs.pop();
+        return item;
+    }
+
+    public unshift(item: T | undefined) {
+        this.refs.unshift(undefined);
+        if (item !== undefined) this.ref(0, item);
+    }
+
+    public shift(target: Ref<T>): T | undefined {
+        if (this.length < 0) return undefined;
+        const item: T | undefined = this.refs[0];
+        target.value = item;
+        this.ref(0, undefined);
         this.refs.pop();
         return item;
     }

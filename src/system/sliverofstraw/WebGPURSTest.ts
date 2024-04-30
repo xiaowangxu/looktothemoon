@@ -10,7 +10,7 @@ import { WebGPURenderStateTextureFormat, WebGPURenderStateTextureUsage } from ".
 import { WebGPURenderStateShaderType } from "./render_state_object/pipeline/WebGPURenderStateShader";
 import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, WebGPURenderStateFacing, type WebGPURenderStateProgramState } from "./render_state_object/pipeline/WebGPURenderStateProgramState";
 import { WebGPURenderStatePrimitiveType } from "./render_state_object/vertex_array/WebGPURenderStateVertexArray";
-import { WebGPURenderElementRenderPipelineCache, WebGPURenderElementRenderPipelineDepthOffset } from "./render_element_object/pipeline/WebGPURenderElementRenderPipelineCache";
+import { WebGPURenderElementRenderPipelineCache } from "./render_element_object/pipeline/WebGPURenderElementRenderPipelineCache";
 import { setAnimationInterval } from '../utils/AnimationInterval';
 import { WebGPURenderElementTextureSamplerCache } from './render_element_object/texture_sampler/WebGPURenderElementTextureSamplerCache';
 import { WebGPURenderElementVector3Buffer } from "./render_element_object/buffer/WebGPURenderElementVectorBuffer";
@@ -291,7 +291,7 @@ async function init() {
         const command_encoder = rs.device.createCommandEncoder();
         const render_pass_encoder = command_encoder.beginRenderPass(frame_buffer_ref.expect.frame_buffer_desc);
         const s = (time % 3.0) > 1.5;
-        const pipeline = pipeline_cache_ref.expect.get(s ? vertex_array2_ref.expect : vertex_array_ref.expect, frame_buffer_ref.expect, WebGPURenderStateCullMode.Back, WebGPURenderElementRenderPipelineDepthOffset.None, WebGPURenderStateDepthCompareFunc.LessEqual);
+        const pipeline = pipeline_cache_ref.expect.get(s ? vertex_array2_ref.expect : vertex_array_ref.expect, frame_buffer_ref.expect, WebGPURenderStateCullMode.Back, s ? 1.0 : 0.0, 0, WebGPURenderStateDepthCompareFunc.LessEqual);
         if (pipeline) {
             render_pass_encoder.setPipeline(pipeline.pipeline);
             render_pass_encoder.setBindGroup(0, bind_group_0_ref.expect.binding_group);

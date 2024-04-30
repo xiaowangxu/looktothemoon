@@ -32,6 +32,7 @@ import type { WebGPURenderStateDepthCompareFunc } from "../../render_state_objec
 //    || depth_compare_enabled
 //    || 
 //    perserved
+// 
 type WebGPURenderElementTextureSamplerCacheHash = number;
 
 export class WebGPURenderElementTextureSamplerCache extends WebGPURenderObjectRefCounted {
