@@ -2,18 +2,17 @@ import { Clock } from "../utils/Clock";
 import { ShortCutActionMap } from "./inputs/InputActionMap";
 import { Singletion } from "./singletions/Singletion";
 import { Node, Viewport } from "./nodes/Node";
-import { ConfiguredObject, type Config } from "./ConfiguredObject";
 import { Ref } from "../utils/RefCounted";
 import { clearAnimationInterval, setAnimationInterval } from "../utils/AnimationInterval";
 import { TweenManager, type Tween } from "./Tween";
 
-export class SceneTree extends ConfiguredObject {
+export class SceneTree {
 
-    private readonly input_action_map: Ref<ShortCutActionMap> = new Ref(new ShortCutActionMap(this.config));
+    private readonly input_action_map: Ref<ShortCutActionMap> = new Ref(new ShortCutActionMap());
     private readonly root: Node;
     private readonly clock: Clock = new Clock();
-    private readonly fps: number;
-    private readonly physics_fps: number;
+    private fps: number = Infinity;
+    private physics_fps: number = 60;
     private readonly physics_clock: Clock = new Clock();
     public frame_id: number = 0;
     private animation_requested: number | undefined = undefined;
@@ -34,13 +33,10 @@ export class SceneTree extends ConfiguredObject {
 
     private readonly node_queued_free: Set<Node> = new Set();
 
-    constructor(config: Config, root: Node) {
-        super(config);
+    constructor(root: Node) {
         if (root.get_Parent() !== undefined || root.ready) throw new Error('<SceneTree> constructor: root is invalid');
         this.root = root;
         this.root.set_SceneTree(this);
-        this.fps = this.config.fps;
-        this.physics_fps = this.config.physics_fps;
     }
 
     public notify_TreeChange() { }
@@ -58,13 +54,6 @@ export class SceneTree extends ConfiguredObject {
         this.frame_id = frame_id;
         // console.log("fps: ", (1 / this.delta).toFixed(2));
         // render server resize
-        this.config.render_server.set_PixelRatio(this.config.render_server_pixel_ratio, this.config.render_server_scale);
-        if (this.config.render_server_size) {
-            this.config.render_server.set_Size(this.config.render_server_size.x, this.config.render_server_size.y);
-        }
-        else {
-            this.config.render_server.set_Size(window.innerWidth, window.innerHeight);
-        }
         // internal process process
         this.root.propagate_Process(this.delta);
         this.tween_manager.process_Tweens(delta);
@@ -124,10 +113,10 @@ export class SceneTree extends ConfiguredObject {
 
     // apis
 
-    public register_Singleton(singletion: new (config: Config, scene_tree: SceneTree) => Singletion) {
+    public register_Singleton(singletion: new (scene_tree: SceneTree) => Singletion) {
         const name = (singletion as typeof Singletion).singleton_name;
         if (this.singletions.has(name)) return;
-        this.singletions.set(name, new singletion(this.config, this));
+        this.singletions.set(name, new singletion(this));
     }
 
     public unregister_Singleton(singletion: typeof Singletion) {
@@ -191,7 +180,9 @@ export class SceneTree extends ConfiguredObject {
         this.viewports.delete(viewport);
     }
 
-    public start_Loop() {
+    public start_Loop(fps?: number, physics_fps?: number) {
+        if (fps !== undefined) this.fps = fps;
+        if (physics_fps !== undefined) this.physics_fps = physics_fps;
         if (this.looping) return;
         this.clock.start();
         this.physics_clock.start();

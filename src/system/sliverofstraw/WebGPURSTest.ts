@@ -18,6 +18,8 @@ import { bitmask_check } from "../utils/BitMask";
 import { WebGPURenderElementIndexBuffer } from "./render_element_object/buffer/WebGPURenderElementBuffer";
 import { WebGPURenderElementGeometry } from "./render_element_object/geometry/WebGPURenderElementGeometry";
 import { WebGPURenderElementGeometryAttributeLayoutBuffer } from "./render_element_object/geometry/WebGPURenderElementGeometryDefination";
+import { WebGPURenderElementFrameBuffer } from "./render_element_object/frame_buffer/WebGPURenderElementFrameBuffer";
+import { WebGPURenderElementMaterial, WebGPURenderElementMaterialPass } from "./render_element_object/material/WebGPURenderElementMaterial";
 
 async function init() {
 
@@ -55,7 +57,7 @@ async function init() {
         @location(1) color: vec3f,
     };
 
-    @group(0) @binding(0) var<uniform> rotate: f32;
+    @group(${WebGPURenderElementMaterial.UniformBindGroupIndex}) @binding(0) var<uniform> rotate: f32;
   
     struct MyVSOutput {
       @builtin(position) position: vec4f,
@@ -73,7 +75,7 @@ async function init() {
         return vsOut;
     }
   
-    @group(0) @binding(1) var<uniform> blend_factor: f32;
+    @group(${WebGPURenderElementMaterial.UniformBindGroupIndex}) @binding(1) var<uniform> blend_factor: f32;
   
     @fragment
     fn fs_main(v: MyVSOutput) -> @location(0) vec4f {
@@ -88,7 +90,7 @@ async function init() {
         @location(2) test: vec3f,
     };
 
-    @group(0) @binding(0) var<uniform> rotate: f32;
+    @group(${WebGPURenderElementMaterial.UniformBindGroupIndex}) @binding(0) var<uniform> rotate: f32;
   
     struct MyVSOutput {
       @builtin(position) position: vec4f,
@@ -106,7 +108,7 @@ async function init() {
         return vsOut;
     }
   
-    @group(0) @binding(1) var<uniform> blend_factor: f32;
+    @group(${WebGPURenderElementMaterial.UniformBindGroupIndex}) @binding(1) var<uniform> blend_factor: f32;
   
     @fragment
     fn fs_main(v: MyVSOutput) -> @location(0) vec4f {
@@ -129,10 +131,15 @@ async function init() {
         depth_write: true,
     };
 
+    const uniform_group_empty_layout = rs.create_UniformLayout();
+
     const uniform_group_0_layout = rs.create_UniformLayout();
 
     uniform_group_0_layout.add_BufferUniform(WebGPURenderStateShaderType.Vertex, 0);
     uniform_group_0_layout.add_BufferUniform(WebGPURenderStateShaderType.Fragment, 1);
+
+    const material_0 = new ReadonlyRef(new WebGPURenderElementMaterial(rs));
+    const material_1 = new ReadonlyRef(new WebGPURenderElementMaterial(rs));
 
     const pipeline_cache_ref = new Ref(new WebGPURenderElementRenderPipelineCache(
         rs,
@@ -150,6 +157,9 @@ async function init() {
             ],
         },
         [
+            uniform_group_empty_layout,
+            uniform_group_empty_layout,
+            uniform_group_empty_layout,
             uniform_group_0_layout,
         ],
         [
@@ -235,6 +245,8 @@ async function init() {
 
     bind_group_0_ref.value = rs.create_UniformGroup(uniform_group_0_layout).expect();
 
+    const bind_group_empty_ref = new Ref(rs.create_UniformGroup(uniform_group_empty_layout).expect());
+
     const uniform_buffer_0_ref = new Ref<WebGPURenderStateBuffer>();
     const uniform_buffer_0_data = new Float32Array(1);
     uniform_buffer_0_ref.value = rs.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, 4).expect();
@@ -245,7 +257,10 @@ async function init() {
     uniform_buffer_1_ref.value = rs.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, 4).expect();
     bind_group_0_ref.expect.set_BufferUniform(1, uniform_buffer_1_ref.expect);
 
-    const frame_buffer_ref = new Ref(rs.create_FrameBuffer().expect());
+    material_0.expect.set_PipelineUniform(WebGPURenderElementMaterialPass.Solid, pipeline_cache_ref.expect, undefined);
+    material_1.expect.set_PipelineUniform(WebGPURenderElementMaterialPass.Solid, pipeline_cache_ref.expect, undefined);
+
+    const frame_buffer_ref = new Ref(new WebGPURenderElementFrameBuffer(rs));
 
     frame_buffer_ref.expect.add_Attachment(
         color_texture_view_ref.expect,
@@ -291,12 +306,16 @@ async function init() {
         frame_buffer_ref.expect.refresh_CanvasTextureView();
         const command_encoder = rs.device.createCommandEncoder();
         const render_pass_encoder = command_encoder.beginRenderPass(frame_buffer_ref.expect.frame_buffer_desc);
+        render_pass_encoder.setBindGroup(WebGPURenderElementMaterial.WorldEnvUniformBindGroupIndex, bind_group_empty_ref.expect.binding_group);
+        render_pass_encoder.setBindGroup(WebGPURenderElementMaterial.LightsUniformBindGroupIndex, bind_group_empty_ref.expect.binding_group);
+        render_pass_encoder.setBindGroup(WebGPURenderElementMaterial.GlobalUniformBindGroupIndex, bind_group_empty_ref.expect.binding_group);
+        render_pass_encoder.setBindGroup(WebGPURenderElementMaterial.UniformBindGroupIndex, bind_group_0_ref.expect.binding_group);
         const s = (time % 3.0) > 1.5;
         const vertex_array = s ? geometry_1.vertex_array_ref.expect : geometry_0.vertex_array_view_refs.index(0);
-        const pipeline = pipeline_cache_ref.expect.get(vertex_array, frame_buffer_ref.expect, WebGPURenderStateCullMode.Back, s ? 1.0 : 0.0, 0, WebGPURenderStateDepthCompareFunc.LessEqual);
+        const material = s ? material_0.expect : material_1.expect;
+        const pipeline = material.get_PipelineUniform(WebGPURenderElementMaterialPass.Solid, vertex_array, frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual);
         if (pipeline) {
-            render_pass_encoder.setPipeline(pipeline.pipeline);
-            render_pass_encoder.setBindGroup(0, bind_group_0_ref.expect.binding_group);
+            render_pass_encoder.setPipeline(pipeline.pipeline.pipeline);
             vertex_array.bind_Buffers(render_pass_encoder);
             vertex_array.draw(render_pass_encoder);
         }

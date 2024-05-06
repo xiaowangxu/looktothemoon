@@ -1,9 +1,11 @@
-import { NodeNotification } from "../../Node";
 import { Node3D } from "../../node3ds/Node3D";
 import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
 
 export abstract class VisualInstance3D extends Node3D {
+
     public static readonly class_name: string = "VisualInstance3D";
+
+    public get visual_world() { return this.get_Viewport()?.world_3d?.visual_world; }
 
     protected _render_queue: number = 0;
     public get render_queue() { return this._render_queue; }

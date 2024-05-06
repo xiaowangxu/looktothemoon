@@ -1,12 +1,12 @@
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { Ref, RefArray, RefMap } from "@/system/utils/RefCounted";
-import type { WebGPURenderStateTextureView } from "../texture/WebGPURenderStateTextureView";
-import { WebGPURenderStateCanvasTextureView } from "../texture/WebGPURenderStateCanvasTextureView";
+import type { WebGPURenderStateTextureView } from "../../render_state_object/texture/WebGPURenderStateTextureView";
+import { WebGPURenderStateCanvasTextureView } from "../../render_state_object/texture/WebGPURenderStateCanvasTextureView";
 import { bitmask_check, bitmask_enable, bitmask_keep, bitmask_set, bitmask_test } from "@/system/utils/BitMask";
 import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
-import { WebGPURenderStateMultiSampleCount } from "../texture/WebGPURenderStateMultiSampleTexture";
+import { WebGPURenderStateMultiSampleCount } from "../../render_state_object/texture/WebGPURenderStateMultiSampleTexture";
 
-export class WebGPURenderStateFrameBuffer extends WebGPURenderObjectRefCounted {
+export class WebGPURenderElementFrameBuffer extends WebGPURenderObjectRefCounted {
 
     public _blend_constant: Vector4 = new Vector4();
     public set blend_constant(constant: Vector4) {
@@ -100,6 +100,5 @@ export class WebGPURenderStateFrameBuffer extends WebGPURenderObjectRefCounted {
         this.canvas_texture_refs.clear();
         this.color_attachment_refs.clear();
         this.depth_stencil_attachment_ref.clear();
-        this.render_state.delete_FrameBuffer(this);
     }
 }

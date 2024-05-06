@@ -14,8 +14,6 @@ export class ViewportMouseInputEventManager {
 
     private readonly viewport: Viewport;
 
-    private get config() { return this.viewport.config; }
-
     private get canvas() { return this.viewport.canvas; }
 
     private _is_mouse_inside: boolean = false;
@@ -107,7 +105,7 @@ export class ViewportMouseInputEventManager {
         this.is_mouse_inside = true;
         this.update_MousePosition(event);
         this.trigger_MouseEvent(
-            new MouseEnterLeaveInputEvent(this.config).set_Viewport(this.viewport).set_Inside(true)
+            new MouseEnterLeaveInputEvent().set_Viewport(this.viewport).set_Inside(true)
         );
     }
 
@@ -115,7 +113,7 @@ export class ViewportMouseInputEventManager {
     private on_MouseLeaved(event: MouseEvent) {
         this.is_mouse_inside = false;
         this.trigger_MouseEvent(
-            new MouseEnterLeaveInputEvent(this.config).set_Viewport(this.viewport).set_Inside(false)
+            new MouseEnterLeaveInputEvent().set_Viewport(this.viewport).set_Inside(false)
         );
     }
 
@@ -128,7 +126,7 @@ export class ViewportMouseInputEventManager {
         const relative = last_mouse_position.sub(this._mouse_position, last_mouse_position);
         const relative_normalized = last_mouse_position_normalized.sub(this._mouse_position_normalized, last_mouse_position_normalized);
         this.trigger_MouseEvent(
-            new MouseMotionInputEvent(this.config)
+            new MouseMotionInputEvent()
                 .set_Viewport(this.viewport)
                 .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
                 .set_Position(this._mouse_position, this._mouse_position_normalized)
@@ -141,7 +139,7 @@ export class ViewportMouseInputEventManager {
         if (event.target !== this.canvas) return;
         this.update_MouseKey(event, true);
         this.trigger_MouseEvent(
-            new MouseButtonInputEvent(this.config)
+            new MouseButtonInputEvent()
                 .set_Viewport(this.viewport)
                 .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
                 .set_Position(this._mouse_position, this._mouse_position_normalized)
@@ -154,7 +152,7 @@ export class ViewportMouseInputEventManager {
         if (event.target !== this.canvas) return;
         this.update_MouseKey(event, false);
         this.trigger_MouseEvent(
-            new MouseButtonInputEvent(this.config)
+            new MouseButtonInputEvent()
                 .set_Viewport(this.viewport)
                 .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
                 .set_Position(this._mouse_position, this._mouse_position_normalized)
@@ -166,7 +164,7 @@ export class ViewportMouseInputEventManager {
     private on_Click(event: MouseEvent) {
         if (event.target !== this.canvas) return;
         this.trigger_MouseEvent(
-            new MouseButtonInputEvent(this.config)
+            new MouseButtonInputEvent()
                 .set_Viewport(this.viewport)
                 .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
                 .set_Position(this._mouse_position, this._mouse_position_normalized)
@@ -177,7 +175,7 @@ export class ViewportMouseInputEventManager {
     private _on_DoubleClick = this.on_DoubleClick.bind(this);
     private on_DoubleClick(event: MouseEvent) {
         this.trigger_MouseEvent(
-            new MouseButtonInputEvent(this.config)
+            new MouseButtonInputEvent()
                 .set_Viewport(this.viewport)
                 .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
                 .set_Position(this._mouse_position, this._mouse_position_normalized)
@@ -189,7 +187,7 @@ export class ViewportMouseInputEventManager {
     private on_RightClick(event: MouseEvent) {
         event.preventDefault();
         this.trigger_MouseEvent(
-            new MouseButtonInputEvent(this.config)
+            new MouseButtonInputEvent()
                 .set_Viewport(this.viewport)
                 .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
                 .set_Position(this._mouse_position, this._mouse_position_normalized)
@@ -202,7 +200,7 @@ export class ViewportMouseInputEventManager {
         event.preventDefault();
         const button = event.deltaY < 0 ? MouseButton.WheelUp : MouseButton.WheelDown;
         this.trigger_MouseEvent(
-            new MouseButtonInputEvent(this.config)
+            new MouseButtonInputEvent()
                 .set_Viewport(this.viewport)
                 .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
                 .set_Position(this._mouse_position, this._mouse_position_normalized)

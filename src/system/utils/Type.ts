@@ -4,6 +4,11 @@ export type Self<T> = T;
 
 export type New<T> = T;
 
+/**
+ * the result is only a temp object, you can use the internal property, but should not keep the object itself, since it may be reused in another return value
+ */
+export type Temp<T extends object> = T;
+
 export type NotNull<T = any> = Exclude<T, null | undefined>;
 
 export class Out<T> {

@@ -4,7 +4,6 @@ import { Camera3D } from "./Camera3D";
 import { Matrix4 } from '@/system/fivepebble/linear_algebra/Matrix4';
 import { Camera3, OrthographicCamera3, PerspectiveCamera3 } from '@/system/fivepebble/graphics/Camera3';
 import type { Vector2 } from '@/system/fivepebble/linear_algebra/Vector2';
-import type { Config } from '../../../ConfiguredObject';
 import { Vector3 } from '@/system/fivepebble/linear_algebra/Vector3';
 
 export class InterpolateCamera3D extends Camera3D {
@@ -75,8 +74,8 @@ export class InterpolateCamera3D extends Camera3D {
 
     public get is_orthographic() { return this.use_orth; }
 
-    constructor(config: Config) {
-        super(config);
+    constructor() {
+        super();
         this.update_Camera();
     }
 

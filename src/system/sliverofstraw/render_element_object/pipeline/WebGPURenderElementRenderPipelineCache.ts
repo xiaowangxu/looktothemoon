@@ -1,9 +1,9 @@
-import { RefArray, RefMap, type RefCountedLike } from "@/system/utils/RefCounted";
+import { RefArray, type RefCountedLike } from "@/system/utils/RefCounted";
 import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import type { WebGPURenderStateRenderPipeline } from "../../render_state_object/pipeline/WebGPURenderStateRenderPipeline";
 import type { WebGPURenderElementVertexArray } from "../vertex_array/WebGPURenderElementVertexArray";
 import type { WebGPURenderElementVertexArrayView } from "../vertex_array/WebGPURenderElementVertexArrayView";
-import type { WebGPURenderStateFrameBuffer } from "../../render_state_object/frame_buffer/WebGPURenderStateFrameBuffer";
+import type { WebGPURenderElementFrameBuffer } from "../frame_buffer/WebGPURenderElementFrameBuffer";
 import type { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, WebGPURenderStateProgramState } from "../../render_state_object/pipeline/WebGPURenderStateProgramState";
 import { bitmask_check, bitmask_keep, bitmask_set } from "@/system/utils/BitMask";
 import { WebGPURenderStateProgram } from "../../render_state_object/pipeline/WebGPURenderStateProgram";
@@ -34,6 +34,8 @@ import { WebGPURenderState } from "../../WebGPURenderState";
 export type WebGPURenderElementRenderPipelineCacheHash = number;
 
 export type WebGPURenderElementRenderPipelineCacheGetterFn = (hash: WebGPURenderElementRenderPipelineCacheHash) => WebGPURenderStateProgram | undefined;
+
+export type WebGPURenderElementVertexArrayLike = WebGPURenderElementVertexArray | WebGPURenderElementVertexArrayView;
 
 class WebGPURenderElementRenderPipelineCacheItem implements RefCountedLike {
 
@@ -82,8 +84,8 @@ export class WebGPURenderElementRenderPipelineCache extends WebGPURenderObjectRe
     }
 
     public get(
-        vertex_array: WebGPURenderElementVertexArray | WebGPURenderElementVertexArrayView,
-        frame_buffer: WebGPURenderStateFrameBuffer,
+        vertex_array: WebGPURenderElementVertexArrayLike,
+        frame_buffer: WebGPURenderElementFrameBuffer,
         cull_mode: WebGPURenderStateCullMode,
         depth_bias: number, depth_bias_slope_scale: number,
         depth_compare_func: WebGPURenderStateDepthCompareFunc,

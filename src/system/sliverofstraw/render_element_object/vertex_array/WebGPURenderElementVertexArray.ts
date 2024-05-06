@@ -7,7 +7,7 @@ import type { WebGPURenderElementRenderPipelineCacheHash } from "../pipeline/Web
 import type { WebGPURenderStateBufferView } from "../../render_state_object/buffer/WebGPURenderStateBufferView";
 import type { WebGPURenderStatePrimitiveType } from "../../render_state_object/pipeline/WebGPURenderStateProgramState";
 
-export type WebGPURenderStateVertexArrayBuffer = WebGPURenderStateBuffer | WebGPURenderStateBufferView;
+export type WebGPURenderElementVertexArrayBuffer = WebGPURenderStateBuffer | WebGPURenderStateBufferView;
 
 export class WebGPURenderElementVertexArray extends WebGPURenderObjectRefCounted {
 
@@ -17,8 +17,8 @@ export class WebGPURenderElementVertexArray extends WebGPURenderObjectRefCounted
     public offset: number;
     public length: number;
     
-    protected attribute_buffer_refs: RefArray<WebGPURenderStateVertexArrayBuffer> = new RefArray(WebGPURenderElementVertexArray.MaxAttributeLocationCount);
-    protected index_buffer_ref: Ref<WebGPURenderStateVertexArrayBuffer> = new Ref();
+    protected attribute_buffer_refs: RefArray<WebGPURenderElementVertexArrayBuffer> = new RefArray(WebGPURenderElementVertexArray.MaxAttributeLocationCount);
+    protected index_buffer_ref: Ref<WebGPURenderElementVertexArrayBuffer> = new Ref();
 
     public get is_indexed(): boolean {
         return !this.index_buffer_ref.is_empty;
@@ -46,7 +46,7 @@ export class WebGPURenderElementVertexArray extends WebGPURenderObjectRefCounted
         this.length = length;
     }
 
-    public set_Buffer(location: number, buffer: WebGPURenderStateVertexArrayBuffer): void {
+    public set_Buffer(location: number, buffer: WebGPURenderElementVertexArrayBuffer): void {
         if (location < 0 || location >= WebGPURenderElementVertexArray.MaxAttributeLocationCount) throw new Error('<WebGPURenderStateVertexArray> set_Buffer: attribute location out of bound');
         this.attribute_buffer_refs.set(location, buffer);
         this.enable_AttributeLocationBit(location);
@@ -63,7 +63,7 @@ export class WebGPURenderElementVertexArray extends WebGPURenderObjectRefCounted
         this.clear_AttributeLocationBits();
     }
 
-    public set_Index(buffer: WebGPURenderStateVertexArrayBuffer): void {
+    public set_Index(buffer: WebGPURenderElementVertexArrayBuffer): void {
         this.index_buffer_ref.value = buffer;
     }
 

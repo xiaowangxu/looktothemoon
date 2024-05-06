@@ -1,8 +1,7 @@
 import { type Rid, RID } from "../../Rid";
 import type { ClassWriter, ClassReader } from "../saver_loader/ClassWriterReader";
-import { ConfiguredObject } from "../../ConfiguredObject";
 
-export class ClassBase extends ConfiguredObject {
+export class ClassBase {
     public static readonly class_name: string = "ClassBase";
 
     public readonly rid: Rid = RID();

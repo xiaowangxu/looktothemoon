@@ -1,6 +1,5 @@
 import { Ref, type RefCounted, type Refed } from '../../utils/RefCounted';
 import { SignalEmitter } from '../../utils/SignalEmitter';
-import { ConfiguredObject, type Config } from '../ConfiguredObject';
 import { ClassBase } from "../classes/class_database/ClassBase";
 
 export abstract class ResourceBase extends ClassBase {
@@ -43,12 +42,8 @@ export abstract class Resource extends ResourceRefCounted {
     }
 }
 
-export class ResourceInstanceCache extends ConfiguredObject {
+export class ResourceInstanceCache {
     private readonly instance_map: Map<string, Refed<ResourceBase | ResourceRefCounted>> = new Map();
-
-    constructor(config: Config) {
-        super(config);
-    }
 
     public add(path: string, resource: ResourceBase | ResourceRefCounted) {
         if (this.instance_map.has(path)) return;

@@ -5,6 +5,8 @@ import '@/system/filesystem/VirtualFileSystem';
 import sys_vfs from 'res://sys.vfs.gz?url';
 import { VFS } from '@/system/filesystem/VirtualFileSystem';
 import { fspath } from './system/filesystem/FileSystemPath';
+import { createEditor } from './app/EditorScene2';
+import { RenderServer } from './system/engine/render_server/RenderServer';
 // import { StlLoader } from './system/engine/loaders/StlLoader';
 // import { ObjLoader } from './system/engine/loaders/ObjLoader';
 
@@ -14,6 +16,7 @@ VFS.touch(fspath('sys://'));
 VFS.touch(fspath('user://'));
 
 (async () => {
+    await RenderServer.inited;
     await fetch(sys_vfs)
         .then(res => res.arrayBuffer())
         // .then(buffer => decompress(buffer))
@@ -32,7 +35,7 @@ VFS.touch(fspath('user://'));
 
     (window as any).VFS = VFS;
     (window as any).fspath = fspath;
-    // (window as any).scenetree = createEditor();
+    (window as any).scenetree = createEditor();
     (window as any).create = () => {
         (window as any).scenetree?.dispose();
         // (window as any).scenetree = createEditor();
@@ -81,4 +84,4 @@ VFS.touch(fspath('user://'));
 //         });
 // })();
 
-import '@/system/sliverofstraw/WebGPURSTest';
+// import '@/system/sliverofstraw/WebGPURSTest';

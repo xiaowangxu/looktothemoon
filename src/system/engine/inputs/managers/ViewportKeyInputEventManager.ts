@@ -5,8 +5,6 @@ import { KeyInputEvent } from "../events/KeyInputEvent";
 export class ViewportKeyInputEventManager {
     private readonly viewport: Viewport;
 
-    private get config() { return this.viewport.config; }
-
     private get is_viewport_active() { return this.viewport.get_Input().is_mouse_inside; }
 
     private key_map: Map<string, boolean> = new Map();
@@ -50,7 +48,7 @@ export class ViewportKeyInputEventManager {
         if (this.is_viewport_active) {
             this.update_Key(event, true);
             this.trigger_KeyEvent(
-                new KeyInputEvent(this.config)
+                new KeyInputEvent()
                     .set_Viewport(this.viewport)
                     .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
                     .set_Key(event.key, event.code, true, event.repeat)
@@ -63,7 +61,7 @@ export class ViewportKeyInputEventManager {
         if (this.is_viewport_active) {
             this.update_Key(event, false);
             this.trigger_KeyEvent(
-                new KeyInputEvent(this.config)
+                new KeyInputEvent()
                     .set_Viewport(this.viewport)
                     .set_Compose(event.ctrlKey, event.shiftKey, event.altKey, event.metaKey)
                     .set_Key(event.key, event.code, false, event.repeat)

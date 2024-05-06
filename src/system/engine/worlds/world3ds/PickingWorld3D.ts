@@ -5,7 +5,6 @@ import type { Viewport } from "../../nodes/Node";
 import type { Camera3D } from "../../nodes/node3ds/camera3ds/Camera3D";
 import type { PickingArea3D } from "../../nodes/node3ds/physics3ds/PickingArea3D";
 import { RaycastSide, type RaycastResult } from "@/system/fivepebble/geometries/GeometryLike";
-import { ConfiguredObject, type Config } from "../../ConfiguredObject";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
 
@@ -16,19 +15,18 @@ export interface PickingShape3D {
     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3 | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined;
 }
 
-class PickingArea extends ConfiguredObject {
+class PickingArea {
     public readonly area: PickingArea3D;
     public layer: number = 0xffffffff;
     public priority: number = 0;
     public enabled: boolean = true;
 
-    constructor(config: Config, area: PickingArea3D) {
-        super(config);
+    constructor(area: PickingArea3D) {
         this.area = area;
     }
 }
 
-class PickingShapeInstance extends ConfiguredObject {
+class PickingShapeInstance {
     public shape: PickingShape3D | undefined;
     public area: PickingArea | undefined;
     public distance_offset: number = 0;
@@ -79,7 +77,7 @@ export class RayPickingResult {
     }
 }
 
-export class PickingWorld3D extends ConfiguredObject {
+export class PickingWorld3D {
 
     static readonly #tmp_vector3_0 = Vector3.new;
     static readonly #tmp_vector3_1 = Vector3.new;
@@ -168,7 +166,7 @@ export class PickingWorld3D extends ConfiguredObject {
 
     public create_PickingArea(area: PickingArea3D): Rid {
         const rid = RID();
-        const _area = new PickingArea(this.config, area);
+        const _area = new PickingArea(area);
         this.areas_map.set(rid, _area);
         return rid;
     }
@@ -231,7 +229,7 @@ export class PickingWorld3D extends ConfiguredObject {
 
     public create_PickingShapeInstance(): Rid {
         const rid = RID();
-        const shape = new PickingShapeInstance(this.config);
+        const shape = new PickingShapeInstance();
         this.shapes_map.set(rid, shape);
         return rid;
     }

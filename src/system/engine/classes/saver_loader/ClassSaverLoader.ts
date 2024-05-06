@@ -280,8 +280,6 @@ export class ClassLoader {
     private disable_use_cache: boolean = false;
     private disable_store_cache: boolean = false;
 
-    private get config() { return this.resource_instance_cache.config; }
-
     private readonly refid_instance_map: Map<RefId, { external: boolean, instance: ClassBase, property?: PropertyMap }> = new Map();
 
     constructor(resource_instance_cache: ResourceInstanceCache, class_db: ClassDatabase = ClassDB) {
@@ -298,7 +296,7 @@ export class ClassLoader {
     private parse_Instance(instance: ClassInstanceData): Result<RefId, Error> {
         const { type, refid, property } = instance;
         const prop = property;
-        const class_instance = this.class_db.instantiate(this.config, type);
+        const class_instance = this.class_db.instantiate(type);
         if (class_instance.failed) return Result.Error(class_instance.expect_Error())
         this.refid_instance_map.set(refid, { external: false, instance: class_instance.expect(), property: prop });
         return Result.Ok(refid);

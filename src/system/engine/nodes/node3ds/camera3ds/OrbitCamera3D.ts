@@ -10,7 +10,6 @@ import { Vector3 } from '@/system/fivepebble/linear_algebra/Vector3';
 import { Vector2 } from '@/system/fivepebble/linear_algebra/Vector2';
 import { Euler } from '@/system/fivepebble/linear_algebra/Euler';
 import { Plane3 } from '@/system/fivepebble/geometries/Plane3';
-import type { Config } from "../../../ConfiguredObject";
 import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { Camera3 } from "@/system/fivepebble/graphics/Camera3";
@@ -27,8 +26,8 @@ export class OrbitCamera3D extends Node3D {
     static readonly #tmp_vector3_0 = Vector3.new;
     static readonly #tmp_vector3_1 = Vector3.new;
 
-    private readonly camera_arm: Node3D = new Node3D(this.config);
-    private readonly camera: InterpolateCamera3D = new InterpolateCamera3D(this.config);
+    private readonly camera_arm: Node3D = new Node3D();
+    private readonly camera: InterpolateCamera3D = new InterpolateCamera3D();
 
     private _focus_distance: number = 1;
     public get focus_distance() { return this._focus_distance; }
@@ -80,8 +79,8 @@ export class OrbitCamera3D extends Node3D {
     public get visual_mask() { return this.camera.mask; }
     public set visual_mask(mask: number) { this.camera.mask = mask; }
 
-    constructor(config: Config) {
-        super(config);
+    constructor() {
+        super();
         this.add_Child(this.camera_arm);
         this.camera_arm.add_Child(this.camera);
         this.camera.fov = this.perspective_fov;
@@ -143,7 +142,7 @@ export class OrbitCamera3D extends Node3D {
                 }
                 else {
                     this._is_grabbing_rotate = true;
-                    this.rotate(OrbitCamera3D.#tmp_vector2_0.mult_Number(event.get_Relative(OrbitCamera3D.#tmp_vector2_0), (this.config.render_server.raw_pixel_ratio)));
+                    this.rotate(OrbitCamera3D.#tmp_vector2_0.mult_Number(event.get_Relative(OrbitCamera3D.#tmp_vector2_0), (event.viewport!.raw_pixel_ratio)));
                 }
                 event.mark_Cancelled();
             }

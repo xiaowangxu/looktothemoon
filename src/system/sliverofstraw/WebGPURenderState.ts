@@ -6,10 +6,9 @@ import { WebGPURenderStateRenderPipeline } from "./render_state_object/pipeline/
 import { WebGPURenderStateBufferUniformType, WebGPURenderStateUniformLayout, type WebGPURenderStateUniformType } from "./render_state_object/uniform/WebGPURenderStateUniformLayout";
 import { WebGPURenderStateTextureFilter, WebGPURenderStateTextureSampler, WebGPURenderStateTextureWrap } from "./render_state_object/texture/WebGPURenderStateTextureSampler";
 import { WebGPURenderStateUniformGroup, type WebGPURenderStateUniformGroupEntry } from "./render_state_object/uniform/WebGPURenderStateUniformGroup";
-import { WebGPURenderStateBuffer, WebGPURenderStateBufferDataType, WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "./render_state_object/buffer/WebGPURenderStateBuffer";
+import { WebGPURenderStateBuffer, WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "./render_state_object/buffer/WebGPURenderStateBuffer";
 import { WebGPURenderStateTextureView } from "./render_state_object/texture/WebGPURenderStateTextureView";
 import { WebGPURenderStateComputePipeline } from "./render_state_object/pipeline/WebGPURenderStateComputePipeline";
-import { WebGPURenderStateFrameBuffer } from "./render_state_object/frame_buffer/WebGPURenderStateFrameBuffer";
 import { WebGPURenderStateCanvasTextureView } from "./render_state_object/texture/WebGPURenderStateCanvasTextureView";
 import { type WebGPURenderStateAttributeLayout } from "./render_state_object/pipeline/WebGPURenderStateAttributeLayout";
 import { WebGPURenderStateBlendFactor, WebGPURenderStateBlendOperator, type WebGPURenderStateOutputState } from "./render_state_object/pipeline/WebGPURenderStateOutputState";
@@ -23,10 +22,14 @@ type WebGPURenderStateMemoryLayoutMemberType =
     { type: 'struct', members: WebGPURenderStateMemoryLayoutMemberType[] } |
     { type: 'layout', size: number, align: number };
 
-type WebGPURenderStateMemoryLayoutType =
-    { type: 'primitive', size: number, align: number, offset: number } |
-    { type: 'array', size: number, align: number, offset: number, member: WebGPURenderStateMemoryLayoutType, length: number } |
-    { type: 'struct', size: number, align: number, offset: number, members: WebGPURenderStateMemoryLayoutType[] };
+type WebGPURenderStateMemoryLayoutTypeList<T> = T extends [infer R] ? [WebGPURenderStateMemoryLayoutType<R>] :
+    T extends [infer G, ...infer B] ? [WebGPURenderStateMemoryLayoutType<G>, ...WebGPURenderStateMemoryLayoutTypeList<B>] : never;
+
+type WebGPURenderStateMemoryLayoutType<T> =
+    T extends WebGPURenderStateUniformType | { type: 'layout' } ?
+    { type: 'primitive', size: number, align: number, offset: number } :
+    T extends { type: 'array', member: infer R } ? { type: 'array', size: number, align: number, offset: number, member: WebGPURenderStateMemoryLayoutType<R>, length: number } :
+    T extends { type: 'struct', members: infer G } ? { type: 'struct', size: number, align: number, offset: number, members: WebGPURenderStateMemoryLayoutTypeList<G> } : never;
 
 export class WebGPURenderState {
 
@@ -143,24 +146,24 @@ export class WebGPURenderState {
 
     //#region memory helper
 
-    public static RenderStateMemoryLayout(type: WebGPURenderStateMemoryLayoutMemberType): WebGPURenderStateMemoryLayoutType {
+    public static RenderStateMemoryLayout<T extends WebGPURenderStateMemoryLayoutMemberType>(type: T): WebGPURenderStateMemoryLayoutType<T> {
 
         // WebGPU specs see https://www.w3.org/TR/WGSL/#alignment-and-size
 
         if (typeof type === 'object') {
             if (type.type === 'layout') {
-                return { type: 'primitive', size: type.size, align: type.align, offset: 0 };
+                return { type: 'primitive', size: type.size, align: type.align, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
             }
             else if (type.type === 'array') {
                 const size_align_offset = WebGPURenderState.RenderStateMemoryLayout(type.member);
                 const { size, align } = size_align_offset;
                 // N × roundUp(AlignOf(E), SizeOf(E))
-                return { type: 'array', size: type.length * (Math.ceil(size / align) * align), align: align, offset: 0, member: size_align_offset, length: type.length };
+                return { type: 'array', size: type.length * (Math.ceil(size / align) * align), align: align, offset: 0, member: size_align_offset, length: type.length } as WebGPURenderStateMemoryLayoutType<T>;
             }
             else {
                 // align = max(AlignOfMember(S,1), ... , AlignOfMember(S,N))
                 let align_max: number = 0;
-                const entries: WebGPURenderStateMemoryLayoutType[] = [];
+                const entries: any = [];
                 let i = 0;
                 for (const member of type.members) {
                     const size_align_offset = WebGPURenderState.RenderStateMemoryLayout(member);
@@ -175,27 +178,27 @@ export class WebGPURenderState {
                 const { size: last_size, offset: last_offset } = entries[type.members.length - 1];
                 const just_pass_last_member = last_offset + last_size;
                 const size = Math.ceil(just_pass_last_member / align_max) * align_max;
-                return { type: 'struct', size, align: align_max, offset: 0, members: entries };
+                return { type: 'struct', size, align: align_max, offset: 0, members: entries } as WebGPURenderStateMemoryLayoutType<T>;
             }
         }
         else {
             switch (type) {
-                case WebGPURenderStateBufferUniformType.Bool: return { type: 'primitive', size: 4, align: 4, offset: 0 };
-                case WebGPURenderStateBufferUniformType.Uint: return { type: 'primitive', size: 4, align: 4, offset: 0 };
-                case WebGPURenderStateBufferUniformType.Int: return { type: 'primitive', size: 4, align: 4, offset: 0 };
-                case WebGPURenderStateBufferUniformType.Float: return { type: 'primitive', size: 4, align: 4, offset: 0 };
-                case WebGPURenderStateBufferUniformType.Vector2: return { type: 'primitive', size: 8, align: 8, offset: 0 };
-                case WebGPURenderStateBufferUniformType.Vector3: return { type: 'primitive', size: 12, align: 16, offset: 0 };
-                case WebGPURenderStateBufferUniformType.Vector4: return { type: 'primitive', size: 16, align: 16, offset: 0 };
-                case WebGPURenderStateBufferUniformType.Matrix2: return { type: 'primitive', size: 16, align: 8, offset: 0 };
-                case WebGPURenderStateBufferUniformType.Matrix3: return { type: 'primitive', size: 48, align: 16, offset: 0 };
-                case WebGPURenderStateBufferUniformType.Matrix4: return { type: 'primitive', size: 64, align: 16, offset: 0 };
-                case WebGPURenderStateBufferUniformType.IVector2: return { type: 'primitive', size: 8, align: 8, offset: 0 };
-                case WebGPURenderStateBufferUniformType.IVector3: return { type: 'primitive', size: 12, align: 16, offset: 0 };
-                case WebGPURenderStateBufferUniformType.IVector4: return { type: 'primitive', size: 16, align: 16, offset: 0 };
-                case WebGPURenderStateBufferUniformType.UVector2: return { type: 'primitive', size: 8, align: 8, offset: 0 };
-                case WebGPURenderStateBufferUniformType.UVector3: return { type: 'primitive', size: 12, align: 16, offset: 0 };
-                case WebGPURenderStateBufferUniformType.UVector4: return { type: 'primitive', size: 16, align: 16, offset: 0 };
+                case WebGPURenderStateBufferUniformType.Bool: return { type: 'primitive', size: 4, align: 4, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
+                case WebGPURenderStateBufferUniformType.Uint: return { type: 'primitive', size: 4, align: 4, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
+                case WebGPURenderStateBufferUniformType.Int: return { type: 'primitive', size: 4, align: 4, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
+                case WebGPURenderStateBufferUniformType.Float: return { type: 'primitive', size: 4, align: 4, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
+                case WebGPURenderStateBufferUniformType.Vector2: return { type: 'primitive', size: 8, align: 8, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
+                case WebGPURenderStateBufferUniformType.Vector3: return { type: 'primitive', size: 12, align: 16, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
+                case WebGPURenderStateBufferUniformType.Vector4: return { type: 'primitive', size: 16, align: 16, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
+                case WebGPURenderStateBufferUniformType.Matrix2: return { type: 'primitive', size: 16, align: 8, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
+                case WebGPURenderStateBufferUniformType.Matrix3: return { type: 'primitive', size: 48, align: 16, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
+                case WebGPURenderStateBufferUniformType.Matrix4: return { type: 'primitive', size: 64, align: 16, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
+                case WebGPURenderStateBufferUniformType.IVector2: return { type: 'primitive', size: 8, align: 8, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
+                case WebGPURenderStateBufferUniformType.IVector3: return { type: 'primitive', size: 12, align: 16, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
+                case WebGPURenderStateBufferUniformType.IVector4: return { type: 'primitive', size: 16, align: 16, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
+                case WebGPURenderStateBufferUniformType.UVector2: return { type: 'primitive', size: 8, align: 8, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
+                case WebGPURenderStateBufferUniformType.UVector3: return { type: 'primitive', size: 12, align: 16, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
+                case WebGPURenderStateBufferUniformType.UVector4: return { type: 'primitive', size: 16, align: 16, offset: 0 } as WebGPURenderStateMemoryLayoutType<T>;
                 default: {
                     throw new Error('<WebGPURenderStateUniformLayout> RenderStateBufferUniformTypeBufferSize: unreachable');
                 }
@@ -548,18 +551,6 @@ export class WebGPURenderState {
 
     public delete_Buffer(buffer: WebGPURenderStateBuffer): void {
         buffer.buffer.destroy();
-    }
-
-    //#endregion
-
-    //#region frame buffer
-
-    public create_FrameBuffer(): Result<WebGPURenderStateFrameBuffer, Error> {
-        return Result.Ok(new WebGPURenderStateFrameBuffer(this));
-    }
-
-    public delete_FrameBuffer(frame_buffer: WebGPURenderStateFrameBuffer): void {
-        return;
     }
 
     //#endregion

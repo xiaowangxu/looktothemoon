@@ -1,12 +1,9 @@
 import { ReadonlyRef, RefArray } from "@/system/utils/RefCounted";
 import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
-import { WebGPURenderElementVertexArray, type WebGPURenderStateVertexArrayBuffer } from "../vertex_array/WebGPURenderElementVertexArray";
+import { WebGPURenderElementVertexArray, type WebGPURenderElementVertexArrayBuffer } from "../vertex_array/WebGPURenderElementVertexArray";
 import type { WebGPURenderState } from "../../WebGPURenderState";
 import { WebGPURenderElementVertexArrayView } from "../vertex_array/WebGPURenderElementVertexArrayView";
 import type { WebGPURenderElementGeometryAttributeLayoutBuffer } from "./WebGPURenderElementGeometryDefination";
-import { WebGPURenderElementBuffer, type WebGPURenderElementIndexBuffer } from "../buffer/WebGPURenderElementBuffer";
-import type { WebGPURenderStateBufferView } from "../../render_state_object/buffer/WebGPURenderStateBufferView";
-import type { WebGPURenderStateBuffer } from "../../render_state_object/buffer/WebGPURenderStateBuffer";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import type { Self } from "@/system/utils/Type";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
@@ -50,11 +47,11 @@ export class WebGPURenderElementGeometry extends WebGPURenderObjectRefCounted {
         this.vertex_array_view_refs.clear();
     }
 
-    public set_AttributeBuffer(attribute: WebGPURenderElementGeometryAttributeLayoutBuffer, buffer: WebGPURenderStateVertexArrayBuffer) {
+    public set_AttributeBuffer(attribute: WebGPURenderElementGeometryAttributeLayoutBuffer, buffer: WebGPURenderElementVertexArrayBuffer) {
         this.vertex_array_ref.expect.set_Buffer(attribute, buffer);
     }
 
-    public set_IndexBuffer(buffer: WebGPURenderStateVertexArrayBuffer) {
+    public set_IndexBuffer(buffer: WebGPURenderElementVertexArrayBuffer) {
         this.vertex_array_ref.expect.set_Index(buffer);
     }
 

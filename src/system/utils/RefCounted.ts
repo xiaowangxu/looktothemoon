@@ -18,12 +18,13 @@ export class Ref<T extends RefCountedLike> {
     public get value() { return this.ref; }
     public set value(item: T | undefined) {
         if (this.ref === item) return;
-        if (this.ref !== undefined) {
-            this.ref.unref();
+        const old_item = this.ref;
+        if (item !== undefined) {
+            item.ref();
         }
         this.ref = item;
-        if (this.ref !== undefined) {
-            this.ref.ref();
+        if (old_item !== undefined) {
+            old_item.unref();
         }
     }
 
@@ -102,12 +103,12 @@ export class RefArray<T extends RefCountedLike> {
     private ref(index: number, value: T | undefined) {
         const item = this.refs[index];
         if (item === value) return;
-        if (item !== undefined) {
-            item.unref();
-        }
-        this.refs[index] = value;
         if (value !== undefined) {
             value.ref();
+        }
+        this.refs[index] = value;
+        if (item !== undefined) {
+            item.unref();
         }
     }
 
@@ -237,11 +238,11 @@ export class RefMap<K extends Exclude<any, RefCountedLike>, T extends RefCounted
 
     private ref(item: T | undefined, value: T | undefined) {
         if (item === value) return;
-        if (item !== undefined) {
-            item.unref();
-        }
         if (value !== undefined) {
             value.ref();
+        }
+        if (item !== undefined) {
+            item.unref();
         }
     }
 
@@ -330,11 +331,11 @@ export class RefSet<T extends RefCountedLike> {
 
     private ref(item: T | undefined, value: T | undefined) {
         if (item === value) return;
-        if (item !== undefined) {
-            item.unref();
-        }
         if (value !== undefined) {
             value.ref();
+        }
+        if (item !== undefined) {
+            item.unref();
         }
     }
 
@@ -487,6 +488,23 @@ class RefTest implements RefCounted {
     public dispose() {
         this._disposed = true;
         console.log('dispose', this.idx);
+    }
+}
+
+class RefLikeTest implements RefCountedLike {
+
+    public test: RefTest;
+
+    constructor(test: RefTest) {
+        this.test = test;
+    }
+
+    ref(): void {
+        this.test.ref();
+    }
+
+    unref(): void {
+        this.test.unref();
     }
 }
 */

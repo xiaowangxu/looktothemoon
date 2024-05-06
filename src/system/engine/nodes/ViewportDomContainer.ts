@@ -1,7 +1,6 @@
 import { NodeNotification, Node, ViewportUpdateMode } from "./Node";
 import { Viewport } from "./Node";
 import { Vector2 } from "../../fivepebble/linear_algebra/Vector2";
-import type { Config } from "../ConfiguredObject";
 
 export class ViewportDomContainer extends Node {
     public static readonly class_name: string = "ViewportDomContainer";
@@ -13,14 +12,6 @@ export class ViewportDomContainer extends Node {
         if (this._size === undefined || !this._size.equal(size)) {
             if (this._size === undefined) this._size = size;
             else this._size = size;
-        }
-    }
-
-    private _position: Vector2 | undefined = undefined;
-    private set position(position: Vector2) {
-        if (this._position === undefined || !this._position.equal(position)) {
-            if (this._position === undefined) this._position = position;
-            else this._position = position;
         }
     }
 
@@ -42,19 +33,8 @@ export class ViewportDomContainer extends Node {
         }
     }
 
-    private _visible: boolean = true;
-    public get visible() { return this._visible; }
-    public set visible(visible: boolean) {
-        if (this._visible !== visible) {
-            this._visible = visible;
-            if (this.viewport_node !== undefined && !this._visible) {
-                this.viewport_node.update_mode = ViewportUpdateMode.Never
-            }
-        }
-    }
-
-    constructor(config: Config) {
-        super(config);
+    constructor() {
+        super();
         this.signal_child_added.connect(this.on_ChildAdded.bind(this));
         this.signal_child_removing.connect(this.on_ChildRemoving.bind(this));
     }
@@ -65,6 +45,9 @@ export class ViewportDomContainer extends Node {
             this.viewport_node = node;
             if (this.dom !== undefined) {
                 this.dom.appendChild(this.viewport_node.canvas);
+                this.viewport_node.canvas.style.backgroundColor = 'tomato';
+                this.viewport_node.canvas.style.width = '100%';
+                this.viewport_node.canvas.style.height = '100%';
             }
         }
     }
@@ -77,14 +60,10 @@ export class ViewportDomContainer extends Node {
         this.viewport_node = undefined;
     }
 
-    private update_DomPositionSize() {
+    private update_DomSize() {
         if (this.dom !== undefined) {
             const width = this.dom.offsetWidth;
             const height = this.dom.offsetHeight;
-            const left = this.dom.offsetLeft;
-            const top = this.dom.offsetTop;
-            // const { left, top, width, height } = this.dom.getBoundingClientRect();
-            this.position = new Vector2(left, top);
             this.size = new Vector2(width, height);
         }
     }
@@ -92,10 +71,9 @@ export class ViewportDomContainer extends Node {
     public _notification(what: NodeNotification): void {
         switch (what) {
             case NodeNotification.InternalBeforeRender: {
-                this.update_DomPositionSize();
-                if (this._size !== undefined && this._position !== undefined && this.viewport_node !== undefined) {
+                this.update_DomSize();
+                if (this._size !== undefined && this.viewport_node !== undefined) {
                     this.viewport_node.size = this._size;
-                    this.viewport_node.position = this._position;
                 }
                 break;
             }

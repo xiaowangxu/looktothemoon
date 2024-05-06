@@ -22,7 +22,6 @@ export class TweenManager {
     }
 
     public start_Tween(tween: Tween) {
-        console.warn("start");
         tween.start();
         if (!tween.finished) {
             this.tweens.add(tween);

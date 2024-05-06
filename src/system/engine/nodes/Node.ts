@@ -14,7 +14,6 @@ import { ViewportMouseInputEventManager } from "../inputs/managers/ViewportMouse
 import { ViewportActionInputEventManager } from "../inputs/managers/ViewportActionInputEventManager";
 import { ViewportInputManager } from "../inputs/managers/ViewportInputManager";
 import { ClassBase } from "../classes/class_database/ClassBase";
-import type { Config } from "../ConfiguredObject";
 import { Ref } from "@/system/utils/RefCounted";
 import type { Renderer3D } from "../renderer/renderer_3d/Renderer3D";
 import { RaycastSide } from "@/system/fivepebble/geometries/GeometryLike";
@@ -23,12 +22,15 @@ import { MouseMotionInputEvent } from "../inputs/events/mouse_events/MouseMotion
 import type { Color } from "@/system/fivepebble/graphics/Color";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { Rid } from "../Rid";
+import { RenderServerViewport } from "../render_server/RenderServerViewport";
 
 export enum NodeNotification {
     ExitingTree,
     EnteredTree,
     ExitedTree,
     EnteredReady,
+    World3DAdded,
+    World3DRemoved,
     Ready,
     Process,
     InternalAfterProcess,
@@ -44,7 +46,7 @@ export enum NodeNotification {
     Dispose,
 }
 
-type NodeConstructor<T> = { new(config: Config): T };
+type NodeConstructor<T> = { new(): T };
 
 export class Node extends ClassBase {
     public static readonly class_name: string = "Node";
@@ -78,10 +80,6 @@ export class Node extends ClassBase {
     public readonly signal_input: SignalEmitter<(event: InputEvent, propagate: boolean) => void> = new SignalEmitter();
     public readonly signal_process: SignalEmitter<(delta: number) => void> = new SignalEmitter();
     public readonly signal_physics_process: SignalEmitter<(delta: number) => void> = new SignalEmitter();
-
-    constructor(config: Config) {
-        super(config);
-    };
 
     // scene tree
     private propagate_SceneTreeExiting() {
@@ -367,7 +365,7 @@ export class Node extends ClassBase {
 }
 
 export enum ViewportUpdateMode {
-    Always, Never, Once, OnceNever,
+    Always, Never, Once,
 }
 
 export type CursorStyle = 'default' | 'none' | 'context-menu' | 'help' | 'pointer' | 'progress' | 'wait' |
@@ -377,36 +375,21 @@ export type CursorStyle = 'default' | 'none' | 'context-menu' | 'help' | 'pointe
     'zoom-in' | 'zoom-out';
 
 export class Viewport extends Node {
+
     public static readonly class_name: string = "Viewport";
 
     static readonly #tmp_vector2_0 = Vector2.new;
     static readonly #tmp_vector2_1 = Vector2.new;
     static readonly #tmp_line3_0 = Line3.new;
 
-    // input manager
     public readonly mouse_event_manager: ViewportMouseInputEventManager;
     public readonly key_event_manager: ViewportKeyInputEventManager;
     public readonly action_event_manager: ViewportActionInputEventManager;
     private readonly input_manager: ViewportInputManager;
 
-    // canvas
-    public readonly canvas: HTMLElement;
+    //#region render state
 
-    // render
     public render_priority: number = 0;
-
-    private _world_3d: Ref<World3D> = new Ref();
-    public get world_3d() { return this._world_3d.value; }
-    public set world_3d(world_3d: World3D | undefined) {
-        if (this._world_3d.value !== world_3d) {
-            if (world_3d === undefined) {
-                if (!this._world_3d.expect.is_empty) throw new Error('<Viewport> set world_3d: current World3D is not empty, please remove all related nodes before changing world');
-            }
-            this._world_3d.value = world_3d;
-        }
-    }
-
-    private camera_3d: Camera3D | undefined;
 
     private readonly _renderer_3d: Ref<Renderer3D> = new Ref();
     public get renderer_3d() { return this._renderer_3d.value; }
@@ -414,7 +397,6 @@ export class Viewport extends Node {
         if (this._renderer_3d.value !== renderer) {
             this._renderer_3d.value = renderer;
             if (renderer !== undefined) {
-                renderer.set_Position(this.position);
                 renderer.set_Size(this.size);
             }
         }
@@ -437,11 +419,17 @@ export class Viewport extends Node {
         }
     }
 
-    public color_map: boolean = true;
+    //#endregion
 
-    public get renderer_3d_texture() { return this._renderer_3d.value?.render_texture; }
+    //#region render viewport
 
-    // size & position
+    public readonly canvas: HTMLCanvasElement;
+    private readonly render_server_viewport: RenderServerViewport;
+
+    public get raw_pixel_ratio() { return this.render_server_viewport.raw_pixel_ratio; }
+    public get scale() { return this.render_server_viewport.scale; }
+    public get pixel_ratio() { return this.render_server_viewport.pixel_ratio; }
+
     private readonly _size: Vector2 = Vector2.new;
     private is_size_dirty: boolean = false;
     public get size(): Vector2 {
@@ -459,28 +447,14 @@ export class Viewport extends Node {
         }
     }
 
-    private readonly _position: Vector2 = Vector2.new;
-    private is_position_changed: boolean = false;
-    public get position(): Vector2 {
-        return this._position.clone();
-    }
-    public get_Position(target: Vector2) {
-        return target.copy(this._position);
-    }
-    public set position(position: Vector2) {
-        if (!this._position.equal(position)) {
-            this._position.copy(position);
-            if (!this._renderer_3d.is_empty) this._renderer_3d.expect.set_Position(this._position);
-            this.is_position_changed = true;
-        }
-    }
-
-    // mode
     public debug: boolean = false;
 
     public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
 
-    // input and physics picking
+    //#endregion
+
+    //#region input and physics picking
+
     public redirect_input_event: boolean = true;
 
     public physics_picking_when_mouse_event_not_cancelled: boolean = true;
@@ -506,7 +480,7 @@ export class Viewport extends Node {
             const pos_normalized = this.input_manager.get_MousePositionNormalized(Viewport.#tmp_vector2_1);
             if (this._physics_mouse_picking_area !== undefined) {
                 this._physics_mouse_picking_area.on_MouseExited(
-                    new MouseInputEvent(this.config)
+                    new MouseInputEvent()
                         .set_Viewport(this)
                         .set_Compose(
                             this.input_manager.is_KeyPressed('Control'),
@@ -520,7 +494,7 @@ export class Viewport extends Node {
             this._physics_mouse_picking_area = area;
             if (this._physics_mouse_picking_area !== undefined) {
                 this._physics_mouse_picking_area.on_MouseEntered(
-                    new MouseInputEvent(this.config)
+                    new MouseInputEvent()
                         .set_Viewport(this)
                         .set_Compose(
                             this.input_manager.is_KeyPressed('Control'),
@@ -545,7 +519,7 @@ export class Viewport extends Node {
             const pos = first ? Viewport.#tmp_vector2_0.set(0, 0) : this.input_manager.get_MousePosition(Viewport.#tmp_vector2_0);
             const pos_normalized = first ? Viewport.#tmp_vector2_1.set(0, 0) : this.input_manager.get_MousePositionNormalized(Viewport.#tmp_vector2_1);
             this._physics_mouse_picking_area.on_MouseMoved(
-                new MouseMotionInputEvent(this.config)
+                new MouseMotionInputEvent()
                     .set_Viewport(this)
                     .set_Compose(
                         this.input_manager.is_KeyPressed('Control'),
@@ -565,7 +539,10 @@ export class Viewport extends Node {
         }
     }
 
-    // style
+    //#endregion
+
+    //#region style
+
     private _cursor_style: CursorStyle = 'default';
     public get cursor_style(): CursorStyle { return this._cursor_style; }
     public set cursor_style(cursor_style: CursorStyle) {
@@ -589,33 +566,17 @@ export class Viewport extends Node {
         }
     }
 
-    // editor
-    public editor_highlighted: boolean = true;
-    public editor_highlight_line_width: number = 2.5;
-
-    private readonly _editor_highlight_color: Color = Vector4.create(1.0, 0.5, 0.0, 1).linear_rgb;
-    public get editor_highlight_color(): Color {
-        return this._editor_highlight_color.clone();
-    }
-    public get_EditorHighlightColor(target: Color) {
-        return target.copy(this._editor_highlight_color);
-    }
-    public set editor_highlight_color(color: Color) {
-        if (!this._editor_highlight_color.equal(color)) {
-            this._editor_highlight_color.copy(color);
-        }
-    }
+    //#endregion
 
     // signals
     public readonly signal_before_render: SignalEmitter<() => void> = new SignalEmitter();
     public readonly signal_after_render: SignalEmitter<() => void> = new SignalEmitter();
     public readonly signal_resized: SignalEmitter<(size: Vector2) => void> = new SignalEmitter();
 
-    constructor(config: Config) {
-        super(config);
-        this.canvas = document.createElement('div');
-        this.canvas.style.width = '100%';
-        this.canvas.style.height = '100%';
+    constructor() {
+        super();
+        this.canvas = document.createElement('canvas');
+        this.render_server_viewport = new RenderServerViewport(this.canvas);
         this.mouse_event_manager = new ViewportMouseInputEventManager(this);
         this.key_event_manager = new ViewportKeyInputEventManager(this);
         this.action_event_manager = new ViewportActionInputEventManager(this);
@@ -725,6 +686,8 @@ export class Viewport extends Node {
 
     //#region camera3d
 
+    private camera_3d: Camera3D | undefined;
+
     public set_ActiveCamera3D(camera: Camera3D) {
         if (this.camera_3d !== camera) {
             if (this.camera_3d !== undefined) {
@@ -750,6 +713,34 @@ export class Viewport extends Node {
 
     //#endregion
 
+    //#region world
+
+    private _world_3d: Ref<World3D> = new Ref();
+    public get world_3d() { return this._world_3d.value; }
+    public set world_3d(world_3d: World3D | undefined) {
+        if (this._world_3d.value !== world_3d) {
+            if (!this._world_3d.is_empty) this.propagate_World3DChanged(NodeNotification.World3DRemoved);
+            this._world_3d.value = world_3d;
+            if (!this._world_3d.is_empty) this.propagate_World3DChanged(NodeNotification.World3DAdded);
+        }
+    }
+
+    private propagate_World3DChangedInternal(node: Node, notification: NodeNotification.World3DAdded | NodeNotification.World3DRemoved) {
+        if (node instanceof Viewport) return;
+        for (const child of node.children) {
+            this.propagate_World3DChangedInternal(child, notification);
+        }
+        node._notification(notification);
+    }
+
+    private propagate_World3DChanged(notification: NodeNotification.World3DAdded | NodeNotification.World3DRemoved) {
+        for (const child of this.children) {
+            this.propagate_World3DChangedInternal(child, notification);
+        }
+    }
+
+    //#endregion
+
     public get_RenderableWorld3D(): World3D | undefined {
         if (this.world_3d !== undefined) return this.world_3d;
         const parent = this.get_Parent();
@@ -761,8 +752,6 @@ export class Viewport extends Node {
 
     // process
 
-    private is_size_changed: boolean = true;
-
     public trigger_BeforeRender(): void {
         const camera_3d = this.get_Camera3D();
         if (camera_3d !== undefined) {
@@ -770,32 +759,20 @@ export class Viewport extends Node {
             if (this.is_size_dirty) {
                 camera_3d.update_ViewportSize(this.size);
                 this.is_size_dirty = false;
-                this.is_size_changed = true;
             }
         }
     }
 
     public render(): void {
         if (this._renderer_3d.is_empty) return;
-        const resized = this.is_size_changed;
-        const moved = this.is_position_changed;
-        this.is_size_changed = false;
-        this.is_position_changed = false;
         if (this.update_mode === ViewportUpdateMode.Never) return;
-        if (this.update_mode === ViewportUpdateMode.OnceNever) {
-            if (!this.config.render_server.flushed && !resized && !moved) return;
-            else this.update_mode = ViewportUpdateMode.Once;
-        }
         const once = this.update_mode === ViewportUpdateMode.Once;
-        if (once) {
-            this.update_mode = ViewportUpdateMode.OnceNever;
-        }
         this.signal_before_render.trigger();
         const world_3d = this.get_RenderableWorld3D();
         const camera_3d = this.get_Camera3D();
         const scene_tree = this.get_SceneTree();
         if (camera_3d !== undefined && world_3d !== undefined && scene_tree !== undefined) {
-            world_3d.visual_world.render(this);
+            // world_3d.visual_world.render(this);
             this._renderer_3d.expect.render(world_3d, this, once);
         }
         this.signal_after_render.trigger();
@@ -855,6 +832,7 @@ export class Viewport extends Node {
                 this._world_3d.clear();
                 this.mouse_event_manager.dispose();
                 this.key_event_manager.dispose();
+                this.render_server_viewport.dispose();
                 return;
             }
             case NodeNotification.InternalAfterPhysicsProcess: {

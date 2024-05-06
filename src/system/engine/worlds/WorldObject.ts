@@ -1,11 +1,9 @@
-import { ConfiguredObject, type Config } from "../ConfiguredObject";
 import type { Rid } from "../Rid";
 
-export abstract class WorldObject extends ConfiguredObject {
+export abstract class WorldObject {
     public readonly rid: Rid;
 
-    constructor(config: Config, rid: Rid) {
-        super(config);
+    constructor(rid: Rid) {
         this.rid = rid;
     }
 
