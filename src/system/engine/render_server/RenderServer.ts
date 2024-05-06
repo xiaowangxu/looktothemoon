@@ -11,7 +11,7 @@ export class RenderServerSingleton {
 
     //#region world env uniform
 
-    public readonly world_env_uniform_layout_ref: Ref<WebGPURenderStateUniformLayout> = new Ref();
+    protected readonly world_env_uniform_layout_ref: Ref<WebGPURenderStateUniformLayout> = new Ref();
     public get world_env_uniform_layout() { return this.world_env_uniform_layout_ref.expect; }
 
     static readonly WorldEnvUniformCameraMatrixMemoryLayout = WebGPURenderState.RenderStateMemoryLayout({

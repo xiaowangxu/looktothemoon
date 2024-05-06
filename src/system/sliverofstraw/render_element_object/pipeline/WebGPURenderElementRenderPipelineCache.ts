@@ -127,7 +127,7 @@ export class WebGPURenderElementRenderPipelineCache extends WebGPURenderObjectRe
             this.pipeline_layout,
             this.attribute_layouts.filter((_, index) => {
                 return bitmask_check(bitmask, index);
-            },),
+            }),
         ).expect();
         this.pipeline_refs.unshift(new WebGPURenderElementRenderPipelineCacheItem(pipeline, bitmask, depth_bias, depth_bias_slope_scale));
         return pipeline;

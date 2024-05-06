@@ -15,6 +15,8 @@ export class WebGPURenderElementGeometry extends WebGPURenderObjectRefCounted {
     public readonly vertex_array_view_refs: RefArray<WebGPURenderElementVertexArrayView> = new RefArray();
 
     public get surface_length() { return this.vertex_array_view_refs.length; }
+    protected _instance_count: number = 1;
+    public get instance_count() { return this._instance_count; }
 
     protected _bbox: Box3 = Box3.new;
     /**
@@ -70,6 +72,10 @@ export class WebGPURenderElementGeometry extends WebGPURenderObjectRefCounted {
     public set_BBox(box: Box3) {
         this._bbox.copy(box);
         this.trigger_BBoxChange();
+    }
+
+    public set_InstanceCount(count: number) {
+        this._instance_count = Math.floor(Math.max(1, count));
     }
 
     public dispose(): void {

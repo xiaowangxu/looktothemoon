@@ -311,13 +311,14 @@ async function init() {
         render_pass_encoder.setBindGroup(WebGPURenderElementMaterial.GlobalUniformBindGroupIndex, bind_group_empty_ref.expect.binding_group);
         render_pass_encoder.setBindGroup(WebGPURenderElementMaterial.UniformBindGroupIndex, bind_group_0_ref.expect.binding_group);
         const s = (time % 3.0) > 1.5;
-        const vertex_array = s ? geometry_1.vertex_array_ref.expect : geometry_0.vertex_array_view_refs.index(0);
+        const geometry = s ? geometry_1 : geometry_0;
+        const vertex_array = geometry.vertex_array_ref.expect;
         const material = s ? material_0.expect : material_1.expect;
         const pipeline = material.get_PipelineUniform(WebGPURenderElementMaterialPass.Solid, vertex_array, frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual);
         if (pipeline) {
             render_pass_encoder.setPipeline(pipeline.pipeline.pipeline);
             vertex_array.bind_Buffers(render_pass_encoder);
-            vertex_array.draw(render_pass_encoder);
+            vertex_array.draw(render_pass_encoder, geometry.instance_count);
         }
         render_pass_encoder.end();
         rs.device.queue.submit([command_encoder.finish()]);
