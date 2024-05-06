@@ -7,6 +7,7 @@ import { GeometryInstance3D } from "./GeometryInstance3D";
 import { Ref, RefMap } from "@/system/utils/RefCounted";
 
 export class MeshInstance3D extends GeometryInstance3D {
+
     public static readonly class_name: string = "MeshInstance3D";
 
     private mesh_rid: Rid | undefined = undefined;
@@ -17,7 +18,7 @@ export class MeshInstance3D extends GeometryInstance3D {
         if (this._geometry.value !== geometry) {
             this._geometry.value = geometry;
             if (this.mesh_rid !== undefined) {
-                const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+                const visual_world = this.visual_world;
                 if (visual_world !== undefined) {
                     visual_world.set_MeshGeometry(this.mesh_rid, this._geometry.value);
                 }
@@ -31,7 +32,7 @@ export class MeshInstance3D extends GeometryInstance3D {
         if (this._material_override.value !== material) {
             this._material_override.value = material;
             if (this.mesh_rid !== undefined) {
-                const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+                const visual_world = this.visual_world;
                 if (visual_world !== undefined) {
                     visual_world.set_MeshMaterialOverride(this.mesh_rid, this._material_override.value);
                 }
@@ -44,7 +45,7 @@ export class MeshInstance3D extends GeometryInstance3D {
         if (surface_idx < 0) return;
         if (this._surface_materials_map.set(surface_idx, material)) {
             if (this.mesh_rid !== undefined) {
-                const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+                const visual_world = this.visual_world;
                 if (visual_world !== undefined) {
                     visual_world.set_MeshSurfaceMaterial(this.mesh_rid, surface_idx, material);
                 }
@@ -53,7 +54,7 @@ export class MeshInstance3D extends GeometryInstance3D {
     }
 
     protected clear_SurfaceMaterials() {
-        const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+        const visual_world = this.visual_world;
         for (const surface_idx of this._surface_materials_map.keys()) {
             if (this.mesh_rid !== undefined && visual_world !== undefined) {
                 visual_world.set_MeshSurfaceMaterial(this.mesh_rid, surface_idx, undefined);
@@ -64,7 +65,7 @@ export class MeshInstance3D extends GeometryInstance3D {
 
     protected on_LayerChanged(): void {
         if (this.mesh_rid !== undefined) {
-            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            const visual_world = this.visual_world;
             if (visual_world !== undefined) {
                 visual_world.set_MeshLayer(this.mesh_rid, this._layer);
             }
@@ -73,7 +74,7 @@ export class MeshInstance3D extends GeometryInstance3D {
 
     protected on_RenderQueueChanged(): void {
         if (this.mesh_rid !== undefined) {
-            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            const visual_world = this.visual_world;
             if (visual_world !== undefined) {
                 visual_world.set_MeshRenderQueue(this.mesh_rid, this._render_queue);
             }
@@ -82,7 +83,7 @@ export class MeshInstance3D extends GeometryInstance3D {
 
     protected on_CastShadowChanged(): void {
         if (this.mesh_rid !== undefined) {
-            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            const visual_world = this.visual_world;
             if (visual_world !== undefined) {
                 visual_world.set_MeshCastShadow(this.mesh_rid, this._cast_shadow);
             }
@@ -91,7 +92,7 @@ export class MeshInstance3D extends GeometryInstance3D {
 
     protected on_CullableOverrideChanged(): void {
         if (this.mesh_rid !== undefined) {
-            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            const visual_world = this.visual_world;
             if (visual_world !== undefined) {
                 visual_world.set_MeshCullableOverride(this.mesh_rid, this._cullable_override);
             }
@@ -100,7 +101,7 @@ export class MeshInstance3D extends GeometryInstance3D {
 
     protected on_EditorHighlightedChanged(): void {
         if (this.mesh_rid !== undefined) {
-            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            const visual_world = this.visual_world;
             if (visual_world !== undefined) {
                 visual_world.set_MeshEditorHighlighted(this.mesh_rid, this._editor_highlighted);
             }
@@ -109,9 +110,10 @@ export class MeshInstance3D extends GeometryInstance3D {
 
     public _notification(what: NodeNotification): void {
         switch (what) {
-            case NodeNotification.EnteredTree: {
+            case NodeNotification.EnteredTree:
+            case NodeNotification.World3DAdded: {
                 if (this.mesh_rid === undefined) {
-                    const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+                    const visual_world = this.visual_world;
                     if (visual_world !== undefined) {
                         this.mesh_rid = visual_world.create_Mesh();
                         if (this.geometry !== undefined) {
@@ -132,9 +134,10 @@ export class MeshInstance3D extends GeometryInstance3D {
                 }
                 break;
             }
-            case NodeNotification.ExitingTree: {
+            case NodeNotification.ExitingTree:
+            case NodeNotification.World3DRemoved: {
                 if (this.mesh_rid !== undefined) {
-                    const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+                    const visual_world = this.visual_world;
                     if (visual_world === undefined) throw new Error('<MeshInstance3D> _notification@ExitingTree: cannot find visual world, fail to free mesh instance');
                     visual_world.free_Mesh(this.mesh_rid);
                     this.mesh_rid = undefined;
@@ -143,7 +146,7 @@ export class MeshInstance3D extends GeometryInstance3D {
             }
             case NodeNotification.InternalBeforeRender: {
                 if (this.mesh_rid !== undefined && (this.is_global_transform_changed || this.is_global_visible_changed)) {
-                    const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+                    const visual_world = this.visual_world;
                     if (visual_world === undefined) throw new Error('<MeshInstance3D> _notification@InternalBeforeRender: cannot find visual world, fail to update mesh instance');
                     if (this.is_global_transform_changed) {
                         this.update_GlobalTransform();

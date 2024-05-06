@@ -9,7 +9,7 @@ export class AmbientLight3D extends LightInstance3D {
 
     protected on_LayerChanged(): void {
         if (this.light_rid !== undefined) {
-            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            const visual_world = this.visual_world;
             if (visual_world !== undefined) {
                 visual_world.set_LightLayer(this.light_rid, this._layer);
             }
@@ -18,7 +18,7 @@ export class AmbientLight3D extends LightInstance3D {
 
     protected on_MaskChanged(): void {
         if (this.light_rid !== undefined) {
-            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            const visual_world = this.visual_world;
             if (visual_world !== undefined) {
                 visual_world.set_LightMask(this.light_rid, this._mask);
             }
@@ -27,7 +27,7 @@ export class AmbientLight3D extends LightInstance3D {
 
     protected on_ColorChanged(): void {
         if (this.light_rid !== undefined) {
-            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            const visual_world = this.visual_world;
             if (visual_world !== undefined) {
                 visual_world.set_LightColor(this.light_rid, this._color);
             }
@@ -36,7 +36,7 @@ export class AmbientLight3D extends LightInstance3D {
 
     protected on_IntensityChanged(): void {
         if (this.light_rid !== undefined) {
-            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            const visual_world = this.visual_world;
             if (visual_world !== undefined) {
                 visual_world.set_LightIntensity(this.light_rid, this._intensity);
             }
@@ -49,7 +49,7 @@ export class AmbientLight3D extends LightInstance3D {
 
     protected on_RenderQueueChanged(): void {
         if (this.light_rid !== undefined) {
-            const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+            const visual_world = this.visual_world;
             if (visual_world !== undefined) {
                 visual_world.set_LightRenderQueue(this.light_rid, this._render_queue);
             }
@@ -64,9 +64,10 @@ export class AmbientLight3D extends LightInstance3D {
 
     public _notification(what: NodeNotification): void {
         switch (what) {
-            case NodeNotification.EnteredTree: {
+            case NodeNotification.EnteredTree:
+            case NodeNotification.World3DAdded: {
                 if (this.light_rid === undefined) {
-                    const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+                    const visual_world = this.visual_world;
                     if (visual_world !== undefined) {
                         this.light_rid = visual_world.create_Light();
                         visual_world.set_LightType(this.light_rid, RenderServerLightType.AmbientLight);
@@ -78,9 +79,10 @@ export class AmbientLight3D extends LightInstance3D {
                 }
                 break;
             }
-            case NodeNotification.ExitingTree: {
+            case NodeNotification.ExitingTree:
+            case NodeNotification.World3DRemoved: {
                 if (this.light_rid !== undefined) {
-                    const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+                    const visual_world = this.visual_world;
                     if (visual_world === undefined) throw new Error('<AmbientLight3D> _notification@ExitingTree: cannot find visual world, fail to free light instance');
                     visual_world.free_Light(this.light_rid);
                     this.light_rid = undefined;
@@ -89,7 +91,7 @@ export class AmbientLight3D extends LightInstance3D {
             }
             case NodeNotification.InternalBeforeRender: {
                 if (this.light_rid !== undefined && (this.is_global_transform_changed || this.is_global_visible_changed)) {
-                    const visual_world = this.get_Viewport()?.world_3d?.visual_world;
+                    const visual_world = this.visual_world;
                     if (visual_world === undefined) throw new Error('<AmbientLight3D> _notification@InternalBeforeRender: cannot find visual world, fail to update mesh instance');
                     if (this.is_global_visible_changed) {
                         visual_world.set_LightVisibility(this.light_rid, this.global_visible);

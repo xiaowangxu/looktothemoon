@@ -1,3 +1,4 @@
+import { RID, type Rid } from "../../Rid";
 // import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
 // import type { WebGL2RenderStateFrameBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
 // import { RenderStateTextureType, RenderStateTextureFormat, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureDataFormat, RenderStateDataType, RenderStateShaderType, RenderStateBufferUsage, RenderStatePrimitiveType, RenderStateUniformType } from "@/system/sliverofstraw/render_state/RenderState";
@@ -11,7 +12,6 @@
 // import { Box3 } from "@/system/fivepebble/geometries/Box3";
 // import type { RenderServerMaterial } from "../../render_server/RenderServerMaterial";
 // import { WorldObject } from "../WorldObject";
-// import { RID, type Rid } from "../../Rid";
 // import { GeometryResource } from "../../resources/geometry_resources/GeometryResource";
 // import type { MaterialResource } from "../../resources/material_resources/MaterialResource";
 // import type { Renderer3DQueue } from "../../renderer/renderer_3d/Renderer3DQueue";
@@ -162,190 +162,190 @@
 
 // // #endregion
 
-// export type Cullable = CameraFrustumLikeCullable<Matrix4, Vector3, Matrix3> & Cloneable<Cullable> & Transformable<Cullable, Vector4, Matrix4>;
+export type Cullable = CameraFrustumLikeCullable<Matrix4, Vector3, Matrix3> & Cloneable<Cullable> & Transformable<Cullable, Vector4, Matrix4>;
 
-// export class VisualWorld3DMesh extends WorldObject {
+export class VisualWorld3DMesh extends WorldObject {
 
-//     public readonly geometry_ref: Ref<RenderServerGeometry> = new Ref();
-//     public readonly lod_geometrys_ref: { geometry: Ref<RenderServerGeometry>, distance: number }[] = [];
-//     public get has_geometry() { return !this.geometry_ref.is_empty && this.geometry_ref.expect.has_geometry; }
+    public readonly geometry_ref: Ref<RenderServerGeometry> = new Ref();
+    public readonly lod_geometrys_ref: { geometry: Ref<RenderServerGeometry>, distance: number }[] = [];
+    public get has_geometry() { return !this.geometry_ref.is_empty && this.geometry_ref.expect.has_geometry; }
 
-//     protected readonly surface_materials_ref: RefMap<number, RenderServerMaterial> = new RefMap();
-//     public readonly material_override_ref: Ref<RenderServerMaterial> = new Ref();
-//     private get has_surface_materials(): boolean { return !this.surface_materials_ref.is_empty; };
+    protected readonly surface_materials_ref: RefMap<number, RenderServerMaterial> = new RefMap();
+    public readonly material_override_ref: Ref<RenderServerMaterial> = new Ref();
+    private get has_surface_materials(): boolean { return !this.surface_materials_ref.is_empty; };
 
-//     public readonly global_transform: Matrix4 = Matrix4.new;
-//     public visible: boolean = true;
-//     public layer: number = 0xffffffff;
-//     public cast_shadow: boolean = true;
-//     public render_queue: number = 0;
+    public readonly global_transform: Matrix4 = Matrix4.new;
+    public visible: boolean = true;
+    public layer: number = 0xffffffff;
+    public cast_shadow: boolean = true;
+    public render_queue: number = 0;
 
-//     //editor
-//     public editor_highlighted: boolean = false;
+    //editor
+    public editor_highlighted: boolean = false;
 
-//     // cullable
-//     // global transformed
-//     private cullable: Cullable = Box3.new;
-//     private is_cullable_empty: boolean = true;
-//     private cullable_override: Cullable | undefined = undefined;
-//     public cullable_enlargment: number = 0;
+    // cullable
+    // global transformed
+    private cullable: Cullable = Box3.new;
+    private is_cullable_empty: boolean = true;
+    private cullable_override: Cullable | undefined = undefined;
+    public cullable_enlargment: number = 0;
 
-//     constructor(config: Config, rid: Rid) {
-//         super(rid);
-//     }
+    constructor(config: Config, rid: Rid) {
+        super(rid);
+    }
 
-//     private update_Cullable() {
-//         if (this.cullable_override === undefined) {
-//             if (!this.has_geometry) {
-//                 this.is_cullable_empty = true;
-//             }
-//             else {
-//                 this.cullable.affine_transform(this.geometry_ref.expect.bbox, this.global_transform);
-//                 this.is_cullable_empty = this.cullable.is_empty;
-//             }
-//         }
-//         else {
-//             this.cullable.affine_transform(this.cullable_override, this.global_transform);
-//             this.is_cullable_empty = this.cullable.is_empty;
-//         }
-//     }
+    private update_Cullable() {
+        if (this.cullable_override === undefined) {
+            if (!this.has_geometry) {
+                this.is_cullable_empty = true;
+            }
+            else {
+                this.cullable.affine_transform(this.geometry_ref.expect.bbox, this.global_transform);
+                this.is_cullable_empty = this.cullable.is_empty;
+            }
+        }
+        else {
+            this.cullable.affine_transform(this.cullable_override, this.global_transform);
+            this.is_cullable_empty = this.cullable.is_empty;
+        }
+    }
 
-//     private on_geometry_bbox_changed = (bbox: Box3) => { this.update_Cullable(); }
+    private on_geometry_bbox_changed = (bbox: Box3) => { this.update_Cullable(); }
 
-//     public set_Geometry(geometry: RenderServerGeometry | undefined) {
-//         if (!this.geometry_ref.is_empty) {
-//             this.geometry_ref.expect.singal_bbox_changed.disconnect(this.on_geometry_bbox_changed);
-//         }
-//         this.geometry_ref.value = geometry;
-//         if (!this.geometry_ref.is_empty) {
-//             this.geometry_ref.expect.singal_bbox_changed.connect(this.on_geometry_bbox_changed);
-//         }
-//         this.update_Cullable();
-//     }
+    public set_Geometry(geometry: RenderServerGeometry | undefined) {
+        if (!this.geometry_ref.is_empty) {
+            this.geometry_ref.expect.singal_bbox_changed.disconnect(this.on_geometry_bbox_changed);
+        }
+        this.geometry_ref.value = geometry;
+        if (!this.geometry_ref.is_empty) {
+            this.geometry_ref.expect.singal_bbox_changed.connect(this.on_geometry_bbox_changed);
+        }
+        this.update_Cullable();
+    }
 
-//     public set_LodGeometry(distance: number, geometry: RenderServerGeometry | undefined) {
-//         const index = this.lod_geometrys_ref.findIndex(i => i.distance === distance);
-//         if (index < 0) {
-//             // new lod level
-//             if (geometry !== undefined) {
-//                 this.lod_geometrys_ref.push({
-//                     geometry: new Ref(geometry),
-//                     distance,
-//                 });
-//             }
-//         }
-//         else {
-//             // already has lod
-//             if (geometry === undefined) {
-//                 this.lod_geometrys_ref.splice(index, 1)[0].geometry.clear();
-//             }
-//             else {
-//                 this.lod_geometrys_ref[index].geometry.value = geometry;
-//             }
-//         }
-//     }
+    public set_LodGeometry(distance: number, geometry: RenderServerGeometry | undefined) {
+        const index = this.lod_geometrys_ref.findIndex(i => i.distance === distance);
+        if (index < 0) {
+            // new lod level
+            if (geometry !== undefined) {
+                this.lod_geometrys_ref.push({
+                    geometry: new Ref(geometry),
+                    distance,
+                });
+            }
+        }
+        else {
+            // already has lod
+            if (geometry === undefined) {
+                this.lod_geometrys_ref.splice(index, 1)[0].geometry.clear();
+            }
+            else {
+                this.lod_geometrys_ref[index].geometry.value = geometry;
+            }
+        }
+    }
 
-//     public set_CullableOverride(cullable: Cullable | undefined) {
-//         if (cullable === undefined) {
-//             if (this.cullable_override === undefined) return;
-//             this.cullable_override = undefined;
-//             this.cullable = Box3.new;
-//         }
-//         else {
-//             this.cullable_override = cullable.clone();
-//             this.cullable = cullable.clone();
-//         }
-//         this.update_Cullable();
-//     }
+    public set_CullableOverride(cullable: Cullable | undefined) {
+        if (cullable === undefined) {
+            if (this.cullable_override === undefined) return;
+            this.cullable_override = undefined;
+            this.cullable = Box3.new;
+        }
+        else {
+            this.cullable_override = cullable.clone();
+            this.cullable = cullable.clone();
+        }
+        this.update_Cullable();
+    }
 
-//     public set_CullableEnlargement(amount: number) {
-//         this.cullable_enlargment = Math.max(0, Math.min(65536, amount));
-//     }
+    public set_CullableEnlargement(amount: number) {
+        this.cullable_enlargment = Math.max(0, Math.min(65536, amount));
+    }
 
-//     public set_EditorHighlighted(highlighted: boolean) {
-//         this.editor_highlighted = highlighted;
-//     }
+    public set_EditorHighlighted(highlighted: boolean) {
+        this.editor_highlighted = highlighted;
+    }
 
-//     public set_SurfaceMaterial(surface_idx: number, material: RenderServerMaterial | undefined) {
-//         if (this.geometry_ref.is_empty) return;
-//         if (surface_idx < 0) return;
-//         this.surface_materials_ref.set(surface_idx, material);
-//     }
+    public set_SurfaceMaterial(surface_idx: number, material: RenderServerMaterial | undefined) {
+        if (this.geometry_ref.is_empty) return;
+        if (surface_idx < 0) return;
+        this.surface_materials_ref.set(surface_idx, material);
+    }
 
-//     public set_MaterialOverride(material: RenderServerMaterial | undefined) {
-//         this.material_override_ref.value = material;
-//     }
+    public set_MaterialOverride(material: RenderServerMaterial | undefined) {
+        this.material_override_ref.value = material;
+    }
 
-//     public set_GlobalTransform(mat: Matrix4) {
-//         this.global_transform.copy(mat);
-//         this.update_Cullable();
-//     }
+    public set_GlobalTransform(mat: Matrix4) {
+        this.global_transform.copy(mat);
+        this.update_Cullable();
+    }
 
-//     public set_Visible(visible: boolean) {
-//         this.visible = visible;
-//     }
+    public set_Visible(visible: boolean) {
+        this.visible = visible;
+    }
 
-//     public set_Layer(layer: number) {
-//         this.layer = layer & 0xffffffff;
-//     }
+    public set_Layer(layer: number) {
+        this.layer = layer & 0xffffffff;
+    }
 
-//     public set_RenderQueue(render_queue: number) {
-//         this.render_queue = render_queue;
-//     }
+    public set_RenderQueue(render_queue: number) {
+        this.render_queue = render_queue;
+    }
 
-//     public set_CastShadow(cast: boolean) {
-//         this.cast_shadow = cast;
-//     }
+    public set_CastShadow(cast: boolean) {
+        this.cast_shadow = cast;
+    }
 
-//     protected clear_Geometry() {
-//         if (!this.geometry_ref.is_empty) {
-//             this.geometry_ref.expect.singal_bbox_changed.disconnect(this.on_geometry_bbox_changed);
-//         }
-//         this.geometry_ref.clear();
-//         for (const { geometry } of this.lod_geometrys_ref) {
-//             geometry.clear();
-//         }
-//     }
+    protected clear_Geometry() {
+        if (!this.geometry_ref.is_empty) {
+            this.geometry_ref.expect.singal_bbox_changed.disconnect(this.on_geometry_bbox_changed);
+        }
+        this.geometry_ref.clear();
+        for (const { geometry } of this.lod_geometrys_ref) {
+            geometry.clear();
+        }
+    }
 
-//     public clear_Materials() {
-//         this.material_override_ref.clear();
-//         this.surface_materials_ref.clear();
-//     }
+    public clear_Materials() {
+        this.material_override_ref.clear();
+        this.surface_materials_ref.clear();
+    }
 
-//     // fill render queue
+    // fill render queue
 
-//     public fill_RenderQueue(queue: Renderer3DQueue, camera: Camera3, frustum: Frustum3, screen_size: Vector2): boolean {
-//         // cullable test
-//         if (!this.visible || (this.layer & camera.mask) === 0 || !this.has_geometry) return false;
-//         const cullable = this.cullable;
-//         if (this.is_cullable_empty || cullable.cull(camera, frustum, screen_size, this.cullable_enlargment)) return false;
-//         const sort_distance = cullable.sort_distance_to(camera, this.cullable_enlargment);
-//         const geometry = this.geometry_ref.expect;
-//         if (!geometry.has_surface || !this.has_surface_materials) {
-//             if (this.material_override_ref.is_empty) return false;
-//             const vertex_array = geometry.get_Geometry();
-//             if (vertex_array !== undefined) queue.add(vertex_array, this.material_override_ref.expect, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer, sort_distance);
-//         }
-//         else {
-//             const surface_count = this.geometry_ref.expect.surface_count;
-//             for (let i = 0; i < surface_count; i++) {
-//                 let material = this.surface_materials_ref.get(i);
-//                 if (material === undefined) {
-//                     if (this.material_override_ref.is_empty) continue;
-//                     else material = this.material_override_ref.expect;
-//                 }
-//                 const vertex_array_view = geometry.get_Surface(i);
-//                 if (vertex_array_view !== undefined) queue.add(vertex_array_view, material, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer, sort_distance);
-//             }
-//         }
-//         return true;
-//     }
+    public fill_RenderQueue(queue: Renderer3DQueue, camera: Camera3, frustum: Frustum3, screen_size: Vector2): boolean {
+        // cullable test
+        if (!this.visible || (this.layer & camera.mask) === 0 || !this.has_geometry) return false;
+        const cullable = this.cullable;
+        if (this.is_cullable_empty || cullable.cull(camera, frustum, screen_size, this.cullable_enlargment)) return false;
+        const sort_distance = cullable.sort_distance_to(camera, this.cullable_enlargment);
+        const geometry = this.geometry_ref.expect;
+        if (!geometry.has_surface || !this.has_surface_materials) {
+            if (this.material_override_ref.is_empty) return false;
+            const vertex_array = geometry.get_Geometry();
+            if (vertex_array !== undefined) queue.add(vertex_array, this.material_override_ref.expect, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer, sort_distance);
+        }
+        else {
+            const surface_count = this.geometry_ref.expect.surface_count;
+            for (let i = 0; i < surface_count; i++) {
+                let material = this.surface_materials_ref.get(i);
+                if (material === undefined) {
+                    if (this.material_override_ref.is_empty) continue;
+                    else material = this.material_override_ref.expect;
+                }
+                const vertex_array_view = geometry.get_Surface(i);
+                if (vertex_array_view !== undefined) queue.add(vertex_array_view, material, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer, sort_distance);
+            }
+        }
+        return true;
+    }
 
-//     public dispose(): void {
-//         this.clear_Geometry();
-//         this.clear_Materials();
-//     }
-// }
+    public dispose(): void {
+        this.clear_Geometry();
+        this.clear_Materials();
+    }
+}
 
 // export class VisualWorld3DLight extends WorldObject {
 
@@ -628,155 +628,155 @@ export class VisualWorld3D {
     //     this.render_server.render_state.draw_Elements(this.sky_program, this.sky_quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
     // }
 
-    // //#region Mesh
+    //#region Mesh
 
-    // public create_Mesh(): Rid {
-    //     const rid = RID();
-    //     const mesh = new VisualWorld3DMesh(rid);
-    //     this.meshes_map.set(rid, mesh);
-    //     return rid;
-    // }
+    public create_Mesh(): Rid {
+        const rid = RID();
+        const mesh = new VisualWorld3DMesh(rid);
+        this.meshes_map.set(rid, mesh);
+        return rid;
+    }
 
-    // protected mesh_getter_cache: [undefined | Rid, VisualWorld3DMesh | undefined] = [undefined, undefined];
-    // protected set_MeshGetterCache(rid: Rid, mesh: VisualWorld3DMesh) {
-    //     this.mesh_getter_cache[0] = rid;
-    //     this.mesh_getter_cache[1] = mesh;
-    // }
-    // protected reset_MeshGetterCache(rid: Rid) {
-    //     if (this.mesh_getter_cache[0] === rid) {
-    //         this.mesh_getter_cache[0] = undefined;
-    //         this.mesh_getter_cache[1] = undefined;
-    //     }
-    // }
-    // protected clear_MeshGetterCache() {
-    //     this.mesh_getter_cache[0] = undefined;
-    //     this.mesh_getter_cache[1] = undefined;
-    // }
+    protected mesh_getter_cache: [undefined | Rid, VisualWorld3DMesh | undefined] = [undefined, undefined];
+    protected set_MeshGetterCache(rid: Rid, mesh: VisualWorld3DMesh) {
+        this.mesh_getter_cache[0] = rid;
+        this.mesh_getter_cache[1] = mesh;
+    }
+    protected reset_MeshGetterCache(rid: Rid) {
+        if (this.mesh_getter_cache[0] === rid) {
+            this.mesh_getter_cache[0] = undefined;
+            this.mesh_getter_cache[1] = undefined;
+        }
+    }
+    protected clear_MeshGetterCache() {
+        this.mesh_getter_cache[0] = undefined;
+        this.mesh_getter_cache[1] = undefined;
+    }
 
-    // protected get_Mesh(rid: Rid): VisualWorld3DMesh | undefined {
-    //     if (this.mesh_getter_cache[0] === rid) {
-    //         return this.mesh_getter_cache[1];
-    //     }
-    //     const mesh = this.meshes_map.get(rid);
-    //     if (mesh !== undefined) {
-    //         this.set_MeshGetterCache(rid, mesh);
-    //     }
-    //     return mesh;
-    // }
+    protected get_Mesh(rid: Rid): VisualWorld3DMesh | undefined {
+        if (this.mesh_getter_cache[0] === rid) {
+            return this.mesh_getter_cache[1];
+        }
+        const mesh = this.meshes_map.get(rid);
+        if (mesh !== undefined) {
+            this.set_MeshGetterCache(rid, mesh);
+        }
+        return mesh;
+    }
 
-    // public free_Mesh(rid: Rid) {
-    //     const instance = this.get_Mesh(rid);
-    //     if (instance === undefined) return;
-    //     instance.dispose();
-    //     this.reset_MeshGetterCache(rid);
-    //     this.meshes_map.delete(rid);
-    // }
+    public free_Mesh(rid: Rid) {
+        const instance = this.get_Mesh(rid);
+        if (instance === undefined) return;
+        instance.dispose();
+        this.reset_MeshGetterCache(rid);
+        this.meshes_map.delete(rid);
+    }
 
-    // public set_MeshGeometry(rid: Rid, geometry: GeometryResource | undefined) {
-    //     const instance = this.get_Mesh(rid);
-    //     if (instance) {
-    //         if (geometry === undefined) {
-    //             instance.set_Geometry(undefined);
-    //         }
-    //         else {
-    //             instance.set_Geometry(geometry.geometry);
-    //         }
-    //     }
-    // }
+    public set_MeshGeometry(rid: Rid, geometry: GeometryResource | undefined) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            if (geometry === undefined) {
+                instance.set_Geometry(undefined);
+            }
+            else {
+                instance.set_Geometry(geometry.geometry);
+            }
+        }
+    }
 
-    // public set_MeshLodGeometry(rid: Rid, distance: number, geometry: GeometryResource | undefined) {
-    //     const instance = this.get_Mesh(rid);
-    //     if (instance) {
-    //         if (geometry === undefined) {
-    //             instance.set_LodGeometry(distance, undefined);
-    //         }
-    //         else {
-    //             instance.set_LodGeometry(distance, geometry.geometry);
-    //         }
-    //     }
-    // }
+    public set_MeshLodGeometry(rid: Rid, distance: number, geometry: GeometryResource | undefined) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            if (geometry === undefined) {
+                instance.set_LodGeometry(distance, undefined);
+            }
+            else {
+                instance.set_LodGeometry(distance, geometry.geometry);
+            }
+        }
+    }
 
-    // public set_MeshCullableOverride(rid: Rid, cullable: Cullable | undefined) {
-    //     const instance = this.get_Mesh(rid);
-    //     if (instance) {
-    //         instance.set_CullableOverride(cullable);
-    //     }
-    // }
+    public set_MeshCullableOverride(rid: Rid, cullable: Cullable | undefined) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            instance.set_CullableOverride(cullable);
+        }
+    }
 
-    // public set_MeshCullableEnlargment(rid: Rid, amount: number) {
-    //     const instance = this.get_Mesh(rid);
-    //     if (instance) {
-    //         instance.set_CullableEnlargement(amount);
-    //     }
-    // }
+    public set_MeshCullableEnlargment(rid: Rid, amount: number) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            instance.set_CullableEnlargement(amount);
+        }
+    }
 
-    // public set_MeshEditorHighlighted(rid: Rid, highlighted: boolean) {
-    //     const instance = this.get_Mesh(rid);
-    //     if (instance) {
-    //         instance.set_EditorHighlighted(highlighted);
-    //     }
-    // }
+    public set_MeshEditorHighlighted(rid: Rid, highlighted: boolean) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            instance.set_EditorHighlighted(highlighted);
+        }
+    }
 
-    // public set_MeshSurfaceMaterial(rid: Rid, surface_idx: number, material: MaterialResource | undefined) {
-    //     const instance = this.get_Mesh(rid);
-    //     if (instance) {
-    //         if (material === undefined) {
-    //             instance.set_SurfaceMaterial(surface_idx, undefined);
-    //         }
-    //         else {
-    //             instance.set_SurfaceMaterial(surface_idx, material.material);
-    //         }
-    //     }
-    // }
+    public set_MeshSurfaceMaterial(rid: Rid, surface_idx: number, material: MaterialResource | undefined) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            if (material === undefined) {
+                instance.set_SurfaceMaterial(surface_idx, undefined);
+            }
+            else {
+                instance.set_SurfaceMaterial(surface_idx, material.material);
+            }
+        }
+    }
 
-    // public set_MeshMaterialOverride(rid: Rid, material: MaterialResource | undefined) {
-    //     const instance = this.get_Mesh(rid);
-    //     if (instance) {
-    //         if (material === undefined) {
-    //             instance.set_MaterialOverride(undefined);
-    //         }
-    //         else {
-    //             instance.set_MaterialOverride(material.material);
-    //         }
-    //     }
-    // }
+    public set_MeshMaterialOverride(rid: Rid, material: MaterialResource | undefined) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            if (material === undefined) {
+                instance.set_MaterialOverride(undefined);
+            }
+            else {
+                instance.set_MaterialOverride(material.material);
+            }
+        }
+    }
 
-    // public set_MeshGlobalTransform(rid: Rid, transform: Matrix4) {
-    //     const instance = this.get_Mesh(rid);
-    //     if (instance) {
-    //         instance.set_GlobalTransform(transform);
-    //     }
-    // }
+    public set_MeshGlobalTransform(rid: Rid, transform: Matrix4) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            instance.set_GlobalTransform(transform);
+        }
+    }
 
-    // public set_MeshVisibility(rid: Rid, visible: boolean) {
-    //     const instance = this.get_Mesh(rid);
-    //     if (instance) {
-    //         instance.set_Visible(visible);
-    //     }
-    // }
+    public set_MeshVisibility(rid: Rid, visible: boolean) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            instance.set_Visible(visible);
+        }
+    }
 
-    // public set_MeshLayer(rid: Rid, layer: number) {
-    //     const instance = this.get_Mesh(rid);
-    //     if (instance) {
-    //         instance.set_Layer(layer);
-    //     }
-    // }
+    public set_MeshLayer(rid: Rid, layer: number) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            instance.set_Layer(layer);
+        }
+    }
 
-    // public set_MeshRenderQueue(rid: Rid, render_queue: number) {
-    //     const instance = this.get_Mesh(rid);
-    //     if (instance) {
-    //         instance.set_RenderQueue(render_queue);
-    //     }
-    // }
+    public set_MeshRenderQueue(rid: Rid, render_queue: number) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            instance.set_RenderQueue(render_queue);
+        }
+    }
 
-    // public set_MeshCastShadow(rid: Rid, cast: boolean) {
-    //     const instance = this.get_Mesh(rid);
-    //     if (instance) {
-    //         instance.set_CastShadow(cast);
-    //     }
-    // }
+    public set_MeshCastShadow(rid: Rid, cast: boolean) {
+        const instance = this.get_Mesh(rid);
+        if (instance) {
+            instance.set_CastShadow(cast);
+        }
+    }
 
-    // //#endregion
+    //#endregion
 
     // //#region Light
 
