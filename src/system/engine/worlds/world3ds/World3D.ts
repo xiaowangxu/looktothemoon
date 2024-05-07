@@ -10,7 +10,7 @@ export class World3D extends Resource {
     public readonly picking_world: PickingWorld3D = new PickingWorld3D();
 
     public trigger_BeforeRender(scene_tree: SceneTree) {
-        // this.visual_world.trigger_BeforeRender(scene_tree);
+        this.visual_world.trigger_BeforeRender(scene_tree);
     }
 
     public dispose() {

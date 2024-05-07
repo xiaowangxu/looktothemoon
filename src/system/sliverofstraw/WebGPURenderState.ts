@@ -311,7 +311,7 @@ export class WebGPURenderState {
         for (const target of output_state.attachments) {
             targets.push({
                 format: target.format,
-                blend: {
+                blend: target.blend ? {
                     color: {
                         operation: target.color_operator ?? WebGPURenderStateBlendOperator.Add,
                         srcFactor: target.color_src_factor ?? WebGPURenderStateBlendFactor.One,
@@ -322,7 +322,7 @@ export class WebGPURenderState {
                         srcFactor: target.alpha_src_factor ?? WebGPURenderStateBlendFactor.One,
                         dstFactor: target.alpha_dst_factor ?? WebGPURenderStateBlendFactor.Zero,
                     },
-                }
+                } : undefined,
             })
         }
 
@@ -408,6 +408,7 @@ export class WebGPURenderState {
             case WebGPURenderStateTextureFormat.RGBA32F: return 16;
             case WebGPURenderStateTextureFormat.RGBA16F: return 8;
             case WebGPURenderStateTextureFormat.R32U: return 4;
+            case WebGPURenderStateTextureFormat.R32F: return 4;
             case WebGPURenderStateTextureFormat.RGBA32U: return 16;
             case WebGPURenderStateTextureFormat.RGBA8: return 4;
             case WebGPURenderStateTextureFormat.BGRA8: return 4;

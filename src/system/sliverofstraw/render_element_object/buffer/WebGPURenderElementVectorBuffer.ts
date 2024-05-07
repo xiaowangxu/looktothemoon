@@ -39,10 +39,15 @@ export class WebGPURenderElementVector2Buffer extends WebGPURenderElementBuffer<
         }
     }
 
-    public set_Data(data: Vector2 | Vector2[], element_offset: number): void {
-        if (Array.isArray(data)) {
+    public set_Data(data: Vector2 | Vector2[] | Float32Array, element_offset: number): void {
+        if (data instanceof Float32Array) {
+            const length = data.length;
+            if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementVector2Buffer> set_Data: data range out of bound');
+            this._data.set(data, element_offset);
+        }
+        else if (Array.isArray(data)) {
             const count = data.length;
-            if (element_offset < 0 || (element_offset + count) >= this.element_count) throw new Error('<WebGPURenderElementVector2Buffer> set_Data: data range out of bound');
+            if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementVector2Buffer> set_Data: data range out of bound');
             for (let i = 0, j = element_offset * 2; i < count; i++) {
                 this._data[j++] = data[i].x;
                 this._data[j++] = data[i].y;
@@ -103,10 +108,15 @@ export class WebGPURenderElementVector3Buffer extends WebGPURenderElementBuffer<
         }
     }
 
-    public set_Data(data: Vector3 | Vector3[], element_offset: number): void {
-        if (Array.isArray(data)) {
+    public set_Data(data: Vector3 | Vector3[] | Float32Array, element_offset: number): void {
+        if (data instanceof Float32Array) {
+            const length = data.length;
+            if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementVector3Buffer> set_Data: data range out of bound');
+            this._data.set(data, element_offset);
+        }
+        else if (Array.isArray(data)) {
             const count = data.length;
-            if (element_offset < 0 || (element_offset + count) >= this.element_count) throw new Error('<WebGPURenderElementVector3Buffer> set_Data: data range out of bound');
+            if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementVector3Buffer> set_Data: data range out of bound');
             for (let i = 0, j = element_offset * 3; i < count; i++) {
                 this._data[j++] = data[i].x;
                 this._data[j++] = data[i].y;
@@ -171,10 +181,15 @@ export class WebGPURenderElementVector4Buffer extends WebGPURenderElementBuffer<
         }
     }
 
-    public set_Data(data: Vector4 | Vector4[], element_offset: number): void {
-        if (Array.isArray(data)) {
+    public set_Data(data: Vector4 | Vector4[] | Float32Array, element_offset: number): void {
+        if (data instanceof Float32Array) {
+            const length = data.length;
+            if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementVector4Buffer> set_Data: data range out of bound');
+            this._data.set(data, element_offset);
+        }
+        else if (Array.isArray(data)) {
             const count = data.length;
-            if (element_offset < 0 || (element_offset + count) >= this.element_count) throw new Error('<WebGPURenderElementVector4Buffer> set_Data: data range out of bound');
+            if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementVector4Buffer> set_Data: data range out of bound');
             for (let i = 0, j = element_offset * 4; i < count; i++) {
                 this._data[j++] = data[i].x;
                 this._data[j++] = data[i].y;

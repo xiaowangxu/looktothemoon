@@ -168,12 +168,11 @@ export class InterpolateCamera3D extends Camera3D {
         super._notification(what);
     }
 
-    public update_ViewportSize(size: Vector2): void {
-        let { x, y } = size;
-        if (y === 0) {
-            x = y = 1;
+    public update_ViewportSize(width: number, height: number): void {
+        if (height === 0) {
+            width = height = 1;
         }
-        const aspect = x / y;
+        const aspect = width / height;
         this.persp_camera.aspect = aspect;
         const h = this.reference_zoom;
         const w = aspect * h;

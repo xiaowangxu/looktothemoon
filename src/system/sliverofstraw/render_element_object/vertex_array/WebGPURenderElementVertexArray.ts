@@ -59,7 +59,7 @@ export class WebGPURenderElementVertexArray extends WebGPURenderObjectRefCounted
     }
 
     public clear_Buffers(): void {
-        this.attribute_buffer_refs.clear();
+        this.attribute_buffer_refs.clear(false);
         this.clear_AttributeLocationBits();
     }
 

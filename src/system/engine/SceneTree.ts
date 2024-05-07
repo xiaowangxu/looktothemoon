@@ -181,12 +181,12 @@ export class SceneTree {
     }
 
     public start_Loop(fps?: number, physics_fps?: number) {
+        if (this.looping) return;
         if (fps !== undefined) this.fps = fps;
         if (physics_fps !== undefined) this.physics_fps = physics_fps;
-        if (this.looping) return;
         this.clock.start();
         this.physics_clock.start();
-        setAnimationInterval(this._loop_func, Math.floor(1000 / this.fps));
+        this.animation_requested = setAnimationInterval(this._loop_func, Math.floor(1000 / this.fps));
         if (this.physics_fps > 0) {
             this.physics_requested = setInterval(this._physics_loop_func, 1000 / this.physics_fps);
         }
@@ -212,7 +212,11 @@ export class SceneTree {
     }
 
     public start_Tween(tween: Tween) {
-        return this.tween_manager.start_Tween(tween);
+
+        if (this.looping) {
+            return this.tween_manager.start_Tween(tween);
+        }
+        throw new Error('<SceneTree> start_Tween: can not start tween when SceneTree is not looping');
     }
 
     public stop_Tween(tween: Tween) {

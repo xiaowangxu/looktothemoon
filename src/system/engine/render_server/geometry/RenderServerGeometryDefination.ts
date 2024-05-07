@@ -1,6 +1,6 @@
-import { WebGPURenderStateAttributeRowType, type WebGPURenderStateAttributeLayout } from "../../render_state_object/pipeline/WebGPURenderStateAttributeLayout";
+import { WebGPURenderStateAttributeRowType, type WebGPURenderStateAttributeLayout } from "../../../sliverofstraw/render_state_object/pipeline/WebGPURenderStateAttributeLayout";
 
-export enum WebGPURenderElementGeometryAttributeLayoutBuffer {
+export enum RenderServerGeometryAttributeLayoutBuffer {
     Position = 0,
     Normal = 1,
     Tangent = 2,
@@ -11,7 +11,7 @@ export enum WebGPURenderElementGeometryAttributeLayoutBuffer {
     Custom1 = 7,
 }
 
-export enum WebGPURenderElementGeometryAttributeLocation {
+export enum RenderServerGeometryAttributeLocation {
     Position = 0,
     Normal = 1,
     Tangent = 2,
@@ -30,13 +30,13 @@ export enum WebGPURenderElementGeometryAttributeLocation {
     Custom4 = 15,
 }
 
-export const WebGPURenderElementGeometryAttributeLayout: WebGPURenderStateAttributeLayout[] = [
+export const RenderServerGeometryAttributeLayout: WebGPURenderStateAttributeLayout[] = [
     // Position
     {
         stride: 12, // 3 * 4
         per_instance: false,
         rows: [{
-            location: WebGPURenderElementGeometryAttributeLocation.Position,
+            location: RenderServerGeometryAttributeLocation.Position,
             offset: 0,
             type: WebGPURenderStateAttributeRowType.Vector3
         }]
@@ -46,7 +46,7 @@ export const WebGPURenderElementGeometryAttributeLayout: WebGPURenderStateAttrib
         stride: 12, // 3 * 4
         per_instance: false,
         rows: [{
-            location: WebGPURenderElementGeometryAttributeLocation.Normal,
+            location: RenderServerGeometryAttributeLocation.Normal,
             offset: 0,
             type: WebGPURenderStateAttributeRowType.Vector3
         }]
@@ -56,7 +56,7 @@ export const WebGPURenderElementGeometryAttributeLayout: WebGPURenderStateAttrib
         stride: 12, // 3 * 4
         per_instance: false,
         rows: [{
-            location: WebGPURenderElementGeometryAttributeLocation.Tangent,
+            location: RenderServerGeometryAttributeLocation.Tangent,
             offset: 0,
             type: WebGPURenderStateAttributeRowType.Vector3
         }]
@@ -66,7 +66,7 @@ export const WebGPURenderElementGeometryAttributeLayout: WebGPURenderStateAttrib
         stride: 8, // 2 * 4
         per_instance: false,
         rows: [{
-            location: WebGPURenderElementGeometryAttributeLocation.Uv,
+            location: RenderServerGeometryAttributeLocation.Uv,
             offset: 0,
             type: WebGPURenderStateAttributeRowType.Vector2
         }]
@@ -77,17 +77,17 @@ export const WebGPURenderElementGeometryAttributeLayout: WebGPURenderStateAttrib
         per_instance: false,
         rows: [
             {
-                location: WebGPURenderElementGeometryAttributeLocation.Uv2,
+                location: RenderServerGeometryAttributeLocation.Uv2,
                 offset: 0,
                 type: WebGPURenderStateAttributeRowType.Vector2
             },
             {
-                location: WebGPURenderElementGeometryAttributeLocation.Bone,
+                location: RenderServerGeometryAttributeLocation.Bone,
                 offset: 8,
                 type: WebGPURenderStateAttributeRowType.Uint
             },
             {
-                location: WebGPURenderElementGeometryAttributeLocation.Weight,
+                location: RenderServerGeometryAttributeLocation.Weight,
                 offset: 12,
                 type: WebGPURenderStateAttributeRowType.Float
             }
@@ -99,22 +99,22 @@ export const WebGPURenderElementGeometryAttributeLayout: WebGPURenderStateAttrib
         per_instance: false,
         rows: [
             {
-                location: WebGPURenderElementGeometryAttributeLocation.InstanceTransformRow0,
+                location: RenderServerGeometryAttributeLocation.InstanceTransformRow0,
                 offset: 0,
                 type: WebGPURenderStateAttributeRowType.Matrix4Row
             },
             {
-                location: WebGPURenderElementGeometryAttributeLocation.InstanceTransformRow1,
+                location: RenderServerGeometryAttributeLocation.InstanceTransformRow1,
                 offset: 16,
                 type: WebGPURenderStateAttributeRowType.Matrix4Row
             },
             {
-                location: WebGPURenderElementGeometryAttributeLocation.InstanceTransformRow2,
+                location: RenderServerGeometryAttributeLocation.InstanceTransformRow2,
                 offset: 32,
                 type: WebGPURenderStateAttributeRowType.Matrix4Row
             },
             {
-                location: WebGPURenderElementGeometryAttributeLocation.InstanceTransformRow3,
+                location: RenderServerGeometryAttributeLocation.InstanceTransformRow3,
                 offset: 48,
                 type: WebGPURenderStateAttributeRowType.Matrix4Row
             }

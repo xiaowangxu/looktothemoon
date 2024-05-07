@@ -296,7 +296,7 @@ export class OrbitCamera3D extends Node3D {
     }
 
     // rotate
-    public rotate_strength: number = 0.0075;
+    public rotate_strength: number = 0.01;
 
     private rotate(relative: Vector2) {
         if (!this.rotate_enable) return;
@@ -355,7 +355,7 @@ export class OrbitCamera3D extends Node3D {
             if (this.fov_tween !== undefined) {
                 this.get_SceneTree()?.stop_Tween(this.fov_tween);
             }
-            this.fov_tween = new PropertyTweenAdaptor(new InterpolateTween(this.transform_duration, InterpolateTweenTransitionType.Quad, InterpolateTweenEasingType.Out), this.camera, 'fov', fov);
+            this.fov_tween = new PropertyTweenAdaptor(new InterpolateTween(this.transform_duration, InterpolateTweenTransitionType.Sine, InterpolateTweenEasingType.InOut), this.camera, 'fov', fov);
             this.get_SceneTree()?.start_Tween(this.fov_tween);
         }
     }

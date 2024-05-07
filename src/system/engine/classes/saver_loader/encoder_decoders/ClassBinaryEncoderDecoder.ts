@@ -10,7 +10,7 @@ import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { ArrayBuffer as MD5 } from 'spark-md5';
 import type { ClassExchangeData, ClassInstanceData } from "../ClassSaverLoader";
-import { ValueDataType } from "../../ValueDataType";
+import { ValueDataType } from "../../ValueDataTypeDefination";
 import { PackedFloatArray, PackedIndexArray, PackedIntArray, PackedMatrix2Array, PackedMatrix3Array, PackedMatrix4Array, PackedUintArray, PackedVector2Array, PackedVector3Array, PackedVector4Array } from "../../value_wrappers/PackedArray";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 

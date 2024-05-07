@@ -1,7 +1,7 @@
 import { type RefCounted } from "../utils/RefCounted";
 import type { WebGPURenderState } from "./WebGPURenderState";
 
-let id = 0;
+let id = 1;
 
 export abstract class WebGPURenderObject {
 

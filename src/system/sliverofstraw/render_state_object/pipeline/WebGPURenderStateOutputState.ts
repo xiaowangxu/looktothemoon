@@ -1,3 +1,4 @@
+import type { WebGPURenderStateMultiSampleCount } from "../texture/WebGPURenderStateMultiSampleTexture";
 import type { WebGPURenderStateTextureFormat } from "../texture/WebGPURenderStateTexture";
 
 export enum WebGPURenderStateBlendFactor {
@@ -37,7 +38,7 @@ interface WebGPURenderStateProgramOutputState {
 
 export interface WebGPURenderStateOutputState {
     depth_stencil_format: WebGPURenderStateTextureFormat,
-    multi_sample_count: 1 | 4,
+    multi_sample_count: WebGPURenderStateMultiSampleCount,
     alpha_to_coverage?: boolean,
     attachments: WebGPURenderStateProgramOutputState[],
 }

@@ -2,12 +2,18 @@ import { WebGPURenderState } from "@/system/sliverofstraw/WebGPURenderState";
 import { WebGPURenderStateShaderType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateShader";
 import { WebGPURenderStateBufferUniformType, WebGPURenderStateUniformLayout } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformLayout";
 import { Ref } from "@/system/utils/RefCounted";
+import type { Disposable } from "@/system/utils/Type";
 
-export class RenderServerSingleton {
+export class RenderServerSingleton implements Disposable {
 
     public render_state = new WebGPURenderState();
 
     public readonly inited: Promise<boolean>;
+
+    static readonly WorldEnvUniformBindGroupIndex = 0;
+    static readonly LightsUniformBindGroupIndex = 1;
+    static readonly InstanceUniformBindGroupIndex = 2;
+    static readonly UniformBindGroupIndex = 3;
 
     //#region world env uniform
 
@@ -46,22 +52,106 @@ export class RenderServerSingleton {
 
     //#endregion
 
+    //#region lights uniform
+
+    protected readonly lights_uniform_layout_ref: Ref<WebGPURenderStateUniformLayout> = new Ref();
+    public get lights_uniform_layout() { return this.lights_uniform_layout_ref.expect; }
+
+    //#endregion
+
+    //#region instance uniform
+
+    protected readonly instance_uniform_layout_ref: Ref<WebGPURenderStateUniformLayout> = new Ref();
+    public get instance_uniform_layout() { return this.instance_uniform_layout_ref.expect; }
+
+    static readonly InstanceUniformMemoryLayout = WebGPURenderState.RenderStateMemoryLayout({
+        type: 'struct',
+        members: [
+            // transform
+            WebGPURenderStateBufferUniformType.Matrix4,
+            // layer
+            WebGPURenderStateBufferUniformType.Uint,
+            // preserved
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+            WebGPURenderStateBufferUniformType.Uint,
+        ] as const,
+    });
+
+    //#endregion
+
     constructor() {
         this.inited = this.render_state.init();
         this.inited.then(this.init.bind(this));
-        console.log(RenderServerSingleton.WorldEnvUniformCameraMatrixMemoryLayout);
+        console.log(RenderServerSingleton.InstanceUniformMemoryLayout)
     }
 
     private init() {
+        //#region world env uniform
         this.world_env_uniform_layout_ref.value = this.render_state.create_UniformLayout();
         // camera matrix
         this.world_env_uniform_layout_ref.expect.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 0);
         // params
         this.world_env_uniform_layout_ref.expect.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 1);
+        //#endregion
+
+        //#region lights uniform
+        this.lights_uniform_layout_ref.value = this.render_state.create_UniformLayout();
+        //#endregion
+
+        //#region instance uniform
+        this.instance_uniform_layout_ref.value = this.render_state.create_UniformLayout();
+        // transform / layer / preserved
+        this.instance_uniform_layout_ref.expect.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 0, true);
+        //#endregion
     }
 
     public dispose() {
         this.world_env_uniform_layout_ref.clear();
+        this.lights_uniform_layout_ref.clear();
+        this.instance_uniform_layout_ref.clear();
     }
 }
 

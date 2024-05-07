@@ -3,7 +3,10 @@ import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import { WebGPURenderStateTextureDimension, type WebGPURenderStateTextureFormat, type WebGPURenderStateTextureUsage } from "./WebGPURenderStateTexture";
 
 export enum WebGPURenderStateMultiSampleCount {
-    None, MS2, MS4, MS8,
+    None = 1,
+    MS2 = 2,
+    MS4 = 4,
+    MS8 = 8,
 }
 
 export class WebGPURenderStateMultiSampleTexture extends WebGPURenderObjectRefCounted {

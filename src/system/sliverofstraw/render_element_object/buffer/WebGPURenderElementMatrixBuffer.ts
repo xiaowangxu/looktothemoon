@@ -41,10 +41,15 @@ export class WebGPURenderElementMatrix2Buffer extends WebGPURenderElementBuffer<
         }
     }
 
-    public set_Data(data: Matrix2 | Matrix2[], element_offset: number): void {
-        if (Array.isArray(data)) {
+    public set_Data(data: Matrix2 | Matrix2[] | Float32Array, element_offset: number): void {
+        if (data instanceof Float32Array) {
+            const length = data.length;
+            if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementMatrix2Buffer> set_Data: data range out of bound');
+            this._data.set(data, element_offset);
+        }
+        else if (Array.isArray(data)) {
             const count = data.length;
-            if (element_offset < 0 || (element_offset + count) >= this.element_count) throw new Error('<WebGPURenderElementMatrix2Buffer> set_Data: data range out of bound');
+            if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementMatrix2Buffer> set_Data: data range out of bound');
             for (let i = 0, j = element_offset * 4; i < count; i++) {
                 this._data[j++] = data[i].n11;
                 this._data[j++] = data[i].n21;
@@ -117,10 +122,15 @@ export class WebGPURenderElementMatrix3Buffer extends WebGPURenderElementBuffer<
         }
     }
 
-    public set_Data(data: Matrix3 | Matrix3[], element_offset: number): void {
-        if (Array.isArray(data)) {
+    public set_Data(data: Matrix3 | Matrix3[] | Float32Array, element_offset: number): void {
+        if (data instanceof Float32Array) {
+            const length = data.length;
+            if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementMatrix3Buffer> set_Data: data range out of bound');
+            this._data.set(data, element_offset);
+        }
+        else if (Array.isArray(data)) {
             const count = data.length;
-            if (element_offset < 0 || (element_offset + count) >= this.element_count) throw new Error('<WebGPURenderElementMatrix3Buffer> set_Data: data range out of bound');
+            if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementMatrix3Buffer> set_Data: data range out of bound');
             for (let i = 0, j = element_offset * 9; i < count; i++) {
                 this._data[j++] = data[i].n11;
                 this._data[j++] = data[i].n21;
@@ -215,10 +225,15 @@ export class WebGPURenderElementMatrix4Buffer extends WebGPURenderElementBuffer<
         }
     }
 
-    public set_Data(data: Matrix4 | Matrix4[], element_offset: number): void {
-        if (Array.isArray(data)) {
+    public set_Data(data: Matrix4 | Matrix4[] | Float32Array, element_offset: number): void {
+        if (data instanceof Float32Array) {
+            const length = data.length;
+            if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementMatrix4Buffer> set_Data: data range out of bound');
+            this._data.set(data, element_offset);
+        }
+        else if (Array.isArray(data)) {
             const count = data.length;
-            if (element_offset < 0 || (element_offset + count) >= this.element_count) throw new Error('<WebGPURenderElementMatrix4Buffer> set_Data: data range out of bound');
+            if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementMatrix4Buffer> set_Data: data range out of bound');
             for (let i = 0, j = element_offset * 16; i < count; i++) {
                 this._data[j++] = data[i].n11;
                 this._data[j++] = data[i].n21;

@@ -1,10 +1,9 @@
 import type { Rid } from "../../../../Rid";
 import { NodeNotification } from "@/system/engine/nodes/Node";
-import type { ClassReader, ClassRef, ClassWriter } from "../../../../classes/saver_loader/ClassWriterReader";
-import type { GeometryResource } from "../../../../resources/geometry_resources/GeometryResource";
-import { MaterialResource } from "../../../../resources/material_resources/MaterialResource";
 import { GeometryInstance3D } from "./GeometryInstance3D";
 import { Ref, RefMap } from "@/system/utils/RefCounted";
+import type { Geometry3DResource } from "@/system/engine/resources/geometry_3d_resources/Geometry3DResource";
+import type { Material3DResource } from "@/system/engine/resources/material_3d_resources/Material3DResource";
 
 export class MeshInstance3D extends GeometryInstance3D {
 
@@ -12,9 +11,9 @@ export class MeshInstance3D extends GeometryInstance3D {
 
     private mesh_rid: Rid | undefined = undefined;
 
-    private _geometry: Ref<GeometryResource> = new Ref();
+    private _geometry: Ref<Geometry3DResource> = new Ref();
     public get geometry() { return this._geometry.value; }
-    public set geometry(geometry: GeometryResource | undefined) {
+    public set geometry(geometry: Geometry3DResource | undefined) {
         if (this._geometry.value !== geometry) {
             this._geometry.value = geometry;
             if (this.mesh_rid !== undefined) {
@@ -26,9 +25,9 @@ export class MeshInstance3D extends GeometryInstance3D {
         }
     }
 
-    private _material_override: Ref<MaterialResource> = new Ref();
-    public get material(): MaterialResource | undefined { return this._material_override.value; }
-    public set material(material: MaterialResource | undefined) {
+    private _material_override: Ref<Material3DResource> = new Ref();
+    public get material(): Material3DResource | undefined { return this._material_override.value; }
+    public set material(material: Material3DResource | undefined) {
         if (this._material_override.value !== material) {
             this._material_override.value = material;
             if (this.mesh_rid !== undefined) {
@@ -40,8 +39,8 @@ export class MeshInstance3D extends GeometryInstance3D {
         }
     }
 
-    private _surface_materials_map: RefMap<number, MaterialResource> = new RefMap();
-    public set_SurfaceMaterial(surface_idx: number, material: MaterialResource | undefined) {
+    private _surface_materials_map: RefMap<number, Material3DResource> = new RefMap();
+    public set_SurfaceMaterial(surface_idx: number, material: Material3DResource | undefined) {
         if (surface_idx < 0) return;
         if (this._surface_materials_map.set(surface_idx, material)) {
             if (this.mesh_rid !== undefined) {
@@ -166,33 +165,5 @@ export class MeshInstance3D extends GeometryInstance3D {
             }
         }
         super._notification(what);
-    }
-
-    // save / load
-
-    public dump(writer: ClassWriter): void {
-        super.dump(writer);
-        writer.property('geometry', this.geometry);
-        writer.property('material', this.material);
-        if (this._surface_materials_map.size !== 0) {
-            const surface_materials_map = new Map<number, ClassRef>();
-            for (const [id, material] of this._surface_materials_map) {
-                const refid = writer.ref(material);
-                surface_materials_map.set(id, refid);
-            }
-            writer.property('surface_materials', surface_materials_map);
-        }
-    }
-
-    public load(reader: ClassReader): void {
-        super.load(reader);
-        this.geometry = reader.get<GeometryResource>('geometry');
-        this.material = reader.get<MaterialResource>('material');
-        const surface_materials = reader.get<Map<number, ClassRef>>('surface_materials');
-        if (surface_materials !== undefined) {
-            for (const [id, material_ref] of surface_materials) {
-                this.set_SurfaceMaterial(id, reader.get<MaterialResource>(material_ref));
-            }
-        }
     }
 }

@@ -1,166 +1,24 @@
+import { Box3 } from "@/system/fivepebble/geometries/Box3";
+import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
+import type { CameraFrustumLikeCullable } from "@/system/fivepebble/graphics/CameraLike";
+import type { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
+import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
+import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import type { Transformable } from "@/system/fivepebble/linear_algebra/VectorLike";
+import { Ref, RefMap } from "@/system/utils/RefCounted";
+import type { Cloneable, Disposable } from "@/system/utils/Type";
 import { RID, type Rid } from "../../Rid";
-// import type { WebGL2RenderStateTexture } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateTexture";
-// import type { WebGL2RenderStateFrameBuffer } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateFrameBuffer";
-// import { RenderStateTextureType, RenderStateTextureFormat, RenderStateTextureMinFilter, RenderStateTextureMagFilter, RenderStateTextureDataFormat, RenderStateDataType, RenderStateShaderType, RenderStateBufferUsage, RenderStatePrimitiveType, RenderStateUniformType } from "@/system/sliverofstraw/render_state/RenderState";
-// import { WebGL2RenderStateFrameBufferAttachmentPoint } from "@/system/sliverofstraw/webgl2/WebGL2RenderState";
-// import { WebGL2RenderStateFloatUniformSlot } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateUniformSlot";
-// import { RenderDeviceVector2AttributeBuffer, RenderDeviceIndexAttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
-// import type { SceneTree } from "../../SceneTree";
-// import { Ref, RefArray, RefMap } from "@/system/utils/RefCounted";
-// import type { RenderServerGeometry } from "../../render_server/RenderServerGeometry";
-// import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
-// import { Box3 } from "@/system/fivepebble/geometries/Box3";
-// import type { RenderServerMaterial } from "../../render_server/RenderServerMaterial";
-// import { WorldObject } from "../WorldObject";
-// import { GeometryResource } from "../../resources/geometry_resources/GeometryResource";
-// import type { MaterialResource } from "../../resources/material_resources/MaterialResource";
-// import type { Renderer3DQueue } from "../../renderer/renderer_3d/Renderer3DQueue";
-// import type { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
-// import { ConfiguredObject, type Config } from "../../ConfiguredObject";
-// import { Cacher } from "@/system/utils/Cacher";
-// import type { WebGL2RenderStateProgram } from "@/system/sliverofstraw/webgl2/webgl2_render_state_objects/WebGL2RenderStateProgram";
-// import { RenderServerLightType, RenderServerLightsData } from "../../render_server/RenderServerLightData";
-// import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
-// import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
-// import { Camera3 } from "@/system/fivepebble/graphics/Camera3";
-// import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
-// import { RenderServerPlainColorTexture } from "../../render_server/RenderServer";
-// import type { Viewport } from "../../nodes/Node";
-// import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
-// import type { Cloneable } from "@/system/utils/Type";
-// import type { Transformable } from "@/system/fivepebble/linear_algebra/VectorLike";
-// import type { CameraFrustumLikeCullable } from "@/system/fivepebble/graphics/CameraLike";
-// import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
-
-// // #region sky
-
-// const SkyQuadGeometry = new Cacher((config: Config) => {
-//     const quad_position = new RenderDeviceVector2AttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [
-// 	      /* 0 */Vector2.create(-1, 1),			//   1  0 ------ 2
-// 	      /* 1 */Vector2.create(-1, -1),		//   |  |        |
-// 	      /* 2 */Vector2.create(1, 1),			//   |  |        |
-// 	      /* 3 */Vector2.create(1, -1),			//  -1  1 ------ 3
-//         /*                    *///     -1 ------ 1
-//     ]);
-//     const quad_index = new RenderDeviceIndexAttributeBuffer(config.render_server, RenderStateBufferUsage.StaticDraw, [0, 1, 2, 3]);
-//     const quad_surface = config.render_server.create_Geometry();
-//     quad_surface.set_Geometry(RenderStatePrimitiveType.TriangleStrip, { position: quad_position }, quad_index);
-//     return new Ref(quad_surface);
-// });
-
-// const quad_vert_shader_code = `#version 300 es
-// precision highp float;
-
-// layout(location = 0) in vec2 a_position;
-
-// out vec2 v_uv;
-
-// void main() {
-// 	gl_Position = vec4(a_position, 1.0, 1.0);
-// 	v_uv = (a_position + 1.0) / 2.0;
-// }
-// `;
-// const sky_frag_shader_code = `#version 300 es
-// precision highp float;
-
-// const float PI = 3.1415926535;
-// const float TAU = 6.283185307;
-// const float EPSILON = 0.00001;
-
-// in vec2 v_uv;
-
-// uniform float time;
-
-// layout(location = 0) out vec4 o_color;
-
-// // Optical length at zenith for molecules.
-// const float rayleigh_zenith_size = 8.4e3;
-// const float mie_zenith_size = 1.25e3;
-// const vec3 UP = vec3( 0.0, 1.0, 0.0 );
-
-// float henyey_greenstein(float cos_theta, float g) {
-// 	const float k = 0.0795774715459;
-// 	return k * (1.0 - g * g) / (pow(1.0 + g * g - 2.0 * g * cos_theta, 1.5));
-// }
-
-// void main() {
-// 	float theta = (v_uv.x - 0.5) * TAU;
-// 	float gamma = v_uv.y * PI;
-// 	float singamma = sin(gamma);
-// 	vec3 normal = normalize(vec3(singamma * cos(theta), cos(gamma), singamma * sin(theta)));
-	
-// 	float rayleigh = 2.0;
-// 	vec4 rayleigh_color = vec4(0.06, 0.28, 0.6, 1.0);
-// 	float mie  = 0.005;
-// 	float mie_eccentricity = 0.8;
-// 	vec4 mie_color = vec4(0.79, 0.5, 0.49, 1.0);	
-// 	float turbidity = 10.0;
-// 	float sun_disk_scale = 1.0;
-// 	vec4 ground_color = vec4(0.1, 0.07, 0.034, 1.0);
-// 	float exposure = 3.0;
-// 	float date = time / 5.0;
-// 	vec3 LIGHT0_DIRECTION = vec3(cos(date), (sin(date) + 1.0) / 2.0, 0.0);
-// 	float LIGHT0_ENERGY = 1.0;
-// 	float LIGHT0_SIZE = 0.025;
-// 	vec3 LIGHT0_COLOR = vec3(1.0, 1.0, 1.0);
-// 	vec3 EYEDIR = normal;
-
-// 	float zenith_angle = clamp(dot(UP, normalize(LIGHT0_DIRECTION)), -1.0, 1.0 );
-// 	float sun_energy = max(0.0, 1.0 - exp(-((PI * 0.5) - acos(zenith_angle)))) * LIGHT0_ENERGY;
-// 	float sun_fade = 1.0 - clamp(1.0 - exp(LIGHT0_DIRECTION.y), 0.0, 1.0);
-
-// 	// Rayleigh coefficients.
-// 	float rayleigh_coefficient = rayleigh - ( 1.0 * ( 1.0 - sun_fade ) );
-// 	vec3 rayleigh_beta = rayleigh_coefficient * rayleigh_color.rgb * 0.0001;
-// 	// mie coefficients from Preetham
-// 	vec3 mie_beta = turbidity * mie * mie_color.rgb * 0.000434;
-
-// 	// Optical length.
-// 	float zenith = acos(max(0.0, dot(UP, EYEDIR)));
-// 	float optical_mass = 1.0 / (cos(zenith) + 0.15 * pow(93.885 - degrees(zenith), -1.253));
-// 	float rayleigh_scatter = rayleigh_zenith_size * optical_mass;
-// 	float mie_scatter = mie_zenith_size * optical_mass;
-
-// 	// Light extinction based on thickness of atmosphere.
-// 	vec3 extinction = exp(-(rayleigh_beta * rayleigh_scatter + mie_beta * mie_scatter));
-
-// 	// In scattering.
-// 	float cos_theta = dot(EYEDIR, normalize(LIGHT0_DIRECTION));
-
-// 	float rayleigh_phase = (3.0 / (16.0 * PI)) * (1.0 + pow(cos_theta * 0.5 + 0.5, 2.0));
-// 	vec3 betaRTheta = rayleigh_beta * rayleigh_phase;
-
-// 	float mie_phase = henyey_greenstein(cos_theta, mie_eccentricity);
-// 	vec3 betaMTheta = mie_beta * mie_phase;
-
-// 	vec3 Lin = pow(sun_energy * ((betaRTheta + betaMTheta) / (rayleigh_beta + mie_beta)) * (1.0 - extinction), vec3(1.5));
-// 	// Hack from https://github.com/mrdoob/three.js/blob/master/examples/jsm/objects/Sky.js
-// 	Lin *= mix(vec3(1.0), pow(sun_energy * ((betaRTheta + betaMTheta) / (rayleigh_beta + mie_beta)) * extinction, vec3(0.5)), clamp(pow(1.0 - zenith_angle, 5.0), 0.0, 1.0));
-
-// 	// Hack in the ground color.
-// 	Lin  *= mix(ground_color.rgb, vec3(1.0), smoothstep(-0.1, 0.1, dot(UP, EYEDIR)));
-
-// 	// Solar disk and out-scattering.
-// 	float sunAngularDiameterCos = cos(LIGHT0_SIZE * sun_disk_scale);
-// 	float sunAngularDiameterCos2 = cos(LIGHT0_SIZE * sun_disk_scale*0.5);
-// 	float sundisk = smoothstep(sunAngularDiameterCos, sunAngularDiameterCos2, cos_theta);
-// 	vec3 L0 = (sun_energy * extinction) * sundisk * LIGHT0_COLOR;
-
-// 	vec3 color = Lin + L0;
-// 	o_color = vec4(pow(color, vec3(1.0 / (1.2 + (1.2 * sun_fade)))), 1.0);
-// 	o_color.rgb *= exposure;
-// }
-// `;
-
-// const SkyProgramUniform = new Cacher((config: Config) => {
-//     const quad_vert_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Vertex, quad_vert_shader_code).expect();
-//     const quad_frag_shader = config.render_server.render_state.create_Shader(RenderStateShaderType.Fragment, sky_frag_shader_code).expect();
-//     const sky_program = config.render_server.render_state.create_Program(quad_vert_shader, quad_frag_shader).expect();
-//     const uniform_time_slot = config.render_server.render_state.create_ProgramUniform(sky_program, 'time', RenderStateUniformType.Float, 0.0).expect();
-//     return { sky_program: new Ref(sky_program), uniform_time_slot: new Ref(uniform_time_slot) };
-// });
-
-// // #endregion
+import type { RenderServerGeometry } from "../../render_server/geometry/RenderServerGeometry";
+import type { RenderServerMaterial } from "../../render_server/material/RenderServerMaterial";
+import type { Renderer3DQueue } from "../../renderer/renderer_3d/Renderer3DQueue";
+import { WorldObject } from "../WorldObject";
+import type { Geometry3DResource } from "../../resources/geometry_3d_resources/Geometry3DResource";
+import type { SceneTree } from "../../SceneTree";
+import type { Material3DResource } from "../../resources/material_3d_resources/Material3DResource";
+import type { RenderServerRenderer3DQueue } from "../../render_server/renderer3d/RenderServerRenderer3DQueue";
 
 export type Cullable = CameraFrustumLikeCullable<Matrix4, Vector3, Matrix3> & Cloneable<Cullable> & Transformable<Cullable, Vector4, Matrix4>;
 
@@ -168,7 +26,7 @@ export class VisualWorld3DMesh extends WorldObject {
 
     public readonly geometry_ref: Ref<RenderServerGeometry> = new Ref();
     public readonly lod_geometrys_ref: { geometry: Ref<RenderServerGeometry>, distance: number }[] = [];
-    public get has_geometry() { return !this.geometry_ref.is_empty && this.geometry_ref.expect.has_geometry; }
+    public get has_geometry() { return !this.geometry_ref.is_empty }
 
     protected readonly surface_materials_ref: RefMap<number, RenderServerMaterial> = new RefMap();
     public readonly material_override_ref: Ref<RenderServerMaterial> = new Ref();
@@ -190,7 +48,7 @@ export class VisualWorld3DMesh extends WorldObject {
     private cullable_override: Cullable | undefined = undefined;
     public cullable_enlargment: number = 0;
 
-    constructor(config: Config, rid: Rid) {
+    constructor(rid: Rid) {
         super(rid);
     }
 
@@ -314,20 +172,20 @@ export class VisualWorld3DMesh extends WorldObject {
 
     // fill render queue
 
-    public fill_RenderQueue(queue: Renderer3DQueue, camera: Camera3, frustum: Frustum3, screen_size: Vector2): boolean {
+    public fill_RenderQueue(queue: RenderServerRenderer3DQueue, camera: Camera3, frustum: Frustum3, screen_size: Vector2): boolean {
         // cullable test
         if (!this.visible || (this.layer & camera.mask) === 0 || !this.has_geometry) return false;
         const cullable = this.cullable;
         if (this.is_cullable_empty || cullable.cull(camera, frustum, screen_size, this.cullable_enlargment)) return false;
         const sort_distance = cullable.sort_distance_to(camera, this.cullable_enlargment);
         const geometry = this.geometry_ref.expect;
-        if (!geometry.has_surface || !this.has_surface_materials) {
+        if ((geometry.surface_length <= 0) || !this.has_surface_materials) {
             if (this.material_override_ref.is_empty) return false;
-            const vertex_array = geometry.get_Geometry();
-            if (vertex_array !== undefined) queue.add(vertex_array, this.material_override_ref.expect, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer, sort_distance);
+            const vertex_array = geometry.vertex_array_ref.expect;
+            if (vertex_array !== undefined) queue.add(vertex_array, this.material_override_ref.expect, geometry.instance_count, this.global_transform, this.layer, sort_distance);
         }
         else {
-            const surface_count = this.geometry_ref.expect.surface_count;
+            const surface_count = this.geometry_ref.expect.surface_length;
             for (let i = 0; i < surface_count; i++) {
                 let material = this.surface_materials_ref.get(i);
                 if (material === undefined) {
@@ -335,7 +193,7 @@ export class VisualWorld3DMesh extends WorldObject {
                     else material = this.material_override_ref.expect;
                 }
                 const vertex_array_view = geometry.get_Surface(i);
-                if (vertex_array_view !== undefined) queue.add(vertex_array_view, material, geometry.is_indexed, geometry.instance_count, this.global_transform, this.layer, sort_distance);
+                if (vertex_array_view !== undefined) queue.add(vertex_array_view, material, geometry.instance_count, this.global_transform, this.layer, sort_distance);
             }
         }
         return true;
@@ -572,14 +430,13 @@ export class VisualWorld3DMesh extends WorldObject {
 //     public dispose(): void { }
 // }
 
-export class VisualWorld3D {
-    // protected readonly meshes_map: Map<Rid, VisualWorld3DMesh> = new Map();
+export class VisualWorld3D implements Disposable {
+
+    protected readonly meshes_map: Map<Rid, VisualWorld3DMesh> = new Map();
     // protected readonly lights_map: Map<Rid, VisualWorld3DLight> = new Map();
     // protected readonly light_shadows_map: Map<Rid, VisualWorld3DLightShadow> = new Map();
 
-    // public get render_server() { return this.config.render_server; }
-
-    // public get meshes() { return this.meshes_map.values(); }
+    public get meshes() { return this.meshes_map.values(); }
     // public get lights() { return this.lights_map.values(); }
     // public get light_shadows() { return this.light_shadows_map.values(); }
 
@@ -588,45 +445,7 @@ export class VisualWorld3D {
         // return this.meshes_map.size <= 0 && this.lights_map.size <= 0 && this.light_shadows_map.size <= 0;
     }
 
-    // // light shadow maps
-    // public readonly lights_data: Ref<RenderServerLightsData> = new Ref(new RenderServerLightsData(this.render_server, 64, 64));
-    // public readonly shadows_texture: Ref<WebGL2RenderStateTexture> = new Ref(this.render_server.get_PlainColorTexture(RenderServerPlainColorTexture.Empty));
-
-    // public readonly sky_texture: Ref<WebGL2RenderStateTexture> = new Ref();
-    // public readonly sky_frame_buffer: Ref<WebGL2RenderStateFrameBuffer> = new Ref();
-    // private readonly sky_quad_geometry: RenderServerGeometry;
-    // private readonly sky_program: WebGL2RenderStateProgram;
-    // private readonly sky_uniform_time_slot: WebGL2RenderStateFloatUniformSlot;
-
-    // constructor() {
-    //     super();
-    // }
-
-    // private rendered_once: boolean = true;
-    // private sky_rendered: boolean = false;
-
-    // public trigger_BeforeRender(scene_tree: SceneTree) {
-    //     this.rendered_once = false;
-    // }
-
-    // public render(viewport: Viewport) {
-    //     if (!this.rendered_once) {
-    //         this.update_Sky(viewport.get_SceneTree()?.time ?? 0);
-    //     }
-    //     this.rendered_once = true;
-    // }
-
-    // private update_Sky(time: number) {
-    //     if (this.sky_rendered) return;
-    //     // this.sky_rendered = true;
-    //     this.render_server.set_RenderCapabilities(false, false, this.render_server.render_state.gl.ALWAYS, false);
-    //     this.render_server.render_state.set_ViewportProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
-    //     this.render_server.render_state.set_ScissorProxy(0, 0, this.sky_texture.expect.width, this.sky_texture.expect.height);
-    //     this.render_server.render_state.use_FrameBuffer(this.sky_frame_buffer.expect);
-    //     this.sky_uniform_time_slot.set_Value(time);
-    //     this.sky_uniform_time_slot.commit();
-    //     this.render_server.render_state.draw_Elements(this.sky_program, this.sky_quad_geometry.get_Geometry()!, RenderStateDataType.UnsignedInt, 1);
-    // }
+    public trigger_BeforeRender(scene_tree: SceneTree) { }
 
     //#region Mesh
 
@@ -672,26 +491,26 @@ export class VisualWorld3D {
         this.meshes_map.delete(rid);
     }
 
-    public set_MeshGeometry(rid: Rid, geometry: GeometryResource | undefined) {
+    public set_MeshGeometry(rid: Rid, geometry: Geometry3DResource | undefined) {
         const instance = this.get_Mesh(rid);
         if (instance) {
             if (geometry === undefined) {
                 instance.set_Geometry(undefined);
             }
             else {
-                instance.set_Geometry(geometry.geometry);
+                instance.set_Geometry(geometry.render_server_geometry);
             }
         }
     }
 
-    public set_MeshLodGeometry(rid: Rid, distance: number, geometry: GeometryResource | undefined) {
+    public set_MeshLodGeometry(rid: Rid, distance: number, geometry: Geometry3DResource | undefined) {
         const instance = this.get_Mesh(rid);
         if (instance) {
             if (geometry === undefined) {
                 instance.set_LodGeometry(distance, undefined);
             }
             else {
-                instance.set_LodGeometry(distance, geometry.geometry);
+                instance.set_LodGeometry(distance, geometry.render_server_geometry);
             }
         }
     }
@@ -717,26 +536,26 @@ export class VisualWorld3D {
         }
     }
 
-    public set_MeshSurfaceMaterial(rid: Rid, surface_idx: number, material: MaterialResource | undefined) {
+    public set_MeshSurfaceMaterial(rid: Rid, surface_idx: number, material: Material3DResource | undefined) {
         const instance = this.get_Mesh(rid);
         if (instance) {
             if (material === undefined) {
                 instance.set_SurfaceMaterial(surface_idx, undefined);
             }
             else {
-                instance.set_SurfaceMaterial(surface_idx, material.material);
+                instance.set_SurfaceMaterial(surface_idx, material.render_server_material);
             }
         }
     }
 
-    public set_MeshMaterialOverride(rid: Rid, material: MaterialResource | undefined) {
+    public set_MeshMaterialOverride(rid: Rid, material: Material3DResource | undefined) {
         const instance = this.get_Mesh(rid);
         if (instance) {
             if (material === undefined) {
                 instance.set_MaterialOverride(undefined);
             }
             else {
-                instance.set_MaterialOverride(material.material);
+                instance.set_MaterialOverride(material.render_server_material);
             }
         }
     }

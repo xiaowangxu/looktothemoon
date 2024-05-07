@@ -53,10 +53,15 @@ export class WebGPURenderElementIndexBuffer extends WebGPURenderElementBuffer<nu
         }
     }
 
-    public set_Data(data: number | number[], element_offset: number): void {
-        if (Array.isArray(data)) {
+    public set_Data(data: number | number[] | Uint32Array, element_offset: number): void {
+        if (data instanceof Uint32Array) {
+            const length = data.length;
+            if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementIndexBuffer> set_Data: data range out of bound');
+            this._data.set(data, element_offset);
+        }
+        else if (Array.isArray(data)) {
             const count = data.length;
-            if (element_offset < 0 || (element_offset + count) >= this.element_count) throw new Error('<WebGPURenderElementIndexBuffer> set_Data: data range out of bound');
+            if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementIndexBuffer> set_Data: data range out of bound');
             const uint32array = new Uint32Array(this._data.buffer, element_offset * Uint32Array.BYTES_PER_ELEMENT, data.length);
             uint32array.set(data);
         }
@@ -105,10 +110,15 @@ export class WebGPURenderElementUintBuffer extends WebGPURenderElementBuffer<num
         }
     }
 
-    public set_Data(data: number | number[], element_offset: number): void {
-        if (Array.isArray(data)) {
+    public set_Data(data: number | number[] | Uint32Array, element_offset: number): void {
+        if (data instanceof Uint32Array) {
+            const length = data.length;
+            if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementUintBuffer> set_Data: data range out of bound');
+            this._data.set(data, element_offset);
+        }
+        else if (Array.isArray(data)) {
             const count = data.length;
-            if (element_offset < 0 || (element_offset + count) >= this.element_count) throw new Error('<WebGPURenderElementUintBuffer> set_Data: data range out of bound');
+            if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementUintBuffer> set_Data: data range out of bound');
             const uint32array = new Uint32Array(this._data.buffer, element_offset * Uint32Array.BYTES_PER_ELEMENT, data.length);
             uint32array.set(data);
         }
@@ -157,10 +167,15 @@ export class WebGPURenderElementIntBuffer extends WebGPURenderElementBuffer<numb
         }
     }
 
-    public set_Data(data: number | number[], element_offset: number): void {
-        if (Array.isArray(data)) {
+    public set_Data(data: number | number[] | Int32Array, element_offset: number): void {
+        if (data instanceof Int32Array) {
+            const length = data.length;
+            if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementIntBuffer> set_Data: data range out of bound');
+            this._data.set(data, element_offset);
+        }
+        else if (Array.isArray(data)) {
             const count = data.length;
-            if (element_offset < 0 || (element_offset + count) >= this.element_count) throw new Error('<WebGPURenderElementIntBuffer> set_Data: data range out of bound');
+            if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementIntBuffer> set_Data: data range out of bound');
             const uint32array = new Int32Array(this._data.buffer, element_offset * Int32Array.BYTES_PER_ELEMENT, data.length);
             uint32array.set(data);
         }
@@ -209,10 +224,15 @@ export class WebGPURenderElementFloatBuffer extends WebGPURenderElementBuffer<nu
         }
     }
 
-    public set_Data(data: number | number[], element_offset: number): void {
-        if (Array.isArray(data)) {
+    public set_Data(data: number | number[] | Float32Array, element_offset: number): void {
+        if (data instanceof Float32Array) {
+            const length = data.length;
+            if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementFloatBuffer> set_Data: data range out of bound');
+            this._data.set(data, element_offset);
+        }
+        else if (Array.isArray(data)) {
             const count = data.length;
-            if (element_offset < 0 || (element_offset + count) >= this.element_count) throw new Error('<WebGPURenderElementFloatBuffer> set_Data: data range out of bound');
+            if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementFloatBuffer> set_Data: data range out of bound');
             const uint32array = new Float32Array(this._data.buffer, element_offset * Float32Array.BYTES_PER_ELEMENT, data.length);
             uint32array.set(data);
         }

@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { WebGPURenderState } from "./WebGPURenderState";
 import { WebGPURenderStateAttributeRowType } from "./render_state_object/pipeline/WebGPURenderStateAttributeLayout";
@@ -19,7 +21,7 @@ import { WebGPURenderElementIndexBuffer } from "./render_element_object/buffer/W
 import { WebGPURenderElementGeometry } from "./render_element_object/geometry/WebGPURenderElementGeometry";
 import { WebGPURenderElementGeometryAttributeLayoutBuffer } from "./render_element_object/geometry/WebGPURenderElementGeometryDefination";
 import { WebGPURenderElementFrameBuffer } from "./render_element_object/frame_buffer/WebGPURenderElementFrameBuffer";
-import { WebGPURenderElementMaterial, WebGPURenderElementMaterialPass } from "./render_element_object/material/WebGPURenderElementMaterial";
+import { RenderServerMaterial, RenderServerMaterialPass } from "../engine/render_server/material/RenderServerMaterial";
 
 async function init() {
 
@@ -57,7 +59,7 @@ async function init() {
         @location(1) color: vec3f,
     };
 
-    @group(${WebGPURenderElementMaterial.UniformBindGroupIndex}) @binding(0) var<uniform> rotate: f32;
+    @group(${RenderServerMaterial.UniformBindGroupIndex}) @binding(0) var<uniform> rotate: f32;
   
     struct MyVSOutput {
       @builtin(position) position: vec4f,
@@ -75,7 +77,7 @@ async function init() {
         return vsOut;
     }
   
-    @group(${WebGPURenderElementMaterial.UniformBindGroupIndex}) @binding(1) var<uniform> blend_factor: f32;
+    @group(${RenderServerMaterial.UniformBindGroupIndex}) @binding(1) var<uniform> blend_factor: f32;
   
     @fragment
     fn fs_main(v: MyVSOutput) -> @location(0) vec4f {
@@ -90,7 +92,7 @@ async function init() {
         @location(2) test: vec3f,
     };
 
-    @group(${WebGPURenderElementMaterial.UniformBindGroupIndex}) @binding(0) var<uniform> rotate: f32;
+    @group(${RenderServerMaterial.UniformBindGroupIndex}) @binding(0) var<uniform> rotate: f32;
   
     struct MyVSOutput {
       @builtin(position) position: vec4f,
@@ -108,7 +110,7 @@ async function init() {
         return vsOut;
     }
   
-    @group(${WebGPURenderElementMaterial.UniformBindGroupIndex}) @binding(1) var<uniform> blend_factor: f32;
+    @group(${RenderServerMaterial.UniformBindGroupIndex}) @binding(1) var<uniform> blend_factor: f32;
   
     @fragment
     fn fs_main(v: MyVSOutput) -> @location(0) vec4f {
@@ -138,8 +140,8 @@ async function init() {
     uniform_group_0_layout.add_BufferUniform(WebGPURenderStateShaderType.Vertex, 0);
     uniform_group_0_layout.add_BufferUniform(WebGPURenderStateShaderType.Fragment, 1);
 
-    const material_0 = new ReadonlyRef(new WebGPURenderElementMaterial(rs));
-    const material_1 = new ReadonlyRef(new WebGPURenderElementMaterial(rs));
+    const material_0 = new ReadonlyRef(new RenderServerMaterial(rs));
+    const material_1 = new ReadonlyRef(new RenderServerMaterial(rs));
 
     const pipeline_cache_ref = new Ref(new WebGPURenderElementRenderPipelineCache(
         rs,
@@ -257,8 +259,8 @@ async function init() {
     uniform_buffer_1_ref.value = rs.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, 4).expect();
     bind_group_0_ref.expect.set_BufferUniform(1, uniform_buffer_1_ref.expect);
 
-    material_0.expect.set_PipelineUniform(WebGPURenderElementMaterialPass.Solid, pipeline_cache_ref.expect, undefined);
-    material_1.expect.set_PipelineUniform(WebGPURenderElementMaterialPass.Solid, pipeline_cache_ref.expect, undefined);
+    material_0.expect.set_PipelineUniform(RenderServerMaterialPass.Solid, pipeline_cache_ref.expect, undefined);
+    material_1.expect.set_PipelineUniform(RenderServerMaterialPass.Solid, pipeline_cache_ref.expect, undefined);
 
     const frame_buffer_ref = new Ref(new WebGPURenderElementFrameBuffer(rs));
 
@@ -306,15 +308,15 @@ async function init() {
         frame_buffer_ref.expect.refresh_CanvasTextureView();
         const command_encoder = rs.device.createCommandEncoder();
         const render_pass_encoder = command_encoder.beginRenderPass(frame_buffer_ref.expect.frame_buffer_desc);
-        render_pass_encoder.setBindGroup(WebGPURenderElementMaterial.WorldEnvUniformBindGroupIndex, bind_group_empty_ref.expect.binding_group);
-        render_pass_encoder.setBindGroup(WebGPURenderElementMaterial.LightsUniformBindGroupIndex, bind_group_empty_ref.expect.binding_group);
-        render_pass_encoder.setBindGroup(WebGPURenderElementMaterial.GlobalUniformBindGroupIndex, bind_group_empty_ref.expect.binding_group);
-        render_pass_encoder.setBindGroup(WebGPURenderElementMaterial.UniformBindGroupIndex, bind_group_0_ref.expect.binding_group);
+        render_pass_encoder.setBindGroup(RenderServerMaterial.WorldEnvUniformBindGroupIndex, bind_group_empty_ref.expect.binding_group);
+        render_pass_encoder.setBindGroup(RenderServerMaterial.LightsUniformBindGroupIndex, bind_group_empty_ref.expect.binding_group);
+        render_pass_encoder.setBindGroup(RenderServerMaterial.GlobalUniformBindGroupIndex, bind_group_empty_ref.expect.binding_group);
+        render_pass_encoder.setBindGroup(RenderServerMaterial.UniformBindGroupIndex, bind_group_0_ref.expect.binding_group);
         const s = (time % 3.0) > 1.5;
         const geometry = s ? geometry_1 : geometry_0;
         const vertex_array = geometry.vertex_array_ref.expect;
         const material = s ? material_0.expect : material_1.expect;
-        const pipeline = material.get_PipelineUniform(WebGPURenderElementMaterialPass.Solid, vertex_array, frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual);
+        const pipeline = material.get_PipelineUniform(RenderServerMaterialPass.Solid, vertex_array, frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual);
         if (pipeline) {
             render_pass_encoder.setPipeline(pipeline.pipeline.pipeline);
             vertex_array.bind_Buffers(render_pass_encoder);

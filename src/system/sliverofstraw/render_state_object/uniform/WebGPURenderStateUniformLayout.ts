@@ -50,7 +50,7 @@ export class WebGPURenderStateUniformLayout extends WebGPURenderObjectRefCounted
     protected _layout: GPUBindGroupLayout | undefined = undefined;
     public get layout() { return this.flush(); }
 
-    public add_Storage(readonly: boolean, visibility: WebGPURenderStateShaderType, binding: number): void {
+    public add_Storage(readonly: boolean, visibility: WebGPURenderStateShaderType, binding: number, dynamic_offset: boolean = false): void {
         if (this._layout !== undefined) throw new Error('<WebGPURenderStateUniformLayout> add_Storage: can not mutate built layout');
         this.entries.push({
             type: WebGPURenderStateUniformBindingType.StorageBuffer,
@@ -58,11 +58,12 @@ export class WebGPURenderStateUniformLayout extends WebGPURenderObjectRefCounted
             visibility: visibility,
             buffer: {
                 type: readonly ? 'read-only-storage' : 'storage',
+                hasDynamicOffset: dynamic_offset,
             }
         });
     }
 
-    public add_BufferUniform(visibility: WebGPURenderStateShaderType, binding: number): void {
+    public add_BufferUniform(visibility: WebGPURenderStateShaderType, binding: number, dynamic_offset: boolean = false): void {
         if (this._layout !== undefined) throw new Error('<WebGPURenderStateUniformLayout> add_BufferUniform: can not mutate built layout');
         this.entries.push({
             type: WebGPURenderStateUniformBindingType.Buffer,
@@ -70,6 +71,7 @@ export class WebGPURenderStateUniformLayout extends WebGPURenderObjectRefCounted
             visibility: visibility,
             buffer: {
                 type: 'uniform',
+                hasDynamicOffset: dynamic_offset,
             }
         });
         this._layout = undefined;

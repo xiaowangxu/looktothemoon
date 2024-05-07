@@ -33,7 +33,7 @@ export abstract class Camera3D extends Node3D {
 
     public abstract get_Camera(): Camera3;
 
-    public abstract update_ViewportSize(size: Readonly<Vector2>): void;
+    public abstract update_ViewportSize(width: number, height: number): void;
 
     public _notification(what: NodeNotification): void {
         switch (what) {

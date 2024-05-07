@@ -22,7 +22,8 @@ import { MouseMotionInputEvent } from "../inputs/events/mouse_events/MouseMotion
 import type { Color } from "@/system/fivepebble/graphics/Color";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { Rid } from "../Rid";
-import { RenderServerViewport } from "../render_server/RenderServerViewport";
+import { RenderServerViewport } from "../render_server/viewport/RenderServerViewport";
+import type { RenderServerRenderer3D } from "../render_server/renderer3d/RenderServerRenderer3D";
 
 export enum NodeNotification {
     ExitingTree,
@@ -46,7 +47,7 @@ export enum NodeNotification {
     Dispose,
 }
 
-type NodeConstructor<T> = { new(): T };
+type NodeConstructor<T extends Node> = { new(): T };
 
 export class Node extends ClassBase {
     public static readonly class_name: string = "Node";
@@ -257,6 +258,7 @@ export class Node extends ClassBase {
     }
 
     // node public apis
+
     public add_Child(node: Node) {
         this.add_ChildInternal(node);
     }
@@ -318,6 +320,7 @@ export class Node extends ClassBase {
     }
 
     // scriptable
+
     public _dispose() {
     }
 
@@ -387,69 +390,26 @@ export class Viewport extends Node {
     public readonly action_event_manager: ViewportActionInputEventManager;
     private readonly input_manager: ViewportInputManager;
 
-    //#region render state
-
-    public render_priority: number = 0;
-
-    private readonly _renderer_3d: Ref<Renderer3D> = new Ref();
-    public get renderer_3d() { return this._renderer_3d.value; }
-    public set renderer_3d(renderer: Renderer3D | undefined) {
-        if (this._renderer_3d.value !== renderer) {
-            this._renderer_3d.value = renderer;
-            if (renderer !== undefined) {
-                renderer.set_Size(this.size);
-            }
-        }
-    }
-
-    public transparent: boolean = false;
-
-    public use_sky: boolean = false;
-
-    private readonly _background_color: Color = Vector4.create(0.9, 0.9, 0.9, 1);
-    public get background_color(): Color {
-        return this._background_color.clone();
-    }
-    public get_BackgroundColor(target: Color) {
-        return target.copy(this._background_color);
-    }
-    public set background_color(color: Color) {
-        if (!this._background_color.equal(color)) {
-            this._background_color.copy(color);
-        }
-    }
-
-    //#endregion
-
-    //#region render viewport
+    //#region render
 
     public readonly canvas: HTMLCanvasElement;
-    private readonly render_server_viewport: RenderServerViewport;
+    protected readonly render_server_viewport: RenderServerViewport;
 
+    private readonly _renderer_3d: Ref<RenderServerRenderer3D> = new Ref();
+    public set renderer_3d(renderer: RenderServerRenderer3D | undefined) {
+        if (this._renderer_3d.value !== renderer) {
+            this._renderer_3d.value = renderer;
+        }
+    }
+
+    public render_priority: number = 0;
+    public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
     public get raw_pixel_ratio() { return this.render_server_viewport.raw_pixel_ratio; }
     public get scale() { return this.render_server_viewport.scale; }
     public get pixel_ratio() { return this.render_server_viewport.pixel_ratio; }
-
-    private readonly _size: Vector2 = Vector2.new;
-    private is_size_dirty: boolean = false;
-    public get size(): Vector2 {
-        return this._size.clone();
-    }
-    public get_Size(target: Vector2) {
-        return target.copy(this._size);
-    }
-    public set size(size: Vector2) {
-        if (!this._size.equal(size)) {
-            this._size.copy(size);
-            if (!this._renderer_3d.is_empty) this._renderer_3d.expect.set_Size(this._size);
-            this.signal_resized.trigger(this.size);
-            this.is_size_dirty = true;
-        }
-    }
-
-    public debug: boolean = false;
-
-    public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
+    public get size(): Vector2 { return this.render_server_viewport.raw_size; }
+    public set size(size: Vector2) { this.render_server_viewport.set_RawSize(size.x, size.y); }
+    public get_Size(target: Vector2) { return this.render_server_viewport.get_RawSize(target); }
 
     //#endregion
 
@@ -568,7 +528,6 @@ export class Viewport extends Node {
 
     //#endregion
 
-    // signals
     public readonly signal_before_render: SignalEmitter<() => void> = new SignalEmitter();
     public readonly signal_after_render: SignalEmitter<() => void> = new SignalEmitter();
     public readonly signal_resized: SignalEmitter<(size: Vector2) => void> = new SignalEmitter();
@@ -695,7 +654,6 @@ export class Viewport extends Node {
             }
             this.camera_3d = camera;
             this.camera_3d._current = true;
-            this.is_size_dirty = true;
         }
     }
 
@@ -703,7 +661,6 @@ export class Viewport extends Node {
         if (this.camera_3d === camera) {
             this.camera_3d._current = false;
             this.camera_3d = undefined;
-            this.is_size_dirty = true;
         }
     }
 
@@ -739,8 +696,6 @@ export class Viewport extends Node {
         }
     }
 
-    //#endregion
-
     public get_RenderableWorld3D(): World3D | undefined {
         if (this.world_3d !== undefined) return this.world_3d;
         const parent = this.get_Parent();
@@ -750,16 +705,14 @@ export class Viewport extends Node {
         return undefined;
     }
 
-    // process
+    //#endregion
 
     public trigger_BeforeRender(): void {
         const camera_3d = this.get_Camera3D();
         if (camera_3d !== undefined) {
+            const size = this.render_server_viewport.get_RawSize(Viewport.#tmp_vector2_0);
             camera_3d._notification(NodeNotification.SetupCamera);
-            if (this.is_size_dirty) {
-                camera_3d.update_ViewportSize(this.size);
-                this.is_size_dirty = false;
-            }
+            camera_3d.update_ViewportSize(size.x, size.y);
         }
     }
 
@@ -767,13 +720,13 @@ export class Viewport extends Node {
         if (this._renderer_3d.is_empty) return;
         if (this.update_mode === ViewportUpdateMode.Never) return;
         const once = this.update_mode === ViewportUpdateMode.Once;
+        if (once) this.update_mode = ViewportUpdateMode.Never;
         this.signal_before_render.trigger();
         const world_3d = this.get_RenderableWorld3D();
         const camera_3d = this.get_Camera3D();
-        const scene_tree = this.get_SceneTree();
-        if (camera_3d !== undefined && world_3d !== undefined && scene_tree !== undefined) {
-            // world_3d.visual_world.render(this);
-            this._renderer_3d.expect.render(world_3d, this, once);
+        const time = this.get_SceneTree()!.time;
+        if (camera_3d !== undefined && world_3d !== undefined) {
+            this._renderer_3d.expect.render(world_3d, camera_3d.get_Camera(), this.render_server_viewport, time, once);
         }
         this.signal_after_render.trigger();
     }

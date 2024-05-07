@@ -47,3 +47,7 @@ enum Ordering {
 export interface PartialEquailty<T> {
     compare(other: T): Ordering;
 }
+
+export interface Disposable {
+    dispose(): void;
+}

@@ -25,8 +25,7 @@ export class OrthographicCamera3D extends Camera3D {
         return this.camera_orth;
     }
 
-    public update_ViewportSize(size: Vector2) {
-        let { x: width, y: height } = size;
+    public update_ViewportSize(width: number, height: number) {
         if (height === 0) width = height = 1;
         this.camera_orth.aspect = width / height;
     }

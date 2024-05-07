@@ -1,4 +1,3 @@
-import type { Box3 } from "@/system/fivepebble/geometries/Box3";
 import type { ClassReader, ClassWriter } from "../../../../classes/saver_loader/ClassWriterReader";
 import { VisualInstance3D } from "../VisualInstance3D";
 import type { Cullable } from "@/system/engine/worlds/world3ds/VisualWorld3D";

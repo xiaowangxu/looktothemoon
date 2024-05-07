@@ -212,12 +212,12 @@ export class RefArray<T extends RefCountedLike> {
         this.refs.splice(start, count);
     }
 
-    public clear() {
+    public clear(resize_to_zero: boolean = true) {
         const length = this.length;
         for (let i = 0; i < length; i++) {
             this.ref(i, undefined);
         }
-        this.refs = [];
+        if (resize_to_zero) this.refs = [];
     }
 }
 

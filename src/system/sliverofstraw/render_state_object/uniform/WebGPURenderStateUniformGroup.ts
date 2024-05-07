@@ -5,6 +5,7 @@ import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import type { WebGPURenderStateBuffer } from "../buffer/WebGPURenderStateBuffer";
 import type { WebGPURenderStateTextureView } from "../texture/WebGPURenderStateTextureView";
 import { WebGPURenderStateUniformBindingType } from "./WebGPURenderStateUniformLayout";
+import type { WebGPURenderStateBufferView } from "../buffer/WebGPURenderStateBufferView";
 
 export type WebGPURenderStateUniformGroupEntry = { type: WebGPURenderStateUniformBindingType, binding: number };
 
@@ -14,8 +15,8 @@ interface WebGPURenderStateUniformGroupEntryGeneric<T extends WebGPURenderStateU
 }
 
 export type WebGPURenderStateUniformGroupResourceEntry =
-    WebGPURenderStateUniformGroupEntryGeneric<WebGPURenderStateUniformBindingType.StorageBuffer, WebGPURenderStateBuffer> |
-    WebGPURenderStateUniformGroupEntryGeneric<WebGPURenderStateUniformBindingType.Buffer, WebGPURenderStateBuffer> |
+    WebGPURenderStateUniformGroupEntryGeneric<WebGPURenderStateUniformBindingType.StorageBuffer, WebGPURenderStateBuffer | WebGPURenderStateBufferView> |
+    WebGPURenderStateUniformGroupEntryGeneric<WebGPURenderStateUniformBindingType.Buffer, WebGPURenderStateBuffer | WebGPURenderStateBufferView> |
     WebGPURenderStateUniformGroupEntryGeneric<WebGPURenderStateUniformBindingType.Texture, WebGPURenderStateTextureView> |
     WebGPURenderStateUniformGroupEntryGeneric<WebGPURenderStateUniformBindingType.Sampler, WebGPURenderStateTextureSampler>;
 
@@ -46,16 +47,16 @@ export class WebGPURenderStateUniformGroup extends WebGPURenderObjectRefCounted 
         const entry = this.entries[binding];
         if (entry.type !== WebGPURenderStateUniformBindingType.StorageBuffer) throw new Error('<WebGPURenderStateUniformGroup> set_Storage: binding is not type of StorageBuffer');
         entry.ref.value = buffer;
-        entry.resource = { buffer: buffer.buffer };
+        entry.resource = { buffer: buffer.buffer, offset: buffer.offset, size: buffer.length };
         this._binding_group = undefined;
     }
 
-    public set_BufferUniform(binding: number, buffer: WebGPURenderStateBuffer): void {
+    public set_BufferUniform(binding: number, buffer: WebGPURenderStateBuffer | WebGPURenderStateBufferView): void {
         if (binding < 0 || binding >= this.entries.length) throw new Error('<WebGPURenderStateUniformGroup> set_BufferUniform: binding out of bound');
         const entry = this.entries[binding];
         if (entry.type !== WebGPURenderStateUniformBindingType.Buffer) throw new Error('<WebGPURenderStateUniformGroup> set_BufferUniform: binding is not type of Buffer');
         entry.ref.value = buffer;
-        entry.resource = { buffer: buffer.buffer };
+        entry.resource = { buffer: buffer.buffer, offset: buffer.offset, size: buffer.length };
         this._binding_group = undefined;
     }
 

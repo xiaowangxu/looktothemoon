@@ -1,17 +1,17 @@
 import { ReadonlyRef, RefArray } from "@/system/utils/RefCounted";
-import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
-import { WebGPURenderElementVertexArray, type WebGPURenderElementVertexArrayBuffer } from "../vertex_array/WebGPURenderElementVertexArray";
-import type { WebGPURenderState } from "../../WebGPURenderState";
-import { WebGPURenderElementVertexArrayView } from "../vertex_array/WebGPURenderElementVertexArrayView";
-import type { WebGPURenderElementGeometryAttributeLayoutBuffer } from "./WebGPURenderElementGeometryDefination";
+import { WebGPURenderElementVertexArray, type WebGPURenderElementVertexArrayBuffer } from "../../../sliverofstraw/render_element_object/vertex_array/WebGPURenderElementVertexArray";
+import { WebGPURenderElementVertexArrayView } from "../../../sliverofstraw/render_element_object/vertex_array/WebGPURenderElementVertexArrayView";
+import type { RenderServerGeometryAttributeLayoutBuffer } from "./RenderServerGeometryDefination";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import type { Self } from "@/system/utils/Type";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
-import { WebGPURenderStatePrimitiveType } from "../../render_state_object/pipeline/WebGPURenderStateProgramState";
+import { WebGPURenderStatePrimitiveType } from "../../../sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
+import { RenderServer } from "../RenderServer";
+import { RenderServerObjectRefCounted } from "../RenderServerObject";
 
-export class WebGPURenderElementGeometry extends WebGPURenderObjectRefCounted {
+export class RenderServerGeometry extends RenderServerObjectRefCounted {
 
-    public readonly vertex_array_ref: ReadonlyRef<WebGPURenderElementVertexArray>;
+    public readonly vertex_array_ref: ReadonlyRef<WebGPURenderElementVertexArray> = new ReadonlyRef(new WebGPURenderElementVertexArray(RenderServer.render_state, WebGPURenderStatePrimitiveType.Triangles, 0, 0));
     public readonly vertex_array_view_refs: RefArray<WebGPURenderElementVertexArrayView> = new RefArray();
 
     public get surface_length() { return this.vertex_array_view_refs.length; }
@@ -31,11 +31,6 @@ export class WebGPURenderElementGeometry extends WebGPURenderObjectRefCounted {
         this.singal_bbox_changed.trigger(this._bbox);
     }
 
-    constructor(render_state: WebGPURenderState) {
-        super(render_state);
-        this.vertex_array_ref = new ReadonlyRef(new WebGPURenderElementVertexArray(this.render_state, WebGPURenderStatePrimitiveType.Triangles, 0, 0));
-    }
-
     public clear_Geometry(clear_surfaces: boolean = true) {
         this.vertex_array_ref.expect.clear_Buffers();
         this.vertex_array_ref.expect.clear_Index();
@@ -49,7 +44,7 @@ export class WebGPURenderElementGeometry extends WebGPURenderObjectRefCounted {
         this.vertex_array_view_refs.clear();
     }
 
-    public set_AttributeBuffer(attribute: WebGPURenderElementGeometryAttributeLayoutBuffer, buffer: WebGPURenderElementVertexArrayBuffer) {
+    public set_AttributeBuffer(attribute: RenderServerGeometryAttributeLayoutBuffer, buffer: WebGPURenderElementVertexArrayBuffer) {
         this.vertex_array_ref.expect.set_Buffer(attribute, buffer);
     }
 
@@ -66,7 +61,11 @@ export class WebGPURenderElementGeometry extends WebGPURenderObjectRefCounted {
     }
 
     public add_Surface(offset: number, length: number) {
-        this.vertex_array_view_refs.push(new WebGPURenderElementVertexArrayView(this.render_state, this.vertex_array_ref.expect, offset, length));
+        this.vertex_array_view_refs.push(new WebGPURenderElementVertexArrayView(RenderServer.render_state, this.vertex_array_ref.expect, offset, length));
+    }
+
+    public get_Surface(index: number) {
+        return this.vertex_array_view_refs.get(index);
     }
 
     public set_BBox(box: Box3) {
