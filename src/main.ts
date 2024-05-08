@@ -36,9 +36,13 @@ VFS.touch(fspath('user://'));
     (window as any).VFS = VFS;
     (window as any).fspath = fspath;
     (window as any).scenetree = createEditor();
+    (window as any).dispose = () => {
+        (window as any).scenetree?.dispose();
+        (window as any).scenetree = undefined;
+    }
     (window as any).create = () => {
         (window as any).scenetree?.dispose();
-        // (window as any).scenetree = createEditor();
+        (window as any).scenetree = createEditor();
     };
 })();
 

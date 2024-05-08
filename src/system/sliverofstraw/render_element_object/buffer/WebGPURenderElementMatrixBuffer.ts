@@ -34,8 +34,9 @@ export class WebGPURenderElementMatrix2Buffer extends WebGPURenderElementBuffer<
                 this._data[j++] = option[i].n12;
                 this._data[j++] = option[i].n22;
             }
-            this.buffer_ref = new ReadonlyRef(this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect());
-            const mapped_array = new Float32Array(this.buffer.buffer.getMappedRange());
+            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect();
+            this.buffer_ref = new ReadonlyRef(buffer);
+            const mapped_array = new Float32Array(data);
             mapped_array.set(this._data);
             this.buffer.buffer.unmap();
         }
@@ -115,8 +116,9 @@ export class WebGPURenderElementMatrix3Buffer extends WebGPURenderElementBuffer<
                 this._data[j++] = option[i].n23;
                 this._data[j++] = option[i].n33;
             }
-            this.buffer_ref = new ReadonlyRef(this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect());
-            const mapped_array = new Float32Array(this.buffer.buffer.getMappedRange());
+            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect();
+            this.buffer_ref = new ReadonlyRef(buffer);
+            const mapped_array = new Float32Array(data);
             mapped_array.set(this._data);
             this.buffer.buffer.unmap();
         }
@@ -218,8 +220,9 @@ export class WebGPURenderElementMatrix4Buffer extends WebGPURenderElementBuffer<
                 this._data[j++] = option[i].n34;
                 this._data[j++] = option[i].n44;
             }
-            this.buffer_ref = new ReadonlyRef(this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect());
-            const mapped_array = new Float32Array(this.buffer.buffer.getMappedRange());
+            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect();
+            this.buffer_ref = new ReadonlyRef(buffer);
+            const mapped_array = new Float32Array(data);
             mapped_array.set(this._data);
             this.buffer.buffer.unmap();
         }

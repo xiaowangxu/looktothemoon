@@ -1,4 +1,4 @@
-export enum WebGPURenderStateAttributeRowType {
+export enum WebGPURenderStateAttributeType {
     Bool = 'uint32',
     Int = 'sint32',
     Uint = 'uint32',
@@ -23,6 +23,6 @@ export interface WebGPURenderStateAttributeLayout {
     rows: {
         location: number,
         offset: number,
-        type: WebGPURenderStateAttributeRowType,
+        type: WebGPURenderStateAttributeType,
     }[]
 }

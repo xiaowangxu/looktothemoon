@@ -1,4 +1,4 @@
-import { RefArray, type RefCountedLike } from "@/system/utils/RefCounted";
+import { RefArray, type RefCountedLike, type WillRefed } from "@/system/utils/RefCounted";
 import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, WebGPURenderStateFacing, WebGPURenderStatePrimitiveType, type WebGPURenderStateProgramState } from "../../../sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
 import type { WebGPURenderStateUniformGroup } from "../../../sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformGroup";
 import { WebGPURenderElementRenderPipelineCache, type WebGPURenderElementRenderPipelineCacheGetterFn, type WebGPURenderElementVertexArrayLike } from "../../../sliverofstraw/render_element_object/pipeline/WebGPURenderElementRenderPipelineCache";
@@ -11,6 +11,8 @@ import type { WebGPURenderStateUniformLayout } from "@/system/sliverofstraw/rend
 import type { WebGPURenderStateAttributeLayout } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateAttributeLayout";
 import { WebGPURenderStateTextureFormat } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTexture";
 import { RenderServerObjectRefCounted } from "../RenderServerObject";
+import type { WebGPURenderStateBuffer, WebGPURenderStateBufferData } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
+import type { WebGPURenderStateBufferView } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBufferView";
 
 export enum RenderServerMaterialPass {
     Depth,
@@ -21,7 +23,7 @@ export enum RenderServerMaterialPass {
 
 type RenderServerMaterialUsablePass = Exclude<RenderServerMaterialPass, RenderServerMaterialPass.Max>;
 
-class RenderServerMaterialShaderItem implements RefCountedLike {
+class RenderServerMaterialPipelineUniformItem implements RefCountedLike {
 
     public readonly pipeline_cache: WebGPURenderElementRenderPipelineCache;
     public readonly uniform: WebGPURenderStateUniformGroup | undefined;
@@ -40,6 +42,42 @@ class RenderServerMaterialShaderItem implements RefCountedLike {
         this.pipeline_cache.unref();
         this.uniform?.unref();
     }
+
+    release(): void {
+        this.pipeline_cache.release();
+        this.uniform?.release();
+    }
+}
+
+class RenderServerMaterialUniformBufferItem implements RefCountedLike {
+
+    public readonly buffer: WebGPURenderStateBuffer | WebGPURenderStateBufferView;
+    public data: WebGPURenderStateBufferData;
+    public changed: boolean = true;
+
+    constructor(buffer: WebGPURenderStateBuffer, data: WebGPURenderStateBufferData) {
+        this.buffer = buffer;
+        this.data = data;
+    }
+
+    public commit() {
+        if (this.changed) {
+            this.changed = false;
+            this.buffer.update_Data(0, this.data);
+        }
+    }
+
+    ref(): void {
+        this.buffer.ref();
+    }
+
+    unref(): void {
+        this.buffer.unref();
+    }
+
+    release(): void {
+        this.buffer.release();
+    }
 }
 
 type RenderServerMaterialPipelineUniformTarget = { pipeline: WebGPURenderStateRenderPipeline, uniform: WebGPURenderStateUniformGroup | undefined };
@@ -54,11 +92,13 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
 
     public is_transparent: boolean = false;
 
-    protected readonly pipeline_uniform_refs: RefArray<RenderServerMaterialShaderItem> = new RefArray(RenderServerMaterialPass.Max);
+    protected readonly pipeline_uniform_refs: RefArray<RenderServerMaterialPipelineUniformItem> = new RefArray(RenderServerMaterialPass.Max);
+
+    protected readonly uniform_buffer_refs: RefArray<RenderServerMaterialUniformBufferItem> = new RefArray(0);
 
     //#region create Pipeline Cache
 
-    static #const_program_state_pipeline_cache: [WebGPURenderStateProgramState, WebGPURenderStateProgramState, WebGPURenderStateProgramState] = [
+    static ProgramStatePipelineTemplates: [WebGPURenderStateProgramState, WebGPURenderStateProgramState, WebGPURenderStateProgramState] = [
         // RenderServerMaterialPass.Depth
         {
             primitive_type: WebGPURenderStatePrimitiveType.Triangles,
@@ -91,7 +131,7 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
         }
     ];
 
-    static #const_output_state_pipeline_cache: [WebGPURenderStateOutputState, WebGPURenderStateOutputState, WebGPURenderStateOutputState] = [
+    static OutputStatePipelineTemplates: [WebGPURenderStateOutputState, WebGPURenderStateOutputState, WebGPURenderStateOutputState] = [
         // RenderServerMaterialPass.Depth
         {
             depth_stencil_format: WebGPURenderStateTextureFormat.D32F,
@@ -145,11 +185,11 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
                     alpha_dst_factor: WebGPURenderStateBlendFactor.OneMinusSrc,
                     blend: true,
                 },
-                // normal
-                {
-                    format: WebGPURenderStateTextureFormat.RGBA16F,
-                    blend: false,
-                }
+                // // normal
+                // {
+                //     format: WebGPURenderStateTextureFormat.RGBA16F,
+                //     blend: false,
+                // }
             ],
         }
     ];
@@ -158,8 +198,8 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
         return new WebGPURenderElementRenderPipelineCache(
             RenderServer.render_state,
             fn,
-            RenderServerMaterial.#const_program_state_pipeline_cache[pass],
-            RenderServerMaterial.#const_output_state_pipeline_cache[pass],
+            RenderServerMaterial.ProgramStatePipelineTemplates[pass],
+            RenderServerMaterial.OutputStatePipelineTemplates[pass],
             uniform_layout !== undefined ?
                 [RenderServer.world_env_uniform_layout, RenderServer.lights_uniform_layout, RenderServer.instance_uniform_layout, uniform_layout] :
                 [RenderServer.world_env_uniform_layout, RenderServer.lights_uniform_layout, RenderServer.instance_uniform_layout],
@@ -170,7 +210,7 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
     //#endregion
 
     public set_PipelineUniform(pass: RenderServerMaterialUsablePass, pipeline_cache: WebGPURenderElementRenderPipelineCache, uniform: WebGPURenderStateUniformGroup | undefined) {
-        this.pipeline_uniform_refs.set(pass, new RenderServerMaterialShaderItem(pipeline_cache, uniform));
+        this.pipeline_uniform_refs.set(pass, new RenderServerMaterialPipelineUniformItem(pipeline_cache, uniform));
     }
 
     public get_PipelineUniform(pass: RenderServerMaterialPass, vertex_array: WebGPURenderElementVertexArrayLike, frame_buffer: WebGPURenderElementFrameBuffer, depth_compare_func: WebGPURenderStateDepthCompareFunc): Temp<RenderServerMaterialPipelineUniformTarget> | undefined {
@@ -185,7 +225,35 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
         return tmp;
     }
 
+    public add_UniformBuffer(buffer: WebGPURenderStateBuffer, data: WebGPURenderStateBufferData) {
+        this.uniform_buffer_refs.push(new RenderServerMaterialUniformBufferItem(buffer, data));
+    }
+
+    public set_UniformBufferData(index: number, data: WebGPURenderStateBufferData) {
+        const item = this.uniform_buffer_refs.get(index);
+        if (item !== undefined) {
+            item.data = data;
+        }
+    }
+
+    public trigger_UniformBufferChange(index: number) {
+        const item = this.uniform_buffer_refs.get(index);
+        if (item !== undefined) {
+            item.changed = true;
+        }
+    }
+
+    public update_UniformBuffers() {
+        for (let i = 0, l = this.uniform_buffer_refs.length; i < l; i++) {
+            const item = this.uniform_buffer_refs.get(i);
+            if (item !== undefined) {
+                item.commit();
+            }
+        }
+    }
+
     public dispose(): void {
         this.pipeline_uniform_refs.clear();
+        this.uniform_buffer_refs.clear();
     }
 }

@@ -1,4 +1,4 @@
-import { RefArray, type RefCountedLike } from "@/system/utils/RefCounted";
+import { Ref, RefArray, type RefCountedLike } from "@/system/utils/RefCounted";
 import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import type { WebGPURenderStateRenderPipeline } from "../../render_state_object/pipeline/WebGPURenderStateRenderPipeline";
 import type { WebGPURenderElementVertexArray } from "../vertex_array/WebGPURenderElementVertexArray";
@@ -57,6 +57,10 @@ class WebGPURenderElementRenderPipelineCacheItem implements RefCountedLike {
 
     unref(): void {
         this.pipeline.unref();
+    }
+
+    release(): void {
+        this.pipeline.release();
     }
 }
 
@@ -129,6 +133,9 @@ export class WebGPURenderElementRenderPipelineCache extends WebGPURenderObjectRe
                 return bitmask_check(bitmask, index);
             }),
         ).expect();
+        // program will be used to create a pipeline, but will not be internal refed, so we need to mannually release it
+        // release the program
+        program.release();
         this.pipeline_refs.unshift(new WebGPURenderElementRenderPipelineCacheItem(pipeline, bitmask, depth_bias, depth_bias_slope_scale));
         return pipeline;
     }

@@ -24,5 +24,9 @@ export abstract class RenderServerObjectRefCounted extends RenderServerObject im
         if (this._ref_count === 0) this.dispose();
     }
 
+    public release() {
+        if (this._ref_count === 0) this.dispose();
+    }
+
     public abstract dispose(): void;
 }

@@ -1,4 +1,4 @@
-import { WebGPURenderStateAttributeRowType, type WebGPURenderStateAttributeLayout } from "../../../sliverofstraw/render_state_object/pipeline/WebGPURenderStateAttributeLayout";
+import { WebGPURenderStateAttributeType, type WebGPURenderStateAttributeLayout } from "../../../sliverofstraw/render_state_object/pipeline/WebGPURenderStateAttributeLayout";
 
 export enum RenderServerGeometryAttributeLayoutBuffer {
     Position = 0,
@@ -38,7 +38,7 @@ export const RenderServerGeometryAttributeLayout: WebGPURenderStateAttributeLayo
         rows: [{
             location: RenderServerGeometryAttributeLocation.Position,
             offset: 0,
-            type: WebGPURenderStateAttributeRowType.Vector3
+            type: WebGPURenderStateAttributeType.Vector3
         }]
     },
     // Normal
@@ -48,7 +48,7 @@ export const RenderServerGeometryAttributeLayout: WebGPURenderStateAttributeLayo
         rows: [{
             location: RenderServerGeometryAttributeLocation.Normal,
             offset: 0,
-            type: WebGPURenderStateAttributeRowType.Vector3
+            type: WebGPURenderStateAttributeType.Vector3
         }]
     },
     // Tangent
@@ -58,7 +58,7 @@ export const RenderServerGeometryAttributeLayout: WebGPURenderStateAttributeLayo
         rows: [{
             location: RenderServerGeometryAttributeLocation.Tangent,
             offset: 0,
-            type: WebGPURenderStateAttributeRowType.Vector3
+            type: WebGPURenderStateAttributeType.Vector3
         }]
     },
     //  Uv
@@ -68,7 +68,7 @@ export const RenderServerGeometryAttributeLayout: WebGPURenderStateAttributeLayo
         rows: [{
             location: RenderServerGeometryAttributeLocation.Uv,
             offset: 0,
-            type: WebGPURenderStateAttributeRowType.Vector2
+            type: WebGPURenderStateAttributeType.Vector2
         }]
     },
     //  BoneWeight
@@ -79,17 +79,17 @@ export const RenderServerGeometryAttributeLayout: WebGPURenderStateAttributeLayo
             {
                 location: RenderServerGeometryAttributeLocation.Uv2,
                 offset: 0,
-                type: WebGPURenderStateAttributeRowType.Vector2
+                type: WebGPURenderStateAttributeType.Vector2
             },
             {
                 location: RenderServerGeometryAttributeLocation.Bone,
                 offset: 8,
-                type: WebGPURenderStateAttributeRowType.Uint
+                type: WebGPURenderStateAttributeType.Uint
             },
             {
                 location: RenderServerGeometryAttributeLocation.Weight,
                 offset: 12,
-                type: WebGPURenderStateAttributeRowType.Float
+                type: WebGPURenderStateAttributeType.Float
             }
         ]
     },
@@ -101,22 +101,22 @@ export const RenderServerGeometryAttributeLayout: WebGPURenderStateAttributeLayo
             {
                 location: RenderServerGeometryAttributeLocation.InstanceTransformRow0,
                 offset: 0,
-                type: WebGPURenderStateAttributeRowType.Matrix4Row
+                type: WebGPURenderStateAttributeType.Matrix4Row
             },
             {
                 location: RenderServerGeometryAttributeLocation.InstanceTransformRow1,
                 offset: 16,
-                type: WebGPURenderStateAttributeRowType.Matrix4Row
+                type: WebGPURenderStateAttributeType.Matrix4Row
             },
             {
                 location: RenderServerGeometryAttributeLocation.InstanceTransformRow2,
                 offset: 32,
-                type: WebGPURenderStateAttributeRowType.Matrix4Row
+                type: WebGPURenderStateAttributeType.Matrix4Row
             },
             {
                 location: RenderServerGeometryAttributeLocation.InstanceTransformRow3,
                 offset: 48,
-                type: WebGPURenderStateAttributeRowType.Matrix4Row
+                type: WebGPURenderStateAttributeType.Matrix4Row
             }
         ]
     }

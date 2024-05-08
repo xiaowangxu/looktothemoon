@@ -57,12 +57,12 @@ export class RenderServerViewport extends RenderServerObject implements Disposab
 
     //#endregion
 
-     //#region World Env Uniform
+    //#region Lights Uniform
 
-     protected readonly lights_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(RenderServer.lights_uniform_layout).expect());
-     public get lights_uniform_group() { return this.lights_uniform_group_ref.expect; }
- 
-     //#endregion
+    protected readonly lights_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(RenderServer.lights_uniform_layout).expect());
+    public get lights_uniform_group() { return this.lights_uniform_group_ref.expect; }
+
+    //#endregion
 
     constructor(canvas: HTMLCanvasElement) {
         super();
@@ -225,26 +225,11 @@ export class RenderServerViewport extends RenderServerObject implements Disposab
         this.world_env_uniform_params_buffer_ref.expect.update_Data(0, this.world_env_uniform_params_array_buffer);
     }
 
-    public render() {
-        const encoder = RenderServer.render_state.device.createCommandEncoder();
-        const render_pass = encoder.beginRenderPass({
-            colorAttachments: [
-                {
-                    clearValue: [0, 0, 0, 1],
-                    loadOp: 'clear',
-                    storeOp: 'store',
-                    view: this.canvas_texture_view.texture_view,
-                }
-            ]
-        });
-        render_pass.end();
-        RenderServer.render_state.device.queue.submit([encoder.finish()]);
-    }
-
     public dispose() {
         this.canvas_texture_view_ref.clear();
         this.world_env_uniform_group_ref.clear();
         this.world_env_uniform_camera_matrix_buffer_ref.clear();
         this.world_env_uniform_params_buffer_ref.clear();
+        this.lights_uniform_group_ref.clear();
     }
 }

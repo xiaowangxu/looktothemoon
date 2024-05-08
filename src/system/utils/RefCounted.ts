@@ -2,15 +2,31 @@ export interface RefCounted {
     get ref_count(): number;
     ref(): void;
     unref(): void;
+    /**
+     * try release an RefCounted item
+     * 
+     * you may use this if you're creating some temp / internal RefCounted objects which will not be used later
+     * 
+     */
+    release(): void;
 }
 
 export interface RefCountedLike {
     ref(): void;
     unref(): void;
+    /**
+     * try release an RefCountedLike item
+     * 
+     * you may use this if you're creating some temp / internal RefCountedLike objects which will not be used later
+     * 
+     */
+    release(): void;
 }
 
 export type Refed<T> = T extends Ref<infer V> ? Ref<V> : (T extends RefCounted ? Ref<T> : T);
 export type Unrefed<T> = T extends Ref<infer V> ? V : T;
+
+export type WillRefed<T extends RefCountedLike> = T;
 
 export class Ref<T extends RefCountedLike> {
     private ref: T | undefined = undefined;
@@ -463,7 +479,80 @@ export class WeakRef<T extends RefCounted> {
     constructor(item: T | undefined = undefined) {
         this.value = item;
     }
+
+    public force_get() {
+        return this.ref;
+    }
+
+    public force_set(item: T | undefined) {
+        this.ref = item;
+    }
 }
+
+export class RefCacher<T extends RefCounted> {
+
+    private readonly getter: () => T;
+
+    private readonly ref: Ref<T> = new Ref();
+
+    constructor(getter: () => T) {
+        this.getter = getter;
+    }
+
+    public get(): T {
+        let value = this.ref.value;
+        if (value === undefined) {
+            value = this.getter();
+            this.ref.value = value;
+        }
+        return value;
+    }
+
+    public forget() {
+        this.ref.value = undefined;
+    }
+
+    public memorize(value: T) {
+        this.ref.value = value;
+    }
+
+    public clear() {
+        this.forget();
+    }
+}
+
+// //#region defer clear ref
+
+// const DeferClearRefs: Set<RefCountedLike> = new Set();
+// let defer_clear_refs_queued = false;
+
+// function clear_defer_refs() {
+//     defer_clear_refs_queued = false;
+//     if (DeferClearRefs.size <= 0) return;
+//     for (const ref of DeferClearRefs) {
+//         ref.ref();
+//         ref.unref();
+//     }
+//     DeferClearRefs.clear();
+// }
+
+// /**
+//  * try release an RefCounted item in idle callback
+//  *
+//  * you may use this if you're creating some temp / internal RefCounted objects which will not be used later
+//  *
+//  * calling this will try to release the item, after main thread, and will not dispose those in usage
+//  * @param item RefCounted / RefCountedLike item to be released
+//  */
+// export function defer_clear_ref(item: RefCountedLike) {
+//     DeferClearRefs.add(item);
+//     if (!defer_clear_refs_queued) {
+//         defer_clear_refs_queued = true;
+//         setTimeout(clear_defer_refs, 0);
+//     }
+// }
+
+// //#endregion
 
 /*
 class RefTest implements RefCounted {

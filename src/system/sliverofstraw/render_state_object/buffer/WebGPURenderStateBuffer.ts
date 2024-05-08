@@ -25,6 +25,11 @@ export enum WebGPURenderStateBufferUsage {
     MapWrite = 0x0002,
 }
 
+export enum WebGPURenderStateBufferMapMode {
+    Read = GPUMapMode.READ,
+    Write = GPUMapMode.WRITE,
+}
+
 export type WebGPURenderStateBufferData = ArrayBuffer | ArrayBufferView;
 
 export class WebGPURenderStateBuffer extends WebGPURenderObjectRefCounted {
@@ -44,6 +49,15 @@ export class WebGPURenderStateBuffer extends WebGPURenderObjectRefCounted {
         this.usage = usage;
         this.length = length;
         this.buffer = buffer;
+    }
+
+    public async map(mode: WebGPURenderStateBufferMapMode, offset?: number, length?: number) {
+        await this.buffer.mapAsync(mode, offset, length);
+        return this.buffer.getMappedRange(offset, length);
+    }
+
+    public unmap() {
+        this.buffer.unmap();
     }
 
     public update_Data(dst_offset: number, data: WebGPURenderStateBufferData, data_element_offset?: number | undefined, data_element_length?: number | undefined): void {

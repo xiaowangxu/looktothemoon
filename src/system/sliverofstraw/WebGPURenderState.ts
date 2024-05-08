@@ -534,13 +534,16 @@ export class WebGPURenderState {
 
     //#region buffer
 
-    public create_Buffer(type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, length: number, map: boolean = false): Result<WebGPURenderStateBuffer, Error> {
+    public create_Buffer(type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, length: number, map?: false): Result<WebGPURenderStateBuffer, Error>;
+    public create_Buffer(type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, length: number, map?: true): Result<{ buffer: WebGPURenderStateBuffer, data: ArrayBuffer }, Error>;
+    public create_Buffer(type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, length: number, map: boolean = false): Result<{ buffer: WebGPURenderStateBuffer, data: ArrayBuffer }, Error> | Result<WebGPURenderStateBuffer, Error> {
         const buffer = this.device.createBuffer({
             size: length,
             usage: type | usage,
             mappedAtCreation: map,
         });
-        return Result.Ok(new WebGPURenderStateBuffer(this, type, usage, length, buffer));
+        if (map) return Result.Ok({ buffer: new WebGPURenderStateBuffer(this, type, usage, length, buffer), data: buffer.getMappedRange() });
+        else return Result.Ok(new WebGPURenderStateBuffer(this, type, usage, length, buffer));
     }
 
     public create_BufferView(buffer: WebGPURenderStateBuffer, offset: number, length: number | undefined = undefined): Result<WebGPURenderStateBufferView, Error> {

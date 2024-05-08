@@ -46,8 +46,9 @@ export class WebGPURenderElementIndexBuffer extends WebGPURenderElementBuffer<nu
             this.element_count = option.length;
             this.bytes_count = this.element_count * Uint32Array.BYTES_PER_ELEMENT;
             this._data = new Uint32Array(option);
-            this.buffer_ref = new ReadonlyRef(this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect());
-            const mapped_array = new Uint32Array(this.buffer.buffer.getMappedRange());
+            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect();
+            this.buffer_ref = new ReadonlyRef(buffer);
+            const mapped_array = new Uint32Array(data);
             mapped_array.set(this._data);
             this.buffer.buffer.unmap();
         }
@@ -103,8 +104,9 @@ export class WebGPURenderElementUintBuffer extends WebGPURenderElementBuffer<num
             this.element_count = option.length;
             this.bytes_count = this.element_count * Uint32Array.BYTES_PER_ELEMENT;
             this._data = new Uint32Array(option);
-            this.buffer_ref = new ReadonlyRef(this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect());
-            const mapped_array = new Uint32Array(this.buffer.buffer.getMappedRange());
+            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect();
+            this.buffer_ref = new ReadonlyRef(buffer);
+            const mapped_array = new Uint32Array(data);
             mapped_array.set(this._data);
             this.buffer.buffer.unmap();
         }
@@ -160,8 +162,9 @@ export class WebGPURenderElementIntBuffer extends WebGPURenderElementBuffer<numb
             this.element_count = option.length;
             this.bytes_count = this.element_count * Int32Array.BYTES_PER_ELEMENT;
             this._data = new Int32Array(option);
-            this.buffer_ref = new ReadonlyRef(this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect());
-            const mapped_array = new Int32Array(this.buffer.buffer.getMappedRange());
+            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect();
+            this.buffer_ref = new ReadonlyRef(buffer);
+            const mapped_array = new Int32Array(data);
             mapped_array.set(this._data);
             this.buffer.buffer.unmap();
         }
@@ -217,8 +220,9 @@ export class WebGPURenderElementFloatBuffer extends WebGPURenderElementBuffer<nu
             this.element_count = option.length;
             this.bytes_count = this.element_count * Float32Array.BYTES_PER_ELEMENT;
             this._data = new Float32Array(option);
-            this.buffer_ref = new ReadonlyRef(this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect());
-            const mapped_array = new Float32Array(this.buffer.buffer.getMappedRange());
+            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect();
+            this.buffer_ref = new ReadonlyRef(buffer);
+            const mapped_array = new Float32Array(data);
             mapped_array.set(this._data);
             this.buffer.buffer.unmap();
         }

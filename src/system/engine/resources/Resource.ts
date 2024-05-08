@@ -30,6 +30,10 @@ export abstract class ResourceRefCounted extends ResourceBase implements RefCoun
             this.dispose();
         }
     }
+
+    public release() {
+        if (this._ref_count === 0) this.dispose();
+    }
 }
 
 export abstract class Resource extends ResourceRefCounted {

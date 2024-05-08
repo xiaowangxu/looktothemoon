@@ -77,6 +77,14 @@ export class ViewportDomContainer extends Node {
                 }
                 break;
             }
+            case NodeNotification.Dispose: {
+                if (this.viewport_node !== undefined && this.dom !== undefined) {
+                    this.dom.removeChild(this.viewport_node.canvas);
+                    this.viewport_node = undefined;
+                    this.dom = undefined;
+                }
+                break;
+            }
         }
         super._notification(what);
     }

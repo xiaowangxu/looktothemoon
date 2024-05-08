@@ -88,7 +88,7 @@ export function createEditor() {
 
     const mesh2 = new MeshInstance3D();
     mesh2.geometry = box_geo;
-    mesh2.material = box_mat;
+    mesh2.material = new TestMaterial3DResource();
     mesh2.local_position = Vector3.create(200, 0, 0);
     mesh2.local_scale = Vector3.create(100, 100, 100);
     World.add_Child(mesh2);
@@ -103,6 +103,26 @@ export function createEditor() {
         Infinity
     );
 
+    const tween2 = new TweenLoop(
+        new PingPongTweenAdaptor(
+            new PropertyTweenAdaptor(
+                new InterpolateTween(2.0, InterpolateTweenTransitionType.Sine, InterpolateTweenEasingType.InOut),
+                box_mat, 'opacity', 0.0
+            )
+        ),
+        Infinity
+    );
+
+    const tween3 = new TweenLoop(
+        new PingPongTweenAdaptor(
+            new PropertyTweenAdaptor(
+                new InterpolateTween(4.0, InterpolateTweenTransitionType.Sine, InterpolateTweenEasingType.InOut),
+                box_mat, 'shift', -2.0
+            )
+        ),
+        Infinity
+    );
+
 
     // EditorViewport.signal_input.connect((evt, pro) => {
     //     if (!pro && evt instanceof MouseMotionInputEvent) {
@@ -112,6 +132,8 @@ export function createEditor() {
 
     EditorSceneTree.start_Loop(Infinity, 60);
     EditorSceneTree.start_Tween(tween);
+    EditorSceneTree.start_Tween(tween2);
+    EditorSceneTree.start_Tween(tween3);
 
     return EditorSceneTree;
 }

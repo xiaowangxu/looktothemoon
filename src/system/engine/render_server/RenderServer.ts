@@ -125,7 +125,6 @@ export class RenderServerSingleton implements Disposable {
     constructor() {
         this.inited = this.render_state.init();
         this.inited.then(this.init.bind(this));
-        console.log(RenderServerSingleton.InstanceUniformMemoryLayout)
     }
 
     private init() {

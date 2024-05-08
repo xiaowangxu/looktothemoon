@@ -2,7 +2,7 @@
 
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { WebGPURenderState } from "./WebGPURenderState";
-import { WebGPURenderStateAttributeRowType } from "./render_state_object/pipeline/WebGPURenderStateAttributeLayout";
+import { WebGPURenderStateAttributeType } from "./render_state_object/pipeline/WebGPURenderStateAttributeLayout";
 import { WebGPURenderStateMultiSampleCount, type WebGPURenderStateMultiSampleTexture } from "./render_state_object/texture/WebGPURenderStateMultiSampleTexture";
 import { ReadonlyRef, Ref } from "@/system/utils/RefCounted";
 import type { WebGPURenderStateTextureView } from "./render_state_object/texture/WebGPURenderStateTextureView";
@@ -170,7 +170,7 @@ async function init() {
                 stride: 3 * 4, // 3 floats, 4 bytes each
                 per_instance: false,
                 rows: [
-                    { location: 0, offset: 0, type: WebGPURenderStateAttributeRowType.Vector3 },
+                    { location: 0, offset: 0, type: WebGPURenderStateAttributeType.Vector3 },
                 ],
             },
             // colors
@@ -178,7 +178,7 @@ async function init() {
                 stride: 3 * 4, // 3 floats, 4 bytes each
                 per_instance: false,
                 rows: [
-                    { location: 1, offset: 0, type: WebGPURenderStateAttributeRowType.Vector3 },
+                    { location: 1, offset: 0, type: WebGPURenderStateAttributeType.Vector3 },
                 ],
             },
             // test
@@ -186,7 +186,7 @@ async function init() {
                 stride: 3 * 4, // 3 floats, 4 bytes each
                 per_instance: false,
                 rows: [
-                    { location: 2, offset: 0, type: WebGPURenderStateAttributeRowType.Vector3 },
+                    { location: 2, offset: 0, type: WebGPURenderStateAttributeType.Vector3 },
                 ],
             },
         ])
