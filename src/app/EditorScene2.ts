@@ -15,6 +15,8 @@ import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds
 import { RenderServerRenderer3D } from "@/system/engine/render_server/renderer3d/RenderServerRenderer3D";
 import { TestMaterial3DResource } from "@/system/engine/resources/material_3d_resources/TestMaterial3DResource";
 import { InterpolateTween, InterpolateTweenEasingType, InterpolateTweenTransitionType, PingPongTweenAdaptor, PropertyTweenAdaptor, TweenLoop } from "@/system/engine/Tween";
+import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import { WebGPURenderStateCullMode } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
 
 const bg_color = Color.create(0.25, 0.25, 0.25).linear_rgb;
 
@@ -77,51 +79,70 @@ export function createEditor() {
     ]));
 
     const box_geo = new BoxGeometry3DResource();
-    const box_mat = new TestMaterial3DResource();
+
+    const box_mat1 = new TestMaterial3DResource();
+    box_mat1.color = Vector4.create(1.0, 0.0, 0.0, 1.0);
+    box_mat1.cull_mode = WebGPURenderStateCullMode.None;
     const mesh = new MeshInstance3D();
     mesh.geometry = box_geo;
-    mesh.material = box_mat;
     mesh.local_position = Vector3.create(0, 0, 0);
     mesh.local_scale = Vector3.create(100, 100, 100);
     World.add_Child(mesh);
 
-
     const mesh2 = new MeshInstance3D();
     mesh2.geometry = box_geo;
-    mesh2.material = new TestMaterial3DResource();
+    const box_mat2 = new TestMaterial3DResource();
+    box_mat2.cull_mode = WebGPURenderStateCullMode.None;
+    box_mat2.color = Vector4.create(0.0, 1.0, 0.0, 0.01);
+    mesh2.material = box_mat2;
     mesh2.local_position = Vector3.create(200, 0, 0);
     mesh2.local_scale = Vector3.create(100, 100, 100);
     World.add_Child(mesh2);
 
-    const tween = new TweenLoop(
-        new PingPongTweenAdaptor(
-            new PropertyTweenAdaptor(
-                new InterpolateTween(2.0, InterpolateTweenTransitionType.Sine, InterpolateTweenEasingType.InOut),
-                mesh2, 'local_position', Vector3.create(200, 200, 200)
-            )
-        ),
-        Infinity
-    );
+    const mesh3 = new MeshInstance3D();
+    mesh3.geometry = box_geo;
+    const box_mat3 = new TestMaterial3DResource();
+    box_mat3.cull_mode = WebGPURenderStateCullMode.None;
+    box_mat3.color = Vector4.create(0.0, 0.0, 1.0, 0.5);
+    mesh3.material = box_mat3;
+    mesh3.local_position = Vector3.create(400, 0, 0);
+    mesh3.local_scale = Vector3.create(100, 100, 100);
+    World.add_Child(mesh3);
+
+    mesh.set_SurfaceMaterial(0, box_mat1);
+    mesh.set_SurfaceMaterial(1, box_mat1);
+    mesh.set_SurfaceMaterial(4, box_mat3);
+    mesh.set_SurfaceMaterial(5, box_mat3);
+
+    // const tween = new TweenLoop(
+    //     new PingPongTweenAdaptor(
+    //         new PropertyTweenAdaptor(
+    //             new InterpolateTween(2.0, InterpolateTweenTransitionType.Sine, InterpolateTweenEasingType.InOut),
+    //             mesh2, 'local_position', Vector3.create(200, 200, 200)
+    //         )
+    //     ),
+    //     Infinity
+    // );
 
     const tween2 = new TweenLoop(
         new PingPongTweenAdaptor(
             new PropertyTweenAdaptor(
                 new InterpolateTween(2.0, InterpolateTweenTransitionType.Sine, InterpolateTweenEasingType.InOut),
-                box_mat, 'opacity', 0.0
+                box_mat2, 'color', Vector4.create(0.0, 1.0, 0.0, 0.9995)
             )
         ),
         Infinity
     );
 
-    const tween3 = new TweenLoop(
-        new PingPongTweenAdaptor(
-            new PropertyTweenAdaptor(
-                new InterpolateTween(4.0, InterpolateTweenTransitionType.Sine, InterpolateTweenEasingType.InOut),
-                box_mat, 'shift', -2.0
-            )
-        ),
-        Infinity
-    );
+    // const tween3 = new TweenLoop(
+    //     new PingPongTweenAdaptor(
+    //         new PropertyTweenAdaptor(
+    //             new InterpolateTween(4.0, InterpolateTweenTransitionType.Sine, InterpolateTweenEasingType.InOut),
+    //             box_mat, 'shift', -2.0
+    //         )
+    //     ),
+    //     Infinity
+    // );
 
 
     // EditorViewport.signal_input.connect((evt, pro) => {
@@ -131,9 +152,9 @@ export function createEditor() {
     // });
 
     EditorSceneTree.start_Loop(Infinity, 60);
-    EditorSceneTree.start_Tween(tween);
+    // EditorSceneTree.start_Tween(tween);
     EditorSceneTree.start_Tween(tween2);
-    EditorSceneTree.start_Tween(tween3);
+    // EditorSceneTree.start_Tween(tween3);
 
     return EditorSceneTree;
 }

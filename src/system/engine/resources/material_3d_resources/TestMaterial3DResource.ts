@@ -8,11 +8,11 @@ import { WebGPURenderState } from "@/system/sliverofstraw/WebGPURenderState";
 import { WebGPURenderStateBufferUniformType } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformLayout";
 import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 import { clamp } from "@/system/fivepebble/Scalar";
+import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 
 const TestMaterial3DResourceUniformLayout = new RefCacher(() => {
     const layout = RenderServer.render_state.create_UniformLayout();
     layout.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 0, false);
-    layout.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 1, false);
     return layout;
 });
 
@@ -46,10 +46,6 @@ const TestMaterial3DResourceSolidPipelineCache = new RefCacher(() => {
                 layer: u32,
             }
 
-            struct Uniform1 {
-                shift: f32,
-            };
-        
             struct VertexOutput {
                 @builtin(position) position: vec4f,
                 @location(0) normal: vec3f,
@@ -59,12 +55,11 @@ const TestMaterial3DResourceSolidPipelineCache = new RefCacher(() => {
             @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(0) var<uniform> world_env_uniform_camera_matrix: WorldEnvUniformCameraMatrix; 
             @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
             @group(${RenderServerSingleton.InstanceUniformBindGroupIndex}) @binding(0) var<uniform> instance_uniform: InstanceUniform; 
-            @group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(1) var<uniform> mat_uniform_1: Uniform1; 
         
             @vertex
             fn vs_main(attri: Attributes) -> VertexOutput {
                 var out: VertexOutput;
-                var _world = instance_uniform.transform * vec4(attri.position + vec3f(mat_uniform_1.shift, 0.0, 0.0), 1.0f);
+                var _world = instance_uniform.transform * vec4(attri.position, 1.0f);
                 var _world_in_view = world_env_uniform_camera_matrix.camera_view * _world;
                 out.position = world_env_uniform_camera_matrix.camera_proj * _world_in_view;
                 var _model_view = world_env_uniform_camera_matrix.camera_view * instance_uniform.transform;
@@ -73,8 +68,8 @@ const TestMaterial3DResourceSolidPipelineCache = new RefCacher(() => {
                 return out;
             }
 
-            struct Uniform0 {
-                opacity: f32,
+            struct Uniform {
+                color: vec4f,
             };
 
             struct FragmentOutput {
@@ -82,12 +77,12 @@ const TestMaterial3DResourceSolidPipelineCache = new RefCacher(() => {
                 @location(1) normal: vec4f,
             };
 
-            @group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(0) var<uniform> mat_uniform_0: Uniform0; 
+            @group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(0) var<uniform> mat_uniform: Uniform; 
         
             @fragment
             fn fs_main(vary: VertexOutput) -> FragmentOutput {
                 var out: FragmentOutput;
-                out.color = vec4f(vary.uv * mat_uniform_0.opacity, 0.0, 1.0);
+                out.color = mat_uniform.color;
                 out.normal = vec4f(0.0, 0.0, 1.0, 1.0);
                 return out;
             }
@@ -151,16 +146,25 @@ const TestMaterial3DResourceTransparentPipelineCache = new RefCacher(() => {
                 return out;
             }
 
+            struct Uniform {
+                color: vec4f,
+            };
+
             struct FragmentOutput {
                 @location(0) accum: vec4f,
                 @location(1) reveal: f32,
             };
+
+            @group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(0) var<uniform> mat_uniform: Uniform; 
         
             @fragment
             fn fs_main(vary: VertexOutput) -> FragmentOutput {
                 var out: FragmentOutput;
-                out.accum = vec4f(vary.uv, 0.0, 1.0);
-                out.reveal = 1.0;
+                var color = mat_uniform.color;
+                var z = vary.position.z;
+                var weight: f32 = max(min(1.0, max(max(color.r, color.g), color.b) * color.a), color.a) * clamp(0.03 / (1e-5 + pow(z / 200, 4.0)), 1e-2, 3e3);
+                out.accum = vec4f(color.rgb * color.a, color.a) * weight;
+                out.reveal = color.a;
                 return out;
             }
             `;
@@ -176,58 +180,42 @@ export class TestMaterial3DResource extends Material3DResource {
     static UniformMemoryLayout = WebGPURenderState.RenderStateMemoryLayout({
         type: 'struct',
         members: [
-            WebGPURenderStateBufferUniformType.Float,
+            WebGPURenderStateBufferUniformType.Vector4,
         ],
     });
 
     private readonly uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(TestMaterial3DResourceUniformLayout.get()).expect());
-    private readonly uniform_buffer_0_ref = new ReadonlyRef(RenderServer.render_state.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, TestMaterial3DResource.UniformMemoryLayout.size, false).expect());
-    private readonly uniform_buffer_1_ref = new ReadonlyRef(RenderServer.render_state.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, TestMaterial3DResource.UniformMemoryLayout.size, false).expect());
-    private readonly unifrom_array_buffer_0 = new ArrayBuffer(TestMaterial3DResource.UniformMemoryLayout.size);
-    private readonly unifrom_array_buffer_1 = new ArrayBuffer(TestMaterial3DResource.UniformMemoryLayout.size);
+    private readonly uniform_buffer_ref = new ReadonlyRef(RenderServer.render_state.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, TestMaterial3DResource.UniformMemoryLayout.size, false).expect());
+    private readonly unifrom_array_buffer = new ArrayBuffer(TestMaterial3DResource.UniformMemoryLayout.size);
 
-    private _opacity: number = 1.0;
-    public get opacity() { return this._opacity; }
-    public set opacity(opacity: number) {
-        opacity = clamp(opacity, 0.0, 1.0);
-        if (opacity !== this._opacity) {
-            this._opacity = opacity;
-            this.update_UniformBuffer();
-        }
-    }
-
-    private _shift: number = 0.0;
-    public get shift() { return this._shift; }
-    public set shift(shift: number) {
-        if (shift !== this._shift) {
-            this._shift = shift;
-            this.update_UniformBuffer();
-        }
+    private _color = Vector4.new;
+    public get color() { return this._color.clone(); }
+    public set color(color: Vector4) {
+        this._color.copy(color);
+        this.render_server_material.is_transparent = this._color.w < 1;
+        this.update_UniformBuffer();
     }
 
     constructor() {
         super();
-        this.uniform_group_ref.expect.set_BufferUniform(0, this.uniform_buffer_0_ref.expect);
-        this.uniform_group_ref.expect.set_BufferUniform(1, this.uniform_buffer_1_ref.expect);
+        this.uniform_group_ref.expect.set_BufferUniform(0, this.uniform_buffer_ref.expect);
         this.render_server_material.set_PipelineUniform(RenderServerMaterialPass.Solid, TestMaterial3DResourceSolidPipelineCache.get(), this.uniform_group_ref.expect);
         this.render_server_material.set_PipelineUniform(RenderServerMaterialPass.Transparent, TestMaterial3DResourceTransparentPipelineCache.get(), this.uniform_group_ref.expect);
-        this.render_server_material.add_UniformBuffer(this.uniform_buffer_0_ref.expect, this.unifrom_array_buffer_0);
-        this.render_server_material.add_UniformBuffer(this.uniform_buffer_1_ref.expect, this.unifrom_array_buffer_1);
+        this.render_server_material.add_UniformBuffer(this.uniform_buffer_ref.expect, this.unifrom_array_buffer);
         this.update_UniformBuffer();
     }
 
     private update_UniformBuffer() {
-        const float32array0 = new Float32Array(this.unifrom_array_buffer_0);
-        float32array0[0] = this._opacity;
+        const float32array0 = new Float32Array(this.unifrom_array_buffer);
+        float32array0[0] = this._color.x;
+        float32array0[1] = this._color.y;
+        float32array0[2] = this._color.z;
+        float32array0[3] = this._color.w;
         this.render_server_material.trigger_UniformBufferChange(0);
-        const float32array1 = new Float32Array(this.unifrom_array_buffer_1);
-        float32array1[0] = this._shift;
-        this.render_server_material.trigger_UniformBufferChange(1);
     }
 
     protected dispose(): void {
         this.uniform_group_ref.clear();
-        this.uniform_buffer_0_ref.clear();
         super.dispose();
     }
 }

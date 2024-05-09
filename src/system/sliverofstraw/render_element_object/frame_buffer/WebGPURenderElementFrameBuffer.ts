@@ -53,19 +53,20 @@ export class WebGPURenderElementFrameBuffer extends WebGPURenderObjectRefCounted
         });
     }
 
-    public set_DepthStencilAttachment(attchment: WebGPURenderStateTextureView, depth_clear: boolean, depth_clear_value: number, depth_write: boolean, stencil_clear: boolean | undefined = undefined, stencil_clear_value: number | undefined = undefined, stencil_write: boolean | undefined = undefined): void {
+    public set_DepthStencilAttachment(attchment: WebGPURenderStateTextureView, depth_clear: boolean, depth_clear_value: number, depth_write: boolean, depth_readonly: boolean, stencil_clear: boolean | undefined = undefined, stencil_clear_value: number | undefined = undefined, stencil_write: boolean | undefined = undefined, stencil_readonly: boolean | undefined = undefined): void {
         this._multi_sample_count = attchment.multi_sample_count;
         this.depth_stencil_attachment_ref.value = attchment;
+        stencil_readonly ??= true;
         this.frame_buffer_desc.depthStencilAttachment = {
             view: attchment.texture_view,
             depthClearValue: depth_clear_value,
-            depthLoadOp: depth_clear ? 'clear' : 'load',
-            depthStoreOp: depth_write ? 'store' : 'discard',
-            depthReadOnly: !depth_write,
+            depthLoadOp: depth_readonly ? undefined : (depth_clear ? 'clear' : 'load'),
+            depthStoreOp: depth_readonly ? undefined : (depth_write ? 'store' : 'discard'),
+            depthReadOnly: depth_readonly,
             stencilClearValue: stencil_clear_value,
-            stencilLoadOp: stencil_clear === undefined ? undefined : (stencil_clear ? 'clear' : 'load'),
-            stencilStoreOp: stencil_write === undefined ? undefined : (stencil_write ? 'store' : 'discard'),
-            stencilReadOnly: stencil_write === undefined ? undefined : (!stencil_write),
+            stencilLoadOp: stencil_readonly ? undefined : (stencil_clear ? 'clear' : 'load'),
+            stencilStoreOp: stencil_readonly ? undefined : (stencil_write ? 'store' : 'discard'),
+            stencilReadOnly: stencil_readonly,
         };
     }
 

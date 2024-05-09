@@ -15,6 +15,7 @@ export enum WebGPURenderStateTextureFormat {
     RGBA32F = 'rgba32float',
     RGBA16F = 'rgba16float',
     R32U = 'r32uint',
+    R16F = 'r16float',
     R32F = 'r32float',
     RGBA32U = 'rgba32uint',
     RGBA8 = 'rgba8unorm', // rgba8unorm

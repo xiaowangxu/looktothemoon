@@ -10,7 +10,7 @@ import { WebGPURenderStateMultiSampleCount, type WebGPURenderStateMultiSampleTex
 import type { WebGPURenderStateTextureView } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTextureView";
 import { ReadonlyRef, Ref, RefCacher } from "@/system/utils/RefCounted";
 import { RenderServer, RenderServerSingleton } from "../RenderServer";
-import { WebGPURenderStateTextureUsage, WebGPURenderStateTextureFormat } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTexture";
+import { WebGPURenderStateTextureUsage, WebGPURenderStateTextureFormat, WebGPURenderStateTexture, WebGPURenderStateTextureDimension } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTexture";
 import { WebGPURenderElementFrameBuffer } from "@/system/sliverofstraw/render_element_object/frame_buffer/WebGPURenderElementFrameBuffer";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { RenderServerMaterial, RenderServerMaterialPass } from "../material/RenderServerMaterial";
@@ -20,6 +20,8 @@ import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/sys
 import { WebGPURenderStateShaderType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateShader";
 import { RenderServerGeometryAttributeLocation } from "../geometry/RenderServerGeometryDefination";
 import { WebGPURenderStateAttributeType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateAttributeLayout";
+import { WebGPURenderStateSamplerUniformType, WebGPURenderStateTextureUniformSampleType, WebGPURenderStateTextureUniformType } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformLayout";
+import { WebGPURenderStateTextureFilter, WebGPURenderStateTextureWrap } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTextureSampler";
 
 const FullScreenTriangleVertexArray = new RefCacher(() => {
     const vertex_array = new WebGPURenderElementVertexArray(RenderServer.render_state, WebGPURenderStatePrimitiveType.Triangles, 0, 3);
@@ -37,7 +39,7 @@ const FullScreenTriangleVertexArray = new RefCacher(() => {
 });
 
 const FullScreenBackgroundPipeline = new RefCacher(() => {
-    
+
     const shader_code = `
 
     struct Attributes {
@@ -92,12 +94,99 @@ const FullScreenBackgroundPipeline = new RefCacher(() => {
 
     const shader = RenderServer.render_state.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
     const program = RenderServer.render_state.create_Program(shader, shader).expect();
-    
+
     const pipeline = RenderServer.render_state.create_RenderPipeline(
         program,
         RenderServerMaterial.ProgramStatePipelineTemplates[RenderServerMaterialPass.Solid],
         RenderServerMaterial.OutputStatePipelineTemplates[RenderServerMaterialPass.Solid],
         [RenderServer.world_env_uniform_layout],
+        [
+            {
+                stride: 8, // 2 * 4
+                per_instance: false,
+                rows: [{
+                    location: 0,
+                    offset: 0,
+                    type: WebGPURenderStateAttributeType.Vector2
+                }]
+            },
+        ]
+    ).expect();
+
+    // mannually release shader and program
+    shader.release();
+    program.release();
+
+    return pipeline;
+});
+
+const OitComposeUniformLayout = new RefCacher(() => {
+    const layout = RenderServer.render_state.create_UniformLayout();
+    layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.NonFilterFloat, WebGPURenderStateShaderType.Fragment, 0);
+    layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.NonFilterFloat, WebGPURenderStateShaderType.Fragment, 1);
+    layout.add_Sampler(WebGPURenderStateSamplerUniformType.NonFilter, WebGPURenderStateShaderType.Fragment, 2);
+    return layout;
+});
+
+const OitComposeUniformSmapler = new RefCacher(() => {
+    return RenderServer.render_state.create_TextureSampler(
+        WebGPURenderStateTextureWrap.Clamp,
+        WebGPURenderStateTextureWrap.Clamp,
+        WebGPURenderStateTextureWrap.Clamp,
+        WebGPURenderStateTextureFilter.Nearest,
+        WebGPURenderStateTextureFilter.Nearest,
+        WebGPURenderStateTextureFilter.Nearest,
+    ).expect();
+});
+
+const OitComposePipeline = new RefCacher(() => {
+
+    const shader_code = `
+
+    struct Attributes {
+        @location(${RenderServerGeometryAttributeLocation.Position}) position: vec2f,
+    };
+    
+    struct VertexOutput {
+        @builtin(position) position: vec4f,
+        @location(1) uv: vec2f,
+    };
+
+    @vertex
+    fn vs_main(attri: Attributes) -> VertexOutput {
+        var out: VertexOutput;
+        out.position = vec4f(attri.position - vec2f(1.0), 1.0, 1.0);
+	    var uv = attri.position / 2.0;
+        out.uv = vec2(uv.x, 1.0 - uv.y);
+        return out;
+    }
+
+    struct FragmentOutput {
+        @location(0) color: vec4f,
+    };
+
+    @group(0) @binding(0) var accum: texture_2d<f32>;
+    @group(0) @binding(1) var reveal: texture_2d<f32>;
+    @group(0) @binding(2) var sample: sampler;
+    
+    @fragment
+    fn fs_main(vary: VertexOutput) -> FragmentOutput {
+        var out: FragmentOutput;
+        var accum_sample = textureSample(accum, sample, vary.uv);
+        var reveal_sample = textureSample(reveal, sample, vary.uv).r;
+        out.color = vec4f(accum_sample.rgb / max(accum_sample.a, 1e-5), 1.0 - reveal_sample);
+        return out;
+    }
+    `;
+
+    const shader = RenderServer.render_state.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
+    const program = RenderServer.render_state.create_Program(shader, shader).expect();
+
+    const pipeline = RenderServer.render_state.create_RenderPipeline(
+        program,
+        RenderServerMaterial.ProgramStatePipelineTemplates[RenderServerMaterialPass.Compose],
+        RenderServerMaterial.OutputStatePipelineTemplates[RenderServerMaterialPass.Compose],
+        [OitComposeUniformLayout.get()],
         [
             {
                 stride: 8, // 2 * 4
@@ -162,6 +251,27 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
     protected readonly solid_frame_buffer_ref = new ReadonlyRef(new WebGPURenderElementFrameBuffer(RenderServer.render_state));
 
+    protected readonly transparent_accum_texture_ref = new Ref<WebGPURenderStateMultiSampleTexture>();
+    protected readonly transparent_reveal_texture_ref = new Ref<WebGPURenderStateMultiSampleTexture>();
+    protected readonly transparent_accum_resolve_texture_ref = new Ref<WebGPURenderStateTexture>();
+    protected readonly transparent_reveal_resolve_texture_ref = new Ref<WebGPURenderStateTexture>();
+
+    protected readonly transparent_accum_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
+    protected readonly transparent_reveal_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
+    protected readonly transparent_accum_resolve_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
+    protected readonly transparent_reveal_resolve_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
+
+    protected readonly transparent_frame_buffer_ref = new ReadonlyRef(new WebGPURenderElementFrameBuffer(RenderServer.render_state));
+
+    //#endregion
+
+    //#region oit compose
+
+    protected readonly oit_compose_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(OitComposeUniformLayout.get()).expect());
+    protected readonly oit_compose_uniform_sampler_ref = new ReadonlyRef(OitComposeUniformSmapler.get());
+    protected readonly oit_compose_pipeline_ref = new ReadonlyRef(OitComposePipeline.get());
+    protected readonly oit_compose_frame_buffer_ref = new ReadonlyRef(new WebGPURenderElementFrameBuffer(RenderServer.render_state));
+
     //#endregion
 
     constructor() {
@@ -170,17 +280,33 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.queue_1_solid_instance_uniform_group_ref.expect.set_BufferUniform(0, this.queue_1_solid_instance_uniform_buffer_view_ref.expect);
         this.queue_0_transparent_instance_uniform_group_ref.expect.set_BufferUniform(0, this.queue_0_transparent_instance_uniform_buffer_view_ref.expect);
         this.queue_1_transparent_instance_uniform_group_ref.expect.set_BufferUniform(0, this.queue_1_transparent_instance_uniform_buffer_view_ref.expect);
+        this.oit_compose_uniform_group_ref.expect.set_Sampler(2, this.oit_compose_uniform_sampler_ref.expect);
     }
 
     public resize(width: number, height: number) {
         if (this.texture_size.x !== width || this.texture_size.y !== height) {
             this.texture_size.set(width, height);
+
             this.solid_color_texture_ref.value = RenderServer.render_state.create_MultiSampleTexture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.RGBA16F, width, height, WebGPURenderStateMultiSampleCount.MS4).expect();
             this.solid_normal_texture_ref.value = RenderServer.render_state.create_MultiSampleTexture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.RGBA16F, width, height, WebGPURenderStateMultiSampleCount.MS4).expect();
             this.solid_depth_texture_ref.value = RenderServer.render_state.create_MultiSampleTexture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.D32F, width, height, WebGPURenderStateMultiSampleCount.MS4).expect();
             this.solid_color_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.solid_color_texture_ref.expect).expect();
             this.solid_normal_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.solid_normal_texture_ref.expect).expect();
             this.solid_depth_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.solid_depth_texture_ref.expect).expect();
+
+
+            this.transparent_accum_texture_ref.value = RenderServer.render_state.create_MultiSampleTexture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.RGBA16F, width, height, WebGPURenderStateMultiSampleCount.MS4).expect();
+            this.transparent_reveal_texture_ref.value = RenderServer.render_state.create_MultiSampleTexture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.R16F, width, height, WebGPURenderStateMultiSampleCount.MS4).expect();
+            this.transparent_accum_resolve_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.RGBA16F, WebGPURenderStateTextureDimension.D2, width, height).expect();
+            this.transparent_reveal_resolve_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.R16F, WebGPURenderStateTextureDimension.D2, width, height).expect();
+            this.transparent_accum_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.transparent_accum_texture_ref.expect).expect();
+            this.transparent_reveal_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.transparent_reveal_texture_ref.expect).expect();
+            this.transparent_accum_resolve_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.transparent_accum_resolve_texture_ref.expect).expect();
+            this.transparent_reveal_resolve_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.transparent_reveal_resolve_texture_ref.expect).expect();
+
+            this.oit_compose_uniform_group_ref.expect.set_Texture(0, this.transparent_accum_resolve_texture_view_ref.value);
+            this.oit_compose_uniform_group_ref.expect.set_Texture(1, this.transparent_reveal_resolve_texture_view_ref.value);
+
             return true;
         }
         return false;
@@ -191,7 +317,16 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.solid_frame_buffer_ref.expect.clear_DepthStencilAttachment();
         this.solid_frame_buffer_ref.expect.add_Attachment(this.solid_color_texture_view_ref.expect, true, Vector4.create(0.2, 0.2, 0.2, 1), true, viewport.canvas_texture_view);
         this.solid_frame_buffer_ref.expect.add_Attachment(this.solid_normal_texture_view_ref.expect, true, Vector4.create(0, 0, 0, 1), true);
-        this.solid_frame_buffer_ref.expect.set_DepthStencilAttachment(this.solid_depth_texture_view_ref.expect, true, 1, true);
+        this.solid_frame_buffer_ref.expect.set_DepthStencilAttachment(this.solid_depth_texture_view_ref.expect, true, 1, true, false);
+
+        this.transparent_frame_buffer_ref.expect.clear_Attachments();
+        this.transparent_frame_buffer_ref.expect.clear_DepthStencilAttachment();
+        this.transparent_frame_buffer_ref.expect.add_Attachment(this.transparent_accum_texture_view_ref.expect, true, Vector4.create(0, 0, 0, 0), true, this.transparent_accum_resolve_texture_view_ref.expect);
+        this.transparent_frame_buffer_ref.expect.add_Attachment(this.transparent_reveal_texture_view_ref.expect, true, Vector4.create(1, 1, 1, 1), true, this.transparent_reveal_resolve_texture_view_ref.expect);
+        this.transparent_frame_buffer_ref.expect.set_DepthStencilAttachment(this.solid_depth_texture_view_ref.expect, false, 1, false, true);
+
+        this.oit_compose_frame_buffer_ref.expect.clear_Attachments();
+        this.oit_compose_frame_buffer_ref.expect.add_Attachment(viewport.canvas_texture_view, false, Vector4.create(1.0, 1.0, 0, 1.0), true);
     }
 
     private last_viewport_id: number = 0;
@@ -217,6 +352,8 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.last_viewport_id = viewport.id;
         viewport.update_Size();
         this.solid_frame_buffer_ref.expect.refresh_CanvasTextureView();
+        this.transparent_frame_buffer_ref.expect.refresh_CanvasTextureView();
+        this.oit_compose_frame_buffer_ref.expect.refresh_CanvasTextureView();
 
         //#endregion
 
@@ -240,6 +377,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
         const encoder = RenderServer.render_state.device.createCommandEncoder();
         this.render_Queue0Solid(encoder, viewport);
+        this.render_Queue0Transparent(encoder, viewport);
         RenderServer.render_state.device.queue.submit([encoder.finish()]);
 
         //#endregion
@@ -278,7 +416,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     //#region queue 0
 
     protected render_Queue0Solid(encoder: GPUCommandEncoder, viewport: RenderServerViewport) {
-        
+
         const render_pass = encoder.beginRenderPass(this.solid_frame_buffer_ref.expect.frame_buffer_desc);
         render_pass.setBindGroup(RenderServerSingleton.WorldEnvUniformBindGroupIndex, viewport.world_env_uniform_group.binding_group);
         render_pass.setBindGroup(RenderServerSingleton.LightsUniformBindGroupIndex, viewport.lights_uniform_group.binding_group);
@@ -309,6 +447,42 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         render_pass.end();
     }
 
+    protected render_Queue0Transparent(encoder: GPUCommandEncoder, viewport: RenderServerViewport) {
+
+        const render_pass = encoder.beginRenderPass(this.transparent_frame_buffer_ref.expect.frame_buffer_desc);
+        render_pass.setBindGroup(RenderServerSingleton.WorldEnvUniformBindGroupIndex, viewport.world_env_uniform_group.binding_group);
+        render_pass.setBindGroup(RenderServerSingleton.LightsUniformBindGroupIndex, viewport.lights_uniform_group.binding_group);
+        const dynamic_offsets = RenderServerRenderer3D.#tmp_instance_uniform_group_dynamic_offsets;
+        for (let i = 0; i <= this.queue_0.transparent_pointer; i++) {
+            const vertex_array = this.queue_0.transparent_vertex_array[i]!;
+            const material = this.queue_0.transparent_material[i]!;
+            material.update_UniformBuffers();
+            const pipeline_uniform = material.get_PipelineUniform(RenderServerMaterialPass.Transparent, vertex_array, this.transparent_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual);
+            if (pipeline_uniform === undefined) continue;
+            const { pipeline, uniform } = pipeline_uniform;
+            if (uniform !== undefined) {
+                render_pass.setBindGroup(RenderServerSingleton.UniformBindGroupIndex, uniform.binding_group);
+            }
+            const instance_count = this.queue_0.get_InstanceCount(true, i);
+            dynamic_offsets[0] = i * RenderServerSingleton.InstanceUniformMemoryLayout.size;
+            render_pass.setBindGroup(RenderServerSingleton.InstanceUniformBindGroupIndex, this.queue_0_transparent_instance_uniform_group_ref.expect.binding_group, dynamic_offsets);
+            render_pass.setPipeline(pipeline.pipeline);
+            vertex_array.bind_Buffers(render_pass);
+            vertex_array.draw(render_pass, instance_count);
+        }
+
+        render_pass.end();
+
+        // background
+        const compose_pass = encoder.beginRenderPass(this.oit_compose_frame_buffer_ref.expect.frame_buffer_desc);
+        compose_pass.setPipeline(this.oit_compose_pipeline_ref.expect.pipeline);
+        compose_pass.setBindGroup(0, this.oit_compose_uniform_group_ref.expect.binding_group);
+        this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(compose_pass);
+        this.full_screen_triangle_vertex_array_ref.expect.draw(compose_pass);
+
+        compose_pass.end();
+    }
+
     //#endregion
 
     public dispose(): void {
@@ -321,12 +495,29 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.solid_color_texture_ref.clear();
         this.solid_normal_texture_ref.clear();
         this.solid_depth_texture_ref.clear();
-        
+
         this.solid_color_texture_view_ref.clear();
         this.solid_normal_texture_view_ref.clear();
         this.solid_depth_texture_view_ref.clear();
 
         this.solid_frame_buffer_ref.clear();
+
+        this.transparent_accum_texture_ref.clear();
+        this.transparent_reveal_texture_ref.clear();
+
+        this.transparent_accum_resolve_texture_ref.clear();
+        this.transparent_reveal_resolve_texture_ref.clear();
+        this.transparent_accum_texture_view_ref.clear();
+        this.transparent_reveal_texture_view_ref.clear();
+        this.transparent_accum_resolve_texture_view_ref.clear();
+        this.transparent_reveal_resolve_texture_view_ref.clear();
+
+        this.transparent_frame_buffer_ref.clear();
+
+        this.oit_compose_uniform_group_ref.clear();
+        this.oit_compose_uniform_sampler_ref.clear();
+        this.oit_compose_pipeline_ref.clear();
+        this.oit_compose_frame_buffer_ref.clear();
 
         this.queue_0_solid_instance_uniform_group_ref.clear();
         this.queue_0_solid_instance_uniform_buffer_view_ref.clear();

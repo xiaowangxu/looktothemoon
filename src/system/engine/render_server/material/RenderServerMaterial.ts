@@ -6,19 +6,21 @@ import type { WebGPURenderElementFrameBuffer } from "../../../sliverofstraw/rend
 import type { WebGPURenderStateRenderPipeline } from "../../../sliverofstraw/render_state_object/pipeline/WebGPURenderStateRenderPipeline";
 import type { Disposable, Temp } from "@/system/utils/Type";
 import { RenderServer } from "../RenderServer";
-import { WebGPURenderStateBlendFactor, type WebGPURenderStateOutputState } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateOutputState";
+import { WebGPURenderStateBlendFactor, WebGPURenderStateBlendOperator, type WebGPURenderStateOutputState } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateOutputState";
 import type { WebGPURenderStateUniformLayout } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformLayout";
 import type { WebGPURenderStateAttributeLayout } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateAttributeLayout";
 import { WebGPURenderStateTextureFormat } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTexture";
 import { RenderServerObjectRefCounted } from "../RenderServerObject";
 import type { WebGPURenderStateBuffer, WebGPURenderStateBufferData } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 import type { WebGPURenderStateBufferView } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBufferView";
+import { WebGPURenderStateMultiSampleCount } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateMultiSampleTexture";
 
 export enum RenderServerMaterialPass {
     Depth,
     Solid,
     Transparent,
     Max = 3,
+    Compose = 3,
 }
 
 type RenderServerMaterialUsablePass = Exclude<RenderServerMaterialPass, RenderServerMaterialPass.Max>;
@@ -98,7 +100,7 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
 
     //#region create Pipeline Cache
 
-    static ProgramStatePipelineTemplates: [WebGPURenderStateProgramState, WebGPURenderStateProgramState, WebGPURenderStateProgramState] = [
+    static ProgramStatePipelineTemplates: [WebGPURenderStateProgramState, WebGPURenderStateProgramState, WebGPURenderStateProgramState, WebGPURenderStateProgramState] = [
         // RenderServerMaterialPass.Depth
         {
             primitive_type: WebGPURenderStatePrimitiveType.Triangles,
@@ -128,14 +130,24 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
             depth_bias_slope_scale: 0,
             depth_compare_func: WebGPURenderStateDepthCompareFunc.LessEqual,
             depth_write: false,
+        },
+        // RenderServerMaterialPass.Compose
+        {
+            primitive_type: WebGPURenderStatePrimitiveType.Triangles,
+            cull_mode: WebGPURenderStateCullMode.Back,
+            facing: WebGPURenderStateFacing.CounterClockwise,
+            depth_bias: 0,
+            depth_bias_slope_scale: 0,
+            depth_compare_func: WebGPURenderStateDepthCompareFunc.Always,
+            depth_write: false,
         }
     ];
 
-    static OutputStatePipelineTemplates: [WebGPURenderStateOutputState, WebGPURenderStateOutputState, WebGPURenderStateOutputState] = [
+    static OutputStatePipelineTemplates: [WebGPURenderStateOutputState, WebGPURenderStateOutputState, WebGPURenderStateOutputState, WebGPURenderStateOutputState] = [
         // RenderServerMaterialPass.Depth
         {
             depth_stencil_format: WebGPURenderStateTextureFormat.D32F,
-            multi_sample_count: 4,
+            multi_sample_count: WebGPURenderStateMultiSampleCount.MS4,
             attachments: [
                 // normal
                 {
@@ -147,7 +159,7 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
         // RenderServerMaterialPass.Solid
         {
             depth_stencil_format: WebGPURenderStateTextureFormat.D32F,
-            multi_sample_count: 4,
+            multi_sample_count: WebGPURenderStateMultiSampleCount.MS4,
             attachments: [
                 // color
                 {
@@ -164,7 +176,7 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
         // RenderServerMaterialPass.Transparent
         {
             depth_stencil_format: WebGPURenderStateTextureFormat.D32F,
-            multi_sample_count: 4,
+            multi_sample_count: WebGPURenderStateMultiSampleCount.MS4,
             alpha_to_coverage: false,
             attachments: [
                 // accum
@@ -178,18 +190,30 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
                 },
                 // reveal
                 {
-                    format: WebGPURenderStateTextureFormat.R32F,
+                    format: WebGPURenderStateTextureFormat.R16F,
                     color_src_factor: WebGPURenderStateBlendFactor.Zero,
                     color_dst_factor: WebGPURenderStateBlendFactor.OneMinusSrc,
                     alpha_src_factor: WebGPURenderStateBlendFactor.Zero,
-                    alpha_dst_factor: WebGPURenderStateBlendFactor.OneMinusSrc,
+                    alpha_dst_factor: WebGPURenderStateBlendFactor.Zero,
                     blend: true,
                 },
-                // // normal
-                // {
-                //     format: WebGPURenderStateTextureFormat.RGBA16F,
-                //     blend: false,
-                // }
+            ],
+        },
+        // RenderServerMaterialPass.Compose
+        {
+            depth_stencil_format: undefined,
+            multi_sample_count: WebGPURenderStateMultiSampleCount.None,
+            alpha_to_coverage: false,
+            attachments: [
+                // compose
+                {
+                    format: WebGPURenderStateTextureFormat.RGBA16F,
+                    color_src_factor: WebGPURenderStateBlendFactor.SrcAlpha,
+                    color_dst_factor: WebGPURenderStateBlendFactor.OneMinusSrcAlpha,
+                    alpha_src_factor: WebGPURenderStateBlendFactor.SrcAlpha,
+                    alpha_dst_factor: WebGPURenderStateBlendFactor.OneMinusSrcAlpha,
+                    blend: true,
+                },
             ],
         }
     ];

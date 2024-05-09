@@ -291,7 +291,7 @@ export class WebGPURenderState {
                 entryPoint: 'vs_main',
                 buffers: buffers,
             },
-            depthStencil: {
+            depthStencil: output_state.depth_stencil_format === undefined ? undefined : {
                 format: output_state.depth_stencil_format,
                 depthWriteEnabled: program_state.depth_write,
                 depthCompare: WebGPURenderState.RenderStateDepthCompareFunc(program_state.depth_compare_func),
@@ -409,6 +409,7 @@ export class WebGPURenderState {
             case WebGPURenderStateTextureFormat.RGBA16F: return 8;
             case WebGPURenderStateTextureFormat.R32U: return 4;
             case WebGPURenderStateTextureFormat.R32F: return 4;
+            case WebGPURenderStateTextureFormat.R16F: return 2;
             case WebGPURenderStateTextureFormat.RGBA32U: return 16;
             case WebGPURenderStateTextureFormat.RGBA8: return 4;
             case WebGPURenderStateTextureFormat.BGRA8: return 4;

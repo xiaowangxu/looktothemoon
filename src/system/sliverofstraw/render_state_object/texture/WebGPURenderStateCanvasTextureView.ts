@@ -6,7 +6,8 @@ export class WebGPURenderStateCanvasTextureView extends WebGPURenderStateTexture
 
     public readonly canvas: GPUCanvasContext;
 
-    public get texture_view() { return this.canvas.getCurrentTexture().createView(); }
+    public get texture() { return this.canvas.getCurrentTexture(); }
+    public get texture_view() { return this.texture.createView(); }
 
     constructor(render_state: WebGPURenderState, canvas: GPUCanvasContext) {
         super(render_state, undefined!, WebGPURenderStateTextureDimension.D2, 1, undefined!);

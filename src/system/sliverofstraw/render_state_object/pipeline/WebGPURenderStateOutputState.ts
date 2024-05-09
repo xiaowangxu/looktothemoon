@@ -37,7 +37,7 @@ interface WebGPURenderStateProgramOutputState {
 }
 
 export interface WebGPURenderStateOutputState {
-    depth_stencil_format: WebGPURenderStateTextureFormat,
+    depth_stencil_format?: WebGPURenderStateTextureFormat,
     multi_sample_count: WebGPURenderStateMultiSampleCount,
     alpha_to_coverage?: boolean,
     attachments: WebGPURenderStateProgramOutputState[],

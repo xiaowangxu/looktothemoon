@@ -117,7 +117,7 @@ export class RenderServerRenderer3DQueue implements Disposable {
     }
 
     public get_InstanceCount(transparent: boolean, index: number) {
-        return transparent ? this.transparent_instance_uniform_params_array[index * 20 + 17] : this.solid_instance_uniform_params_array[index * RenderServerRenderer3DQueue.#const_instance_uniform_buffer_element_stride + 17];
+        return transparent ? this.transparent_instance_uniform_params_array[index * RenderServerRenderer3DQueue.#const_instance_uniform_buffer_element_stride + 17] : this.solid_instance_uniform_params_array[index * RenderServerRenderer3DQueue.#const_instance_uniform_buffer_element_stride + 17];
     }
 
     public commit_InstanceUniformBuffers() {
