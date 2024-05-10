@@ -406,7 +406,9 @@ export class Viewport extends Node {
     public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
     public get raw_pixel_ratio() { return this.render_server_viewport.raw_pixel_ratio; }
     public get scale() { return this.render_server_viewport.scale; }
+    public set scale(scale: number) { this.render_server_viewport.set_Scale(scale); }
     public get pixel_ratio() { return this.render_server_viewport.pixel_ratio; }
+    public set pixel_ratio(pixel_ratio: number | undefined) { this.render_server_viewport.set_PixelRatio(pixel_ratio); }
     public get size(): Vector2 { return this.render_server_viewport.raw_size; }
     public set size(size: Vector2) { this.render_server_viewport.set_RawSize(size.x, size.y); }
     public get_Size(target: Vector2) { return this.render_server_viewport.get_RawSize(target); }

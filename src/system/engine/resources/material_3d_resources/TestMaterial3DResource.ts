@@ -7,7 +7,6 @@ import { ReadonlyRef, RefCacher } from "@/system/utils/RefCounted";
 import { WebGPURenderState } from "@/system/sliverofstraw/WebGPURenderState";
 import { WebGPURenderStateBufferUniformType } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformLayout";
 import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
-import { clamp } from "@/system/fivepebble/Scalar";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 
 const TestMaterial3DResourceUniformLayout = new RefCacher(() => {
@@ -132,6 +131,8 @@ const TestMaterial3DResourceTransparentPipelineCache = new RefCacher(() => {
 
             @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(0) var<uniform> world_env_uniform_camera_matrix: WorldEnvUniformCameraMatrix; 
             @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
+            @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var world_env_uniform_color_texture: texture_2d<f32>;
+            @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(4) var world_env_uniform_sampler: sampler;
             @group(${RenderServerSingleton.InstanceUniformBindGroupIndex}) @binding(0) var<uniform> instance_uniform: InstanceUniform; 
         
             @vertex
@@ -160,7 +161,8 @@ const TestMaterial3DResourceTransparentPipelineCache = new RefCacher(() => {
             @fragment
             fn fs_main(vary: VertexOutput) -> FragmentOutput {
                 var out: FragmentOutput;
-                var color = mat_uniform.color;
+                var tex = textureSample(world_env_uniform_color_texture, world_env_uniform_sampler, vary.uv);
+                var color = mat_uniform.color * tex;
                 var z = vary.position.z;
                 var weight: f32 = max(min(1.0, max(max(color.r, color.g), color.b) * color.a), color.a) * clamp(0.03 / (1e-5 + pow(z / 200, 4.0)), 1e-2, 3e3);
                 out.accum = vec4f(color.rgb * color.a, color.a) * weight;
@@ -216,6 +218,7 @@ export class TestMaterial3DResource extends Material3DResource {
 
     protected dispose(): void {
         this.uniform_group_ref.clear();
+        this.uniform_buffer_ref.clear();
         super.dispose();
     }
 }
