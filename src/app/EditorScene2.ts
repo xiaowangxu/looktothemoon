@@ -17,6 +17,7 @@ import { TestMaterial3DResource } from "@/system/engine/resources/material_3d_re
 import { InterpolateTween, InterpolateTweenEasingType, InterpolateTweenTransitionType, PingPongTweenAdaptor, PropertyTweenAdaptor, TweenLoop } from "@/system/engine/Tween";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { WebGPURenderStateCullMode } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
+import { ActionInputEvent } from "@/system/engine/inputs/events/ActionInputEvent";
 
 const bg_color = Color.create(0.25, 0.25, 0.25).linear_rgb;
 
@@ -80,6 +81,14 @@ export function createEditor() {
         new MouseButtonInputEvent().set_Button(MouseButton.WheelDown, true, false, false).set_Compose(true),
         new MouseButtonInputEvent().set_Button(MouseButton.WheelDown, true, false, false),
     ]));
+    EditorSceneTree.get_InputActionMap().add_Action('test_A', new ShortCut().set([new KeyInputEvent().set_Key('a', 'KeyA', true, true)]));
+    EditorSceneTree.get_InputActionMap().add_Action('test_B', new ShortCut().set([new KeyInputEvent().set_Key('a', 'KeyA', true, false)]));
+
+    World.signal_input.connect((evt, prop) => {
+        if (!prop && evt instanceof ActionInputEvent) {
+            console.log(evt.action, evt.pressed, evt.echo);
+        }
+    });
 
     const box_geo = new BoxGeometry3DResource();
 

@@ -549,20 +549,26 @@ export class Viewport extends Node {
     private mouse_event_cancelled: boolean = false;
 
     public on_InputEvent(event: InputEvent) {
-        const action_input_event = this.action_event_manager.parse_ActionInputEvent(event);
-        if (action_input_event !== undefined) {
-            if (this.redirect_input_event) {
-                this.redirect_InputEvent(action_input_event);
-            }
-            else {
-                this.propagate_InputEvent(action_input_event, this);
-            }
-        }
+        const action_input_events = this.action_event_manager.parse_ActionInputEvent(event);
+        // origin event
         if (this.redirect_input_event) {
             this.redirect_InputEvent(event);
         }
         else {
             this.propagate_InputEvent(event, this);
+        }
+        // for each action
+        if (action_input_events !== undefined) {
+            if (this.redirect_input_event) {
+                for (const action_input_event of action_input_events) {
+                    this.redirect_InputEvent(action_input_event);
+                }
+            }
+            else {
+                for (const action_input_event of action_input_events) {
+                    this.propagate_InputEvent(action_input_event, this);
+                }
+            }
         }
         // check mouse event cancel for physics picking
         if (event instanceof MouseInputEvent || event instanceof MouseEnterLeaveInputEvent) {

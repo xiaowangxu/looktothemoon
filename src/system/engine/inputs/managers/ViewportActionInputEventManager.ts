@@ -19,11 +19,13 @@ export class ViewportActionInputEventManager {
     }
 
     public parse_ActionInputEvent(event: InputEvent) {
-        const action_input_event = this.viewport.get_SceneTree()?.get_InputActionMap()?.parse_ActionInputEvent(event);
-        if (action_input_event !== undefined) {
-            this.update_Action(action_input_event);
+        const action_input_events = this.viewport.get_SceneTree()?.get_InputActionMap()?.parse_ActionInputEvent(event);
+        if (action_input_events !== undefined) {
+            for (const action_input_event of action_input_events) {
+                this.update_Action(action_input_event);
+            }
         }
-        return action_input_event;
+        return action_input_events;
     }
 
     private update_Action(action_input_event: ActionInputEvent) {

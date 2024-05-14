@@ -21,20 +21,22 @@ export class ShortCutActionMap extends Resource {
         return false;
     }
 
-    public parse_ActionInputEvent(event: InputEvent): ActionInputEvent | undefined {
+    public parse_ActionInputEvent(event: InputEvent): ActionInputEvent[] {
+        const action_input_events: ActionInputEvent[] = []
         for (const [action, shortcut] of this.input_action_map.entries()) {
             if (shortcut.match(event, false)) {
                 const pressed = this.is_InputEventPressed(event);
                 const echo = this.is_InputEventEcho(event);
-                return new ActionInputEvent(this.config).set_Action(action, pressed, echo);
+                action_input_events.push(new ActionInputEvent().set_Action(action, pressed, echo));
+                continue;
             }
         }
-        return undefined;
+        return action_input_events;
     }
 
     public add_Action(action: string, shortcut: ShortCut) {
         this.input_action_map.set(action, shortcut);
     }
 
-    protected dispose(): void {}
+    protected dispose(): void { }
 }
