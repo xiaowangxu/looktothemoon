@@ -53,6 +53,8 @@ const TestMaterial3DResourceSolidPipelineCache = new RefCacher(() => {
 
             @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(0) var<uniform> world_env_uniform_camera_matrix: WorldEnvUniformCameraMatrix; 
             @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
+            @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var world_env_uniform_color_texture: texture_2d<f32>;
+            @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(4) var world_env_uniform_sampler: sampler;
             @group(${RenderServerSingleton.InstanceUniformBindGroupIndex}) @binding(0) var<uniform> instance_uniform: InstanceUniform; 
         
             @vertex
@@ -81,6 +83,7 @@ const TestMaterial3DResourceSolidPipelineCache = new RefCacher(() => {
             @fragment
             fn fs_main(vary: VertexOutput) -> FragmentOutput {
                 var out: FragmentOutput;
+                // var tex = textureSample(world_env_uniform_color_texture, world_env_uniform_sampler, vary.uv);
                 out.color = mat_uniform.color;
                 out.normal = vec4f(0.0, 0.0, 1.0, 1.0);
                 return out;
@@ -132,6 +135,7 @@ const TestMaterial3DResourceTransparentPipelineCache = new RefCacher(() => {
             @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(0) var<uniform> world_env_uniform_camera_matrix: WorldEnvUniformCameraMatrix; 
             @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
             @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var world_env_uniform_color_texture: texture_2d<f32>;
+            @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(3) var world_env_uniform_depth_texture: texture_depth_2d;
             @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(4) var world_env_uniform_sampler: sampler;
             @group(${RenderServerSingleton.InstanceUniformBindGroupIndex}) @binding(0) var<uniform> instance_uniform: InstanceUniform; 
         

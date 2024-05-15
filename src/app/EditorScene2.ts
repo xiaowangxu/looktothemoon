@@ -25,7 +25,7 @@ export function createEditor() {
 
     // viewport
     const EditorViewport = new Viewport();
-    // EditorViewport.scale = 0.8;
+    // EditorViewport.scale = 0.2;
     // viewport container
     const EditorViewportContainer = new ViewportDomContainer();
     EditorViewportContainer.dom = (document.querySelector('#viewport-0') ?? undefined) as HTMLElement;
@@ -38,28 +38,28 @@ export function createEditor() {
     EditorViewport.world_3d = new World3D();
     EditorViewport.renderer_3d = new RenderServerRenderer3D();
 
-    // // viewport 0
-    // const EditorViewportContainer0 = new ViewportDomContainer();
-    // EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-    // const EditorViewport0 = new Viewport();
-    // // EditorViewport0.scale = 0.5;
-    // EditorViewport0.renderer_3d = new RenderServerRenderer3D();
-    // EditorViewportContainer0.add_Child(EditorViewport0);
-    // const EditorCamera0 = new OrbitCamera3D();
-    // EditorViewport0.add_Child(EditorCamera0);
-    // EditorViewport.add_Child(EditorViewportContainer0);
-    // EditorCamera0.set_Zoom(0.3);
-    // // viewport 1
-    // const EditorViewportContainer1 = new ViewportDomContainer();
-    // EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
-    // const EditorViewport1 = new Viewport();
-    // // EditorViewport1.scale = 0.5;
-    // EditorViewport1.renderer_3d = new RenderServerRenderer3D();
-    // EditorViewportContainer1.add_Child(EditorViewport1);
-    // const EditorCamera1 = new OrbitCamera3D();
-    // EditorViewport1.add_Child(EditorCamera1);
-    // EditorViewport.add_Child(EditorViewportContainer1);
-    // EditorCamera1.set_Zoom(0.3);
+    // viewport 0
+    const EditorViewportContainer0 = new ViewportDomContainer();
+    EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+    const EditorViewport0 = new Viewport();
+    // EditorViewport0.scale = 0.5;
+    EditorViewport0.renderer_3d = new RenderServerRenderer3D();
+    EditorViewportContainer0.add_Child(EditorViewport0);
+    const EditorCamera0 = new OrbitCamera3D();
+    EditorViewport0.add_Child(EditorCamera0);
+    EditorViewport.add_Child(EditorViewportContainer0);
+    EditorCamera0.set_Zoom(0.3);
+    // viewport 1
+    const EditorViewportContainer1 = new ViewportDomContainer();
+    EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
+    const EditorViewport1 = new Viewport();
+    // EditorViewport1.scale = 0.5;
+    EditorViewport1.renderer_3d = new RenderServerRenderer3D();
+    EditorViewportContainer1.add_Child(EditorViewport1);
+    const EditorCamera1 = new OrbitCamera3D();
+    EditorViewport1.add_Child(EditorCamera1);
+    EditorViewport.add_Child(EditorViewportContainer1);
+    EditorCamera1.set_Zoom(0.3);
 
     // World 
     const World = new Node3D();
@@ -94,18 +94,17 @@ export function createEditor() {
 
     const box_mat1 = new TestMaterial3DResource();
     box_mat1.color = Vector4.create(1.0, 0.0, 0.0, 1.0);
-    box_mat1.cull_mode = WebGPURenderStateCullMode.None;
     const mesh = new MeshInstance3D();
     mesh.geometry = box_geo;
     mesh.material = box_mat1;
     mesh.local_position = Vector3.create(0, 0, 0);
     mesh.local_scale = Vector3.create(100, 100, 100);
+    mesh.render_queue = 1;
     World.add_Child(mesh);
 
     const mesh2 = new MeshInstance3D();
     mesh2.geometry = box_geo;
     const box_mat2 = new TestMaterial3DResource();
-    box_mat2.cull_mode = WebGPURenderStateCullMode.None;
     box_mat2.color = Vector4.create(0.0, 1.0, 0.0, 0.5);
     mesh2.material = box_mat2;
     mesh2.local_position = Vector3.create(200, 0, 0);
@@ -115,12 +114,21 @@ export function createEditor() {
     const mesh3 = new MeshInstance3D();
     mesh3.geometry = box_geo;
     const box_mat3 = new TestMaterial3DResource();
-    box_mat3.cull_mode = WebGPURenderStateCullMode.None;
-    box_mat3.color = Vector4.create(1.0, 0.0, 0.0, 0.2);
+    box_mat3.color = Vector4.create(0.0, 0.0, 1.0, 1);
     mesh3.material = box_mat3;
-    mesh3.local_position = Vector3.create(400, 0, 0);
+    mesh3.local_position = Vector3.create(400, 0, 100);
     mesh3.local_scale = Vector3.create(100, 100, 100);
     World.add_Child(mesh3);
+
+    const mesh4 = new MeshInstance3D();
+    mesh4.geometry = box_geo;
+    const box_mat4 = new TestMaterial3DResource();
+    box_mat4.color = Vector4.create(1.0, 1.0, 0.0, 0.75);
+    mesh4.material = box_mat4;
+    mesh4.local_position = Vector3.create(-200, 0, -100);
+    mesh4.local_scale = Vector3.create(100, 100, 100);
+    mesh4.render_queue = 1;
+    World.add_Child(mesh4);
 
     // const tween = new TweenLoop(
     //     new PingPongTweenAdaptor(

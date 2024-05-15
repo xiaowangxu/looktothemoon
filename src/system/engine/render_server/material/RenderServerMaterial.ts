@@ -147,7 +147,7 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
         // RenderServerMaterialPass.Depth
         {
             depth_stencil_format: WebGPURenderStateTextureFormat.D32F,
-            multi_sample_count: WebGPURenderStateMultiSampleCount.MS4,
+            multi_sample_count: WebGPURenderStateMultiSampleCount.None,
             attachments: [
                 // normal
                 {
@@ -159,7 +159,7 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
         // RenderServerMaterialPass.Solid
         {
             depth_stencil_format: WebGPURenderStateTextureFormat.D32F,
-            multi_sample_count: WebGPURenderStateMultiSampleCount.MS4,
+            multi_sample_count: WebGPURenderStateMultiSampleCount.None,
             attachments: [
                 // color
                 {
@@ -176,7 +176,7 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
         // RenderServerMaterialPass.Transparent
         {
             depth_stencil_format: WebGPURenderStateTextureFormat.D32F,
-            multi_sample_count: WebGPURenderStateMultiSampleCount.MS4,
+            multi_sample_count: WebGPURenderStateMultiSampleCount.None,
             alpha_to_coverage: false,
             attachments: [
                 // accum
