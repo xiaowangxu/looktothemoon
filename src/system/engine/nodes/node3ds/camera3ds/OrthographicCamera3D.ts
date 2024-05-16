@@ -1,7 +1,6 @@
 import { Camera3, OrthographicCamera3 } from "@/system/fivepebble/graphics/Camera3";
 import { Camera3D } from "./Camera3D";
 import { NodeNotification } from "../../Node";
-import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
 export class OrthographicCamera3D extends Camera3D {
     public static readonly class_name: string = "OrthographicCamera3D";

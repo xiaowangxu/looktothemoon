@@ -86,9 +86,8 @@ const FullScreenBackgroundPipeline = new RefCacher(() => {
     @fragment
     fn fs_main(vary: VertexOutput) -> FragmentOutput {
         var out: FragmentOutput;
-        var y = vary.uv.y / 5.0 + 0.1;
         out.color = vec4f(0.2, 0.2, 0.2, 1.0);
-        out.normal = vec4f(0.0, 0.0, 1.0, 1.0);
+        out.normal = vec4f(0.0, 0.0, 0.0, 1.0);
         return out;
     }
     `;
@@ -292,6 +291,138 @@ const ResultEmptyTextureView = new RefCacher(() => {
     return RenderServer.render_state.create_TextureView(texture).expect();
 });
 
+const EffectFxaaPipeline = new RefCacher(() => {
+
+    const shader_code = `
+
+    struct Attributes {
+        @location(${RenderServerGeometryAttributeLocation.Position}) position: vec2f,
+    };
+    
+    struct WorldEnvUniformParams {
+        screen_size: vec2f,
+        time: f32,
+        orthogonal: u32,
+        pixel_ratio: f32,
+    };
+
+    struct VertexOutput {
+        @builtin(position) position: vec4f,
+        @location(1) frag_coord: vec2f,
+        @location(2) rgb_NW: vec2f,
+        @location(3) rgb_NE: vec2f,
+        @location(4) rgb_SW: vec2f,
+        @location(5) rgb_SE: vec2f,
+        @location(6) rgb_M: vec2f,
+    };
+
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
+
+    @vertex
+    fn vs_main(attri: Attributes) -> VertexOutput {
+        var out: VertexOutput;
+        out.position = vec4f(attri.position - vec2f(1.0), 1.0, 1.0);
+        out.frag_coord = vec2f(attri.position.x, 2.0 - attri.position.y) / 2.0 * world_env_uniform_params.screen_size;
+        var inv_vp = 1.0 / world_env_uniform_params.screen_size.xy;
+        out.rgb_NW = (out.frag_coord + vec2f(-1.0, -1.0)) * inv_vp;
+        out.rgb_NE = (out.frag_coord + vec2f(1.0, -1.0)) * inv_vp;
+        out.rgb_SW = (out.frag_coord + vec2f(-1.0, 1.0)) * inv_vp;
+        out.rgb_SE = (out.frag_coord + vec2f(1.0, 1.0)) * inv_vp;
+        out.rgb_M = vec2f(out.frag_coord) * inv_vp;
+        return out;
+    }
+
+    struct FragmentOutput {
+        @location(0) color: vec4f,
+    };
+
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var color: texture_2d<f32>;
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(5) var sample: sampler;
+    
+    @fragment
+    fn fs_main(vary: VertexOutput) -> FragmentOutput {
+        var out: FragmentOutput;
+        out.color = fxaa(color, sample, vary.frag_coord, world_env_uniform_params.screen_size, vary.rgb_NW, vary.rgb_NE, vary.rgb_SW, vary.rgb_SE, vary.rgb_M);
+        return out;
+    }
+
+    fn fxaa(tex: texture_2d<f32>, sample: sampler, fragCoord: vec2f, resolution: vec2f, v_rgbNW: vec2f, v_rgbNE: vec2f, v_rgbSW: vec2f, v_rgbSE: vec2f, v_rgbM: vec2f) -> vec4f {
+        var color: vec4f;
+        var inverseVP = 1.0 / world_env_uniform_params.screen_size.xy;
+        var rgbNW = textureSample(tex, sample, v_rgbNW).xyz;
+        var rgbNE = textureSample(tex, sample, v_rgbNE).xyz;
+        var rgbSW = textureSample(tex, sample, v_rgbSW).xyz;
+        var rgbSE = textureSample(tex, sample, v_rgbSE).xyz;
+        var texColor = textureSample(tex, sample, v_rgbM);
+        var rgbM  = texColor.xyz;
+        var luma = vec3f(0.4126729,  0.7151522, 0.1721750);
+        var lumaNW = dot(rgbNW, luma);
+        var lumaNE = dot(rgbNE, luma);
+        var lumaSW = dot(rgbSW, luma);
+        var lumaSE = dot(rgbSE, luma);
+        var lumaM  = dot(rgbM,  luma);
+        var lumaMin = min(lumaM, min(min(lumaNW, lumaNE), min(lumaSW, lumaSE)));
+        var lumaMax = max(lumaM, max(max(lumaNW, lumaNE), max(lumaSW, lumaSE)));
+        
+        var dir: vec2f;
+        dir.x = -((lumaNW + lumaNE) - (lumaSW + lumaSE));
+        dir.y =  ((lumaNW + lumaSW) - (lumaNE + lumaSE));
+
+        var dirReduce = max((lumaNW + lumaNE + lumaSW + lumaSE) *
+                              (0.25 * (1.0 / 16.0)), (1.0 / 128.0));
+        
+        var rcpDirMin = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
+        dir = min(vec2(8.0, 8.0),
+                  max(vec2(-8.0, -8.0),
+                  dir * rcpDirMin)) * inverseVP;
+        
+        var rgbA = 0.5 * (
+            textureSample(tex, sample, fragCoord * inverseVP + dir * (1.0 / 3.0 - 0.5)).xyz +
+            textureSample(tex, sample, fragCoord * inverseVP + dir * (2.0 / 3.0 - 0.5)).xyz);
+        var rgbB = rgbA * 0.5 + 0.25 * (
+            textureSample(tex, sample, fragCoord * inverseVP + dir * -0.5).xyz +
+            textureSample(tex, sample, fragCoord * inverseVP + dir * 0.5).xyz);
+
+        var lumaB = dot(rgbB, luma);
+        if ((lumaB < lumaMin) || (lumaB > lumaMax)) {
+            color = vec4(rgbA, texColor.a);
+        }
+        else {
+            color = vec4(rgbB, texColor.a);
+        }
+
+        return color;
+    }
+    `;
+
+    const shader = RenderServer.render_state.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
+    const program = RenderServer.render_state.create_Program(shader, shader).expect();
+
+    const pipeline = RenderServer.render_state.create_RenderPipeline(
+        program,
+        RenderServerMaterial.ProgramStatePipelineTemplates[RenderServerMaterialPass.Compose],
+        RenderServerMaterial.OutputStatePipelineTemplates[RenderServerMaterialPass.Compose],
+        [RenderServer.world_env_uniform_layout],
+        [
+            {
+                stride: 8, // 2 * 4
+                per_instance: false,
+                rows: [{
+                    location: 0,
+                    offset: 0,
+                    type: WebGPURenderStateAttributeType.Vector2
+                }]
+            },
+        ]
+    ).expect();
+
+    // mannually release shader and program
+    shader.release();
+    program.release();
+
+    return pipeline;
+});
+
 export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
     static readonly #tmp_frustum_0 = Frustum3.new;
@@ -364,18 +495,32 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     protected readonly result_color_texture_ref = new Ref<WebGPURenderStateTexture>();
     protected readonly result_normal_texture_ref = new Ref<WebGPURenderStateTexture>();
     protected readonly result_depth_texture_ref = new Ref<WebGPURenderStateTexture>();
-    
+
     protected readonly result_color_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
     protected readonly result_normal_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
     protected readonly result_depth_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
 
-    protected readonly result_depth_render_queue_1_texture_ref = new Ref<WebGPURenderStateTexture>();
     protected readonly result_color_render_queue_1_texture_ref = new Ref<WebGPURenderStateTexture>();
-    protected readonly result_depth_render_queue_1_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
+    protected readonly result_normal_render_queue_1_texture_ref = new Ref<WebGPURenderStateTexture>();
+    protected readonly result_depth_render_queue_1_texture_ref = new Ref<WebGPURenderStateTexture>();
     protected readonly result_color_render_queue_1_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
+    protected readonly result_normal_render_queue_1_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
+    protected readonly result_depth_render_queue_1_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
 
     protected readonly result_empty_texture_view_ref = new ReadonlyRef(ResultEmptyTextureView.get());
     protected readonly result_depth_empty_texture_view_ref = new ReadonlyRef(ResultDepthEmptyTextureView.get());
+
+    //#endregion
+
+    //#region effects
+
+    protected readonly effect_texture_ref = new Ref<WebGPURenderStateTexture>();
+    protected readonly effect_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
+
+    protected readonly effect_frame_buffer_0_ref = new ReadonlyRef(new WebGPURenderElementFrameBuffer(RenderServer.render_state));
+    protected readonly effect_frame_buffer_1_ref = new ReadonlyRef(new WebGPURenderElementFrameBuffer(RenderServer.render_state));
+
+    protected readonly effect_color_pipeline_ref = new ReadonlyRef(EffectFxaaPipeline.get());
 
     //#endregion
 
@@ -383,8 +528,9 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
     protected readonly world_env_queue_0_uniform_solid_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(RenderServer.world_env_uniform_layout).expect());
     protected readonly world_env_queue_0_uniform_transparent_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(RenderServer.world_env_uniform_layout).expect());
-
     protected readonly world_env_queue_1_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(RenderServer.world_env_uniform_layout).expect());
+    protected readonly world_env_effect_uniform_group_0_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(RenderServer.world_env_uniform_layout).expect());
+    protected readonly world_env_effect_uniform_group_1_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(RenderServer.world_env_uniform_layout).expect());
 
     protected readonly world_env_uniform_camera_matrix_buffer_ref = new ReadonlyRef(RenderServer.render_state.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, RenderServerSingleton.WorldEnvUniformCameraMatrixMemoryLayout.size).expect());
     protected readonly world_env_uniform_camera_matrix_array_buffer = new ArrayBuffer(RenderServerSingleton.WorldEnvUniformCameraMatrixMemoryLayout.size);
@@ -423,20 +569,37 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.world_env_queue_0_uniform_solid_group_ref.expect.set_BufferUniform(0, this.world_env_uniform_camera_matrix_buffer_ref.expect);
         this.world_env_queue_0_uniform_solid_group_ref.expect.set_BufferUniform(1, this.world_env_uniform_params_buffer_ref.expect);
         this.world_env_queue_0_uniform_solid_group_ref.expect.set_Texture(2, this.result_empty_texture_view_ref.expect);
-        this.world_env_queue_0_uniform_solid_group_ref.expect.set_Texture(3, this.result_depth_empty_texture_view_ref.expect);
-        this.world_env_queue_0_uniform_solid_group_ref.expect.set_Sampler(4, this.compose_uniform_sampler_ref.expect);
+        this.world_env_queue_0_uniform_solid_group_ref.expect.set_Texture(3, this.result_empty_texture_view_ref.expect);
+        this.world_env_queue_0_uniform_solid_group_ref.expect.set_Texture(4, this.result_depth_empty_texture_view_ref.expect);
+        this.world_env_queue_0_uniform_solid_group_ref.expect.set_Sampler(5, this.compose_uniform_sampler_ref.expect);
 
         this.world_env_queue_0_uniform_transparent_group_ref.expect.set_BufferUniform(0, this.world_env_uniform_camera_matrix_buffer_ref.expect);
         this.world_env_queue_0_uniform_transparent_group_ref.expect.set_BufferUniform(1, this.world_env_uniform_params_buffer_ref.expect);
         this.world_env_queue_0_uniform_transparent_group_ref.expect.set_Texture(2, this.result_empty_texture_view_ref.expect);
-        this.world_env_queue_0_uniform_transparent_group_ref.expect.set_Texture(3, this.result_depth_empty_texture_view_ref.expect);
-        this.world_env_queue_0_uniform_transparent_group_ref.expect.set_Sampler(4, this.compose_uniform_sampler_ref.expect);
+        this.world_env_queue_0_uniform_transparent_group_ref.expect.set_Texture(3, this.result_empty_texture_view_ref.expect);
+        this.world_env_queue_0_uniform_transparent_group_ref.expect.set_Texture(4, this.result_depth_empty_texture_view_ref.expect);
+        this.world_env_queue_0_uniform_transparent_group_ref.expect.set_Sampler(5, this.compose_uniform_sampler_ref.expect);
 
         this.world_env_queue_1_uniform_group_ref.expect.set_BufferUniform(0, this.world_env_uniform_camera_matrix_buffer_ref.expect);
         this.world_env_queue_1_uniform_group_ref.expect.set_BufferUniform(1, this.world_env_uniform_params_buffer_ref.expect);
         this.world_env_queue_1_uniform_group_ref.expect.set_Texture(2, this.result_empty_texture_view_ref.expect);
-        this.world_env_queue_1_uniform_group_ref.expect.set_Texture(3, this.result_depth_empty_texture_view_ref.expect);
-        this.world_env_queue_1_uniform_group_ref.expect.set_Sampler(4, this.compose_uniform_sampler_ref.expect);
+        this.world_env_queue_1_uniform_group_ref.expect.set_Texture(3, this.result_empty_texture_view_ref.expect);
+        this.world_env_queue_1_uniform_group_ref.expect.set_Texture(4, this.result_depth_empty_texture_view_ref.expect);
+        this.world_env_queue_1_uniform_group_ref.expect.set_Sampler(5, this.compose_uniform_sampler_ref.expect);
+
+        this.world_env_effect_uniform_group_0_ref.expect.set_BufferUniform(0, this.world_env_uniform_camera_matrix_buffer_ref.expect);
+        this.world_env_effect_uniform_group_0_ref.expect.set_BufferUniform(1, this.world_env_uniform_params_buffer_ref.expect);
+        this.world_env_effect_uniform_group_0_ref.expect.set_Texture(2, this.result_empty_texture_view_ref.expect);
+        this.world_env_effect_uniform_group_0_ref.expect.set_Texture(3, this.result_empty_texture_view_ref.expect);
+        this.world_env_effect_uniform_group_0_ref.expect.set_Texture(4, this.result_depth_empty_texture_view_ref.expect);
+        this.world_env_effect_uniform_group_0_ref.expect.set_Sampler(5, this.compose_uniform_sampler_ref.expect);
+
+        this.world_env_effect_uniform_group_1_ref.expect.set_BufferUniform(0, this.world_env_uniform_camera_matrix_buffer_ref.expect);
+        this.world_env_effect_uniform_group_1_ref.expect.set_BufferUniform(1, this.world_env_uniform_params_buffer_ref.expect);
+        this.world_env_effect_uniform_group_1_ref.expect.set_Texture(2, this.result_empty_texture_view_ref.expect);
+        this.world_env_effect_uniform_group_1_ref.expect.set_Texture(3, this.result_empty_texture_view_ref.expect);
+        this.world_env_effect_uniform_group_1_ref.expect.set_Texture(4, this.result_depth_empty_texture_view_ref.expect);
+        this.world_env_effect_uniform_group_1_ref.expect.set_Sampler(5, this.compose_uniform_sampler_ref.expect);
     }
 
     public set_WorldEnvUniform(camera_world: Matrix4, camera_projection: Matrix4, camera_is_orthogonal: boolean, time: number, pixel_ratio: number, screen_width: number, screen_height: number) {
@@ -488,12 +651,15 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
             this.world_env_uniform_camera_normal_view[0] = matrix.n11;
             this.world_env_uniform_camera_normal_view[1] = matrix.n12;
             this.world_env_uniform_camera_normal_view[2] = matrix.n13;
-            this.world_env_uniform_camera_normal_view[3] = matrix.n21;
-            this.world_env_uniform_camera_normal_view[4] = matrix.n22;
-            this.world_env_uniform_camera_normal_view[5] = matrix.n23;
-            this.world_env_uniform_camera_normal_view[6] = matrix.n31;
-            this.world_env_uniform_camera_normal_view[7] = matrix.n32;
-            this.world_env_uniform_camera_normal_view[8] = matrix.n33;
+            // this.world_env_uniform_camera_normal_view[3] = 0;
+            this.world_env_uniform_camera_normal_view[4] = matrix.n21;
+            this.world_env_uniform_camera_normal_view[5] = matrix.n22;
+            this.world_env_uniform_camera_normal_view[6] = matrix.n23;
+            // this.world_env_uniform_camera_normal_view[7] = 0;
+            this.world_env_uniform_camera_normal_view[8] = matrix.n31;
+            this.world_env_uniform_camera_normal_view[9] = matrix.n32;
+            this.world_env_uniform_camera_normal_view[10] = matrix.n33;
+            // this.world_env_uniform_camera_normal_view[11] = 0;
         }
         // camera projection
         {
@@ -560,9 +726,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
             this.texture_size.set(width, height);
 
             this.solid_normal_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.RGBA16F, WebGPURenderStateTextureDimension.D2, width, height).expect();
-            this.result_depth_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment | WebGPURenderStateTextureUsage.CopySrc, WebGPURenderStateTextureFormat.D32F, WebGPURenderStateTextureDimension.D2, width, height).expect();
             this.solid_normal_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.solid_normal_texture_ref.expect).expect();
-            this.result_depth_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.result_depth_texture_ref.expect).expect();
 
             this.transparent_accum_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.RGBA16F, WebGPURenderStateTextureDimension.D2, width, height).expect();
             this.transparent_reveal_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.R16F, WebGPURenderStateTextureDimension.D2, width, height).expect();
@@ -574,20 +738,40 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
             this.result_color_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment | WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopySrc, WebGPURenderStateTextureFormat.RGBA16F, WebGPURenderStateTextureDimension.D2, width, height).expect();
             this.result_normal_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment | WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopySrc, WebGPURenderStateTextureFormat.RGBA16F, WebGPURenderStateTextureDimension.D2, width, height).expect();
-            this.result_depth_render_queue_1_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment | WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopySrc, WebGPURenderStateTextureFormat.D32F , WebGPURenderStateTextureDimension.D2, width, height).expect();
+            this.result_depth_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment | WebGPURenderStateTextureUsage.CopySrc, WebGPURenderStateTextureFormat.D32F, WebGPURenderStateTextureDimension.D2, width, height).expect();
+
             this.result_color_render_queue_1_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopyDst, WebGPURenderStateTextureFormat.RGBA16F, WebGPURenderStateTextureDimension.D2, width, height).expect();
+            this.result_normal_render_queue_1_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopyDst, WebGPURenderStateTextureFormat.RGBA16F, WebGPURenderStateTextureDimension.D2, width, height).expect();
+            this.result_depth_render_queue_1_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment | WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopySrc, WebGPURenderStateTextureFormat.D32F, WebGPURenderStateTextureDimension.D2, width, height).expect();
+
             this.result_color_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.result_color_texture_ref.expect).expect();
             this.result_normal_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.result_normal_texture_ref.expect).expect();
-            this.result_depth_render_queue_1_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.result_depth_render_queue_1_texture_ref.expect).expect();
+            this.result_depth_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.result_depth_texture_ref.expect).expect();
+
             this.result_color_render_queue_1_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.result_color_render_queue_1_texture_ref.expect).expect();
+            this.result_normal_render_queue_1_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.result_normal_render_queue_1_texture_ref.expect).expect();
+            this.result_depth_render_queue_1_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.result_depth_render_queue_1_texture_ref.expect).expect();
+
+            this.effect_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment | WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopySrc, WebGPURenderStateTextureFormat.RGBA16F, WebGPURenderStateTextureDimension.D2, width, height).expect();
+            this.effect_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.effect_texture_ref.expect).expect();
 
             this.color_compose_uniform_group_ref.expect.set_Texture(0, this.result_color_texture_view_ref.expect);
 
             this.world_env_queue_0_uniform_transparent_group_ref.expect.set_Texture(2, this.result_color_texture_view_ref.expect);
-            this.world_env_queue_0_uniform_transparent_group_ref.expect.set_Texture(3, this.result_depth_texture_view_ref.expect);
+            this.world_env_queue_0_uniform_transparent_group_ref.expect.set_Texture(3, this.result_normal_texture_view_ref.expect);
+            this.world_env_queue_0_uniform_transparent_group_ref.expect.set_Texture(4, this.result_depth_texture_view_ref.expect);
 
             this.world_env_queue_1_uniform_group_ref.expect.set_Texture(2, this.result_color_render_queue_1_texture_view_ref.expect);
-            this.world_env_queue_1_uniform_group_ref.expect.set_Texture(3, this.result_depth_render_queue_1_texture_view_ref.expect);
+            this.world_env_queue_1_uniform_group_ref.expect.set_Texture(3, this.result_normal_render_queue_1_texture_view_ref.expect);
+            this.world_env_queue_1_uniform_group_ref.expect.set_Texture(4, this.result_depth_render_queue_1_texture_view_ref.expect);
+
+            this.world_env_effect_uniform_group_0_ref.expect.set_Texture(2, this.result_color_texture_view_ref.expect);
+            this.world_env_effect_uniform_group_0_ref.expect.set_Texture(3, this.result_normal_texture_view_ref.expect);
+            this.world_env_effect_uniform_group_0_ref.expect.set_Texture(4, this.result_depth_render_queue_1_texture_view_ref.expect);
+
+            this.world_env_effect_uniform_group_1_ref.expect.set_Texture(2, this.effect_texture_view_ref.expect);
+            this.world_env_effect_uniform_group_1_ref.expect.set_Texture(3, this.result_normal_texture_view_ref.expect);
+            this.world_env_effect_uniform_group_1_ref.expect.set_Texture(4, this.result_depth_render_queue_1_texture_view_ref.expect);
 
             return true;
         }
@@ -615,6 +799,12 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
         this.compose_frame_buffer_ref.expect.clear_Attachments();
         this.compose_frame_buffer_ref.expect.add_Attachment(this.result_color_texture_view_ref.expect, false, Vector4.create(0, 0, 0, 0), true);
+
+        this.effect_frame_buffer_0_ref.expect.clear_Attachments();
+        this.effect_frame_buffer_0_ref.expect.add_Attachment(this.effect_texture_view_ref.expect, true, Vector4.create(0, 0, 0, 0), true);
+
+        this.effect_frame_buffer_1_ref.expect.clear_Attachments();
+        this.effect_frame_buffer_1_ref.expect.add_Attachment(this.result_color_texture_view_ref.expect, true, Vector4.create(0, 0, 0, 0), true);
     }
 
     private last_viewport_id: number = 0;
@@ -664,10 +854,12 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.render_Queue0Solid(encoder);
         this.render_Queue0Transparent(encoder);
         encoder.copyTextureToTexture({ texture: this.result_color_texture_ref.expect.texture }, { texture: this.result_color_render_queue_1_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
+        encoder.copyTextureToTexture({ texture: this.result_normal_texture_ref.expect.texture }, { texture: this.result_normal_render_queue_1_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
         encoder.copyTextureToTexture({ texture: this.result_depth_texture_ref.expect.texture }, { texture: this.result_depth_render_queue_1_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
         this.render_Queue1Solid(encoder);
         this.render_Queue1Transparent(encoder);
-        encoder.copyTextureToTexture({ texture: this.result_color_texture_ref.expect.texture }, { texture: viewport.canvas_texture_view.texture }, { width: texture_width, height: texture_height });
+        const effect_first_texture = (this.render_Effects(encoder) % 2) === 0;
+        encoder.copyTextureToTexture({ texture: effect_first_texture ? this.result_color_texture_ref.expect.texture : this.effect_texture_ref.expect.texture }, { texture: viewport.canvas_texture_view.texture }, { width: texture_width, height: texture_height });
         RenderServer.render_state.device.queue.submit([encoder.finish()]);
 
         //#endregion
@@ -842,6 +1034,25 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
     //#endregion
 
+    //#region effect
+
+    protected render_Effects(encoder: GPUCommandEncoder): number {
+        let pass = 0;
+
+        const effect_pass_0 = encoder.beginRenderPass(this.effect_frame_buffer_0_ref.expect.frame_buffer_desc);
+        effect_pass_0.setPipeline(this.effect_color_pipeline_ref.expect.pipeline);
+        effect_pass_0.setBindGroup(0, this.world_env_effect_uniform_group_0_ref.expect.binding_group);
+        this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(effect_pass_0);
+        this.full_screen_triangle_vertex_array_ref.expect.draw(effect_pass_0);
+        effect_pass_0.end();
+
+        pass++;
+
+        return pass;
+    }
+
+    //#endregion
+
     public dispose(): void {
         this.queue_0.dispose();
         this.queue_1.dispose();
@@ -851,7 +1062,6 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
         this.solid_normal_texture_ref.clear();
         this.result_depth_texture_ref.clear();
-
         this.solid_normal_texture_view_ref.clear();
         this.result_depth_texture_view_ref.clear();
 
@@ -860,7 +1070,6 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
         this.transparent_accum_texture_ref.clear();
         this.transparent_reveal_texture_ref.clear();
-
         this.transparent_accum_texture_view_ref.clear();
         this.transparent_reveal_texture_view_ref.clear();
 
@@ -880,13 +1089,21 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.result_normal_texture_ref.clear();
         this.result_depth_render_queue_1_texture_ref.clear();
         this.result_color_render_queue_1_texture_ref.clear();
+
         this.result_color_texture_view_ref.clear();
+        this.result_normal_render_queue_1_texture_ref.clear();
         this.result_normal_texture_view_ref.clear();
         this.result_depth_render_queue_1_texture_view_ref.clear();
+        this.result_normal_render_queue_1_texture_view_ref.clear();
         this.result_color_render_queue_1_texture_view_ref.clear();
 
         this.result_empty_texture_view_ref.clear();
         this.result_depth_empty_texture_view_ref.clear();
+
+        this.effect_texture_ref.clear();
+        this.effect_texture_view_ref.clear();
+        this.effect_frame_buffer_0_ref.clear();
+        this.effect_frame_buffer_1_ref.clear();
 
         this.queue_0_solid_instance_uniform_group_ref.clear();
         this.queue_0_solid_instance_uniform_buffer_view_ref.clear();
@@ -902,6 +1119,8 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.world_env_queue_1_uniform_group_ref.clear();
         this.world_env_uniform_camera_matrix_buffer_ref.clear();
         this.world_env_uniform_params_buffer_ref.clear();
+        this.world_env_effect_uniform_group_0_ref.clear();
+        this.world_env_effect_uniform_group_1_ref.clear();
         this.lights_uniform_group_ref.clear();
     }
 }

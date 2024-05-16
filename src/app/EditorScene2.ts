@@ -18,6 +18,8 @@ import { InterpolateTween, InterpolateTweenEasingType, InterpolateTweenTransitio
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { WebGPURenderStateCullMode } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
 import { ActionInputEvent } from "@/system/engine/inputs/events/ActionInputEvent";
+import { OrthographicCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/OrthographicCamera3D";
+import { PerspectiveCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/PerspectiveCamera3D";
 
 const bg_color = Color.create(0.25, 0.25, 0.25).linear_rgb;
 
@@ -171,6 +173,58 @@ export function createEditor() {
     // EditorSceneTree.start_Tween(tween);
     // EditorSceneTree.start_Tween(tween2);
     // EditorSceneTree.start_Tween(tween3);
+
+    {
+        // compass
+        // viewport 0
+        const CompassViewportContainer = new ViewportDomContainer();
+        CompassViewportContainer.dom = (document.querySelector('#compass-viewport') ?? undefined) as HTMLElement;
+        const CompassViewport = new Viewport();
+        CompassViewport.scale = 2;
+        CompassViewport.world_3d = new World3D();
+        CompassViewport.renderer_3d = new RenderServerRenderer3D();
+        CompassViewportContainer.add_Child(CompassViewport);
+
+        const compass_box_geo = new BoxGeometry3DResource();
+        const compass_box_mat_0 = new TestMaterial3DResource();
+        compass_box_mat_0.color = Color.color8code(0x466fe6ff);
+        const compass_box_mat_1 = new TestMaterial3DResource();
+        compass_box_mat_1.color = Color.color8code(0x04b973ff);
+        const compass_box_mat_2 = new TestMaterial3DResource();
+        compass_box_mat_2.color = Color.color8code(0xff4a56ff);
+        const compass_box_mat_0_n = new TestMaterial3DResource();
+        compass_box_mat_0_n.color = Color.color8code(0x466fe680);
+        const compass_box_mat_1_n = new TestMaterial3DResource();
+        compass_box_mat_1_n.color = Color.color8code(0x04b97380);
+        const compass_box_mat_2_n = new TestMaterial3DResource();
+        compass_box_mat_2_n.color = Color.color8code(0xff4a5680);
+        const mesh = new MeshInstance3D();
+        mesh.geometry = compass_box_geo;
+        mesh.set_SurfaceMaterial(2, compass_box_mat_0);
+        mesh.set_SurfaceMaterial(0, compass_box_mat_1);
+        mesh.set_SurfaceMaterial(4, compass_box_mat_2);
+        mesh.set_SurfaceMaterial(3, compass_box_mat_0_n);
+        mesh.set_SurfaceMaterial(1, compass_box_mat_1_n);
+        mesh.set_SurfaceMaterial(5, compass_box_mat_2_n);
+        CompassViewport.add_Child(mesh);
+
+        const CompassCamera = new OrthographicCamera3D();
+        CompassCamera.zoom = 0.45;
+        CompassCamera.local_position = Vector3.create(0, 0, 10);
+        CompassViewport.add_Child(CompassCamera);
+
+        CompassViewport.signal_process.connect(() => {
+            const camera = CompassViewport.get_SceneTree()?.get_ActiveViewports()[0]?.get_Camera3D();
+            if (camera !== undefined) {
+                CompassCamera.local_rotation = camera.global_rotation;
+                const dir = CompassCamera.to_Global(Vector3.create(0, 0, -1), Vector3.new);
+                dir.direction_to(dir, CompassCamera.global_position);
+                CompassCamera.local_position = dir;
+            }
+        });
+
+        EditorViewportContainer.add_Child(CompassViewportContainer);
+    }
 
     return EditorSceneTree;
 }

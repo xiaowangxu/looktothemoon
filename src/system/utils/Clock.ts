@@ -50,3 +50,27 @@ export class Clock {
         return this._delta;
     }
 }
+
+function clear_TimeoutId(id: number | undefined) {
+    clearTimeout(id);
+}
+
+export type TimerCanceller = () => void;
+export function timer(func: () => void, time_ms: number): TimerCanceller {
+    const timeout_id = setTimeout(func, time_ms);
+    return clear_TimeoutId.bind(undefined, timeout_id);
+}
+
+export function debounce(func: () => void, time_ms: number): () => void {
+    let timer_canceller: TimerCanceller | undefined = undefined;
+    const _func = () => { func(); timer_canceller = undefined; }
+    return () => {
+        if (timer_canceller === undefined) {
+            timer_canceller = timer(_func, time_ms);
+        }
+        else {
+            timer_canceller();
+            timer_canceller = timer(_func, time_ms);
+        }
+    };
+}

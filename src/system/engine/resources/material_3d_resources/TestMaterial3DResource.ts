@@ -54,7 +54,7 @@ const TestMaterial3DResourceSolidPipelineCache = new RefCacher(() => {
             @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(0) var<uniform> world_env_uniform_camera_matrix: WorldEnvUniformCameraMatrix; 
             @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
             @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var world_env_uniform_color_texture: texture_2d<f32>;
-            @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(4) var world_env_uniform_sampler: sampler;
+            @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(5) var world_env_uniform_sampler: sampler;
             @group(${RenderServerSingleton.InstanceUniformBindGroupIndex}) @binding(0) var<uniform> instance_uniform: InstanceUniform; 
         
             @vertex
@@ -64,7 +64,7 @@ const TestMaterial3DResourceSolidPipelineCache = new RefCacher(() => {
                 var _world_in_view = world_env_uniform_camera_matrix.camera_view * _world;
                 out.position = world_env_uniform_camera_matrix.camera_proj * _world_in_view;
                 var _model_view = world_env_uniform_camera_matrix.camera_view * instance_uniform.transform;
-                out.normal = vec3f(1.0, 1.0, 1.0);
+                out.normal = world_env_uniform_camera_matrix.camera_norview * attri.normal;
                 out.uv = attri.uv;
                 return out;
             }
@@ -85,7 +85,7 @@ const TestMaterial3DResourceSolidPipelineCache = new RefCacher(() => {
                 var out: FragmentOutput;
                 // var tex = textureSample(world_env_uniform_color_texture, world_env_uniform_sampler, vary.uv);
                 out.color = mat_uniform.color;
-                out.normal = vec4f(0.0, 0.0, 1.0, 1.0);
+                out.normal = vec4f(vary.normal, 1.0);
                 return out;
             }
             `;
@@ -135,8 +135,9 @@ const TestMaterial3DResourceTransparentPipelineCache = new RefCacher(() => {
             @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(0) var<uniform> world_env_uniform_camera_matrix: WorldEnvUniformCameraMatrix; 
             @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
             @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var world_env_uniform_color_texture: texture_2d<f32>;
-            @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(3) var world_env_uniform_depth_texture: texture_depth_2d;
-            @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(4) var world_env_uniform_sampler: sampler;
+            @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(3) var world_env_uniform_normal_texture: texture_2d<f32>;
+            @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(4) var world_env_uniform_depth_texture: texture_depth_2d;
+            @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(5) var world_env_uniform_sampler: sampler;
             @group(${RenderServerSingleton.InstanceUniformBindGroupIndex}) @binding(0) var<uniform> instance_uniform: InstanceUniform; 
         
             @vertex
@@ -165,8 +166,8 @@ const TestMaterial3DResourceTransparentPipelineCache = new RefCacher(() => {
             @fragment
             fn fs_main(vary: VertexOutput) -> FragmentOutput {
                 var out: FragmentOutput;
-                var tex = textureSample(world_env_uniform_color_texture, world_env_uniform_sampler, vary.uv);
-                var color = mat_uniform.color * tex;
+                var tex = textureSample(world_env_uniform_normal_texture, world_env_uniform_sampler, vary.uv);
+                var color = mat_uniform.color;
                 var z = vary.position.z;
                 var weight: f32 = max(min(1.0, max(max(color.r, color.g), color.b) * color.a), color.a) * clamp(0.03 / (1e-5 + pow(z / 200, 4.0)), 1e-2, 3e3);
                 out.accum = vec4f(color.rgb * color.a, color.a) * weight;

@@ -136,8 +136,9 @@ export class RenderServerSingleton implements Disposable {
         this.world_env_uniform_layout_ref.expect.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 1);
         // result texture
         this.world_env_uniform_layout_ref.expect.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.NonFilterFloat, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 2);
-        this.world_env_uniform_layout_ref.expect.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.Depth, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 3);
-        this.world_env_uniform_layout_ref.expect.add_Sampler(WebGPURenderStateSamplerUniformType.NonFilter, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 4);
+        this.world_env_uniform_layout_ref.expect.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.NonFilterFloat, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 3);
+        this.world_env_uniform_layout_ref.expect.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.Depth, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 4);
+        this.world_env_uniform_layout_ref.expect.add_Sampler(WebGPURenderStateSamplerUniformType.NonFilter, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 5);
         //#endregion
 
         //#region lights uniform
