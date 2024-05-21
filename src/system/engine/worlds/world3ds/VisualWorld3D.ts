@@ -137,9 +137,7 @@ export class VisualWorld3DMesh extends WorldObject {
 
     public set_GlobalTransform(mat: Matrix4) {
         this.global_transform.copy(mat);
-        this.global_transform.get_Basis(this.global_normal);
-        this.global_normal.inverse(this.global_normal);
-        this.global_normal.transpose(this.global_normal);
+        this.global_normal.set_NormalTransform(this.global_transform);
         this.update_Cullable();
     }
 

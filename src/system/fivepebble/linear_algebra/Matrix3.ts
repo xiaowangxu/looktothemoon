@@ -1,6 +1,7 @@
 import { lerp } from "../Scalar";
 import { Euler, EulerOrder } from "./Euler";
 import { Matrix2 } from "./Matrix2";
+import type { Matrix4 } from "./Matrix4";
 import type { MatrixLike } from "./MatrixLike";
 import type { Quaternion } from "./Quaternion";
 import { Vector2 } from "./Vector2";
@@ -240,6 +241,43 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         this.n11 = x; this.n12 = 0; this.n13 = 0;
         this.n21 = 0; this.n22 = y; this.n23 = 0;
         this.n31 = 0; this.n32 = 0; this.n33 = z;
+        return this;
+    }
+
+    public set_NormalTransform(transform : Matrix4) {
+        const {
+            n11, n12, n13,
+            n21, n22, n23,
+            n31, n32, n33,
+        } = transform;
+        // inverse
+        const t11 = n33 * n22 - n32 * n23;
+        const t12 = n32 * n13 - n33 * n12;
+        const t13 = n23 * n12 - n22 * n13;
+        const det = n11 * t11 + n21 * t12 + n31 * t13;
+        if (det === 0) {
+            this.n11 = 0;
+            this.n21 = 0;
+            this.n31 = 0;
+            this.n12 = 0;
+            this.n22 = 0;
+            this.n32 = 0;
+            this.n13 = 0;
+            this.n23 = 0;
+            this.n33 = 0;
+            return this;
+        }
+        const det_inverse = 1 / det;
+        // transpose
+        this.n11 = t11 * det_inverse;
+        this.n12 = (n31 * n23 - n33 * n21) * det_inverse;
+        this.n13 = (n32 * n21 - n31 * n22) * det_inverse;
+        this.n21 = t12 * det_inverse;
+        this.n22 = (n33 * n11 - n31 * n13) * det_inverse;
+        this.n23 = (n31 * n12 - n32 * n11) * det_inverse;
+        this.n31 = t13 * det_inverse;
+        this.n32 = (n21 * n13 - n23 * n11) * det_inverse;
+        this.n33 = (n22 * n11 - n21 * n12) * det_inverse;
         return this;
     }
 
