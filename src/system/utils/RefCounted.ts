@@ -65,7 +65,7 @@ export class Ref<T extends RefCountedLike> {
         this.value = item;
     }
 
-    public borrow() {
+    public clone() {
         return new Ref(this.ref);
     }
 

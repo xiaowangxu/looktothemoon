@@ -6,6 +6,7 @@ import type { Disposable } from "@/system/utils/Type";
 import { RenderServer, RenderServerSingleton } from "../RenderServer";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { RenderServerMaterial } from "../material/RenderServerMaterial";
+import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 
 type RenderServerRenderer3DQueueVeretxArray = WebGPURenderElementVertexArray | WebGPURenderElementVertexArrayView;
 
@@ -64,14 +65,14 @@ export class RenderServerRenderer3DQueue implements Disposable {
         //#endregion
     }
 
-    public add(vertex_array: RenderServerRenderer3DQueueVeretxArray, material: RenderServerMaterial, instance_count: number, transform: Matrix4, layer: number, sort_distance: number) {
+    public add(vertex_array: RenderServerRenderer3DQueueVeretxArray, material: RenderServerMaterial, instance_count: number, transform: Matrix4, normal: Matrix3, layer: number, sort_distance: number) {
         const is_transparent = material.is_transparent;
         if (!is_transparent) {
             const index = ++this.solid_pointer;
             if (this.is_solid_full) return;
             this.solid_vertex_array[index] = vertex_array;
             this.solid_material[index] = material;
-            this.set_InstanceUniform(false, index, transform, layer, instance_count);
+            this.set_InstanceUniform(false, index, transform, normal, layer, instance_count);
             // const sort_distance_index = this.solid_sort_distance_index_queue[this.solid_pointer];
             // sort_distance_index.distance = sort_distance;
             // sort_distance_index.index = this.solid_pointer;
@@ -81,21 +82,21 @@ export class RenderServerRenderer3DQueue implements Disposable {
             if (this.is_transparent_full) return;
             this.transparent_vertex_array[index] = vertex_array;
             this.transparent_material[index] = material;
-            this.set_InstanceUniform(true, index, transform, layer, instance_count);
+            this.set_InstanceUniform(true, index, transform, normal, layer, instance_count);
             // const sort_distance_index = this.transparent_sort_distance_index_queue[this.transparent_pointer];
             // sort_distance_index.distance = sort_distance;
             // sort_distance_index.index = this.transparent_pointer;
         }
         if (this.addtion_sync_queue !== undefined) {
-            this.addtion_sync_queue.add(vertex_array, material, instance_count, transform, layer, sort_distance);
+            this.addtion_sync_queue.add(vertex_array, material, instance_count, transform, normal, layer, sort_distance);
         }
     }
 
-    public set_InstanceUniform(transparent: boolean, index: number, transform: Matrix4, layer: number, instance_count: number) {
+    public set_InstanceUniform(transparent: boolean, index: number, transform: Matrix4, normal: Matrix3, layer: number, instance_count: number) {
         const transform_array = transparent ? this.transparent_instance_uniform_transform_array : this.solid_instance_uniform_transform_array;
         const params_array = transparent ? this.transparent_instance_uniform_params_array : this.solid_instance_uniform_params_array;
         let transform_index = index * RenderServerRenderer3DQueue.#const_instance_uniform_buffer_element_stride;
-        let params_index = transform_index + 16;
+        let params_index = transform_index + 28;
         transform_array[transform_index++] = transform.n11;
         transform_array[transform_index++] = transform.n21;
         transform_array[transform_index++] = transform.n31;
@@ -112,12 +113,26 @@ export class RenderServerRenderer3DQueue implements Disposable {
         transform_array[transform_index++] = transform.n24;
         transform_array[transform_index++] = transform.n34;
         transform_array[transform_index++] = transform.n44;
+        transform_array[transform_index++] = normal.n11;
+        transform_array[transform_index++] = normal.n21;
+        transform_array[transform_index++] = normal.n31;
+        transform_array[transform_index++] = 0;
+        transform_array[transform_index++] = normal.n12;
+        transform_array[transform_index++] = normal.n22;
+        transform_array[transform_index++] = normal.n32;
+        transform_array[transform_index++] = 0;
+        transform_array[transform_index++] = normal.n13;
+        transform_array[transform_index++] = normal.n23;
+        transform_array[transform_index++] = normal.n33;
+        transform_array[transform_index++] = 0;
         params_array[params_index++] = layer;
         params_array[params_index++] = instance_count;
     }
 
     public get_InstanceCount(transparent: boolean, index: number) {
-        return transparent ? this.transparent_instance_uniform_params_array[index * RenderServerRenderer3DQueue.#const_instance_uniform_buffer_element_stride + 17] : this.solid_instance_uniform_params_array[index * RenderServerRenderer3DQueue.#const_instance_uniform_buffer_element_stride + 17];
+        return transparent ?
+            this.transparent_instance_uniform_params_array[index * RenderServerRenderer3DQueue.#const_instance_uniform_buffer_element_stride + 29] :
+            this.solid_instance_uniform_params_array[index * RenderServerRenderer3DQueue.#const_instance_uniform_buffer_element_stride + 29];
     }
 
     public commit_InstanceUniformBuffers() {

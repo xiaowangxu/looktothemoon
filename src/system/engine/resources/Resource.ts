@@ -44,6 +44,10 @@ export abstract class Resource extends ResourceRefCounted {
     protected trigger_Changed() {
         this.signal_changed.trigger();
     }
+
+    protected dispose(): void {
+        this.signal_changed.clear();
+    }
 }
 
 export class ResourceInstanceCache {

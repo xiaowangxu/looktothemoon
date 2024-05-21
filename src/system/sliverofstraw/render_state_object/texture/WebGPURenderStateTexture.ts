@@ -80,9 +80,9 @@ export class WebGPURenderStateTexture extends WebGPURenderObjectRefCounted {
      * @param dst_x the texture origin x to copy in, if omitted is 0
      * @param dst_y the texture origin y to copy in, if omitted is 0, ignored in D1 texture
      * @param dst_z the texture origin z to copy in, if omitted is 0, ignored in D1, D2 texture
-     * @param dst_w the texture region width to copy in, if omitted is (width - dst_x)
-     * @param dst_h the texture region height to copy in, if omitted is (height - dst_y), ignored in D1 texture
-     * @param dst_d the texture region depth to copy in, if omitted is (depth - dst_z), ignored in D1, D2 texture
+     * @param dst_w the texture region width to copy in, if omitted is (this.width - dst_x)
+     * @param dst_h the texture region height to copy in, if omitted is (this.height - dst_y), ignored in D1 texture
+     * @param dst_d the texture region depth to copy in, if omitted is (this.depth - dst_z), ignored in D1, D2 texture
      * @param data an ArrayBuffer, TypedArray, or DataView
      * @param data_w use to specify data's dimension, required in D2, D3 texture, in D2, D3 texture this needs to be bigger than the dst_w
      * @param data_h use to specify data's dimension, required in D2 texture, in D3 texture this needs to be bigger than the dst_h

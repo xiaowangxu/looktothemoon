@@ -1,6 +1,6 @@
 import { Result } from "@/system/utils/Result";
 import { ClassSaver } from "../classes/saver_loader/ClassSaverLoader";
-import { ImageTextureResource } from "../resources/texture_resources/ImageTextureResource";
+import { ImageTextureResource } from "../resources/texture_resources/texture2d_resources/ImageTexture2DResource";
 import { RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureWrap } from "@/system/sliverofstraw/render_state/RenderState";
 
 export class ImageLoader {

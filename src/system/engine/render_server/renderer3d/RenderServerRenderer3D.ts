@@ -342,7 +342,8 @@ const EffectFxaaPipeline = new RefCacher(() => {
     @fragment
     fn fs_main(vary: VertexOutput) -> FragmentOutput {
         var out: FragmentOutput;
-        out.color = fxaa(color, sample, vary.frag_coord, world_env_uniform_params.screen_size, vary.rgb_NW, vary.rgb_NE, vary.rgb_SW, vary.rgb_SE, vary.rgb_M);
+        var color = fxaa(color, sample, vary.frag_coord, world_env_uniform_params.screen_size, vary.rgb_NW, vary.rgb_NE, vary.rgb_SW, vary.rgb_SE, vary.rgb_M);
+        out.color = color;
         return out;
     }
 
@@ -647,7 +648,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
             // transpose( inverse( mat3( inverse( camera_world ) ) ) )
             const matrix = RenderServerRenderer3D.#tmp_matrix4_0.get_Basis(RenderServerRenderer3D.#tmp_matrix3_0);
             matrix.inverse(matrix);
-            // transpose by writing code
+            // transpose by assign code
             this.world_env_uniform_camera_normal_view[0] = matrix.n11;
             this.world_env_uniform_camera_normal_view[1] = matrix.n12;
             this.world_env_uniform_camera_normal_view[2] = matrix.n13;

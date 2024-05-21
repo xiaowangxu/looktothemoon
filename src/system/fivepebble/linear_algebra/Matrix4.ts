@@ -432,22 +432,28 @@ export class Matrix4 implements MatrixLike<Matrix4> {
         return this;
     }
     transpose(a: Matrix4): Matrix4 {
-        this.n11 = a.n11;
-        this.n12 = a.n21;
-        this.n13 = a.n31;
-        this.n14 = a.n41;
-        this.n21 = a.n12;
-        this.n22 = a.n22;
-        this.n23 = a.n32;
-        this.n24 = a.n42;
-        this.n31 = a.n13;
-        this.n32 = a.n23;
-        this.n33 = a.n33;
-        this.n34 = a.n43;
-        this.n41 = a.n14;
-        this.n42 = a.n24;
-        this.n43 = a.n34;
-        this.n44 = a.n44;
+        const {
+            n11, n21, n31, n41,
+            n12, n22, n32, n42,
+            n13, n23, n33, n43,
+            n14, n24, n34, n44,
+        } = a;
+        this.n11 = n11;
+        this.n12 = n21;
+        this.n13 = n31;
+        this.n14 = n41;
+        this.n21 = n12;
+        this.n22 = n22;
+        this.n23 = n32;
+        this.n24 = n42;
+        this.n31 = n13;
+        this.n32 = n23;
+        this.n33 = n33;
+        this.n34 = n43;
+        this.n41 = n14;
+        this.n42 = n24;
+        this.n43 = n34;
+        this.n44 = n44;
         return this;
     }
     inverse(a: Matrix4): Matrix4 {

@@ -14,7 +14,5 @@ export abstract class PickingShape3DResource extends Resource implements Picking
 
     public readonly preserve_global_transform: boolean = false;
 
-    perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3 | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
-        throw new Error("abstract method");
-    }
+    abstract perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3 | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined;
 }

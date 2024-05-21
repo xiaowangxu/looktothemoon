@@ -52,7 +52,7 @@ import { PickingShape3D } from "@/system/engine/nodes/node3ds/physics3ds/Picking
 import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/LineGrabber3D";
 import { FixSizeNode3D } from "@/system/engine/nodes/node3ds/gizmo3ds/FixSizeNode3D";
 import { PlaceholderTextureResource } from "@/system/engine/resources/texture_resources/PlaceholderTextureResource";
-import { ImageTextureResource } from "@/system/engine/resources/texture_resources/ImageTextureResource";
+import { ImageTextureResource } from "@/system/engine/resources/texture_resources/texture2d_resources/ImageTexture2DResource";
 import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/MatcapMaterialResource";
 import { RenderStateTextureMagFilter, RenderStateTextureMinFilter } from "@/system/sliverofstraw/render_state/RenderState";
 import { Dom3D } from "@/system/engine/nodes/node3ds/Dom3D";

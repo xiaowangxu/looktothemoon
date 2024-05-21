@@ -2,7 +2,7 @@ import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
 import type { CameraFrustumLikeCullable } from "@/system/fivepebble/graphics/CameraLike";
 import type { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
-import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
@@ -15,9 +15,9 @@ import type { RenderServerGeometry } from "../../render_server/geometry/RenderSe
 import type { RenderServerMaterial } from "../../render_server/material/RenderServerMaterial";
 import type { Renderer3DQueue } from "../../renderer/renderer_3d/Renderer3DQueue";
 import { WorldObject } from "../WorldObject";
-import type { Geometry3DResource } from "../../resources/geometry_3d_resources/Geometry3DResource";
+import type { Geometry3DResource } from "../../resources/geometry3d_resources/Geometry3DResource";
 import type { SceneTree } from "../../SceneTree";
-import type { Material3DResource } from "../../resources/material_3d_resources/Material3DResource";
+import type { MaterialResource } from "../../resources/material_resources/MaterialResource";
 import type { RenderServerRenderer3DQueue } from "../../render_server/renderer3d/RenderServerRenderer3DQueue";
 
 export type Cullable = CameraFrustumLikeCullable<Matrix4, Vector3, Matrix3> & Cloneable<Cullable> & Transformable<Cullable, Vector4, Matrix4>;
@@ -33,6 +33,7 @@ export class VisualWorld3DMesh extends WorldObject {
     private get has_surface_materials(): boolean { return !this.surface_materials_ref.is_empty; };
 
     public readonly global_transform: Matrix4 = Matrix4.new;
+    public readonly global_normal: Matrix3 = Matrix3.new;
     public visible: boolean = true;
     public layer: number = 0xffffffff;
     public cast_shadow: boolean = true;
@@ -136,6 +137,9 @@ export class VisualWorld3DMesh extends WorldObject {
 
     public set_GlobalTransform(mat: Matrix4) {
         this.global_transform.copy(mat);
+        this.global_transform.get_Basis(this.global_normal);
+        this.global_normal.inverse(this.global_normal);
+        this.global_normal.transpose(this.global_normal);
         this.update_Cullable();
     }
 
@@ -182,7 +186,7 @@ export class VisualWorld3DMesh extends WorldObject {
         if ((geometry.surface_length <= 0) || !this.has_surface_materials) {
             if (this.material_override_ref.is_empty) return false;
             const vertex_array = geometry.vertex_array_ref.expect;
-            if (vertex_array !== undefined) queue.add(vertex_array, this.material_override_ref.expect, geometry.instance_count, this.global_transform, this.layer, sort_distance);
+            if (vertex_array !== undefined) queue.add(vertex_array, this.material_override_ref.expect, geometry.instance_count, this.global_transform, this.global_normal, this.layer, sort_distance);
         }
         else {
             const surface_count = this.geometry_ref.expect.surface_length;
@@ -193,7 +197,7 @@ export class VisualWorld3DMesh extends WorldObject {
                     else material = this.material_override_ref.expect;
                 }
                 const vertex_array_view = geometry.get_Surface(i);
-                if (vertex_array_view !== undefined) queue.add(vertex_array_view, material, geometry.instance_count, this.global_transform, this.layer, sort_distance);
+                if (vertex_array_view !== undefined) queue.add(vertex_array_view, material, geometry.instance_count, this.global_transform, this.global_normal, this.layer, sort_distance);
             }
         }
         return true;
@@ -536,7 +540,7 @@ export class VisualWorld3D implements Disposable {
         }
     }
 
-    public set_MeshSurfaceMaterial(rid: Rid, surface_idx: number, material: Material3DResource | undefined) {
+    public set_MeshSurfaceMaterial(rid: Rid, surface_idx: number, material: MaterialResource | undefined) {
         const instance = this.get_Mesh(rid);
         if (instance) {
             if (material === undefined) {
@@ -548,7 +552,7 @@ export class VisualWorld3D implements Disposable {
         }
     }
 
-    public set_MeshMaterialOverride(rid: Rid, material: Material3DResource | undefined) {
+    public set_MeshMaterialOverride(rid: Rid, material: MaterialResource | undefined) {
         const instance = this.get_Mesh(rid);
         if (instance) {
             if (material === undefined) {

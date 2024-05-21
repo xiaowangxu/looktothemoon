@@ -12,5 +12,6 @@ export abstract class Geometry3DResource extends Resource {
 
     protected dispose(): void {
         this.render_server_geometry_ref.clear();
+        super.dispose();
     }
 }

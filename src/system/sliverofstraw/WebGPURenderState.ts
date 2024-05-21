@@ -3,7 +3,7 @@ import { WebGPURenderStateShader, WebGPURenderStateShaderType } from "./render_s
 import { WebGPURenderStateTexture, WebGPURenderStateTextureDimension, WebGPURenderStateTextureFormat, WebGPURenderStateTextureUsage, WebGPURendetStateTextureDestination } from "./render_state_object/texture/WebGPURenderStateTexture";
 import { WebGPURenderStateProgram } from "./render_state_object/pipeline/WebGPURenderStateProgram";
 import { WebGPURenderStateRenderPipeline } from "./render_state_object/pipeline/WebGPURenderStateRenderPipeline";
-import { WebGPURenderStateBufferUniformType, WebGPURenderStateUniformLayout, type WebGPURenderStateUniformType } from "./render_state_object/uniform/WebGPURenderStateUniformLayout";
+import { WebGPURenderStateBufferUniformType, WebGPURenderStateSamplerUniformType, WebGPURenderStateTextureUniformSampleType, WebGPURenderStateTextureUniformType, WebGPURenderStateUniformLayout, type WebGPURenderStateUniformType } from "./render_state_object/uniform/WebGPURenderStateUniformLayout";
 import { WebGPURenderStateTextureFilter, WebGPURenderStateTextureSampler, WebGPURenderStateTextureWrap } from "./render_state_object/texture/WebGPURenderStateTextureSampler";
 import { WebGPURenderStateUniformGroup, type WebGPURenderStateUniformGroupEntry } from "./render_state_object/uniform/WebGPURenderStateUniformGroup";
 import { WebGPURenderStateBuffer, WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "./render_state_object/buffer/WebGPURenderStateBuffer";
@@ -12,9 +12,11 @@ import { WebGPURenderStateComputePipeline } from "./render_state_object/pipeline
 import { WebGPURenderStateCanvasTextureView } from "./render_state_object/texture/WebGPURenderStateCanvasTextureView";
 import { type WebGPURenderStateAttributeLayout } from "./render_state_object/pipeline/WebGPURenderStateAttributeLayout";
 import { WebGPURenderStateBlendFactor, WebGPURenderStateBlendOperator, type WebGPURenderStateOutputState } from "./render_state_object/pipeline/WebGPURenderStateOutputState";
-import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, WebGPURenderStatePrimitiveType, type WebGPURenderStateProgramState } from "./render_state_object/pipeline/WebGPURenderStateProgramState";
+import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, WebGPURenderStateFacing, WebGPURenderStatePrimitiveType, type WebGPURenderStateProgramState } from "./render_state_object/pipeline/WebGPURenderStateProgramState";
 import { WebGPURenderStateMultiSampleCount, WebGPURenderStateMultiSampleTexture } from "./render_state_object/texture/WebGPURenderStateMultiSampleTexture";
 import { WebGPURenderStateBufferView } from "./render_state_object/buffer/WebGPURenderStateBufferView";
+import { RefMap, ReadonlyRef } from "../utils/RefCounted";
+import type { Disposable } from "../utils/Type";
 
 type WebGPURenderStateMemoryLayoutMemberType =
     WebGPURenderStateUniformType |
@@ -31,7 +33,7 @@ type WebGPURenderStateMemoryLayoutType<T> =
     T extends { type: 'array', member: infer R } ? { type: 'array', size: number, align: number, offset: number, member: WebGPURenderStateMemoryLayoutType<R>, length: number } :
     T extends { type: 'struct', members: infer G } ? { type: 'struct', size: number, align: number, offset: number, members: WebGPURenderStateMemoryLayoutTypeList<G> } : never;
 
-export class WebGPURenderState {
+export class WebGPURenderState implements Disposable {
 
     protected _device!: GPUDevice;
     public get device() { return this._device; }
@@ -43,6 +45,12 @@ export class WebGPURenderState {
             return false;
         }
         this._device = device;
+        //#region mipmap
+        this.mipmap_pipeline_uniform_layout_ref = new ReadonlyRef(this.create_UniformLayout());
+        this.mipmap_pipeline_uniform_layout_ref.expect.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.Float, WebGPURenderStateShaderType.Fragment, 0);
+        this.mipmap_pipeline_uniform_layout_ref.expect.add_Sampler(WebGPURenderStateSamplerUniformType.Filter, WebGPURenderStateShaderType.Fragment, 1);
+        this.mipmap_texture_sampler_ref = new ReadonlyRef(this.create_TextureSampler(undefined, undefined, undefined, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear).expect());
+        //#endregion
         return true;
     }
 
@@ -427,9 +435,11 @@ export class WebGPURenderState {
     }
 
     public create_Texture(usage: WebGPURenderStateTextureUsage, format: WebGPURenderStateTextureFormat, dimension: WebGPURenderStateTextureDimension, width: number, height: number = 1, depth: number = 1, mipmap_level_count: number = 1): Result<WebGPURenderStateTexture, Error> {
+        mipmap_level_count = mipmap_level_count <= 1 ? 1 : Math.min(mipmap_level_count, WebGPURenderState.get_MipmapCount(width, height));
         const texture = this.device.createTexture({
             dimension: WebGPURenderState.RenderStateTextureDimension(dimension),
             size: [width, height, depth],
+            mipLevelCount: mipmap_level_count,
             format: format,
             usage: usage,
         });
@@ -478,6 +488,127 @@ export class WebGPURenderState {
     public delete_TextureSampler(sampler: WebGPURenderStateTextureSampler): void {
         return;
     }
+
+    //#region mipmap
+
+    private readonly mipmap_pipeline_refs: RefMap<WebGPURenderStateTextureFormat, WebGPURenderStateRenderPipeline> = new RefMap();
+    private mipmap_pipeline_uniform_layout_ref!: ReadonlyRef<WebGPURenderStateUniformLayout>;
+    private mipmap_texture_sampler_ref!: ReadonlyRef<WebGPURenderStateTextureSampler>;
+
+    private get_MipmapPipeline(format: WebGPURenderStateTextureFormat) {
+        if (this.mipmap_pipeline_refs.has(format)) {
+            return this.mipmap_pipeline_refs.get(format)!;
+        }
+        else {
+            const shader_code = `
+            struct VSOutput {
+                @builtin(position) position: vec4f,
+                @location(0) texcoord: vec2f,
+            };
+ 
+            @vertex
+            fn vs_main(@builtin(vertex_index) vertexIndex : u32) -> VSOutput {
+                let pos = array(
+                    vec2f(0.0, 0.0),
+                    vec2f(1.0, 0.0),
+                    vec2f(0.0, 1.0),
+                    vec2f(0.0, 1.0),
+                    vec2f(1.0, 0.0),
+                    vec2f(1.0, 1.0),
+                );
+                var vsOutput: VSOutput;
+                let xy = pos[vertexIndex];
+                vsOutput.position = vec4f(xy * 2.0 - 1.0, 0.0, 1.0);
+                vsOutput.texcoord = vec2f(xy.x, 1.0 - xy.y);
+                return vsOutput;
+            }
+ 
+            @group(0) @binding(0) var ourTexture: texture_2d<f32>;
+            @group(0) @binding(1) var ourSampler: sampler;
+ 
+            @fragment
+            fn fs_main(fsInput: VSOutput) -> @location(0) vec4f {
+                return textureSample(ourTexture, ourSampler, fsInput.texcoord);
+            }
+            `;
+
+            const shader = this.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
+            const program = this.create_Program(shader, shader).expect();
+
+            const pipeline = this.create_RenderPipeline(
+                program,
+                {
+                    primitive_type: WebGPURenderStatePrimitiveType.Triangles,
+                    cull_mode: WebGPURenderStateCullMode.None,
+                    facing: WebGPURenderStateFacing.CounterClockwise,
+                    depth_bias: 0,
+                    depth_bias_slope_scale: 0,
+                    depth_compare_func: WebGPURenderStateDepthCompareFunc.Always,
+                    depth_write: false,
+                },
+                {
+                    depth_stencil_format: undefined,
+                    multi_sample_count: WebGPURenderStateMultiSampleCount.None,
+                    attachments: [
+                        // normal
+                        {
+                            format: format,
+                            blend: false,
+                        }
+                    ],
+                },
+                [this.mipmap_pipeline_uniform_layout_ref.expect],
+                []
+            ).expect();
+
+            shader.release();
+            program.release();
+            this.mipmap_pipeline_refs.set(format, pipeline);
+
+            return pipeline;
+        }
+    }
+
+    static get_MipmapCount(width: number, height: number) {
+        const max_dim = Math.max(width, height);
+        return 1 + Math.floor(Math.log2(max_dim));
+    }
+
+    public generate_Mipmap(texture: WebGPURenderStateTexture) {
+        const mipmap_count = Math.min(texture.mipmap_level_count, WebGPURenderState.get_MipmapCount(texture.width, texture.height));
+        let base_mipmap_level = 0;
+        const encoder = this.device.createCommandEncoder();
+        const sampler = this.mipmap_texture_sampler_ref.expect.sampler;
+        const pipeline = this.get_MipmapPipeline(texture.format).pipeline;
+        for (let i = mipmap_count - 1; i >= 1; i--) {
+            const uniform_bind_group = this.device.createBindGroup({
+                layout: this.mipmap_pipeline_uniform_layout_ref.expect.layout,
+                entries: [
+                    { binding: 0, resource: texture.texture.createView({ baseMipLevel: base_mipmap_level, mipLevelCount: 1 }) },
+                    { binding: 1, resource: sampler },
+                ],
+            });
+            base_mipmap_level++;
+            const frame_buffer_desc: GPURenderPassDescriptor = {
+                colorAttachments: [
+                    {
+                        view: texture.texture.createView({ baseMipLevel: base_mipmap_level, mipLevelCount: 1 }),
+                        loadOp: 'clear',
+                        storeOp: 'store',
+                    },
+                ],
+            };
+            const pass = encoder.beginRenderPass(frame_buffer_desc);
+            pass.setPipeline(pipeline);
+            pass.setBindGroup(0, uniform_bind_group);
+            pass.draw(6);
+            pass.end();
+        }
+        const command_buffer = encoder.finish();
+        this.device.queue.submit([command_buffer]);
+    }
+
+    //#endregion
 
     //#endregion
 
@@ -559,4 +690,10 @@ export class WebGPURenderState {
     }
 
     //#endregion
+
+    public dispose(): void {
+        this.mipmap_pipeline_refs.clear();
+        this.mipmap_pipeline_uniform_layout_ref.clear();
+        this.mipmap_texture_sampler_ref.clear();
+    }
 }

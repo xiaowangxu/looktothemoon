@@ -1,8 +1,21 @@
 import { WebGPURenderState } from "@/system/sliverofstraw/WebGPURenderState";
+import { WebGPURenderElementTextureSamplerCache } from "@/system/sliverofstraw/render_element_object/texture_sampler/WebGPURenderElementTextureSamplerCache";
+import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, WebGPURenderStateFacing, WebGPURenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
 import { WebGPURenderStateShaderType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateShader";
+import { WebGPURenderStateTextureDimension, WebGPURenderStateTextureFormat, WebGPURenderStateTextureUsage, WebGPURendetStateTextureDestination } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTexture";
+import type { WebGPURenderStateTextureWrap, WebGPURenderStateTextureFilter } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTextureSampler";
 import { WebGPURenderStateBufferUniformType, WebGPURenderStateSamplerUniformType, WebGPURenderStateTextureUniformSampleType, WebGPURenderStateTextureUniformType, WebGPURenderStateUniformLayout } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformLayout";
-import { Ref } from "@/system/utils/RefCounted";
+import { ReadonlyRef, Ref, RefMap } from "@/system/utils/RefCounted";
 import type { Disposable } from "@/system/utils/Type";
+import { RenderServerTexture } from "./texture/RenderServerTexture";
+import type { WebGPURenderStateRenderPipeline } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateRenderPipeline";
+import { WebGPURenderStateAttributeType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateAttributeLayout";
+import { RenderServerMaterial, RenderServerMaterialPass } from "./material/RenderServerMaterial";
+import { WebGPURenderStateMultiSampleCount } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateMultiSampleTexture";
+
+export enum RenderServerDefaultTextureType {
+    Hint, White, Black, Transparent,
+}
 
 export class RenderServerSingleton implements Disposable {
 
@@ -69,22 +82,13 @@ export class RenderServerSingleton implements Disposable {
         members: [
             // transform
             WebGPURenderStateBufferUniformType.Matrix4,
+            // normal
+            WebGPURenderStateBufferUniformType.Matrix3,
             // layer
             WebGPURenderStateBufferUniformType.Uint,
-            // preserved
+            // instance count
             WebGPURenderStateBufferUniformType.Uint,
-            WebGPURenderStateBufferUniformType.Uint,
-            WebGPURenderStateBufferUniformType.Uint,
-            WebGPURenderStateBufferUniformType.Uint,
-            WebGPURenderStateBufferUniformType.Uint,
-            WebGPURenderStateBufferUniformType.Uint,
-            WebGPURenderStateBufferUniformType.Uint,
-            WebGPURenderStateBufferUniformType.Uint,
-            WebGPURenderStateBufferUniformType.Uint,
-            WebGPURenderStateBufferUniformType.Uint,
-            WebGPURenderStateBufferUniformType.Uint,
-            WebGPURenderStateBufferUniformType.Uint,
-            WebGPURenderStateBufferUniformType.Uint,
+            // perserved
             WebGPURenderStateBufferUniformType.Uint,
             WebGPURenderStateBufferUniformType.Uint,
             WebGPURenderStateBufferUniformType.Uint,
@@ -122,9 +126,25 @@ export class RenderServerSingleton implements Disposable {
 
     //#endregion
 
+    //#region texture sampler cache
+
+    private readonly texture_sampler_cache_ref = new ReadonlyRef(new WebGPURenderElementTextureSamplerCache(this.render_state));
+
+    //#endregion
+
+    //#region default texture
+
+    private default_texture_hint_ref!: ReadonlyRef<RenderServerTexture>;
+    private default_texture_white_ref!: ReadonlyRef<RenderServerTexture>;
+    private default_texture_black_ref!: ReadonlyRef<RenderServerTexture>;
+    private default_texture_transparent_ref!: ReadonlyRef<RenderServerTexture>;
+
+    //#endregion
+
     constructor() {
         this.inited = this.render_state.init();
         this.inited.then(this.init.bind(this));
+        console.log(RenderServerSingleton.InstanceUniformMemoryLayout);
     }
 
     private init() {
@@ -150,12 +170,70 @@ export class RenderServerSingleton implements Disposable {
         // transform / layer / preserved
         this.instance_uniform_layout_ref.expect.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 0, true);
         //#endregion
+
+        //#region texture
+        this.default_texture_hint_ref = new ReadonlyRef(RenderServerTexture.create(WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopyDst, WebGPURenderStateTextureFormat.RGBA8, WebGPURenderStateTextureDimension.D2, 2, 2, 1));
+        this.default_texture_hint_ref.expect.update_Data(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
+            new Uint8Array([
+                255, 0, 255, 255,
+                0, 255, 255, 255,
+                0, 255, 255, 255,
+                255, 0, 255, 255,
+            ]), 2, 2,
+        );
+        this.default_texture_white_ref = new ReadonlyRef(RenderServerTexture.create(WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopyDst, WebGPURenderStateTextureFormat.RGBA8, WebGPURenderStateTextureDimension.D2, 1, 1, 1));
+        this.default_texture_white_ref.expect.update_Data(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
+            new Uint8Array([
+                255, 255, 255, 255,
+            ]), 1, 1,
+        );
+        this.default_texture_black_ref = new ReadonlyRef(RenderServerTexture.create(WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopyDst, WebGPURenderStateTextureFormat.RGBA8, WebGPURenderStateTextureDimension.D2, 1, 1, 1));
+        this.default_texture_black_ref.expect.update_Data(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
+            new Uint8Array([
+                0, 0, 0, 255,
+            ]), 1, 1,
+        );
+        this.default_texture_transparent_ref = new ReadonlyRef(RenderServerTexture.create(WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopyDst, WebGPURenderStateTextureFormat.RGBA8, WebGPURenderStateTextureDimension.D2, 1, 1, 1));
+        this.default_texture_transparent_ref.expect.update_Data(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
+            new Uint8Array([
+                255, 255, 255, 0,
+            ]), 1, 1,
+        );
+        //#endregion
+    }
+
+    public get_TextureSampler(
+        wrap_u?: WebGPURenderStateTextureWrap, wrap_v?: WebGPURenderStateTextureWrap, wrap_w?: WebGPURenderStateTextureWrap,
+        min_filter?: WebGPURenderStateTextureFilter, mag_filter?: WebGPURenderStateTextureFilter, mipmap_filter?: WebGPURenderStateTextureFilter,
+        compare?: WebGPURenderStateDepthCompareFunc,
+        min_lod?: number, max_lod?: number, anisotropy?: number,
+    ) {
+        return this.texture_sampler_cache_ref.expect.get(wrap_u, wrap_v, wrap_w, min_filter, mag_filter, mipmap_filter, compare, min_lod, max_lod, anisotropy);
+    }
+
+    public get_DefaultTexture(type: RenderServerDefaultTextureType) {
+        switch (type) {
+            case RenderServerDefaultTextureType.Hint: return this.default_texture_hint_ref.expect;
+            case RenderServerDefaultTextureType.White: return this.default_texture_white_ref.expect;
+            case RenderServerDefaultTextureType.Black: return this.default_texture_black_ref.expect;
+            case RenderServerDefaultTextureType.Transparent: return this.default_texture_transparent_ref.expect;
+            default: {
+                const n: never = type;
+                throw new Error('should not reach');
+            }
+        }
     }
 
     public dispose() {
         this.world_env_uniform_layout_ref.clear();
         this.lights_uniform_layout_ref.clear();
         this.instance_uniform_layout_ref.clear();
+        this.texture_sampler_cache_ref.clear();
+        this.default_texture_hint_ref.clear();
+        this.default_texture_white_ref.clear();
+        this.default_texture_black_ref.clear();
+        this.default_texture_transparent_ref.clear();
+        this.render_state.dispose();
     }
 }
 

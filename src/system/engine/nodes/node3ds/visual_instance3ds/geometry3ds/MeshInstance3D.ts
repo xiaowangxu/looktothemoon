@@ -2,7 +2,7 @@ import type { Rid } from "../../../../Rid";
 import { NodeNotification } from "@/system/engine/nodes/Node";
 import { GeometryInstance3D } from "./GeometryInstance3D";
 import { Ref, RefMap } from "@/system/utils/RefCounted";
-import type { Geometry3DResource } from "@/system/engine/resources/geometry_3d_resources/Geometry3DResource";
+import type { Geometry3DResource } from "@/system/engine/resources/geometry3d_resources/Geometry3DResource";
 import type { Material3DResource } from "@/system/engine/resources/material_3d_resources/Material3DResource";
 
 export class MeshInstance3D extends GeometryInstance3D {

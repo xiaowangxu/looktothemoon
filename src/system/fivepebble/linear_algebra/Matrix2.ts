@@ -136,8 +136,14 @@ export class Matrix2 implements MatrixLike<Matrix2> {
         return this;
     }
     transpose(a: Matrix2): Matrix2 {
-        this.n11 = a.n11; this.n12 = a.n21;
-        this.n21 = a.n12; this.n22 = a.n22;
+        const {
+            n11, n21,
+            n12, n22,
+        } = a;
+        this.n11 = n11;
+        this.n12 = n21;
+        this.n21 = n12;
+        this.n22 = n22;
         return this;
     }
     inverse(a: Matrix2): Matrix2 {

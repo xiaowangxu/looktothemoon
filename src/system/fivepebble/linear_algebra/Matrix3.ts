@@ -309,9 +309,20 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         return this;
     }
     transpose(a: Matrix3): Matrix3 {
-        this.n11 = a.n11; this.n12 = a.n21; this.n13 = a.n31;
-        this.n21 = a.n12; this.n22 = a.n22; this.n23 = a.n32;
-        this.n31 = a.n13; this.n32 = a.n23; this.n33 = a.n33;
+        const {
+            n11, n21, n31,
+            n12, n22, n32,
+            n13, n23, n33,
+        } = a;
+        this.n11 = n11;
+        this.n12 = n21;
+        this.n13 = n31;
+        this.n21 = n12;
+        this.n22 = n22;
+        this.n23 = n32;
+        this.n31 = n13;
+        this.n32 = n23;
+        this.n33 = n33;
         return this;
     }
     inverse(a: Matrix3): Matrix3 {
