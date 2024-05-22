@@ -489,7 +489,7 @@ export class WeakRef<T extends RefCounted> {
     }
 }
 
-export class RefCacher<T extends RefCounted> {
+export class RefCacher<T extends RefCountedLike> {
 
     private readonly getter: () => T;
 

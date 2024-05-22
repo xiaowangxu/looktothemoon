@@ -40,6 +40,8 @@ export class MaterialTextureStorage<T extends TextureResource = TextureResource>
     private readonly texture_binding: number;
     private readonly texture_fallback: RenderServerDefaultTextureType;
 
+    public get is_empty() { return this.texture_ref.is_empty; }
+
     private readonly sampler_ref: ReadonlyRef<WebGPURenderStateTextureSampler> | undefined;
     private readonly sampler_binding: number | undefined;
 
@@ -68,12 +70,16 @@ export class MaterialTextureStorage<T extends TextureResource = TextureResource>
         return this.texture_ref.value;
     }
 
+    /**
+     * @returns return true if texture changed
+     */
     public set(texture: T | undefined) {
-        if (texture === this.texture_ref.value) return;
+        if (texture === this.texture_ref.value) return false;
         this.texture_ref.value?.signal_changed.disconnect(this.update_func);
         this.texture_ref.value = texture;
         this.texture_ref.value?.signal_changed.connect(this.update_func);
         this.update();
+        return true;
     }
 
     public dispose() {

@@ -476,6 +476,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     protected readonly transparent_reveal_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
 
     protected readonly transparent_frame_buffer_ref = new ReadonlyRef(new WebGPURenderElementFrameBuffer(RenderServer.render_state));
+    protected readonly transparent_depth_normal_frame_buffer_ref = new ReadonlyRef(new WebGPURenderElementFrameBuffer(RenderServer.render_state));
 
     //#endregion
 
@@ -798,6 +799,11 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.transparent_frame_buffer_ref.expect.add_Attachment(this.transparent_reveal_texture_view_ref.expect, true, Vector4.create(1, 1, 1, 1), true);
         this.transparent_frame_buffer_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_view_ref.expect, false, 1, false, true);
 
+        this.transparent_depth_normal_frame_buffer_ref.expect.clear_Attachments();
+        this.transparent_depth_normal_frame_buffer_ref.expect.clear_DepthStencilAttachment();
+        this.transparent_depth_normal_frame_buffer_ref.expect.add_Attachment(this.result_normal_texture_view_ref.expect, false, Vector4.create(1, 1, 1, 0), true);
+        this.transparent_depth_normal_frame_buffer_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_view_ref.expect, false, 1, true, false);
+
         this.compose_frame_buffer_ref.expect.clear_Attachments();
         this.compose_frame_buffer_ref.expect.add_Attachment(this.result_color_texture_view_ref.expect, false, Vector4.create(0, 0, 0, 0), true);
 
@@ -854,6 +860,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         const encoder = RenderServer.render_state.device.createCommandEncoder();
         this.render_Queue0Solid(encoder);
         this.render_Queue0Transparent(encoder);
+        this.render_Queue0TransparentDepthNormal(encoder);
         encoder.copyTextureToTexture({ texture: this.result_color_texture_ref.expect.texture }, { texture: this.result_color_render_queue_1_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
         encoder.copyTextureToTexture({ texture: this.result_normal_texture_ref.expect.texture }, { texture: this.result_normal_render_queue_1_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
         encoder.copyTextureToTexture({ texture: this.result_depth_texture_ref.expect.texture }, { texture: this.result_depth_render_queue_1_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
@@ -932,6 +939,8 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
     protected render_Queue0Transparent(encoder: GPUCommandEncoder) {
 
+        if (this.queue_0.transparent_pointer < 0) return;
+
         const render_pass = encoder.beginRenderPass(this.transparent_frame_buffer_ref.expect.frame_buffer_desc);
         render_pass.setBindGroup(RenderServerSingleton.WorldEnvUniformBindGroupIndex, this.world_env_queue_0_uniform_transparent_group_ref.expect.binding_group);
         render_pass.setBindGroup(RenderServerSingleton.LightsUniformBindGroupIndex, this.lights_uniform_group_ref.expect.binding_group);
@@ -966,11 +975,42 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         compose_pass.end();
     }
 
+    protected render_Queue0TransparentDepthNormal(encoder: GPUCommandEncoder) {
+
+        if (this.queue_0.transparent_pointer < 0) return;
+
+        const render_pass = encoder.beginRenderPass(this.transparent_depth_normal_frame_buffer_ref.expect.frame_buffer_desc);
+        render_pass.setBindGroup(RenderServerSingleton.WorldEnvUniformBindGroupIndex, this.world_env_queue_0_uniform_solid_group_ref.expect.binding_group);
+        render_pass.setBindGroup(RenderServerSingleton.LightsUniformBindGroupIndex, this.lights_uniform_group_ref.expect.binding_group);
+        const dynamic_offsets = RenderServerRenderer3D.#tmp_instance_uniform_group_dynamic_offsets;
+        for (let i = 0; i <= this.queue_0.transparent_pointer; i++) {
+            const vertex_array = this.queue_0.transparent_vertex_array[i]!;
+            const material = this.queue_0.transparent_material[i]!;
+            material.update_UniformBuffers();
+            const pipeline_uniform = material.get_PipelineUniform(RenderServerMaterialPass.Depth, vertex_array, this.transparent_depth_normal_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual);
+            if (pipeline_uniform === undefined) continue;
+            const { pipeline, uniform } = pipeline_uniform;
+            if (uniform !== undefined) {
+                render_pass.setBindGroup(RenderServerSingleton.UniformBindGroupIndex, uniform.binding_group);
+            }
+            const instance_count = this.queue_0.get_InstanceCount(true, i);
+            dynamic_offsets[0] = i * RenderServerSingleton.InstanceUniformMemoryLayout.size;
+            render_pass.setBindGroup(RenderServerSingleton.InstanceUniformBindGroupIndex, this.queue_0_transparent_instance_uniform_group_ref.expect.binding_group, dynamic_offsets);
+            render_pass.setPipeline(pipeline.pipeline);
+            vertex_array.bind_Buffers(render_pass);
+            vertex_array.draw(render_pass, instance_count);
+        }
+
+        render_pass.end();
+    }
+
     //#endregion
 
     //#region queue 1
 
     protected render_Queue1Solid(encoder: GPUCommandEncoder) {
+
+        if (this.queue_1.solid_pointer < 0) return;
 
         const render_pass = encoder.beginRenderPass(this.solid_frame_buffer_1_ref.expect.frame_buffer_desc);
         render_pass.setBindGroup(RenderServerSingleton.WorldEnvUniformBindGroupIndex, this.world_env_queue_1_uniform_group_ref.expect.binding_group);
@@ -998,6 +1038,8 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     }
 
     protected render_Queue1Transparent(encoder: GPUCommandEncoder) {
+
+        if (this.queue_1.transparent_pointer < 0) return;
 
         const render_pass = encoder.beginRenderPass(this.transparent_frame_buffer_ref.expect.frame_buffer_desc);
         render_pass.setBindGroup(RenderServerSingleton.WorldEnvUniformBindGroupIndex, this.world_env_queue_1_uniform_group_ref.expect.binding_group);
@@ -1075,6 +1117,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.transparent_reveal_texture_view_ref.clear();
 
         this.transparent_frame_buffer_ref.clear();
+        this.transparent_depth_normal_frame_buffer_ref.clear();
 
         this.compose_uniform_sampler_ref.clear();
 

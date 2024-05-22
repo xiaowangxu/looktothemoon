@@ -126,6 +126,40 @@ export class RenderServerSingleton implements Disposable {
 
     //#endregion
 
+    //#region code
+
+    static readonly WorldUniformsStructCode = `struct WorldEnvUniformCameraMatrix {
+    camera_world: mat4x4f,
+    camera_view: mat4x4f,
+    camera_proj: mat4x4f,
+    camera_inv_proj: mat4x4f,
+    camera_norview: mat3x3f,
+}
+
+struct WorldEnvUniformParams {
+    screen_size: vec2f,
+    time: f32,
+    orthogonal: u32,
+    pixel_ratio: f32,
+}`;
+
+    static readonly InstanceUniformsStructCode = `struct InstanceUniform {
+    transform: mat4x4f,
+    normal: mat3x3f,
+    layer: u32,
+}`;
+
+    static readonly WorldUniformsGroupBindingCode = `@group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(0) var<uniform> world_env_uniform_camera_matrix: WorldEnvUniformCameraMatrix; 
+@group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
+@group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var world_env_uniform_color_texture: texture_2d<f32>;
+@group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(3) var world_env_uniform_normal_texture: texture_2d<f32>;
+@group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(4) var world_env_uniform_depth_texture: texture_depth_2d;
+@group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(5) var world_env_uniform_sampler: sampler;`
+
+    static readonly InstanceUniformsGroupBindingCode = `@group(${RenderServerSingleton.InstanceUniformBindGroupIndex}) @binding(0) var<uniform> instance_uniform: InstanceUniform;`;
+
+    //#endregion
+
     //#region texture sampler cache
 
     private readonly texture_sampler_cache_ref = new ReadonlyRef(new WebGPURenderElementTextureSamplerCache(this.render_state));
@@ -144,7 +178,6 @@ export class RenderServerSingleton implements Disposable {
     constructor() {
         this.inited = this.render_state.init();
         this.inited.then(this.init.bind(this));
-        console.log(RenderServerSingleton.InstanceUniformMemoryLayout);
     }
 
     private init() {
