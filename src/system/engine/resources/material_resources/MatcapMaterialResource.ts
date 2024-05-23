@@ -1,6 +1,6 @@
 import { WebGPURenderState } from "@/system/sliverofstraw/WebGPURenderState";
 import { WebGPURenderStateBufferUniformType, WebGPURenderStateSamplerUniformType, WebGPURenderStateTextureUniformSampleType, WebGPURenderStateTextureUniformType } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformLayout";
-import { MaterialResource, MaterialTextureStorage } from "./MaterialResource";
+import { MaterialResource, MaterialTextureSamplerStorage } from "./MaterialResource";
 import { ReadonlyRef, RefCacher } from "@/system/utils/RefCounted";
 import { RenderServerMaterial, RenderServerMaterialPass } from "../../render_server/material/RenderServerMaterial";
 import { RenderServerGeometryAttributeLayout, RenderServerGeometryAttributeLocation } from "../../render_server/geometry/RenderServerGeometryDefination";
@@ -44,17 +44,20 @@ const MatcapMaterialSolidPipelineCacheSet = new RefCacher(() => {
 		`	var _world = instance_uniform.transform * vec4(attri.position, 1.0f);
 	var _world_in_view = world_env_uniform_camera_matrix.camera_view * _world;
 	out.position = world_env_uniform_camera_matrix.camera_proj * _world_in_view;
+	out.vertex_view = _world_in_view.xyz;
 	out.normal = world_env_uniform_camera_matrix.camera_norview * instance_uniform.normal * attri.normal;
 	out.uv = attri.uv;
 	if bool(world_env_uniform_params.orthogonal) { out.lookat = vec3f(0.0f, 0.0f, 1.0f); } else { out.lookat = -normalize(_world_in_view.xyz); }`,
 		// varys
 		`	@builtin(position) position: vec4f,
-	@location(0) normal: vec3f,
-	@location(1) lookat: vec3f,
-	@location(2) uv: vec2f,`,
+	@location(0) vertex_view: vec3f,
+	@location(1) normal: vec3f,
+	@location(2) lookat: vec3f,
+	@location(3) uv: vec2f,`,
 		// fragment code
 		`	var normal = normalize(vary.normal);
-	var matcap_uv = matcap_uv_compute(vary.lookat, normal);
+	var normal_sample = normalize(tbn * (textureSample(mat_uniform_normal_tex, mat_uniform_sampler, vary.uv).xyz * 2.0 - 1.0));
+	var matcap_uv = matcap_uv_compute(vary.lookat, normal_sample);
 	var color = textureSample(mat_uniform_matcap_tex, mat_uniform_sampler, matcap_uv) * mat_uniform.color;`,
 		// custom
 		`fn matcap_uv_compute(I: vec3f, N: vec3f) -> vec2f {
@@ -98,7 +101,7 @@ export class MatcapMaterialResource extends MaterialResource {
 	}
 
 	private _has_normal: boolean = false;
-	private readonly normal_texture_storage = new MaterialTextureStorage<Texture2DResource>(this.uniform_group_ref.expect, 1, undefined, RenderServerDefaultTextureType.White);
+	private readonly normal_texture_storage = new MaterialTextureSamplerStorage<Texture2DResource>(this.uniform_group_ref.expect, 1, undefined, RenderServerDefaultTextureType.White);
 	public get normal_texture() { return this.normal_texture_storage.get(); }
 	public set normal_texture(texture: Texture2DResource | undefined) {
 		if (this.normal_texture_storage.set(texture)) {
@@ -107,7 +110,7 @@ export class MatcapMaterialResource extends MaterialResource {
 		}
 	}
 
-	private readonly matcap_texture_storage = new MaterialTextureStorage<Texture2DResource>(this.uniform_group_ref.expect, 2, undefined, RenderServerDefaultTextureType.White);
+	private readonly matcap_texture_storage = new MaterialTextureSamplerStorage<Texture2DResource>(this.uniform_group_ref.expect, 2, undefined, RenderServerDefaultTextureType.White);
 	public get matcap_texture() { return this.matcap_texture_storage.get(); }
 	public set matcap_texture(texture: Texture2DResource | undefined) { this.matcap_texture_storage.set(texture); }
 

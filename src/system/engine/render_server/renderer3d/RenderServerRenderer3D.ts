@@ -64,7 +64,7 @@ const FullScreenBackgroundPipeline = new RefCacher(() => {
     
     struct VertexOutput {
         @builtin(position) position: vec4f,
-        @location(1) uv: vec2f,
+        @location(0) uv: vec2f,
     };
 
     @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(0) var<uniform> world_env_uniform_camera_matrix: WorldEnvUniformCameraMatrix; 
@@ -149,7 +149,7 @@ const OitComposePipeline = new RefCacher(() => {
     
     struct VertexOutput {
         @builtin(position) position: vec4f,
-        @location(1) uv: vec2f,
+        @location(0) uv: vec2f,
     };
 
     @vertex
@@ -225,7 +225,7 @@ const ColorComposePipeline = new RefCacher(() => {
     
     struct VertexOutput {
         @builtin(position) position: vec4f,
-        @location(1) uv: vec2f,
+        @location(0) uv: vec2f,
     };
 
     @vertex
@@ -308,12 +308,12 @@ const EffectFxaaPipeline = new RefCacher(() => {
 
     struct VertexOutput {
         @builtin(position) position: vec4f,
-        @location(1) frag_coord: vec2f,
-        @location(2) rgb_NW: vec2f,
-        @location(3) rgb_NE: vec2f,
-        @location(4) rgb_SW: vec2f,
-        @location(5) rgb_SE: vec2f,
-        @location(6) rgb_M: vec2f,
+        @location(0) frag_coord: vec2f,
+        @location(1) rgb_NW: vec2f,
+        @location(2) rgb_NE: vec2f,
+        @location(3) rgb_SW: vec2f,
+        @location(4) rgb_SE: vec2f,
+        @location(5) rgb_M: vec2f,
     };
 
     @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
@@ -522,7 +522,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     protected readonly effect_frame_buffer_0_ref = new ReadonlyRef(new WebGPURenderElementFrameBuffer(RenderServer.render_state));
     protected readonly effect_frame_buffer_1_ref = new ReadonlyRef(new WebGPURenderElementFrameBuffer(RenderServer.render_state));
 
-    protected readonly effect_color_pipeline_ref = new ReadonlyRef(EffectFxaaPipeline.get());
+    protected readonly effect_fxaa_pipeline_ref = new ReadonlyRef(EffectFxaaPipeline.get());
 
     //#endregion
 
@@ -861,13 +861,17 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.render_Queue0Solid(encoder);
         this.render_Queue0Transparent(encoder);
         this.render_Queue0TransparentDepthNormal(encoder);
-        encoder.copyTextureToTexture({ texture: this.result_color_texture_ref.expect.texture }, { texture: this.result_color_render_queue_1_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
+        const effect_queue_0_first_texture = (this.render_Queue0Effects(encoder) % 2) === 0;
+        if (!effect_queue_0_first_texture) {
+            encoder.copyTextureToTexture({ texture: this.effect_texture_ref.expect.texture  }, { texture: this.result_color_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
+        }
+        encoder.copyTextureToTexture({ texture: this.result_color_texture_ref.expect.texture  }, { texture: this.result_color_render_queue_1_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
         encoder.copyTextureToTexture({ texture: this.result_normal_texture_ref.expect.texture }, { texture: this.result_normal_render_queue_1_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
         encoder.copyTextureToTexture({ texture: this.result_depth_texture_ref.expect.texture }, { texture: this.result_depth_render_queue_1_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
         this.render_Queue1Solid(encoder);
         this.render_Queue1Transparent(encoder);
-        const effect_first_texture = (this.render_Effects(encoder) % 2) === 0;
-        encoder.copyTextureToTexture({ texture: effect_first_texture ? this.result_color_texture_ref.expect.texture : this.effect_texture_ref.expect.texture }, { texture: viewport.canvas_texture_view.texture }, { width: texture_width, height: texture_height });
+        const effect_queue_1_first_texture = (this.render_Queue1Effects(encoder) % 2) === 0;
+        encoder.copyTextureToTexture({ texture: effect_queue_1_first_texture ? this.result_color_texture_ref.expect.texture : this.effect_texture_ref.expect.texture }, { texture: viewport.canvas_texture_view.texture }, { width: texture_width, height: texture_height });
         RenderServer.render_state.device.queue.submit([encoder.finish()]);
 
         //#endregion
@@ -1004,6 +1008,14 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         render_pass.end();
     }
 
+    protected render_Queue0Effects(encoder: GPUCommandEncoder): number {
+        let pass = 0;
+
+        // see render_Queue1Effects for examples
+
+        return pass;
+    }
+
     //#endregion
 
     //#region queue 1
@@ -1075,15 +1087,11 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         compose_pass.end();
     }
 
-    //#endregion
-
-    //#region effect
-
-    protected render_Effects(encoder: GPUCommandEncoder): number {
+    protected render_Queue1Effects(encoder: GPUCommandEncoder): number {
         let pass = 0;
 
         const effect_pass_0 = encoder.beginRenderPass(this.effect_frame_buffer_0_ref.expect.frame_buffer_desc);
-        effect_pass_0.setPipeline(this.effect_color_pipeline_ref.expect.pipeline);
+        effect_pass_0.setPipeline(this.effect_fxaa_pipeline_ref.expect.pipeline);
         effect_pass_0.setBindGroup(0, this.world_env_effect_uniform_group_0_ref.expect.binding_group);
         this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(effect_pass_0);
         this.full_screen_triangle_vertex_array_ref.expect.draw(effect_pass_0);
@@ -1148,6 +1156,8 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.effect_texture_view_ref.clear();
         this.effect_frame_buffer_0_ref.clear();
         this.effect_frame_buffer_1_ref.clear();
+
+        this.effect_fxaa_pipeline_ref.clear();
 
         this.queue_0_solid_instance_uniform_group_ref.clear();
         this.queue_0_solid_instance_uniform_buffer_view_ref.clear();

@@ -22,7 +22,8 @@ import { OrthographicCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/Or
 import { PerspectiveCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/PerspectiveCamera3D";
 
 import f_image_url from 'res://f-texture.png';
-import matcap_6_image_url from 'res://matcap-11.png';
+import matcap_6_image_url from 'res://matcap-13.png';
+import normal_image_url from 'res://normal_texture-0.png';
 
 import { RenderServerTexture } from "@/system/engine/render_server/texture/RenderServerTexture";
 import { ImageTexture2DResource } from "@/system/engine/resources/texture_resources/texture2d_resources/ImageTexture2DResource";
@@ -110,15 +111,15 @@ export async function createEditor() {
 	const sph_geo = new TorusGeometry3DResource();
 
 	const box_mat_test = new MatcapMaterialResource();
-	// box_mat_test.color = Vector4.create(1.0, 1.0, 1.0, 0.5);
+	// box_mat_test.color = Vector4.create(0.55, 0.5, 0.7, 1.0);
 
 	const box_mat1 = new TestMaterialResource();
 	box_mat1.color = Vector4.create(1.0, 1.0, 1.0, 1.0);
 	const mesh = new MeshInstance3D();
-	mesh.geometry = sph_geo;
+	mesh.geometry = box_geo;
 	mesh.material = box_mat_test;
 	mesh.local_position = Vector3.create(0, 0, 0);
-	mesh.local_rotation = Euler.create(Pi / 4, 0, 0);
+	mesh.local_rotation = Euler.create(0, 0, 0);
 	mesh.local_scale = Vector3.create(100, 100, 100);
 	// mesh.render_queue = 1;
 	World.add_Child(mesh);
@@ -224,8 +225,18 @@ export async function createEditor() {
 		image.src = matcap_6_image_url;
 		image.onload = () => {
 			const { naturalWidth, naturalHeight } = image;
-			const texture = ImageTexture2DResource.create_Image(image, naturalWidth, naturalHeight, Infinity, true);
+			const texture = ImageTexture2DResource.create_Image(image, naturalWidth, naturalHeight);
 			box_mat_test.matcap_texture = texture;
+		};
+	}
+
+	{
+		const image = new Image();
+		image.src = normal_image_url;
+		image.onload = () => {
+			const { naturalWidth, naturalHeight } = image;
+			const texture = ImageTexture2DResource.create_Image(image, naturalWidth, naturalHeight, Infinity, true);
+			box_mat_test.normal_texture = texture;
 		};
 	}
 

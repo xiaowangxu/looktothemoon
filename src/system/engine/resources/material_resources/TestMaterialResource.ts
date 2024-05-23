@@ -2,7 +2,7 @@ import { WebGPURenderStateShaderType } from "@/system/sliverofstraw/render_state
 import { RenderServer, RenderServerDefaultTextureType, RenderServerSingleton } from "../../render_server/RenderServer";
 import { RenderServerGeometryAttributeLayout, RenderServerGeometryAttributeLocation } from "../../render_server/geometry/RenderServerGeometryDefination";
 import { RenderServerMaterial, RenderServerMaterialPass } from "../../render_server/material/RenderServerMaterial";
-import { MaterialResource, MaterialTextureStorage } from "./MaterialResource";
+import { MaterialResource, MaterialTextureSamplerStorage } from "./MaterialResource";
 import { ReadonlyRef, RefCacher } from "@/system/utils/RefCounted";
 import { WebGPURenderState } from "@/system/sliverofstraw/WebGPURenderState";
 import { WebGPURenderStateBufferUniformType, WebGPURenderStateSamplerUniformType, WebGPURenderStateTextureUniformSampleType, WebGPURenderStateTextureUniformType } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformLayout";
@@ -234,7 +234,7 @@ export class TestMaterialResource extends MaterialResource {
         this.update_UniformBuffer();
     }
 
-    private readonly texture_storage = new MaterialTextureStorage<Texture2DResource>(this.uniform_group_ref.expect, 1, undefined, RenderServerDefaultTextureType.White, 2, RenderServer.get_TextureSampler(undefined, undefined, undefined, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear));
+    private readonly texture_storage = new MaterialTextureSamplerStorage<Texture2DResource>(this.uniform_group_ref.expect, 1, undefined, RenderServerDefaultTextureType.White, 2, RenderServer.get_TextureSampler(undefined, undefined, undefined, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear));
     public get texture() { return this.texture_storage.get(); }
     public set texture(texture: Texture2DResource | undefined) { this.texture_storage.set(texture); }
 

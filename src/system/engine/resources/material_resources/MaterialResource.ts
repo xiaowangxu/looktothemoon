@@ -32,18 +32,18 @@ export abstract class MaterialResource extends Resource {
     }
 }
 
-export class MaterialTextureStorage<T extends TextureResource = TextureResource> implements Disposable {
+export class MaterialTextureSamplerStorage<T extends TextureResource = TextureResource> implements Disposable {
 
     private readonly uniform_group_ref: ReadonlyRef<WebGPURenderStateUniformGroup>;
 
-    private readonly texture_ref: Ref<T> = new Ref();
     private readonly texture_binding: number;
+    private readonly texture_ref: Ref<T> = new Ref();
     private readonly texture_fallback: RenderServerDefaultTextureType;
 
     public get is_empty() { return this.texture_ref.is_empty; }
 
-    private readonly sampler_ref: ReadonlyRef<WebGPURenderStateTextureSampler> | undefined;
     private readonly sampler_binding: number | undefined;
+    private readonly sampler_fallback_ref: Ref<WebGPURenderStateTextureSampler> = new Ref();
 
     constructor(uniform_group: WebGPURenderStateUniformGroup, texture_binding: number, texture: T | undefined = undefined, texture_fallback: RenderServerDefaultTextureType, sampler_binding?: number, sampler?: WebGPURenderStateTextureSampler) {
         this.uniform_group_ref = new ReadonlyRef(uniform_group);
@@ -52,11 +52,10 @@ export class MaterialTextureStorage<T extends TextureResource = TextureResource>
         this.texture_binding = texture_binding;
         this.texture_fallback = texture_fallback;
 
+        if (sampler_binding !== undefined && sampler === undefined) throw new Error('<MaterialTextureSamplerStorage> constructor: sampler must be provided when sampler_binding is not undefined');
+        
         this.sampler_binding = sampler_binding;
-        this.sampler_ref = sampler === undefined ? undefined : new ReadonlyRef(sampler);
-        if (this.sampler_binding !== undefined && this.sampler_ref !== undefined) {
-            this.uniform_group_ref.expect.set_Sampler(this.sampler_binding, this.sampler_ref.expect);
-        }
+        this.sampler_fallback_ref.value = sampler_binding === undefined ? undefined : sampler;
 
         this.update();
     }
@@ -64,6 +63,9 @@ export class MaterialTextureStorage<T extends TextureResource = TextureResource>
     private readonly update_func = () => { this.update(); }
     private update() {
         this.uniform_group_ref.expect.set_Texture(this.texture_binding, this.texture_ref.value?.render_server_texture.texture_view_ref.expect ?? RenderServer.get_DefaultTexture(this.texture_fallback).texture_view_ref.expect);
+        if (this.sampler_binding !== undefined) {
+            this.uniform_group_ref.expect.set_Sampler(this.sampler_binding, this.texture_ref.value?.default_sampler ?? this.sampler_fallback_ref.expect);
+        }
     }
 
     public get() {
@@ -84,7 +86,7 @@ export class MaterialTextureStorage<T extends TextureResource = TextureResource>
 
     public dispose() {
         this.texture_ref.clear();
-        this.sampler_ref?.clear();
+        this.sampler_fallback_ref.clear();
         this.uniform_group_ref.clear();
     }
 }

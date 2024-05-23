@@ -92,6 +92,55 @@ type PipelineCodeOption = {
 	check_tangent_attribute?: boolean,
 	tangent_attribute_location?: number,
 	tangent_attribute_name?: string,
+	fragment_out_color_name?: string,
+	fragment_out_normal_name?: string,
+	fragment_tbn_matrix3?: boolean,
+	fragment_tbn_vertex_view_vary_name?: string,
+	fragment_tbn_normal_view_vary_name?: string,
+	fragment_tbn_tangent_view_vary_name?: string,
+	fragment_tbn_uv_vary_name?: string,
+}
+
+class RenderServerPipelineCacheSet implements RefCountedLike {
+
+	private readonly depth_pipeline_cache: WebGPURenderElementRenderPipelineCache | undefined;
+	private readonly solid_pipeline_cache: WebGPURenderElementRenderPipelineCache | undefined;
+	private readonly transparent_pipeline_cache: WebGPURenderElementRenderPipelineCache | undefined;
+
+	constructor(
+		depth_pipeline_cache: WebGPURenderElementRenderPipelineCache | undefined,
+		solid_pipeline_cache: WebGPURenderElementRenderPipelineCache | undefined,
+		transparent_pipeline_cache: WebGPURenderElementRenderPipelineCache | undefined,
+	) {
+		this.depth_pipeline_cache = depth_pipeline_cache;
+		this.solid_pipeline_cache = solid_pipeline_cache;
+		this.transparent_pipeline_cache = transparent_pipeline_cache;
+	}
+
+	public set_RenderServerMaterialPipelineCaches(material: RenderServerMaterial, uniform_group: WebGPURenderStateUniformGroup | undefined) {
+		if (this.depth_pipeline_cache) material.set_PipelineUniform(RenderServerMaterialPass.Depth, this.depth_pipeline_cache, uniform_group);
+		if (this.solid_pipeline_cache) material.set_PipelineUniform(RenderServerMaterialPass.Solid, this.solid_pipeline_cache, uniform_group);
+		if (this.transparent_pipeline_cache) material.set_PipelineUniform(RenderServerMaterialPass.Transparent, this.transparent_pipeline_cache, uniform_group);
+	}
+
+	ref(): void {
+		this.depth_pipeline_cache?.ref();
+		this.solid_pipeline_cache?.ref();
+		this.transparent_pipeline_cache?.ref();
+	}
+
+	unref(): void {
+		this.depth_pipeline_cache?.unref();
+		this.solid_pipeline_cache?.unref();
+		this.transparent_pipeline_cache?.unref();
+	}
+
+	release(): void {
+		this.depth_pipeline_cache?.release();
+		this.solid_pipeline_cache?.release();
+		this.transparent_pipeline_cache?.release();
+	}
+
 }
 
 export class RenderServerMaterial extends RenderServerObjectRefCounted {
@@ -282,15 +331,23 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
 			check_tangent_attribute = true,
 			tangent_attribute_location = RenderServerGeometryAttributeLocation.Tangent,
 			tangent_attribute_name = 'tangent',
+			fragment_out_color_name = 'color',
+			fragment_out_normal_name = 'normal',
+			fragment_tbn_matrix3 = true,
+			fragment_tbn_vertex_view_vary_name = 'vertex_view',
+			fragment_tbn_normal_view_vary_name = 'normal',
+			fragment_tbn_tangent_view_vary_name = 'tangent',
+			fragment_tbn_uv_vary_name = 'uv',
 		} = option;
 
 		const fn: WebGPURenderElementRenderPipelineCacheGetterFn = (hash: WebGPURenderElementRenderPipelineCacheHash) => {
 
-			const shader_code = `
-// Attributes
+			const has_tangent = bitmask_check(hash, tangent_attribute_location);
+
+			const shader_code = `// Attributes
 struct Attributes {
 	@builtin(vertex_index) vertex_index : u32,
-	@builtin(instance_index) instance_index : u32,${check_tangent_attribute && bitmask_check(hash, tangent_attribute_location) ? `
+	@builtin(instance_index) instance_index : u32,${check_tangent_attribute && has_tangent ? `
 	@location(${tangent_attribute_location}) ${tangent_attribute_name}: vec3f,` : ``}
 	// Custom Attributes
 ${[...attributes].map(([name, location, type]) => `	@location(${location}) ${name}: ${RenderServerMaterial.RenderStateAttributeType(type)},`).join('\n')}
@@ -335,36 +392,53 @@ ${fragment_depth_override ? `	@builtin(frag_depth) depth: f32,
 
 @fragment
 fn fs_main(vary: VertexOutput, @builtin(front_facing) front_facing: bool) -> FragmentOutput {
-	var out: FragmentOutput;
-
+	var _out: FragmentOutput;
+${fragment_tbn_matrix3 ? `
+	// TBN Matrix3
+	var _normal_view: vec3f = normalize(vary.${fragment_tbn_normal_view_vary_name});
+	var tbn: mat3x3f;
+${!has_tangent ?
+`	var _q0: vec3f = dpdx(vary.${fragment_tbn_vertex_view_vary_name});
+	var _q1: vec3f = dpdy(vary.${fragment_tbn_vertex_view_vary_name});
+	var _st0: vec2f = dpdx(vary.${fragment_tbn_uv_vary_name}.xy);
+	var _st1: vec2f = dpdy(vary.${fragment_tbn_uv_vary_name}.xy);
+	var _q1perp: vec3f = cross(_q1, _normal_view);
+	var _q0perp: vec3f = cross(_normal_view, _q0);
+	var _tangent_view: vec3f = _q1perp * _st0.x + _q0perp * _st1.x;
+	var _B: vec3f = _q1perp * _st0.y + _q0perp * _st1.y;
+	var _det = max(dot(_tangent_view, _tangent_view), dot(_B, _B));
+	var _scale: f32 = 0.0;
+	if _det != 0.0 { _scale = -inverseSqrt(_det); }
+	tbn = mat3x3f(_tangent_view * _scale, _B * _scale, _normal_view);`:
+`	var _tangent_view: vec3f = normalize(vary.${fragment_tbn_tangent_view_vary_name});
+	tbn = mat3x3f(-_tangent_view, -cross(_tangent_view, _normal_view), _normal_view);`}
+`: ``}
 	// Custom Fragment
 ${fragment}
 	// End Custom Fragment
 	${pass === RenderServerMaterialPass.Transparent ? `
 	// Transparent OIT
-	var weight: f32 = max(min(1.0, max(max(color.r, color.g), color.b) * color.a), color.a) * clamp(0.03 / (1e-5 + pow(vary.position.z / 200, 4.0)), 1e-2, 3e3);
-	out.accum = vec4f(color.rgb * color.a, color.a) * weight;
-	out.reveal = color.a;
+	var _weight: f32 = max(min(1.0, max(max(${fragment_out_color_name}.r, ${fragment_out_color_name}.g), ${fragment_out_color_name}.b) * ${fragment_out_color_name}.a), ${fragment_out_color_name}.a) * clamp(0.03 / (1e-5 + pow(vary.position.z / 200, 4.0)), 1e-2, 3e3);
+	_out.accum = vec4f(${fragment_out_color_name}.rgb * ${fragment_out_color_name}.a, ${fragment_out_color_name}.a) * _weight;
+	_out.reveal = ${fragment_out_color_name}.a;
 	` :
-		pass === RenderServerMaterialPass.Solid ? `
+					pass === RenderServerMaterialPass.Solid ? `
 	// Solid
-	out.color = color;
-	out.normal = vec4f(normal, 1.0);
+	_out.color = ${fragment_out_color_name};
+	_out.normal = vec4f(${fragment_out_normal_name}, 1.0);
 	` :
-			pass === RenderServerMaterialPass.Depth ? `
+						pass === RenderServerMaterialPass.Depth ? `
 	// Depth
-	out.normal = vec4f(normal, 1.0);
+	_out.normal = vec4f(${fragment_out_normal_name}, 1.0);
 	` :
-				``}
-	return out;
+							``}
+	return _out;
 }
 ${custom !== undefined ? `
 // Custom
-${custom}
-`: ``}
-`;
+${custom}`: ``}`;
 
-			console.log(shader_code);
+			console.log(shader_code.split('\n').map((l, i) => `${(i + 1).toFixed(0).padEnd(4, ' ')}|	${l}`).join('\n'));
 
 			const shader = RenderServer.render_state.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
 			const program = RenderServer.render_state.create_Program(shader, shader).expect();
@@ -430,46 +504,4 @@ ${custom}
 		this.pipeline_uniform_refs.clear();
 		this.uniform_buffer_refs.clear();
 	}
-}
-
-class RenderServerPipelineCacheSet implements RefCountedLike {
-
-	private readonly depth_pipeline_cache: WebGPURenderElementRenderPipelineCache | undefined;
-	private readonly solid_pipeline_cache: WebGPURenderElementRenderPipelineCache | undefined;
-	private readonly transparent_pipeline_cache: WebGPURenderElementRenderPipelineCache | undefined;
-
-	constructor(
-		depth_pipeline_cache: WebGPURenderElementRenderPipelineCache | undefined,
-		solid_pipeline_cache: WebGPURenderElementRenderPipelineCache | undefined,
-		transparent_pipeline_cache: WebGPURenderElementRenderPipelineCache | undefined,
-	) {
-		this.depth_pipeline_cache = depth_pipeline_cache;
-		this.solid_pipeline_cache = solid_pipeline_cache;
-		this.transparent_pipeline_cache = transparent_pipeline_cache;
-	}
-
-	public set_RenderServerMaterialPipelineCaches(material: RenderServerMaterial, uniform_group: WebGPURenderStateUniformGroup | undefined) {
-		if (this.depth_pipeline_cache) material.set_PipelineUniform(RenderServerMaterialPass.Depth, this.depth_pipeline_cache, uniform_group);
-		if (this.solid_pipeline_cache) material.set_PipelineUniform(RenderServerMaterialPass.Solid, this.solid_pipeline_cache, uniform_group);
-		if (this.transparent_pipeline_cache) material.set_PipelineUniform(RenderServerMaterialPass.Transparent, this.transparent_pipeline_cache, uniform_group);
-	}
-
-	ref(): void {
-		this.depth_pipeline_cache?.ref();
-		this.solid_pipeline_cache?.ref();
-		this.transparent_pipeline_cache?.ref();
-	}
-
-	unref(): void {
-		this.depth_pipeline_cache?.unref();
-		this.solid_pipeline_cache?.unref();
-		this.transparent_pipeline_cache?.unref();
-	}
-
-	release(): void {
-		this.depth_pipeline_cache?.release();
-		this.solid_pipeline_cache?.release();
-		this.transparent_pipeline_cache?.release();
-	}
-
 }

@@ -38,6 +38,10 @@ export class RenderServerTexture extends RenderServerObjectRefCounted {
             data, data_w, data_h, data_offset);
     }
 
+    public slice(view_dimension?: WebGPURenderStateTextureDimension, part?: WebGPURendetStateTextureDestination, base_layer?: number, layer_count?: number, base_mipmap?: number, mipmap_count?: number,) {
+        return new RenderServerTexture(this.texture_ref.expect, RenderServer.render_state.create_TextureView(this.texture_ref.expect, view_dimension, part, base_layer, layer_count, base_mipmap, mipmap_count).expect());
+    }
+
     static create(
         usage: WebGPURenderStateTextureUsage, format: WebGPURenderStateTextureFormat, dimension: WebGPURenderStateTextureDimension, width: number, height: number, depth: number, mipmap_level_count: number = 1,
         view_dimension?: WebGPURenderStateTextureDimension, part?: WebGPURendetStateTextureDestination, base_layer?: number, layer_count?: number, base_mipmap?: number, mipmap_count?: number,
