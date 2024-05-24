@@ -16,6 +16,8 @@ export class WebGPURenderElementVector2Buffer extends WebGPURenderElementBuffer<
     public readonly element_count: number;
     public readonly bytes_count: number;
 
+    protected changed: boolean = false;
+
     constructor(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, option: Vector2[] | number) {
         super(render_state);
         if (typeof option === 'number') {
@@ -45,6 +47,7 @@ export class WebGPURenderElementVector2Buffer extends WebGPURenderElementBuffer<
             const length = data.length;
             if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementVector2Buffer> set_Data: data range out of bound');
             this._data.set(data, element_offset);
+            this.changed = true;
         }
         else if (Array.isArray(data)) {
             const count = data.length;
@@ -53,12 +56,14 @@ export class WebGPURenderElementVector2Buffer extends WebGPURenderElementBuffer<
                 this._data[j++] = data[i].x;
                 this._data[j++] = data[i].y;
             }
+            this.changed = true;
         }
         else {
             if (element_offset < 0 || element_offset >= this.element_count) throw new Error('<WebGPURenderElementVector2Buffer> set_Data: data offset out of bound');
             let j = element_offset * 2;
             this._data[j++] = data.x;
             this._data[j++] = data.y;
+            this.changed = true;
         }
     }
 
@@ -70,8 +75,11 @@ export class WebGPURenderElementVector2Buffer extends WebGPURenderElementBuffer<
         return target.set(x, y);
     }
 
-    public commit(): void {
-        this.buffer.update_Data(0, this._data);
+    public commit(force: boolean = false): void {
+        if (force || this.changed) {
+            this.buffer.update_Data(0, this._data);
+            this.changed = false;
+        }
     }
 }
 
@@ -84,6 +92,8 @@ export class WebGPURenderElementVector3Buffer extends WebGPURenderElementBuffer<
 
     public readonly element_count: number;
     public readonly bytes_count: number;
+
+    protected changed: boolean = false;
 
     constructor(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, option: Vector3[] | number) {
         super(render_state);
@@ -115,6 +125,7 @@ export class WebGPURenderElementVector3Buffer extends WebGPURenderElementBuffer<
             const length = data.length;
             if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementVector3Buffer> set_Data: data range out of bound');
             this._data.set(data, element_offset);
+            this.changed = true;
         }
         else if (Array.isArray(data)) {
             const count = data.length;
@@ -124,6 +135,7 @@ export class WebGPURenderElementVector3Buffer extends WebGPURenderElementBuffer<
                 this._data[j++] = data[i].y;
                 this._data[j++] = data[i].z;
             }
+            this.changed = true;
         }
         else {
             if (element_offset < 0 || element_offset >= this.element_count) throw new Error('<WebGPURenderElementVector3Buffer> set_Data: data offset out of bound');
@@ -131,6 +143,7 @@ export class WebGPURenderElementVector3Buffer extends WebGPURenderElementBuffer<
             this._data[j++] = data.x;
             this._data[j++] = data.y;
             this._data[j++] = data.z;
+            this.changed = true;
         }
     }
 
@@ -143,8 +156,11 @@ export class WebGPURenderElementVector3Buffer extends WebGPURenderElementBuffer<
         return target.set(x, y, z);
     }
 
-    public commit(): void {
-        this.buffer.update_Data(0, this._data);
+    public commit(force: boolean = false): void {
+        if (force || this.changed) {
+            this.buffer.update_Data(0, this._data);
+            this.changed = false;
+        }
     }
 }
 
@@ -157,6 +173,8 @@ export class WebGPURenderElementVector4Buffer extends WebGPURenderElementBuffer<
 
     public readonly element_count: number;
     public readonly bytes_count: number;
+
+    protected changed: boolean = false;
 
     constructor(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, option: Vector4[] | number) {
         super(render_state);
@@ -189,6 +207,7 @@ export class WebGPURenderElementVector4Buffer extends WebGPURenderElementBuffer<
             const length = data.length;
             if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementVector4Buffer> set_Data: data range out of bound');
             this._data.set(data, element_offset);
+            this.changed = true;
         }
         else if (Array.isArray(data)) {
             const count = data.length;
@@ -199,6 +218,7 @@ export class WebGPURenderElementVector4Buffer extends WebGPURenderElementBuffer<
                 this._data[j++] = data[i].z;
                 this._data[j++] = data[i].w;
             }
+            this.changed = true;
         }
         else {
             if (element_offset < 0 || element_offset >= this.element_count) throw new Error('<WebGPURenderElementVector4Buffer> set_Data: data offset out of bound');
@@ -207,6 +227,7 @@ export class WebGPURenderElementVector4Buffer extends WebGPURenderElementBuffer<
             this._data[j++] = data.y;
             this._data[j++] = data.z;
             this._data[j++] = data.w;
+            this.changed = true;
         }
     }
 
@@ -220,7 +241,10 @@ export class WebGPURenderElementVector4Buffer extends WebGPURenderElementBuffer<
         return target.set(x, y, z, w);
     }
 
-    public commit(): void {
-        this.buffer.update_Data(0, this._data);
+    public commit(force: boolean = false): void {
+        if (force || this.changed) {
+            this.buffer.update_Data(0, this._data);
+            this.changed = false;
+        }
     }
 }

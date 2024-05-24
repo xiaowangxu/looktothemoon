@@ -17,7 +17,7 @@ export abstract class WebGPURenderElementBuffer<T = any> extends WebGPURenderObj
 
     public abstract get_Data(element_index: number, target?: T): T;
 
-    public abstract commit(): void;
+    public abstract commit(force: boolean): void;
 
     public dispose(): void {
         this.buffer_ref.clear();
@@ -33,6 +33,8 @@ export class WebGPURenderElementIndexBuffer extends WebGPURenderElementBuffer<nu
 
     public readonly element_count: number;
     public readonly bytes_count: number;
+
+    protected changed: boolean = false;
 
     constructor(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, option: number[] | Uint32Array | number) {
         super(render_state);
@@ -59,16 +61,19 @@ export class WebGPURenderElementIndexBuffer extends WebGPURenderElementBuffer<nu
             const length = data.length;
             if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementIndexBuffer> set_Data: data range out of bound');
             this._data.set(data, element_offset);
+            this.changed = true;
         }
         else if (Array.isArray(data)) {
             const count = data.length;
             if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementIndexBuffer> set_Data: data range out of bound');
             const uint32array = new Uint32Array(this._data.buffer, element_offset * Uint32Array.BYTES_PER_ELEMENT, data.length);
             uint32array.set(data);
+            this.changed = true;
         }
         else {
             if (element_offset < 0 || element_offset >= this.element_count) throw new Error('<WebGPURenderElementIndexBuffer> set_Data: data offset out of bound');
             this._data[element_offset] = data;
+            this.changed = true;
         }
     }
 
@@ -77,8 +82,11 @@ export class WebGPURenderElementIndexBuffer extends WebGPURenderElementBuffer<nu
         return this._data[element_index];
     }
 
-    public commit(): void {
-        this.buffer.update_Data(0, this._data);
+    public commit(force: boolean = false): void {
+        if (force || this.changed) {
+            this.buffer.update_Data(0, this._data);
+            this.changed = false;
+        }
     }
 }
 
@@ -91,6 +99,8 @@ export class WebGPURenderElementUintBuffer extends WebGPURenderElementBuffer<num
 
     public readonly element_count: number;
     public readonly bytes_count: number;
+
+    protected changed: boolean = false;
 
     constructor(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, option: number[] | number) {
         super(render_state);
@@ -117,16 +127,19 @@ export class WebGPURenderElementUintBuffer extends WebGPURenderElementBuffer<num
             const length = data.length;
             if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementUintBuffer> set_Data: data range out of bound');
             this._data.set(data, element_offset);
+            this.changed = true;
         }
         else if (Array.isArray(data)) {
             const count = data.length;
             if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementUintBuffer> set_Data: data range out of bound');
             const uint32array = new Uint32Array(this._data.buffer, element_offset * Uint32Array.BYTES_PER_ELEMENT, data.length);
             uint32array.set(data);
+            this.changed = true;
         }
         else {
             if (element_offset < 0 || element_offset >= this.element_count) throw new Error('<WebGPURenderElementUintBuffer> set_Data: data offset out of bound');
             this._data[element_offset] = data;
+            this.changed = true;
         }
     }
 
@@ -135,8 +148,11 @@ export class WebGPURenderElementUintBuffer extends WebGPURenderElementBuffer<num
         return this._data[element_index];
     }
 
-    public commit(): void {
-        this.buffer.update_Data(0, this._data);
+    public commit(force: boolean = false): void {
+        if (force || this.changed) {
+            this.buffer.update_Data(0, this._data);
+            this.changed = false;
+        }
     }
 }
 
@@ -149,6 +165,8 @@ export class WebGPURenderElementIntBuffer extends WebGPURenderElementBuffer<numb
 
     public readonly element_count: number;
     public readonly bytes_count: number;
+
+    protected changed: boolean = false;
 
     constructor(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, option: number[] | number) {
         super(render_state);
@@ -175,16 +193,19 @@ export class WebGPURenderElementIntBuffer extends WebGPURenderElementBuffer<numb
             const length = data.length;
             if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementIntBuffer> set_Data: data range out of bound');
             this._data.set(data, element_offset);
+            this.changed = true;
         }
         else if (Array.isArray(data)) {
             const count = data.length;
             if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementIntBuffer> set_Data: data range out of bound');
             const uint32array = new Int32Array(this._data.buffer, element_offset * Int32Array.BYTES_PER_ELEMENT, data.length);
             uint32array.set(data);
+            this.changed = true;
         }
         else {
             if (element_offset < 0 || element_offset >= this.element_count) throw new Error('<WebGPURenderElementIntBuffer> set_Data: data offset out of bound');
             this._data[element_offset] = data;
+            this.changed = true;
         }
     }
 
@@ -193,8 +214,11 @@ export class WebGPURenderElementIntBuffer extends WebGPURenderElementBuffer<numb
         return this._data[element_index];
     }
 
-    public commit(): void {
-        this.buffer.update_Data(0, this._data);
+    public commit(force: boolean = false): void {
+        if (force || this.changed) {
+            this.buffer.update_Data(0, this._data);
+            this.changed = false;
+        }
     }
 }
 
@@ -207,6 +231,8 @@ export class WebGPURenderElementFloatBuffer extends WebGPURenderElementBuffer<nu
 
     public readonly element_count: number;
     public readonly bytes_count: number;
+
+    protected changed: boolean = false;
 
     constructor(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, option: number[] | number) {
         super(render_state);
@@ -233,16 +259,19 @@ export class WebGPURenderElementFloatBuffer extends WebGPURenderElementBuffer<nu
             const length = data.length;
             if (element_offset < 0 || (element_offset + length) > this._data.length) throw new Error('<WebGPURenderElementFloatBuffer> set_Data: data range out of bound');
             this._data.set(data, element_offset);
+            this.changed = true;
         }
         else if (Array.isArray(data)) {
             const count = data.length;
             if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementFloatBuffer> set_Data: data range out of bound');
             const uint32array = new Float32Array(this._data.buffer, element_offset * Float32Array.BYTES_PER_ELEMENT, data.length);
             uint32array.set(data);
+            this.changed = true;
         }
         else {
             if (element_offset < 0 || element_offset >= this.element_count) throw new Error('<WebGPURenderElementFloatBuffer> set_Data: data offset out of bound');
             this._data[element_offset] = data;
+            this.changed = true;
         }
     }
 
@@ -251,7 +280,10 @@ export class WebGPURenderElementFloatBuffer extends WebGPURenderElementBuffer<nu
         return this._data[element_index];
     }
 
-    public commit(): void {
-        this.buffer.update_Data(0, this._data);
+    public commit(force: boolean = false): void {
+        if (force || this.changed) {
+            this.buffer.update_Data(0, this._data);
+            this.changed = false;
+        }
     }
 }

@@ -149,6 +149,22 @@ struct WorldEnvUniformParams {
     layer: u32,
 }`;
 
+    static readonly LightDataUniformsStructCode = `struct LightDataUniform {
+    position: vec3f,
+    normal_attenuation: vec4f,
+    color: vec3f,
+    layer: u32,
+    mask: u32,
+    visible: u32,
+    shadow_0: u32,
+    shadow_1: u32,
+    shadow_2: u32,
+    shadow_3: u32,
+    shadow_4: u32,
+    shadow_5: u32,
+    params: vec4f,
+}`;
+
     static readonly WorldUniformsGroupBindingCode = `@group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(0) var<uniform> world_env_uniform_camera_matrix: WorldEnvUniformCameraMatrix; 
 @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
 @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var world_env_uniform_color_texture: texture_2d<f32>;
@@ -157,6 +173,8 @@ struct WorldEnvUniformParams {
 @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(5) var world_env_uniform_sampler: sampler;`
 
     static readonly InstanceUniformsGroupBindingCode = `@group(${RenderServerSingleton.InstanceUniformBindGroupIndex}) @binding(0) var<uniform> instance_uniform: InstanceUniform;`;
+
+    static readonly LightUniformsGroupBindingCode = `@group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(0) var<storage, read> light_data_uniform: array<LightDataUniform>;`;
 
     //#endregion
 
@@ -196,6 +214,7 @@ struct WorldEnvUniformParams {
 
         //#region lights uniform
         this.lights_uniform_layout_ref.value = this.render_state.create_UniformLayout();
+        this.lights_uniform_layout_ref.expect.add_Storage(true, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 0, false);
         //#endregion
 
         //#region instance uniform

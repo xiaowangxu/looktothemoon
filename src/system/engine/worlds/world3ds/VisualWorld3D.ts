@@ -13,12 +13,12 @@ import type { Cloneable, Disposable } from "@/system/utils/Type";
 import { RID, type Rid } from "../../Rid";
 import type { RenderServerGeometry } from "../../render_server/geometry/RenderServerGeometry";
 import type { RenderServerMaterial } from "../../render_server/material/RenderServerMaterial";
-import type { Renderer3DQueue } from "../../renderer/renderer_3d/Renderer3DQueue";
 import { WorldObject } from "../WorldObject";
 import type { Geometry3DResource } from "../../resources/geometry3d_resources/Geometry3DResource";
 import type { SceneTree } from "../../SceneTree";
 import type { MaterialResource } from "../../resources/material_resources/MaterialResource";
 import type { RenderServerRenderer3DQueue } from "../../render_server/renderer3d/RenderServerRenderer3DQueue";
+import { RenderServerLightData } from "../../render_server/light/RenderServerLightData";
 
 export type Cullable = CameraFrustumLikeCullable<Matrix4, Vector3, Matrix3> & Cloneable<Cullable> & Transformable<Cullable, Vector4, Matrix4>;
 
@@ -447,7 +447,9 @@ export class VisualWorld3D implements Disposable {
         // return this.meshes_map.size <= 0 && this.lights_map.size <= 0 && this.light_shadows_map.size <= 0;
     }
 
-    public trigger_BeforeRender(scene_tree: SceneTree) { }
+    public trigger_BeforeRender(scene_tree: SceneTree) {
+        this.render_server_light_data.commit();
+    }
 
     //#region Mesh
 
@@ -600,6 +602,8 @@ export class VisualWorld3D implements Disposable {
     //#endregion
 
     // //#region Light
+
+    public readonly render_server_light_data = new RenderServerLightData();
 
     // public create_Light(): Rid {
     //     const rid = RID();
@@ -866,16 +870,17 @@ export class VisualWorld3D implements Disposable {
     // //#endregion
 
     public dispose() {
-        // for (const mesh of this.meshes) {
-        //     mesh.dispose();
-        // }
+        for (const mesh of this.meshes) {
+            mesh.dispose();
+        }
         // for (const light of this.lights) {
         //     light.dispose();
         // }
+        this.render_server_light_data.dispose();
         // for (const light_shadow of this.light_shadows) {
         //     light_shadow.dispose();
         // }
-        // this.meshes_map.clear();
+        this.meshes_map.clear();
         // this.lights_map.clear();
         // this.sky_frame_buffer.clear();
         // this.sky_texture.clear();

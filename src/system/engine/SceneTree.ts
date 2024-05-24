@@ -8,6 +8,8 @@ import { TweenManager, type Tween } from "./Tween";
 
 export class SceneTree {
 
+    static readonly world_before_render_triggered: Set<number> = new Set();
+
     private readonly input_action_map: Ref<ShortCutActionMap> = new Ref(new ShortCutActionMap());
     private readonly root: Node;
     private readonly clock: Clock = new Clock();
@@ -58,10 +60,15 @@ export class SceneTree {
         this.root.propagate_Process(this.delta);
         this.tween_manager.process_Tweens(delta);
         this.root.propagate_InternalAfterProcess(this.delta);
+        const world_before_render_triggered = SceneTree.world_before_render_triggered;
+        world_before_render_triggered.clear();
         for (const viewport of this.viewports) {
             viewport.trigger_BeforeRender();
             const world = viewport.world_3d;
-            if (world !== undefined) world.trigger_BeforeRender(this);
+            if (world !== undefined && !world_before_render_triggered.has(world.rid)) {
+                world.trigger_BeforeRender(this);
+                world_before_render_triggered.add(world.rid);
+            }
         }
         let redundant_before_render = false;
         for (const viewport of [...this.viewports].sort((a, b) => {

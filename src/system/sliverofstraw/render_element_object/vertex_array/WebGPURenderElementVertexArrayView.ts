@@ -29,6 +29,7 @@ export class WebGPURenderElementVertexArrayView extends WebGPURenderObjectRefCou
     }
 
     public draw(pass: GPURenderPassEncoder, instance_count: number = 1, instance_offset: number = 0) {
+        if (instance_count === 0 || this.length === 0) return;
         if (this.is_indexed) {
             pass.drawIndexed(this.length, instance_count, this.offset, undefined, instance_offset);
         }

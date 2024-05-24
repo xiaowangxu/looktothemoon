@@ -23,6 +23,7 @@ import { WebGPURenderStateSamplerUniformType, WebGPURenderStateTextureUniformSam
 import { WebGPURenderStateTextureFilter, WebGPURenderStateTextureWrap } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTextureSampler";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
+import type { WebGPURenderStateBufferView } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBufferView";
 
 const FullScreenTriangleVertexArray = new RefCacher(() => {
     const vertex_array = new WebGPURenderElementVertexArray(RenderServer.render_state, WebGPURenderStatePrimitiveType.Triangles, 0, 3);
@@ -424,6 +425,146 @@ const EffectFxaaPipeline = new RefCacher(() => {
     return pipeline;
 });
 
+const EffectTemplatePipeline = new RefCacher(() => {
+
+    const shader_code = `
+
+    struct Attributes {
+        @location(${RenderServerGeometryAttributeLocation.Position}) position: vec2f,
+    };
+    
+    struct WorldEnvUniformCameraMatrix {
+        camera_world: mat4x4f,
+        camera_view: mat4x4f,
+        camera_proj: mat4x4f,
+        camera_inv_proj: mat4x4f,
+        camera_norview: mat3x3f,
+    }
+
+    struct WorldEnvUniformParams {
+        screen_size: vec2f,
+        time: f32,
+        orthogonal: u32,
+        pixel_ratio: f32,
+    }
+    
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(0) var<uniform> world_env_uniform_camera_matrix: WorldEnvUniformCameraMatrix; 
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
+    
+    struct VertexOutput {
+        @builtin(position) position: vec4f,
+        @location(0) uv: vec2f,
+    };
+
+    @vertex
+    fn vs_main(attri: Attributes) -> VertexOutput {
+        var out: VertexOutput;
+        out.position = vec4f(attri.position - vec2f(1.0), 1.0, 1.0);
+	    var uv = attri.position / 2.0;
+        out.uv = vec2(uv.x, 1.0 - uv.y);
+        return out;
+    }
+
+    struct FragmentOutput {
+        @location(0) color: vec4f,
+    };
+
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var color: texture_2d<f32>;
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(3) var normal: texture_2d<f32>;
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(4) var depth: texture_depth_2d;
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(5) var sample: sampler;
+    
+    const SAMPLE_COUNT: i32 = 32;
+
+    @fragment
+    fn fs_main(vary: VertexOutput) -> FragmentOutput {
+        var out: FragmentOutput;
+        var depth = textureSample(depth, sample, vary.uv);
+        var nor = textureSample(normal, sample, vary.uv).xyz;
+        var projected = vec4f(vary.uv * 2.0 - 1.0, depth, 1.0);
+        var rebuilt_pos = world_env_uniform_camera_matrix.camera_inv_proj * projected;
+        var pos = rebuilt_pos.xyz / rebuilt_pos.w;
+
+        var rcpSampleCount: f32 = 1.0 / f32(SAMPLE_COUNT);
+
+        var i: i32;
+        for (i = 0; i < SAMPLE_COUNT; i++) {
+            var offset = PickSamplePoint(vary.uv, i, rcpSampleCount, nor);
+            var vpos2 = pos + offset;
+    
+        }
+    
+        var color = textureSample(color, sample, vary.uv);
+        out.color = color;
+        return out;
+    }
+
+    fn Random(p: vec2f) -> f32 {
+        return fract(sin(dot(p, vec2f(12.9898, 78.233))) * 43758.5453);
+    }
+
+    fn InterleavedGradientNoise(uv: vec2f, FrameId: i32) -> f32 {
+        // magic values are found by experimentation
+        var _uv = uv + f32(FrameId) * (vec2f(47, 17) * 0.695);
+        var magic = vec3f( 0.06711056, 0.0058371, 52.9829189);
+        return fract(magic.z * fract(dot(uv, magic.xy)));
+    }
+
+    const RADIUS: f32 = 2.0;
+
+    fn PickSamplePoint(uv: vec2f, sampleIndex: i32, rcpSampleCount: f32, normal: vec3f) -> vec3f {
+        var gn = InterleavedGradientNoise(uv * world_env_uniform_params.screen_size, sampleIndex);
+        var u = fract(Random(vec2f(0.0, f32(sampleIndex))) + gn) * 2.0 - 1.0;
+        var theta = Random(vec2f(1.0, f32(sampleIndex)) + gn) * 6.283185307;
+        var u2 = sqrt(1.0 - u * u);
+    
+        // 全球上随机一点
+        var v = vec3f(u2 * cos(theta), u2 * sin(theta), u);
+        v *= sqrt(f32(sampleIndex) * rcpSampleCount); // 随着采样次数越向外采样
+    
+        // 半球上随机一点 逆半球法线翻转
+        // https://thebookofshaders.com/glossary/?search=faceforward
+        v = faceForward(v, -normal, v); // 确保v跟normal一个方向
+    
+        // 缩放到[0, RADIUS]
+        v *= RADIUS;
+    
+        return v;
+    }
+
+    `;
+
+    const shader = RenderServer.render_state.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
+    const program = RenderServer.render_state.create_Program(shader, shader).expect();
+
+    const pipeline = RenderServer.render_state.create_RenderPipeline(
+        program,
+        RenderServerMaterial.ProgramStatePipelineTemplates[RenderServerMaterialPass.Compose],
+        RenderServerMaterial.OutputStatePipelineTemplates[RenderServerMaterialPass.Compose],
+        [RenderServer.world_env_uniform_layout],
+        [
+            {
+                stride: 8, // 2 * 4
+                per_instance: false,
+                rows: [{
+                    location: 0,
+                    offset: 0,
+                    type: WebGPURenderStateAttributeType.Vector2
+                }]
+            },
+        ]
+    ).expect();
+
+    // mannually release shader and program
+    shader.release();
+    program.release();
+
+    return pipeline;
+});
+
+/**
+ * Renderer used in each Viewport Node to render on viewport's RenderServerViewport
+ */
 export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
     static readonly #tmp_frustum_0 = Frustum3.new;
@@ -432,8 +573,8 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     static readonly #tmp_matrix3_0: Matrix3 = Matrix3.new;
     static readonly #tmp_instance_uniform_group_dynamic_offsets = [0];
 
-    protected readonly queue_0 = new RenderServerRenderer3DQueue();
-    protected readonly queue_1 = new RenderServerRenderer3DQueue();
+    protected readonly queue_0: RenderServerRenderer3DQueue;
+    protected readonly queue_1: RenderServerRenderer3DQueue;
 
     protected readonly compose_uniform_sampler_ref = new ReadonlyRef(ComposeUniformSmapler.get());
 
@@ -447,14 +588,14 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     //#region queue instance uniform groups
 
     protected readonly queue_0_solid_instance_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(RenderServer.instance_uniform_layout).expect());
-    protected readonly queue_0_solid_instance_uniform_buffer_view_ref = new ReadonlyRef(RenderServer.render_state.create_BufferView(this.queue_0.solid_instance_uniform_buffer, 0, RenderServerSingleton.InstanceUniformMemoryLayout.size).expect());
+    protected readonly queue_0_solid_instance_uniform_buffer_view_ref: ReadonlyRef<WebGPURenderStateBufferView>;
     protected readonly queue_1_solid_instance_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(RenderServer.instance_uniform_layout).expect());
-    protected readonly queue_1_solid_instance_uniform_buffer_view_ref = new ReadonlyRef(RenderServer.render_state.create_BufferView(this.queue_1.solid_instance_uniform_buffer, 0, RenderServerSingleton.InstanceUniformMemoryLayout.size).expect());
+    protected readonly queue_1_solid_instance_uniform_buffer_view_ref: ReadonlyRef<WebGPURenderStateBufferView>;
 
     protected readonly queue_0_transparent_instance_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(RenderServer.instance_uniform_layout).expect());
-    protected readonly queue_0_transparent_instance_uniform_buffer_view_ref = new ReadonlyRef(RenderServer.render_state.create_BufferView(this.queue_0.transparent_instance_uniform_buffer, 0, RenderServerSingleton.InstanceUniformMemoryLayout.size).expect());
+    protected readonly queue_0_transparent_instance_uniform_buffer_view_ref: ReadonlyRef<WebGPURenderStateBufferView>;
     protected readonly queue_1_transparent_instance_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(RenderServer.instance_uniform_layout).expect());
-    protected readonly queue_1_transparent_instance_uniform_buffer_view_ref = new ReadonlyRef(RenderServer.render_state.create_BufferView(this.queue_1.transparent_instance_uniform_buffer, 0, RenderServerSingleton.InstanceUniformMemoryLayout.size).expect());
+    protected readonly queue_1_transparent_instance_uniform_buffer_view_ref: ReadonlyRef<WebGPURenderStateBufferView>;
 
     //#endregion
 
@@ -557,8 +698,16 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
     //#endregion
 
-    constructor() {
+    constructor(queue_0_solid_capcity?: number, queue_0_transparent_capcity?: number, queue_1_solid_capcity?: number, queue_1_transparent_capcity?: number) {
         super();
+
+        this.queue_0 = new RenderServerRenderer3DQueue(queue_0_solid_capcity, queue_0_transparent_capcity);
+        this.queue_1 = new RenderServerRenderer3DQueue(queue_1_solid_capcity, queue_1_transparent_capcity);
+
+        this.queue_0_solid_instance_uniform_buffer_view_ref = new ReadonlyRef(RenderServer.render_state.create_BufferView(this.queue_0.solid_instance_uniform_buffer, 0, RenderServerSingleton.InstanceUniformMemoryLayout.size).expect());
+        this.queue_1_solid_instance_uniform_buffer_view_ref = new ReadonlyRef(RenderServer.render_state.create_BufferView(this.queue_1.solid_instance_uniform_buffer, 0, RenderServerSingleton.InstanceUniformMemoryLayout.size).expect());
+        this.queue_0_transparent_instance_uniform_buffer_view_ref = new ReadonlyRef(RenderServer.render_state.create_BufferView(this.queue_0.transparent_instance_uniform_buffer, 0, RenderServerSingleton.InstanceUniformMemoryLayout.size).expect());
+        this.queue_1_transparent_instance_uniform_buffer_view_ref = new ReadonlyRef(RenderServer.render_state.create_BufferView(this.queue_1.transparent_instance_uniform_buffer, 0, RenderServerSingleton.InstanceUniformMemoryLayout.size).expect());
 
         this.queue_0_solid_instance_uniform_group_ref.expect.set_BufferUniform(0, this.queue_0_solid_instance_uniform_buffer_view_ref.expect);
         this.queue_1_solid_instance_uniform_group_ref.expect.set_BufferUniform(0, this.queue_1_solid_instance_uniform_buffer_view_ref.expect);
@@ -815,6 +964,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     }
 
     private last_viewport_id: number = 0;
+    private last_world_id: number = 0;
 
     public render(world: World3D, camera: Camera3, viewport: RenderServerViewport, time: number, once: boolean) {
 
@@ -834,7 +984,11 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         if (this.resize(texture_width, texture_height) || viewport.id !== this.last_viewport_id) {
             this.reset_FrameBuffer();
         }
+        if (world.rid !== this.last_world_id) {
+            this.lights_uniform_group_ref.expect.set_Storage(0, world.visual_world.render_server_light_data.light_data_buffer_ref.expect);
+        }
         this.last_viewport_id = viewport.id;
+        this.last_world_id = world.rid;
         viewport.update_Size();
 
         //#endregion
@@ -860,12 +1014,12 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         const encoder = RenderServer.render_state.device.createCommandEncoder();
         this.render_Queue0Solid(encoder);
         this.render_Queue0Transparent(encoder);
-        this.render_Queue0TransparentDepthNormal(encoder);
         const effect_queue_0_first_texture = (this.render_Queue0Effects(encoder) % 2) === 0;
         if (!effect_queue_0_first_texture) {
-            encoder.copyTextureToTexture({ texture: this.effect_texture_ref.expect.texture  }, { texture: this.result_color_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
+            encoder.copyTextureToTexture({ texture: this.effect_texture_ref.expect.texture }, { texture: this.result_color_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
         }
-        encoder.copyTextureToTexture({ texture: this.result_color_texture_ref.expect.texture  }, { texture: this.result_color_render_queue_1_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
+        this.render_Queue0TransparentDepthNormal(encoder);
+        encoder.copyTextureToTexture({ texture: this.result_color_texture_ref.expect.texture }, { texture: this.result_color_render_queue_1_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
         encoder.copyTextureToTexture({ texture: this.result_normal_texture_ref.expect.texture }, { texture: this.result_normal_render_queue_1_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
         encoder.copyTextureToTexture({ texture: this.result_depth_texture_ref.expect.texture }, { texture: this.result_depth_render_queue_1_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
         this.render_Queue1Solid(encoder);
@@ -1012,6 +1166,14 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         let pass = 0;
 
         // see render_Queue1Effects for examples
+        const effect_pass_0 = encoder.beginRenderPass(this.effect_frame_buffer_0_ref.expect.frame_buffer_desc);
+        effect_pass_0.setPipeline(EffectTemplatePipeline.get().pipeline);
+        effect_pass_0.setBindGroup(0, this.world_env_effect_uniform_group_0_ref.expect.binding_group);
+        this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(effect_pass_0);
+        this.full_screen_triangle_vertex_array_ref.expect.draw(effect_pass_0);
+        effect_pass_0.end();
+
+        pass++;
 
         return pass;
     }

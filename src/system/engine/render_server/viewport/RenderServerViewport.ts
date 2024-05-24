@@ -1,13 +1,15 @@
 import type { WebGPURenderStateCanvasTextureView } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateCanvasTextureView";
 import { ReadonlyRef } from "@/system/utils/RefCounted";
 import { RenderServer, RenderServerSingleton } from "../RenderServer";
-import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import type { Disposable } from "@/system/utils/Type";
 import { RenderServerObject } from "../RenderServerObject";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
+/**
+ * Viewport with canvas used in each Viewport Node
+ */
 export class RenderServerViewport extends RenderServerObject implements Disposable {
 
     static readonly #tmp_matrix4_0: Matrix4 = Matrix4.new;

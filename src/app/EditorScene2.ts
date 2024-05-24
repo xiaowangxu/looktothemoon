@@ -22,7 +22,7 @@ import { OrthographicCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/Or
 import { PerspectiveCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/PerspectiveCamera3D";
 
 import f_image_url from 'res://f-texture.png';
-import matcap_6_image_url from 'res://matcap-13.png';
+import matcap_6_image_url from 'res://matcap-12.png';
 import normal_image_url from 'res://normal_texture-0.png';
 
 import { RenderServerTexture } from "@/system/engine/render_server/texture/RenderServerTexture";
@@ -34,8 +34,11 @@ import { WebGPURenderStateAttributeType } from "@/system/sliverofstraw/render_st
 import { RenderServerGeometryAttributeLayout } from "@/system/engine/render_server/geometry/RenderServerGeometryDefination";
 import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/MatcapMaterialResource";
 import { TorusGeometry3DResource } from "@/system/engine/resources/geometry3d_resources/TorusGeometry3DResource";
+import { MultiGeometry3DResource } from "@/system/engine/resources/geometry3d_resources/MultiGeometry3DResource";
+import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
+import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 
-const viewport_scale = 1.1;
+const viewport_scale = 1;
 const bg_color = Color.create(0.25, 0.25, 0.25).linear_rgb;
 
 export async function createEditor() {
@@ -239,6 +242,25 @@ export async function createEditor() {
 			box_mat_test.normal_texture = texture;
 		};
 	}
+
+	// {
+	// 	const multi_geo = new MultiGeometry3DResource();
+	// 	multi_geo.base_geometry = box_geo;
+	// 	multi_geo.set_Count(20 * 20 * 20);
+	// 	for (let i = 0; i < 20; i++) {
+	// 		for (let j = 0; j < 20; j++)
+	// 			for (let k = 0; k < 20; k++)
+	// 				multi_geo.set_TransformColor((i * 20 * 20) + (j * 20) + k, Matrix4.new.set_BasisPosition(Matrix3.new.set_Euler(Euler.create(Math.random() * Tau, Math.random() * Tau, Math.random() * Tau)), Vector3.create(i * 2, j * 2, k * 2)),); // Vector4.create(Math.random(), Math.random(), Math.random(), 1.0)
+	// 	}
+	// 	multi_geo.commit();
+	// 	console.log(multi_geo);
+	// 	const mesh = new MeshInstance3D();
+	// 	mesh.geometry = multi_geo;
+	// 	mesh.material = box_mat_test;
+	// 	mesh.local_position = Vector3.create(-200, 200, -100);
+	// 	mesh.local_scale = Vector3.create(100, 100, 100);
+	// 	World.add_Child(mesh);
+	// }
 
 	{
 		// compass

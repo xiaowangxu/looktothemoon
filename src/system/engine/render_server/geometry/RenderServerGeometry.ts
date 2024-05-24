@@ -44,6 +44,10 @@ export class RenderServerGeometry extends RenderServerObjectRefCounted {
         this.vertex_array_view_refs.clear();
     }
 
+    public set_BaseGeometry(geometry: RenderServerGeometry | undefined, sync_type_and_size: boolean = true, reset_size_if_empty: boolean = true) {
+        this.vertex_array_ref.expect.set_BaseVertexArray(geometry?.vertex_array_ref.expect, sync_type_and_size, reset_size_if_empty);
+    }
+
     public set_AttributeBuffer(attribute: RenderServerGeometryAttributeLayoutBuffer, buffer: WebGPURenderElementVertexArrayBuffer) {
         this.vertex_array_ref.expect.set_Buffer(attribute, buffer);
     }

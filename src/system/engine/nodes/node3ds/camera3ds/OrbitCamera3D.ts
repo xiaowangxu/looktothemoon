@@ -313,7 +313,10 @@ export class OrbitCamera3D extends Node3D {
         const result = plane.intersect_UncappedRay(ray, OrbitCamera3D.#tmp_vector3_0);
         const ray2 = this.drag_start_camera.project_Ray(position_normalized, undefined, OrbitCamera3D.#tmp_ray3_0);
         const result2 = plane.intersect_UncappedRay(ray2, OrbitCamera3D.#tmp_vector3_1);
-        if (result === undefined || result2 === undefined) return;
+        if (result === undefined || result2 === undefined) {
+            console.log(">>>>>");
+            return;
+        }
 
         const shift = result2.sub(result2, result);
         this.set_Position(OrbitCamera3D.#tmp_vector3_0.sub(this.drag_start_global_position, shift));

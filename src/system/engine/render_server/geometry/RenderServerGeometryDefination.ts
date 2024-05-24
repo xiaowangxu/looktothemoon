@@ -6,7 +6,7 @@ export enum RenderServerGeometryAttributeLayoutBuffer {
     Tangent = 2,
     Uv = 3,
     Uv2BoneWeight = 4,
-    InstanceTransform = 5,
+    InstanceTransformColor = 5,
     Custom0 = 6,
     Custom1 = 7,
 }
@@ -19,10 +19,10 @@ export enum RenderServerGeometryAttributeLocation {
     Uv2 = 4,
     Bone = 5,
     Weight = 6,
-    InstanceTransformRow0 = 7,
-    InstanceTransformRow1 = 8,
-    InstanceTransformRow2 = 9,
-    InstanceTransformRow3 = 10,
+    InstanceTransformColorRow0 = 7,
+    InstanceTransformColorRow1 = 8,
+    InstanceTransformColorRow2 = 9,
+    InstanceTransformColorRow3 = 10,
     Custom0 = 11,
     Custom1 = 12,
     Custom2 = 13,
@@ -71,7 +71,7 @@ export const RenderServerGeometryAttributeLayout: WebGPURenderStateAttributeLayo
             type: WebGPURenderStateAttributeType.Vector2
         }]
     },
-    //  BoneWeight
+    //  Uv2BoneWeight
     {
         stride: 16, // 4 * 4
         per_instance: false,
@@ -93,28 +93,28 @@ export const RenderServerGeometryAttributeLayout: WebGPURenderStateAttributeLayo
             }
         ]
     },
-    //  InstanceTransform
+    //  InstanceTransformColor
     {
         stride: 64, // 16 * 4
-        per_instance: false,
+        per_instance: true,
         rows: [
             {
-                location: RenderServerGeometryAttributeLocation.InstanceTransformRow0,
+                location: RenderServerGeometryAttributeLocation.InstanceTransformColorRow0,
                 offset: 0,
                 type: WebGPURenderStateAttributeType.Matrix4Row
             },
             {
-                location: RenderServerGeometryAttributeLocation.InstanceTransformRow1,
+                location: RenderServerGeometryAttributeLocation.InstanceTransformColorRow1,
                 offset: 16,
                 type: WebGPURenderStateAttributeType.Matrix4Row
             },
             {
-                location: RenderServerGeometryAttributeLocation.InstanceTransformRow2,
+                location: RenderServerGeometryAttributeLocation.InstanceTransformColorRow2,
                 offset: 32,
                 type: WebGPURenderStateAttributeType.Matrix4Row
             },
             {
-                location: RenderServerGeometryAttributeLocation.InstanceTransformRow3,
+                location: RenderServerGeometryAttributeLocation.InstanceTransformColorRow3,
                 offset: 48,
                 type: WebGPURenderStateAttributeType.Matrix4Row
             }

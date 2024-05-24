@@ -1,13 +1,10 @@
-import type { Box3 } from "../geometries/Box3";
 import { Plane3 } from "../geometries/Plane3";
-import type { PlaneLike } from "../geometries/PlaneLike";
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import type { Matrix4 } from "../linear_algebra/Matrix4";
 import { Vector3 } from "../linear_algebra/Vector3";
 import type { FrustumLike } from "./FrustumLike";
 
 export class Frustum3 implements FrustumLike<Vector3, Matrix3> {
-
 
     //#region init
 

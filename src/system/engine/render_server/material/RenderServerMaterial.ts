@@ -15,7 +15,7 @@ import type { WebGPURenderStateBuffer, WebGPURenderStateBufferData } from "@/sys
 import type { WebGPURenderStateBufferView } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBufferView";
 import { WebGPURenderStateMultiSampleCount } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateMultiSampleTexture";
 import { WebGPURenderStateShaderType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateShader";
-import { RenderServerGeometryAttributeLocation } from "../geometry/RenderServerGeometryDefination";
+import { RenderServerGeometryAttributeLayoutBuffer, RenderServerGeometryAttributeLocation } from "../geometry/RenderServerGeometryDefination";
 import { bitmask_check } from "@/system/utils/BitMask";
 
 export enum RenderServerMaterialPass {
@@ -65,8 +65,8 @@ class RenderServerMaterialUniformBufferItem implements RefCountedLike {
 		this.data = data;
 	}
 
-	public commit() {
-		if (this.changed) {
+	public commit(force: boolean = false) {
+		if (force || this.changed) {
 			this.changed = false;
 			this.buffer.update_Data(0, this.data);
 		}
@@ -89,12 +89,23 @@ type RenderServerMaterialPipelineUniformTarget = { pipeline: WebGPURenderStateRe
 
 type PipelineCodeOption = {
 	fragment_depth_override?: boolean,
+	// tangent
 	check_tangent_attribute?: boolean,
-	tangent_attribute_location?: number,
+	tangent_attribute_buffer?: RenderServerGeometryAttributeLayoutBuffer,
+	tangent_attribute_location?: RenderServerGeometryAttributeLocation,
 	tangent_attribute_name?: string,
+	// instance_transform_color
+	check_instance_transform_color_attribute?: boolean,
+	instance_transform_color_attribute_buffer?: RenderServerGeometryAttributeLayoutBuffer,
+	instance_transform_color_attribute_location?: RenderServerGeometryAttributeLocation,
+	instance_transform_color_attribute_name?: string,
+
+	vertex_instance_transform_color?: boolean,
+	fragment_tbn_matrix3?: boolean,
+
+	// naming
 	fragment_out_color_name?: string,
 	fragment_out_normal_name?: string,
-	fragment_tbn_matrix3?: boolean,
 	fragment_tbn_vertex_view_vary_name?: string,
 	fragment_tbn_normal_view_vary_name?: string,
 	fragment_tbn_tangent_view_vary_name?: string,
@@ -328,12 +339,22 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
 
 		const {
 			fragment_depth_override = false,
+
 			check_tangent_attribute = true,
+			tangent_attribute_buffer = RenderServerGeometryAttributeLayoutBuffer.Tangent,
 			tangent_attribute_location = RenderServerGeometryAttributeLocation.Tangent,
 			tangent_attribute_name = 'tangent',
+
+			check_instance_transform_color_attribute = true,
+			instance_transform_color_attribute_buffer = RenderServerGeometryAttributeLayoutBuffer.InstanceTransformColor,
+			instance_transform_color_attribute_location = RenderServerGeometryAttributeLocation.InstanceTransformColorRow0,
+			instance_transform_color_attribute_name = 'instance_transform_color',
+
+			vertex_instance_transform_color = true,
+			fragment_tbn_matrix3 = true,
+
 			fragment_out_color_name = 'color',
 			fragment_out_normal_name = 'normal',
-			fragment_tbn_matrix3 = true,
 			fragment_tbn_vertex_view_vary_name = 'vertex_view',
 			fragment_tbn_normal_view_vary_name = 'normal',
 			fragment_tbn_tangent_view_vary_name = 'tangent',
@@ -342,13 +363,18 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
 
 		const fn: WebGPURenderElementRenderPipelineCacheGetterFn = (hash: WebGPURenderElementRenderPipelineCacheHash) => {
 
-			const has_tangent = bitmask_check(hash, tangent_attribute_location);
+			const has_tangent = bitmask_check(hash, tangent_attribute_buffer);
+			const has_instance_transform_color = bitmask_check(hash, instance_transform_color_attribute_buffer);
 
 			const shader_code = `// Attributes
 struct Attributes {
-	@builtin(vertex_index) vertex_index : u32,
-	@builtin(instance_index) instance_index : u32,${check_tangent_attribute && has_tangent ? `
-	@location(${tangent_attribute_location}) ${tangent_attribute_name}: vec3f,` : ``}
+	@builtin(vertex_index) vertex_index: u32,
+	@builtin(instance_index) instance_index: u32,${check_tangent_attribute && has_tangent ? `
+	@location(${tangent_attribute_location}) ${tangent_attribute_name}: vec3f,` : ``}${check_instance_transform_color_attribute && has_instance_transform_color ? `
+	@location(${instance_transform_color_attribute_location + 0}) ${instance_transform_color_attribute_name}_0: vec4f,
+	@location(${instance_transform_color_attribute_location + 1}) ${instance_transform_color_attribute_name}_1: vec4f,
+	@location(${instance_transform_color_attribute_location + 2}) ${instance_transform_color_attribute_name}_2: vec4f,
+	@location(${instance_transform_color_attribute_location + 3}) ${instance_transform_color_attribute_name}_3: vec4f,` : ``}
 	// Custom Attributes
 ${[...attributes].map(([name, location, type]) => `	@location(${location}) ${name}: ${RenderServerMaterial.RenderStateAttributeType(type)},`).join('\n')}
 };
@@ -359,11 +385,17 @@ ${RenderServerSingleton.WorldUniformsStructCode}
 // InstanceUniformsStruct
 ${RenderServerSingleton.InstanceUniformsStructCode}
 
+// LightUniformsStruct
+${RenderServerSingleton.LightDataUniformsStructCode}
+
 // WorldUniformsGroupBinding
 ${RenderServerSingleton.WorldUniformsGroupBindingCode}
 
 // InstanceUniformsGroupBinding
 ${RenderServerSingleton.InstanceUniformsGroupBindingCode}
+
+// LightUniformsGroupBinding
+${RenderServerSingleton.LightUniformsGroupBindingCode}
 ${uniforms !== undefined ? `
 // Custom Uniforms
 ${uniforms}
@@ -376,7 +408,41 @@ ${vary}
 @vertex
 fn vs_main(attri: Attributes) -> VertexOutput {
 	var out: VertexOutput;
-
+${vertex_instance_transform_color ? has_instance_transform_color ? `
+	// Instance Transform Color with Attribute
+	var instance_transform = mat4x4f(
+		vec4f(attri.${instance_transform_color_attribute_name}_0.xyz, 0.0),
+		vec4f(attri.${instance_transform_color_attribute_name}_1.xyz, 0.0),
+		vec4f(attri.${instance_transform_color_attribute_name}_2.xyz, 0.0),
+		vec4f(attri.${instance_transform_color_attribute_name}_3.xyz, 1.0),
+	);
+	var instance_normal = transpose(_invert_mat3x3f(mat3x3f(
+		attri.${instance_transform_color_attribute_name}_0.xyz,
+		attri.${instance_transform_color_attribute_name}_1.xyz,
+		attri.${instance_transform_color_attribute_name}_2.xyz,
+	)));
+	var instance_color = vec4f(
+		attri.${instance_transform_color_attribute_name}_0.w,
+		attri.${instance_transform_color_attribute_name}_1.w,
+		attri.${instance_transform_color_attribute_name}_2.w,
+		attri.${instance_transform_color_attribute_name}_3.w,
+	);
+` : `
+	// Instance Transform Color Default
+	var instance_transform = mat4x4f(
+		vec4f(1.0, 0.0, 0.0, 0.0),
+		vec4f(0.0, 1.0, 0.0, 0.0),
+		vec4f(0.0, 0.0, 1.0, 0.0),
+		vec4f(0.0, 0.0, 0.0, 1.0),
+	);
+	var instance_normal = mat3x3f(
+		vec3f(1.0, 0.0, 0.0),
+		vec3f(0.0, 1.0, 0.0),
+		vec3f(0.0, 0.0, 1.0),
+	);
+	var instance_color = vec4f(1.0);
+`: ``
+				}
 	// Custom Vertex
 ${vertex}
 	// End Custom Vertex
@@ -398,7 +464,7 @@ ${fragment_tbn_matrix3 ? `
 	var _normal_view: vec3f = normalize(vary.${fragment_tbn_normal_view_vary_name});
 	var tbn: mat3x3f;
 ${!has_tangent ?
-`	var _q0: vec3f = dpdx(vary.${fragment_tbn_vertex_view_vary_name});
+						`	var _q0: vec3f = dpdx(vary.${fragment_tbn_vertex_view_vary_name});
 	var _q1: vec3f = dpdy(vary.${fragment_tbn_vertex_view_vary_name});
 	var _st0: vec2f = dpdx(vary.${fragment_tbn_uv_vary_name}.xy);
 	var _st1: vec2f = dpdy(vary.${fragment_tbn_uv_vary_name}.xy);
@@ -410,7 +476,7 @@ ${!has_tangent ?
 	var _scale: f32 = 0.0;
 	if _det != 0.0 { _scale = -inverseSqrt(_det); }
 	tbn = mat3x3f(_tangent_view * _scale, _B * _scale, _normal_view);`:
-`	var _tangent_view: vec3f = normalize(vary.${fragment_tbn_tangent_view_vary_name});
+						`	var _tangent_view: vec3f = normalize(vary.${fragment_tbn_tangent_view_vary_name});
 	tbn = mat3x3f(-_tangent_view, -cross(_tangent_view, _normal_view), _normal_view);`}
 `: ``}
 	// Custom Fragment
@@ -434,9 +500,15 @@ ${fragment}
 							``}
 	return _out;
 }
+${vertex_instance_transform_color && has_instance_transform_color ? `
+fn _invert_mat3x3f(mat: mat3x3f) -> mat3x3f {
+	let s = (1.0f / determinant(mat));
+  	return (s * mat3x3<f32>(vec3<f32>(((mat[1u][1u] * mat[2u][2u]) - (mat[1u][2u] * mat[2u][1u])), ((mat[0u][2u] * mat[2u][1u]) - (mat[0u][1u] * mat[2u][2u])), ((mat[0u][1u] * mat[1u][2u]) - (mat[0u][2u] * mat[1u][1u]))), vec3<f32>(((mat[1u][2u] * mat[2u][0u]) - (mat[1u][0u] * mat[2u][2u])), ((mat[0u][0u] * mat[2u][2u]) - (mat[0u][2u] * mat[2u][0u])), ((mat[0u][2u] * mat[1u][0u]) - (mat[0u][0u] * mat[1u][2u]))), vec3<f32>(((mat[1u][0u] * mat[2u][1u]) - (mat[1u][1u] * mat[2u][0u])), ((mat[0u][1u] * mat[2u][0u]) - (mat[0u][0u] * mat[2u][1u])), ((mat[0u][0u] * mat[1u][1u]) - (mat[0u][1u] * mat[1u][0u])))));
+}
+`: ``}
 ${custom !== undefined ? `
 // Custom
-${custom}`: ``}`;
+${custom}` : ``}`;
 
 			console.log(shader_code.split('\n').map((l, i) => `${(i + 1).toFixed(0).padEnd(4, ' ')}|	${l}`).join('\n'));
 
