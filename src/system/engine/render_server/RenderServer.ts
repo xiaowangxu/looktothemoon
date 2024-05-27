@@ -1,5 +1,5 @@
 import { WebGPURenderState } from "@/system/sliverofstraw/WebGPURenderState";
-import { WebGPURenderElementTextureSamplerCache } from "@/system/sliverofstraw/render_element_object/texture_sampler/WebGPURenderElementTextureSamplerCache";
+import { WebGPURenderElementTextureSamplerCache, WebGPURenderElementTextureSamplerCacheHash } from "@/system/sliverofstraw/render_element_object/texture_sampler/WebGPURenderElementTextureSamplerCache";
 import { WebGPURenderStateCullMode, WebGPURenderStateDepthCompareFunc, WebGPURenderStateFacing, WebGPURenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
 import { WebGPURenderStateShaderType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateShader";
 import { WebGPURenderStateTextureDimension, WebGPURenderStateTextureFormat, WebGPURenderStateTextureUsage, WebGPURendetStateTextureDestination } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTexture";
@@ -261,6 +261,10 @@ struct WorldEnvUniformParams {
         min_lod?: number, max_lod?: number, anisotropy?: number,
     ) {
         return this.texture_sampler_cache_ref.expect.get(wrap_u, wrap_v, wrap_w, min_filter, mag_filter, mipmap_filter, compare, min_lod, max_lod, anisotropy);
+    }
+
+    public get_TextureSamplerByHash(hash: WebGPURenderElementTextureSamplerCacheHash) {
+        return this.texture_sampler_cache_ref.expect.get_ByHash(hash);
     }
 
     public get_DefaultTexture(type: RenderServerDefaultTextureType) {

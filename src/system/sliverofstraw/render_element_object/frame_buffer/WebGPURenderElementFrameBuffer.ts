@@ -87,7 +87,7 @@ export class WebGPURenderElementFrameBuffer extends WebGPURenderObjectRefCounted
     public refresh_CanvasTextureView() {
         for (const [mask, texture_view] of this.canvas_texture_refs) {
             const resolve = bitmask_check(mask, 31);
-            const index = bitmask_keep(mask, 31, 0);
+            const index = bitmask_keep(mask, 0, 31);
             if (resolve) {
                 this.color_attachment_entries[index].resolveTarget = texture_view.texture_view;
             }

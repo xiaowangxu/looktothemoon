@@ -18,7 +18,7 @@
  * @param base begin of 1s
  * @returns 
  */
-export function bitmask(length: number = 32, base: number = 0) {
+export function bitmask(base: number = 0, length: number = 32) {
     base = Math.min(31, Math.max(0, base));
     length = Math.min(32 - base, Math.max(0, length));
     if (length === 0) return 0x00000000;
@@ -44,8 +44,8 @@ export function bitmask(length: number = 32, base: number = 0) {
  * @param base
  * @returns 
  */
-export function bitmask_keep(bm: number, length: number, base: number) {
-    return bm & bitmask(length, base);
+export function bitmask_keep(bm: number, base: number, length: number) {
+    return bm & bitmask(base, length);
 }
 
 /**
@@ -65,8 +65,8 @@ export function bitmask_keep(bm: number, length: number, base: number) {
  * @param base
  * @returns 
  */
-export function bitmask_clear(bm: number, length: number, base: number) {
-    return bm & (~(bitmask(length, base)));
+export function bitmask_clear(bm: number, base: number, length: number) {
+    return bm & (~(bitmask(base, length)));
 }
 
 /**
@@ -89,8 +89,28 @@ export function bitmask_clear(bm: number, length: number, base: number) {
  */
 export function bitmask_set(bm: number, value: number, base: number = 0, length: number = 32) {
     const v = value | 0;
-    const mask = bitmask(length, base);
+    const mask = bitmask(base, length);
     return (bm & ~mask) | ((v << base) & mask);
+}
+
+/**
+ * keep bitmask to appear in a range [base, base + length]
+ * 
+ * source
+ *   
+ *            0b 00000000 0011111 0 00010010 00000000
+ *                          +--- range ---+
+ * 
+ * get
+ *            0b 11111 0 0001001 = 7945
+ * 
+ * @param bm origin bitmask
+ * @param length
+ * @param base
+ * @returns 
+ */
+export function bitmask_get(bm: number, base: number, length: number = 32) {
+    return (bm & bitmask(base, length)) >>> base;
 }
 
 /**

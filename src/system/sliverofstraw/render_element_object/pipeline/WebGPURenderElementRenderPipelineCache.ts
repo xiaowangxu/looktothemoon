@@ -96,7 +96,7 @@ export class WebGPURenderElementRenderPipelineCache extends WebGPURenderObjectRe
     ): WebGPURenderStateRenderPipeline | undefined {
 
         // vertex array attributes
-        let bitmask = bitmask_keep(vertex_array.attribute_bitmask, 12, 0);
+        let bitmask = bitmask_keep(vertex_array.attribute_bitmask, 0, 12);
         // preserved [13-22]
         // primitive type
         const primitive_type = vertex_array.primitive_type;

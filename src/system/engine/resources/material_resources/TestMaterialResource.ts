@@ -162,7 +162,7 @@ const TestMaterialResourceTransparentPipelineCache = new RefCacher(() => {
                 out.position = world_env_uniform_camera_matrix.camera_proj * _world_in_view;
                 var _model_view = world_env_uniform_camera_matrix.camera_view * instance_uniform.transform;
                 out.normal = vec3f(1.0, 1.0, 1.0);
-                out.uv = attri.uv;
+                out.uv = attri.uv * 2.0;
                 out.color = color;
                 return out;
             }

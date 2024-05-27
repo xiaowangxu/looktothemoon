@@ -1,8 +1,154 @@
 import { RefMap } from "@/system/utils/RefCounted";
 import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import { WebGPURenderStateTextureFilter, WebGPURenderStateTextureWrap, type WebGPURenderStateTextureSampler } from "../../render_state_object/texture/WebGPURenderStateTextureSampler";
-import { bitmask_bitset, bitmask as bitmask_create, bitmask_enable, bitmask_set } from "@/system/utils/BitMask";
+import { bitmask_bitset, bitmask_check, bitmask_disable, bitmask_enable, bitmask_get, bitmask_set } from "@/system/utils/BitMask";
 import type { WebGPURenderStateDepthCompareFunc } from "../../render_state_object/pipeline/WebGPURenderStateProgramState";
+
+export enum WebGPURenderElementTextureSamplerCacheHash {
+    
+    /*                */WrapUClamp = 0b00_0_00000_000000_000000_000_0_0_0_00_00_00,
+    /*               */WrapURepeat = 0b00_0_00000_000000_000000_000_0_0_0_00_00_01,
+    /*         */WrapUMirrorRepeat = 0b00_0_00000_000000_000000_000_0_0_0_00_00_10,
+    
+    /*                */WrapVClamp = 0b00_0_00000_000000_000000_000_0_0_0_00_00_00,
+    /*               */WrapVRepeat = 0b00_0_00000_000000_000000_000_0_0_0_00_01_00,
+    /*         */WrapVMirrorRepeat = 0b00_0_00000_000000_000000_000_0_0_0_00_10_00,
+    
+    /*                */WrapWClamp = 0b00_0_00000_000000_000000_000_0_0_0_00_00_00,
+    /*               */WrapWRepeat = 0b00_0_00000_000000_000000_000_0_0_0_01_00_00,
+    /*         */WrapWMirrorRepeat = 0b00_0_00000_000000_000000_000_0_0_0_10_00_00,
+
+    /*                 */WrapClamp = 0b00_0_00000_000000_000000_000_0_0_0_00_00_00,
+    /*                */WrapRepeat = 0b00_0_00000_000000_000000_000_0_0_0_01_01_01,
+    /*          */WrapMirrorRepeat = 0b00_0_00000_000000_000000_000_0_0_0_10_10_10,
+
+    /*          */MinFilterNearest = 0b00_0_00000_000000_000000_000_0_0_0_00_00_00,
+    /*           */MinFilterLinear = 0b00_0_00000_000000_000000_000_0_0_1_00_00_00,
+
+    /*          */MagFilterNearest = 0b00_0_00000_000000_000000_000_0_0_0_00_00_00,
+    /*           */MagFilterLinear = 0b00_0_00000_000000_000000_000_0_1_0_00_00_00,
+
+    /*       */MipmapFilterNearest = 0b00_0_00000_000000_000000_000_0_0_0_00_00_00,
+    /*        */MipmapFilterLinear = 0b00_0_00000_000000_000000_000_1_0_0_00_00_00,
+
+    /*             */FilterNearest = 0b00_0_00000_000000_000000_000_0_0_0_00_00_00,
+    /*              */FilterLinear = 0b00_0_00000_000000_000000_000_1_1_1_00_00_00,
+
+    /*      */DepthCompareDisabled = 0b00_1_00000_000000_000000_000_0_0_0_00_00_00,
+    /*         */DepthCompareNever = 0b00_0_00000_000000_000000_000_0_0_0_00_00_00,
+    /*        */DepthCompareAlways = 0b00_0_00000_000000_000000_001_0_0_0_00_00_00,
+    /*          */DepthCompareLess = 0b00_0_00000_000000_000000_010_0_0_0_00_00_00,
+    /*         */DepthCompareEqual = 0b00_0_00000_000000_000000_011_0_0_0_00_00_00,
+    /*       */DepthCompareGreater = 0b00_0_00000_000000_000000_100_0_0_0_00_00_00,
+    /*      */DepthCompareNotEqual = 0b00_0_00000_000000_000000_101_0_0_0_00_00_00,
+    /*     */DepthCompareLessEqual = 0b00_0_00000_000000_000000_110_0_0_0_00_00_00,
+    /*  */DepthCompareGreaterEqual = 0b00_0_00000_000000_000000_111_0_0_0_00_00_00,
+
+    /*                   */MinLod0 = 0b00_0_00000_000000_000000_000_0_0_0_00_00_00,
+    /*                   */MinLod1 = 0b00_0_00000_000000_000001_000_0_0_0_00_00_00,
+    /*                   */MinLod2 = 0b00_0_00000_000000_000010_000_0_0_0_00_00_00,
+    /*                   */MinLod3 = 0b00_0_00000_000000_000011_000_0_0_0_00_00_00,
+    /*                   */MinLod4 = 0b00_0_00000_000000_000100_000_0_0_0_00_00_00,
+    /*                   */MinLod5 = 0b00_0_00000_000000_000101_000_0_0_0_00_00_00,
+    /*                   */MinLod6 = 0b00_0_00000_000000_000110_000_0_0_0_00_00_00,
+    /*                   */MinLod7 = 0b00_0_00000_000000_000111_000_0_0_0_00_00_00,
+    /*                   */MinLod8 = 0b00_0_00000_000000_001000_000_0_0_0_00_00_00,
+    /*                   */MinLod9 = 0b00_0_00000_000000_001001_000_0_0_0_00_00_00,
+    /*                  */MinLod10 = 0b00_0_00000_000000_001010_000_0_0_0_00_00_00,
+    /*                  */MinLod11 = 0b00_0_00000_000000_001011_000_0_0_0_00_00_00,
+    /*                  */MinLod12 = 0b00_0_00000_000000_001100_000_0_0_0_00_00_00,
+    /*                  */MinLod13 = 0b00_0_00000_000000_001101_000_0_0_0_00_00_00,
+    /*                  */MinLod14 = 0b00_0_00000_000000_001110_000_0_0_0_00_00_00,
+    /*                  */MinLod15 = 0b00_0_00000_000000_001111_000_0_0_0_00_00_00,
+    /*                  */MinLod16 = 0b00_0_00000_000000_010000_000_0_0_0_00_00_00,
+    /*                  */MinLod17 = 0b00_0_00000_000000_010001_000_0_0_0_00_00_00,
+    /*                  */MinLod18 = 0b00_0_00000_000000_010010_000_0_0_0_00_00_00,
+    /*                  */MinLod19 = 0b00_0_00000_000000_010011_000_0_0_0_00_00_00,
+    /*                  */MinLod20 = 0b00_0_00000_000000_010100_000_0_0_0_00_00_00,
+    /*                  */MinLod21 = 0b00_0_00000_000000_010101_000_0_0_0_00_00_00,
+    /*                  */MinLod22 = 0b00_0_00000_000000_010110_000_0_0_0_00_00_00,
+    /*                  */MinLod23 = 0b00_0_00000_000000_010111_000_0_0_0_00_00_00,
+    /*                  */MinLod24 = 0b00_0_00000_000000_011000_000_0_0_0_00_00_00,
+    /*                  */MinLod25 = 0b00_0_00000_000000_011001_000_0_0_0_00_00_00,
+    /*                  */MinLod26 = 0b00_0_00000_000000_011010_000_0_0_0_00_00_00,
+    /*                  */MinLod27 = 0b00_0_00000_000000_011011_000_0_0_0_00_00_00,
+    /*                  */MinLod28 = 0b00_0_00000_000000_011100_000_0_0_0_00_00_00,
+    /*                  */MinLod29 = 0b00_0_00000_000000_011101_000_0_0_0_00_00_00,
+    /*                  */MinLod30 = 0b00_0_00000_000000_011110_000_0_0_0_00_00_00,
+    /*                  */MinLod31 = 0b00_0_00000_000000_011111_000_0_0_0_00_00_00,
+    /*                  */MinLod32 = 0b00_0_00000_000000_100000_000_0_0_0_00_00_00,
+
+    /*                   */MaxLod0 = 0b00_0_00000_000000_000000_000_0_0_0_00_00_00,
+    /*                   */MaxLod1 = 0b00_0_00000_000001_000000_000_0_0_0_00_00_00,
+    /*                   */MaxLod2 = 0b00_0_00000_000010_000000_000_0_0_0_00_00_00,
+    /*                   */MaxLod3 = 0b00_0_00000_000011_000000_000_0_0_0_00_00_00,
+    /*                   */MaxLod4 = 0b00_0_00000_000100_000000_000_0_0_0_00_00_00,
+    /*                   */MaxLod5 = 0b00_0_00000_000101_000000_000_0_0_0_00_00_00,
+    /*                   */MaxLod6 = 0b00_0_00000_000110_000000_000_0_0_0_00_00_00,
+    /*                   */MaxLod7 = 0b00_0_00000_000111_000000_000_0_0_0_00_00_00,
+    /*                   */MaxLod8 = 0b00_0_00000_001000_000000_000_0_0_0_00_00_00,
+    /*                   */MaxLod9 = 0b00_0_00000_001001_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod10 = 0b00_0_00000_001010_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod11 = 0b00_0_00000_001011_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod12 = 0b00_0_00000_001100_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod13 = 0b00_0_00000_001101_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod14 = 0b00_0_00000_001110_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod15 = 0b00_0_00000_001111_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod16 = 0b00_0_00000_010000_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod17 = 0b00_0_00000_010001_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod18 = 0b00_0_00000_010010_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod19 = 0b00_0_00000_010011_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod20 = 0b00_0_00000_010100_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod21 = 0b00_0_00000_010101_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod22 = 0b00_0_00000_010110_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod23 = 0b00_0_00000_010111_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod24 = 0b00_0_00000_011000_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod25 = 0b00_0_00000_011001_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod26 = 0b00_0_00000_011010_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod27 = 0b00_0_00000_011011_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod28 = 0b00_0_00000_011100_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod29 = 0b00_0_00000_011101_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod30 = 0b00_0_00000_011110_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod31 = 0b00_0_00000_011111_000000_000_0_0_0_00_00_00,
+    /*                  */MaxLod32 = 0b00_0_00000_100000_000000_000_0_0_0_00_00_00,
+
+    /*                    */AllLod = 0b00_0_00000_100000_000000_000_0_0_0_00_00_00,
+
+    /*            */AnisotropyLod1 = 0b00_0_00000_000000_000000_000_0_0_0_00_00_00,
+    /*            */AnisotropyLod2 = 0b00_0_00001_000000_000000_000_0_0_0_00_00_00,
+    /*            */AnisotropyLod3 = 0b00_0_00010_000000_000000_000_0_0_0_00_00_00,
+    /*            */AnisotropyLod4 = 0b00_0_00011_000000_000000_000_0_0_0_00_00_00,
+    /*            */AnisotropyLod5 = 0b00_0_00100_000000_000000_000_0_0_0_00_00_00,
+    /*            */AnisotropyLod6 = 0b00_0_00101_000000_000000_000_0_0_0_00_00_00,
+    /*            */AnisotropyLod7 = 0b00_0_00110_000000_000000_000_0_0_0_00_00_00,
+    /*            */AnisotropyLod8 = 0b00_0_00111_000000_000000_000_0_0_0_00_00_00,
+    /*            */AnisotropyLod9 = 0b00_0_01000_000000_000000_000_0_0_0_00_00_00,
+    /*            */AnisotropyLo10 = 0b00_0_01001_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod11 = 0b00_0_01010_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod12 = 0b00_0_01011_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod13 = 0b00_0_01100_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod14 = 0b00_0_01101_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod15 = 0b00_0_01110_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod16 = 0b00_0_01111_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod17 = 0b00_0_10000_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod18 = 0b00_0_10001_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod19 = 0b00_0_10010_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod20 = 0b00_0_10011_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod21 = 0b00_0_10100_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod22 = 0b00_0_10101_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod23 = 0b00_0_10110_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod24 = 0b00_0_10111_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod25 = 0b00_0_11000_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod26 = 0b00_0_11001_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod27 = 0b00_0_11010_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod28 = 0b00_0_11011_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod29 = 0b00_0_11100_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod30 = 0b00_0_11101_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod31 = 0b00_0_11110_000000_000000_000_0_0_0_00_00_00,
+    /*           */AnisotropyLod32 = 0b00_0_11111_000000_000000_000_0_0_0_00_00_00,
+
+    /*             */AllAnisotropy = 0b00_0_11111_000000_000000_000_0_0_0_00_00_00,
+}
 
 // hash bitmask 32bit uint
 // 
@@ -29,11 +175,10 @@ import type { WebGPURenderStateDepthCompareFunc } from "../../render_state_objec
 //    || | |||||
 //    || | anisotropy
 //    || |
-//    || depth_compare_enabled
+//    || depth_compare_disabled
 //    || 
 //    perserved
 // 
-type WebGPURenderElementTextureSamplerCacheHash = number;
 
 export class WebGPURenderElementTextureSamplerCache extends WebGPURenderObjectRefCounted {
 
@@ -91,6 +236,40 @@ export class WebGPURenderElementTextureSamplerCache extends WebGPURenderObjectRe
             ).expect();
             this.texture_sampler_refs.set(bitmask, texture_sampler);
             return texture_sampler;
+        }
+    }
+
+    public get_ByHash(hash: WebGPURenderElementTextureSamplerCacheHash) {
+        // remove perserved
+        let bitmask = bitmask_disable(hash, 31);
+        if (this.texture_sampler_refs.has(bitmask)) {
+            return this.texture_sampler_refs.get(bitmask)!;
+        }
+        else {
+            // wrap_u
+            const wrap_u = bitmask_get(bitmask, 0, 2);
+            // wrap_v
+            const wrap_v = bitmask_get(bitmask, 2, 2);
+            // wrap_w
+            const wrap_w = bitmask_get(bitmask, 4, 2);
+            // min_filter
+            const min_filter = bitmask_check(bitmask, 6) ? 1 : 0;
+            // mag_filter
+            const mag_filter = bitmask_check(bitmask, 7) ? 1 : 0;
+            // mipmap_filter
+            const mipmap_filter = bitmask_check(bitmask, 8) ? 1 : 0;
+            // compare
+            const depth_compare_disabled = bitmask_check(bitmask, 29);
+            let compare: WebGPURenderStateDepthCompareFunc | undefined = undefined;
+            if (!depth_compare_disabled) { compare = bitmask_get(bitmask, 9, 3); }
+            // min_lod
+            const min_lod = bitmask_get(bitmask, 12, 6);
+            // max_lod
+            const max_lod = bitmask_get(bitmask, 18, 6);
+            // anisotropy
+            const anisotropy = bitmask_get(bitmask, 24, 5) + 1;
+
+            return this.get(wrap_u, wrap_v, wrap_w, min_filter, mag_filter, mipmap_filter, compare, min_lod, max_lod, anisotropy);
         }
     }
 

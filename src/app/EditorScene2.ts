@@ -21,7 +21,7 @@ import { ActionInputEvent } from "@/system/engine/inputs/events/ActionInputEvent
 import { OrthographicCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/OrthographicCamera3D";
 import { PerspectiveCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/PerspectiveCamera3D";
 
-import f_image_url from 'res://f-texture.png';
+import f_image_url from 'res://test-image.png';
 import matcap_6_image_url from 'res://matcap-12.png';
 import normal_image_url from 'res://normal_texture-0.png';
 
@@ -37,6 +37,7 @@ import { TorusGeometry3DResource } from "@/system/engine/resources/geometry3d_re
 import { MultiGeometry3DResource } from "@/system/engine/resources/geometry3d_resources/MultiGeometry3DResource";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import { WebGPURenderElementTextureSamplerCacheHash } from "@/system/sliverofstraw/render_element_object/texture_sampler/WebGPURenderElementTextureSamplerCache";
 
 const viewport_scale = 1;
 const bg_color = Color.create(0.25, 0.25, 0.25).linear_rgb;
@@ -104,11 +105,11 @@ export async function createEditor() {
 	EditorSceneTree.get_InputActionMap().add_Action('test_A', new ShortCut().set([new KeyInputEvent().set_Key('a', 'KeyA', true, true)]));
 	EditorSceneTree.get_InputActionMap().add_Action('test_B', new ShortCut().set([new KeyInputEvent().set_Key('a', 'KeyA', true, false)]));
 
-	World.signal_input.connect((evt, prop) => {
-		if (!prop && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {
-			World.get_SceneTree()?.get_ActiveViewports()[0]?.emulate_InputEvent(new ActionInputEvent().set_Action('zoomIn', true, false));
-		}
-	});
+	// World.signal_input.connect((evt, prop) => {
+	// 	if (!prop && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {
+	// 		World.get_SceneTree()?.get_ActiveViewports()[0]?.emulate_InputEvent(new ActionInputEvent().set_Action('zoomIn', true, false));
+	// 	}
+	// });
 
 	const box_geo = new BoxGeometry3DResource();
 	const sph_geo = new TorusGeometry3DResource();
@@ -219,6 +220,8 @@ export async function createEditor() {
 		image.onload = () => {
 			const { naturalWidth, naturalHeight } = image;
 			const texture = ImageTexture2DResource.create_Image(image, naturalWidth, naturalHeight, Infinity, true);
+			texture.default_sampler_hash =
+				WebGPURenderElementTextureSamplerCacheHash.WrapClamp | WebGPURenderElementTextureSamplerCacheHash.FilterNearest | WebGPURenderElementTextureSamplerCacheHash.MinFilterLinear | WebGPURenderElementTextureSamplerCacheHash.DepthCompareDisabled | WebGPURenderElementTextureSamplerCacheHash.AllLod | WebGPURenderElementTextureSamplerCacheHash.AnisotropyLod1;
 			box_mat4.texture = texture;
 		}
 	}

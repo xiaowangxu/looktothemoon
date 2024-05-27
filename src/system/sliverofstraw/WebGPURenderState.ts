@@ -628,7 +628,6 @@ export class WebGPURenderState implements Disposable {
         return Result.Ok(new WebGPURenderStateTextureView(this, texture, dimension, multi_sample_count, texture_view));
     }
 
-
     public delete_TextureView(texture_view: WebGPURenderStateTextureView): void {
         return;
     }

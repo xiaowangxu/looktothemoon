@@ -1166,14 +1166,15 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         let pass = 0;
 
         // see render_Queue1Effects for examples
-        const effect_pass_0 = encoder.beginRenderPass(this.effect_frame_buffer_0_ref.expect.frame_buffer_desc);
-        effect_pass_0.setPipeline(EffectTemplatePipeline.get().pipeline);
-        effect_pass_0.setBindGroup(0, this.world_env_effect_uniform_group_0_ref.expect.binding_group);
-        this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(effect_pass_0);
-        this.full_screen_triangle_vertex_array_ref.expect.draw(effect_pass_0);
-        effect_pass_0.end();
+        
+        // const effect_pass_0 = encoder.beginRenderPass(this.effect_frame_buffer_0_ref.expect.frame_buffer_desc);
+        // effect_pass_0.setPipeline(EffectTemplatePipeline.get().pipeline);
+        // effect_pass_0.setBindGroup(0, this.world_env_effect_uniform_group_0_ref.expect.binding_group);
+        // this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(effect_pass_0);
+        // this.full_screen_triangle_vertex_array_ref.expect.draw(effect_pass_0);
+        // effect_pass_0.end();
 
-        pass++;
+        // pass++;
 
         return pass;
     }
