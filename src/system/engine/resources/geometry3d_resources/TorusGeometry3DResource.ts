@@ -131,10 +131,10 @@ export class TorusGeometry3DResource extends Geometry3DResource {
             }
         }
 
-        position_buffer.commit();
-        normal_buffer.commit();
-        uv_buffer.commit();
-        index_buffer.commit();
+        position_buffer.commit(true);
+        normal_buffer.commit(true);
+        uv_buffer.commit(true);
+        index_buffer.commit(true);
 
         // build geometry
         const outer_radius = radius + tube_radius;
