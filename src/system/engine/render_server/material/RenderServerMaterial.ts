@@ -6,7 +6,7 @@ import type { WebGPURenderElementFrameBuffer } from "../../../sliverofstraw/rend
 import type { WebGPURenderStateRenderPipeline } from "../../../sliverofstraw/render_state_object/pipeline/WebGPURenderStateRenderPipeline";
 import type { Disposable, Temp } from "@/system/utils/Type";
 import { RenderServer, RenderServerSingleton } from "../RenderServer";
-import { WebGPURenderStateBlendFactor, type WebGPURenderStateOutputState } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateOutputState";
+import { WebGPURenderStateBlendFactor, WebGPURenderStateBlendOperator, type WebGPURenderStateOutputState } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateOutputState";
 import type { WebGPURenderStateUniformLayout } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformLayout";
 import { WebGPURenderStateAttributeType, type WebGPURenderStateAttributeLayout } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateAttributeLayout";
 import { WebGPURenderStateTextureFormat } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTexture";
@@ -24,6 +24,7 @@ export enum RenderServerMaterialPass {
 	Transparent,
 	Max = 3,
 	Compose = 3,
+	Set = 4,
 }
 
 type RenderServerMaterialUsablePass = Exclude<RenderServerMaterialPass, RenderServerMaterialPass.Max>;
@@ -110,6 +111,12 @@ type PipelineCodeOption = {
 	fragment_tbn_normal_view_vary_name?: string,
 	fragment_tbn_tangent_view_vary_name?: string,
 	fragment_tbn_uv_vary_name?: string,
+
+	// builtin func
+	builtin_func?: {
+		position_to_screen_uv?: boolean,
+		invert_mat3?: boolean,
+	}
 }
 
 class RenderServerPipelineCacheSet implements RefCountedLike {
@@ -170,7 +177,7 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
 
 	//#region create Pipeline Cache
 
-	static ProgramStatePipelineTemplates: [WebGPURenderStateProgramState, WebGPURenderStateProgramState, WebGPURenderStateProgramState, WebGPURenderStateProgramState] = [
+	static ProgramStatePipelineTemplates: [WebGPURenderStateProgramState, WebGPURenderStateProgramState, WebGPURenderStateProgramState, WebGPURenderStateProgramState, WebGPURenderStateProgramState] = [
 		// RenderServerMaterialPass.Depth
 		{
 			primitive_type: WebGPURenderStatePrimitiveType.Triangles,
@@ -210,10 +217,20 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
 			depth_bias_slope_scale: 0,
 			depth_compare_func: WebGPURenderStateDepthCompareFunc.Always,
 			depth_write: false,
+		},
+		// RenderServerMaterialPass.Set
+		{
+			primitive_type: WebGPURenderStatePrimitiveType.Triangles,
+			cull_mode: WebGPURenderStateCullMode.Back,
+			facing: WebGPURenderStateFacing.CounterClockwise,
+			depth_bias: 0,
+			depth_bias_slope_scale: 0,
+			depth_compare_func: WebGPURenderStateDepthCompareFunc.Always,
+			depth_write: false,
 		}
 	];
 
-	static OutputStatePipelineTemplates: [WebGPURenderStateOutputState, WebGPURenderStateOutputState, WebGPURenderStateOutputState, WebGPURenderStateOutputState] = [
+	static OutputStatePipelineTemplates: [WebGPURenderStateOutputState, WebGPURenderStateOutputState, WebGPURenderStateOutputState, WebGPURenderStateOutputState, WebGPURenderStateOutputState] = [
 		// RenderServerMaterialPass.Depth
 		{
 			depth_stencil_format: WebGPURenderStateTextureFormat.D32F,
@@ -239,7 +256,7 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
 				// normal
 				{
 					format: WebGPURenderStateTextureFormat.RGBA16F,
-					blend: false,
+					blend: true,
 				}
 			],
 		},
@@ -285,15 +302,29 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
 					blend: true,
 				},
 			],
-		}
+		},
+		// RenderServerMaterialPass.Set
+		{
+			depth_stencil_format: undefined,
+			multi_sample_count: WebGPURenderStateMultiSampleCount.None,
+			alpha_to_coverage: false,
+			attachments: [
+				// compose
+				{
+					format: WebGPURenderStateTextureFormat.RGBA16F,
+					blend: false,
+				},
+			],
+		},
 	];
 
-	static PipelineOutputCodeTemplates: [string, string, string, string] = [
+	static PipelineOutputCodeTemplates: [string, string, string, string, string] = [
 		`    @location(0) normal: vec4f,`,
 		`    @location(0) color: vec4f,
     @location(1) normal: vec4f,`,
 		`    @location(0) accum: vec4f,
     @location(1) reveal: f32,`,
+		`    @location(0) color: vec4f,`,
 		`    @location(0) color: vec4f,`,
 	];
 
@@ -359,7 +390,21 @@ export class RenderServerMaterial extends RenderServerObjectRefCounted {
 			fragment_tbn_normal_view_vary_name = 'normal',
 			fragment_tbn_tangent_view_vary_name = 'tangent',
 			fragment_tbn_uv_vary_name = 'uv',
+
+			builtin_func
 		} = option;
+
+		const builtin_func_code = `${builtin_func?.position_to_screen_uv ? `
+
+fn position_to_screen_uv(position: vec2f, viewport: vec4f) -> vec2f {
+	var screen_uv = (position - viewport.xy) / viewport.zw;
+	return screen_uv;
+}`: ``}${builtin_func?.invert_mat3 ? `
+
+fn invert_mat3(mat: mat3x3f) -> mat3x3f {
+	let s = (1.0f / determinant(mat));
+  	return (s * mat3x3<f32>(vec3<f32>(((mat[1u][1u] * mat[2u][2u]) - (mat[1u][2u] * mat[2u][1u])), ((mat[0u][2u] * mat[2u][1u]) - (mat[0u][1u] * mat[2u][2u])), ((mat[0u][1u] * mat[1u][2u]) - (mat[0u][2u] * mat[1u][1u]))), vec3<f32>(((mat[1u][2u] * mat[2u][0u]) - (mat[1u][0u] * mat[2u][2u])), ((mat[0u][0u] * mat[2u][2u]) - (mat[0u][2u] * mat[2u][0u])), ((mat[0u][2u] * mat[1u][0u]) - (mat[0u][0u] * mat[1u][2u]))), vec3<f32>(((mat[1u][0u] * mat[2u][1u]) - (mat[1u][1u] * mat[2u][0u])), ((mat[0u][1u] * mat[2u][0u]) - (mat[0u][0u] * mat[2u][1u])), ((mat[0u][0u] * mat[1u][1u]) - (mat[0u][1u] * mat[1u][0u])))));
+}`: ``}`;
 
 		const fn: WebGPURenderElementRenderPipelineCacheGetterFn = (hash: WebGPURenderElementRenderPipelineCacheHash) => {
 
@@ -484,8 +529,10 @@ ${fragment}
 	// End Custom Fragment
 	${pass === RenderServerMaterialPass.Transparent ? `
 	// Transparent OIT
-	var _weight: f32 = max(min(1.0, max(max(${fragment_out_color_name}.r, ${fragment_out_color_name}.g), ${fragment_out_color_name}.b) * ${fragment_out_color_name}.a), ${fragment_out_color_name}.a) * clamp(0.03 / (1e-5 + pow(vary.position.z / 200, 4.0)), 1e-2, 3e3);
-	_out.accum = vec4f(${fragment_out_color_name}.rgb * ${fragment_out_color_name}.a, ${fragment_out_color_name}.a) * _weight;
+	var _z = abs(vary.position.z);
+	var _weight = max(min(1.0, max(max(${fragment_out_color_name}.r, ${fragment_out_color_name}.g), ${fragment_out_color_name}.b) * ${fragment_out_color_name}.a), ${fragment_out_color_name}.a) *
+    clamp(0.03 / (1e-5 + pow(_z / 200, 4.0)), 1e-2, 3e3);
+	_out.accum = vec4(${fragment_out_color_name}.rgb * ${fragment_out_color_name}.a, ${fragment_out_color_name}.a)  * _weight;
 	_out.reveal = ${fragment_out_color_name}.a;
 	` :
 					pass === RenderServerMaterialPass.Solid ? `
@@ -499,8 +546,7 @@ ${fragment}
 	` :
 							``}
 	return _out;
-}
-${vertex_instance_transform_color && has_instance_transform_color ? `
+}${builtin_func_code}${vertex_instance_transform_color && has_instance_transform_color ? `
 fn _invert_mat3x3f(mat: mat3x3f) -> mat3x3f {
 	let s = (1.0f / determinant(mat));
   	return (s * mat3x3<f32>(vec3<f32>(((mat[1u][1u] * mat[2u][2u]) - (mat[1u][2u] * mat[2u][1u])), ((mat[0u][2u] * mat[2u][1u]) - (mat[0u][1u] * mat[2u][2u])), ((mat[0u][1u] * mat[1u][2u]) - (mat[0u][2u] * mat[1u][1u]))), vec3<f32>(((mat[1u][2u] * mat[2u][0u]) - (mat[1u][0u] * mat[2u][2u])), ((mat[0u][0u] * mat[2u][2u]) - (mat[0u][2u] * mat[2u][0u])), ((mat[0u][2u] * mat[1u][0u]) - (mat[0u][0u] * mat[1u][2u]))), vec3<f32>(((mat[1u][0u] * mat[2u][1u]) - (mat[1u][1u] * mat[2u][0u])), ((mat[0u][1u] * mat[2u][0u]) - (mat[0u][0u] * mat[2u][1u])), ((mat[0u][0u] * mat[1u][1u]) - (mat[0u][1u] * mat[1u][0u])))));

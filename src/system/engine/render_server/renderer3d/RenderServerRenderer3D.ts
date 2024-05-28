@@ -175,7 +175,7 @@ const OitComposePipeline = new RefCacher(() => {
         var out: FragmentOutput;
         var accum_sample = textureSample(accum, sample, vary.uv);
         var reveal_sample = textureSample(reveal, sample, vary.uv).r;
-        var color = vec4f(accum_sample.rgb / max(accum_sample.a, 1e-5), 1.0 - reveal_sample);
+        var color = vec4f(accum_sample.rgb / clamp(accum_sample.a, 1e-4, 5e4), 1.0 - reveal_sample);
         out.color = color;
         return out;
     }
@@ -189,79 +189,6 @@ const OitComposePipeline = new RefCacher(() => {
         RenderServerMaterial.ProgramStatePipelineTemplates[RenderServerMaterialPass.Compose],
         RenderServerMaterial.OutputStatePipelineTemplates[RenderServerMaterialPass.Compose],
         [OitComposeUniformLayout.get()],
-        [
-            {
-                stride: 8, // 2 * 4
-                per_instance: false,
-                rows: [{
-                    location: 0,
-                    offset: 0,
-                    type: WebGPURenderStateAttributeType.Vector2
-                }]
-            },
-        ]
-    ).expect();
-
-    // mannually release shader and program
-    shader.release();
-    program.release();
-
-    return pipeline;
-});
-
-const ColorComposeUniformLayout = new RefCacher(() => {
-    const layout = RenderServer.render_state.create_UniformLayout();
-    layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.NonFilterFloat, WebGPURenderStateShaderType.Fragment, 0);
-    layout.add_Sampler(WebGPURenderStateSamplerUniformType.NonFilter, WebGPURenderStateShaderType.Fragment, 1);
-    return layout;
-});
-
-const ColorComposePipeline = new RefCacher(() => {
-
-    const shader_code = `
-
-    struct Attributes {
-        @location(${RenderServerGeometryAttributeLocation.Position}) position: vec2f,
-    };
-    
-    struct VertexOutput {
-        @builtin(position) position: vec4f,
-        @location(0) uv: vec2f,
-    };
-
-    @vertex
-    fn vs_main(attri: Attributes) -> VertexOutput {
-        var out: VertexOutput;
-        out.position = vec4f(attri.position - vec2f(1.0), 1.0, 1.0);
-	    var uv = attri.position / 2.0;
-        out.uv = vec2(uv.x, 1.0 - uv.y);
-        return out;
-    }
-
-    struct FragmentOutput {
-        @location(0) color: vec4f,
-    };
-
-    @group(0) @binding(0) var color: texture_2d<f32>;
-    @group(0) @binding(1) var sample: sampler;
-    
-    @fragment
-    fn fs_main(vary: VertexOutput) -> FragmentOutput {
-        var out: FragmentOutput;
-        var color_sample = textureSample(color, sample, vary.uv);
-        out.color = color_sample;
-        return out;
-    }
-    `;
-
-    const shader = RenderServer.render_state.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
-    const program = RenderServer.render_state.create_Program(shader, shader).expect();
-
-    const pipeline = RenderServer.render_state.create_RenderPipeline(
-        program,
-        RenderServerMaterial.ProgramStatePipelineTemplates[RenderServerMaterialPass.Compose],
-        RenderServerMaterial.OutputStatePipelineTemplates[RenderServerMaterialPass.Compose],
-        [ColorComposeUniformLayout.get()],
         [
             {
                 stride: 8, // 2 * 4
@@ -349,20 +276,28 @@ const EffectFxaaPipeline = new RefCacher(() => {
     }
 
     fn fxaa(tex: texture_2d<f32>, sample: sampler, fragCoord: vec2f, resolution: vec2f, v_rgbNW: vec2f, v_rgbNE: vec2f, v_rgbSW: vec2f, v_rgbSE: vec2f, v_rgbM: vec2f) -> vec4f {
-        var color: vec4f;
+        
+        // modified from godot https://github.com/godotengine/godot/blob/b1a50ad80538d57d917c3f399053e1a22d1aa749/drivers/gles3/shaders/tonemap.glsl
+        
+        const FXAA_REDUCE_MIN = (1.0 / 128.0);
+	    const FXAA_REDUCE_MUL = (1.0 / 8.0);
+	    const FXAA_SPAN_MAX = 8.0;
+        
         var inverseVP = 1.0 / world_env_uniform_params.screen_size.xy;
-        var rgbNW = textureSample(tex, sample, v_rgbNW).xyz;
-        var rgbNE = textureSample(tex, sample, v_rgbNE).xyz;
-        var rgbSW = textureSample(tex, sample, v_rgbSW).xyz;
-        var rgbSE = textureSample(tex, sample, v_rgbSE).xyz;
-        var texColor = textureSample(tex, sample, v_rgbM);
-        var rgbM  = texColor.xyz;
-        var luma = vec3f(0.4126729,  0.7151522, 0.1721750);
-        var lumaNW = dot(rgbNW, luma);
-        var lumaNE = dot(rgbNE, luma);
-        var lumaSW = dot(rgbSW, luma);
-        var lumaSE = dot(rgbSE, luma);
-        var lumaM  = dot(rgbM,  luma);
+        var rgbNW = textureSample(tex, sample, v_rgbNW);
+        var rgbNE = textureSample(tex, sample, v_rgbNE);
+        var rgbSW = textureSample(tex, sample, v_rgbSW);
+        var rgbSE = textureSample(tex, sample, v_rgbSE);
+        var rgbM  = textureSample(tex, sample, v_rgbM);
+
+        var color = rgbM;
+
+        var luma = vec3f(0.4126729,  0.7151522, 0.1721750); // vec3f(0.299, 0.587, 0.114);
+        var lumaNW = dot(rgbNW.rgb, luma) - ((1 - rgbNW.a) / 8.0);
+        var lumaNE = dot(rgbNE.rgb, luma) - ((1 - rgbNE.a) / 8.0);
+        var lumaSW = dot(rgbSW.rgb, luma) - ((1 - rgbSW.a) / 8.0);
+        var lumaSE = dot(rgbSE.rgb, luma) - ((1 - rgbSE.a) / 8.0);
+        var lumaM  = dot( rgbM.rgb, luma) - (color.a / 8.0);
         var lumaMin = min(lumaM, min(min(lumaNW, lumaNE), min(lumaSW, lumaSE)));
         var lumaMax = max(lumaM, max(max(lumaNW, lumaNE), max(lumaSW, lumaSE)));
         
@@ -371,30 +306,92 @@ const EffectFxaaPipeline = new RefCacher(() => {
         dir.y =  ((lumaNW + lumaSW) - (lumaNE + lumaSE));
 
         var dirReduce = max((lumaNW + lumaNE + lumaSW + lumaSE) *
-                              (0.25 * (1.0 / 16.0)), (1.0 / 128.0));
+                              (0.25 * FXAA_REDUCE_MUL), FXAA_REDUCE_MIN);
         
         var rcpDirMin = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
-        dir = min(vec2(8.0, 8.0),
-                  max(vec2(-8.0, -8.0),
+
+        dir = min(vec2(FXAA_SPAN_MAX, FXAA_SPAN_MAX),
+                  max(vec2(-FXAA_SPAN_MAX, -FXAA_SPAN_MAX),
                   dir * rcpDirMin)) * inverseVP;
-        
-        var rgbA = 0.5 * (
-            textureSample(tex, sample, fragCoord * inverseVP + dir * (1.0 / 3.0 - 0.5)).xyz +
-            textureSample(tex, sample, fragCoord * inverseVP + dir * (2.0 / 3.0 - 0.5)).xyz);
-        var rgbB = rgbA * 0.5 + 0.25 * (
-            textureSample(tex, sample, fragCoord * inverseVP + dir * -0.5).xyz +
-            textureSample(tex, sample, fragCoord * inverseVP + dir * 0.5).xyz);
 
-        var lumaB = dot(rgbB, luma);
-        if ((lumaB < lumaMin) || (lumaB > lumaMax)) {
-            color = vec4(rgbA, texColor.a);
-        }
-        else {
-            color = vec4(rgbB, texColor.a);
-        }
+        var rgbA: vec4f = 0.5 * (textureSample(tex, sample, fragCoord * inverseVP + dir * (1.0 / 3.0 - 0.5)) + textureSample(tex, sample, fragCoord * inverseVP + dir * (2.0 / 3.0 - 0.5)));
 
-        return color;
+	    var rgbB : vec4f= rgbA * 0.5 + 0.25 * (textureSample(tex, sample, fragCoord * inverseVP + dir * -0.5) + textureSample(tex, sample, fragCoord * inverseVP + dir * 0.5));
+
+	    var lumaB = dot(rgbB.rgb, luma) - ((1 - rgbB.a) / 8.0);
+	    var color_output = select(rgbA, rgbB, (lumaB < lumaMin) || (lumaB > lumaMax));
+	    if color_output.a == 0.0 {
+	    	return vec4f(0.0, 0.0, 0.0, color_output.a);
+	    }
+        return color_output;
     }
+    `;
+
+    const shader = RenderServer.render_state.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
+    const program = RenderServer.render_state.create_Program(shader, shader).expect();
+
+    const pipeline = RenderServer.render_state.create_RenderPipeline(
+        program,
+        RenderServerMaterial.ProgramStatePipelineTemplates[RenderServerMaterialPass.Set],
+        RenderServerMaterial.OutputStatePipelineTemplates[RenderServerMaterialPass.Set],
+        [RenderServer.world_env_uniform_layout],
+        [
+            {
+                stride: 8, // 2 * 4
+                per_instance: false,
+                rows: [{
+                    location: 0,
+                    offset: 0,
+                    type: WebGPURenderStateAttributeType.Vector2
+                }]
+            },
+        ]
+    ).expect();
+
+    // mannually release shader and program
+    shader.release();
+    program.release();
+
+    return pipeline;
+});
+
+const EffectPreMultAlphaPipeline = new RefCacher(() => {
+
+    const shader_code = `
+
+    struct Attributes {
+        @location(${RenderServerGeometryAttributeLocation.Position}) position: vec2f,
+    };
+    
+    struct VertexOutput {
+        @builtin(position) position: vec4f,
+        @location(0) uv: vec2f,
+    };
+
+    @vertex
+    fn vs_main(attri: Attributes) -> VertexOutput {
+        var out: VertexOutput;
+        out.position = vec4f(attri.position - vec2f(1.0), 1.0, 1.0);
+	    var uv = attri.position / 2.0;
+        out.uv = vec2(uv.x, 1.0 - uv.y);
+        return out;
+    }
+
+    struct FragmentOutput {
+        @location(0) color: vec4f,
+    };
+
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var color: texture_2d<f32>;
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(5) var sample: sampler;
+    
+    @fragment
+    fn fs_main(vary: VertexOutput) -> FragmentOutput {
+        var out: FragmentOutput;
+        var color = textureSample(color, sample, vary.uv);
+        out.color = vec4f(color.rgb * color.a, color.a);
+        return out;
+    }
+
     `;
 
     const shader = RenderServer.render_state.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
@@ -626,9 +623,6 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     protected readonly oit_compose_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(OitComposeUniformLayout.get()).expect());
     protected readonly oit_compose_pipeline_ref = new ReadonlyRef(OitComposePipeline.get());
 
-    protected readonly color_compose_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(ColorComposeUniformLayout.get()).expect());
-    protected readonly color_compose_pipeline_ref = new ReadonlyRef(ColorComposePipeline.get());
-
     protected readonly compose_frame_buffer_ref = new ReadonlyRef(new WebGPURenderElementFrameBuffer(RenderServer.render_state));
 
     //#endregion
@@ -664,6 +658,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     protected readonly effect_frame_buffer_1_ref = new ReadonlyRef(new WebGPURenderElementFrameBuffer(RenderServer.render_state));
 
     protected readonly effect_fxaa_pipeline_ref = new ReadonlyRef(EffectFxaaPipeline.get());
+    protected readonly effect_pre_mult_alpha_pipeline_ref = new ReadonlyRef(EffectPreMultAlphaPipeline.get());
 
     //#endregion
 
@@ -715,7 +710,6 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.queue_1_transparent_instance_uniform_group_ref.expect.set_BufferUniform(0, this.queue_1_transparent_instance_uniform_buffer_view_ref.expect);
 
         this.oit_compose_uniform_group_ref.expect.set_Sampler(2, this.compose_uniform_sampler_ref.expect);
-        this.color_compose_uniform_group_ref.expect.set_Sampler(1, this.compose_uniform_sampler_ref.expect);
 
         this.world_env_queue_0_uniform_solid_group_ref.expect.set_BufferUniform(0, this.world_env_uniform_camera_matrix_buffer_ref.expect);
         this.world_env_queue_0_uniform_solid_group_ref.expect.set_BufferUniform(1, this.world_env_uniform_params_buffer_ref.expect);
@@ -906,8 +900,6 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
             this.effect_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment | WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopySrc, WebGPURenderStateTextureFormat.RGBA16F, WebGPURenderStateTextureDimension.D2, width, height).expect();
             this.effect_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.effect_texture_ref.expect).expect();
 
-            this.color_compose_uniform_group_ref.expect.set_Texture(0, this.result_color_texture_view_ref.expect);
-
             this.world_env_queue_0_uniform_transparent_group_ref.expect.set_Texture(2, this.result_color_texture_view_ref.expect);
             this.world_env_queue_0_uniform_transparent_group_ref.expect.set_Texture(3, this.result_normal_texture_view_ref.expect);
             this.world_env_queue_0_uniform_transparent_group_ref.expect.set_Texture(4, this.result_depth_texture_view_ref.expect);
@@ -932,7 +924,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     public reset_FrameBuffer() {
         this.solid_frame_buffer_ref.expect.clear_Attachments();
         this.solid_frame_buffer_ref.expect.clear_DepthStencilAttachment();
-        this.solid_frame_buffer_ref.expect.add_Attachment(this.result_color_texture_view_ref.expect, true, Vector4.create(0.2, 0.2, 0.2, 1), true);
+        this.solid_frame_buffer_ref.expect.add_Attachment(this.result_color_texture_view_ref.expect, true, Vector4.create(0, 0, 0, 0), true);
         this.solid_frame_buffer_ref.expect.add_Attachment(this.result_normal_texture_view_ref.expect, true, Vector4.create(0, 0, 0, 1), true);
         this.solid_frame_buffer_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_view_ref.expect, true, 1, true, false);
 
@@ -1012,7 +1004,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         //#region render
 
         const encoder = RenderServer.render_state.device.createCommandEncoder();
-        this.render_Queue0Solid(encoder);
+        this.render_Queue0Solid(encoder, viewport.background);
         this.render_Queue0Transparent(encoder);
         const effect_queue_0_first_texture = (this.render_Queue0Effects(encoder) % 2) === 0;
         if (!effect_queue_0_first_texture) {
@@ -1063,7 +1055,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
     //#region queue 0
 
-    protected render_Queue0Solid(encoder: GPUCommandEncoder) {
+    protected render_Queue0Solid(encoder: GPUCommandEncoder, background: boolean) {
 
         const render_pass = encoder.beginRenderPass(this.solid_frame_buffer_ref.expect.frame_buffer_desc);
         render_pass.setBindGroup(RenderServerSingleton.WorldEnvUniformBindGroupIndex, this.world_env_queue_0_uniform_solid_group_ref.expect.binding_group);
@@ -1088,9 +1080,11 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         }
 
         // background
-        render_pass.setPipeline(this.full_screen_background_pipeline_ref.expect.pipeline);
-        this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(render_pass);
-        this.full_screen_triangle_vertex_array_ref.expect.draw(render_pass);
+        if (background) {
+            render_pass.setPipeline(this.full_screen_background_pipeline_ref.expect.pipeline);
+            this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(render_pass);
+            this.full_screen_triangle_vertex_array_ref.expect.draw(render_pass);
+        }
 
         render_pass.end();
     }
@@ -1166,7 +1160,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         let pass = 0;
 
         // see render_Queue1Effects for examples
-        
+
         // const effect_pass_0 = encoder.beginRenderPass(this.effect_frame_buffer_0_ref.expect.frame_buffer_desc);
         // effect_pass_0.setPipeline(EffectTemplatePipeline.get().pipeline);
         // effect_pass_0.setBindGroup(0, this.world_env_effect_uniform_group_0_ref.expect.binding_group);
@@ -1185,28 +1179,28 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
     protected render_Queue1Solid(encoder: GPUCommandEncoder) {
 
-        if (this.queue_1.solid_pointer < 0) return;
-
         const render_pass = encoder.beginRenderPass(this.solid_frame_buffer_1_ref.expect.frame_buffer_desc);
-        render_pass.setBindGroup(RenderServerSingleton.WorldEnvUniformBindGroupIndex, this.world_env_queue_1_uniform_group_ref.expect.binding_group);
-        render_pass.setBindGroup(RenderServerSingleton.LightsUniformBindGroupIndex, this.lights_uniform_group_ref.expect.binding_group);
-        const dynamic_offsets = RenderServerRenderer3D.#tmp_instance_uniform_group_dynamic_offsets;
-        for (let i = 0; i <= this.queue_1.solid_pointer; i++) {
-            const vertex_array = this.queue_1.solid_vertex_array[i]!;
-            const material = this.queue_1.solid_material[i]!;
-            material.update_UniformBuffers();
-            const pipeline_uniform = material.get_PipelineUniform(RenderServerMaterialPass.Solid, vertex_array, this.solid_frame_buffer_1_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual);
-            if (pipeline_uniform === undefined) continue;
-            const { pipeline, uniform } = pipeline_uniform;
-            if (uniform !== undefined) {
-                render_pass.setBindGroup(RenderServerSingleton.UniformBindGroupIndex, uniform.binding_group);
+        if (this.queue_1.solid_pointer >= 0) {
+            render_pass.setBindGroup(RenderServerSingleton.WorldEnvUniformBindGroupIndex, this.world_env_queue_1_uniform_group_ref.expect.binding_group);
+            render_pass.setBindGroup(RenderServerSingleton.LightsUniformBindGroupIndex, this.lights_uniform_group_ref.expect.binding_group);
+            const dynamic_offsets = RenderServerRenderer3D.#tmp_instance_uniform_group_dynamic_offsets;
+            for (let i = 0; i <= this.queue_1.solid_pointer; i++) {
+                const vertex_array = this.queue_1.solid_vertex_array[i]!;
+                const material = this.queue_1.solid_material[i]!;
+                material.update_UniformBuffers();
+                const pipeline_uniform = material.get_PipelineUniform(RenderServerMaterialPass.Solid, vertex_array, this.solid_frame_buffer_1_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual);
+                if (pipeline_uniform === undefined) continue;
+                const { pipeline, uniform } = pipeline_uniform;
+                if (uniform !== undefined) {
+                    render_pass.setBindGroup(RenderServerSingleton.UniformBindGroupIndex, uniform.binding_group);
+                }
+                const instance_count = this.queue_1.get_InstanceCount(false, i);
+                dynamic_offsets[0] = i * RenderServerSingleton.InstanceUniformMemoryLayout.size;
+                render_pass.setBindGroup(RenderServerSingleton.InstanceUniformBindGroupIndex, this.queue_1_solid_instance_uniform_group_ref.expect.binding_group, dynamic_offsets);
+                render_pass.setPipeline(pipeline.pipeline);
+                vertex_array.bind_Buffers(render_pass);
+                vertex_array.draw(render_pass, instance_count);
             }
-            const instance_count = this.queue_1.get_InstanceCount(false, i);
-            dynamic_offsets[0] = i * RenderServerSingleton.InstanceUniformMemoryLayout.size;
-            render_pass.setBindGroup(RenderServerSingleton.InstanceUniformBindGroupIndex, this.queue_1_solid_instance_uniform_group_ref.expect.binding_group, dynamic_offsets);
-            render_pass.setPipeline(pipeline.pipeline);
-            vertex_array.bind_Buffers(render_pass);
-            vertex_array.draw(render_pass, instance_count);
         }
 
         render_pass.end();
@@ -1295,9 +1289,6 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.oit_compose_uniform_group_ref.clear();
         this.oit_compose_pipeline_ref.clear();
 
-        this.color_compose_uniform_group_ref.clear();
-        this.color_compose_pipeline_ref.clear();
-
         this.compose_frame_buffer_ref.clear();
 
         this.result_color_texture_ref.clear();
@@ -1321,6 +1312,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.effect_frame_buffer_1_ref.clear();
 
         this.effect_fxaa_pipeline_ref.clear();
+        this.effect_pre_mult_alpha_pipeline_ref.clear();
 
         this.queue_0_solid_instance_uniform_group_ref.clear();
         this.queue_0_solid_instance_uniform_buffer_view_ref.clear();

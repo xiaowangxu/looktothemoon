@@ -15,12 +15,9 @@ import { ViewportActionInputEventManager } from "../inputs/managers/ViewportActi
 import { ViewportInputManager } from "../inputs/managers/ViewportInputManager";
 import { ClassBase } from "../classes/class_database/ClassBase";
 import { Ref } from "@/system/utils/RefCounted";
-import type { Renderer3D } from "../renderer/renderer_3d/Renderer3D";
 import { RaycastSide } from "@/system/fivepebble/geometries/GeometryLike";
 import { Line3 } from "@/system/fivepebble/geometries/Line3";
 import { MouseMotionInputEvent } from "../inputs/events/mouse_events/MouseMotionInputEvent";
-import type { Color } from "@/system/fivepebble/graphics/Color";
-import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { Rid } from "../Rid";
 import { RenderServerViewport } from "../render_server/viewport/RenderServerViewport";
 import type { RenderServerRenderer3D } from "../render_server/renderer3d/RenderServerRenderer3D";
@@ -412,6 +409,8 @@ export class Viewport extends Node {
     public get size(): Vector2 { return this.render_server_viewport.raw_size; }
     public set size(size: Vector2) { this.render_server_viewport.set_RawSize(size.x, size.y); }
     public get_Size(target: Vector2) { return this.render_server_viewport.get_RawSize(target); }
+    public get background() { return this.render_server_viewport.background; }
+    public set background(background: boolean) { this.render_server_viewport.set_Background(background); }
 
     //#endregion
 

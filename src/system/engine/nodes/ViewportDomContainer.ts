@@ -40,7 +40,7 @@ export class ViewportDomContainer extends Node {
             this.viewport_node = node;
             if (this.dom !== undefined) {
                 this.dom.appendChild(this.viewport_node.canvas);
-                this.viewport_node.canvas.style.backgroundColor = 'tomato';
+                // this.viewport_node.canvas.style.backgroundColor = 'tomato';
                 this.viewport_node.canvas.style.width = '100%';
                 this.viewport_node.canvas.style.height = '100%';
             }

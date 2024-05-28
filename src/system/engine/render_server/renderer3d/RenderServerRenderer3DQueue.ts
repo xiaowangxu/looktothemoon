@@ -58,7 +58,7 @@ export class RenderServerRenderer3DQueue implements Disposable {
         this.transparent_capcity = transparent_capcity;
         this.transparent_vertex_array = new Array(this.transparent_capcity).fill(undefined);
         this.transparent_material = new Array(this.transparent_capcity).fill(undefined);
-        this.transparent_instance_uniform_buffer_ref = new ReadonlyRef(RenderServer.render_state.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, RenderServerRenderer3DQueue.#const_instance_uniform_buffer_member_size * this.solid_capcity).expect());
+        this.transparent_instance_uniform_buffer_ref = new ReadonlyRef(RenderServer.render_state.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, RenderServerRenderer3DQueue.#const_instance_uniform_buffer_member_size * this.transparent_capcity).expect());
         this.transparent_instance_uniform_array_buffer = new ArrayBuffer(this.transparent_instance_uniform_buffer_ref.expect.length);
         this.transparent_instance_uniform_transform_array = new Float32Array(this.transparent_instance_uniform_array_buffer);
         this.transparent_instance_uniform_params_array = new Uint32Array(this.transparent_instance_uniform_array_buffer);

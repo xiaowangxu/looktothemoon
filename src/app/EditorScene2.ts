@@ -22,7 +22,7 @@ import { OrthographicCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/Or
 import { PerspectiveCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/PerspectiveCamera3D";
 
 import f_image_url from 'res://test-image.png';
-import matcap_6_image_url from 'res://matcap-12.png';
+import matcap_6_image_url from 'res://matcap-13.png';
 import normal_image_url from 'res://normal_texture-0.png';
 
 import { RenderServerTexture } from "@/system/engine/render_server/texture/RenderServerTexture";
@@ -38,6 +38,7 @@ import { MultiGeometry3DResource } from "@/system/engine/resources/geometry3d_re
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { WebGPURenderElementTextureSamplerCacheHash } from "@/system/sliverofstraw/render_element_object/texture_sampler/WebGPURenderElementTextureSamplerCache";
+import { PureColorMaterialResource } from "@/system/engine/resources/material_resources/PureColorMaterialResource";
 
 const viewport_scale = 1;
 const bg_color = Color.create(0.25, 0.25, 0.25).linear_rgb;
@@ -59,28 +60,28 @@ export async function createEditor() {
 	EditorViewport.world_3d = new World3D();
 	EditorViewport.renderer_3d = new RenderServerRenderer3D();
 
-	// viewport 0
-	const EditorViewportContainer0 = new ViewportDomContainer();
-	EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-	const EditorViewport0 = new Viewport();
-	EditorViewport0.scale = viewport_scale;
-	EditorViewport0.renderer_3d = new RenderServerRenderer3D();
-	EditorViewportContainer0.add_Child(EditorViewport0);
-	const EditorCamera0 = new OrbitCamera3D();
-	EditorViewport0.add_Child(EditorCamera0);
-	EditorViewport.add_Child(EditorViewportContainer0);
-	EditorCamera0.set_Zoom(0.3);
-	// viewport 1
-	const EditorViewportContainer1 = new ViewportDomContainer();
-	EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
-	const EditorViewport1 = new Viewport();
-	EditorViewport1.scale = viewport_scale;
-	EditorViewport1.renderer_3d = new RenderServerRenderer3D();
-	EditorViewportContainer1.add_Child(EditorViewport1);
-	const EditorCamera1 = new OrbitCamera3D();
-	EditorViewport1.add_Child(EditorCamera1);
-	EditorViewport.add_Child(EditorViewportContainer1);
-	EditorCamera1.set_Zoom(0.3);
+	// // viewport 0
+	// const EditorViewportContainer0 = new ViewportDomContainer();
+	// EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+	// const EditorViewport0 = new Viewport();
+	// EditorViewport0.scale = viewport_scale;
+	// EditorViewport0.renderer_3d = new RenderServerRenderer3D();
+	// EditorViewportContainer0.add_Child(EditorViewport0);
+	// const EditorCamera0 = new OrbitCamera3D();
+	// EditorViewport0.add_Child(EditorCamera0);
+	// EditorViewport.add_Child(EditorViewportContainer0);
+	// EditorCamera0.set_Zoom(0.3);
+	// // viewport 1
+	// const EditorViewportContainer1 = new ViewportDomContainer();
+	// EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
+	// const EditorViewport1 = new Viewport();
+	// EditorViewport1.scale = viewport_scale;
+	// EditorViewport1.renderer_3d = new RenderServerRenderer3D();
+	// EditorViewportContainer1.add_Child(EditorViewport1);
+	// const EditorCamera1 = new OrbitCamera3D();
+	// EditorViewport1.add_Child(EditorCamera1);
+	// EditorViewport.add_Child(EditorViewportContainer1);
+	// EditorCamera1.set_Zoom(0.3);
 
 	// World 
 	const World = new Node3D();
@@ -107,7 +108,7 @@ export async function createEditor() {
 
 	// World.signal_input.connect((evt, prop) => {
 	// 	if (!prop && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {
-	// 		World.get_SceneTree()?.get_ActiveViewports()[0]?.emulate_InputEvent(new ActionInputEvent().set_Action('zoomIn', true, false));
+	// 		World.get_SceneTree()?.get_ActiveViewports()[0]?.emulate_InputEvent(new MouseButtonInputEvent().set_Button(MouseButton.WheelUp, true, false, false).set_Compose(true));
 	// 	}
 	// });
 
@@ -128,11 +129,14 @@ export async function createEditor() {
 	// mesh.render_queue = 1;
 	World.add_Child(mesh);
 
+	const pure = new PureColorMaterialResource();
+	pure.color = Color.create(1.0, 1.0, 0.0, 0.5);
 	const mesh2 = new MeshInstance3D();
 	mesh2.geometry = box_geo;
 	const box_mat2 = new TestMaterialResource();
 	box_mat2.color = Vector4.create(1.0, 1.0, 1.0, 0.5);
-	mesh2.material = box_mat2;
+	mesh2.material = pure; // box_mat2;
+	mesh2.render_queue = 1;
 	mesh2.local_position = Vector3.create(200, 0, 0);
 	mesh2.local_scale = Vector3.create(100, 100, 100);
 	World.add_Child(mesh2);
@@ -221,7 +225,7 @@ export async function createEditor() {
 			const { naturalWidth, naturalHeight } = image;
 			const texture = ImageTexture2DResource.create_Image(image, naturalWidth, naturalHeight, Infinity, true);
 			texture.default_sampler_hash =
-				WebGPURenderElementTextureSamplerCacheHash.WrapClamp | WebGPURenderElementTextureSamplerCacheHash.FilterNearest | WebGPURenderElementTextureSamplerCacheHash.MinFilterLinear | WebGPURenderElementTextureSamplerCacheHash.DepthCompareDisabled | WebGPURenderElementTextureSamplerCacheHash.AllLod | WebGPURenderElementTextureSamplerCacheHash.AnisotropyLod1;
+				WebGPURenderElementTextureSamplerCacheHash.WrapMirrorRepeat | WebGPURenderElementTextureSamplerCacheHash.FilterLinear | WebGPURenderElementTextureSamplerCacheHash.DepthCompareDisabled | WebGPURenderElementTextureSamplerCacheHash.AllLod | WebGPURenderElementTextureSamplerCacheHash.AnisotropyLod1;
 			box_mat4.texture = texture;
 		}
 	}
@@ -271,24 +275,25 @@ export async function createEditor() {
 		const CompassViewportContainer = new ViewportDomContainer();
 		CompassViewportContainer.dom = (document.querySelector('#compass-viewport') ?? undefined) as HTMLElement;
 		const CompassViewport = new Viewport();
-		CompassViewport.scale = viewport_scale;
+		CompassViewport.scale = 1.5;
 		CompassViewport.world_3d = new World3D();
-		CompassViewport.renderer_3d = new RenderServerRenderer3D();
+		CompassViewport.renderer_3d = new RenderServerRenderer3D(6, 6, 6, 6);
+		CompassViewport.background = false;
 		CompassViewportContainer.add_Child(CompassViewport);
 
 		const compass_box_geo = new BoxGeometry3DResource();
-		const compass_box_mat_0 = new TestMaterialResource();
-		compass_box_mat_0.color = Color.color8code(0x466fe6ff);
-		const compass_box_mat_1 = new TestMaterialResource();
+		const compass_box_mat_0 = new PureColorMaterialResource();
+		compass_box_mat_0.color = Color.color8code(0x365ff6ff);
+		const compass_box_mat_1 = new PureColorMaterialResource();
 		compass_box_mat_1.color = Color.color8code(0x04b973ff);
-		const compass_box_mat_2 = new TestMaterialResource();
-		compass_box_mat_2.color = Color.color8code(0xff4a56ff);
-		const compass_box_mat_0_n = new TestMaterialResource();
-		compass_box_mat_0_n.color = Color.color8code(0x466fe680);
-		const compass_box_mat_1_n = new TestMaterialResource();
-		compass_box_mat_1_n.color = Color.color8code(0x04b97380);
-		const compass_box_mat_2_n = new TestMaterialResource();
-		compass_box_mat_2_n.color = Color.color8code(0xff4a5680);
+		const compass_box_mat_2 = new PureColorMaterialResource();
+		compass_box_mat_2.color = Color.color8code(0xef4a56ff);
+		const compass_box_mat_0_n = new PureColorMaterialResource();
+		compass_box_mat_0_n.color = Color.color8code(0x365ff650);
+		const compass_box_mat_1_n = new PureColorMaterialResource();
+		compass_box_mat_1_n.color = Color.color8code(0x04b97350);
+		const compass_box_mat_2_n = new PureColorMaterialResource();
+		compass_box_mat_2_n.color = Color.color8code(0xef4a5650);
 		const mesh = new MeshInstance3D();
 		mesh.geometry = compass_box_geo;
 		mesh.set_SurfaceMaterial(2, compass_box_mat_0);

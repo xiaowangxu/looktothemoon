@@ -1,8 +1,6 @@
 import type { WebGPURenderStateCanvasTextureView } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateCanvasTextureView";
-import { ReadonlyRef } from "@/system/utils/RefCounted";
-import { RenderServer, RenderServerSingleton } from "../RenderServer";
-import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
-import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import { ReadonlyRef, Ref } from "@/system/utils/RefCounted";
+import { RenderServer } from "../RenderServer";
 import type { Disposable } from "@/system/utils/Type";
 import { RenderServerObject } from "../RenderServerObject";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
@@ -12,12 +10,9 @@ import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
  */
 export class RenderServerViewport extends RenderServerObject implements Disposable {
 
-    static readonly #tmp_matrix4_0: Matrix4 = Matrix4.new;
-    static readonly #tmp_matrix3_0: Matrix3 = Matrix3.new;
-
     protected readonly canvas: HTMLCanvasElement;
 
-    protected readonly canvas_texture_view_ref: ReadonlyRef<WebGPURenderStateCanvasTextureView>;
+    protected readonly canvas_texture_view_ref: Ref<WebGPURenderStateCanvasTextureView> = new Ref();
     public get canvas_texture_view() { return this.canvas_texture_view_ref.expect; }
 
     protected readonly _raw_size: Vector2 = Vector2.new;
@@ -37,16 +32,25 @@ export class RenderServerViewport extends RenderServerObject implements Disposab
     protected _pixel_ratio: number = 1.0;
     public get pixel_ratio() { return this._pixel_ratio; }
 
+    protected _background: boolean = true;
+    public get background() { return this._background; }
+
     constructor(canvas: HTMLCanvasElement) {
         super();
         this.canvas = canvas;
-        const canvas_ctx = canvas.getContext('webgpu')!;
+        this.config();
+    }
+
+    protected config() {
+        const canvas_ctx = this.canvas.getContext('webgpu')!;
+        canvas_ctx.unconfigure();
         canvas_ctx.configure({
             device: RenderServer.render_state.device,
             usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_DST,
             format: 'rgba16float',
+            alphaMode: this._background ? 'opaque' : 'premultiplied',
         });
-        this.canvas_texture_view_ref = new ReadonlyRef(RenderServer.render_state.create_CanvasTextureView(canvas_ctx).expect());
+        this.canvas_texture_view_ref.value = RenderServer.render_state.create_CanvasTextureView(canvas_ctx).expect();
     }
 
     public set_PixelRatio(ratio: number = window.devicePixelRatio) {
@@ -69,6 +73,13 @@ export class RenderServerViewport extends RenderServerObject implements Disposab
         width = Math.max(Math.floor(width * this.pixel_ratio), 1);
         height = Math.max(Math.floor(height * this.pixel_ratio), 1);
         this._size.set(width, height);
+    }
+
+    public set_Background(background: boolean) {
+        if (this._background !== background) {
+            this._background = background;
+            this.config();
+        }
     }
 
     public update_Size() {
