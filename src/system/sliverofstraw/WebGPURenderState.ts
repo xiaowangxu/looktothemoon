@@ -674,7 +674,7 @@ export class WebGPURenderState implements Disposable {
             usage: type | usage,
             mappedAtCreation: map,
         });
-        if (init_data) {
+        if (map && init_data) {
             return Result.Ok({ buffer: new WebGPURenderStateBuffer(this, type, usage, length, buffer), data: buffer.getMappedRange() });
         }
         else return Result.Ok(new WebGPURenderStateBuffer(this, type, usage, length, buffer));
