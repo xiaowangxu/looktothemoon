@@ -715,6 +715,8 @@ export class Viewport extends Node {
     //#endregion
 
     public trigger_BeforeRender(): void {
+        this.render_server_viewport.set_PixelRatio();
+        this.render_server_viewport.update_Size();
         const camera_3d = this.get_Camera3D();
         if (camera_3d !== undefined) {
             const size = this.render_server_viewport.get_RawSize(Viewport.#tmp_vector2_0);
