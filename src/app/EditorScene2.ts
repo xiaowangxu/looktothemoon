@@ -1,4 +1,4 @@
-import { Viewport } from "@/system/engine/nodes/Node";
+import { Viewport, ViewportUpdateMode } from "@/system/engine/nodes/Node";
 import { SceneTree } from "@/system/engine/SceneTree";
 import { Node3D } from "@/system/engine/nodes/node3ds/Node3D";
 import { ViewportDomContainer } from "@/system/engine/nodes/ViewportDomContainer";
@@ -19,7 +19,9 @@ import { OrthographicCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/Or
 
 import f_image_url from 'res://test-image.png';
 import matcap_6_image_url from 'res://matcap-11.png';
+import matcap_7_image_url from 'res://matcap-0.png';
 import normal_image_url from 'res://normal_texture-0.png';
+import normal_0_image_url from 'res://normal_texture.png';
 
 import { ImageTexture2DResource } from "@/system/engine/resources/texture_resources/texture2d_resources/ImageTexture2DResource";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
@@ -28,6 +30,7 @@ import { TorusGeometry3DResource } from "@/system/engine/resources/geometry_reso
 import { WebGPURenderElementTextureSamplerCacheHash } from "@/system/sliverofstraw/render_element_object/texture_sampler/WebGPURenderElementTextureSamplerCache";
 import { PolyLineGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/polyline3d_resources/PolyLineGeometry3DResource";
 import { PureColorMaterial3DResource } from "@/system/engine/resources/material_resources/material3d_resources/PureColorMaterial3DResource";
+import { PolyLineMaterial3DResource } from "@/system/engine/resources/material_resources/material3d_resources/polyline3d/PolyLineMaterial3DResource";
 
 const viewport_scale = 1;
 const bg_color = Color.create(0.25, 0.25, 0.25).linear_rgb;
@@ -36,6 +39,7 @@ export async function createEditor() {
 
 	// viewport
 	const EditorViewport = new Viewport();
+	// EditorViewport.update_mode = ViewportUpdateMode.Once;
 	EditorViewport.scale = viewport_scale;
 	// viewport container
 	const EditorViewportContainer = new ViewportDomContainer();
@@ -95,11 +99,11 @@ export async function createEditor() {
 	EditorSceneTree.get_InputActionMap().add_Action('test_A', new ShortCut().set([new KeyInputEvent().set_Key('a', 'KeyA', true, true)]));
 	EditorSceneTree.get_InputActionMap().add_Action('test_B', new ShortCut().set([new KeyInputEvent().set_Key('a', 'KeyA', true, false)]));
 
-	// World.signal_input.connect((evt, prop) => {
-	// 	if (!prop && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {
-	// 		World.get_SceneTree()?.get_ActiveViewports()[0]?.emulate_InputEvent(new MouseButtonInputEvent().set_Button(MouseButton.WheelUp, true, false, false).set_Compose(true));
-	// 	}
-	// });
+	World.signal_input.connect((evt, prop) => {
+		if (!prop && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {
+			World.get_SceneTree()?.get_ActiveViewports()[0]?.emulate_InputEvent(new MouseButtonInputEvent().set_Button(MouseButton.WheelUp, true, false, false).set_Compose(true));
+		}
+	});
 
 	const box_geo = new BoxGeometry3DResource();
 	const sph_geo = new TorusGeometry3DResource();
@@ -132,8 +136,9 @@ export async function createEditor() {
 
 	const mesh3 = new MeshInstance3D();
 	mesh3.geometry = box_geo;
-	const box_mat3 = new TestMaterial3DResource();
-	box_mat3.color = Vector4.create(0.0, 0.0, 1.0, 1);
+	const box_mat3 = new MatcapMaterialResource();
+	box_mat3.depth_bias = 0.3;
+	box_mat3.depth_bias_slope_scale = 2;
 	mesh3.material = box_mat3;
 	mesh3.local_position = Vector3.create(400, 0, 100);
 	mesh3.local_scale = Vector3.create(100, 100, 100);
@@ -148,6 +153,13 @@ export async function createEditor() {
 	mesh4.local_scale = Vector3.create(100, 100, 100);
 	// mesh4.render_queue = 1;
 	World.add_Child(mesh4);
+
+	const mesh5 = new MeshInstance3D();
+	mesh5.geometry = box_geo;
+	mesh5.material = box_mat3;
+	mesh5.local_position = Vector3.create(475, 0, 100);
+	mesh5.local_scale = Vector3.create(50, 50, 50);
+	World.add_Child(mesh5);
 
 	// const tween = new TweenLoop(
 	//     new PingPongTweenAdaptor(
@@ -226,6 +238,16 @@ export async function createEditor() {
 			const { naturalWidth, naturalHeight } = image;
 			const texture = ImageTexture2DResource.create_Image(image, naturalWidth, naturalHeight);
 			box_mat_test.matcap_texture = texture;
+		};
+	}
+
+	{
+		const image = new Image();
+		image.src = matcap_7_image_url;
+		image.onload = () => {
+			const { naturalWidth, naturalHeight } = image;
+			const texture = ImageTexture2DResource.create_Image(image, naturalWidth, naturalHeight);
+			box_mat3.matcap_texture = texture;
 		};
 	}
 
@@ -313,10 +335,11 @@ export async function createEditor() {
 
 	const polyline = new MeshInstance3D();
 	const polyline_geo = new PolyLineGeometry3DResource();
-	const polyline_mat = new TestMaterial3DResource();
+	const polyline_mat = new PolyLineMaterial3DResource();
+	polyline_mat.color = Color.color8(0xff, 0xbb, 0x00);
 	polyline.geometry = polyline_geo;
 	polyline.material = polyline_mat;
-	polyline.local_position = Vector3.create(0, 200, 0);
+	polyline.local_position = Vector3.create(400, 0, 100);
 	polyline.local_scale = Vector3.create(100, 100, 100);
 	World.add_Child(polyline);
 

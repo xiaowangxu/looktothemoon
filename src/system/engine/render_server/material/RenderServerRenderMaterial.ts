@@ -524,7 +524,7 @@ ${custom !== undefined ? `
 // Custom
 ${custom}` : ``}`;
 
-			console.log(shader_code.split('\n').map((l, i) => `${(i + 1).toFixed(0).padEnd(4, ' ')}|	${l}`).join('\n'));
+			// console.log(shader_code.split('\n').map((l, i) => `${(i + 1).toFixed(0).padEnd(4, ' ')}|	${l}`).join('\n'));
 
 			const shader = RenderServer.render_state.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
 			const program = RenderServer.render_state.create_Program(shader, shader).expect();

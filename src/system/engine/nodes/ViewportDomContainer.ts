@@ -8,7 +8,7 @@ export class ViewportDomContainer extends Node {
 
     private viewport_node: Viewport | undefined = undefined;
 
-    private _size: Vector2 = Vector2.create(0, 0);
+    private _size: Vector2 = Vector2.create(128, 128);
 
     private _dom: HTMLElement | undefined = undefined;
     public get dom() { return this._dom; }
@@ -38,6 +38,7 @@ export class ViewportDomContainer extends Node {
         if (this.viewport_node !== undefined) return;
         if (node instanceof Viewport) {
             this.viewport_node = node;
+            this.inited = true;
             if (this.dom !== undefined) {
                 this.dom.appendChild(this.viewport_node.canvas);
                 // this.viewport_node.canvas.style.backgroundColor = 'tomato';
@@ -55,12 +56,14 @@ export class ViewportDomContainer extends Node {
         this.viewport_node = undefined;
     }
 
+    private inited: boolean = false;
     private should_update: boolean = true;
     private update_timer_cancller: TimerCanceller | undefined;
     private update = () => { this.should_update = true; this.update_timer_cancller = undefined; }
 
     private update_DomSize(immediate: boolean = false) {
         if (this.dom !== undefined) {
+            this.inited = false;
             const width = this.dom.offsetWidth;
             const height = this.dom.offsetHeight;
             if (this._size.x === width && this._size.y === height) return;
@@ -79,8 +82,8 @@ export class ViewportDomContainer extends Node {
 
     public _notification(what: NodeNotification): void {
         switch (what) {
-            case NodeNotification.InternalBeforeRender: {
-                this.update_DomSize();
+            case NodeNotification.Process: {
+                this.update_DomSize(this.inited);
                 if (this.should_update && this.viewport_node !== undefined) {
                     this.should_update = false;
                     this.viewport_node.size = this._size;

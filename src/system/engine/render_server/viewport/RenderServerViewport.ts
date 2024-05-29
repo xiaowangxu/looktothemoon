@@ -15,11 +15,11 @@ export class RenderServerViewport extends RenderServerObject implements Disposab
     protected readonly canvas_texture_view_ref: Ref<WebGPURenderStateCanvasTextureView> = new Ref();
     public get canvas_texture_view() { return this.canvas_texture_view_ref.expect; }
 
-    protected readonly _raw_size: Vector2 = Vector2.new;
+    protected readonly _raw_size: Vector2 = Vector2.create(128, 128);
     public get raw_size() { return this._raw_size.clone(); }
     public get_RawSize(target: Vector2) { return target.copy(this._raw_size); }
 
-    protected readonly _size: Vector2 = Vector2.new;
+    protected readonly _size: Vector2 = Vector2.create(128, 128);
     public get size() { return this._size.clone(); }
     public get_Size(target: Vector2) { return target.copy(this._size); }
 

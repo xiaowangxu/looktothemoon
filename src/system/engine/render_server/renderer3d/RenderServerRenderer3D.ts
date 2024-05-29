@@ -973,7 +973,6 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
         //#region Resize Reset FrameBuffer
 
-        viewport.set_PixelRatio();
         const { x: texture_width, y: texture_height } = viewport.get_Size(RenderServerRenderer3D.#tmp_vector_0);
         if (this.resize(texture_width, texture_height) || viewport.id !== this.last_viewport_id) {
             this.reset_FrameBuffer();
@@ -983,7 +982,6 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         }
         this.last_viewport_id = viewport.id;
         this.last_world_id = world.rid;
-        viewport.update_Size();
 
         //#endregion
 
@@ -1072,7 +1070,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         }
     }
 
-    protected render_Mesh(render_pass: GPURenderPassEncoder, index: number, pass: RenderServerRenderMaterialPass, frame_buffer: WebGPURenderElementFrameBuffer, depth_func: WebGPURenderStateDepthCompareFunc, vertex_array: RenderServerRenderer3DQueueVeretxArray, material: RenderServerRenderMaterial, instance_uniform_group: WebGPURenderStateUniformGroup) {
+    protected render_Mesh(render_pass: GPURenderPassEncoder, index: number, pass: RenderServerRenderMaterialPass, frame_buffer: WebGPURenderElementFrameBuffer, depth_func: WebGPURenderStateDepthCompareFunc, vertex_array: RenderServerRenderer3DQueueVeretxArray, material: RenderServerRenderMaterial, instance_uniform_group: WebGPURenderStateUniformGroup, instance_count: number) {
         let mat: RenderServerRenderMaterial | undefined = material;
         const dynamic_offsets = RenderServerRenderer3D.#tmp_instance_uniform_group_dynamic_offsets;
         while (mat !== undefined) {
@@ -1083,7 +1081,6 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
                 if (uniform !== undefined) {
                     render_pass.setBindGroup(RenderServerSingleton.UniformBindGroupIndex, uniform.binding_group);
                 }
-                const instance_count = this.queue_0.get_InstanceCount(false, index);
                 dynamic_offsets[0] = index * RenderServerSingleton.InstanceUniformMemoryLayout.size;
                 render_pass.setBindGroup(RenderServerSingleton.InstanceUniformBindGroupIndex, instance_uniform_group.binding_group, dynamic_offsets);
                 render_pass.setPipeline(pipeline.pipeline);
@@ -1104,10 +1101,10 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         for (let i = 0; i <= this.queue_0.solid_pointer; i++) {
             const vertex_array = this.queue_0.solid_vertex_array[i]!;
             const material = this.queue_0.solid_material[i]!;
-            this.render_Mesh(render_pass, i, RenderServerRenderMaterialPass.Solid, this.solid_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual, vertex_array, material, this.queue_0_solid_instance_uniform_group_ref.expect);
+            const instance_count = this.queue_0.get_InstanceCount(false, i);
+            this.render_Mesh(render_pass, i, RenderServerRenderMaterialPass.Solid, this.solid_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual, vertex_array, material, this.queue_0_solid_instance_uniform_group_ref.expect, instance_count);
         }
 
-        // background
         if (background) {
             render_pass.setPipeline(this.full_screen_background_pipeline_ref.expect.pipeline);
             this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(render_pass);
@@ -1119,15 +1116,14 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
     protected render_Queue0Transparent(encoder: GPUCommandEncoder) {
 
-        if (this.queue_0.transparent_pointer < 0) return;
-
         const render_pass = encoder.beginRenderPass(this.transparent_frame_buffer_ref.expect.frame_buffer_desc);
         render_pass.setBindGroup(RenderServerSingleton.WorldEnvUniformBindGroupIndex, this.world_env_queue_0_uniform_transparent_group_ref.expect.binding_group);
         render_pass.setBindGroup(RenderServerSingleton.LightsUniformBindGroupIndex, this.lights_uniform_group_ref.expect.binding_group);
         for (let i = 0; i <= this.queue_0.transparent_pointer; i++) {
             const vertex_array = this.queue_0.transparent_vertex_array[i]!;
             const material = this.queue_0.transparent_material[i]!;
-            this.render_Mesh(render_pass, i, RenderServerRenderMaterialPass.Transparent, this.transparent_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual, vertex_array, material, this.queue_0_transparent_instance_uniform_group_ref.expect);
+            const instance_count = this.queue_0.get_InstanceCount(true, i);
+            this.render_Mesh(render_pass, i, RenderServerRenderMaterialPass.Transparent, this.transparent_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual, vertex_array, material, this.queue_0_transparent_instance_uniform_group_ref.expect, instance_count);
         }
 
         render_pass.end();
@@ -1144,15 +1140,14 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
     protected render_Queue0TransparentDepthNormal(encoder: GPUCommandEncoder) {
 
-        if (this.queue_0.transparent_pointer < 0) return;
-
         const render_pass = encoder.beginRenderPass(this.transparent_depth_normal_frame_buffer_ref.expect.frame_buffer_desc);
         render_pass.setBindGroup(RenderServerSingleton.WorldEnvUniformBindGroupIndex, this.world_env_queue_0_uniform_solid_group_ref.expect.binding_group);
         render_pass.setBindGroup(RenderServerSingleton.LightsUniformBindGroupIndex, this.lights_uniform_group_ref.expect.binding_group);
         for (let i = 0; i <= this.queue_0.transparent_pointer; i++) {
             const vertex_array = this.queue_0.transparent_vertex_array[i]!;
             const material = this.queue_0.transparent_material[i]!;
-            this.render_Mesh(render_pass, i, RenderServerRenderMaterialPass.Depth, this.transparent_depth_normal_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual, vertex_array, material, this.queue_0_transparent_instance_uniform_group_ref.expect);
+            const instance_count = this.queue_0.get_InstanceCount(true, i);
+            this.render_Mesh(render_pass, i, RenderServerRenderMaterialPass.Depth, this.transparent_depth_normal_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual, vertex_array, material, this.queue_0_transparent_instance_uniform_group_ref.expect, instance_count);
         }
 
         render_pass.end();
@@ -1188,7 +1183,8 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
             for (let i = 0; i <= this.queue_1.solid_pointer; i++) {
                 const vertex_array = this.queue_1.solid_vertex_array[i]!;
                 const material = this.queue_1.solid_material[i]!;
-                this.render_Mesh(render_pass, i, RenderServerRenderMaterialPass.Solid, this.solid_frame_buffer_1_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual, vertex_array, material, this.queue_1_solid_instance_uniform_group_ref.expect);
+                const instance_count = this.queue_1.get_InstanceCount(false, i);
+                this.render_Mesh(render_pass, i, RenderServerRenderMaterialPass.Solid, this.solid_frame_buffer_1_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual, vertex_array, material, this.queue_1_solid_instance_uniform_group_ref.expect, instance_count);
             }
         }
 
@@ -1205,7 +1201,8 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         for (let i = 0; i <= this.queue_1.transparent_pointer; i++) {
             const vertex_array = this.queue_1.transparent_vertex_array[i]!;
             const material = this.queue_1.transparent_material[i]!;
-            this.render_Mesh(render_pass, i, RenderServerRenderMaterialPass.Transparent, this.transparent_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual, vertex_array, material, this.queue_1_transparent_instance_uniform_group_ref.expect);
+            const instance_count = this.queue_1.get_InstanceCount(true, i);
+            this.render_Mesh(render_pass, i, RenderServerRenderMaterialPass.Transparent, this.transparent_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual, vertex_array, material, this.queue_1_transparent_instance_uniform_group_ref.expect, instance_count);
         }
 
         render_pass.end();

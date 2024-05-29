@@ -12,14 +12,14 @@ import { RefCacher } from "@/system/utils/RefCounted";
 export const PolyLineSegmentBaseGeometry3D = new RefCacher(() => {
 
     const position_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.None, [
-        Vector3.create(- 1, 2, 0),
-        Vector3.create(1, 2, 0),
-        Vector3.create(- 1, 1, 0),
-        Vector3.create(1, 1, 0),
-        Vector3.create(- 1, 0, 0),
-        Vector3.create(1, 0, 0),
-        Vector3.create(- 1, - 1, 0),
-        Vector3.create(1, - 1, 0),
+        Vector3.create(-1,  2, 0),
+        Vector3.create( 1,  2, 0),
+        Vector3.create(-1,  1, 0),
+        Vector3.create( 1,  1, 0),
+        Vector3.create(-1,  0, 0),
+        Vector3.create( 1,  0, 0),
+        Vector3.create(-1, -1, 0),
+        Vector3.create( 1, -1, 0),
     ]);
     const normal_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.None, [
         Vector3.create(0, 0, -1),

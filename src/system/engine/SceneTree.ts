@@ -5,6 +5,7 @@ import { Node, Viewport } from "./nodes/Node";
 import { Ref } from "../utils/RefCounted";
 import { clearAnimationInterval, setAnimationInterval } from "../utils/AnimationInterval";
 import { TweenManager, type Tween } from "./Tween";
+import { SignalEmitter } from "../utils/SignalEmitter";
 
 export class SceneTree {
 
@@ -24,6 +25,11 @@ export class SceneTree {
     public delta: number = 0;
     public physics_time: number = 0;
     public physics_delta: number = 0;
+
+    // signals
+
+    public readonly signal_before_loop: SignalEmitter<() => void> = new SignalEmitter();
+    public readonly signal_after_loop: SignalEmitter<() => void> = new SignalEmitter();
 
     private readonly tween_manager: TweenManager = new TweenManager();
 
@@ -54,12 +60,13 @@ export class SceneTree {
         this.time = time;
         this.delta = delta;
         this.frame_id = frame_id;
-        // console.log("fps: ", (1 / this.delta).toFixed(2));
-        // render server resize
-        // internal process process
+
+        this.signal_before_loop.trigger();
+
         this.root.propagate_Process(this.delta);
         this.tween_manager.process_Tweens(delta);
         this.root.propagate_InternalAfterProcess(this.delta);
+
         const world_before_render_triggered = SceneTree.world_before_render_triggered;
         world_before_render_triggered.clear();
         for (const viewport of this.viewports) {
@@ -70,6 +77,7 @@ export class SceneTree {
                 world_before_render_triggered.add(world.rid);
             }
         }
+
         let redundant_before_render = false;
         for (const viewport of [...this.viewports].sort((a, b) => {
             const a_p = a.render_priority, b_p = b.render_priority;
@@ -86,6 +94,7 @@ export class SceneTree {
             this.current_viewport = undefined;
             redundant_before_render = true;
         }
+
         // queue free
         for (const node of this.node_queued_free) {
             if (node !== this.root) {
@@ -94,6 +103,9 @@ export class SceneTree {
             }
         }
         this.node_queued_free.clear();
+        
+        this.signal_after_loop.trigger();
+
         // loop linked trees
         for (const tree of this.linked_trees) {
             tree.process_Loop(time, delta, frame_id);

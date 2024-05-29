@@ -6,7 +6,7 @@ import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import type { WebGPURenderElementRenderPipelineCacheHash } from "../pipeline/WebGPURenderElementRenderPipelineCache";
 import type { WebGPURenderStateBufferView } from "../../render_state_object/buffer/WebGPURenderStateBufferView";
 import type { WebGPURenderStatePrimitiveType } from "../../render_state_object/pipeline/WebGPURenderStateProgramState";
-import type { RenderServerGeometryAttributeLayoutBuffer } from "@/system/engine/render_server/geometry/RenderServerGeometryDefination";
+import { RenderServerGeometryAttributeLayoutBuffer } from "@/system/engine/render_server/geometry/RenderServerGeometryDefination";
 
 export type WebGPURenderElementVertexArrayBuffer = WebGPURenderStateBuffer | WebGPURenderStateBufferView;
 
