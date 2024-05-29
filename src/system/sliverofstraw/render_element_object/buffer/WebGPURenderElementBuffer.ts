@@ -48,7 +48,7 @@ export class WebGPURenderElementIndexBuffer extends WebGPURenderElementBuffer<nu
             this.element_count = option.length;
             this.bytes_count = this.element_count * Uint32Array.BYTES_PER_ELEMENT;
             this._data = new Uint32Array(option);
-            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect();
+            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
             this.buffer_ref = new ReadonlyRef(buffer);
             const mapped_array = new Uint32Array(data);
             mapped_array.set(this._data);
@@ -114,7 +114,7 @@ export class WebGPURenderElementUintBuffer extends WebGPURenderElementBuffer<num
             this.element_count = option.length;
             this.bytes_count = this.element_count * Uint32Array.BYTES_PER_ELEMENT;
             this._data = new Uint32Array(option);
-            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect();
+            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
             this.buffer_ref = new ReadonlyRef(buffer);
             const mapped_array = new Uint32Array(data);
             mapped_array.set(this._data);
@@ -180,7 +180,7 @@ export class WebGPURenderElementIntBuffer extends WebGPURenderElementBuffer<numb
             this.element_count = option.length;
             this.bytes_count = this.element_count * Int32Array.BYTES_PER_ELEMENT;
             this._data = new Int32Array(option);
-            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect();
+            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
             this.buffer_ref = new ReadonlyRef(buffer);
             const mapped_array = new Int32Array(data);
             mapped_array.set(this._data);
@@ -246,7 +246,7 @@ export class WebGPURenderElementFloatBuffer extends WebGPURenderElementBuffer<nu
             this.element_count = option.length;
             this.bytes_count = this.element_count * Float32Array.BYTES_PER_ELEMENT;
             this._data = new Float32Array(option);
-            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true).expect();
+            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
             this.buffer_ref = new ReadonlyRef(buffer);
             const mapped_array = new Float32Array(data);
             mapped_array.set(this._data);

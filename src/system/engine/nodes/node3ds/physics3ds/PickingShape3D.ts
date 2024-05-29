@@ -4,7 +4,6 @@ import { Node3D } from "../Node3D";
 import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
 import type { PickingShape3DResource } from "../../../resources/picking_shape_resources/PickingShapeResource";
 import { PickingArea3D } from "./PickingArea3D";
-import type { Config } from "@/system/engine/ConfiguredObject";
 import { Ref } from "@/system/utils/RefCounted";
 
 export class PickingShape3D extends Node3D {
@@ -40,8 +39,8 @@ export class PickingShape3D extends Node3D {
         }
     }
 
-    constructor(config: Config) {
-        super(config);
+    constructor() {
+        super();
         this.reset_transform_changed_in_physics = true;
     }
 

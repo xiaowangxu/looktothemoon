@@ -666,14 +666,17 @@ export class WebGPURenderState implements Disposable {
     //#region buffer
 
     public create_Buffer(type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, length: number, map?: false): Result<WebGPURenderStateBuffer, Error>;
-    public create_Buffer(type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, length: number, map?: true): Result<{ buffer: WebGPURenderStateBuffer, data: ArrayBuffer }, Error>;
-    public create_Buffer(type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, length: number, map: boolean = false): Result<{ buffer: WebGPURenderStateBuffer, data: ArrayBuffer }, Error> | Result<WebGPURenderStateBuffer, Error> {
+    public create_Buffer(type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, length: number, map?: true, init_data?: false): Result<WebGPURenderStateBuffer, Error>;
+    public create_Buffer(type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, length: number, map?: true, init_data?: true): Result<{ buffer: WebGPURenderStateBuffer, data: ArrayBuffer }, Error>;
+    public create_Buffer(type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, length: number, map: boolean = false, init_data: boolean = true): Result<{ buffer: WebGPURenderStateBuffer, data: ArrayBuffer }, Error> | Result<WebGPURenderStateBuffer, Error> {
         const buffer = this.device.createBuffer({
             size: length,
             usage: type | usage,
             mappedAtCreation: map,
         });
-        if (map) return Result.Ok({ buffer: new WebGPURenderStateBuffer(this, type, usage, length, buffer), data: buffer.getMappedRange() });
+        if (init_data) {
+            return Result.Ok({ buffer: new WebGPURenderStateBuffer(this, type, usage, length, buffer), data: buffer.getMappedRange() });
+        }
         else return Result.Ok(new WebGPURenderStateBuffer(this, type, usage, length, buffer));
     }
 

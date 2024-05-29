@@ -66,7 +66,7 @@ export class WebGPURenderStateBufferStagingBelt extends WebGPURenderObjectRefCou
                 const buffer = this.render_state.create_Buffer(
                     WebGPURenderStateBufferType.NotSpecified,
                     WebGPURenderStateBufferUsage.MapWrite | WebGPURenderStateBufferUsage.CopySrc,
-                    length, true
+                    length, true, false
                 ).expect();
                 const free_chunk = new WebGPURenderStateBufferStagingChunk(this.render_state, buffer, 0, length);
                 this.active_chunks.push(free_chunk);

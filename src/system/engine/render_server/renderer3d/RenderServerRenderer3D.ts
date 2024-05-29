@@ -29,7 +29,7 @@ import type { RenderServerComputeMaterial } from "../material/RenderServerComput
 
 const FullScreenTriangleVertexArray = new RefCacher(() => {
     const vertex_array = new WebGPURenderElementVertexArray(RenderServer.render_state, WebGPURenderStatePrimitiveType.Triangles, 0, 3);
-    const { buffer, data } = RenderServer.render_state.create_Buffer(WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.None, 24, true).expect();
+    const { buffer, data } = RenderServer.render_state.create_Buffer(WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.None, 24, true, true).expect();
     const pos_array = new Float32Array(data);
     pos_array[0] = 0;
     pos_array[1] = 4;
