@@ -5,10 +5,10 @@ import { ReadonlyRef } from "@/system/utils/RefCounted";
 import type { Disposable } from "@/system/utils/Type";
 import { RenderServer, RenderServerSingleton } from "../RenderServer";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
-import type { RenderServerMaterial } from "../material/RenderServerMaterial";
 import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import type { RenderServerRenderMaterial } from "../material/RenderServerRenderMaterial";
 
-type RenderServerRenderer3DQueueVeretxArray = WebGPURenderElementVertexArray | WebGPURenderElementVertexArrayView;
+export type RenderServerRenderer3DQueueVeretxArray = WebGPURenderElementVertexArray | WebGPURenderElementVertexArrayView;
 
 export class RenderServerRenderer3DQueue implements Disposable {
 
@@ -17,7 +17,7 @@ export class RenderServerRenderer3DQueue implements Disposable {
 
     protected readonly solid_capcity: number;
     public solid_vertex_array: (RenderServerRenderer3DQueueVeretxArray | undefined)[];
-    public solid_material: (RenderServerMaterial | undefined)[];
+    public solid_material: (RenderServerRenderMaterial | undefined)[];
     protected readonly solid_instance_uniform_buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
     public get solid_instance_uniform_buffer() { return this.solid_instance_uniform_buffer_ref.expect; }
     public readonly solid_instance_uniform_array_buffer: ArrayBuffer;
@@ -26,7 +26,7 @@ export class RenderServerRenderer3DQueue implements Disposable {
 
     protected readonly transparent_capcity: number;
     public transparent_vertex_array: (RenderServerRenderer3DQueueVeretxArray | undefined)[];
-    public transparent_material: (RenderServerMaterial | undefined)[];
+    public transparent_material: (RenderServerRenderMaterial | undefined)[];
     protected readonly transparent_instance_uniform_buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
     public get transparent_instance_uniform_buffer() { return this.transparent_instance_uniform_buffer_ref.expect; }
     public readonly transparent_instance_uniform_array_buffer: ArrayBuffer;
@@ -65,7 +65,7 @@ export class RenderServerRenderer3DQueue implements Disposable {
         //#endregion
     }
 
-    public add(vertex_array: RenderServerRenderer3DQueueVeretxArray, material: RenderServerMaterial, instance_count: number, transform: Matrix4, normal: Matrix3, layer: number, sort_distance: number) {
+    public add(vertex_array: RenderServerRenderer3DQueueVeretxArray, material: RenderServerRenderMaterial, instance_count: number, transform: Matrix4, normal: Matrix3, layer: number, sort_distance: number) {
         const is_transparent = material.is_transparent;
         if (!is_transparent) {
             const index = ++this.solid_pointer;

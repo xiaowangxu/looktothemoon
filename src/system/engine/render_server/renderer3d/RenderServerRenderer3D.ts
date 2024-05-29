@@ -3,7 +3,7 @@ import type { World3D } from "../../worlds/world3ds/World3D";
 import { RenderServerObjectRefCounted } from "../RenderServerObject";
 import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
 import type { RenderServerViewport } from "../viewport/RenderServerViewport";
-import { RenderServerRenderer3DQueue } from "./RenderServerRenderer3DQueue";
+import { RenderServerRenderer3DQueue, type RenderServerRenderer3DQueueVeretxArray } from "./RenderServerRenderer3DQueue";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { VisualWorld3DMesh } from "../../worlds/world3ds/VisualWorld3D";
 import type { WebGPURenderStateTextureView } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTextureView";
@@ -12,7 +12,7 @@ import { RenderServer, RenderServerSingleton } from "../RenderServer";
 import { WebGPURenderStateTextureUsage, WebGPURenderStateTextureFormat, WebGPURenderStateTexture, WebGPURenderStateTextureDimension } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTexture";
 import { WebGPURenderElementFrameBuffer } from "@/system/sliverofstraw/render_element_object/frame_buffer/WebGPURenderElementFrameBuffer";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
-import { RenderServerMaterial, RenderServerMaterialPass } from "../material/RenderServerMaterial";
+import { RenderServerRenderMaterial, RenderServerRenderMaterialPass } from "../material/RenderServerRenderMaterial";
 import { WebGPURenderStateDepthCompareFunc, WebGPURenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
 import { WebGPURenderElementVertexArray } from "@/system/sliverofstraw/render_element_object/vertex_array/WebGPURenderElementVertexArray";
 import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
@@ -24,6 +24,9 @@ import { WebGPURenderStateTextureFilter, WebGPURenderStateTextureWrap } from "@/
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { WebGPURenderStateBufferView } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBufferView";
+import { RenderServerMaterialType, type RenderServerMaterial } from "../material/RenderServerMaterial";
+import type { WebGPURenderStateUniformGroup } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformGroup";
+import type { RenderServerComputeMaterial } from "../material/RenderServerComputeMaterial";
 
 const FullScreenTriangleVertexArray = new RefCacher(() => {
     const vertex_array = new WebGPURenderElementVertexArray(RenderServer.render_state, WebGPURenderStatePrimitiveType.Triangles, 0, 3);
@@ -98,8 +101,8 @@ const FullScreenBackgroundPipeline = new RefCacher(() => {
 
     const pipeline = RenderServer.render_state.create_RenderPipeline(
         program,
-        RenderServerMaterial.ProgramStatePipelineTemplates[RenderServerMaterialPass.Solid],
-        RenderServerMaterial.OutputStatePipelineTemplates[RenderServerMaterialPass.Solid],
+        RenderServerRenderMaterial.ProgramStatePipelineTemplates[RenderServerRenderMaterialPass.Solid],
+        RenderServerRenderMaterial.OutputStatePipelineTemplates[RenderServerRenderMaterialPass.Solid],
         [RenderServer.world_env_uniform_layout],
         [
             {
@@ -186,8 +189,8 @@ const OitComposePipeline = new RefCacher(() => {
 
     const pipeline = RenderServer.render_state.create_RenderPipeline(
         program,
-        RenderServerMaterial.ProgramStatePipelineTemplates[RenderServerMaterialPass.Compose],
-        RenderServerMaterial.OutputStatePipelineTemplates[RenderServerMaterialPass.Compose],
+        RenderServerRenderMaterial.ProgramStatePipelineTemplates[RenderServerRenderMaterialPass.Compose],
+        RenderServerRenderMaterial.OutputStatePipelineTemplates[RenderServerRenderMaterialPass.Compose],
         [OitComposeUniformLayout.get()],
         [
             {
@@ -332,8 +335,8 @@ const EffectFxaaPipeline = new RefCacher(() => {
 
     const pipeline = RenderServer.render_state.create_RenderPipeline(
         program,
-        RenderServerMaterial.ProgramStatePipelineTemplates[RenderServerMaterialPass.Set],
-        RenderServerMaterial.OutputStatePipelineTemplates[RenderServerMaterialPass.Set],
+        RenderServerRenderMaterial.ProgramStatePipelineTemplates[RenderServerRenderMaterialPass.Set],
+        RenderServerRenderMaterial.OutputStatePipelineTemplates[RenderServerRenderMaterialPass.Set],
         [RenderServer.world_env_uniform_layout],
         [
             {
@@ -399,8 +402,8 @@ const EffectPreMultAlphaPipeline = new RefCacher(() => {
 
     const pipeline = RenderServer.render_state.create_RenderPipeline(
         program,
-        RenderServerMaterial.ProgramStatePipelineTemplates[RenderServerMaterialPass.Compose],
-        RenderServerMaterial.OutputStatePipelineTemplates[RenderServerMaterialPass.Compose],
+        RenderServerRenderMaterial.ProgramStatePipelineTemplates[RenderServerRenderMaterialPass.Compose],
+        RenderServerRenderMaterial.OutputStatePipelineTemplates[RenderServerRenderMaterialPass.Compose],
         [RenderServer.world_env_uniform_layout],
         [
             {
@@ -536,8 +539,8 @@ const EffectTemplatePipeline = new RefCacher(() => {
 
     const pipeline = RenderServer.render_state.create_RenderPipeline(
         program,
-        RenderServerMaterial.ProgramStatePipelineTemplates[RenderServerMaterialPass.Compose],
-        RenderServerMaterial.OutputStatePipelineTemplates[RenderServerMaterialPass.Compose],
+        RenderServerRenderMaterial.ProgramStatePipelineTemplates[RenderServerRenderMaterialPass.Compose],
+        RenderServerRenderMaterial.OutputStatePipelineTemplates[RenderServerRenderMaterialPass.Compose],
         [RenderServer.world_env_uniform_layout],
         [
             {
@@ -1053,6 +1056,45 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         }
     }
 
+    public compute_Data(compute_pass: GPUComputePassEncoder, material: RenderServerComputeMaterial) {
+        let mat: RenderServerComputeMaterial | undefined = material;
+        while (mat !== undefined) {
+            mat.update_UniformBuffers();
+            const pipeline_uniform = mat.get_PipelineUniform();
+            if (pipeline_uniform !== undefined) {
+                const { pipeline, uniform } = pipeline_uniform;
+                if (uniform !== undefined) {
+                    compute_pass.setBindGroup(RenderServerSingleton.UniformBindGroupIndex, uniform.binding_group);
+                }
+                compute_pass.setPipeline(pipeline.pipeline);
+                mat.dispatch(compute_pass);
+            }
+            mat = mat.next_pass;
+        }
+    }
+
+    protected render_Mesh(render_pass: GPURenderPassEncoder, index: number, pass: RenderServerRenderMaterialPass, frame_buffer: WebGPURenderElementFrameBuffer, depth_func: WebGPURenderStateDepthCompareFunc, vertex_array: RenderServerRenderer3DQueueVeretxArray, material: RenderServerRenderMaterial, instance_uniform_group: WebGPURenderStateUniformGroup) {
+        let mat: RenderServerRenderMaterial | undefined = material;
+        const dynamic_offsets = RenderServerRenderer3D.#tmp_instance_uniform_group_dynamic_offsets;
+        while (mat !== undefined) {
+            mat.update_UniformBuffers();
+            const pipeline_uniform = mat.get_PipelineUniform(pass, vertex_array, frame_buffer, depth_func);
+            if (pipeline_uniform !== undefined) {
+                const { pipeline, uniform } = pipeline_uniform;
+                if (uniform !== undefined) {
+                    render_pass.setBindGroup(RenderServerSingleton.UniformBindGroupIndex, uniform.binding_group);
+                }
+                const instance_count = this.queue_0.get_InstanceCount(false, index);
+                dynamic_offsets[0] = index * RenderServerSingleton.InstanceUniformMemoryLayout.size;
+                render_pass.setBindGroup(RenderServerSingleton.InstanceUniformBindGroupIndex, instance_uniform_group.binding_group, dynamic_offsets);
+                render_pass.setPipeline(pipeline.pipeline);
+                vertex_array.bind_Buffers(render_pass);
+                vertex_array.draw(render_pass, instance_count);
+            }
+            mat = mat.next_pass;
+        }
+    }
+
     //#region queue 0
 
     protected render_Queue0Solid(encoder: GPUCommandEncoder, background: boolean) {
@@ -1060,23 +1102,10 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         const render_pass = encoder.beginRenderPass(this.solid_frame_buffer_ref.expect.frame_buffer_desc);
         render_pass.setBindGroup(RenderServerSingleton.WorldEnvUniformBindGroupIndex, this.world_env_queue_0_uniform_solid_group_ref.expect.binding_group);
         render_pass.setBindGroup(RenderServerSingleton.LightsUniformBindGroupIndex, this.lights_uniform_group_ref.expect.binding_group);
-        const dynamic_offsets = RenderServerRenderer3D.#tmp_instance_uniform_group_dynamic_offsets;
         for (let i = 0; i <= this.queue_0.solid_pointer; i++) {
             const vertex_array = this.queue_0.solid_vertex_array[i]!;
             const material = this.queue_0.solid_material[i]!;
-            material.update_UniformBuffers();
-            const pipeline_uniform = material.get_PipelineUniform(RenderServerMaterialPass.Solid, vertex_array, this.solid_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual);
-            if (pipeline_uniform === undefined) continue;
-            const { pipeline, uniform } = pipeline_uniform;
-            if (uniform !== undefined) {
-                render_pass.setBindGroup(RenderServerSingleton.UniformBindGroupIndex, uniform.binding_group);
-            }
-            const instance_count = this.queue_0.get_InstanceCount(false, i);
-            dynamic_offsets[0] = i * RenderServerSingleton.InstanceUniformMemoryLayout.size;
-            render_pass.setBindGroup(RenderServerSingleton.InstanceUniformBindGroupIndex, this.queue_0_solid_instance_uniform_group_ref.expect.binding_group, dynamic_offsets);
-            render_pass.setPipeline(pipeline.pipeline);
-            vertex_array.bind_Buffers(render_pass);
-            vertex_array.draw(render_pass, instance_count);
+            this.render_Mesh(render_pass, i, RenderServerRenderMaterialPass.Solid, this.solid_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual, vertex_array, material, this.queue_0_solid_instance_uniform_group_ref.expect);
         }
 
         // background
@@ -1096,23 +1125,10 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         const render_pass = encoder.beginRenderPass(this.transparent_frame_buffer_ref.expect.frame_buffer_desc);
         render_pass.setBindGroup(RenderServerSingleton.WorldEnvUniformBindGroupIndex, this.world_env_queue_0_uniform_transparent_group_ref.expect.binding_group);
         render_pass.setBindGroup(RenderServerSingleton.LightsUniformBindGroupIndex, this.lights_uniform_group_ref.expect.binding_group);
-        const dynamic_offsets = RenderServerRenderer3D.#tmp_instance_uniform_group_dynamic_offsets;
         for (let i = 0; i <= this.queue_0.transparent_pointer; i++) {
             const vertex_array = this.queue_0.transparent_vertex_array[i]!;
             const material = this.queue_0.transparent_material[i]!;
-            material.update_UniformBuffers();
-            const pipeline_uniform = material.get_PipelineUniform(RenderServerMaterialPass.Transparent, vertex_array, this.transparent_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual);
-            if (pipeline_uniform === undefined) continue;
-            const { pipeline, uniform } = pipeline_uniform;
-            if (uniform !== undefined) {
-                render_pass.setBindGroup(RenderServerSingleton.UniformBindGroupIndex, uniform.binding_group);
-            }
-            const instance_count = this.queue_0.get_InstanceCount(true, i);
-            dynamic_offsets[0] = i * RenderServerSingleton.InstanceUniformMemoryLayout.size;
-            render_pass.setBindGroup(RenderServerSingleton.InstanceUniformBindGroupIndex, this.queue_0_transparent_instance_uniform_group_ref.expect.binding_group, dynamic_offsets);
-            render_pass.setPipeline(pipeline.pipeline);
-            vertex_array.bind_Buffers(render_pass);
-            vertex_array.draw(render_pass, instance_count);
+            this.render_Mesh(render_pass, i, RenderServerRenderMaterialPass.Transparent, this.transparent_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual, vertex_array, material, this.queue_0_transparent_instance_uniform_group_ref.expect);
         }
 
         render_pass.end();
@@ -1134,23 +1150,10 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         const render_pass = encoder.beginRenderPass(this.transparent_depth_normal_frame_buffer_ref.expect.frame_buffer_desc);
         render_pass.setBindGroup(RenderServerSingleton.WorldEnvUniformBindGroupIndex, this.world_env_queue_0_uniform_solid_group_ref.expect.binding_group);
         render_pass.setBindGroup(RenderServerSingleton.LightsUniformBindGroupIndex, this.lights_uniform_group_ref.expect.binding_group);
-        const dynamic_offsets = RenderServerRenderer3D.#tmp_instance_uniform_group_dynamic_offsets;
         for (let i = 0; i <= this.queue_0.transparent_pointer; i++) {
             const vertex_array = this.queue_0.transparent_vertex_array[i]!;
             const material = this.queue_0.transparent_material[i]!;
-            material.update_UniformBuffers();
-            const pipeline_uniform = material.get_PipelineUniform(RenderServerMaterialPass.Depth, vertex_array, this.transparent_depth_normal_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual);
-            if (pipeline_uniform === undefined) continue;
-            const { pipeline, uniform } = pipeline_uniform;
-            if (uniform !== undefined) {
-                render_pass.setBindGroup(RenderServerSingleton.UniformBindGroupIndex, uniform.binding_group);
-            }
-            const instance_count = this.queue_0.get_InstanceCount(true, i);
-            dynamic_offsets[0] = i * RenderServerSingleton.InstanceUniformMemoryLayout.size;
-            render_pass.setBindGroup(RenderServerSingleton.InstanceUniformBindGroupIndex, this.queue_0_transparent_instance_uniform_group_ref.expect.binding_group, dynamic_offsets);
-            render_pass.setPipeline(pipeline.pipeline);
-            vertex_array.bind_Buffers(render_pass);
-            vertex_array.draw(render_pass, instance_count);
+            this.render_Mesh(render_pass, i, RenderServerRenderMaterialPass.Depth, this.transparent_depth_normal_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual, vertex_array, material, this.queue_0_transparent_instance_uniform_group_ref.expect);
         }
 
         render_pass.end();
@@ -1183,23 +1186,10 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         if (this.queue_1.solid_pointer >= 0) {
             render_pass.setBindGroup(RenderServerSingleton.WorldEnvUniformBindGroupIndex, this.world_env_queue_1_uniform_group_ref.expect.binding_group);
             render_pass.setBindGroup(RenderServerSingleton.LightsUniformBindGroupIndex, this.lights_uniform_group_ref.expect.binding_group);
-            const dynamic_offsets = RenderServerRenderer3D.#tmp_instance_uniform_group_dynamic_offsets;
             for (let i = 0; i <= this.queue_1.solid_pointer; i++) {
                 const vertex_array = this.queue_1.solid_vertex_array[i]!;
                 const material = this.queue_1.solid_material[i]!;
-                material.update_UniformBuffers();
-                const pipeline_uniform = material.get_PipelineUniform(RenderServerMaterialPass.Solid, vertex_array, this.solid_frame_buffer_1_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual);
-                if (pipeline_uniform === undefined) continue;
-                const { pipeline, uniform } = pipeline_uniform;
-                if (uniform !== undefined) {
-                    render_pass.setBindGroup(RenderServerSingleton.UniformBindGroupIndex, uniform.binding_group);
-                }
-                const instance_count = this.queue_1.get_InstanceCount(false, i);
-                dynamic_offsets[0] = i * RenderServerSingleton.InstanceUniformMemoryLayout.size;
-                render_pass.setBindGroup(RenderServerSingleton.InstanceUniformBindGroupIndex, this.queue_1_solid_instance_uniform_group_ref.expect.binding_group, dynamic_offsets);
-                render_pass.setPipeline(pipeline.pipeline);
-                vertex_array.bind_Buffers(render_pass);
-                vertex_array.draw(render_pass, instance_count);
+                this.render_Mesh(render_pass, i, RenderServerRenderMaterialPass.Solid, this.solid_frame_buffer_1_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual, vertex_array, material, this.queue_1_solid_instance_uniform_group_ref.expect);
             }
         }
 
@@ -1213,23 +1203,10 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         const render_pass = encoder.beginRenderPass(this.transparent_frame_buffer_ref.expect.frame_buffer_desc);
         render_pass.setBindGroup(RenderServerSingleton.WorldEnvUniformBindGroupIndex, this.world_env_queue_1_uniform_group_ref.expect.binding_group);
         render_pass.setBindGroup(RenderServerSingleton.LightsUniformBindGroupIndex, this.lights_uniform_group_ref.expect.binding_group);
-        const dynamic_offsets = RenderServerRenderer3D.#tmp_instance_uniform_group_dynamic_offsets;
         for (let i = 0; i <= this.queue_1.transparent_pointer; i++) {
             const vertex_array = this.queue_1.transparent_vertex_array[i]!;
             const material = this.queue_1.transparent_material[i]!;
-            material.update_UniformBuffers();
-            const pipeline_uniform = material.get_PipelineUniform(RenderServerMaterialPass.Transparent, vertex_array, this.transparent_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual);
-            if (pipeline_uniform === undefined) continue;
-            const { pipeline, uniform } = pipeline_uniform;
-            if (uniform !== undefined) {
-                render_pass.setBindGroup(RenderServerSingleton.UniformBindGroupIndex, uniform.binding_group);
-            }
-            const instance_count = this.queue_1.get_InstanceCount(true, i);
-            dynamic_offsets[0] = i * RenderServerSingleton.InstanceUniformMemoryLayout.size;
-            render_pass.setBindGroup(RenderServerSingleton.InstanceUniformBindGroupIndex, this.queue_1_transparent_instance_uniform_group_ref.expect.binding_group, dynamic_offsets);
-            render_pass.setPipeline(pipeline.pipeline);
-            vertex_array.bind_Buffers(render_pass);
-            vertex_array.draw(render_pass, instance_count);
+            this.render_Mesh(render_pass, i, RenderServerRenderMaterialPass.Transparent, this.transparent_frame_buffer_ref.expect, WebGPURenderStateDepthCompareFunc.LessEqual, vertex_array, material, this.queue_1_transparent_instance_uniform_group_ref.expect);
         }
 
         render_pass.end();

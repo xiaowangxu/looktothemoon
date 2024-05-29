@@ -2,7 +2,7 @@ import { WebGPURenderState } from "@/system/sliverofstraw/WebGPURenderState";
 import { WebGPURenderStateBufferUniformType, WebGPURenderStateSamplerUniformType, WebGPURenderStateTextureUniformSampleType, WebGPURenderStateTextureUniformType } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformLayout";
 import { MaterialResource, MaterialTextureSamplerStorage } from "./MaterialResource";
 import { ReadonlyRef, RefCacher } from "@/system/utils/RefCounted";
-import { RenderServerMaterial, RenderServerMaterialPass } from "../../render_server/material/RenderServerMaterial";
+import { RenderServerRenderMaterial, RenderServerRenderMaterialPass } from "../../render_server/material/RenderServerRenderMaterial";
 import { RenderServerGeometryAttributeLayout, RenderServerGeometryAttributeLocation } from "../../render_server/geometry/RenderServerGeometryDefination";
 import { WebGPURenderStateAttributeType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateAttributeLayout";
 import { WebGPURenderStateShaderType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateShader";
@@ -22,7 +22,7 @@ const MatcapMaterialResourceUniformLayout = new RefCacher(() => {
 });
 
 const MatcapMaterialSolidPipelineCacheSet = new RefCacher(() => {
-	const pipeline_cache_set = RenderServerMaterial.create_PipelineCacheSet(
+	const pipeline_cache_set = RenderServerRenderMaterial.create_PipelineCacheSet(
 		// attributes
 		[
 			['position', RenderServerGeometryAttributeLocation.Position, WebGPURenderStateAttributeType.Vector3],

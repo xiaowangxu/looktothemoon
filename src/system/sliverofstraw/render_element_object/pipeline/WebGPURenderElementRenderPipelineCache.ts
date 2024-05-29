@@ -142,5 +142,6 @@ export class WebGPURenderElementRenderPipelineCache extends WebGPURenderObjectRe
 
     public dispose(): void {
         this.pipeline_refs.clear();
+        this.uniform_layouts.clear();
     }
 }

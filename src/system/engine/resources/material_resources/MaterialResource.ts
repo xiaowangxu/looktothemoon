@@ -1,5 +1,5 @@
 import { ReadonlyRef, Ref } from "@/system/utils/RefCounted";
-import { RenderServerMaterial } from "../../render_server/material/RenderServerMaterial";
+import { RenderServerRenderMaterial } from "../../render_server/material/RenderServerRenderMaterial";
 import { Resource } from "../Resource";
 import type { WebGPURenderStateCullMode } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
 import type { WebGPURenderStateUniformGroup } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformGroup";
@@ -10,7 +10,7 @@ import type { WebGPURenderStateTextureSampler } from "@/system/sliverofstraw/ren
 
 export abstract class MaterialResource extends Resource {
 
-    protected readonly render_server_material_ref: ReadonlyRef<RenderServerMaterial> = new ReadonlyRef(new RenderServerMaterial());
+    protected readonly render_server_material_ref: ReadonlyRef<RenderServerRenderMaterial> = new ReadonlyRef(new RenderServerRenderMaterial());
     public get render_server_material() { return this.render_server_material_ref.expect; }
 
     public get cull_mode() { return this.render_server_material.cull_mode; }

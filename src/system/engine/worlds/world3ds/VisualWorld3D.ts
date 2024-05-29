@@ -12,7 +12,7 @@ import { Ref, RefMap } from "@/system/utils/RefCounted";
 import type { Cloneable, Disposable } from "@/system/utils/Type";
 import { RID, type Rid } from "../../Rid";
 import type { RenderServerGeometry } from "../../render_server/geometry/RenderServerGeometry";
-import type { RenderServerMaterial } from "../../render_server/material/RenderServerMaterial";
+import type { RenderServerRenderMaterial } from "../../render_server/material/RenderServerRenderMaterial";
 import { WorldObject } from "../WorldObject";
 import type { Geometry3DResource } from "../../resources/geometry3d_resources/Geometry3DResource";
 import type { SceneTree } from "../../SceneTree";
@@ -28,8 +28,8 @@ export class VisualWorld3DMesh extends WorldObject {
     public readonly lod_geometrys_ref: { geometry: Ref<RenderServerGeometry>, distance: number }[] = [];
     public get has_geometry() { return !this.geometry_ref.is_empty }
 
-    protected readonly surface_materials_ref: RefMap<number, RenderServerMaterial> = new RefMap();
-    public readonly material_override_ref: Ref<RenderServerMaterial> = new Ref();
+    protected readonly surface_materials_ref: RefMap<number, RenderServerRenderMaterial> = new RefMap();
+    public readonly material_override_ref: Ref<RenderServerRenderMaterial> = new Ref();
     private get has_surface_materials(): boolean { return !this.surface_materials_ref.is_empty; };
 
     public readonly global_transform: Matrix4 = Matrix4.new;
@@ -125,13 +125,13 @@ export class VisualWorld3DMesh extends WorldObject {
         this.editor_highlighted = highlighted;
     }
 
-    public set_SurfaceMaterial(surface_idx: number, material: RenderServerMaterial | undefined) {
+    public set_SurfaceMaterial(surface_idx: number, material: RenderServerRenderMaterial | undefined) {
         if (this.geometry_ref.is_empty) return;
         if (surface_idx < 0) return;
         this.surface_materials_ref.set(surface_idx, material);
     }
 
-    public set_MaterialOverride(material: RenderServerMaterial | undefined) {
+    public set_MaterialOverride(material: RenderServerRenderMaterial | undefined) {
         this.material_override_ref.value = material;
     }
 

@@ -1,7 +1,7 @@
 import { WebGPURenderStateShaderType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateShader";
 import { RenderServer, RenderServerDefaultTextureType, RenderServerSingleton } from "../../render_server/RenderServer";
 import { RenderServerGeometryAttributeLayout, RenderServerGeometryAttributeLocation } from "../../render_server/geometry/RenderServerGeometryDefination";
-import { RenderServerMaterial, RenderServerMaterialPass } from "../../render_server/material/RenderServerMaterial";
+import { RenderServerRenderMaterial, RenderServerRenderMaterialPass } from "../../render_server/material/RenderServerRenderMaterial";
 import { MaterialResource, MaterialTextureSamplerStorage } from "./MaterialResource";
 import { ReadonlyRef, RefCacher } from "@/system/utils/RefCounted";
 import { WebGPURenderState } from "@/system/sliverofstraw/WebGPURenderState";
@@ -22,7 +22,7 @@ const TestMaterialResourceUniformLayout = new RefCacher(() => {
 });
 
 const TestMaterialResourceSolidPipelineCache = new RefCacher(() => {
-    const pipeline_cache = RenderServerMaterial.create_PipelineCache(hash => {
+    const pipeline_cache = RenderServerRenderMaterial.create_PipelineCache(hash => {
         const shader_code = `
 
             struct Attributes {
@@ -102,12 +102,12 @@ const TestMaterialResourceSolidPipelineCache = new RefCacher(() => {
         const shader = RenderServer.render_state.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
         const program = RenderServer.render_state.create_Program(shader, shader).expect();
         return program;
-    }, RenderServerMaterialPass.Solid, TestMaterialResourceUniformLayout.get(), RenderServerGeometryAttributeLayout);
+    }, RenderServerRenderMaterialPass.Solid, TestMaterialResourceUniformLayout.get(), RenderServerGeometryAttributeLayout);
     return pipeline_cache;
 });
 
 const TestMaterialResourceTransparentPipelineCache = new RefCacher(() => {
-    const pipeline_cache = RenderServerMaterial.create_PipelineCache(hash => {
+    const pipeline_cache = RenderServerRenderMaterial.create_PipelineCache(hash => {
         const shader_code = `
 
             struct Attributes {
@@ -195,7 +195,7 @@ const TestMaterialResourceTransparentPipelineCache = new RefCacher(() => {
         const shader = RenderServer.render_state.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
         const program = RenderServer.render_state.create_Program(shader, shader).expect();
         return program;
-    }, RenderServerMaterialPass.Transparent, TestMaterialResourceUniformLayout.get(), RenderServerGeometryAttributeLayout);
+    }, RenderServerRenderMaterialPass.Transparent, TestMaterialResourceUniformLayout.get(), RenderServerGeometryAttributeLayout);
     return pipeline_cache;
 });
 
@@ -241,8 +241,8 @@ export class TestMaterialResource extends MaterialResource {
     constructor() {
         super();
         this.uniform_group_ref.expect.set_BufferUniform(0, this.uniform_buffer_ref.expect);
-        this.render_server_material.set_PipelineUniform(RenderServerMaterialPass.Solid, TestMaterialResourceSolidPipelineCache.get(), this.uniform_group_ref.expect);
-        this.render_server_material.set_PipelineUniform(RenderServerMaterialPass.Transparent, TestMaterialResourceTransparentPipelineCache.get(), this.uniform_group_ref.expect);
+        this.render_server_material.set_PipelineUniform(RenderServerRenderMaterialPass.Solid, TestMaterialResourceSolidPipelineCache.get(), this.uniform_group_ref.expect);
+        this.render_server_material.set_PipelineUniform(RenderServerRenderMaterialPass.Transparent, TestMaterialResourceTransparentPipelineCache.get(), this.uniform_group_ref.expect);
         this.render_server_material.add_UniformBuffer(this.uniform_buffer_ref.expect, this.uniform_array_buffer);
         this.uniform_group_ref.expect.set_Storage(3, this.uniform_colors_storage_buffer_ref.expect.buffer);
         this.update_UniformBuffer();
