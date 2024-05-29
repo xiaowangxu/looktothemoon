@@ -10,10 +10,10 @@ import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletio
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { World3D } from "@/system/engine/worlds/world3ds/World3D";
 import { OrbitCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/OrbitCamera3D";
-import { BoxGeometry3DResource } from "@/system/engine/resources/geometry3d_resources/BoxGeometry3DResource";
+import { BoxGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/BoxGeometry3DResource";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
 import { RenderServerRenderer3D } from "@/system/engine/render_server/renderer3d/RenderServerRenderer3D";
-import { TestMaterial3DResource } from "@/system/engine/resources/material_resources/TestMaterial3DResource";
+import { TestMaterial3DResource } from "@/system/engine/resources/material_resources/material3d_resources/TestMaterial3DResource";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { OrthographicCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/OrthographicCamera3D";
 
@@ -23,11 +23,11 @@ import normal_image_url from 'res://normal_texture-0.png';
 
 import { ImageTexture2DResource } from "@/system/engine/resources/texture_resources/texture2d_resources/ImageTexture2DResource";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
-import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/MatcapMaterial3DResource";
-import { TorusGeometry3DResource } from "@/system/engine/resources/geometry3d_resources/TorusGeometry3DResource";
+import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/material3d_resources/MatcapMaterial3DResource";
+import { TorusGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/TorusGeometry3DResource";
 import { WebGPURenderElementTextureSamplerCacheHash } from "@/system/sliverofstraw/render_element_object/texture_sampler/WebGPURenderElementTextureSamplerCache";
-import { PolyLineGeometry3DResource } from "@/system/engine/resources/geometry3d_resources/polyline3d_resources/PolyLineGeometry3DResource";
-import { PureColorMaterial3DResource } from "@/system/engine/resources/material_resources/PureColorMaterial3DResource";
+import { PolyLineGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/polyline3d_resources/PolyLineGeometry3DResource";
+import { PureColorMaterial3DResource } from "@/system/engine/resources/material_resources/material3d_resources/PureColorMaterial3DResource";
 
 const viewport_scale = 1;
 const bg_color = Color.create(0.25, 0.25, 0.25).linear_rgb;

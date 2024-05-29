@@ -1,16 +1,16 @@
 import { WebGPURenderState } from "@/system/sliverofstraw/WebGPURenderState";
 import { WebGPURenderStateBufferUniformType, WebGPURenderStateSamplerUniformType, WebGPURenderStateTextureUniformSampleType, WebGPURenderStateTextureUniformType } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformLayout";
-import { MaterialResource, MaterialTextureSamplerStorage } from "./MaterialResource";
+import { MaterialResource, MaterialTextureSamplerStorage } from "../MaterialResource";
 import { ReadonlyRef, RefCacher } from "@/system/utils/RefCounted";
-import { RenderServerRenderMaterial, RenderServerRenderMaterialPass } from "../../render_server/material/RenderServerRenderMaterial";
-import { RenderServerGeometryAttributeLayout, RenderServerGeometryAttributeLocation } from "../../render_server/geometry/RenderServerGeometryDefination";
+import { RenderServerRenderMaterial } from "../../../render_server/material/RenderServerRenderMaterial";
+import { RenderServerGeometryAttributeLayout, RenderServerGeometryAttributeLocation } from "../../../render_server/geometry/RenderServerGeometryDefination";
 import { WebGPURenderStateAttributeType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateAttributeLayout";
 import { WebGPURenderStateShaderType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateShader";
-import { RenderServer, RenderServerDefaultTextureType, RenderServerSingleton } from "../../render_server/RenderServer";
+import { RenderServer, RenderServerDefaultTextureType, RenderServerSingleton } from "../../../render_server/RenderServer";
 import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { WebGPURenderStateTextureFilter } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTextureSampler";
-import type { Texture2DResource } from "../texture_resources/texture2d_resources/Texture2DResource";
+import type { Texture2DResource } from "../../texture_resources/texture2d_resources/Texture2DResource";
 
 const MatcapMaterialResourceUniformLayout = new RefCacher(() => {
 	const layout = RenderServer.render_state.create_UniformLayout();

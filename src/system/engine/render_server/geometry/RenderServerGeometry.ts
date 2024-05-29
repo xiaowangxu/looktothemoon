@@ -8,8 +8,11 @@ import { SignalEmitter } from "@/system/utils/SignalEmitter";
 import { WebGPURenderStatePrimitiveType } from "../../../sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
 import { RenderServer } from "../RenderServer";
 import { RenderServerObjectRefCounted } from "../RenderServerObject";
+import type { BoxLike } from "@/system/fivepebble/geometries/BoxLike";
+import type { MatrixLike } from "@/system/fivepebble/linear_algebra/MatrixLike";
+import type { VectorLike } from "@/system/fivepebble/linear_algebra/VectorLike";
 
-export class RenderServerGeometry extends RenderServerObjectRefCounted {
+export abstract class RenderServerGeometry<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>, Box extends BoxLike<Vec, Mat>> extends RenderServerObjectRefCounted {
 
     public readonly vertex_array_ref: ReadonlyRef<WebGPURenderElementVertexArray> = new ReadonlyRef(new WebGPURenderElementVertexArray(RenderServer.render_state, WebGPURenderStatePrimitiveType.Triangles, 0, 0));
     public readonly vertex_array_view_refs: RefArray<WebGPURenderElementVertexArrayView> = new RefArray();
@@ -18,14 +21,14 @@ export class RenderServerGeometry extends RenderServerObjectRefCounted {
     protected _instance_count: number = 1;
     public get instance_count() { return this._instance_count; }
 
-    protected _bbox: Box3 = Box3.new;
+    protected abstract _bbox: Box;
     /**
      * returned by reference
      */
-    public get bbox(): Self<Box3> { return this._bbox; }
+    public get bbox(): Self<Box> { return this._bbox; }
 
     // signal
-    public readonly singal_bbox_changed: SignalEmitter<(bbox: Self<Box3>) => void> = new SignalEmitter();
+    public readonly singal_bbox_changed: SignalEmitter<(bbox: Self<Box>) => void> = new SignalEmitter();
 
     protected trigger_BBoxChange() {
         this.singal_bbox_changed.trigger(this._bbox);
@@ -44,7 +47,7 @@ export class RenderServerGeometry extends RenderServerObjectRefCounted {
         this.vertex_array_view_refs.clear();
     }
 
-    public set_BaseGeometry(geometry: RenderServerGeometry | undefined, sync_type_and_size: boolean = true, reset_size_if_empty: boolean = true) {
+    public set_BaseGeometry(geometry: RenderServerGeometry<Vec, Mat, Box> | undefined, sync_type_and_size: boolean = true, reset_size_if_empty: boolean = true) {
         this.vertex_array_ref.expect.set_BaseVertexArray(geometry?.vertex_array_ref.expect, sync_type_and_size, reset_size_if_empty);
     }
 

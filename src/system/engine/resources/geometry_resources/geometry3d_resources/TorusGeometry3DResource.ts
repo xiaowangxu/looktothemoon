@@ -1,16 +1,16 @@
 import { Ref } from "@/system/utils/RefCounted";
-import { GeometryResource } from "../geometry_resources/GeometryResource";
 import { WebGPURenderElementIndexBuffer } from "@/system/sliverofstraw/render_element_object/buffer/WebGPURenderElementBuffer";
 import { WebGPURenderElementVector2Buffer, WebGPURenderElementVector3Buffer } from "@/system/sliverofstraw/render_element_object/buffer/WebGPURenderElementVectorBuffer";
-import { RenderServer } from "../../render_server/RenderServer";
+import { RenderServer } from "../../../render_server/RenderServer";
 import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 import { WebGPURenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
-import { RenderServerGeometryAttributeLayoutBuffer } from "../../render_server/geometry/RenderServerGeometryDefination";
+import { RenderServerGeometryAttributeLayoutBuffer } from "../../../render_server/geometry/RenderServerGeometryDefination";
 import { Pi, Tau } from "@/system/fivepebble/Scalar";
 import { clamp } from "@vueuse/core";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { Geometry3DResource } from "./Geometry3DResource";
 
-export class TorusGeometry3DResource extends GeometryResource {
+export class TorusGeometry3DResource extends Geometry3DResource {
 
     private readonly position_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
     private readonly normal_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
@@ -151,9 +151,9 @@ export class TorusGeometry3DResource extends GeometryResource {
         this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Position, this.position_buffer_ref.expect.buffer);
         this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Normal, this.normal_buffer_ref.expect.buffer);
         this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Uv, this.uv_buffer_ref.expect.buffer);
-        GeometryResource.$tmp_box3_for_bbox.min.set(-outer_radius, -tube_radius, -outer_radius);
-        GeometryResource.$tmp_box3_for_bbox.max.set(outer_radius, tube_radius, outer_radius);
-        this.render_server_geometry.set_BBox(GeometryResource.$tmp_box3_for_bbox);
+        Geometry3DResource.$tmp_box3_for_bbox.min.set(-outer_radius, -tube_radius, -outer_radius);
+        Geometry3DResource.$tmp_box3_for_bbox.max.set(outer_radius, tube_radius, outer_radius);
+        this.render_server_geometry.set_BBox(Geometry3DResource.$tmp_box3_for_bbox);
     }
 
     protected dispose(): void {

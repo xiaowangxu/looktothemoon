@@ -11,21 +11,21 @@ import type { Transformable } from "@/system/fivepebble/linear_algebra/VectorLik
 import { Ref, RefMap } from "@/system/utils/RefCounted";
 import type { Cloneable, Disposable } from "@/system/utils/Type";
 import { RID, type Rid } from "../../Rid";
-import type { RenderServerGeometry } from "../../render_server/geometry/RenderServerGeometry";
 import type { RenderServerRenderMaterial } from "../../render_server/material/RenderServerRenderMaterial";
 import { WorldObject } from "../WorldObject";
-import type { GeometryResource } from "../../resources/geometry_resources/GeometryResource";
 import type { SceneTree } from "../../SceneTree";
 import type { MaterialResource } from "../../resources/material_resources/MaterialResource";
 import type { RenderServerRenderer3DQueue } from "../../render_server/renderer3d/RenderServerRenderer3DQueue";
 import { RenderServerLightData } from "../../render_server/light/RenderServerLightData";
+import type { RenderServerGeometry3D } from "../../render_server/geometry/RenderServerGeometry3D";
+import type { Geometry3DResource } from "../../resources/geometry_resources/geometry3d_resources/Geometry3DResource";
 
 export type Cullable = CameraFrustumLikeCullable<Matrix4, Vector3, Matrix3> & Cloneable<Cullable> & Transformable<Cullable, Vector4, Matrix4>;
 
 export class VisualWorld3DMesh extends WorldObject {
 
-    public readonly geometry_ref: Ref<RenderServerGeometry> = new Ref();
-    public readonly lod_geometrys_ref: { geometry: Ref<RenderServerGeometry>, distance: number }[] = [];
+    public readonly geometry_ref: Ref<RenderServerGeometry3D> = new Ref();
+    public readonly lod_geometrys_ref: { geometry: Ref<RenderServerGeometry3D>, distance: number }[] = [];
     public get has_geometry() { return !this.geometry_ref.is_empty }
 
     protected readonly surface_materials_ref: RefMap<number, RenderServerRenderMaterial> = new RefMap();
@@ -71,7 +71,7 @@ export class VisualWorld3DMesh extends WorldObject {
 
     private on_geometry_bbox_changed = (bbox: Box3) => { this.update_Cullable(); }
 
-    public set_Geometry(geometry: RenderServerGeometry | undefined) {
+    public set_Geometry(geometry: RenderServerGeometry3D | undefined) {
         if (!this.geometry_ref.is_empty) {
             this.geometry_ref.expect.singal_bbox_changed.disconnect(this.on_geometry_bbox_changed);
         }
@@ -82,7 +82,7 @@ export class VisualWorld3DMesh extends WorldObject {
         this.update_Cullable();
     }
 
-    public set_LodGeometry(distance: number, geometry: RenderServerGeometry | undefined) {
+    public set_LodGeometry(distance: number, geometry: RenderServerGeometry3D | undefined) {
         const index = this.lod_geometrys_ref.findIndex(i => i.distance === distance);
         if (index < 0) {
             // new lod level
@@ -495,7 +495,7 @@ export class VisualWorld3D implements Disposable {
         this.meshes_map.delete(rid);
     }
 
-    public set_MeshGeometry(rid: Rid, geometry: GeometryResource | undefined) {
+    public set_MeshGeometry(rid: Rid, geometry: Geometry3DResource | undefined) {
         const instance = this.get_Mesh(rid);
         if (instance) {
             if (geometry === undefined) {
@@ -507,7 +507,7 @@ export class VisualWorld3D implements Disposable {
         }
     }
 
-    public set_MeshLodGeometry(rid: Rid, distance: number, geometry: GeometryResource | undefined) {
+    public set_MeshLodGeometry(rid: Rid, distance: number, geometry: Geometry3DResource | undefined) {
         const instance = this.get_Mesh(rid);
         if (instance) {
             if (geometry === undefined) {

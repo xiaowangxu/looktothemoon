@@ -1,5 +1,6 @@
 import { RenderServer } from "@/system/engine/render_server/RenderServer";
 import { RenderServerGeometry } from "@/system/engine/render_server/geometry/RenderServerGeometry";
+import { RenderServerGeometry3D } from "@/system/engine/render_server/geometry/RenderServerGeometry3D";
 import { RenderServerGeometryAttributeLayoutBuffer } from "@/system/engine/render_server/geometry/RenderServerGeometryDefination";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
@@ -44,7 +45,7 @@ export const PolyLineSegmentBaseGeometry3D = new RefCacher(() => {
         0, 2, 1, 2, 3, 1, 2, 4, 3, 4, 5, 3, 4, 6, 5, 6, 7, 5
     ]);
 
-    const geometry = new RenderServerGeometry();
+    const geometry = new RenderServerGeometry3D();
     geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Position, position_buffer.buffer);
     geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Normal, normal_buffer.buffer);
     geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Uv, uv_buffer.buffer);

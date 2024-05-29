@@ -1,5 +1,4 @@
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
-import { GeometryResource } from "../../geometry_resources/GeometryResource";
 import { PolyLineSegmentBaseGeometry3D } from "./PolyLineSegmentBaseGeometry3D";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { WebGPURenderElementVector3Buffer } from "@/system/sliverofstraw/render_element_object/buffer/WebGPURenderElementVectorBuffer";
@@ -7,8 +6,9 @@ import { Ref } from "@/system/utils/RefCounted";
 import { RenderServer } from "@/system/engine/render_server/RenderServer";
 import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 import { RenderServerGeometryAttributeLayoutBuffer } from "@/system/engine/render_server/geometry/RenderServerGeometryDefination";
+import { Geometry3DResource } from "../Geometry3DResource";
 
-export class PolyLineGeometry3DResource extends GeometryResource {
+export class PolyLineGeometry3DResource extends Geometry3DResource {
 
     private readonly point_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
 

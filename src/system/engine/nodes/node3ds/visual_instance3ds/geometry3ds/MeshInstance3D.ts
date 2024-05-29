@@ -2,8 +2,8 @@ import type { Rid } from "../../../../Rid";
 import { NodeNotification } from "@/system/engine/nodes/Node";
 import { GeometryInstance3D } from "./GeometryInstance3D";
 import { Ref, RefMap } from "@/system/utils/RefCounted";
-import type { Geometry3DResource } from "@/system/engine/resources/geometry3d_resources/Geometry3DResource";
-import type { Material3DResource } from "@/system/engine/resources/material_3d_resources/Material3DResource";
+import type { Geometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/Geometry3DResource";
+import type { MaterialResource } from "@/system/engine/resources/material_resources/MaterialResource";
 
 export class MeshInstance3D extends GeometryInstance3D {
 
@@ -25,9 +25,9 @@ export class MeshInstance3D extends GeometryInstance3D {
         }
     }
 
-    private _material_override: Ref<Material3DResource> = new Ref();
-    public get material(): Material3DResource | undefined { return this._material_override.value; }
-    public set material(material: Material3DResource | undefined) {
+    private _material_override: Ref<MaterialResource> = new Ref();
+    public get material(): MaterialResource | undefined { return this._material_override.value; }
+    public set material(material: MaterialResource | undefined) {
         if (this._material_override.value !== material) {
             this._material_override.value = material;
             if (this.mesh_rid !== undefined) {
@@ -39,8 +39,8 @@ export class MeshInstance3D extends GeometryInstance3D {
         }
     }
 
-    private _surface_materials_map: RefMap<number, Material3DResource> = new RefMap();
-    public set_SurfaceMaterial(surface_idx: number, material: Material3DResource | undefined) {
+    private _surface_materials_map: RefMap<number, MaterialResource> = new RefMap();
+    public set_SurfaceMaterial(surface_idx: number, material: MaterialResource | undefined) {
         if (surface_idx < 0) return;
         if (this._surface_materials_map.set(surface_idx, material)) {
             if (this.mesh_rid !== undefined) {

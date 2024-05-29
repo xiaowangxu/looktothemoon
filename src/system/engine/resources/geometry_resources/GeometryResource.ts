@@ -1,17 +1,9 @@
-import { ReadonlyRef } from "@/system/utils/RefCounted";
 import { Resource } from "../Resource";
 import { RenderServerGeometry } from "../../render_server/geometry/RenderServerGeometry";
-import { Box3 } from "@/system/fivepebble/geometries/Box3";
+import type { BoxLike } from "@/system/fivepebble/geometries/BoxLike";
+import type { MatrixLike } from "@/system/fivepebble/linear_algebra/MatrixLike";
+import type { VectorLike } from "@/system/fivepebble/linear_algebra/VectorLike";
 
-export abstract class GeometryResource extends Resource {
-
-    static readonly $tmp_box3_for_bbox = Box3.new;
-
-    protected readonly render_server_geometry_ref: ReadonlyRef<RenderServerGeometry> = new ReadonlyRef(new RenderServerGeometry());
-    public get render_server_geometry() { return this.render_server_geometry_ref.expect; }
-
-    protected dispose(): void {
-        this.render_server_geometry_ref.clear();
-        super.dispose();
-    }
+export abstract class GeometryResource<Geo extends RenderServerGeometry<Vec, Mat, Box>, Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>, Box extends BoxLike<Vec, Mat>> extends Resource {
+    public abstract get render_server_geometry(): Geo;
 }

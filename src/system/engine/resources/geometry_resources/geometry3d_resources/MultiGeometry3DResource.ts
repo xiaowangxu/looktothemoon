@@ -1,15 +1,15 @@
 import { Ref } from "@/system/utils/RefCounted";
-import { GeometryResource } from "../geometry_resources/GeometryResource";
 import { WebGPURenderElementMatrix4Buffer } from "@/system/sliverofstraw/render_element_object/buffer/WebGPURenderElementMatrixBuffer";
-import { RenderServer } from "../../render_server/RenderServer";
+import { RenderServer } from "../../../render_server/RenderServer";
 import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Color } from "@/system/fivepebble/graphics/Color";
-import { RenderServerGeometryAttributeLayoutBuffer } from "../../render_server/geometry/RenderServerGeometryDefination";
+import { RenderServerGeometryAttributeLayoutBuffer } from "../../../render_server/geometry/RenderServerGeometryDefination";
+import { Geometry3DResource } from "./Geometry3DResource";
 
-type BaseGeometry3DResource = Exclude<GeometryResource, MultiGeometry3DResource>;
+type BaseGeometry3DResource = Exclude<Geometry3DResource, MultiGeometry3DResource>;
 
-export class MultiGeometry3DResource extends GeometryResource {
+export class MultiGeometry3DResource extends Geometry3DResource {
 
     static readonly #const_matrxi4_default_transform_color: Matrix4 = Matrix4.create(
         1, 0, 0, 0,
@@ -48,9 +48,9 @@ export class MultiGeometry3DResource extends GeometryResource {
             this.render_server_geometry.clear_Geometry();
             this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.InstanceTransformColor, this.instance_transform_color_buffer_ref.expect.buffer);
             this.render_server_geometry.set_InstanceCount(count);
-            GeometryResource.$tmp_box3_for_bbox.min.set(-10000, -10000, -10000);
-            GeometryResource.$tmp_box3_for_bbox.max.set(10000, 10000, 10000);
-            this.render_server_geometry.set_BBox(GeometryResource.$tmp_box3_for_bbox);
+            Geometry3DResource.$tmp_box3_for_bbox.min.set(-10000, -10000, -10000);
+            Geometry3DResource.$tmp_box3_for_bbox.max.set(10000, 10000, 10000);
+            this.render_server_geometry.set_BBox(Geometry3DResource.$tmp_box3_for_bbox);
         }
     }
 

@@ -1,12 +1,12 @@
 import { WebGPURenderState } from "@/system/sliverofstraw/WebGPURenderState";
 import { WebGPURenderStateBufferUniformType } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformLayout";
-import { MaterialResource } from "./MaterialResource";
+import { MaterialResource } from "../MaterialResource";
 import { ReadonlyRef, RefCacher } from "@/system/utils/RefCounted";
-import { RenderServerRenderMaterial } from "../../render_server/material/RenderServerRenderMaterial";
-import { RenderServerGeometryAttributeLayout, RenderServerGeometryAttributeLocation } from "../../render_server/geometry/RenderServerGeometryDefination";
+import { RenderServerRenderMaterial } from "../../../render_server/material/RenderServerRenderMaterial";
+import { RenderServerGeometryAttributeLayout, RenderServerGeometryAttributeLocation } from "../../../render_server/geometry/RenderServerGeometryDefination";
 import { WebGPURenderStateAttributeType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateAttributeLayout";
 import { WebGPURenderStateShaderType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateShader";
-import { RenderServer, RenderServerSingleton } from "../../render_server/RenderServer";
+import { RenderServer, RenderServerSingleton } from "../../../render_server/RenderServer";
 import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 

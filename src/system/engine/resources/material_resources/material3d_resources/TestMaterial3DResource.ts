@@ -1,15 +1,15 @@
 import { WebGPURenderStateShaderType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateShader";
-import { RenderServer, RenderServerDefaultTextureType, RenderServerSingleton } from "../../render_server/RenderServer";
-import { RenderServerGeometryAttributeLayout, RenderServerGeometryAttributeLocation } from "../../render_server/geometry/RenderServerGeometryDefination";
-import { RenderServerRenderMaterial, RenderServerRenderMaterialPass } from "../../render_server/material/RenderServerRenderMaterial";
-import { MaterialResource, MaterialTextureSamplerStorage } from "./MaterialResource";
+import { RenderServer, RenderServerDefaultTextureType, RenderServerSingleton } from "../../../render_server/RenderServer";
+import { RenderServerGeometryAttributeLayout, RenderServerGeometryAttributeLocation } from "../../../render_server/geometry/RenderServerGeometryDefination";
+import { RenderServerRenderMaterial, RenderServerRenderMaterialPass } from "../../../render_server/material/RenderServerRenderMaterial";
+import { MaterialResource, MaterialTextureSamplerStorage } from "../MaterialResource";
 import { ReadonlyRef, RefCacher } from "@/system/utils/RefCounted";
 import { WebGPURenderState } from "@/system/sliverofstraw/WebGPURenderState";
 import { WebGPURenderStateBufferUniformType, WebGPURenderStateSamplerUniformType, WebGPURenderStateTextureUniformSampleType, WebGPURenderStateTextureUniformType } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformLayout";
 import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { WebGPURenderStateTextureFilter } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTextureSampler";
-import type { Texture2DResource } from "../texture_resources/texture2d_resources/Texture2DResource";
+import type { Texture2DResource } from "../../texture_resources/texture2d_resources/Texture2DResource";
 import { WebGPURenderElementVector4Buffer } from "@/system/sliverofstraw/render_element_object/buffer/WebGPURenderElementVectorBuffer";
 
 const TestMaterial3DResourceUniformLayout = new RefCacher(() => {
