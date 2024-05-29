@@ -58,7 +58,20 @@ export class Node extends ClassBase {
     private viewport: Viewport | undefined;
 
     private parent: Node | undefined = undefined;
-    public readonly children: Node[] = [];
+    protected _children: Node[] = [];
+    private _children_cache: Node[] | undefined = undefined;
+    public get children() {
+        if (this.is_propagating > 0) {
+            if (this._children_cache === undefined) {
+                this._children_cache = [...this._children];
+            }
+            return this._children_cache;
+        }
+        else {
+            return this._children;
+        }
+    }
+
     private is_ready: boolean = false;
     public get ready() { return this.is_ready; }
     private first_time_ready: boolean = true;
@@ -69,6 +82,16 @@ export class Node extends ClassBase {
     public block_input: boolean = false;
     public block_process: boolean = false;
     public block_physics_process: boolean = false;
+
+    private _is_propagating: number = 0;
+    protected get is_propagating() { return this._is_propagating; }
+    protected set is_propagating(count: number) {
+        this._is_propagating = count;
+        if (this._is_propagating === 0 && this._children_cache !== undefined) {
+            this._children = this._children_cache;
+            this._children_cache = undefined;
+        }
+    }
 
     // signals
     public readonly signal_child_added: SignalEmitter<(node: Node) => void> = new SignalEmitter();
@@ -81,9 +104,11 @@ export class Node extends ClassBase {
 
     // scene tree
     private propagate_SceneTreeExiting() {
-        for (const child of this.children) {
+        this.is_propagating++;
+        for (const child of this._children) {
             child.propagate_SceneTreeExiting();
         }
+        this.is_propagating--;
         // before exit tree
         this._notification(NodeNotification.ExitingTree);
         this.viewport = undefined;
@@ -105,26 +130,32 @@ export class Node extends ClassBase {
         this.inside_tree = true;
         // entered tree
         this._notification(NodeNotification.EnteredTree);
-        for (const child of this.children) {
+        this.is_propagating++;
+        for (const child of this._children) {
             if (!child.inside_tree) {
                 child.propagate_SceneTreeEntering();
             }
         }
+        this.is_propagating--;
     }
 
     private propagate_SceneTreeExited() {
-        for (const child of this.children) {
+        this.is_propagating++;
+        for (const child of this._children) {
             child.propagate_SceneTreeExited();
         }
+        this.is_propagating--;
         // exited tree
         this._notification(NodeNotification.ExitedTree);
     }
 
     public propagate_Ready() {
         this.is_ready = true;
-        for (const child of this.children) {
+        this.is_propagating++;
+        for (const child of this._children) {
             child.propagate_Ready();
         }
+        this.is_propagating--;
         this._notification(NodeNotification.EnteredReady);
         if (this.first_time_ready) {
             this.first_time_ready = false;
@@ -136,9 +167,11 @@ export class Node extends ClassBase {
     }
 
     public propagate_Process(delta: number) {
-        for (const child of this.children) {
+        this.is_propagating++;
+        for (const child of this._children) {
             child.propagate_Process(delta);
         }
+        this.is_propagating--;
         // process
         this._notification(NodeNotification.Process);
         if (!this.block_process) {
@@ -148,17 +181,21 @@ export class Node extends ClassBase {
     }
 
     public propagate_InternalAfterProcess(delta: number) {
-        for (const child of this.children) {
+        this.is_propagating++;
+        for (const child of this._children) {
             child.propagate_InternalAfterProcess(delta);
         }
+        this.is_propagating--;
         // internal before process
         this._notification(NodeNotification.InternalAfterProcess);
     }
 
     public propagate_PhysicsProcess(delta: number) {
-        for (const child of this.children) {
+        this.is_propagating++;
+        for (const child of this._children) {
             child.propagate_PhysicsProcess(delta);
         }
+        this.is_propagating--;
         // physics process
         this._notification(NodeNotification.PhysicsProcess);
         if (!this.block_physics_process) {
@@ -168,9 +205,11 @@ export class Node extends ClassBase {
     }
 
     public propagate_InternalAfterPhysicsProcess(delta: number) {
-        for (const child of this.children) {
+        this.is_propagating++;
+        for (const child of this._children) {
             child.propagate_InternalAfterPhysicsProcess(delta);
         }
+        this.is_propagating--;
         // internal before process
         this._notification(NodeNotification.InternalAfterPhysicsProcess);
     }
@@ -180,9 +219,11 @@ export class Node extends ClassBase {
         if (!redundant || !(this.block_redundant_before_render_notification)) {
             this._notification(NodeNotification.InternalBeforeRender);
         }
-        for (const child of this.children) {
+        this.is_propagating++;
+        for (const child of this._children) {
             child.propagate_InternalBeforeRender(delta, redundant && !this.propergate_redundant_before_render_reset);
         }
+        this.is_propagating--;
     }
 
     public set_SceneTree(scenetree: SceneTree | undefined) {
@@ -241,9 +282,11 @@ export class Node extends ClassBase {
     }
 
     private propagate_Dispose() {
-        for (const child of this.children) {
+        this.is_propagating++;
+        for (const child of this._children) {
             child.propagate_Dispose();
         }
+        this.is_propagating--;
         // dispose
         this._notification(NodeNotification.Dispose);
         this._dispose();
@@ -606,10 +649,12 @@ export class Viewport extends Node {
             node.signal_input.trigger(event, true);
             if (event.cancelled) return;
         }
-        for (const child of node.children) {
+        (node as Viewport).is_propagating++;
+        for (const child of (node as Viewport)._children) {
             this.propagate_InputEventInternal(child, event, target);
             if (event.cancelled) return;
         }
+        (node as Viewport).is_propagating--;
         if (!node.block_input) {
             node._input(event, false);
             if (event.cancelled) return;
@@ -625,10 +670,12 @@ export class Viewport extends Node {
             this.signal_input.trigger(event, true);
             if (event.cancelled) return;
         }
-        for (const child of this.children) {
+        this.is_propagating++;
+        for (const child of this._children) {
             this.propagate_InputEventInternal(child, event, target);
             if (event.cancelled) return;
         }
+        this.is_propagating--;
         if (!this.block_input) {
             this._input(event, false);
             if (event.cancelled) return;
@@ -652,9 +699,13 @@ export class Viewport extends Node {
 
     //#region camera3d
 
+    private actived_camera_3d: Camera3D[] = [];
     private camera_3d: Camera3D | undefined;
 
+    private a = 0;
     public set_ActiveCamera3D(camera: Camera3D) {
+        if (this.a++ > 10) throw new Error();
+        this.actived_camera_3d.push(camera);
         if (this.camera_3d !== camera) {
             if (this.camera_3d !== undefined) {
                 this.camera_3d._current = false;
@@ -665,9 +716,13 @@ export class Viewport extends Node {
     }
 
     public clear_ActiveCamera3D(camera: Camera3D) {
+        const idx = this.actived_camera_3d.indexOf(camera);
+        if (idx >= 0) {
+            this.actived_camera_3d.splice(idx, 1);
+        }
         if (this.camera_3d === camera) {
             this.camera_3d._current = false;
-            this.camera_3d = undefined;
+            this.camera_3d = this.actived_camera_3d.length > 0 ? this.actived_camera_3d[this.actived_camera_3d.length - 1] : undefined;
         }
     }
 
@@ -691,16 +746,20 @@ export class Viewport extends Node {
 
     private propagate_World3DChangedInternal(node: Node, notification: NodeNotification.World3DAdded | NodeNotification.World3DRemoved) {
         if (node instanceof Viewport) return;
-        for (const child of node.children) {
+        (node as Viewport).is_propagating++;
+        for (const child of (node as Viewport)._children) {
             this.propagate_World3DChangedInternal(child, notification);
         }
+        (node as Viewport).is_propagating--;
         node._notification(notification);
     }
 
     private propagate_World3DChanged(notification: NodeNotification.World3DAdded | NodeNotification.World3DRemoved) {
-        for (const child of this.children) {
+        this.is_propagating++;
+        for (const child of this._children) {
             this.propagate_World3DChangedInternal(child, notification);
         }
+        this.is_propagating--;
     }
 
     public get_RenderableWorld3D(): World3D | undefined {
@@ -715,6 +774,8 @@ export class Viewport extends Node {
     //#endregion
 
     public trigger_BeforeRender(): void {
+        this.render_server_viewport.set_PixelRatio();
+        this.render_server_viewport.update_Size();
         const camera_3d = this.get_Camera3D();
         if (camera_3d !== undefined) {
             const size = this.render_server_viewport.get_RawSize(Viewport.#tmp_vector2_0);
@@ -793,6 +854,7 @@ export class Viewport extends Node {
                 this.mouse_event_manager.dispose();
                 this.key_event_manager.dispose();
                 this.render_server_viewport.dispose();
+                this.actived_camera_3d = [];
                 return;
             }
             case NodeNotification.InternalAfterPhysicsProcess: {
