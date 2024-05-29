@@ -24,7 +24,6 @@ import { WebGPURenderStateTextureFilter, WebGPURenderStateTextureWrap } from "@/
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { WebGPURenderStateBufferView } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBufferView";
-import { RenderServerMaterialType, type RenderServerMaterial } from "../material/RenderServerMaterial";
 import type { WebGPURenderStateUniformGroup } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformGroup";
 import type { RenderServerComputeMaterial } from "../material/RenderServerComputeMaterial";
 

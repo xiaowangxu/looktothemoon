@@ -5,7 +5,7 @@ import type { WebGPURenderState } from "../../WebGPURenderState";
 
 export abstract class WebGPURenderElementBuffer<T = any> extends WebGPURenderObjectRefCounted {
 
-    public abstract readonly buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
+    protected abstract readonly buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
     public get buffer(): WebGPURenderStateBuffer { return this.buffer_ref.expect; }
 
     public abstract get data(): WebGPURenderStateBufferData;

@@ -1,5 +1,5 @@
 import { ReadonlyRef } from "@/system/utils/RefCounted";
-import { Geometry3DResource } from "./Geometry3DResource";
+import { GeometryResource } from "../geometry_resources/GeometryResource";
 import { WebGPURenderElementIndexBuffer } from "@/system/sliverofstraw/render_element_object/buffer/WebGPURenderElementBuffer";
 import { WebGPURenderElementVector2Buffer, WebGPURenderElementVector3Buffer } from "@/system/sliverofstraw/render_element_object/buffer/WebGPURenderElementVectorBuffer";
 import { RenderServer } from "../../render_server/RenderServer";
@@ -7,7 +7,7 @@ import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/sys
 import { WebGPURenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
 import { RenderServerGeometryAttributeLayoutBuffer } from "../../render_server/geometry/RenderServerGeometryDefination";
 
-export class BoxGeometry3DResource extends Geometry3DResource {
+export class BoxGeometry3DResource extends GeometryResource {
 
     private readonly position_buffer_ref: ReadonlyRef<WebGPURenderElementVector3Buffer> = new ReadonlyRef(new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, 24));
     private readonly normal_buffer_ref: ReadonlyRef<WebGPURenderElementVector3Buffer> = new ReadonlyRef(new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, 24));
@@ -182,9 +182,9 @@ export class BoxGeometry3DResource extends Geometry3DResource {
             ]), 0
         );
         this.uv_buffer_ref.expect.commit();
-        Geometry3DResource.$tmp_box3_for_bbox.min.set(-half_w, -half_h, -half_d);
-        Geometry3DResource.$tmp_box3_for_bbox.max.set(half_w, half_h, half_d);
-        this.render_server_geometry.set_BBox(Geometry3DResource.$tmp_box3_for_bbox);
+        GeometryResource.$tmp_box3_for_bbox.min.set(-half_w, -half_h, -half_d);
+        GeometryResource.$tmp_box3_for_bbox.max.set(half_w, half_h, half_d);
+        this.render_server_geometry.set_BBox(GeometryResource.$tmp_box3_for_bbox);
     }
 
     protected dispose(): void {

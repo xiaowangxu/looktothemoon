@@ -3,7 +3,7 @@ import { Resource } from "../Resource";
 import { RenderServerGeometry } from "../../render_server/geometry/RenderServerGeometry";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 
-export abstract class Geometry3DResource extends Resource {
+export abstract class GeometryResource extends Resource {
 
     static readonly $tmp_box3_for_bbox = Box3.new;
 

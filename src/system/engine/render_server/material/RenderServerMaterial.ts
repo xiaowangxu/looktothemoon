@@ -3,10 +3,6 @@ import { RenderServerObjectRefCounted } from "../RenderServerObject";
 import type { WebGPURenderStateBuffer, WebGPURenderStateBufferData } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 import type { WebGPURenderStateBufferView } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBufferView";
 
-export enum RenderServerMaterialType {
-	Render, Compute,
-}
-
 class RenderServerMaterialUniformBufferItem implements RefCountedLike {
 
 	public readonly buffer: WebGPURenderStateBuffer | WebGPURenderStateBufferView;

@@ -17,7 +17,7 @@ import { WebGPURenderStateMultiSampleCount } from "@/system/sliverofstraw/render
 import { WebGPURenderStateShaderType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateShader";
 import { RenderServerGeometryAttributeLayoutBuffer, RenderServerGeometryAttributeLocation } from "../geometry/RenderServerGeometryDefination";
 import { bitmask_check } from "@/system/utils/BitMask";
-import { RenderServerMaterial, RenderServerMaterialType } from "./RenderServerMaterial";
+import { RenderServerMaterial } from "./RenderServerMaterial";
 
 export enum RenderServerRenderMaterialPass {
 	Depth,
@@ -134,10 +134,6 @@ class RenderServerRenderMaterialPipelineCacheSet implements RefCountedLike {
 export class RenderServerRenderMaterial extends RenderServerMaterial<RenderServerRenderMaterial> {
 
 	static readonly #tmp_pipeline_uniform_for_result: RenderServerRenderMaterialPipelineUniformTarget = { pipeline: undefined!, uniform: undefined };
-
-	public get type(): RenderServerMaterialType {
-		return RenderServerMaterialType.Render;
-	}
 
 	public cull_mode: WebGPURenderStateCullMode = WebGPURenderStateCullMode.Back;
 	public depth_bias: number = 0.0;

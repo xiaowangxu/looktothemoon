@@ -2,7 +2,7 @@ import type { Config } from "@/system/engine/ConfiguredObject";
 import { PackedIndexArray, PackedVector3Array } from "@/system/engine/classes/value_wrappers/PackedArray";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
 import { ArrayGeometryResource } from "@/system/engine/resources/geometry_resources/ArrayGeometryResource";
-import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/MatcapMaterialResource";
+import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/MatcapMaterial3DResource";
 import type { Bvh3, BvhNode3 } from "@/system/fivepebble/bvh/Bvh3";
 import type { AABB } from "@/system/fivepebble/bvh/BvhLike";
 import type { Box3 } from "@/system/fivepebble/geometries/Box3";

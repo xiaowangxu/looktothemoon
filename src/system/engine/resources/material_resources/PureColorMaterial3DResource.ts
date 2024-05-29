@@ -10,13 +10,13 @@ import { RenderServer, RenderServerSingleton } from "../../render_server/RenderS
 import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 
-const PureColorMaterialUniformLayout = new RefCacher(() => {
+const PureColorMaterial3DUniformLayout = new RefCacher(() => {
 	const layout = RenderServer.render_state.create_UniformLayout();
 	layout.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 0, false);
 	return layout;
 });
 
-const PureColorMaterialSolidPipelineCacheSet = new RefCacher(() => {
+const PureColorMaterial3DSolidPipelineCacheSet = new RefCacher(() => {
 	const pipeline_cache_set = RenderServerRenderMaterial.create_PipelineCacheSet(
 		// attributes
 		[
@@ -53,7 +53,7 @@ const PureColorMaterialSolidPipelineCacheSet = new RefCacher(() => {
 	var color = mat_uniform.color * vary.color;`,
 		// custom
 		undefined,
-		PureColorMaterialUniformLayout.get(),
+		PureColorMaterial3DUniformLayout.get(),
 		RenderServerGeometryAttributeLayout,
 		{
 			builtin_func: {
@@ -64,7 +64,7 @@ const PureColorMaterialSolidPipelineCacheSet = new RefCacher(() => {
 	return pipeline_cache_set;
 });
 
-export class PureColorMaterialResource extends MaterialResource {
+export class PureColorMaterial3DResource extends MaterialResource {
 
 	static UniformMemoryLayout = WebGPURenderState.RenderStateMemoryLayout({
 		type: 'struct',
@@ -73,9 +73,9 @@ export class PureColorMaterialResource extends MaterialResource {
 		],
 	} as const);
 
-	private readonly uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(PureColorMaterialUniformLayout.get()).expect());
-	private readonly uniform_buffer_ref = new ReadonlyRef(RenderServer.render_state.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, PureColorMaterialResource.UniformMemoryLayout.size, false).expect());
-	private readonly uniform_array_buffer = new ArrayBuffer(PureColorMaterialResource.UniformMemoryLayout.size);
+	private readonly uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(PureColorMaterial3DUniformLayout.get()).expect());
+	private readonly uniform_buffer_ref = new ReadonlyRef(RenderServer.render_state.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, PureColorMaterial3DResource.UniformMemoryLayout.size, false).expect());
+	private readonly uniform_array_buffer = new ArrayBuffer(PureColorMaterial3DResource.UniformMemoryLayout.size);
 
 	private _color = Vector4.create(1.0, 1.0, 1.0, 1.0);
 	public get color() { return this._color.clone(); }
@@ -91,7 +91,7 @@ export class PureColorMaterialResource extends MaterialResource {
 		super();
 		this.uniform_group_ref.expect.set_BufferUniform(0, this.uniform_buffer_ref.expect);
 		this.render_server_material.add_UniformBuffer(this.uniform_buffer_ref.expect, this.uniform_array_buffer);
-		PureColorMaterialSolidPipelineCacheSet.get().set_RenderServerMaterialPipelineCaches(this.render_server_material, this.uniform_group_ref.expect);
+		PureColorMaterial3DSolidPipelineCacheSet.get().set_RenderServerMaterialPipelineCaches(this.render_server_material, this.uniform_group_ref.expect);
 		this.update_UniformBuffer();
 	}
 

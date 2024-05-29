@@ -14,7 +14,7 @@ import { RID, type Rid } from "../../Rid";
 import type { RenderServerGeometry } from "../../render_server/geometry/RenderServerGeometry";
 import type { RenderServerRenderMaterial } from "../../render_server/material/RenderServerRenderMaterial";
 import { WorldObject } from "../WorldObject";
-import type { Geometry3DResource } from "../../resources/geometry3d_resources/Geometry3DResource";
+import type { GeometryResource } from "../../resources/geometry_resources/GeometryResource";
 import type { SceneTree } from "../../SceneTree";
 import type { MaterialResource } from "../../resources/material_resources/MaterialResource";
 import type { RenderServerRenderer3DQueue } from "../../render_server/renderer3d/RenderServerRenderer3DQueue";
@@ -495,7 +495,7 @@ export class VisualWorld3D implements Disposable {
         this.meshes_map.delete(rid);
     }
 
-    public set_MeshGeometry(rid: Rid, geometry: Geometry3DResource | undefined) {
+    public set_MeshGeometry(rid: Rid, geometry: GeometryResource | undefined) {
         const instance = this.get_Mesh(rid);
         if (instance) {
             if (geometry === undefined) {
@@ -507,7 +507,7 @@ export class VisualWorld3D implements Disposable {
         }
     }
 
-    public set_MeshLodGeometry(rid: Rid, distance: number, geometry: Geometry3DResource | undefined) {
+    public set_MeshLodGeometry(rid: Rid, distance: number, geometry: GeometryResource | undefined) {
         const instance = this.get_Mesh(rid);
         if (instance) {
             if (geometry === undefined) {

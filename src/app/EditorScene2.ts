@@ -13,7 +13,7 @@ import { OrbitCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/OrbitCame
 import { BoxGeometry3DResource } from "@/system/engine/resources/geometry3d_resources/BoxGeometry3DResource";
 import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
 import { RenderServerRenderer3D } from "@/system/engine/render_server/renderer3d/RenderServerRenderer3D";
-import { TestMaterialResource } from "@/system/engine/resources/material_resources/TestMaterialResource";
+import { TestMaterial3DResource } from "@/system/engine/resources/material_resources/TestMaterial3DResource";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { OrthographicCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/OrthographicCamera3D";
 
@@ -23,10 +23,11 @@ import normal_image_url from 'res://normal_texture-0.png';
 
 import { ImageTexture2DResource } from "@/system/engine/resources/texture_resources/texture2d_resources/ImageTexture2DResource";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
-import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/MatcapMaterialResource";
+import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/MatcapMaterial3DResource";
 import { TorusGeometry3DResource } from "@/system/engine/resources/geometry3d_resources/TorusGeometry3DResource";
 import { WebGPURenderElementTextureSamplerCacheHash } from "@/system/sliverofstraw/render_element_object/texture_sampler/WebGPURenderElementTextureSamplerCache";
-import { PureColorMaterialResource } from "@/system/engine/resources/material_resources/PureColorMaterialResource";
+import { PolyLineGeometry3DResource } from "@/system/engine/resources/geometry3d_resources/polyline3d_resources/PolyLineGeometry3DResource";
+import { PureColorMaterial3DResource } from "@/system/engine/resources/material_resources/PureColorMaterial3DResource";
 
 const viewport_scale = 1;
 const bg_color = Color.create(0.25, 0.25, 0.25).linear_rgb;
@@ -106,7 +107,7 @@ export async function createEditor() {
 	const box_mat_test = new MatcapMaterialResource();
 	// box_mat_test.color = Vector4.create(0.55, 0.5, 0.7, 1.0);
 
-	const box_mat1 = new TestMaterialResource();
+	const box_mat1 = new TestMaterial3DResource();
 	box_mat1.color = Vector4.create(1.0, 1.0, 1.0, 1.0);
 	const mesh = new MeshInstance3D();
 	mesh.geometry = box_geo;
@@ -117,21 +118,21 @@ export async function createEditor() {
 	// mesh.render_queue = 1;
 	World.add_Child(mesh);
 
-	const pure = new PureColorMaterialResource();
+	const pure = new PureColorMaterial3DResource();
 	pure.color = Color.create(1.0, 1.0, 0.0, 0.5);
 	const mesh2 = new MeshInstance3D();
 	mesh2.geometry = box_geo;
-	const box_mat2 = new TestMaterialResource();
+	const box_mat2 = new TestMaterial3DResource();
 	box_mat2.color = Vector4.create(1.0, 1.0, 1.0, 0.5);
 	mesh2.material = pure; // box_mat2;
-	mesh2.render_queue = 1;
+	// mesh2.render_queue = 1;
 	mesh2.local_position = Vector3.create(200, 0, 0);
 	mesh2.local_scale = Vector3.create(100, 100, 100);
 	World.add_Child(mesh2);
 
 	const mesh3 = new MeshInstance3D();
 	mesh3.geometry = box_geo;
-	const box_mat3 = new TestMaterialResource();
+	const box_mat3 = new TestMaterial3DResource();
 	box_mat3.color = Vector4.create(0.0, 0.0, 1.0, 1);
 	mesh3.material = box_mat3;
 	mesh3.local_position = Vector3.create(400, 0, 100);
@@ -140,7 +141,7 @@ export async function createEditor() {
 
 	const mesh4 = new MeshInstance3D();
 	mesh4.geometry = box_geo;
-	const box_mat4 = new TestMaterialResource();
+	const box_mat4 = new TestMaterial3DResource();
 	box_mat4.color = Vector4.create(1.0, 1.0, 1.0, 0.75);
 	mesh4.material = box_mat4;
 	mesh4.local_position = Vector3.create(-200, 0, -100);
@@ -270,17 +271,17 @@ export async function createEditor() {
 		CompassViewportContainer.add_Child(CompassViewport);
 
 		const compass_box_geo = new BoxGeometry3DResource();
-		const compass_box_mat_0 = new PureColorMaterialResource();
+		const compass_box_mat_0 = new PureColorMaterial3DResource();
 		compass_box_mat_0.color = Color.color8code(0x365ff6ff);
-		const compass_box_mat_1 = new PureColorMaterialResource();
+		const compass_box_mat_1 = new PureColorMaterial3DResource();
 		compass_box_mat_1.color = Color.color8code(0x04b973ff);
-		const compass_box_mat_2 = new PureColorMaterialResource();
+		const compass_box_mat_2 = new PureColorMaterial3DResource();
 		compass_box_mat_2.color = Color.color8code(0xef4a56ff);
-		const compass_box_mat_0_n = new PureColorMaterialResource();
+		const compass_box_mat_0_n = new PureColorMaterial3DResource();
 		compass_box_mat_0_n.color = Color.color8code(0x365ff650);
-		const compass_box_mat_1_n = new PureColorMaterialResource();
+		const compass_box_mat_1_n = new PureColorMaterial3DResource();
 		compass_box_mat_1_n.color = Color.color8code(0x04b97350);
-		const compass_box_mat_2_n = new PureColorMaterialResource();
+		const compass_box_mat_2_n = new PureColorMaterial3DResource();
 		compass_box_mat_2_n.color = Color.color8code(0xef4a5650);
 		const mesh = new MeshInstance3D();
 		mesh.geometry = compass_box_geo;
@@ -309,6 +310,15 @@ export async function createEditor() {
 
 		EditorViewportContainer.add_Child(CompassViewportContainer);
 	}
+
+	const polyline = new MeshInstance3D();
+	const polyline_geo = new PolyLineGeometry3DResource();
+	const polyline_mat = new TestMaterial3DResource();
+	polyline.geometry = polyline_geo;
+	polyline.material = polyline_mat;
+	polyline.local_position = Vector3.create(0, 200, 0);
+	polyline.local_scale = Vector3.create(100, 100, 100);
+	World.add_Child(polyline);
 
 	return EditorSceneTree;
 }
