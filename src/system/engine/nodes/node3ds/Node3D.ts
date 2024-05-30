@@ -150,8 +150,6 @@ export class Node3D extends Node {
         }
     }
 
-    protected reset_transform_changed_in_physics: boolean = false;
-
     protected propagate_TransformChanged() {
         if (this.is_global_transform_dirty) return;
         for (const child of this.children) {
@@ -203,6 +201,27 @@ export class Node3D extends Node {
         this.is_global_visible_changed = true;
     }
 
+    //#region reset changed states
+
+    /**
+     * reset transform changed in InternalBeforeRender
+     */
+    protected reset_transform_changed_before_render: boolean = true;
+    /**
+     * reset transform changed in InternalAfterPhysicsProcess
+     */
+    protected reset_transform_changed_after_physics_process: boolean = false;
+    /**
+     * reset visible changed in InternalBeforeRender
+     */
+    protected reset_visible_changed_before_render: boolean = true;
+    /**
+     * reset visible changed in InternalAfterPhysicsProcess
+     */
+    protected reset_visible_changed_after_physics_process: boolean = false;
+
+    //#endregion
+
     public _notification(what: NodeNotification): void {
         switch (what) {
             case NodeNotification.Parented: {
@@ -219,12 +238,13 @@ export class Node3D extends Node {
                 break;
             }
             case NodeNotification.InternalBeforeRender: {
-                this.is_global_visible_changed = false;
-                if (!this.reset_transform_changed_in_physics) this.is_global_transform_changed = false;
+                if (this.reset_visible_changed_before_render) this.is_global_visible_changed = false;
+                if (this.reset_transform_changed_before_render) this.is_global_transform_changed = false;
                 break;
             }
             case NodeNotification.InternalAfterPhysicsProcess: {
-                if (this.reset_transform_changed_in_physics) this.is_global_transform_changed = false;
+                if (this.reset_visible_changed_after_physics_process) this.is_global_visible_changed = false;
+                if (this.reset_transform_changed_after_physics_process) this.is_global_transform_changed = false;
                 break;
             }
         }

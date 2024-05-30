@@ -2,6 +2,8 @@ export interface SignalBindOption {
     once?: boolean,
 }
 
+export type SignalEmitterListener<T extends SignalEmitter<any>> = T extends SignalEmitter<infer P> ? P : never;
+
 export class SignalEmitter<T extends (...args: any[]) => void> {
     private has_callbacks: boolean = false;
     private readonly callbacks: Set<T> = new Set();

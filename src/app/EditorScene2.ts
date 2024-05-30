@@ -31,6 +31,7 @@ import { WebGPURenderElementTextureSamplerCacheHash } from "@/system/sliverofstr
 import { PolyLineGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/polyline3d_resources/PolyLineGeometry3DResource";
 import { PureColorMaterial3DResource } from "@/system/engine/resources/material_resources/material3d_resources/PureColorMaterial3DResource";
 import { PolyLineMaterial3DResource } from "@/system/engine/resources/material_resources/material3d_resources/polyline3d/PolyLineMaterial3DResource";
+import type { SignalEmitterListener } from "@/system/utils/SignalEmitter";
 
 const viewport_scale = 1;
 const bg_color = Color.create(0.25, 0.25, 0.25).linear_rgb;
@@ -101,7 +102,16 @@ export async function createEditor() {
 
 	World.signal_input.connect((evt, prop) => {
 		if (!prop && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {
-			World.get_SceneTree()?.get_ActiveViewports()[0]?.emulate_InputEvent(new MouseButtonInputEvent().set_Button(MouseButton.WheelUp, true, false, false).set_Compose(true));
+			const EditorCamera = new OrbitCamera3D();
+			EditorViewport.add_Child(EditorCamera);
+			const func: SignalEmitterListener<typeof World.signal_input> = (evt, prop) => {
+				if (!prop && evt instanceof KeyInputEvent && evt.key === 'a' && evt.pressed) {
+					EditorCamera.queue_Free();
+					World.signal_input.disconnect(func);
+				}
+			}
+			World.signal_input.connect(func);
+			// World.get_SceneTree()?.get_ActiveViewports()[0]?.emulate_InputEvent(new MouseButtonInputEvent().set_Button(MouseButton.WheelUp, true, false, false).set_Compose(true));
 		}
 	});
 

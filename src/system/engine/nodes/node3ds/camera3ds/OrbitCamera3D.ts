@@ -15,6 +15,7 @@ import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { Camera3 } from "@/system/fivepebble/graphics/Camera3";
 import type { MouseInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseInputEvent";
 import { InterpolateTween, InterpolateTweenEasingType, InterpolateTweenTransitionType, MethodTweenAdaptor, PropertyTweenAdaptor, TweenParallel, type Tween } from "@/system/engine/Tween";
+import { ViewportCursorStyle } from "../../Node";
 
 export class OrbitCamera3D extends Node3D {
     public static readonly class_name: string = "OrbitCamera3D";
@@ -95,7 +96,7 @@ export class OrbitCamera3D extends Node3D {
             this._is_grabbing = is_grabbing;
             if (this._is_grabbing) {
                 this.get_SceneTree()?.get_Singleton(GrabbingSingleton)?.on_GrabStart();
-                this.get_Viewport()!.set_CursorStyle(this.rid, 'move');
+                this.get_Viewport()!.set_CursorStyle(this.rid, ViewportCursorStyle.Move);
             }
             else {
                 this.get_SceneTree()?.get_Singleton(GrabbingSingleton)?.on_GrabEnd();

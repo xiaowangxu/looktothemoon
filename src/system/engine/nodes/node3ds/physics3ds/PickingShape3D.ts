@@ -41,7 +41,8 @@ export class PickingShape3D extends Node3D {
 
     constructor() {
         super();
-        this.reset_transform_changed_in_physics = true;
+        this.reset_transform_changed_before_render = false;
+        this.reset_transform_changed_after_physics_process = true;
     }
 
     public _notification(what: NodeNotification): void {

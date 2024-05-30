@@ -35,6 +35,5 @@ export class PolyLineGeometry3DResource extends Geometry3DResource {
         this.point_end_buffer_view_ref.value = RenderServer.render_state.create_BufferView(this.point_buffer_ref.expect.buffer, 12).expect();
         this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Custom0, this.point_buffer_ref.expect.buffer);
         this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Custom1, this.point_end_buffer_view_ref.expect);
-        console.log(this.render_server_geometry);
     }
 }

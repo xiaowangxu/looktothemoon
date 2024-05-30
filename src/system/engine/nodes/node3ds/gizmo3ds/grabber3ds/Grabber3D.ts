@@ -1,5 +1,5 @@
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
-import type { Viewport, CursorStyle } from "../../../Node";
+import type { Viewport, ViewportCursorStyle } from "../../../Node";
 import { FixSizeNode3D } from "../FixSizeNode3D";
 import { MaterialResource, type MaterialReadOnlyUniforms } from "@/system/engine/resources/material_resources/MaterialResource";
 import { RenderServerDevice } from "@/system/engine/render_server/RenderServer";
@@ -72,7 +72,7 @@ export class GrabberElement3D<T> extends FixSizeNode3D {
         throw new Error('abstract method');
     }
 
-    protected set_ViewportCursorStyle(viewport: Viewport, cursor_style: CursorStyle) {
+    protected set_ViewportCursorStyle(viewport: Viewport, cursor_style: ViewportCursorStyle) {
         viewport.set_CursorStyle(this.rid, cursor_style);
     }
 

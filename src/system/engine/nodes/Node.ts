@@ -156,13 +156,15 @@ export class Node extends ClassBase {
             child.propagate_Ready();
         }
         this.is_propagating--;
-        this._notification(NodeNotification.EnteredReady);
-        if (this.first_time_ready) {
-            this.first_time_ready = false;
-            // ready
-            this._notification(NodeNotification.Ready);
-            this._ready();
-            this.signal_ready.trigger();
+        if (this.is_inside_tree) {
+            this._notification(NodeNotification.EnteredReady);
+            if (this.first_time_ready) {
+                this.first_time_ready = false;
+                // ready
+                this._notification(NodeNotification.Ready);
+                this._ready();
+                this.signal_ready.trigger();
+            }
         }
     }
 
@@ -173,10 +175,12 @@ export class Node extends ClassBase {
         }
         this.is_propagating--;
         // process
-        this._notification(NodeNotification.Process);
-        if (!this.block_process) {
-            this._process(delta);
-            this.signal_process.trigger(delta);
+        if (this.is_inside_tree) {
+            this._notification(NodeNotification.Process);
+            if (!this.block_process) {
+                this._process(delta);
+                this.signal_process.trigger(delta);
+            }
         }
     }
 
@@ -187,7 +191,7 @@ export class Node extends ClassBase {
         }
         this.is_propagating--;
         // internal before process
-        this._notification(NodeNotification.InternalAfterProcess);
+        if (this.is_inside_tree) this._notification(NodeNotification.InternalAfterProcess);
     }
 
     public propagate_PhysicsProcess(delta: number) {
@@ -197,10 +201,12 @@ export class Node extends ClassBase {
         }
         this.is_propagating--;
         // physics process
-        this._notification(NodeNotification.PhysicsProcess);
-        if (!this.block_physics_process) {
-            this._physics_process(delta);
-            this.signal_physics_process.trigger(delta);
+        if (this.is_inside_tree) {
+            this._notification(NodeNotification.PhysicsProcess);
+            if (!this.block_physics_process) {
+                this._physics_process(delta);
+                this.signal_physics_process.trigger(delta);
+            }
         }
     }
 
@@ -211,7 +217,7 @@ export class Node extends ClassBase {
         }
         this.is_propagating--;
         // internal before process
-        this._notification(NodeNotification.InternalAfterPhysicsProcess);
+        if (this.is_inside_tree) this._notification(NodeNotification.InternalAfterPhysicsProcess);
     }
 
     public propagate_InternalBeforeRender(delta: number, redundant: boolean) {
@@ -411,11 +417,43 @@ export enum ViewportUpdateMode {
     Always, Never, Once,
 }
 
-export type CursorStyle = 'default' | 'none' | 'context-menu' | 'help' | 'pointer' | 'progress' | 'wait' |
-    'cell' | 'crosshair' | 'text' | 'vertical-text' | 'alias' | 'copy' | 'move' | 'no-drop' | 'not-allowed' | 'grab' |
-    'grabbing' | 'e-resize' | 'n-resize' | 'ne-resize' | 'nw-resize' | 's-resize' | 'se-resize' | 'sw-resize' |
-    'w-resize' | 'ew-resize' | 'ns-resize' | 'nesw-resize' | 'nwse-resize' | 'col-resize' | 'row-resize' | 'all-scroll' |
-    'zoom-in' | 'zoom-out';
+export enum ViewportCursorStyle {
+    Default = 'default',
+    None = 'none',
+    ContextMenu = 'context-menu',
+    Help = 'help',
+    Pointer = 'pointer',
+    Progress = 'progress',
+    Wait = 'wait',
+    Cell = 'cell',
+    Crosshair = 'crosshair',
+    Text = 'text',
+    TextVertical = 'vertical-text',
+    Alias = 'alias',
+    Copy = 'copy',
+    Move = 'move',
+    NoDrop = 'no-drop',
+    NotAllowed = 'not-allowed',
+    Grab = 'grab',
+    Grabbing = 'grabbing',
+    ResizeE = 'e-resize',
+    ResizeN = 'n-resize',
+    ResizeNE = 'ne-resize',
+    ResizeNW = 'nw-resize',
+    ResizeS = 's-resize',
+    ResizeSE = 'se-resize',
+    ResizeSW = 'sw-resize',
+    ResizeW = 'w-resize',
+    ResizeEW = 'ew-resize',
+    ResizeNS = 'ns-resize',
+    ResizeNESW = 'nesw-resize',
+    ResizeNWSE = 'nwse-resize',
+    ResizeCol = 'col-resize',
+    ResizeRow = 'row-resize',
+    ScrollAll = 'all-scroll',
+    ZoomIn = 'zoom-in',
+    ZoomOut = 'zoom-out'
+}
 
 export class Viewport extends Node {
 
@@ -547,9 +585,9 @@ export class Viewport extends Node {
 
     //#region style
 
-    private _cursor_style: CursorStyle = 'default';
-    public get cursor_style(): CursorStyle { return this._cursor_style; }
-    public set cursor_style(cursor_style: CursorStyle) {
+    private _cursor_style: ViewportCursorStyle = ViewportCursorStyle.Default;
+    public get cursor_style(): ViewportCursorStyle { return this._cursor_style; }
+    public set cursor_style(cursor_style: ViewportCursorStyle) {
         if (this._cursor_style !== cursor_style) {
             this._cursor_style = cursor_style;
             this.canvas.style.cursor = this._cursor_style;
@@ -557,9 +595,9 @@ export class Viewport extends Node {
     }
 
     private cursor_style_cache: Rid | undefined = undefined;
-    public set_CursorStyle(id: Rid, cursor_style: CursorStyle | undefined) {
-        cursor_style ??= 'default';
-        if (cursor_style === 'default') {
+    public set_CursorStyle(id: Rid, cursor_style: ViewportCursorStyle | undefined) {
+        cursor_style ??= ViewportCursorStyle.Default;
+        if (cursor_style === ViewportCursorStyle.Default) {
             if (this.cursor_style_cache === id) {
                 this.cursor_style = cursor_style;
             }
@@ -644,9 +682,9 @@ export class Viewport extends Node {
             return;
         }
         if (!node.block_input) {
-            node._input(event, true);
+            if (node.is_inside_tree) node._input(event, true);
             if (event.cancelled) return;
-            node.signal_input.trigger(event, true);
+            if (node.is_inside_tree) node.signal_input.trigger(event, true);
             if (event.cancelled) return;
         }
         (node as Viewport).is_propagating++;
@@ -656,18 +694,18 @@ export class Viewport extends Node {
         }
         (node as Viewport).is_propagating--;
         if (!node.block_input) {
-            node._input(event, false);
+            if (node.is_inside_tree) node._input(event, false);
             if (event.cancelled) return;
-            node.signal_input.trigger(event, false);
+            if (node.is_inside_tree) node.signal_input.trigger(event, false);
         }
     }
 
     private propagate_InputEvent(event: InputEvent, target: Viewport | undefined) {
         if (event.cancelled) return;
         if (!this.block_input) {
-            this._input(event, true);
+            if (this.is_inside_tree) this._input(event, true);
             if (event.cancelled) return;
-            this.signal_input.trigger(event, true);
+            if (this.is_inside_tree) this.signal_input.trigger(event, true);
             if (event.cancelled) return;
         }
         this.is_propagating++;
@@ -677,9 +715,9 @@ export class Viewport extends Node {
         }
         this.is_propagating--;
         if (!this.block_input) {
-            this._input(event, false);
+            if (this.is_inside_tree) this._input(event, false);
             if (event.cancelled) return;
-            this.signal_input.trigger(event, false);
+            if (this.is_inside_tree) this.signal_input.trigger(event, false);
         }
     }
 
@@ -702,16 +740,13 @@ export class Viewport extends Node {
     private actived_camera_3d: Camera3D[] = [];
     private camera_3d: Camera3D | undefined;
 
-    private a = 0;
     public set_ActiveCamera3D(camera: Camera3D) {
-        if (this.a++ > 10) throw new Error();
-        this.actived_camera_3d.push(camera);
         if (this.camera_3d !== camera) {
-            if (this.camera_3d !== undefined) {
-                this.camera_3d._current = false;
+            const idx = this.actived_camera_3d.indexOf(camera);
+            if (idx < 0) {
+                this.actived_camera_3d.push(camera);
             }
             this.camera_3d = camera;
-            this.camera_3d._current = true;
         }
     }
 
@@ -721,7 +756,6 @@ export class Viewport extends Node {
             this.actived_camera_3d.splice(idx, 1);
         }
         if (this.camera_3d === camera) {
-            this.camera_3d._current = false;
             this.camera_3d = this.actived_camera_3d.length > 0 ? this.actived_camera_3d[this.actived_camera_3d.length - 1] : undefined;
         }
     }

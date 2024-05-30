@@ -5,7 +5,7 @@ import { Node3D } from "../Node3D";
 export abstract class Camera3D extends Node3D {
     public static readonly class_name: string = "Camera3D";
 
-    public _current: boolean = true;
+    protected _current: boolean = true;
     public get current() { return this._current; }
     public set current(current: boolean) {
         if (this._current !== current) {
@@ -29,6 +29,12 @@ export abstract class Camera3D extends Node3D {
     }
 
     protected abstract on_MaskChanged(): void;
+
+    constructor() {
+        super();
+        this.reset_transform_changed_before_render = false;
+        this.reset_transform_changed_after_physics_process = false;
+    }
 
     public abstract get_Camera(): Camera3;
 
