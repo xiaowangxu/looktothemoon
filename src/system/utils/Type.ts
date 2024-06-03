@@ -40,6 +40,11 @@ export interface Equality<T> {
     equal(other: T): boolean;
 }
 
+export interface Indexed {
+    get index(): number;
+    set index(index: number);
+}
+
 enum Ordering {
     Less = -1, Equal = 0, Greater = 1
 }

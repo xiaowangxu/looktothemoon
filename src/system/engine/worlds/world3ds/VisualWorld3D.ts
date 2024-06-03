@@ -5,8 +5,8 @@ import type { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
-import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import type { Transformable } from "@/system/fivepebble/linear_algebra/VectorLike";
 import { Ref, RefMap } from "@/system/utils/RefCounted";
 import type { Cloneable, Disposable } from "@/system/utils/Type";
@@ -16,9 +16,12 @@ import { WorldObject } from "../WorldObject";
 import type { SceneTree } from "../../SceneTree";
 import type { MaterialResource } from "../../resources/material_resources/MaterialResource";
 import type { RenderServerRenderer3DQueue } from "../../render_server/renderer3d/RenderServerRenderer3DQueue";
-import { RenderServerLightData } from "../../render_server/light/RenderServerLightData";
+import { RenderServerLightData, RenderServerLightType } from "../../render_server/light/RenderServerLightData";
 import type { RenderServerGeometry3D } from "../../render_server/geometry/RenderServerGeometry3D";
 import type { Geometry3DResource } from "../../resources/geometry_resources/geometry3d_resources/Geometry3DResource";
+import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
+import { type Indexed } from "@/system/utils/Type";
+import { IndexedVec } from "@/system/structures/IndexedVec";
 
 export type Cullable = CameraFrustumLikeCullable<Matrix4, Vector3, Matrix3> & Cloneable<Cullable> & Transformable<Cullable, Vector4, Matrix4>;
 
@@ -207,188 +210,191 @@ export class VisualWorld3DMesh extends WorldObject {
     }
 }
 
-// export class VisualWorld3DLight extends WorldObject {
+export class VisualWorld3DLight extends WorldObject implements Indexed {
 
-//     static #const_forward_vector3 = Vector3.create(0, 0, -1);
-//     static #tmp_cullable_affine_transform_matrix4 = Matrix4.new;
-//     static #tmp_cullable_rotate_matrix3 = Matrix3.new;
-//     static #tmp_cullable_rotate_quaternion = Quaternion.new;
+    static readonly #const_forward_vector3 = Vector3.create(0, 0, -1);
+    static readonly #tmp_color_vector4: Vector4 = Vector4.new;
+    static readonly #tmp_cullable_affine_transform_matrix4 = Matrix4.new;
+    static readonly #tmp_cullable_rotate_matrix3 = Matrix3.new;
+    static readonly #tmp_cullable_rotate_quaternion = Quaternion.new;
 
-//     public type: RenderServerLightType = RenderServerLightType.SpotLight;
-//     public readonly position: Vector3 = new Vector3();
-//     public readonly direction: Vector3 = new Vector3(0, 0, -1);
-//     public readonly color: Vector3 = new Vector3(1, 1, 1);
-//     public intensity: number = 1.0;
-//     public attenuation: number = 2.0;
-//     public layer: number = 0xffffffff;
-//     public mask: number = 0xffffffff;
-//     public visible: boolean = true;
-//     public param_0: number = 0;
-//     public param_1: number = 0;
-//     public param_2: number = 0;
-//     public param_3: number = 0;
-//     public cast_shadow: boolean = false;
-//     public shadow_bias: number = 0;
-//     public shadow_normal_bias: number = 0;
-//     public shadow_opacity: number = 0;
-//     public shadows: Set<VisualWorld3DLightShadow> = new Set();
-//     public render_queue: number = 0;
+    //#region Indexed interface
 
-//     private cullable: Cullable | undefined = undefined;
-//     private cullable_override: Cullable | undefined = undefined;
-//     private is_cullable_empty: boolean = true;
-//     public cullable_enlargment: number = 0;
+    public index: number = -1;
 
-//     constructor(config: Config, rid: Rid) {
-//         super(config, rid);
-//     }
+    //#endregion
 
-//     public set_Type(type: RenderServerLightType) {
-//         this.type = type;
-//     }
+    public type: RenderServerLightType = RenderServerLightType.Spot;
+    public readonly position: Vector3 = Vector3.new;
+    public readonly direction: Vector3 = Vector3.create(0, 0, -1);
+    public readonly color: Vector3 = Vector3.create(1, 1, 1);
+    public intensity: number = 1.0;
+    public attenuation: number = 2.0;
+    public layer: number = 0xffffffff;
+    public mask: number = 0xffffffff;
+    public visible: boolean = true;
+    public param_0: number = 0;
+    public param_1: number = 0;
+    public param_2: number = 0;
+    public param_3: number = 0;
+    public cast_shadow: boolean = false;
+    public shadow_bias: number = 0;
+    public shadow_normal_bias: number = 0;
+    public shadow_opacity: number = 0;
+    // public shadows: Set<VisualWorld3DLightShadow> = new Set();
+    public render_queue: number = 0;
 
-//     public set_GlobalPositionDirection(position?: Vector3, direction?: Vector3) {
-//         if (position === undefined && direction === undefined) return;
-//         if (position) this.position.copy(position);
-//         if (direction) this.direction.copy(direction);
-//         this.update_Cullable();
-//     }
+    private cullable: Cullable | undefined = undefined;
+    private cullable_override: Cullable | undefined = undefined;
+    private is_cullable_empty: boolean = true;
+    public cullable_enlargment: number = 0;
 
-//     private update_Cullable() {
-//         if (this.cullable !== undefined) {
-//             this.cullable.affine_transform(this.cullable_override!,
-//                 VisualWorld3DLight.#tmp_cullable_affine_transform_matrix4.set_BasisPosition(
-//                     VisualWorld3DLight.#tmp_cullable_rotate_matrix3.set_Quaternion(
-//                         VisualWorld3DLight.#tmp_cullable_rotate_quaternion.set_Rotate(
-//                             VisualWorld3DLight.#const_forward_vector3,
-//                             this.direction
-//                         )
-//                     ),
-//                     this.position
-//                 )
-//             );
-//             this.is_cullable_empty = this.cullable.is_empty;
-//         }
-//     }
+    constructor(rid: Rid) {
+        super(rid);
+    }
 
-//     public set_Cullable(cullable: Cullable | undefined) {
-//         if (cullable === undefined) {
-//             if (this.cullable_override === undefined) return;
-//             this.cullable_override = undefined;
-//             this.cullable = undefined;
-//             this.is_cullable_empty = true;
-//         }
-//         else {
-//             this.cullable_override = cullable.clone();
-//             this.cullable = cullable.clone();
-//             this.is_cullable_empty = this.cullable.is_empty;
-//         }
-//         this.update_Cullable();
-//     }
+    public set_Type(type: RenderServerLightType) {
+        this.type = type;
+    }
 
-//     public set_CullableEnlargement(amount: number) {
-//         this.cullable_enlargment = Math.max(0, Math.min(65536, amount));
-//     }
+    public set_GlobalPositionDirection(position?: Vector3, direction?: Vector3) {
+        if (position === undefined && direction === undefined) return;
+        if (position) this.position.copy(position);
+        if (direction) this.direction.copy(direction);
+        this.update_Cullable();
+    }
 
-//     public set_Color(color: Vector3) {
-//         this.color.copy(color);
-//     }
+    private update_Cullable() {
+        if (this.cullable !== undefined) {
+            this.cullable.affine_transform(this.cullable_override!,
+                VisualWorld3DLight.#tmp_cullable_affine_transform_matrix4.set_BasisPosition(
+                    VisualWorld3DLight.#tmp_cullable_rotate_matrix3.set_Quaternion(
+                        VisualWorld3DLight.#tmp_cullable_rotate_quaternion.set_Rotate(
+                            VisualWorld3DLight.#const_forward_vector3,
+                            this.direction
+                        )
+                    ),
+                    this.position
+                )
+            );
+            this.is_cullable_empty = this.cullable.is_empty;
+        }
+    }
 
-//     public set_Intensity(intensity: number) {
-//         this.intensity = intensity;
-//     }
+    public set_Cullable(cullable: Cullable | undefined) {
+        if (cullable === undefined) {
+            if (this.cullable_override === undefined) return;
+            this.cullable_override = undefined;
+            this.cullable = undefined;
+            this.is_cullable_empty = true;
+        }
+        else {
+            this.cullable_override = cullable.clone();
+            this.cullable = cullable.clone();
+            this.is_cullable_empty = this.cullable.is_empty;
+        }
+        this.update_Cullable();
+    }
 
-//     public set_Attenuation(attenuation: number) {
-//         this.attenuation = attenuation;
-//     }
+    public set_CullableEnlargement(amount: number) {
+        this.cullable_enlargment = Math.max(0, Math.min(65536, amount));
+    }
 
-//     public set_Mask(mask: number) {
-//         this.mask = mask & 0xffffffff;
-//         for (const shadow of this.shadows) {
-//             shadow.set_Mask(this.mask);
-//         }
-//     }
+    public set_Color(color: Vector3) {
+        this.color.copy(color);
+    }
 
-//     public set_Layer(layer: number) {
-//         this.layer = layer & 0xffffffff;
-//     }
+    public set_Intensity(intensity: number) {
+        this.intensity = intensity;
+    }
 
-//     public set_RenderQueue(render_queue: number) {
-//         this.render_queue = render_queue;
-//     }
+    public set_Attenuation(attenuation: number) {
+        this.attenuation = attenuation;
+    }
 
-//     public set_Visible(visible: boolean) {
-//         this.visible = visible;
-//     }
+    public set_Mask(mask: number) {
+        this.mask = mask & 0xffffffff;
+        // for (const shadow of this.shadows) {
+        //     shadow.set_Mask(this.mask);
+        // }
+    }
 
-//     public set_Parameter0(val: number) {
-//         this.param_0 = val;
-//     }
+    public set_Layer(layer: number) {
+        this.layer = layer & 0xffffffff;
+    }
 
-//     public set_Parameter1(val: number) {
-//         this.param_1 = val;
-//     }
+    public set_RenderQueue(render_queue: number) {
+        this.render_queue = render_queue;
+    }
 
-//     public set_Parameter2(val: number) {
-//         this.param_2 = val;
-//     }
+    public set_Visible(visible: boolean) {
+        this.visible = visible;
+    }
 
-//     public set_Parameter3(val: number) {
-//         this.param_3 = val;
-//     }
+    public set_Parameter0(val: number) {
+        this.param_0 = val;
+    }
 
-//     public set_CastShadow(cast: boolean) {
-//         this.cast_shadow = cast;
-//     }
+    public set_Parameter1(val: number) {
+        this.param_1 = val;
+    }
 
-//     public add_Shadow(shadow: VisualWorld3DLightShadow) {
-//         shadow.light = this;
-//         shadow.set_Mask(this.layer);
-//         this.shadows.add(shadow);
-//     }
+    public set_Parameter2(val: number) {
+        this.param_2 = val;
+    }
 
-//     public remove_Shadow(shadow: VisualWorld3DLightShadow) {
-//         shadow.light = undefined;
-//         shadow.set_Mask(0);
-//         this.shadows.delete(shadow);
-//     }
+    public set_Parameter3(val: number) {
+        this.param_3 = val;
+    }
 
-//     public set_ShadowBias(bias: number) {
-//         this.shadow_bias = bias;
-//     }
+    public set_CastShadow(cast: boolean) {
+        this.cast_shadow = cast;
+    }
 
-//     public set_ShadowNormalBias(bias: number) {
-//         this.shadow_normal_bias = bias;
-//     }
+    // public add_Shadow(shadow: VisualWorld3DLightShadow) {
+    //     shadow.light = this;
+    //     shadow.set_Mask(this.layer);
+    //     this.shadows.add(shadow);
+    // }
 
-//     public set_ShadowOpacity(opacity: number) {
-//         this.shadow_opacity = opacity;
-//     }
+    // public remove_Shadow(shadow: VisualWorld3DLightShadow) {
+    //     shadow.light = undefined;
+    //     shadow.set_Mask(0);
+    //     this.shadows.delete(shadow);
+    // }
 
-//     // fill light data
+    public set_ShadowBias(bias: number) {
+        this.shadow_bias = bias;
+    }
 
-//     static readonly #color: Vector3 = new Vector3();
+    public set_ShadowNormalBias(bias: number) {
+        this.shadow_normal_bias = bias;
+    }
 
-//     public fill_LightData(lights_data: RenderServerLightsData, idx: number, frustum: Frustum3, camera: Camera3, base_size: Vector2): number {
-//         if (idx >= lights_data.max_light_count) return idx;
-//         if (this.cullable !== undefined && (this.is_cullable_empty || this.cullable.cull(camera, frustum, base_size, this.cullable_enlargment))) return idx - 1;
-//         const color = VisualWorld3DLight.#color;
-//         color.mult_Number(this.color, this.intensity);
-//         const data_stride = !this.cast_shadow ? 0 : this.shadows.size;
-//         lights_data.set_Light(idx, this.type, this.position, this.direction, color, this.attenuation, this.mask, this.param_0, this.param_1, this.param_2, this.param_3, this.shadow_bias, this.shadow_normal_bias, this.shadow_opacity, data_stride);
-//         if (data_stride > 0) {
-//             let _idx = idx;
-//             for (const shadow of this.shadows) {
-//                 shadow.fill_LightShadowData(lights_data, ++_idx);
-//             }
-//         }
-//         return idx + data_stride;
-//     }
+    public set_ShadowOpacity(opacity: number) {
+        this.shadow_opacity = opacity;
+    }
 
-//     public dispose(): void {
-//         this.shadows.clear();
-//     }
-// }
+    // fill light data
+
+
+    public update_LightData(lights_data: RenderServerLightData) {
+        const index = this.index;
+        const color = VisualWorld3DLight.#tmp_color_vector4;
+        color.set(this.color.x * this.intensity, this.color.y * this.intensity, this.color.z * this.intensity, 0);
+        lights_data.set_Data(
+            index,
+            this.position, this.direction, this.attenuation, color,
+            this.layer, this.mask, this.visible,
+            undefined, undefined, undefined, undefined, undefined, undefined,
+            this.param_0, this.param_1, this.param_2, this.param_3
+        );
+    }
+
+    public dispose(): void {
+        // this.shadows.clear();
+    }
+}
 
 // export enum LightShadowMapSize {
 //     S128, S256, S512, S1024, S2048
@@ -435,11 +441,13 @@ export class VisualWorld3DMesh extends WorldObject {
 export class VisualWorld3D implements Disposable {
 
     protected readonly meshes_map: Map<Rid, VisualWorld3DMesh> = new Map();
-    // protected readonly lights_map: Map<Rid, VisualWorld3DLight> = new Map();
+    protected readonly lights_map: Map<Rid, VisualWorld3DLight> = new Map();
+    protected readonly lights_indexed_vec: IndexedVec<VisualWorld3DLight> = new IndexedVec(1024);
+
     // protected readonly light_shadows_map: Map<Rid, VisualWorld3DLightShadow> = new Map();
 
     public get meshes() { return this.meshes_map.values(); }
-    // public get lights() { return this.lights_map.values(); }
+    public get lights() { return this.lights_map.values(); }
     // public get light_shadows() { return this.light_shadows_map.values(); }
 
     public get is_empty(): boolean {
@@ -873,15 +881,16 @@ export class VisualWorld3D implements Disposable {
         for (const mesh of this.meshes) {
             mesh.dispose();
         }
-        // for (const light of this.lights) {
-        //     light.dispose();
-        // }
+        for (const light of this.lights) {
+            light.dispose();
+        }
         this.render_server_light_data.dispose();
         // for (const light_shadow of this.light_shadows) {
         //     light_shadow.dispose();
         // }
         this.meshes_map.clear();
-        // this.lights_map.clear();
+        this.lights_map.clear();
+        this.lights_indexed_vec.clear();
         // this.sky_frame_buffer.clear();
         // this.sky_texture.clear();
         // this.shadows_texture.clear();

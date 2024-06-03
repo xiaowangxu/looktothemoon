@@ -7,6 +7,13 @@ import { RenderServer } from "../RenderServer";
 import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { Color } from "@/system/fivepebble/graphics/Color";
 
+export enum RenderServerLightType {
+    Ambient,
+    Directional,
+    Spot,
+    Point,
+}
+
 /**
  * LightData different in each VisualWorld3D
  */
@@ -17,9 +24,9 @@ export class RenderServerLightData implements Disposable {
         members: [
             // position vec3
             WebGPURenderStateBufferUniformType.Vector4,
-            // normal vec3, attenuation f32
+            // direction vec3, attenuation f32
             WebGPURenderStateBufferUniformType.Vector4,
-            // color vec3
+            // color vec3, perserved f32
             WebGPURenderStateBufferUniformType.Vector3,
             // layer u32
             WebGPURenderStateBufferUniformType.Uint,
@@ -57,30 +64,30 @@ export class RenderServerLightData implements Disposable {
 
     public set_Data(
         index: number,
-        position: Vector3, normal: Vector3, attenuation: number, color: Color,
+        position: Vector3, direction: Vector3, attenuation: number, color: Color,
         layer: number, mask: number, visible: boolean,
         shadow_0: number = 0, shadow_1: number = 0, shadow_2: number = 0, shadow_3: number = 0, shadow_4: number = 0, shadow_5: number = 0,
         param_0: number = 0, param_1: number = 0, param_2: number = 0, param_3: number = 0,
     ) {
         if (index >= this.length) return;
-        
+
         const float_array = new Float32Array(this.light_data_array_buffer, index * RenderServerLightData.LightDataUniformMemoryLayout.size, RenderServerLightData.#const_light_data_32_element_count);
         const uint_array = new Uint32Array(this.light_data_array_buffer, index * RenderServerLightData.LightDataUniformMemoryLayout.size, RenderServerLightData.#const_light_data_32_element_count);
-        
+
         // position vec3
         float_array[0] = position.x;
         float_array[1] = position.y;
         float_array[2] = position.z;
-        // normal vec3, attenuation f32
-        float_array[3] = normal.x;
-        float_array[4] = normal.y;
-        float_array[5] = normal.z;
+        // direction vec3, attenuation f32
+        float_array[3] = direction.x;
+        float_array[4] = direction.y;
+        float_array[5] = direction.z;
         float_array[6] = attenuation;
-        // color vec3
-        float_array[7] = color.x;
-        float_array[8] = color.y;
-        float_array[9] = color.z;
-        float_array[10] = color.z;
+        // color vec3, preserved f32
+        float_array[7] = color.r;
+        float_array[8] = color.g;
+        float_array[9] = color.b;
+        float_array[10] = color.a;
         // layer u32
         uint_array[11] = layer;
         // mask u32
@@ -94,7 +101,7 @@ export class RenderServerLightData implements Disposable {
         uint_array[17] = shadow_3;
         uint_array[18] = shadow_4;
         uint_array[19] = shadow_5;
-        // shadows
+        // params
         float_array[20] = param_0;
         float_array[21] = param_1;
         float_array[22] = param_2;

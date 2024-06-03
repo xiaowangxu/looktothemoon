@@ -22,16 +22,22 @@ export class Vec<T> {
             for (let i = 0; i < this._length; i++) {
                 array[i] = this.array[i];
             }
-            for (let i = this._length; i < this.capacity; i++) {
-                array[i] = undefined;
-            }
+            // for (let i = this._length; i < this.capacity; i++) {
+            //     array[i] = undefined;
+            // }
             this.array = array;
         }
     }
 
-    public index(index: number) {
+    public get(index: number) {
         if (index < 0 || index >= this._length) return undefined;
         return this.array[index];
+    }
+
+    public set(index: number, item: T): boolean {
+        if (index < 0 || index >= this._length) return false;
+        this.array[index] = item;
+        return true;
     }
 
     public push(item: T) {
@@ -48,13 +54,20 @@ export class Vec<T> {
 
     public swap(from: number, to: number) {
         if (from === to) return;
+        if (from < 0 || from >= this._length || to < 0 || to >= this._length) return;
         const tmp = this.array[from];
         this.array[from] = this.array[to];
         this.array[to] = tmp;
     }
 
     public swap_remove(index: number) {
+        if (index < 0 || index >= this._length) return;
         this.swap(index, this._length - 1);
-        this.pop();
+        return this.pop();
+    }
+
+    public clear(capacity: number = 0) {
+        this._capacity = capacity;
+        this.array = new Array(capacity).fill(undefined);
     }
 }
