@@ -32,6 +32,8 @@ import { PolyLineGeometry3DResource } from "@/system/engine/resources/geometry_r
 import { PureColorMaterial3DResource } from "@/system/engine/resources/material_resources/material3d_resources/PureColorMaterial3DResource";
 import { PolyLineMaterial3DResource } from "@/system/engine/resources/material_resources/material3d_resources/polyline3d/PolyLineMaterial3DResource";
 import type { SignalEmitterListener } from "@/system/utils/SignalEmitter";
+import { AmbientLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/AmbientLight3D";
+import { DirectionalLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/DirectionalLight3D";
 
 const viewport_scale = 1;
 const bg_color = Color.create(0.25, 0.25, 0.25).linear_rgb;
@@ -102,15 +104,15 @@ export async function createEditor() {
 
 	World.signal_input.connect((evt, prop) => {
 		if (!prop && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {
-			const EditorCamera = new OrbitCamera3D();
-			EditorViewport.add_Child(EditorCamera);
-			const func: SignalEmitterListener<typeof World.signal_input> = (evt, prop) => {
-				if (!prop && evt instanceof KeyInputEvent && evt.key === 'a' && evt.pressed) {
-					EditorCamera.queue_Free();
-					World.signal_input.disconnect(func);
-				}
-			}
-			World.signal_input.connect(func);
+			// const EditorCamera = new OrbitCamera3D();
+			// EditorViewport.add_Child(EditorCamera);
+			// const func: SignalEmitterListener<typeof World.signal_input> = (evt, prop) => {
+			// 	if (!prop && evt instanceof KeyInputEvent && evt.key === 'a' && evt.pressed) {
+			// 		EditorCamera.queue_Free();
+			// 		World.signal_input.disconnect(func);
+			// 	}
+			// }
+			// World.signal_input.connect(func);
 			// World.get_SceneTree()?.get_ActiveViewports()[0]?.emulate_InputEvent(new MouseButtonInputEvent().set_Button(MouseButton.WheelUp, true, false, false).set_Compose(true));
 		}
 	});
@@ -290,58 +292,58 @@ export async function createEditor() {
 	// 	World.add_Child(mesh);
 	// }
 
-	{
-		// compass
-		// viewport 0
-		const CompassViewportContainer = new ViewportDomContainer();
-		CompassViewportContainer.dom = (document.querySelector('#compass-viewport') ?? undefined) as HTMLElement;
-		const CompassViewport = new Viewport();
-		CompassViewport.scale = 1.5;
-		CompassViewport.world_3d = new World3D();
-		CompassViewport.renderer_3d = new RenderServerRenderer3D(6, 6, 6, 6);
-		CompassViewport.background = false;
-		CompassViewportContainer.add_Child(CompassViewport);
+	// {
+	// 	// compass
+	// 	// viewport 0
+	// 	const CompassViewportContainer = new ViewportDomContainer();
+	// 	CompassViewportContainer.dom = (document.querySelector('#compass-viewport') ?? undefined) as HTMLElement;
+	// 	const CompassViewport = new Viewport();
+	// 	CompassViewport.scale = 1.5;
+	// 	CompassViewport.world_3d = new World3D();
+	// 	CompassViewport.renderer_3d = new RenderServerRenderer3D(6, 6, 6, 6);
+	// 	CompassViewport.background = false;
+	// 	CompassViewportContainer.add_Child(CompassViewport);
 
-		const compass_box_geo = new BoxGeometry3DResource();
-		const compass_box_mat_0 = new PureColorMaterial3DResource();
-		compass_box_mat_0.color = Color.color8code(0x365ff6ff);
-		const compass_box_mat_1 = new PureColorMaterial3DResource();
-		compass_box_mat_1.color = Color.color8code(0x04b973ff);
-		const compass_box_mat_2 = new PureColorMaterial3DResource();
-		compass_box_mat_2.color = Color.color8code(0xef4a56ff);
-		const compass_box_mat_0_n = new PureColorMaterial3DResource();
-		compass_box_mat_0_n.color = Color.color8code(0x365ff650);
-		const compass_box_mat_1_n = new PureColorMaterial3DResource();
-		compass_box_mat_1_n.color = Color.color8code(0x04b97350);
-		const compass_box_mat_2_n = new PureColorMaterial3DResource();
-		compass_box_mat_2_n.color = Color.color8code(0xef4a5650);
-		const mesh = new MeshInstance3D();
-		mesh.geometry = compass_box_geo;
-		mesh.set_SurfaceMaterial(2, compass_box_mat_0);
-		mesh.set_SurfaceMaterial(0, compass_box_mat_1);
-		mesh.set_SurfaceMaterial(4, compass_box_mat_2);
-		mesh.set_SurfaceMaterial(3, compass_box_mat_0_n);
-		mesh.set_SurfaceMaterial(1, compass_box_mat_1_n);
-		mesh.set_SurfaceMaterial(5, compass_box_mat_2_n);
-		CompassViewport.add_Child(mesh);
+	// 	const compass_box_geo = new BoxGeometry3DResource();
+	// 	const compass_box_mat_0 = new PureColorMaterial3DResource();
+	// 	compass_box_mat_0.color = Color.color8code(0x365ff6ff);
+	// 	const compass_box_mat_1 = new PureColorMaterial3DResource();
+	// 	compass_box_mat_1.color = Color.color8code(0x04b973ff);
+	// 	const compass_box_mat_2 = new PureColorMaterial3DResource();
+	// 	compass_box_mat_2.color = Color.color8code(0xef4a56ff);
+	// 	const compass_box_mat_0_n = new PureColorMaterial3DResource();
+	// 	compass_box_mat_0_n.color = Color.color8code(0x365ff650);
+	// 	const compass_box_mat_1_n = new PureColorMaterial3DResource();
+	// 	compass_box_mat_1_n.color = Color.color8code(0x04b97350);
+	// 	const compass_box_mat_2_n = new PureColorMaterial3DResource();
+	// 	compass_box_mat_2_n.color = Color.color8code(0xef4a5650);
+	// 	const mesh = new MeshInstance3D();
+	// 	mesh.geometry = compass_box_geo;
+	// 	mesh.set_SurfaceMaterial(2, compass_box_mat_0);
+	// 	mesh.set_SurfaceMaterial(0, compass_box_mat_1);
+	// 	mesh.set_SurfaceMaterial(4, compass_box_mat_2);
+	// 	mesh.set_SurfaceMaterial(3, compass_box_mat_0_n);
+	// 	mesh.set_SurfaceMaterial(1, compass_box_mat_1_n);
+	// 	mesh.set_SurfaceMaterial(5, compass_box_mat_2_n);
+	// 	CompassViewport.add_Child(mesh);
 
-		const CompassCamera = new OrthographicCamera3D();
-		CompassCamera.zoom = 0.45;
-		CompassCamera.local_position = Vector3.create(0, 0, 10);
-		CompassViewport.add_Child(CompassCamera);
+	// 	const CompassCamera = new OrthographicCamera3D();
+	// 	CompassCamera.zoom = 0.45;
+	// 	CompassCamera.local_position = Vector3.create(0, 0, 10);
+	// 	CompassViewport.add_Child(CompassCamera);
 
-		CompassViewport.signal_process.connect(() => {
-			const camera = CompassViewport.get_SceneTree()?.get_ActiveViewports()[0]?.get_Camera3D();
-			if (camera !== undefined) {
-				CompassCamera.local_rotation = camera.global_rotation;
-				const dir = CompassCamera.to_Global(Vector3.create(0, 0, -1), Vector3.new);
-				dir.direction_to(dir, CompassCamera.global_position);
-				CompassCamera.local_position = dir;
-			}
-		});
+	// 	CompassViewport.signal_process.connect(() => {
+	// 		const camera = CompassViewport.get_SceneTree()?.get_ActiveViewports()[0]?.get_Camera3D();
+	// 		if (camera !== undefined) {
+	// 			CompassCamera.local_rotation = camera.global_rotation;
+	// 			const dir = CompassCamera.to_Global(Vector3.create(0, 0, -1), Vector3.new);
+	// 			dir.direction_to(dir, CompassCamera.global_position);
+	// 			CompassCamera.local_position = dir;
+	// 		}
+	// 	});
 
-		EditorViewportContainer.add_Child(CompassViewportContainer);
-	}
+	// 	EditorViewportContainer.add_Child(CompassViewportContainer);
+	// }
 
 	const polyline = new MeshInstance3D();
 	const polyline_geo = new PolyLineGeometry3DResource();
@@ -352,6 +354,19 @@ export async function createEditor() {
 	polyline.local_position = Vector3.create(400, 0, 100);
 	polyline.local_scale = Vector3.create(100, 100, 100);
 	World.add_Child(polyline);
+
+	const light1 = new AmbientLight3D();
+	World.add_Child(light1);
+	const light2 = new DirectionalLight3D();
+	World.add_Child(light2);
+	// const light2 = new AmbientLight3D();
+	// World.add_Child(light2);
+
+	// World.signal_input.connect((evt, prop) => {
+	// 	if (!prop && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {
+	// 		light1.color = Color.create(1, 0, 0).get_PlainColor();
+	// 	}
+	// });
 
 	return EditorSceneTree;
 }

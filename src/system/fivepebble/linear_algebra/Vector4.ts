@@ -1,5 +1,6 @@
 import { lerp } from "../Scalar";
 import type { Matrix4 } from "./Matrix4";
+import { Vector3 } from "./Vector3";
 import type { VectorLike } from "./VectorLike";
 
 export class Vector4 implements VectorLike<Vector4, Matrix4> {
@@ -27,6 +28,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
     public set g(val: number) { this.y = val; }
     public set b(val: number) { this.z = val; }
     public set a(val: number) { this.w = val; }
+    public get_PlainColor(mult_alpha: boolean = false) { return new Vector3(this.x * this.w, this.y * this.w, this.z * this.w); }
 
     get dimension(): number { return 4; }
     get array(): number[] { return [this.x, this.y, this.z, this.w]; }

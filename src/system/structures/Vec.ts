@@ -1,3 +1,24 @@
+class VecIterator<T> implements Iterator<T> {
+
+    protected array: T[];
+
+    protected length: number;
+    protected current: number = 0;
+
+    constructor(array: T[], length: number, base: number = 0) {
+        this.array = array;
+        this.length = length;
+        this.current = base;
+    }
+
+    next(): IteratorResult<T, T> {
+        const value = this.array[this.current];
+        const done = this.current >= this.length;
+        this.current++;
+        return { value, done };
+    }
+}
+
 export class Vec<T> {
 
     protected array: (T | undefined)[];
@@ -9,6 +30,9 @@ export class Vec<T> {
     public get capacity() { return this._capacity; }
 
     public get is_empty() { return this._length <= 0; }
+
+
+    [Symbol.iterator]() { return new VecIterator<T>(this.array as T[], this.length); }
 
     constructor(capacity: number) {
         this._capacity = capacity;

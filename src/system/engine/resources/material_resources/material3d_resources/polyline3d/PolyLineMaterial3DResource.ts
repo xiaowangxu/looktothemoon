@@ -261,7 +261,7 @@ export class PolyLineMaterial3DResource extends MaterialResource {
         float32array0[1] = this._color.y;
         float32array0[2] = this._color.z;
         float32array0[3] = this._color.w;
-        float32array0[4] = 3;
+        float32array0[4] = 2;
         this.render_server_material.trigger_UniformBufferChange(0);
     }
 

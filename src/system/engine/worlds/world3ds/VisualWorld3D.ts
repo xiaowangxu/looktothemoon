@@ -218,6 +218,8 @@ export class VisualWorld3DLight extends WorldObject implements Indexed {
     static readonly #tmp_cullable_rotate_matrix3 = Matrix3.new;
     static readonly #tmp_cullable_rotate_quaternion = Quaternion.new;
 
+    protected changed: boolean = true;
+
     //#region Indexed interface
 
     public index: number = -1;
@@ -233,16 +235,17 @@ export class VisualWorld3DLight extends WorldObject implements Indexed {
     public layer: number = 0xffffffff;
     public mask: number = 0xffffffff;
     public visible: boolean = true;
+    public render_queue: number = 0;
     public param_0: number = 0;
     public param_1: number = 0;
     public param_2: number = 0;
     public param_3: number = 0;
-    public cast_shadow: boolean = false;
-    public shadow_bias: number = 0;
-    public shadow_normal_bias: number = 0;
-    public shadow_opacity: number = 0;
+
+    // public cast_shadow: boolean = false;
+    // public shadow_bias: number = 0;
+    // public shadow_normal_bias: number = 0;
+    // public shadow_opacity: number = 0;
     // public shadows: Set<VisualWorld3DLightShadow> = new Set();
-    public render_queue: number = 0;
 
     private cullable: Cullable | undefined = undefined;
     private cullable_override: Cullable | undefined = undefined;
@@ -255,6 +258,7 @@ export class VisualWorld3DLight extends WorldObject implements Indexed {
 
     public set_Type(type: RenderServerLightType) {
         this.type = type;
+        this.changed = true;
     }
 
     public set_GlobalPositionDirection(position?: Vector3, direction?: Vector3) {
@@ -262,6 +266,7 @@ export class VisualWorld3DLight extends WorldObject implements Indexed {
         if (position) this.position.copy(position);
         if (direction) this.direction.copy(direction);
         this.update_Cullable();
+        this.changed = true;
     }
 
     private update_Cullable() {
@@ -302,14 +307,17 @@ export class VisualWorld3DLight extends WorldObject implements Indexed {
 
     public set_Color(color: Vector3) {
         this.color.copy(color);
+        this.changed = true;
     }
 
     public set_Intensity(intensity: number) {
         this.intensity = intensity;
+        this.changed = true;
     }
 
     public set_Attenuation(attenuation: number) {
         this.attenuation = attenuation;
+        this.changed = true;
     }
 
     public set_Mask(mask: number) {
@@ -317,39 +325,48 @@ export class VisualWorld3DLight extends WorldObject implements Indexed {
         // for (const shadow of this.shadows) {
         //     shadow.set_Mask(this.mask);
         // }
+        this.changed = true;
     }
 
     public set_Layer(layer: number) {
         this.layer = layer & 0xffffffff;
+        this.changed = true;
     }
 
     public set_RenderQueue(render_queue: number) {
         this.render_queue = render_queue;
+        this.changed = true;
     }
 
     public set_Visible(visible: boolean) {
         this.visible = visible;
+        this.changed = true;
     }
 
     public set_Parameter0(val: number) {
         this.param_0 = val;
+        this.changed = true;
     }
 
     public set_Parameter1(val: number) {
         this.param_1 = val;
+        this.changed = true;
     }
 
     public set_Parameter2(val: number) {
         this.param_2 = val;
+        this.changed = true;
     }
 
     public set_Parameter3(val: number) {
         this.param_3 = val;
+        this.changed = true;
     }
 
-    public set_CastShadow(cast: boolean) {
-        this.cast_shadow = cast;
-    }
+    // public set_CastShadow(cast: boolean) {
+    //     this.cast_shadow = cast;
+    //     this.changed = true;
+    // }
 
     // public add_Shadow(shadow: VisualWorld3DLightShadow) {
     //     shadow.light = this;
@@ -363,32 +380,41 @@ export class VisualWorld3DLight extends WorldObject implements Indexed {
     //     this.shadows.delete(shadow);
     // }
 
-    public set_ShadowBias(bias: number) {
-        this.shadow_bias = bias;
-    }
+    // public set_ShadowBias(bias: number) {
+    //     this.shadow_bias = bias;
+    //     this.changed = true;
+    // }
 
-    public set_ShadowNormalBias(bias: number) {
-        this.shadow_normal_bias = bias;
-    }
+    // public set_ShadowNormalBias(bias: number) {
+    //     this.shadow_normal_bias = bias;
+    //     this.changed = true;
+    // }
 
-    public set_ShadowOpacity(opacity: number) {
-        this.shadow_opacity = opacity;
-    }
+    // public set_ShadowOpacity(opacity: number) {
+    //     this.shadow_opacity = opacity;
+    //     this.changed = true;
+    // }
 
     // fill light data
 
+    public trigger_Changed() {
+        this.changed = true;
+    }
 
     public update_LightData(lights_data: RenderServerLightData) {
+        if (!this.changed) return;
+        // console.log("this.changed");
         const index = this.index;
         const color = VisualWorld3DLight.#tmp_color_vector4;
         color.set(this.color.x * this.intensity, this.color.y * this.intensity, this.color.z * this.intensity, 0);
         lights_data.set_Data(
-            index,
+            index, this.type,
             this.position, this.direction, this.attenuation, color,
-            this.layer, this.mask, this.visible,
+            this.layer, this.mask, this.visible, this.render_queue,
             undefined, undefined, undefined, undefined, undefined, undefined,
             this.param_0, this.param_1, this.param_2, this.param_3
         );
+        this.changed = false;
     }
 
     public dispose(): void {
@@ -456,6 +482,10 @@ export class VisualWorld3D implements Disposable {
     }
 
     public trigger_BeforeRender(scene_tree: SceneTree) {
+        this.render_server_light_data.set_Length(this.get_LightCount());
+        for (const light of this.lights_indexed_vec) {
+            light.update_LightData(this.render_server_light_data);
+        }
         this.render_server_light_data.commit();
     }
 
@@ -609,152 +639,160 @@ export class VisualWorld3D implements Disposable {
 
     //#endregion
 
-    // //#region Light
+    //#region Light
 
     public readonly render_server_light_data = new RenderServerLightData();
 
-    // public create_Light(): Rid {
-    //     const rid = RID();
-    //     const light = new VisualWorld3DLight(this.config, rid);
-    //     this.lights_map.set(rid, light);
-    //     return rid;
-    // }
+    public create_Light(): Rid {
+        const rid = RID();
+        const light = new VisualWorld3DLight(rid);
+        this.lights_map.set(rid, light);
+        this.lights_indexed_vec.push(light);
+        return rid;
+    }
 
-    // protected light_getter_cache: [undefined | Rid, VisualWorld3DLight | undefined] = [undefined, undefined];
-    // protected set_LightGetterCache(rid: Rid, light: VisualWorld3DLight) {
-    //     this.light_getter_cache[0] = rid;
-    //     this.light_getter_cache[1] = light;
-    // }
-    // protected reset_LightGetterCache(rid: Rid) {
-    //     if (this.light_getter_cache[0] === rid) {
-    //         this.light_getter_cache[0] = undefined;
-    //         this.light_getter_cache[1] = undefined;
-    //     }
-    // }
-    // protected clear_LightGetterCache() {
-    //     this.light_getter_cache[0] = undefined;
-    //     this.light_getter_cache[1] = undefined;
-    // }
+    protected light_getter_cache: [undefined | Rid, VisualWorld3DLight | undefined] = [undefined, undefined];
+    protected set_LightGetterCache(rid: Rid, light: VisualWorld3DLight) {
+        this.light_getter_cache[0] = rid;
+        this.light_getter_cache[1] = light;
+    }
+    protected reset_LightGetterCache(rid: Rid) {
+        if (this.light_getter_cache[0] === rid) {
+            this.light_getter_cache[0] = undefined;
+            this.light_getter_cache[1] = undefined;
+        }
+    }
+    protected clear_LightGetterCache() {
+        this.light_getter_cache[0] = undefined;
+        this.light_getter_cache[1] = undefined;
+    }
 
-    // protected get_Light(rid: Rid): VisualWorld3DLight | undefined {
-    //     if (this.light_getter_cache[0] === rid) {
-    //         return this.light_getter_cache[1];
-    //     }
-    //     const light = this.lights_map.get(rid);
-    //     if (light !== undefined) {
-    //         this.set_LightGetterCache(rid, light);
-    //     }
-    //     return light;
-    // }
+    protected get_Light(rid: Rid): VisualWorld3DLight | undefined {
+        if (this.light_getter_cache[0] === rid) {
+            return this.light_getter_cache[1];
+        }
+        const light = this.lights_map.get(rid);
+        if (light !== undefined) {
+            this.set_LightGetterCache(rid, light);
+        }
+        return light;
+    }
 
-    // public free_Light(rid: Rid) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance === undefined) return;
-    //     instance.dispose();
-    //     this.reset_LightGetterCache(rid);
-    //     this.lights_map.delete(rid);
-    // }
+    protected get_LightCount() {
+        return this.lights_indexed_vec.length;
+    }
 
-    // public set_LightType(rid: Rid, type: RenderServerLightType) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance) {
-    //         instance.set_Type(type);
-    //     }
-    // }
+    public free_Light(rid: Rid) {
+        const instance = this.get_Light(rid);
+        if (instance === undefined) return;
+        const index = instance.index;
+        instance.dispose();
+        this.reset_LightGetterCache(rid);
+        this.lights_map.delete(rid);
+        const replace_instance = this.lights_indexed_vec.swap_remove(index);
+        replace_instance?.trigger_Changed();
+    }
 
-    // public set_LightGlobalPositionDirection(rid: Rid, position?: Vector3, direction?: Vector3) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance) {
-    //         instance.set_GlobalPositionDirection(position, direction);
-    //     }
-    // }
+    public set_LightType(rid: Rid, type: RenderServerLightType) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Type(type);
+        }
+    }
 
-    // public set_LightColor(rid: Rid, color: Vector3) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance) {
-    //         instance.set_Color(color);
-    //     }
-    // }
+    public set_LightGlobalPositionDirection(rid: Rid, position?: Vector3, direction?: Vector3) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_GlobalPositionDirection(position, direction);
+        }
+    }
 
-    // public set_LightIntensity(rid: Rid, intensity: number) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance) {
-    //         instance.set_Intensity(intensity);
-    //     }
-    // }
+    public set_LightColor(rid: Rid, color: Vector3) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Color(color);
+        }
+    }
 
-    // public set_LightAttenuation(rid: Rid, attenuation: number) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance) {
-    //         instance.set_Attenuation(attenuation);
-    //     }
-    // }
+    public set_LightIntensity(rid: Rid, intensity: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Intensity(intensity);
+        }
+    }
 
-    // public set_LightLayer(rid: Rid, layer: number) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance) {
-    //         instance.set_Layer(layer);
-    //     }
-    // }
+    public set_LightAttenuation(rid: Rid, attenuation: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Attenuation(attenuation);
+        }
+    }
 
-    // public set_LightMask(rid: Rid, mask: number) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance) {
-    //         instance.set_Mask(mask);
-    //     }
-    // }
+    public set_LightLayer(rid: Rid, layer: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Layer(layer);
+        }
+    }
 
-    // public set_LightRenderQueue(rid: Rid, queue: number) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance) {
-    //         instance.set_RenderQueue(queue);
-    //     }
-    // }
+    public set_LightMask(rid: Rid, mask: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Mask(mask);
+        }
+    }
 
-    // public set_LightVisibility(rid: Rid, visible: boolean) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance) {
-    //         instance.set_Visible(visible);
-    //     }
-    // }
+    public set_LightRenderQueue(rid: Rid, queue: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_RenderQueue(queue);
+        }
+    }
 
-    // public set_LightParameters(rid: Rid, val0?: number, val1?: number, val2?: number, val3?: number) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance) {
-    //         if (val0 !== undefined) instance.set_Parameter0(val0);
-    //         if (val1 !== undefined) instance.set_Parameter1(val1);
-    //         if (val2 !== undefined) instance.set_Parameter2(val2);
-    //         if (val3 !== undefined) instance.set_Parameter3(val3);
-    //     }
-    // }
+    public set_LightVisibility(rid: Rid, visible: boolean) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Visible(visible);
+        }
+    }
 
-    // public set_LightParameter0(rid: Rid, val: number) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance) {
-    //         instance.set_Parameter0(val);
-    //     }
-    // }
+    public set_LightParameters(rid: Rid, val0?: number, val1?: number, val2?: number, val3?: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            if (val0 !== undefined) instance.set_Parameter0(val0);
+            if (val1 !== undefined) instance.set_Parameter1(val1);
+            if (val2 !== undefined) instance.set_Parameter2(val2);
+            if (val3 !== undefined) instance.set_Parameter3(val3);
+        }
+    }
 
-    // public set_LightParameter1(rid: Rid, val: number) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance) {
-    //         instance.set_Parameter1(val);
-    //     }
-    // }
+    public set_LightParameter0(rid: Rid, val: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Parameter0(val);
+        }
+    }
 
-    // public set_LightParameter2(rid: Rid, val: number) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance) {
-    //         instance.set_Parameter2(val);
-    //     }
-    // }
+    public set_LightParameter1(rid: Rid, val: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Parameter1(val);
+        }
+    }
 
-    // public set_LightParameter3(rid: Rid, val: number) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance) {
-    //         instance.set_Parameter3(val);
-    //     }
-    // }
+    public set_LightParameter2(rid: Rid, val: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Parameter2(val);
+        }
+    }
+
+    public set_LightParameter3(rid: Rid, val: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Parameter3(val);
+        }
+    }
 
     // public set_LightShadowBias(rid: Rid, bias: number) {
     //     const instance = this.get_Light(rid);
@@ -800,21 +838,21 @@ export class VisualWorld3D implements Disposable {
     //     }
     // }
 
-    // public set_LightCullable(rid: Rid, cullable: Cullable | undefined) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance) {
-    //         instance.set_Cullable(cullable);
-    //     }
-    // }
+    public set_LightCullable(rid: Rid, cullable: Cullable | undefined) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_Cullable(cullable);
+        }
+    }
 
-    // public set_LightCullableEnlargment(rid: Rid, amount: number) {
-    //     const instance = this.get_Light(rid);
-    //     if (instance) {
-    //         instance.set_CullableEnlargement(amount);
-    //     }
-    // }
+    public set_LightCullableEnlargment(rid: Rid, amount: number) {
+        const instance = this.get_Light(rid);
+        if (instance) {
+            instance.set_CullableEnlargement(amount);
+        }
+    }
 
-    // //#endregion
+    //#endregion
 
     // //#region LightShadow
 

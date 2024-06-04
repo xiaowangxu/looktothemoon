@@ -1,7 +1,7 @@
 import type { Rid } from "@/system/engine/Rid";
 import { LightInstance3D } from "./LightInstance3D";
 import { NodeNotification } from "../../../Node";
-import { RenderServerLightType } from "@/system/engine/render_server/RenderServerLightData";
+import { RenderServerLightType } from "@/system/engine/render_server/light/RenderServerLightData";
 
 export class AmbientLight3D extends LightInstance3D {
 
@@ -70,7 +70,7 @@ export class AmbientLight3D extends LightInstance3D {
                     const visual_world = this.visual_world;
                     if (visual_world !== undefined) {
                         this.light_rid = visual_world.create_Light();
-                        visual_world.set_LightType(this.light_rid, RenderServerLightType.AmbientLight);
+                        visual_world.set_LightType(this.light_rid, RenderServerLightType.Ambient);
                         visual_world.set_LightColor(this.light_rid, this._color);
                         visual_world.set_LightIntensity(this.light_rid, this._intensity);
                         visual_world.set_LightLayer(this.light_rid, this._layer);

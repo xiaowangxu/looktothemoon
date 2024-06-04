@@ -32,13 +32,10 @@ export class SceneTree {
     public readonly signal_after_loop: SignalEmitter<() => void> = new SignalEmitter();
 
     private readonly tween_manager: TweenManager = new TweenManager();
-
     private readonly singletions: Map<string, Singletion> = new Map();
-
     private readonly viewports: Set<Viewport> = new Set();
-
+    private readonly sorted_viewports: Viewport[] = [];
     private readonly linked_trees: Set<SceneTree> = new Set();
-
     private readonly node_queued_free: Set<Node> = new Set();
 
     constructor(root: Node) {
@@ -69,27 +66,19 @@ export class SceneTree {
 
         const world_before_render_triggered = SceneTree.world_before_render_triggered;
         world_before_render_triggered.clear();
-        for (const viewport of this.viewports) {
+        let redundant_before_render = false;
+        for (const viewport of this.sorted_viewports) {
+            this.current_viewport = viewport;
+            // update viewport size / setup camera etc.
             viewport.trigger_BeforeRender();
+            // scene tree 
+            this.root.propagate_InternalBeforeRender(this.delta, redundant_before_render);
+            // world trigger update lights / shadow / visual instance etc.
             const world = viewport.world_3d;
             if (world !== undefined && !world_before_render_triggered.has(world.rid)) {
-                world.trigger_BeforeRender(this);
                 world_before_render_triggered.add(world.rid);
+                world.trigger_BeforeRender(this);
             }
-        }
-
-        let redundant_before_render = false;
-        for (const viewport of [...this.viewports].sort((a, b) => {
-            const a_p = a.render_priority, b_p = b.render_priority;
-            if (a_p < b_p) return -1;
-            if (a_p > b_p) return 1;
-            const a_m = a.get_Input().is_mouse_inside, b_m = b.get_Input().is_mouse_inside;
-            if (a_m) return 1;
-            if (b_m) return -1;
-            return 0;
-        })) {
-            this.current_viewport = viewport;
-            this.root.propagate_InternalBeforeRender(this.delta, redundant_before_render);
             viewport.render();
             this.current_viewport = undefined;
             redundant_before_render = true;
@@ -103,7 +92,7 @@ export class SceneTree {
             }
         }
         this.node_queued_free.clear();
-        
+
         this.signal_after_loop.trigger();
 
         // loop linked trees
@@ -188,15 +177,37 @@ export class SceneTree {
     }
 
     public get_ActiveViewports(): Viewport[] {
-        return [...this.viewports].filter(v => v.get_Input().is_mouse_inside);
+        return this.sorted_viewports.filter(v => v.get_Input().is_mouse_inside);
     }
 
     public add_Viewport(viewport: Viewport) {
-        this.viewports.add(viewport);
+        if (!this.viewports.has(viewport)) {
+            this.viewports.add(viewport);
+            this.sorted_viewports.push(viewport);
+            this.sort_Viewports();
+        }
     }
 
     public remove_Viewport(viewport: Viewport) {
-        this.viewports.delete(viewport);
+        if (this.viewports.has(viewport)) {
+            this.viewports.delete(viewport);
+            const index = this.sorted_viewports.indexOf(viewport);
+            if (index >= 0) {
+                this.sorted_viewports.splice(index, 1);
+                this.sort_Viewports();
+            }
+        }
+    }
+
+    public sort_Viewports() {
+        this.sorted_viewports.sort(
+            (a, b) => {
+                const a_p = a.render_priority, b_p = b.render_priority;
+                if (a_p < b_p) return -1;
+                if (a_p > b_p) return 1;
+                return 0;
+            }
+        );
     }
 
     public start_Loop(fps?: number, physics_fps?: number) {

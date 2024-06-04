@@ -979,6 +979,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         }
         if (world.rid !== this.last_world_id) {
             this.lights_uniform_group_ref.expect.set_Storage(0, world.visual_world.render_server_light_data.light_data_buffer_ref.expect);
+            this.lights_uniform_group_ref.expect.set_BufferUniform(1, world.visual_world.render_server_light_data.light_count_buffer_ref.expect);
         }
         this.last_viewport_id = viewport.id;
         this.last_world_id = world.rid;

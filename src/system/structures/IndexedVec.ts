@@ -11,6 +11,8 @@ export class IndexedVec<T extends Indexed> extends Vec<T> {
     }
 
     public push(item: T): void {
+        this.insure(this._length + 1);
+        this.array[this._length++] = item;
         item.index = this.length - 1;
     }
 
