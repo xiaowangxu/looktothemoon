@@ -176,7 +176,9 @@ struct LightUniform {
     static readonly InstanceUniformsGroupBindingCode = `@group(${RenderServerSingleton.InstanceUniformBindGroupIndex}) @binding(0) var<uniform> instance_uniform: InstanceUniform;`;
 
     static readonly LightUniformsGroupBindingCode = `@group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(0) var<storage, read> light_data_uniform: array<LightDataUniform>;
-@group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(1) var<uniform> light_uniform: LightUniform;`;
+@group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(1) var<uniform> light_uniform: LightUniform;
+@group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(2) var light_uniform_background_texture: texture_2d<f32>;
+@group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(3) var light_uniform_sampler: sampler;`;
 
     //#endregion
 
@@ -216,8 +218,10 @@ struct LightUniform {
 
         //#region lights uniform
         this.lights_uniform_layout_ref.value = this.render_state.create_UniformLayout();
-        this.lights_uniform_layout_ref.expect.add_Storage(true, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 0, false);
-        this.lights_uniform_layout_ref.expect.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 1, false);
+        this.lights_uniform_layout_ref.expect.add_Storage(true, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 0);
+        this.lights_uniform_layout_ref.expect.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 1);
+        this.lights_uniform_layout_ref.expect.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.Float, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 2);
+        this.lights_uniform_layout_ref.expect.add_Sampler(WebGPURenderStateSamplerUniformType.Filter, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 3);
         //#endregion
 
         //#region instance uniform

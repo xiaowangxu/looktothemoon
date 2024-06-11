@@ -22,6 +22,8 @@ import type { Geometry3DResource } from "../../resources/geometry_resources/geom
 import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { type Indexed } from "@/system/utils/Type";
 import { IndexedVec } from "@/system/structures/IndexedVec";
+import type { RenderServerTexture } from "../../render_server/texture/RenderServerTexture";
+import type { Texture2DResource } from "../../resources/texture_resources/texture2d_resources/Texture2DResource";
 
 export type Cullable = CameraFrustumLikeCullable<Matrix4, Vector3, Matrix3> & Cloneable<Cullable> & Transformable<Cullable, Vector4, Matrix4>;
 
@@ -641,6 +643,13 @@ export class VisualWorld3D implements Disposable {
 
     //#region Light
 
+    protected readonly background_texture_ref: Ref<RenderServerTexture> = new Ref();
+    public get background_texture() { return this.background_texture_ref.value; }
+
+    public set_BackgroundTexture(texture: Texture2DResource | undefined) {
+        this.background_texture_ref.value = texture?.render_server_texture;
+    }
+
     public readonly render_server_light_data = new RenderServerLightData();
 
     public create_Light(): Rid {
@@ -929,12 +938,13 @@ export class VisualWorld3D implements Disposable {
         this.meshes_map.clear();
         this.lights_map.clear();
         this.lights_indexed_vec.clear();
+        this.background_texture_ref.clear();
         // this.sky_frame_buffer.clear();
         // this.sky_texture.clear();
         // this.shadows_texture.clear();
         // this.lights_data.clear();
-        // this.clear_MeshGetterCache();
-        // this.clear_LightGetterCache();
+        this.clear_MeshGetterCache();
+        this.clear_LightGetterCache();
         // this.clear_LightShadowGetterCache();
     }
 }

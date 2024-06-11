@@ -86,6 +86,7 @@ type RenderServerRenderMaterialPipelineCodeOption = {
 	builtin_func?: {
 		position_to_screen_uv?: boolean,
 		invert_mat3?: boolean,
+		sample_background?: boolean,
 	}
 }
 
@@ -371,7 +372,19 @@ fn position_to_screen_uv(position: vec2f, viewport: vec4f) -> vec2f {
 
 fn invert_mat3(mat: mat3x3f) -> mat3x3f {
 	let s = (1.0f / determinant(mat));
-  	return (s * mat3x3<f32>(vec3<f32>(((mat[1u][1u] * mat[2u][2u]) - (mat[1u][2u] * mat[2u][1u])), ((mat[0u][2u] * mat[2u][1u]) - (mat[0u][1u] * mat[2u][2u])), ((mat[0u][1u] * mat[1u][2u]) - (mat[0u][2u] * mat[1u][1u]))), vec3<f32>(((mat[1u][2u] * mat[2u][0u]) - (mat[1u][0u] * mat[2u][2u])), ((mat[0u][0u] * mat[2u][2u]) - (mat[0u][2u] * mat[2u][0u])), ((mat[0u][2u] * mat[1u][0u]) - (mat[0u][0u] * mat[1u][2u]))), vec3<f32>(((mat[1u][0u] * mat[2u][1u]) - (mat[1u][1u] * mat[2u][0u])), ((mat[0u][1u] * mat[2u][0u]) - (mat[0u][0u] * mat[2u][1u])), ((mat[0u][0u] * mat[1u][1u]) - (mat[0u][1u] * mat[1u][0u])))));
+	  return (s * mat3x3<f32>(vec3<f32>(((mat[1u][1u] * mat[2u][2u]) - (mat[1u][2u] * mat[2u][1u])), ((mat[0u][2u] * mat[2u][1u]) - (mat[0u][1u] * mat[2u][2u])), ((mat[0u][1u] * mat[1u][2u]) - (mat[0u][2u] * mat[1u][1u]))), vec3<f32>(((mat[1u][2u] * mat[2u][0u]) - (mat[1u][0u] * mat[2u][2u])), ((mat[0u][0u] * mat[2u][2u]) - (mat[0u][2u] * mat[2u][0u])), ((mat[0u][2u] * mat[1u][0u]) - (mat[0u][0u] * mat[1u][2u]))), vec3<f32>(((mat[1u][0u] * mat[2u][1u]) - (mat[1u][1u] * mat[2u][0u])), ((mat[0u][1u] * mat[2u][0u]) - (mat[0u][0u] * mat[2u][1u])), ((mat[0u][0u] * mat[1u][1u]) - (mat[0u][1u] * mat[1u][0u])))));
+}`: ``}${builtin_func?.sample_background ? `
+
+fn sample_background(direction: vec3f) -> vec4f {
+ 	var dir = mat3x3f(
+        world_env_uniform_camera_matrix.camera_world[0].xyz,
+        world_env_uniform_camera_matrix.camera_world[1].xyz,
+        world_env_uniform_camera_matrix.camera_world[2].xyz,
+    ) * direction;
+	var R = normalize(dir);
+	var theta = atan2(R.z, R.x);
+	var gamma = acos(R.y);
+	return textureSample(light_uniform_background_texture, light_uniform_sampler, vec2f(theta / TAU + 0.5, 1.0 - gamma / PI));
 }`: ``}`;
 
 		const fn: WebGPURenderElementRenderPipelineCacheGetterFn = (hash: WebGPURenderElementRenderPipelineCacheHash) => {
@@ -379,7 +392,12 @@ fn invert_mat3(mat: mat3x3f) -> mat3x3f {
 			const has_tangent = bitmask_check(hash, tangent_attribute_buffer);
 			const has_instance_transform_color = bitmask_check(hash, instance_transform_color_attribute_buffer);
 
-			const shader_code = `// Attributes
+			const shader_code = `// Constants
+const PI: f32 = 3.141592653589793;
+const TAU: f32 = 6.283185307179586;
+const EPSILON: f32 = 1E-10;
+			
+// Attributes
 struct Attributes {
 	@builtin(vertex_index) vertex_index: u32,
 	@builtin(instance_index) instance_index: u32,${check_tangent_attribute && has_tangent ? `
@@ -524,7 +542,7 @@ ${custom !== undefined ? `
 // Custom
 ${custom}` : ``}`;
 
-			// console.log(shader_code.split('\n').map((l, i) => `${(i + 1).toFixed(0).padEnd(4, ' ')}|	${l}`).join('\n'));
+			console.log(shader_code.split('\n').map((l, i) => `${(i + 1).toFixed(0).padEnd(4, ' ')}|	${l}`).join('\n'));
 
 			const shader = RenderServer.render_state.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
 			const program = RenderServer.render_state.create_Program(shader, shader).expect();

@@ -22,6 +22,7 @@ import matcap_6_image_url from 'res://matcap-11.png';
 import matcap_7_image_url from 'res://matcap-0.png';
 import normal_image_url from 'res://normal_texture-0.png';
 import normal_0_image_url from 'res://normal_texture.png';
+import studio from 'res://studio.png';
 
 import { ImageTexture2DResource } from "@/system/engine/resources/texture_resources/texture2d_resources/ImageTexture2DResource";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
@@ -34,6 +35,16 @@ import { PolyLineMaterial3DResource } from "@/system/engine/resources/material_r
 import type { SignalEmitterListener } from "@/system/utils/SignalEmitter";
 import { AmbientLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/AmbientLight3D";
 import { DirectionalLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/DirectionalLight3D";
+import { PhongMaterialResource } from "@/system/engine/resources/material_resources/material3d_resources/PhongMaterial3DResource";
+import { Pi, Tau } from "@/system/fivepebble/Scalar";
+import { PointLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/PointLight3D";
+import { InterpolateTween, InterpolateTweenEasingType, InterpolateTweenTransitionType, PingPongTweenAdaptor, PropertyTweenAdaptor, TweenLoop } from "@/system/engine/Tween";
+import { MultiGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/MultiGeometry3DResource";
+import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
+import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
+import { SpotLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/SpotLight3D";
+import { PbrMaterialResource } from "@/system/engine/resources/material_resources/material3d_resources/PbrMaterial3DResource";
+import { SphereGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/SphereGeometry3DResource";
 
 const viewport_scale = 1;
 const bg_color = Color.create(0.25, 0.25, 0.25).linear_rgb;
@@ -118,21 +129,38 @@ export async function createEditor() {
 	});
 
 	const box_geo = new BoxGeometry3DResource();
-	const sph_geo = new TorusGeometry3DResource();
+	const tor_geo = new TorusGeometry3DResource();
+	const sph_geo = new SphereGeometry3DResource();
 
 	const box_mat_test = new MatcapMaterialResource();
 	// box_mat_test.color = Vector4.create(0.55, 0.5, 0.7, 1.0);
+
+	const box_mat_test_2 = true ? new PbrMaterialResource() : new PhongMaterialResource();
+	box_mat_test_2.roughness = 0.4;
+	// box_mat_test_2.metallic = 0;
+	// box_mat_test_2.color = Vector4.create(1.0, 0., 0., 1.0);
 
 	const box_mat1 = new TestMaterial3DResource();
 	box_mat1.color = Vector4.create(1.0, 1.0, 1.0, 1.0);
 	const mesh = new MeshInstance3D();
 	mesh.geometry = box_geo;
-	mesh.material = box_mat_test;
+	mesh.material = box_mat_test_2;
 	mesh.local_position = Vector3.create(0, 0, 0);
 	mesh.local_rotation = Euler.create(0, 0, 0);
 	mesh.local_scale = Vector3.create(100, 100, 100);
 	// mesh.render_queue = 1;
-	World.add_Child(mesh);
+	// World.add_Child(mesh);
+
+	const phong = new PhongMaterialResource();
+	phong.roughness = 0.1;
+	const _mesh = new MeshInstance3D();
+	_mesh.geometry = box_geo;
+	_mesh.material = phong;
+	_mesh.local_position = Vector3.create(100, 0, 0);
+	_mesh.local_rotation = Euler.create(0, 0, 0);
+	_mesh.local_scale = Vector3.create(100, 100, 100);
+	// _mesh.render_queue = 1;
+	// World.add_Child(_mesh);
 
 	const pure = new PureColorMaterial3DResource();
 	pure.color = Color.create(1.0, 1.0, 0.0, 0.5);
@@ -270,6 +298,17 @@ export async function createEditor() {
 			const { naturalWidth, naturalHeight } = image;
 			const texture = ImageTexture2DResource.create_Image(image, naturalWidth, naturalHeight, Infinity, true);
 			box_mat_test.normal_texture = texture;
+			// box_mat_test_2.normal_texture = texture;
+		};
+	}
+
+	{
+		const image = new Image();
+		image.src = studio;
+		image.onload = () => {
+			const { naturalWidth, naturalHeight } = image;
+			const texture = ImageTexture2DResource.create_Image(image, naturalWidth, naturalHeight, Infinity, true);
+			EditorViewport.world_3d?.visual_world.set_BackgroundTexture(texture);
 		};
 	}
 
@@ -283,12 +322,11 @@ export async function createEditor() {
 	// 				multi_geo.set_TransformColor((i * 20 * 20) + (j * 20) + k, Matrix4.new.set_BasisPosition(Matrix3.new.set_Euler(Euler.create(Math.random() * Tau, Math.random() * Tau, Math.random() * Tau)), Vector3.create(i * 2, j * 2, k * 2)),); // Vector4.create(Math.random(), Math.random(), Math.random(), 1.0)
 	// 	}
 	// 	multi_geo.commit();
-	// 	console.log(multi_geo);
 	// 	const mesh = new MeshInstance3D();
 	// 	mesh.geometry = multi_geo;
-	// 	mesh.material = box_mat_test;
-	// 	mesh.local_position = Vector3.create(-200, 200, -100);
-	// 	mesh.local_scale = Vector3.create(100, 100, 100);
+	// 	mesh.material = box_mat_test_2;
+	// 	mesh.local_position = Vector3.create(-20, 50, -20);
+	// 	mesh.local_scale = Vector3.create(1, 1, 1);
 	// 	World.add_Child(mesh);
 	// }
 
@@ -357,10 +395,83 @@ export async function createEditor() {
 
 	const light1 = new AmbientLight3D();
 	World.add_Child(light1);
-	const light2 = new DirectionalLight3D();
-	World.add_Child(light2);
-	// const light2 = new AmbientLight3D();
+	light1.intensity = 0.1;
+	// const light2 = new DirectionalLight3D();
+	// light2.local_rotation = Euler.create(-Pi / 4, Pi / 4, 0);
+	// light2.intensity = 0.5;
 	// World.add_Child(light2);
+	const light3 = new PointLight3D();
+	light3.color = Vector3.create(1, 1, 1);
+	light3.local_position = Vector3.create(0, 100, 0);
+	light3.intensity = 0.5;
+	light3.radius = 100;
+	World.add_Child(light3);
+	// const light4 = new PointLight3D();
+	// light4.color = Vector3.create(1, 1, 1);
+	// light4.local_position = Vector3.create(-25, 60, 20);
+	// light4.intensity = 0.1;
+	// light4.radius = 0.4;
+	// World.add_Child(light4);
+	// const light5 = new PointLight3D();
+	// light5.color = Vector3.create(1, 1, 1);
+	// light5.local_position = Vector3.create(0, 60, -23);
+	// light5.intensity = 0.1;
+	// light5.radius = 0.4;
+	// World.add_Child(light5);
+
+	// const light6 = new SpotLight3D();
+	// light6.color = Vector3.create(1, 1, 0);
+	// light6.angle = Pi / 10;
+	// light6.local_position = Vector3.create(100, 0, 100);
+	// light6.local_rotation = Euler.create(0, Pi / 4, 0);
+	// light6.intensity = 0.5;
+	// World.add_Child(light6);
+
+	// let t = 0;
+	// light6.signal_process.connect((delta) => {
+	// 	t += delta;
+	// 	light6.local_rotation = Euler.create(0, ((Math.sin(t) + 1) / 2 * 0.8 + 0.1) * Pi / 2, 0);
+	// });
+
+	for (let i = 0; i <= 10; i++) {
+		for (let j = 0; j <= 10; j++) {
+			const mesh = new MeshInstance3D();
+			mesh.geometry = sph_geo;
+			const mat = new PbrMaterialResource();
+			mat.color = Vector4.create(1.0, 1.0, 1.0, 1.0);
+			mesh.material = mat;
+			mat.roughness = i === 0 ? 0.05 : i / 10;
+			mat.metallic = j / 10;
+			mesh.local_position = Vector3.create(-80 + (i * 15), 20, -80 + (j * 15));
+			mesh.local_scale = Vector3.create(10, 10, 10);
+			World.add_Child(mesh);
+		}
+	}
+
+	// EditorSceneTree.start_Tween(new TweenLoop(
+	// 	new PingPongTweenAdaptor(
+	// 		new PropertyTweenAdaptor(
+	// 			new InterpolateTween(2.0, InterpolateTweenTransitionType.Cubic, InterpolateTweenEasingType.InOut),
+	// 			box_mat_test_2,
+	// 			"metallic",
+	// 			1.0,
+	// 			0.0,
+	// 		)
+	// 	),
+	// 	Infinity,
+	// ));
+
+	// EditorSceneTree.start_Tween(new TweenLoop(
+	// 	new PingPongTweenAdaptor(
+	// 		new PropertyTweenAdaptor(
+	// 			new InterpolateTween(5.0, InterpolateTweenTransitionType.Cubic, InterpolateTweenEasingType.InOut),
+	// 			light4,
+	// 			'local_position',
+	// 			Vector3.create(25, 60, 20)
+	// 		)
+	// 	),
+	// 	Infinity,
+	// ));
 
 	// World.signal_input.connect((evt, prop) => {
 	// 	if (!prop && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {

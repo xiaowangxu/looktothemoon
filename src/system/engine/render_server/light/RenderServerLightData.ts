@@ -10,10 +10,11 @@ import { bitmask_bitset, bitmask_enable, bitmask_get, bitmask_set, bitmask_test 
 import { clamp } from "@/system/fivepebble/Scalar";
 
 export enum RenderServerLightType {
+    None = 0,
     Ambient,
     Directional,
-    Spot,
     Point,
+    Spot,
 }
 
 /**
@@ -92,20 +93,19 @@ export class RenderServerLightData implements Disposable {
         const float_array = new Float32Array(this.light_data_array_buffer, index * RenderServerLightData.LightDataUniformMemoryLayout.size, RenderServerLightData.#const_light_data_32_element_count);
         const uint_array = new Uint32Array(this.light_data_array_buffer, index * RenderServerLightData.LightDataUniformMemoryLayout.size, RenderServerLightData.#const_light_data_32_element_count);
 
-        // position vec3
+        // position vec3, perserved f32
         float_array[0] = position.x;
         float_array[1] = position.y;
         float_array[2] = position.z;
         // direction vec3, attenuation f32
-        float_array[3] = direction.x;
-        float_array[4] = direction.y;
-        float_array[5] = direction.z;
-        float_array[6] = attenuation;
-        // color vec3, preserved f32
-        float_array[7] = color.r;
-        float_array[8] = color.g;
-        float_array[9] = color.b;
-        float_array[10] = color.a;
+        float_array[4] = direction.x;
+        float_array[5] = direction.y;
+        float_array[6] = direction.z;
+        float_array[7] = attenuation;
+        // color vec3
+        float_array[8] = color.r;
+        float_array[9] = color.g;
+        float_array[10] = color.b;
         // layer u32
         uint_array[11] = layer;
         // mask u32

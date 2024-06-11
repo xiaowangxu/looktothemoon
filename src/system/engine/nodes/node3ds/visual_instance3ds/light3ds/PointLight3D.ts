@@ -1,8 +1,8 @@
 import type { Rid } from "@/system/engine/Rid";
 import { LightInstance3D } from "./LightInstance3D";
 import { NodeNotification } from "../../../Node";
-import { RenderServerLightType } from "@/system/engine/render_server/RenderServerLightData";
 import { Sphere3 } from "@/system/fivepebble/geometries/Sphere3";
+import { RenderServerLightType } from "@/system/engine/render_server/light/RenderServerLightData";
 
 export class PointLight3D extends LightInstance3D {
 
@@ -98,7 +98,7 @@ export class PointLight3D extends LightInstance3D {
         if (this.light_rid !== undefined) {
             const visual_world = this.get_Viewport()?.world_3d?.visual_world;
             if (visual_world !== undefined) {
-                visual_world.set_LightCastShadow(this.light_rid, this._cast_shadow);
+                // visual_world.set_LightCastShadow(this.light_rid, this._cast_shadow);
             }
         }
     }
@@ -107,7 +107,7 @@ export class PointLight3D extends LightInstance3D {
         if (this.light_rid !== undefined) {
             const visual_world = this.get_Viewport()?.world_3d?.visual_world;
             if (visual_world !== undefined) {
-                visual_world.set_LightShadowBias(this.light_rid, this._shadow_bias);
+                // visual_world.set_LightShadowBias(this.light_rid, this._shadow_bias);
             }
         }
     }
@@ -116,7 +116,7 @@ export class PointLight3D extends LightInstance3D {
         if (this.light_rid !== undefined) {
             const visual_world = this.get_Viewport()?.world_3d?.visual_world;
             if (visual_world !== undefined) {
-                visual_world.set_LightShadowNormalBias(this.light_rid, this._shadow_normal_bias);
+                // visual_world.set_LightShadowNormalBias(this.light_rid, this._shadow_normal_bias);
             }
         }
     }
@@ -125,7 +125,7 @@ export class PointLight3D extends LightInstance3D {
         if (this.light_rid !== undefined) {
             const visual_world = this.get_Viewport()?.world_3d?.visual_world;
             if (visual_world !== undefined) {
-                visual_world.set_LightShadowOpacity(this.light_rid, this._shadow_opacity);
+                // visual_world.set_LightShadowOpacity(this.light_rid, this._shadow_opacity);
             }
         }
     }
@@ -147,16 +147,16 @@ export class PointLight3D extends LightInstance3D {
                     const visual_world = this.get_Viewport()?.world_3d?.visual_world;
                     if (visual_world !== undefined) {
                         this.light_rid = visual_world.create_Light();
-                        visual_world.set_LightType(this.light_rid, RenderServerLightType.PointLight);
+                        visual_world.set_LightType(this.light_rid, RenderServerLightType.Point);
                         visual_world.set_LightColor(this.light_rid, this._color);
                         visual_world.set_LightIntensity(this.light_rid, this._intensity);
                         visual_world.set_LightAttenuation(this.light_rid, this._attenuation);
                         visual_world.set_LightLayer(this.light_rid, this._layer);
                         visual_world.set_LightParameters(this.light_rid, Math.max(0, this._radius - this._falloff_radius), this._radius);
-                        visual_world.set_LightShadowBias(this.light_rid, this._shadow_bias);
-                        visual_world.set_LightShadowNormalBias(this.light_rid, this._shadow_normal_bias);
-                        visual_world.set_LightShadowOpacity(this.light_rid, this._shadow_opacity);
-                        visual_world.set_LightCastShadow(this.light_rid, this._cast_shadow);
+                        // visual_world.set_LightShadowBias(this.light_rid, this._shadow_bias);
+                        // visual_world.set_LightShadowNormalBias(this.light_rid, this._shadow_normal_bias);
+                        // visual_world.set_LightShadowOpacity(this.light_rid, this._shadow_opacity);
+                        // visual_world.set_LightCastShadow(this.light_rid, this._cast_shadow);
                         visual_world.set_LightRenderQueue(this.light_rid, this._render_queue);
                         visual_world.set_LightMask(this.light_rid, this._mask);
                         this.update_Cullable();

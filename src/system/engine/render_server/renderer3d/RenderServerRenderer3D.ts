@@ -8,7 +8,7 @@ import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { VisualWorld3DMesh } from "../../worlds/world3ds/VisualWorld3D";
 import type { WebGPURenderStateTextureView } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTextureView";
 import { ReadonlyRef, Ref, RefCacher } from "@/system/utils/RefCounted";
-import { RenderServer, RenderServerSingleton } from "../RenderServer";
+import { RenderServer, RenderServerDefaultTextureType, RenderServerSingleton } from "../RenderServer";
 import { WebGPURenderStateTextureUsage, WebGPURenderStateTextureFormat, WebGPURenderStateTexture, WebGPURenderStateTextureDimension } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTexture";
 import { WebGPURenderElementFrameBuffer } from "@/system/sliverofstraw/render_element_object/frame_buffer/WebGPURenderElementFrameBuffer";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
@@ -86,11 +86,58 @@ const FullScreenBackgroundPipeline = new RefCacher(() => {
         @location(1) normal: vec4f,
     };
     
+    struct LightDataUniform {
+        position: vec4f,
+        direction_attenuation: vec4f,
+        color: vec3f,
+        layer: u32,
+        mask: u32,
+        visible_queue_type: u32,
+        shadow_0: u32,
+        shadow_1: u32,
+        shadow_2: u32,
+        shadow_3: u32,
+        shadow_4: u32,
+        shadow_5: u32,
+        params: vec4f,
+    }
+
+    struct LightUniform {
+        count: u32,
+    }
+
+    @group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(0) var<storage, read> light_data_uniform: array<LightDataUniform>;
+    @group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(1) var<uniform> light_uniform: LightUniform;
+    @group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(2) var light_uniform_background_texture: texture_2d<f32>;
+    @group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(3) var light_uniform_sampler: sampler;
+    
+    const PI: f32 = 3.141592653589793;
+    const TAU: f32 = 6.283185307179586;
+    const EPSILON: f32 = 1E-10;
+
     @fragment
     fn fs_main(vary: VertexOutput) -> FragmentOutput {
         var out: FragmentOutput;
+
+        var view = world_env_uniform_camera_matrix.camera_inv_proj * vec4f((vary.uv * 2.0 - 1.0), 1.0, 1.0);
+        var normal_view =  vec3f(0.0, 0.0, 1.0);
+        // if !bool(world_env_uniform_params.orthogonal) {
+        //     normal_view = -normalize(view.xyz);
+        // }
+        // var dir = mat4x4f(
+        //     vec4f(world_env_uniform_camera_matrix.camera_world[0].xyz, 0.0),
+        //     vec4f(world_env_uniform_camera_matrix.camera_world[1].xyz, 0.0),
+        //     vec4f(world_env_uniform_camera_matrix.camera_world[2].xyz, 0.0),
+        //     vec4f(0.0, 0.0, 0.0, 1.0),
+        // ) * view;
+        // var R = normalize(dir.xyz);
+        // var theta = atan2(R.z, R.x);
+        // var gamma = acos(R.y);
+        // var sky_color = textureSample(light_uniform_background_texture, light_uniform_sampler, vec2f(theta / TAU + 0.5, 1.0 - gamma / PI));
+        // out.color = sky_color;
         out.color = vec4f(0.2, 0.2, 0.2, 1.0);
-        out.normal = vec4f(0.0, 0.0, 0.0, 1.0);
+        out.normal = vec4(normal_view, 1.0);
+
         return out;
     }
     `;
@@ -102,7 +149,7 @@ const FullScreenBackgroundPipeline = new RefCacher(() => {
         program,
         RenderServerRenderMaterial.ProgramStatePipelineTemplates[RenderServerRenderMaterialPass.Solid],
         RenderServerRenderMaterial.OutputStatePipelineTemplates[RenderServerRenderMaterialPass.Solid],
-        [RenderServer.world_env_uniform_layout],
+        [RenderServer.world_env_uniform_layout, RenderServer.lights_uniform_layout],
         [
             {
                 stride: 8, // 2 * 4
@@ -325,7 +372,18 @@ const EffectFxaaPipeline = new RefCacher(() => {
 	    if color_output.a == 0.0 {
 	    	return vec4f(0.0, 0.0, 0.0, color_output.a);
 	    }
-        return color_output;
+        var tone_mapped = vec4f(aces_tone_mapping(color_output.rgb, 0.72), color_output.a);
+        return tone_mapped;
+    }
+
+    fn aces_tone_mapping(color: vec3f, adapted_lum: f32) -> vec3f {
+    	const A: f32 = 2.51f;
+    	const B: f32 = 0.03f;
+    	const C: f32 = 2.43f;
+    	const D: f32 = 0.59f;
+    	const E: f32 = 0.14f;
+    	var _color = color * adapted_lum;
+    	return (_color * (A * _color + B)) / (_color * (C * _color + D) + E);
     }
     `;
 
@@ -692,6 +750,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     //#region Lights Uniform
 
     protected readonly lights_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(RenderServer.lights_uniform_layout).expect());
+    protected readonly lights_background_texture_view_ref = new ReadonlyRef(RenderServer.render_state.create_TextureView(RenderServer.get_DefaultTexture(RenderServerDefaultTextureType.White).texture_ref.expect).expect());
 
     //#endregion
 
@@ -747,6 +806,9 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.world_env_effect_uniform_group_1_ref.expect.set_Texture(3, this.result_empty_texture_view_ref.expect);
         this.world_env_effect_uniform_group_1_ref.expect.set_Texture(4, this.result_depth_empty_texture_view_ref.expect);
         this.world_env_effect_uniform_group_1_ref.expect.set_Sampler(5, this.compose_uniform_sampler_ref.expect);
+
+        this.lights_uniform_group_ref.expect.set_Texture(2, this.lights_background_texture_view_ref.expect);
+        this.lights_uniform_group_ref.expect.set_Sampler(3, RenderServer.get_TextureSampler(undefined, undefined, undefined, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear));
     }
 
     public set_WorldEnvUniform(camera_world: Matrix4, camera_projection: Matrix4, camera_is_orthogonal: boolean, time: number, pixel_ratio: number, screen_width: number, screen_height: number) {
@@ -957,8 +1019,9 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.effect_frame_buffer_1_ref.expect.add_Attachment(this.result_color_texture_view_ref.expect, true, Vector4.create(0, 0, 0, 0), true);
     }
 
-    private last_viewport_id: number = 0;
-    private last_world_id: number = 0;
+    private last_viewport_id: number = -1;
+    private last_world_id: number = -1;
+    private last_background_id: number = -1;
 
     public render(world: World3D, camera: Camera3, viewport: RenderServerViewport, time: number, once: boolean) {
 
@@ -977,12 +1040,17 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         if (this.resize(texture_width, texture_height) || viewport.id !== this.last_viewport_id) {
             this.reset_FrameBuffer();
         }
+        const background_id = world.visual_world.background_texture?.id ?? 0;
         if (world.rid !== this.last_world_id) {
             this.lights_uniform_group_ref.expect.set_Storage(0, world.visual_world.render_server_light_data.light_data_buffer_ref.expect);
             this.lights_uniform_group_ref.expect.set_BufferUniform(1, world.visual_world.render_server_light_data.light_count_buffer_ref.expect);
         }
+        if (background_id !== this.last_background_id) {
+            this.lights_uniform_group_ref.expect.set_Texture(2, world.visual_world.background_texture?.texture_view_ref.expect ?? this.lights_background_texture_view_ref.expect);
+        }
         this.last_viewport_id = viewport.id;
         this.last_world_id = world.rid;
+        this.last_background_id = background_id;
 
         //#endregion
 
@@ -1304,6 +1372,8 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.world_env_uniform_params_buffer_ref.clear();
         this.world_env_effect_uniform_group_0_ref.clear();
         this.world_env_effect_uniform_group_1_ref.clear();
+
         this.lights_uniform_group_ref.clear();
+        this.lights_background_texture_view_ref.clear();
     }
 }
