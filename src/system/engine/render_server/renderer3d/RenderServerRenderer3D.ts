@@ -121,21 +121,21 @@ const FullScreenBackgroundPipeline = new RefCacher(() => {
 
         var view = world_env_uniform_camera_matrix.camera_inv_proj * vec4f((vary.uv * 2.0 - 1.0), 1.0, 1.0);
         var normal_view =  vec3f(0.0, 0.0, 1.0);
-        // if !bool(world_env_uniform_params.orthogonal) {
-        //     normal_view = -normalize(view.xyz);
-        // }
-        // var dir = mat4x4f(
-        //     vec4f(world_env_uniform_camera_matrix.camera_world[0].xyz, 0.0),
-        //     vec4f(world_env_uniform_camera_matrix.camera_world[1].xyz, 0.0),
-        //     vec4f(world_env_uniform_camera_matrix.camera_world[2].xyz, 0.0),
-        //     vec4f(0.0, 0.0, 0.0, 1.0),
-        // ) * view;
-        // var R = normalize(dir.xyz);
-        // var theta = atan2(R.z, R.x);
-        // var gamma = acos(R.y);
-        // var sky_color = textureSample(light_uniform_background_texture, light_uniform_sampler, vec2f(theta / TAU + 0.5, 1.0 - gamma / PI));
-        // out.color = sky_color;
-        out.color = vec4f(0.2, 0.2, 0.2, 1.0);
+        if !bool(world_env_uniform_params.orthogonal) {
+            normal_view = -normalize(view.xyz);
+        }
+        var dir = mat4x4f(
+            vec4f(world_env_uniform_camera_matrix.camera_world[0].xyz, 0.0),
+            vec4f(world_env_uniform_camera_matrix.camera_world[1].xyz, 0.0),
+            vec4f(world_env_uniform_camera_matrix.camera_world[2].xyz, 0.0),
+            vec4f(0.0, 0.0, 0.0, 1.0),
+        ) * view;
+        var R = normalize(dir.xyz);
+        var theta = atan2(R.z, R.x);
+        var gamma = acos(R.y);
+        var sky_color = textureSampleLevel(light_uniform_background_texture, light_uniform_sampler, vec2f(theta / TAU + 0.5, 1.0 - gamma / PI), 0);
+        out.color = sky_color;
+        // out.color = vec4f(0.2, 0.2, 0.2, 1.0);
         out.normal = vec4(normal_view, 1.0);
 
         return out;
@@ -291,6 +291,7 @@ const EffectFxaaPipeline = new RefCacher(() => {
         @location(3) rgb_SW: vec2f,
         @location(4) rgb_SE: vec2f,
         @location(5) rgb_M: vec2f,
+        @location(6) uv: vec2f,
     };
 
     @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
@@ -299,7 +300,8 @@ const EffectFxaaPipeline = new RefCacher(() => {
     fn vs_main(attri: Attributes) -> VertexOutput {
         var out: VertexOutput;
         out.position = vec4f(attri.position - vec2f(1.0), 1.0, 1.0);
-        out.frag_coord = vec2f(attri.position.x, 2.0 - attri.position.y) / 2.0 * world_env_uniform_params.screen_size;
+        out.uv = vec2f(attri.position.x, 2.0 - attri.position.y) / 2.0;
+        out.frag_coord = out.uv * world_env_uniform_params.screen_size;
         var inv_vp = 1.0 / world_env_uniform_params.screen_size.xy;
         out.rgb_NW = (out.frag_coord + vec2f(-1.0, -1.0)) * inv_vp;
         out.rgb_NE = (out.frag_coord + vec2f(1.0, -1.0)) * inv_vp;
@@ -319,8 +321,10 @@ const EffectFxaaPipeline = new RefCacher(() => {
     @fragment
     fn fs_main(vary: VertexOutput) -> FragmentOutput {
         var out: FragmentOutput;
-        var color = fxaa(color, sample, vary.frag_coord, world_env_uniform_params.screen_size, vary.rgb_NW, vary.rgb_NE, vary.rgb_SW, vary.rgb_SE, vary.rgb_M);
-        out.color = color;
+        // var color = fxaa(color, sample, vary.frag_coord, world_env_uniform_params.screen_size, vary.rgb_NW, vary.rgb_NE, vary.rgb_SW, vary.rgb_SE, vary.rgb_M);
+        var color = textureSample(color, sample, vary.uv);
+        var tone_mapped = vec4f(aces_tone_mapping(color.rgb, 0.72), color.a);
+        out.color = tone_mapped;
         return out;
     }
 
@@ -372,8 +376,7 @@ const EffectFxaaPipeline = new RefCacher(() => {
 	    if color_output.a == 0.0 {
 	    	return vec4f(0.0, 0.0, 0.0, color_output.a);
 	    }
-        var tone_mapped = vec4f(aces_tone_mapping(color_output.rgb, 0.72), color_output.a);
-        return tone_mapped;
+        return color_output;
     }
 
     fn aces_tone_mapping(color: vec3f, adapted_lum: f32) -> vec3f {
@@ -808,7 +811,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.world_env_effect_uniform_group_1_ref.expect.set_Sampler(5, this.compose_uniform_sampler_ref.expect);
 
         this.lights_uniform_group_ref.expect.set_Texture(2, this.lights_background_texture_view_ref.expect);
-        this.lights_uniform_group_ref.expect.set_Sampler(3, RenderServer.get_TextureSampler(undefined, undefined, undefined, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear));
+        this.lights_uniform_group_ref.expect.set_Sampler(3, RenderServer.get_TextureSampler(WebGPURenderStateTextureWrap.Clamp, WebGPURenderStateTextureWrap.Clamp, WebGPURenderStateTextureWrap.Clamp, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear));
     }
 
     public set_WorldEnvUniform(camera_world: Matrix4, camera_projection: Matrix4, camera_is_orthogonal: boolean, time: number, pixel_ratio: number, screen_width: number, screen_height: number) {

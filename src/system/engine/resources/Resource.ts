@@ -50,6 +50,10 @@ export abstract class Resource extends ResourceRefCounted {
     }
 }
 
+export interface ResourceSetOptionAllAtOnce<Option> {
+    set option(option: Option);
+}
+
 export class ResourceInstanceCache {
     private readonly instance_map: Map<string, Refed<ResourceBase | ResourceRefCounted>> = new Map();
 

@@ -49,7 +49,7 @@ export class WebGPURenderState implements Disposable {
         this.mipmap_pipeline_uniform_layout_ref = new ReadonlyRef(this.create_UniformLayout());
         this.mipmap_pipeline_uniform_layout_ref.expect.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.Float, WebGPURenderStateShaderType.Fragment, 0);
         this.mipmap_pipeline_uniform_layout_ref.expect.add_Sampler(WebGPURenderStateSamplerUniformType.Filter, WebGPURenderStateShaderType.Fragment, 1);
-        this.mipmap_texture_sampler_ref = new ReadonlyRef(this.create_TextureSampler(undefined, undefined, undefined, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear).expect());
+        this.mipmap_texture_sampler_ref = new ReadonlyRef(this.create_TextureSampler(WebGPURenderStateTextureWrap.Repeat, WebGPURenderStateTextureWrap.Repeat, WebGPURenderStateTextureWrap.Repeat, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Nearest).expect());
         //#endregion
         return true;
     }
@@ -519,7 +519,7 @@ export class WebGPURenderState implements Disposable {
                 var vsOutput: VSOutput;
                 let xy = pos[vertexIndex];
                 vsOutput.position = vec4f(xy * 2.0 - 1.0, 0.0, 1.0);
-                vsOutput.texcoord = vec2f(xy.x, 1.0 - xy.y);
+                vsOutput.texcoord = clamp(vec2f(xy.x, 1.0 - xy.y), vec2f(0.0), vec2f(1.0));
                 return vsOutput;
             }
  
@@ -529,6 +529,68 @@ export class WebGPURenderState implements Disposable {
             @fragment
             fn fs_main(fsInput: VSOutput) -> @location(0) vec4f {
                 return textureSample(ourTexture, ourSampler, fsInput.texcoord);
+            }
+
+            // w0, w1, w2, and w3 are the four cubic B-spline basis functions
+            fn w0(a: f32) -> f32 {
+            	return (1.0f / 6.0f) * (a * (a * (-a + 3.0f) - 3.0f) + 1.0f);
+            }
+
+            fn w1(a: f32) -> f32 {
+            	return (1.0f / 6.0f) * (a * a * (3.0f * a - 6.0f) + 4.0f);
+            }
+
+            fn w2(a: f32) -> f32 {
+            	return (1.0f / 6.0f) * (a * (a * (-3.0f * a + 3.0f) + 3.0f) + 1.0f);
+            }
+
+            fn w3(a: f32) -> f32 {
+            	return (1.0f / 6.0f) * (a * a * a);
+            }
+
+            // g0 and g1 are the two amplitude functions
+            fn g0(a: f32) -> f32 {
+            	return w0(a) + w1(a);
+            }
+
+            fn g1(a: f32) -> f32 {
+            	return w2(a) + w3(a);
+            }
+
+            // h0 and h1 are the two offset functions
+            fn h0(a: f32) -> f32 {
+            	return -1.0f + w1(a) / (w0(a) + w1(a));
+            }
+
+            fn h1(a: f32) -> f32 {
+            	return 1.0f + w3(a) / (w2(a) + w3(a));
+            }
+
+            fn textureSampleBicubic(tex: texture_2d<f32>, sampler: sampler, uv: vec2f, p_lod: u32) -> vec4f {
+            	var lod = f32(p_lod);
+                var _tex_size = textureDimensions(tex).xy;
+            	var tex_size = vec2f(f32(u32(_tex_size.x) >> p_lod), f32(u32(_tex_size.y) >> p_lod));
+            	var pixel_size = vec2f(1) / tex_size;
+
+            	var _uv = uv * tex_size + vec2f(0.5f);
+
+            	var iuv = floor(_uv);
+            	var fuv = fract(_uv);
+
+            	var g0x = g0(fuv.x);
+            	var g1x = g1(fuv.x);
+            	var h0x = h0(fuv.x);
+            	var h1x = h1(fuv.x);
+            	var h0y = h0(fuv.y);
+            	var h1y = h1(fuv.y);
+
+            	var p0 = (vec2f(iuv.x + h0x, iuv.y + h0y) - vec2f(0.5f)) * pixel_size;
+            	var p1 = (vec2f(iuv.x + h1x, iuv.y + h0y) - vec2f(0.5f)) * pixel_size;
+            	var p2 = (vec2f(iuv.x + h0x, iuv.y + h1y) - vec2f(0.5f)) * pixel_size;
+            	var p3 = (vec2f(iuv.x + h1x, iuv.y + h1y) - vec2f(0.5f)) * pixel_size;
+
+            	return (g0(fuv.y) * (g0x * textureSampleBias(tex, sampler, p0, lod) + g1x * textureSampleBias(tex, sampler, p1, lod))) +
+            		   (g1(fuv.y) * (g0x * textureSampleBias(tex, sampler, p2, lod) + g1x * textureSampleBias(tex, sampler, p3, lod)));
             }
             `;
 
@@ -581,28 +643,44 @@ export class WebGPURenderState implements Disposable {
         const sampler = this.mipmap_texture_sampler_ref.expect.sampler;
         const pipeline = this.get_MipmapPipeline(texture.format).pipeline;
         for (let i = mipmap_count - 1; i >= 1; i--) {
-            const uniform_bind_group = this.device.createBindGroup({
-                layout: this.mipmap_pipeline_uniform_layout_ref.expect.layout,
-                entries: [
-                    { binding: 0, resource: texture.texture.createView({ baseMipLevel: base_mipmap_level, mipLevelCount: 1 }) },
-                    { binding: 1, resource: sampler },
-                ],
-            });
+            for (let layer = 0; layer < texture.depth; layer++) {
+                const uniform_bind_group = this.device.createBindGroup({
+                    layout: this.mipmap_pipeline_uniform_layout_ref.expect.layout,
+                    entries: [
+                        {
+                            binding: 0, resource: texture.texture.createView({
+                                dimension: '2d',
+                                baseMipLevel: base_mipmap_level,
+                                mipLevelCount: 1,
+                                baseArrayLayer: layer,
+                                arrayLayerCount: 1,
+                            })
+                        },
+                        { binding: 1, resource: sampler },
+                    ],
+                });
+                const frame_buffer_desc: GPURenderPassDescriptor = {
+                    colorAttachments: [
+                        {
+                            view: texture.texture.createView({
+                                dimension: '2d',
+                                baseMipLevel: base_mipmap_level + 1,
+                                mipLevelCount: 1,
+                                baseArrayLayer: layer,
+                                arrayLayerCount: 1,
+                            }),
+                            loadOp: 'clear',
+                            storeOp: 'store',
+                        },
+                    ],
+                };
+                const pass = encoder.beginRenderPass(frame_buffer_desc);
+                pass.setPipeline(pipeline);
+                pass.setBindGroup(0, uniform_bind_group);
+                pass.draw(6);
+                pass.end();
+            }
             base_mipmap_level++;
-            const frame_buffer_desc: GPURenderPassDescriptor = {
-                colorAttachments: [
-                    {
-                        view: texture.texture.createView({ baseMipLevel: base_mipmap_level, mipLevelCount: 1 }),
-                        loadOp: 'clear',
-                        storeOp: 'store',
-                    },
-                ],
-            };
-            const pass = encoder.beginRenderPass(frame_buffer_desc);
-            pass.setPipeline(pipeline);
-            pass.setBindGroup(0, uniform_bind_group);
-            pass.draw(6);
-            pass.end();
         }
         const command_buffer = encoder.finish();
         this.device.queue.submit([command_buffer]);

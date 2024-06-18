@@ -12,12 +12,13 @@ import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { WebGPURenderStateTextureFilter } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTextureSampler";
 import type { Texture2DResource } from "../../texture_resources/texture2d_resources/Texture2DResource";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import type { TextureCubeMapResource } from "../../texture_resources/texture2d_resources/TextureCubeMapResource";
 
 const PbrMaterialResourceUniformLayout = new RefCacher(() => {
 	const layout = RenderServer.render_state.create_UniformLayout();
 	layout.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 0, false);
 	layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.Float, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 1);
-	layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.Float, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 2);
+	layout.add_Texture(WebGPURenderStateTextureUniformType.TexCubeMap, WebGPURenderStateTextureUniformSampleType.Float, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 2);
 	layout.add_Sampler(WebGPURenderStateSamplerUniformType.Filter, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 3);
 	return layout;
 });
@@ -33,7 +34,7 @@ const PbrMaterialSolidPipelineCacheSet = new RefCacher(() => {
 		// uniforms
 		`struct Uniform {
 	color: vec4f,
-	ior: vec3f,
+	reflection: f32,
 	roughness: f32,
 	metallic: f32,
 	has_normal: u32,
@@ -41,7 +42,7 @@ const PbrMaterialSolidPipelineCacheSet = new RefCacher(() => {
 
 @group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(0) var<uniform> mat_uniform: Uniform;
 @group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(1) var mat_uniform_normal_tex: texture_2d<f32>; 
-@group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(2) var mat_uniform_matcap_tex: texture_2d<f32>; 
+@group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(2) var mat_uniform_cubemap_tex: texture_cube<f32>; 
 @group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(3) var mat_uniform_sampler: sampler;
 `,
 		// vertex code
@@ -68,18 +69,16 @@ const PbrMaterialSolidPipelineCacheSet = new RefCacher(() => {
 	if bool(mat_uniform.has_normal) {
 		normal = normalize(tbn * (textureSample(mat_uniform_normal_tex, mat_uniform_sampler, vary.uv).xyz * 2.0 - 1.0));
 	}
-	// var _direction = reflect(-normalize(vary.lookat), normal);
-	// var sky = sample_background(_direction);
 	var albedo = mat_uniform.color;
 	var roughness = mat_uniform.roughness;
 	var metallic = mat_uniform.metallic;
-
+	
 	var view = normalize(vary.lookat);
 	var world = vary.vertex;
-
-    var f0 = vec3f(0.04); 
+	
+    var f0 = vec3f(0.05); 
     f0 = mix(f0, albedo.rgb, metallic);
-
+	
 	var Am = vec3f(0.0);
 	var Lo = vec3f(0.0);
 
@@ -112,7 +111,7 @@ const PbrMaterialSolidPipelineCacheSet = new RefCacher(() => {
 	            var distance_w = (l_distance - near_distance) / ( far_distance - near_distance);
 	            var distance_strength = smoothstep(1.0, 0.0, distance_w);
 	            radiance *= distance_strength / pow(max(l_distance, 1.0), attenuation);
-				// Am += max(0, dot(normal, direction)) * radiance;
+				Am += max(0, dot(normal, direction)) * radiance;
 	        }
 	        case 4u {
 	            // spot light
@@ -133,7 +132,7 @@ const PbrMaterialSolidPipelineCacheSet = new RefCacher(() => {
 
 		var half = normalize(direction + view);
 
- 		var ndf: f32 = DistributionGGX(normal, half, roughness);        
+ 		var ndf: f32 = DistributionGGX(normal, half, roughness);
         var gsf: f32 = GeometrySmith(normal, view, direction, roughness);      
         var fnl: vec3f = fresnelSchlick(max(dot(half, view), 0.0), f0);       
 
@@ -150,12 +149,31 @@ const PbrMaterialSolidPipelineCacheSet = new RefCacher(() => {
         Lo += (kD * albedo.rgb / PI + specular) * radiance * strength; 
 	}
 
-	var ambient = Am * albedo.rgb;
+	var fnl: vec3f = fresnelSchlickRoughness(max(dot(normal, view), 0.0), f0, roughness);       
+	var kS = fnl;
+    var kD = vec3f(1.0) - kS;
+    kD *= 1.0 - metallic;	  
+
+	var _direction = reflect(-normalize(vary.lookat), normal);
+	var dir = mat3x3f(
+        world_env_uniform_camera_matrix.camera_world[0].xyz,
+        world_env_uniform_camera_matrix.camera_world[1].xyz,
+        world_env_uniform_camera_matrix.camera_world[2].xyz,
+	) * _direction;
+	var mipmap = f32(textureNumLevels(light_uniform_background_texture) - 1);
+	var specular = textureSampleBias(mat_uniform_cubemap_tex, mat_uniform_sampler, dir, roughness * mipmap).rgb * 0.3;
+	// var specular = sample_background(_direction, roughness).rgb;
+
+	var ambient = (kD * Am * albedo.rgb + specular) * 1.0; // 1.0 is AO
     var color = vec4f(ambient + Lo, 1.0);`,
 		// custom
 		`fn fresnelSchlick(cosTheta: f32, F0: vec3f) -> vec3f {
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
+
+fn fresnelSchlickRoughness(cosTheta: f32, F0: vec3f, roughness: f32) -> vec3f {
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+} 
 
 fn DistributionGGX(N: vec3f, H: vec3f, roughness: f32) -> f32 {
     var a      = roughness * roughness;
@@ -201,7 +219,7 @@ export class PbrMaterialResource extends MaterialResource {
 		type: 'struct',
 		members: [
 			WebGPURenderStateBufferUniformType.Vector4,
-			WebGPURenderStateBufferUniformType.Vector3,
+			WebGPURenderStateBufferUniformType.Float,
 			WebGPURenderStateBufferUniformType.Float,
 			WebGPURenderStateBufferUniformType.Float,
 			WebGPURenderStateBufferUniformType.Bool,
@@ -222,11 +240,11 @@ export class PbrMaterialResource extends MaterialResource {
 		}
 	}
 
-	private _ior = Vector3.create(1.0, 1.0, 1.0);
-	public get ior() { return this._ior.clone(); }
-	public set ior(ior: Vector3) {
-		if (!this._ior.equal(ior)) {
-			this._ior.copy(ior);
+	private _reflection = 0.5;
+	public get reflection() { return this._reflection; }
+	public set reflection(reflection: number) {
+		if (this._reflection !== reflection) {
+			this._reflection = reflection;
 			this.update_UniformBuffer();
 		}
 	}
@@ -250,7 +268,7 @@ export class PbrMaterialResource extends MaterialResource {
 	}
 
 	private _has_normal: boolean = false;
-	private readonly normal_texture_storage = new MaterialTextureSamplerStorage<Texture2DResource>(this.uniform_group_ref.expect, 1, undefined, RenderServerDefaultTextureType.White);
+	private readonly normal_texture_storage = new MaterialTextureSamplerStorage<Texture2DResource>(this.uniform_group_ref.expect, 1, undefined, RenderServerDefaultTextureType.White, 3, RenderServer.get_TextureSampler(undefined, undefined, undefined, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear));
 	public get normal_texture() { return this.normal_texture_storage.get(); }
 	public set normal_texture(texture: Texture2DResource | undefined) {
 		if (this.normal_texture_storage.set(texture)) {
@@ -259,14 +277,13 @@ export class PbrMaterialResource extends MaterialResource {
 		}
 	}
 
-	private readonly matcap_texture_storage = new MaterialTextureSamplerStorage<Texture2DResource>(this.uniform_group_ref.expect, 2, undefined, RenderServerDefaultTextureType.White);
-	public get matcap_texture() { return this.matcap_texture_storage.get(); }
-	public set matcap_texture(texture: Texture2DResource | undefined) { this.matcap_texture_storage.set(texture); }
+	private readonly cube_texture_storage = new MaterialTextureSamplerStorage<TextureCubeMapResource>(this.uniform_group_ref.expect, 2, undefined, RenderServerDefaultTextureType.CubeWhite);
+	public get cube_texture() { return this.cube_texture_storage.get(); }
+	public set cube_texture(texture: TextureCubeMapResource | undefined) { this.cube_texture_storage.set(texture); }
 
 	constructor() {
 		super();
 		this.uniform_group_ref.expect.set_BufferUniform(0, this.uniform_buffer_ref.expect);
-		this.uniform_group_ref.expect.set_Sampler(3, RenderServer.get_TextureSampler(undefined, undefined, undefined, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear));
 		this.render_server_material.add_UniformBuffer(this.uniform_buffer_ref.expect, this.uniform_array_buffer);
 		PbrMaterialSolidPipelineCacheSet.get().set_RenderServerMaterialPipelineCaches(this.render_server_material, this.uniform_group_ref.expect);
 		this.update_UniformBuffer();
@@ -278,11 +295,9 @@ export class PbrMaterialResource extends MaterialResource {
 		float32array0[1] = this._color.y;
 		float32array0[2] = this._color.z;
 		float32array0[3] = this._color.w;
-		float32array0[4] = this._ior.x;
-		float32array0[5] = this._ior.y;
-		float32array0[6] = this._ior.z;
-		float32array0[7] = this._roughness;
-		float32array0[8] = this._metallic;
+		float32array0[4] = this._reflection;
+		float32array0[5] = this._roughness;
+		float32array0[6] = this._metallic;
 		const uint32array0 = new Uint32Array(this.uniform_array_buffer, PbrMaterialResource.UniformMemoryLayout.members[4].offset);
 		uint32array0[0] = this._has_normal ? 1 : 0;
 		this.render_server_material.trigger_UniformBufferChange(0);

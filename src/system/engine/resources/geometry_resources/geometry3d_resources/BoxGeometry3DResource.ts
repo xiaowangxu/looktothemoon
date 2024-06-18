@@ -6,8 +6,15 @@ import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/sys
 import { WebGPURenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
 import { RenderServerGeometryAttributeLayoutBuffer } from "../../../render_server/geometry/RenderServerGeometryDefination";
 import { Geometry3DResource } from "./Geometry3DResource";
+import type { ResourceSetOptionAllAtOnce } from "../../Resource";
 
-export class BoxGeometry3DResource extends Geometry3DResource {
+type BoxGeometry3DResourceOption = {
+    width?: number,
+    height?: number,
+    depth?: number,
+}
+
+export class BoxGeometry3DResource extends Geometry3DResource implements ResourceSetOptionAllAtOnce<BoxGeometry3DResourceOption> {
 
     private readonly position_buffer_ref: ReadonlyRef<WebGPURenderElementVector3Buffer> = new ReadonlyRef(new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, 24));
     private readonly normal_buffer_ref: ReadonlyRef<WebGPURenderElementVector3Buffer> = new ReadonlyRef(new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, 24));
@@ -40,18 +47,49 @@ export class BoxGeometry3DResource extends Geometry3DResource {
         width = Math.max(width, 0);
         if (this._width !== width) {
             this._width = width;
+            this.build();
         }
     }
     public set height(height: number) {
         height = Math.max(height, 0);
         if (this._height !== height) {
             this._height = height;
+            this.build();
         }
     }
     public set depth(depth: number) {
         depth = Math.max(depth, 0);
         if (this._depth !== depth) {
             this._depth = depth;
+            this.build();
+        }
+    }
+
+    public set option(option: BoxGeometry3DResourceOption) {
+        let changed = false;
+        if (option.width !== undefined) {
+            const width = Math.max(option.width, 0);
+            if (this._width !== width) {
+                changed = true;
+                this._width = width;
+            }
+        }
+        if (option.height !== undefined) {
+            const height = Math.max(option.height, 0);
+            if (this._height !== height) {
+                changed = true;
+                this._height = height;
+            }
+        }
+        if (option.depth !== undefined) {
+            const depth = Math.max(option.depth, 0);
+            if (this._depth !== depth) {
+                changed = true;
+                this._depth = depth;
+            }
+        }
+        if (changed) {
+            this.build();
         }
     }
 

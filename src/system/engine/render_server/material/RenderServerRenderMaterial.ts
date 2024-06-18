@@ -375,7 +375,7 @@ fn invert_mat3(mat: mat3x3f) -> mat3x3f {
 	  return (s * mat3x3<f32>(vec3<f32>(((mat[1u][1u] * mat[2u][2u]) - (mat[1u][2u] * mat[2u][1u])), ((mat[0u][2u] * mat[2u][1u]) - (mat[0u][1u] * mat[2u][2u])), ((mat[0u][1u] * mat[1u][2u]) - (mat[0u][2u] * mat[1u][1u]))), vec3<f32>(((mat[1u][2u] * mat[2u][0u]) - (mat[1u][0u] * mat[2u][2u])), ((mat[0u][0u] * mat[2u][2u]) - (mat[0u][2u] * mat[2u][0u])), ((mat[0u][2u] * mat[1u][0u]) - (mat[0u][0u] * mat[1u][2u]))), vec3<f32>(((mat[1u][0u] * mat[2u][1u]) - (mat[1u][1u] * mat[2u][0u])), ((mat[0u][1u] * mat[2u][0u]) - (mat[0u][0u] * mat[2u][1u])), ((mat[0u][0u] * mat[1u][1u]) - (mat[0u][1u] * mat[1u][0u])))));
 }`: ``}${builtin_func?.sample_background ? `
 
-fn sample_background(direction: vec3f) -> vec4f {
+fn sample_background(direction: vec3f, bias: f32) -> vec4f {
  	var dir = mat3x3f(
         world_env_uniform_camera_matrix.camera_world[0].xyz,
         world_env_uniform_camera_matrix.camera_world[1].xyz,
@@ -384,7 +384,8 @@ fn sample_background(direction: vec3f) -> vec4f {
 	var R = normalize(dir);
 	var theta = atan2(R.z, R.x);
 	var gamma = acos(R.y);
-	return textureSample(light_uniform_background_texture, light_uniform_sampler, vec2f(theta / TAU + 0.5, 1.0 - gamma / PI));
+	var mipmap = f32(textureNumLevels(light_uniform_background_texture) - 1);
+	return textureSampleBias(light_uniform_background_texture, light_uniform_sampler, vec2f(theta / TAU + 0.5, 1.0 - gamma / PI), bias * mipmap);
 }`: ``}`;
 
 		const fn: WebGPURenderElementRenderPipelineCacheGetterFn = (hash: WebGPURenderElementRenderPipelineCacheHash) => {

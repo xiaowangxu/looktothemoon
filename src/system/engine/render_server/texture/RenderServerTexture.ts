@@ -74,6 +74,32 @@ export class RenderServerTexture extends RenderServerObjectRefCounted {
         return new RenderServerTexture(texture, RenderServer.render_state.create_TextureView(texture, view_dimension, part, base_layer, layer_count, base_mipmap, mipmap_count).expect());
     }
 
+    static create_Images(
+        image_options: { image: GPUImageCopyExternalImageSource, width: number, height: number }[], mipmap_level_count: number = 1, generate_mipmap: boolean = false,
+        view_dimension?: WebGPURenderStateTextureDimension, part?: WebGPURendetStateTextureDestination, base_layer?: number, layer_count?: number, base_mipmap?: number, mipmap_count?: number,
+    ) {
+        const [max_width, max_height] = image_options.reduce((max, option) => [Math.max(max[0], option.width), Math.max(max[1], option.height)], [0, 0]);
+        const texture = RenderServer.render_state.create_Texture(
+            WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopyDst | WebGPURenderStateTextureUsage.Attchment,
+            WebGPURenderStateTextureFormat.RGBA8,
+            WebGPURenderStateTextureDimension.D2Array,
+            max_width, max_height, image_options.length, mipmap_level_count,
+        ).expect();
+        let layer = 0;
+        for (const { image, width, height } of image_options) {
+            RenderServer.render_state.device.queue.copyExternalImageToTexture(
+                { source: image, flipY: true },
+                { texture: texture.texture, origin: { x: 0, y: 0, z: layer } },
+                { width, height, depthOrArrayLayers: 1 },
+            );
+            layer++;
+        }
+        if (generate_mipmap && texture.mipmap_level_count > 1) {
+            RenderServer.render_state.generate_Mipmap(texture);
+        }
+        return new RenderServerTexture(texture, RenderServer.render_state.create_TextureView(texture, view_dimension, part, base_layer, layer_count, base_mipmap, mipmap_count).expect());
+    }
+
     public dispose(): void {
         this.texture_ref.clear();
         this.texture_view_ref.clear();

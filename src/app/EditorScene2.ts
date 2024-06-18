@@ -22,14 +22,20 @@ import matcap_6_image_url from 'res://matcap-11.png';
 import matcap_7_image_url from 'res://matcap-0.png';
 import normal_image_url from 'res://normal_texture-0.png';
 import normal_0_image_url from 'res://normal_texture.png';
-import studio from 'res://studio.png';
+import studio from 'res://grass_road.png';
+import cubemap_x from 'res://cubemap/x.png';
+import cubemap_x_ from 'res://cubemap/x_.png';
+import cubemap_y from 'res://cubemap/y.png';
+import cubemap_y_ from 'res://cubemap/y_.png';
+import cubemap_z from 'res://cubemap/z.png';
+import cubemap_z_ from 'res://cubemap/z_.png';
 
 import { ImageTexture2DResource } from "@/system/engine/resources/texture_resources/texture2d_resources/ImageTexture2DResource";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/material3d_resources/MatcapMaterial3DResource";
 import { TorusGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/TorusGeometry3DResource";
 import { WebGPURenderElementTextureSamplerCacheHash } from "@/system/sliverofstraw/render_element_object/texture_sampler/WebGPURenderElementTextureSamplerCache";
-import { PolyLineGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/polyline3d_resources/PolyLineGeometry3DResource";
+import { PolyLineGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/polyline_geometry3d_resources/PolyLineGeometry3DResource";
 import { PureColorMaterial3DResource } from "@/system/engine/resources/material_resources/material3d_resources/PureColorMaterial3DResource";
 import { PolyLineMaterial3DResource } from "@/system/engine/resources/material_resources/material3d_resources/polyline3d/PolyLineMaterial3DResource";
 import type { SignalEmitterListener } from "@/system/utils/SignalEmitter";
@@ -38,13 +44,16 @@ import { DirectionalLight3D } from "@/system/engine/nodes/node3ds/visual_instanc
 import { PhongMaterialResource } from "@/system/engine/resources/material_resources/material3d_resources/PhongMaterial3DResource";
 import { Pi, Tau } from "@/system/fivepebble/Scalar";
 import { PointLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/PointLight3D";
-import { InterpolateTween, InterpolateTweenEasingType, InterpolateTweenTransitionType, PingPongTweenAdaptor, PropertyTweenAdaptor, TweenLoop } from "@/system/engine/Tween";
+import { InterpolateTween, InterpolateTweenEasingType, InterpolateTweenTransitionType, MethodTweenAdaptor, PingPongTweenAdaptor, PropertyTweenAdaptor, TweenLoop } from "@/system/engine/Tween";
 import { MultiGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/MultiGeometry3DResource";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { SpotLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/SpotLight3D";
 import { PbrMaterialResource } from "@/system/engine/resources/material_resources/material3d_resources/PbrMaterial3DResource";
 import { SphereGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/SphereGeometry3DResource";
+import { ImageTextureCubeMapResource } from "@/system/engine/resources/texture_resources/texture2d_resources/ImageTextureCubeMapResource";
+import { PlaneGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/PlaneGeometry3DResource";
+import { CylinderGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/CylinderGeometry3DResource";
 
 const viewport_scale = 1;
 const bg_color = Color.create(0.25, 0.25, 0.25).linear_rgb;
@@ -113,8 +122,21 @@ export async function createEditor() {
 	EditorSceneTree.get_InputActionMap().add_Action('test_A', new ShortCut().set([new KeyInputEvent().set_Key('a', 'KeyA', true, true)]));
 	EditorSceneTree.get_InputActionMap().add_Action('test_B', new ShortCut().set([new KeyInputEvent().set_Key('a', 'KeyA', true, false)]));
 
+	const box_geo = new BoxGeometry3DResource();
+	const tor_geo = new TorusGeometry3DResource();
+	const sph_geo = new SphereGeometry3DResource();
+
 	World.signal_input.connect((evt, prop) => {
 		if (!prop && evt instanceof KeyInputEvent && evt.key === ' ' && evt.pressed) {
+			// EditorSceneTree.start_Tween(new MethodTweenAdaptor(
+			// 	new InterpolateTween(2, InterpolateTweenTransitionType.Cubic, InterpolateTweenEasingType.InOut),
+			// 	(v) => {
+			// 		sph_geo.option = {
+			// 			radius: v * 0.5 + 0.1,
+			// 			phi_segments: Math.round(v * 100)
+			// 		};
+			// 	}
+			// ))
 			// const EditorCamera = new OrbitCamera3D();
 			// EditorViewport.add_Child(EditorCamera);
 			// const func: SignalEmitterListener<typeof World.signal_input> = (evt, prop) => {
@@ -128,22 +150,18 @@ export async function createEditor() {
 		}
 	});
 
-	const box_geo = new BoxGeometry3DResource();
-	const tor_geo = new TorusGeometry3DResource();
-	const sph_geo = new SphereGeometry3DResource();
-
 	const box_mat_test = new MatcapMaterialResource();
 	// box_mat_test.color = Vector4.create(0.55, 0.5, 0.7, 1.0);
 
-	const box_mat_test_2 = true ? new PbrMaterialResource() : new PhongMaterialResource();
+	const box_mat_test_2 = new PbrMaterialResource();
 	box_mat_test_2.roughness = 0.4;
-	// box_mat_test_2.metallic = 0;
-	// box_mat_test_2.color = Vector4.create(1.0, 0., 0., 1.0);
+	box_mat_test_2.metallic = 1;
+	box_mat_test_2.color = Vector4.create(0.2, 0.2, 0.2, 1.0);
 
 	const box_mat1 = new TestMaterial3DResource();
 	box_mat1.color = Vector4.create(1.0, 1.0, 1.0, 1.0);
 	const mesh = new MeshInstance3D();
-	mesh.geometry = box_geo;
+	mesh.geometry = sph_geo;
 	mesh.material = box_mat_test_2;
 	mesh.local_position = Vector3.create(0, 0, 0);
 	mesh.local_rotation = Euler.create(0, 0, 0);
@@ -312,6 +330,43 @@ export async function createEditor() {
 		};
 	}
 
+	{
+		const promises = Promise.all([
+			cubemap_x,
+			cubemap_x_,
+			cubemap_y,
+			cubemap_y_,
+			cubemap_z,
+			cubemap_z_,
+		].map(url => {
+			return new Promise<HTMLImageElement>((resolve, reject) => {
+				const image = new Image();
+				image.src = url;
+				image.onload = () => { resolve(image) };
+			});
+		}));
+		promises.then((images) => {
+			const image_options = images.map(img => ({ image: img, width: img.naturalWidth, height: img.naturalHeight }));
+			const texture = ImageTextureCubeMapResource.create_Images(image_options, Infinity, true);
+			box_mat_test_2.cube_texture = texture;
+			for (let i = 0; i <= 10; i++) {
+				for (let j = 0; j <= 10; j++) {
+					const mesh = new MeshInstance3D();
+					mesh.geometry = sph_geo;
+					const mat = new PbrMaterialResource();
+					// mat.color = Vector4.create(1.0, 0.0, 0.0, 1.0);
+					mesh.material = mat;
+					mat.roughness = i / 10;
+					mat.metallic = j / 10;
+					mat.cube_texture = texture;
+					mesh.local_position = Vector3.create(-80 + (i * 15), 20, -80 + (j * 15));
+					mesh.local_scale = Vector3.create(10, 10, 10);
+					World.add_Child(mesh);
+				}
+			}
+		});
+	}
+
 	// {
 	// 	const multi_geo = new MultiGeometry3DResource();
 	// 	multi_geo.base_geometry = box_geo;
@@ -393,19 +448,29 @@ export async function createEditor() {
 	polyline.local_scale = Vector3.create(100, 100, 100);
 	World.add_Child(polyline);
 
-	const light1 = new AmbientLight3D();
-	World.add_Child(light1);
-	light1.intensity = 0.1;
-	// const light2 = new DirectionalLight3D();
-	// light2.local_rotation = Euler.create(-Pi / 4, Pi / 4, 0);
-	// light2.intensity = 0.5;
-	// World.add_Child(light2);
-	const light3 = new PointLight3D();
-	light3.color = Vector3.create(1, 1, 1);
-	light3.local_position = Vector3.create(0, 100, 0);
-	light3.intensity = 0.5;
-	light3.radius = 100;
-	World.add_Child(light3);
+	// const light1 = new AmbientLight3D();
+	// light1.intensity = 0.1;
+	// World.add_Child(light1);
+
+	const light2 = new DirectionalLight3D();
+	light2.local_rotation = Euler.create(-Pi / 2, 0, 0);
+	light2.intensity = 2.0;
+	World.add_Child(light2);
+	const light2_1 = new DirectionalLight3D();
+	light2_1.local_rotation = Euler.create(-Pi / 3, 0, 0);
+	light2_1.intensity = 2.0;
+	World.add_Child(light2_1);
+	const light2_2 = new DirectionalLight3D();
+	light2_2.local_rotation = Euler.create(Pi + Pi / 3, 0, 0);
+	light2_2.intensity = 2.0;
+	World.add_Child(light2_2);
+
+	// const light3 = new PointLight3D();
+	// light3.color = Vector3.create(1, 1, 1);
+	// light3.local_position = Vector3.create(0, 100, 0);
+	// light3.intensity = 0.5;
+	// light3.radius = 100;
+	// World.add_Child(light3);
 	// const light4 = new PointLight3D();
 	// light4.color = Vector3.create(1, 1, 1);
 	// light4.local_position = Vector3.create(-25, 60, 20);
@@ -433,20 +498,7 @@ export async function createEditor() {
 	// 	light6.local_rotation = Euler.create(0, ((Math.sin(t) + 1) / 2 * 0.8 + 0.1) * Pi / 2, 0);
 	// });
 
-	for (let i = 0; i <= 10; i++) {
-		for (let j = 0; j <= 10; j++) {
-			const mesh = new MeshInstance3D();
-			mesh.geometry = sph_geo;
-			const mat = new PbrMaterialResource();
-			mat.color = Vector4.create(1.0, 1.0, 1.0, 1.0);
-			mesh.material = mat;
-			mat.roughness = i === 0 ? 0.05 : i / 10;
-			mat.metallic = j / 10;
-			mesh.local_position = Vector3.create(-80 + (i * 15), 20, -80 + (j * 15));
-			mesh.local_scale = Vector3.create(10, 10, 10);
-			World.add_Child(mesh);
-		}
-	}
+
 
 	// EditorSceneTree.start_Tween(new TweenLoop(
 	// 	new PingPongTweenAdaptor(
@@ -478,6 +530,28 @@ export async function createEditor() {
 	// 		light1.color = Color.create(1, 0, 0).get_PlainColor();
 	// 	}
 	// });
+
+	const pln_geo = new CylinderGeometry3DResource();
+	pln_geo.option = {
+		height: 2.3,
+	}
+	const ground = new MeshInstance3D();
+	ground.geometry = pln_geo;
+	ground.material = box_mat_test_2;
+	ground.set_SurfaceMaterial(0, box_mat_test);
+	box_mat_test_2.roughness = 0.5;
+	box_mat_test_2.metallic = 0;
+	ground.local_scale = Vector3.create(100, 100, 100);
+	ground.local_position = Vector3.create(0, -120, 0);
+	World.add_Child(ground);
+
+	const light6 = new SpotLight3D();
+	light6.color = Vector3.create(0, 0, 1);
+	light6.distance = 10;
+	light6.intensity = 100;
+	light6.local_rotation = Euler.create(-Pi / 2, 0.3, 0);
+	light6.local_position = Vector3.create(200, 200, 0);
+	World.add_Child(light6);
 
 	return EditorSceneTree;
 }

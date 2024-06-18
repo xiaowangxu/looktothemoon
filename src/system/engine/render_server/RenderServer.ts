@@ -11,6 +11,7 @@ import { RenderServerTexture } from "./texture/RenderServerTexture";
 
 export enum RenderServerDefaultTextureType {
     Hint, White, Black, Transparent,
+    CubeWhite,
 }
 
 export class RenderServerSingleton implements Disposable {
@@ -194,6 +195,7 @@ struct LightUniform {
     private default_texture_white_ref!: ReadonlyRef<RenderServerTexture>;
     private default_texture_black_ref!: ReadonlyRef<RenderServerTexture>;
     private default_texture_transparent_ref!: ReadonlyRef<RenderServerTexture>;
+    private default_texture_cube_white_ref!: ReadonlyRef<RenderServerTexture>;
 
     //#endregion
 
@@ -258,6 +260,17 @@ struct LightUniform {
                 255, 255, 255, 0,
             ]), 1, 1,
         );
+        this.default_texture_cube_white_ref = new ReadonlyRef(RenderServerTexture.create(WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopyDst, WebGPURenderStateTextureFormat.RGBA8, WebGPURenderStateTextureDimension.D2, 1, 1, 6, undefined, WebGPURenderStateTextureDimension.CubeMap));
+        this.default_texture_cube_white_ref.expect.update_Data(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
+            new Uint8Array([
+                255, 255, 255, 255,
+                255, 255, 255, 255,
+                255, 255, 255, 255,
+                255, 255, 255, 255,
+                255, 255, 255, 255,
+                255, 255, 255, 255,
+            ]), 1, 1,
+        );
         //#endregion
     }
 
@@ -280,6 +293,7 @@ struct LightUniform {
             case RenderServerDefaultTextureType.White: return this.default_texture_white_ref.expect;
             case RenderServerDefaultTextureType.Black: return this.default_texture_black_ref.expect;
             case RenderServerDefaultTextureType.Transparent: return this.default_texture_transparent_ref.expect;
+            case RenderServerDefaultTextureType.CubeWhite: return this.default_texture_cube_white_ref.expect;
             default: {
                 const n: never = type;
                 throw new Error('should not reach');
@@ -296,6 +310,7 @@ struct LightUniform {
         this.default_texture_white_ref.clear();
         this.default_texture_black_ref.clear();
         this.default_texture_transparent_ref.clear();
+        this.default_texture_cube_white_ref.clear();
         this.render_state.dispose();
     }
 }

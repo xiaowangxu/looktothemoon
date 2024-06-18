@@ -5,12 +5,19 @@ import { RenderServer } from "../../../render_server/RenderServer";
 import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 import { WebGPURenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
 import { RenderServerGeometryAttributeLayoutBuffer } from "../../../render_server/geometry/RenderServerGeometryDefination";
-import { Pi, Tau } from "@/system/fivepebble/Scalar";
-import { clamp } from "@vueuse/core";
-import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
+import { Pi, Tau, clamp } from "@/system/fivepebble/Scalar";
 import { Geometry3DResource } from "./Geometry3DResource";
+import type { ResourceSetOptionAllAtOnce } from "../../Resource";
 
-export class SphereGeometry3DResource extends Geometry3DResource {
+type SphereGeometry3DResourceOption = {
+    radius?: number,
+    theta?: number,
+    theta_segments?: number,
+    phi?: number,
+    phi_segments?: number,
+}
+
+export class SphereGeometry3DResource extends Geometry3DResource implements ResourceSetOptionAllAtOnce<SphereGeometry3DResourceOption> {
 
     private readonly position_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
     private readonly normal_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
@@ -19,9 +26,9 @@ export class SphereGeometry3DResource extends Geometry3DResource {
 
     protected _radius: number = 0.5;
     protected _theta: number = Tau;
-    protected _theta_segments: number = 32;
+    protected _theta_segments: number = 64;
     protected _phi: number = Pi;
-    protected _phi_segments: number = 16;
+    protected _phi_segments: number = 32;
 
     public get radius() { return this._radius; }
     public get theta() { return this._theta; }
@@ -33,33 +40,79 @@ export class SphereGeometry3DResource extends Geometry3DResource {
         radius = Math.max(radius, 0);
         if (this._radius !== radius) {
             this._radius = radius;
+            this.build();
         }
     }
     public set theta(theta: number) {
         theta = clamp(theta, 0, Tau);
         if (this._theta !== theta) {
             this._theta = theta;
+            this.build();
         }
     }
     public set theta_segments(theta_segments: number) {
         theta_segments = Math.max(Math.floor(theta_segments), 3);
         if (this._theta_segments !== theta_segments) {
             this._theta_segments = theta_segments;
+            this.build();
         }
     }
     public set phi(phi: number) {
         phi = clamp(phi, 0, Pi);
         if (this._phi !== phi) {
             this._phi = phi;
+            this.build();
         }
     }
     public set phi_segments(phi_segments: number) {
         phi_segments = Math.max(Math.floor(phi_segments), 2);
         if (this._phi_segments !== phi_segments) {
             this._phi_segments = phi_segments;
+            this.build();
         }
     }
 
+    public set option(option: SphereGeometry3DResourceOption) {
+        let changed = false;
+        if (option.radius !== undefined) {
+            const radius = Math.max(option.radius, 0);
+            if (this._radius !== radius) {
+                changed = true;
+                this._radius = radius;
+            }
+        }
+        if (option.theta !== undefined) {
+            const theta = clamp(option.theta, 0, Tau);
+            if (this._theta !== theta) {
+                changed = true;
+                this._theta = theta;
+            }
+        }
+        if (option.theta_segments !== undefined) {
+            const theta_segments = Math.max(Math.floor(option.theta_segments), 3);
+            if (this._theta_segments !== theta_segments) {
+                changed = true;
+                this._theta_segments = theta_segments;
+            }
+        }
+        if (option.phi !== undefined) {
+            const phi = clamp(option.phi, 0, Pi);
+            if (this._phi !== phi) {
+                changed = true;
+                this._phi = phi;
+            }
+        }
+        if (option.phi_segments !== undefined && option.phi_segments !== this._phi_segments) {
+            const phi_segments = Math.max(Math.floor(option.phi_segments), 2);
+            if (this._phi_segments !== phi_segments) {
+                changed = true;
+                this._phi_segments = phi_segments;
+            }
+        }
+        if (changed) {
+            this.build();
+        }
+    }
 
     constructor() {
         super();
@@ -79,13 +132,13 @@ export class SphereGeometry3DResource extends Geometry3DResource {
         const normal_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
         const uv_buffer = new WebGPURenderElementVector2Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
 
+        let vertex_idx = 0;
         for (let iy = 0; iy <= phi_segments; iy++) {
             const v = iy / phi_segments;
             for (let ix = 0; ix <= theta_segments; ix++) {
                 const u = ix / theta_segments;
-                const idx = iy * (theta_segments + 1) + ix;
-                const vec3_idx = idx * 3;
-                const vec2_idx = idx * 2;
+                const vec3_idx = vertex_idx * 3;
+                const vec2_idx = vertex_idx * 2;
                 // vertex
                 const x = Math.cos(u * theta) * Math.sin(v * phi);
                 const y = Math.cos(v * phi);
@@ -100,15 +153,15 @@ export class SphereGeometry3DResource extends Geometry3DResource {
                 // uv
                 uv_buffer.data[vec2_idx + 0] = u;
                 uv_buffer.data[vec2_idx + 1] = 1 - v;
+                vertex_idx++;
             }
         }
 
+        const index_count = (theta_segments * phi_segments - 1) * 6;
 
-        const index_count =  (theta_segments * phi_segments - 1) * 6;
-        
         const index_buffer = new WebGPURenderElementIndexBuffer(RenderServer.render_state, WebGPURenderStateBufferType.Index, WebGPURenderStateBufferUsage.CopyDst, index_count);
 
-        let i = 0;
+        let index_idx = 0;
         for (let iy = 0; iy < phi_segments; iy++) {
             for (let ix = 0; ix < theta_segments; ix++) {
                 const idx = ix + 1 + iy * (theta_segments + 1);
@@ -117,14 +170,14 @@ export class SphereGeometry3DResource extends Geometry3DResource {
                 const c = a + theta_segments;
                 const d = c + 1;
                 if (iy !== 0) {
-                    index_buffer.data[i++] = a;
-                    index_buffer.data[i++] = b;
-                    index_buffer.data[i++] = d;
+                    index_buffer.data[index_idx++] = a;
+                    index_buffer.data[index_idx++] = b;
+                    index_buffer.data[index_idx++] = d;
                 }
                 if (iy !== phi_segments - 1) {
-                    index_buffer.data[i++] = d;
-                    index_buffer.data[i++] = b;
-                    index_buffer.data[i++] = c;
+                    index_buffer.data[index_idx++] = d;
+                    index_buffer.data[index_idx++] = b;
+                    index_buffer.data[index_idx++] = c;
                 }
             }
         }
