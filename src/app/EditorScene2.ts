@@ -369,27 +369,6 @@ export async function createEditor() {
 		});
 	}
 
-	for (let i = 0; i < 1024; i++) {
-		const light3 = new PointLight3D();
-		light3.color = Vector3.create(Math.random(), Math.random(), Math.random());
-		light3.local_position = Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200);
-		light3.intensity = 0.2;
-		light3.radius = 1;
-		// EditorSceneTree.start_Tween(
-		// 	new TweenLoop(
-		// 		new PingPongTweenAdaptor(
-		// 			new PropertyTweenAdaptor(
-		// 				new InterpolateTween(2, InterpolateTweenTransitionType.Cubic, InterpolateTweenEasingType.InOut),
-		// 				light3, "local_position",
-		// 				Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200)
-		// 			)
-		// 		),
-		// 		Infinity
-		// 	)
-		// )
-		World.add_Child(light3);
-	}
-
 	// {
 	// 	const multi_geo = new MultiGeometry3DResource();
 	// 	multi_geo.base_geometry = box_geo;
@@ -575,6 +554,27 @@ export async function createEditor() {
 	light6.local_rotation = Euler.create(-Pi / 2, 0.3, 0);
 	light6.local_position = Vector3.create(200, 200, 0);
 	World.add_Child(light6);
+
+	for (let i = 0; i < 1024; i++) {
+		const light3 = new PointLight3D();
+		light3.color = Vector3.create(Math.random(), Math.random(), Math.random());
+		light3.local_position = Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200);
+		light3.intensity = 0.2;
+		light3.radius = 1;
+		EditorSceneTree.start_Tween(
+			new TweenLoop(
+				new PingPongTweenAdaptor(
+					new PropertyTweenAdaptor(
+						new InterpolateTween(2, InterpolateTweenTransitionType.Cubic, InterpolateTweenEasingType.InOut),
+						light3, "local_position",
+						Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200)
+					)
+				),
+				Infinity
+			)
+		)
+		World.add_Child(light3);
+	}
 
 	return EditorSceneTree;
 }

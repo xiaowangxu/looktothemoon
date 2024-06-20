@@ -650,7 +650,7 @@ export class VisualWorld3D implements Disposable {
         this.background_texture_ref.value = texture?.render_server_texture;
     }
 
-    public readonly render_server_light_data = new RenderServerLightData();
+    public readonly render_server_light_data = new RenderServerLightData(2048);
 
     public create_Light(): Rid {
         const rid = RID();

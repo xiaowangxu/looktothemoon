@@ -83,7 +83,7 @@ const PbrMaterialSolidPipelineCacheSet = new RefCacher(() => {
 
 	let cluster_index = get_cluster_index(vary.position);
 	var light_cluster: u32 = cluster_index.z * (light_cluster_uniform.width_count * light_cluster_uniform.height_count) + cluster_index.y * light_cluster_uniform.width_count + cluster_index.x;
-	var light_index_base = 0u; //light_cluster * light_cluster_uniform.cluster_count;
+	var light_index_base = light_cluster * (light_cluster_uniform.cluster_count + 1);
 	var light_count = light_cluster_data_uniform[light_index_base];
 
 	for (var i: u32 = 1; i <= light_count; i++) {

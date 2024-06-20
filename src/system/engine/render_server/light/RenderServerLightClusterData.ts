@@ -45,50 +45,22 @@ const RenderServerLightClusterDataPipeline = new RefCacher(() => {
     @workgroup_size(1) 
     fn cs_main(@builtin(global_invocation_id) id: vec3u) {
         let cluster_id = id.z * (cluster_uniform.width_count * cluster_uniform.height_count) + id.y * cluster_uniform.width_count + id.x;
-        let index_id = cluster_id * cluster_uniform.cluster_count;
-
-        // let z_near = world_env_uniform_params.z_range.x;
-        // let z_far = world_env_uniform_params.z_range.y;
-
-        // let tile_near = -z_near * pow(z_far / z_near, f32(id.z    ) / f32(cluster_uniform.depth_count));
-        // let tile_far  = -z_near * pow(z_far / z_near, f32(id.z + 1) / f32(cluster_uniform.depth_count));
-
-        // let width_count_f32 = f32(cluster_uniform.width_count);
-        // let height_count_f32 = f32(cluster_uniform.height_count);
-        // let max_point_screen_space = vec4f(vec2f(width_count_f32 / f32(id.x + 1), height_count_f32 / f32(id.y + 1)), 0.0, 1.0);
-        // let min_point_screen_space = vec4f(vec2f(width_count_f32 / f32(id.x    ), height_count_f32 / f32(id.y    )), 0.0, 1.0);
-        // let max_point_view_space = screen_to_view(max_point_screen_space).xyz;
-        // let min_point_view_space = screen_to_view(min_point_screen_space).xyz;
-
-        // let min_point_near = line_intersection_to_z_plane(EYE_POS, max_point_view_space, tile_near);
-        // let min_point_far  = line_intersection_to_z_plane(EYE_POS, max_point_view_space, tile_far);
-        // let max_point_near = line_intersection_to_z_plane(EYE_POS, max_point_view_space, tile_near);
-        // let max_point_far  = line_intersection_to_z_plane(EYE_POS, max_point_view_space, tile_far);
-
-        // let box = Box3 (
-        //     min(min(min_point_near, min_point_far), min(max_point_near, max_point_far)),
-        //     max(max(min_point_near, min_point_far), max(max_point_near, max_point_far)),
-        // );
-
+        let index_id = cluster_id * (cluster_uniform.cluster_count + 1);
         var count: u32 = 0;
-        for (var i: u32 = 0; i < light_uniform.count && count < cluster_uniform.cluster_count; i++) {
-            
-            // let light = lights[i];
-            // let t: u32 = light.visible_queue_type & 0xff;
-		    // let visible: bool = (light.visible_queue_type & 0x80000000) != 0u;
-            // // if !visible { continue; }
+        if id.x >= 12 && id.x <= 20 && id.y >= 5 && id.y <= 10 {
+            for (var i: u32 = 0; i < light_uniform.count && count < cluster_uniform.cluster_count; i++) {
+                let light = lights[i];
+                let t: u32 = light.visible_queue_type & 0xff;
+                let visible: bool = (light.visible_queue_type & 0x80000000) != 0u;
+                let attenuation = light.direction_attenuation.w;
+                let direction = light.direction_attenuation.xyz;
+                let position = light.position.xyz;
 
-		    // let attenuation = light.direction_attenuation.w;
-		    // let direction = light.direction_attenuation.xyz;
-		    // let position = light.position.xyz;
-            
-            // // if t == 3u {
-            // //     let point = world_env_uniform_camera_matrix.camera_view * vec4f(position, 1.0);
-            // //     if !is_point_inside_box3(box, point.xyz) { continue; }
-            // // }
+                // if t == 3u { continue; }
 
-            clusters[index_id + 1 + count] = i;
-            count += 1; 
+                clusters[index_id + 1 + count] = i;
+                count += 1; 
+            }
         }
         clusters[index_id] = count;
     }

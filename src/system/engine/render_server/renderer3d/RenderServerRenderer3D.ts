@@ -1043,8 +1043,6 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     private last_world_id: number = -1;
     private last_background_id: number = -1;
 
-    private computed = false;
-
     public render(world: World3D, camera: Camera3, viewport: RenderServerViewport, time: number, once: boolean) {
 
         //#region constants
@@ -1096,10 +1094,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
         const encoder = RenderServer.render_state.device.createCommandEncoder();
         // Lights
-        if (!this.computed) {
-            // this.computed = true;
-            this.lights_cluster_data_ref.expect.compute(encoder, camera, world.visual_world.render_server_light_data, this.world_env_queue_0_uniform_solid_group_ref.expect);
-        }
+        this.lights_cluster_data_ref.expect.compute(encoder, camera, world.visual_world.render_server_light_data, this.world_env_queue_0_uniform_solid_group_ref.expect);
         // Meshs
         this.render_Queue0Solid(encoder, viewport.background);
         this.render_Queue0Transparent(encoder);
