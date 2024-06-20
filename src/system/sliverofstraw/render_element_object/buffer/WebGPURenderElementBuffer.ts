@@ -26,7 +26,7 @@ export abstract class WebGPURenderElementBuffer<T = any> extends WebGPURenderObj
 
 export class WebGPURenderElementIndexBuffer extends WebGPURenderElementBuffer<number> {
 
-    public buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
+    protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
     public readonly _data: Uint32Array;
     public get data(): Uint32Array { return this._data; }
@@ -92,7 +92,7 @@ export class WebGPURenderElementIndexBuffer extends WebGPURenderElementBuffer<nu
 
 export class WebGPURenderElementUintBuffer extends WebGPURenderElementBuffer<number> {
 
-    public buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
+    protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
     public readonly _data: Uint32Array;
     public get data(): Uint32Array { return this._data; }
@@ -158,7 +158,7 @@ export class WebGPURenderElementUintBuffer extends WebGPURenderElementBuffer<num
 
 export class WebGPURenderElementIntBuffer extends WebGPURenderElementBuffer<number> {
 
-    public buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
+    protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
     public readonly _data: Int32Array;
     public get data(): Int32Array { return this._data; }
@@ -224,7 +224,7 @@ export class WebGPURenderElementIntBuffer extends WebGPURenderElementBuffer<numb
 
 export class WebGPURenderElementFloatBuffer extends WebGPURenderElementBuffer<number> {
 
-    public buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
+    protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
     public readonly _data: Float32Array;
     public get data(): Float32Array { return this._data; }

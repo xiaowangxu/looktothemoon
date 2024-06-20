@@ -11,7 +11,6 @@ import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/sys
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { WebGPURenderStateTextureFilter } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTextureSampler";
 import type { Texture2DResource } from "../../texture_resources/texture2d_resources/Texture2DResource";
-import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { TextureCubeMapResource } from "../../texture_resources/texture2d_resources/TextureCubeMapResource";
 
 const PbrMaterialResourceUniformLayout = new RefCacher(() => {
@@ -82,8 +81,16 @@ const PbrMaterialSolidPipelineCacheSet = new RefCacher(() => {
 	var Am = vec3f(0.0);
 	var Lo = vec3f(0.0);
 
-	for (var i: u32 = 0; i < light_uniform.count; i += 1) {
-	    var light: LightDataUniform = light_data_uniform[i];
+	let cluster_index = get_cluster_index(vary.position);
+	var light_cluster: u32 = cluster_index.z * (light_cluster_uniform.width_count * light_cluster_uniform.height_count) + cluster_index.y * light_cluster_uniform.width_count + cluster_index.x;
+	var light_index_base = 0u; //light_cluster * light_cluster_uniform.cluster_count;
+	var light_count = light_cluster_data_uniform[light_index_base];
+
+	for (var i: u32 = 1; i <= light_count; i++) {
+	
+		var light_index = light_cluster_data_uniform[light_index_base + i];
+
+	    var light: LightDataUniform = light_data_uniform[light_index];
 		var t: u32 = light.visible_queue_type & 0xff;
 		var visible: bool = (light.visible_queue_type & 0x80000000) != 0u;
 		var attenuation = light.direction_attenuation.w;
@@ -167,7 +174,33 @@ const PbrMaterialSolidPipelineCacheSet = new RefCacher(() => {
 	var ambient = (kD * Am * albedo.rgb + specular) * 1.0; // 1.0 is AO
     var color = vec4f(ambient + Lo, 1.0);`,
 		// custom
-		`fn fresnelSchlick(cosTheta: f32, F0: vec3f) -> vec3f {
+		`fn linear_depth(depth: f32) -> f32 {
+	let z_near = world_env_uniform_params.z_range.x;
+	let z_far = world_env_uniform_params.z_range.y;
+  	return z_far * z_near / fma(depth, z_near - z_far, z_far);
+}
+
+fn get_cluster_index(position : vec4f) -> vec3u {
+	let z_near = world_env_uniform_params.z_range.x;
+	let z_far = world_env_uniform_params.z_range.y;
+	let tile_x = f32(light_cluster_uniform.width_count);
+	let tile_y = f32(light_cluster_uniform.height_count);
+	let tile_z = f32(light_cluster_uniform.depth_count);
+
+	let slice_scale = tile_z / log2(z_far / z_near);
+	let slice_bias = -(tile_z * log2(z_near) / log2(z_far / z_near));
+	var z_tile = u32(max(log2(linear_depth(position.z)) * slice_scale + slice_bias, 0.0));
+
+	let uv = position_to_screen_uv(position.xy, vec4f(0.0, 0.0, world_env_uniform_params.screen_size));
+
+  	return vec3u(
+		u32(uv.x * tile_x),
+		u32(uv.y * tile_y),
+  	    z_tile,
+	);
+}
+
+fn fresnelSchlick(cosTheta: f32, F0: vec3f) -> vec3f {
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
@@ -206,7 +239,8 @@ fn GeometrySmith(N: vec3f, V: vec3f, L: vec3f, roughness: f32) -> f32 {
 		RenderServerGeometryAttributeLayout,
 		{
 			builtin_func: {
-				sample_background: true
+				sample_background: true,
+				position_to_screen_uv: true,
 			}
 		}
 	);
@@ -304,6 +338,8 @@ export class PbrMaterialResource extends MaterialResource {
 	}
 
 	protected dispose(): void {
+		this.uniform_group_ref.clear();
+		this.uniform_buffer_ref.clear();
 		super.dispose();
 	}
 }

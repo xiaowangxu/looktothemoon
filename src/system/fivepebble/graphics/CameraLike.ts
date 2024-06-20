@@ -12,6 +12,9 @@ export interface CameraLike<Proj extends MatrixLike<Proj>, Vec extends VectorLik
     set projection(mat: Proj);
     get_Projection(target: Proj): Proj;
 
+    get near(): number;
+    get far(): number;
+
     get global_transform(): Proj;
     set global_transform(mat: Proj);
     get_GlobalTransform(target: Proj): Proj;

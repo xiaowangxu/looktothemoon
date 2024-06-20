@@ -212,7 +212,7 @@ export class OrbitCamera3D extends Node3D {
     }
 
     private update_GrabStart(evt: MouseInputEvent) {
-        this.drag_start_camera = this.camera.get_Camera().clone();
+        this.drag_start_camera = this.camera.get_Camera().clone() as Camera3;
         this.get_GlobalPosition(this.drag_start_global_position);
         evt.get_PositionNormalized(this.drag_start_mouse_position_normalized);
     }

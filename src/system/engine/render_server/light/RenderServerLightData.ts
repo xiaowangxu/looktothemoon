@@ -60,6 +60,9 @@ export class RenderServerLightData implements Disposable {
     public readonly light_count_buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
     public readonly light_count_array_buffer: ArrayBuffer;
 
+    public get light_count_buffer() { return this.light_count_buffer_ref.expect; }
+    public get light_data_buffer() { return this.light_data_buffer_ref.expect; }
+
     protected data_changed: boolean = true;
     protected length_changed: boolean = true;
 
@@ -67,7 +70,7 @@ export class RenderServerLightData implements Disposable {
         this.capcity = capcity;
         this.light_data_buffer_ref = new ReadonlyRef(RenderServer.render_state.create_Buffer(WebGPURenderStateBufferType.Uniform | WebGPURenderStateBufferType.Storage, WebGPURenderStateBufferUsage.CopyDst, RenderServerLightData.LightDataUniformMemoryLayout.size * this.capcity).expect());
         this.light_data_array_buffer = new ArrayBuffer(this.light_data_buffer_ref.expect.length);
-        this.light_count_buffer_ref = new ReadonlyRef(RenderServer.render_state.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, 4).expect());
+        this.light_count_buffer_ref = new ReadonlyRef(RenderServer.render_state.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, 24).expect()); // use 24 since requires a buffer binding which is at least 24 bytes
         this.light_count_array_buffer = new ArrayBuffer(this.light_count_buffer_ref.expect.length);
     }
 

@@ -51,6 +51,8 @@ export class RenderServerSingleton implements Disposable {
         members: [
             // screen_size
             WebGPURenderStateBufferUniformType.Vector2,
+            // z range
+            WebGPURenderStateBufferUniformType.Vector2,
             // time
             WebGPURenderStateBufferUniformType.Float,
             // orthogonal 
@@ -135,6 +137,7 @@ export class RenderServerSingleton implements Disposable {
 
 struct WorldEnvUniformParams {
     screen_size: vec2f,
+    z_range: vec2f,
     time: f32,
     orthogonal: u32,
     pixel_ratio: f32,
@@ -165,6 +168,15 @@ struct WorldEnvUniformParams {
 struct LightUniform {
     count: u32,
 }
+
+struct LightClusterUniform {
+    width_count: u32,
+    height_count: u32,
+    depth_count: u32,
+    cluster_count: u32,
+    z_near: f32,
+    z_far: f32,
+}
 `;
 
     static readonly WorldUniformsGroupBindingCode = `@group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(0) var<uniform> world_env_uniform_camera_matrix: WorldEnvUniformCameraMatrix; 
@@ -179,7 +191,10 @@ struct LightUniform {
     static readonly LightUniformsGroupBindingCode = `@group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(0) var<storage, read> light_data_uniform: array<LightDataUniform>;
 @group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(1) var<uniform> light_uniform: LightUniform;
 @group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(2) var light_uniform_background_texture: texture_2d<f32>;
-@group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(3) var light_uniform_sampler: sampler;`;
+@group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(3) var light_uniform_sampler: sampler;
+@group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(4) var<storage, read> light_cluster_data_uniform: array<u32>;
+@group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(5) var<uniform> light_cluster_uniform: LightClusterUniform;
+`;
 
     //#endregion
 
@@ -208,9 +223,9 @@ struct LightUniform {
         //#region world env uniform
         this.world_env_uniform_layout_ref.value = this.render_state.create_UniformLayout();
         // camera matrix
-        this.world_env_uniform_layout_ref.expect.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 0);
+        this.world_env_uniform_layout_ref.expect.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment | WebGPURenderStateShaderType.Compute, 0);
         // params
-        this.world_env_uniform_layout_ref.expect.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 1);
+        this.world_env_uniform_layout_ref.expect.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment | WebGPURenderStateShaderType.Compute, 1);
         // result texture
         this.world_env_uniform_layout_ref.expect.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.NonFilterFloat, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 2);
         this.world_env_uniform_layout_ref.expect.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.NonFilterFloat, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 3);
@@ -224,6 +239,8 @@ struct LightUniform {
         this.lights_uniform_layout_ref.expect.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 1);
         this.lights_uniform_layout_ref.expect.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.Float, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 2);
         this.lights_uniform_layout_ref.expect.add_Sampler(WebGPURenderStateSamplerUniformType.Filter, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 3);
+        this.lights_uniform_layout_ref.expect.add_Storage(true, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 4);
+        this.lights_uniform_layout_ref.expect.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 5);
         //#endregion
 
         //#region instance uniform

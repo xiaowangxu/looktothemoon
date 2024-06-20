@@ -26,6 +26,9 @@ import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { WebGPURenderStateBufferView } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBufferView";
 import type { WebGPURenderStateUniformGroup } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformGroup";
 import type { RenderServerComputeMaterial } from "../material/RenderServerComputeMaterial";
+import { RenderServerLightClusterData } from "../light/RenderServerLightClusterData";
+import { LightClusterMaterial3DResource } from "../../resources/material_resources/material3d_resources/LightClusterMaterial3DResource";
+import type { MaterialResource } from "../../resources/material_resources/MaterialResource";
 
 const FullScreenTriangleVertexArray = new RefCacher(() => {
     const vertex_array = new WebGPURenderElementVertexArray(RenderServer.render_state, WebGPURenderStatePrimitiveType.Triangles, 0, 3);
@@ -296,6 +299,10 @@ const EffectFxaaPipeline = new RefCacher(() => {
 
     @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
 
+    ${RenderServerSingleton.LightDataUniformsStructCode}
+
+    ${RenderServerSingleton.LightUniformsGroupBindingCode}
+
     @vertex
     fn vs_main(attri: Attributes) -> VertexOutput {
         var out: VertexOutput;
@@ -397,7 +404,7 @@ const EffectFxaaPipeline = new RefCacher(() => {
         program,
         RenderServerRenderMaterial.ProgramStatePipelineTemplates[RenderServerRenderMaterialPass.Set],
         RenderServerRenderMaterial.OutputStatePipelineTemplates[RenderServerRenderMaterialPass.Set],
-        [RenderServer.world_env_uniform_layout],
+        [RenderServer.world_env_uniform_layout, RenderServer.lights_uniform_layout],
         [
             {
                 stride: 8, // 2 * 4
@@ -638,6 +645,8 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
     protected readonly compose_uniform_sampler_ref = new ReadonlyRef(ComposeUniformSmapler.get());
 
+    protected readonly material_override_ref = new Ref<MaterialResource>(); // new LightClusterMaterial3DResource()
+
     //#region full screen triangle
 
     protected readonly full_screen_triangle_vertex_array_ref = new ReadonlyRef(FullScreenTriangleVertexArray.get());
@@ -721,7 +730,6 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     protected readonly effect_frame_buffer_1_ref = new ReadonlyRef(new WebGPURenderElementFrameBuffer(RenderServer.render_state));
 
     protected readonly effect_fxaa_pipeline_ref = new ReadonlyRef(EffectFxaaPipeline.get());
-    protected readonly effect_pre_mult_alpha_pipeline_ref = new ReadonlyRef(EffectPreMultAlphaPipeline.get());
 
     //#endregion
 
@@ -744,9 +752,10 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     protected readonly world_env_uniform_params_buffer_ref = new ReadonlyRef(RenderServer.render_state.create_Buffer(WebGPURenderStateBufferType.Uniform, WebGPURenderStateBufferUsage.CopyDst, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.size).expect());
     protected readonly world_env_uniform_params_array_buffer = new ArrayBuffer(RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.size);
     protected readonly world_env_uniform_screen_size = new Float32Array(this.world_env_uniform_params_array_buffer, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.members[0].offset, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.members[0].size / Float32Array.BYTES_PER_ELEMENT);
-    protected readonly world_env_uniform_time = new Float32Array(this.world_env_uniform_params_array_buffer, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.members[1].offset, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.members[1].size / Float32Array.BYTES_PER_ELEMENT);
-    protected readonly world_env_uniform_camera_is_orthogonal = new Uint32Array(this.world_env_uniform_params_array_buffer, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.members[2].offset, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.members[2].size / Uint32Array.BYTES_PER_ELEMENT);
-    protected readonly world_env_uniform_pixel_ratio: Float32Array = new Float32Array(this.world_env_uniform_params_array_buffer, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.members[3].offset, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.members[3].size / Float32Array.BYTES_PER_ELEMENT);
+    protected readonly world_env_uniform_z_range = new Float32Array(this.world_env_uniform_params_array_buffer, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.members[1].offset, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.members[1].size / Float32Array.BYTES_PER_ELEMENT);
+    protected readonly world_env_uniform_time = new Float32Array(this.world_env_uniform_params_array_buffer, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.members[2].offset, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.members[2].size / Float32Array.BYTES_PER_ELEMENT);
+    protected readonly world_env_uniform_camera_is_orthogonal = new Uint32Array(this.world_env_uniform_params_array_buffer, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.members[3].offset, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.members[3].size / Uint32Array.BYTES_PER_ELEMENT);
+    protected readonly world_env_uniform_pixel_ratio: Float32Array = new Float32Array(this.world_env_uniform_params_array_buffer, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.members[4].offset, RenderServerSingleton.WorldEnvUniformParamsMemoryLayout.members[4].size / Float32Array.BYTES_PER_ELEMENT);
 
     //#endregion
 
@@ -754,6 +763,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
     protected readonly lights_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(RenderServer.lights_uniform_layout).expect());
     protected readonly lights_background_texture_view_ref = new ReadonlyRef(RenderServer.render_state.create_TextureView(RenderServer.get_DefaultTexture(RenderServerDefaultTextureType.White).texture_ref.expect).expect());
+    protected readonly lights_cluster_data_ref = new ReadonlyRef(new RenderServerLightClusterData());
 
     //#endregion
 
@@ -812,9 +822,11 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
         this.lights_uniform_group_ref.expect.set_Texture(2, this.lights_background_texture_view_ref.expect);
         this.lights_uniform_group_ref.expect.set_Sampler(3, RenderServer.get_TextureSampler(WebGPURenderStateTextureWrap.Clamp, WebGPURenderStateTextureWrap.Clamp, WebGPURenderStateTextureWrap.Clamp, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear));
+        this.lights_uniform_group_ref.expect.set_Storage(4, this.lights_cluster_data_ref.expect.cluster_buffer);
+        this.lights_uniform_group_ref.expect.set_BufferUniform(5, this.lights_cluster_data_ref.expect.uniform_buffer);
     }
 
-    public set_WorldEnvUniform(camera_world: Matrix4, camera_projection: Matrix4, camera_is_orthogonal: boolean, time: number, pixel_ratio: number, screen_width: number, screen_height: number) {
+    public set_WorldEnvUniform(camera_world: Matrix4, camera_projection: Matrix4, camera_is_orthogonal: boolean, z_near: number, z_far: number, time: number, pixel_ratio: number, screen_width: number, screen_height: number) {
         // camera world
         {
             this.world_env_uniform_camera_world[0] = camera_world.n11;
@@ -925,6 +937,11 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
             this.world_env_uniform_screen_size[0] = screen_width;
             this.world_env_uniform_screen_size[1] = screen_height;
         }
+        // z range
+        {
+            this.world_env_uniform_z_range[0] = z_near;
+            this.world_env_uniform_z_range[1] = z_far;
+        }
         // pixel ratio
         {
             this.world_env_uniform_pixel_ratio[0] = pixel_ratio;
@@ -1026,6 +1043,8 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     private last_world_id: number = -1;
     private last_background_id: number = -1;
 
+    private computed = false;
+
     public render(world: World3D, camera: Camera3, viewport: RenderServerViewport, time: number, once: boolean) {
 
         //#region constants
@@ -1045,8 +1064,8 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         }
         const background_id = world.visual_world.background_texture?.id ?? 0;
         if (world.rid !== this.last_world_id) {
-            this.lights_uniform_group_ref.expect.set_Storage(0, world.visual_world.render_server_light_data.light_data_buffer_ref.expect);
-            this.lights_uniform_group_ref.expect.set_BufferUniform(1, world.visual_world.render_server_light_data.light_count_buffer_ref.expect);
+            this.lights_uniform_group_ref.expect.set_Storage(0, world.visual_world.render_server_light_data.light_data_buffer);
+            this.lights_uniform_group_ref.expect.set_BufferUniform(1, world.visual_world.render_server_light_data.light_count_buffer);
         }
         if (background_id !== this.last_background_id) {
             this.lights_uniform_group_ref.expect.set_Texture(2, world.visual_world.background_texture?.texture_view_ref.expect ?? this.lights_background_texture_view_ref.expect);
@@ -1059,7 +1078,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
         //#region setup global uniforms
 
-        this.set_WorldEnvUniform(camera_world, camera_projection, camera_is_orthogonal, time, viewport.pixel_ratio, texture_width, texture_height);
+        this.set_WorldEnvUniform(camera_world, camera_projection, camera_is_orthogonal, camera.near, camera.far, time, viewport.pixel_ratio, texture_width, texture_height);
 
         //#endregion
 
@@ -1076,6 +1095,12 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         //#region render
 
         const encoder = RenderServer.render_state.device.createCommandEncoder();
+        // Lights
+        if (!this.computed) {
+            // this.computed = true;
+            this.lights_cluster_data_ref.expect.compute(encoder, camera, world.visual_world.render_server_light_data, this.world_env_queue_0_uniform_solid_group_ref.expect);
+        }
+        // Meshs
         this.render_Queue0Solid(encoder, viewport.background);
         this.render_Queue0Transparent(encoder);
         const effect_queue_0_first_texture = (this.render_Queue0Effects(encoder) % 2) === 0;
@@ -1090,8 +1115,34 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.render_Queue1Transparent(encoder);
         const effect_queue_1_first_texture = (this.render_Queue1Effects(encoder) % 2) === 0;
         encoder.copyTextureToTexture({ texture: effect_queue_1_first_texture ? this.result_color_texture_ref.expect.texture : this.effect_texture_ref.expect.texture }, { texture: viewport.canvas_texture_view.texture }, { width: texture_width, height: texture_height });
+
+        // encoder.copyBufferToBuffer(
+        //     this.lights_cluster_data_ref.expect.cluster_buffer.buffer,
+        //     0,
+        //     this.lights_cluster_data_ref.expect.cluster_buffer_copy.buffer,
+        //     0,
+        //     this.lights_cluster_data_ref.expect.cluster_buffer.length
+        // );
+
         RenderServer.render_state.device.queue.submit([encoder.finish()]);
 
+        // this.lights_cluster_data_ref.expect.cluster_buffer_copy.buffer.mapAsync(GPUMapMode.READ).then(() => {
+        //     const a = new Uint32Array(this.lights_cluster_data_ref.expect.cluster_buffer_copy.buffer.getMappedRange());
+        //     for (let z = 0; z < 32; z++) {
+        //         for (let y = 0; y < 32; y++) {
+        //             for (let x = 0; x < 32; x++) {
+        //                 const cluster = z * (32 * 32) + y * 32 + x;
+        //                 const index = cluster * 64;
+        //                 const array = a.slice(index, index + 64);
+        //                 console.groupCollapsed(`${x}, ${y}, ${z}`);
+        //                 console.log(array.toString());
+        //                 console.groupEnd();
+        //             }
+        //         }
+        //     }
+        //     this.lights_cluster_data_ref.expect.cluster_buffer_copy.buffer.unmap();
+        // });
+        // throw new Error(">>>>>");
         //#endregion
 
         //#region cleanup
@@ -1143,7 +1194,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     }
 
     protected render_Mesh(render_pass: GPURenderPassEncoder, index: number, pass: RenderServerRenderMaterialPass, frame_buffer: WebGPURenderElementFrameBuffer, depth_func: WebGPURenderStateDepthCompareFunc, vertex_array: RenderServerRenderer3DQueueVeretxArray, material: RenderServerRenderMaterial, instance_uniform_group: WebGPURenderStateUniformGroup, instance_count: number) {
-        let mat: RenderServerRenderMaterial | undefined = material;
+        let mat: RenderServerRenderMaterial | undefined = this.material_override_ref.value?.render_server_material ?? material;
         const dynamic_offsets = RenderServerRenderer3D.#tmp_instance_uniform_group_dynamic_offsets;
         while (mat !== undefined) {
             mat.update_UniformBuffers();
@@ -1295,6 +1346,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         const effect_pass_0 = encoder.beginRenderPass(this.effect_frame_buffer_0_ref.expect.frame_buffer_desc);
         effect_pass_0.setPipeline(this.effect_fxaa_pipeline_ref.expect.pipeline);
         effect_pass_0.setBindGroup(0, this.world_env_effect_uniform_group_0_ref.expect.binding_group);
+        effect_pass_0.setBindGroup(RenderServerSingleton.LightsUniformBindGroupIndex, this.lights_uniform_group_ref.expect.binding_group);
         this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(effect_pass_0);
         this.full_screen_triangle_vertex_array_ref.expect.draw(effect_pass_0);
         effect_pass_0.end();
@@ -1307,6 +1359,8 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     //#endregion
 
     public dispose(): void {
+        this.material_override_ref.clear();
+
         this.queue_0.dispose();
         this.queue_1.dispose();
 
@@ -1357,7 +1411,6 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.effect_frame_buffer_1_ref.clear();
 
         this.effect_fxaa_pipeline_ref.clear();
-        this.effect_pre_mult_alpha_pipeline_ref.clear();
 
         this.queue_0_solid_instance_uniform_group_ref.clear();
         this.queue_0_solid_instance_uniform_buffer_view_ref.clear();
@@ -1378,5 +1431,6 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
         this.lights_uniform_group_ref.clear();
         this.lights_background_texture_view_ref.clear();
+        this.lights_cluster_data_ref.clear();
     }
 }

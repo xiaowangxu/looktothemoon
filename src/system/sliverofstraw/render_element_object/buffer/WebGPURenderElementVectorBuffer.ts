@@ -8,7 +8,7 @@ import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 
 export class WebGPURenderElementVector2Buffer extends WebGPURenderElementBuffer<Vector2> {
 
-    public buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
+    protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
     public readonly _data: Float32Array;
     public get data(): Float32Array { return this._data; }
@@ -85,7 +85,7 @@ export class WebGPURenderElementVector2Buffer extends WebGPURenderElementBuffer<
 
 export class WebGPURenderElementVector3Buffer extends WebGPURenderElementBuffer<Vector3> {
 
-    public buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
+    protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
     public readonly _data: Float32Array;
     public get data(): Float32Array { return this._data; }
@@ -166,7 +166,7 @@ export class WebGPURenderElementVector3Buffer extends WebGPURenderElementBuffer<
 
 export class WebGPURenderElementVector4Buffer extends WebGPURenderElementBuffer<Vector4> {
 
-    public buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
+    protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
     public readonly _data: Float32Array;
     public get data(): Float32Array { return this._data; }

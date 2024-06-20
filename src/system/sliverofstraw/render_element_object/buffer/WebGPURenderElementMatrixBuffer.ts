@@ -8,7 +8,7 @@ import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 
 export class WebGPURenderElementMatrix2Buffer extends WebGPURenderElementBuffer<Matrix2> {
 
-    public buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
+    protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
     public readonly _data: Float32Array;
     public get data(): Float32Array { return this._data; }
@@ -93,7 +93,7 @@ export class WebGPURenderElementMatrix2Buffer extends WebGPURenderElementBuffer<
 
 export class WebGPURenderElementMatrix3Buffer extends WebGPURenderElementBuffer<Matrix3> {
 
-    public buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
+    protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
     public readonly _data: Float32Array;
     public get data(): Float32Array { return this._data; }
@@ -198,7 +198,7 @@ export class WebGPURenderElementMatrix3Buffer extends WebGPURenderElementBuffer<
 
 export class WebGPURenderElementMatrix4Buffer extends WebGPURenderElementBuffer<Matrix4> {
 
-    public buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
+    protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
     public readonly _data: Float32Array;
     public get data(): Float32Array { return this._data; }

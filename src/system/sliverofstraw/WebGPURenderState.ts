@@ -220,9 +220,9 @@ export class WebGPURenderState implements Disposable {
 
     public static is_VertexShader(type: WebGPURenderStateShaderType) { return (type & WebGPURenderStateShaderType.Vertex) !== 0; }
 
-    public static is_FragmentShader(type: WebGPURenderStateShaderType) { return (type & WebGPURenderStateShaderType.Vertex) !== 0; }
+    public static is_FragmentShader(type: WebGPURenderStateShaderType) { return (type & WebGPURenderStateShaderType.Fragment) !== 0; }
 
-    public static is_ComputeShader(type: WebGPURenderStateShaderType) { return (type & WebGPURenderStateShaderType.Vertex) !== 0; }
+    public static is_ComputeShader(type: WebGPURenderStateShaderType) { return (type & WebGPURenderStateShaderType.Compute) !== 0; }
 
     public static is_StripPrimitiveType(type: WebGPURenderStatePrimitiveType) { return type === WebGPURenderStatePrimitiveType.LineStrip || type === WebGPURenderStatePrimitiveType.TriangleStrip; }
 
@@ -377,7 +377,7 @@ export class WebGPURenderState implements Disposable {
             }),
             compute: {
                 module: (program.vertex_or_compute_shader_ref.expect as WebGPURenderStateShader).shader,
-                entryPoint: 'main',
+                entryPoint: 'cs_main',
             }
         };
 

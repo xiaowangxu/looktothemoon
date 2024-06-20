@@ -105,6 +105,8 @@ export class PureColorMaterial3DResource extends MaterialResource {
 	}
 
 	protected dispose(): void {
+		this.uniform_group_ref.clear();
+		this.uniform_buffer_ref.clear();
 		super.dispose();
 	}
 }

@@ -9,7 +9,7 @@ import { Frustum3 } from "./Frustum3";
 import { Euler } from "../linear_algebra/Euler";
 import type { Line3 } from "../geometries/Line3";
 
-export class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
+export abstract class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
 
     static WebGPUSystem: boolean = true;
 
@@ -26,6 +26,9 @@ export class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
         this.update_Frustum();
     }
     public get_Projection(target: Matrix4) { return target.copy(this._projection); }
+
+    public abstract get near(): number;
+    public abstract get far(): number;
 
     protected _global_transform: Matrix4 = Matrix4.new;
     protected _global_transform_inverse: Matrix4 = Matrix4.new;
@@ -105,15 +108,7 @@ export class Camera3 implements CameraLike<Matrix4, Vector3, Matrix3> {
         throw new Error('not impl');
     }
 
-    clone(): Camera3 {
-        const cam = new Camera3();
-        cam._mask = this._mask;
-        cam._global_transform.copy(this._global_transform);
-        cam._global_transform_inverse.copy(this._global_transform_inverse);
-        cam._projection.copy(this._projection);
-        cam._frustum.copy(this._frustum);
-        return cam;
-    }
+    public abstract clone(): CameraLike<Matrix4, Vector3, Matrix3>;
 }
 
 export class OrthographicCamera3 extends Camera3 {
