@@ -13,24 +13,35 @@ export class WebGPURenderElementMatrix2Buffer extends WebGPURenderElementBuffer<
     public readonly _data: Float32Array;
     public get data(): Float32Array { return this._data; }
 
-    public readonly element_count: number;
+    public readonly elements_count: number;
     public readonly bytes_count: number;
 
     protected changed: boolean = false;
 
-    constructor(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, option: Matrix2[] | number) {
+    constructor(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, option: Matrix2[] | number | Float32Array) {
         super(render_state);
         if (typeof option === 'number') {
-            this.element_count = option;
-            this.bytes_count = this.element_count * 4 * Float32Array.BYTES_PER_ELEMENT;
-            this._data = new Float32Array(this.element_count * 4);
+            this.elements_count = option;
+            this.bytes_count = this.elements_count * 4 * Float32Array.BYTES_PER_ELEMENT;
+            this._data = new Float32Array(this.elements_count * 4);
             this.buffer_ref = new ReadonlyRef(this.render_state.create_Buffer(type, usage, this.bytes_count, false).expect());
         }
+        else if (option instanceof Float32Array) {
+            if (option.length % 4 !== 0) throw new Error('<WebGPURenderElementMatrix2Buffer> constructor@Float32Array: data\'s length is not multiples of 4');
+            this.elements_count = option.length / 4;
+            this.bytes_count = this.elements_count * 4 * Float32Array.BYTES_PER_ELEMENT;
+            this._data = option;
+            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
+            this.buffer_ref = new ReadonlyRef(buffer);
+            const mapped_array = new Float32Array(data);
+            mapped_array.set(this._data);
+            this.buffer.unmap();
+        }
         else {
-            this.element_count = option.length;
-            this.bytes_count = this.element_count * 4 * Float32Array.BYTES_PER_ELEMENT;
-            this._data = new Float32Array(this.element_count * 4);
-            for (let i = 0, j = 0; i < this.element_count; i++) {
+            this.elements_count = option.length;
+            this.bytes_count = this.elements_count * 4 * Float32Array.BYTES_PER_ELEMENT;
+            this._data = new Float32Array(this.elements_count * 4);
+            for (let i = 0, j = 0; i < this.elements_count; i++) {
                 this._data[j++] = option[i].n11;
                 this._data[j++] = option[i].n21;
                 this._data[j++] = option[i].n12;
@@ -53,7 +64,7 @@ export class WebGPURenderElementMatrix2Buffer extends WebGPURenderElementBuffer<
         }
         else if (Array.isArray(data)) {
             const count = data.length;
-            if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementMatrix2Buffer> set_Data: data range out of bound');
+            if (element_offset < 0 || (element_offset + count) > this.elements_count) throw new Error('<WebGPURenderElementMatrix2Buffer> set_Data: data range out of bound');
             for (let i = 0, j = element_offset * 4; i < count; i++) {
                 this._data[j++] = data[i].n11;
                 this._data[j++] = data[i].n21;
@@ -63,7 +74,7 @@ export class WebGPURenderElementMatrix2Buffer extends WebGPURenderElementBuffer<
             this.changed = true;
         }
         else {
-            if (element_offset < 0 || element_offset >= this.element_count) throw new Error('<WebGPURenderElementMatrix2Buffer> set_Data: data offset out of bound');
+            if (element_offset < 0 || element_offset >= this.elements_count) throw new Error('<WebGPURenderElementMatrix2Buffer> set_Data: data offset out of bound');
             let j = element_offset * 4;
             this._data[j++] = data.n11;
             this._data[j++] = data.n21;
@@ -74,7 +85,7 @@ export class WebGPURenderElementMatrix2Buffer extends WebGPURenderElementBuffer<
     }
 
     public get_Data(element_index: number, target: Matrix2): Matrix2 {
-        if (element_index < 0 || element_index >= this.element_count) throw new Error('<WebGPURenderElementMatrix2Buffer> get_Data: element index out of bound');
+        if (element_index < 0 || element_index >= this.elements_count) throw new Error('<WebGPURenderElementMatrix2Buffer> get_Data: element index out of bound');
         let j = element_index * 4;
         const n11 = this._data[j++];
         const n21 = this._data[j++];
@@ -98,24 +109,35 @@ export class WebGPURenderElementMatrix3Buffer extends WebGPURenderElementBuffer<
     public readonly _data: Float32Array;
     public get data(): Float32Array { return this._data; }
 
-    public readonly element_count: number;
+    public readonly elements_count: number;
     public readonly bytes_count: number;
 
     protected changed: boolean = false;
 
-    constructor(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, option: Matrix3[] | number) {
+    constructor(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, option: Matrix3[] | number | Float32Array) {
         super(render_state);
         if (typeof option === 'number') {
-            this.element_count = option;
-            this.bytes_count = this.element_count * 9 * Float32Array.BYTES_PER_ELEMENT;
-            this._data = new Float32Array(this.element_count * 9);
+            this.elements_count = option;
+            this.bytes_count = this.elements_count * 9 * Float32Array.BYTES_PER_ELEMENT;
+            this._data = new Float32Array(this.elements_count * 9);
             this.buffer_ref = new ReadonlyRef(this.render_state.create_Buffer(type, usage, this.bytes_count, false).expect());
         }
+        else if (option instanceof Float32Array) {
+            if (option.length % 9 !== 0) throw new Error('<WebGPURenderElementMatrix3Buffer> constructor@Float32Array: data\'s length is not multiples of 9');
+            this.elements_count = option.length / 9;
+            this.bytes_count = this.elements_count * 9 * Float32Array.BYTES_PER_ELEMENT;
+            this._data = option;
+            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
+            this.buffer_ref = new ReadonlyRef(buffer);
+            const mapped_array = new Float32Array(data);
+            mapped_array.set(this._data);
+            this.buffer.unmap();
+        }
         else {
-            this.element_count = option.length;
-            this.bytes_count = this.element_count * 9 * Float32Array.BYTES_PER_ELEMENT;
-            this._data = new Float32Array(this.element_count * 9);
-            for (let i = 0, j = 0; i < this.element_count; i++) {
+            this.elements_count = option.length;
+            this.bytes_count = this.elements_count * 9 * Float32Array.BYTES_PER_ELEMENT;
+            this._data = new Float32Array(this.elements_count * 9);
+            for (let i = 0, j = 0; i < this.elements_count; i++) {
                 this._data[j++] = option[i].n11;
                 this._data[j++] = option[i].n21;
                 this._data[j++] = option[i].n31;
@@ -143,7 +165,7 @@ export class WebGPURenderElementMatrix3Buffer extends WebGPURenderElementBuffer<
         }
         else if (Array.isArray(data)) {
             const count = data.length;
-            if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementMatrix3Buffer> set_Data: data range out of bound');
+            if (element_offset < 0 || (element_offset + count) > this.elements_count) throw new Error('<WebGPURenderElementMatrix3Buffer> set_Data: data range out of bound');
             for (let i = 0, j = element_offset * 9; i < count; i++) {
                 this._data[j++] = data[i].n11;
                 this._data[j++] = data[i].n21;
@@ -158,7 +180,7 @@ export class WebGPURenderElementMatrix3Buffer extends WebGPURenderElementBuffer<
             this.changed = true;
         }
         else {
-            if (element_offset < 0 || element_offset >= this.element_count) throw new Error('<WebGPURenderElementMatrix3Buffer> set_Data: data offset out of bound');
+            if (element_offset < 0 || element_offset >= this.elements_count) throw new Error('<WebGPURenderElementMatrix3Buffer> set_Data: data offset out of bound');
             let j = element_offset * 9;
             this._data[j++] = data.n11;
             this._data[j++] = data.n21;
@@ -174,7 +196,7 @@ export class WebGPURenderElementMatrix3Buffer extends WebGPURenderElementBuffer<
     }
 
     public get_Data(element_index: number, target: Matrix3): Matrix3 {
-        if (element_index < 0 || element_index >= this.element_count) throw new Error('<WebGPURenderElementMatrix3Buffer> get_Data: element index out of bound');
+        if (element_index < 0 || element_index >= this.elements_count) throw new Error('<WebGPURenderElementMatrix3Buffer> get_Data: element index out of bound');
         let j = element_index * 9;
         const n11 = this._data[j++];
         const n21 = this._data[j++];
@@ -203,24 +225,35 @@ export class WebGPURenderElementMatrix4Buffer extends WebGPURenderElementBuffer<
     public readonly _data: Float32Array;
     public get data(): Float32Array { return this._data; }
 
-    public readonly element_count: number;
+    public readonly elements_count: number;
     public readonly bytes_count: number;
 
     protected changed: boolean = false;
 
-    constructor(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, option: Matrix4[] | number) {
+    constructor(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage, option: Matrix4[] | number | Float32Array) {
         super(render_state);
         if (typeof option === 'number') {
-            this.element_count = option;
-            this.bytes_count = this.element_count * 16 * Float32Array.BYTES_PER_ELEMENT;
-            this._data = new Float32Array(this.element_count * 16);
+            this.elements_count = option;
+            this.bytes_count = this.elements_count * 16 * Float32Array.BYTES_PER_ELEMENT;
+            this._data = new Float32Array(this.elements_count * 16);
             this.buffer_ref = new ReadonlyRef(this.render_state.create_Buffer(type, usage, this.bytes_count, false).expect());
         }
+        else if (option instanceof Float32Array) {
+            if (option.length % 16 !== 0) throw new Error('<WebGPURenderElementMatrix4Buffer> constructor@Float32Array: data\'s length is not multiples of 16');
+            this.elements_count = option.length / 16;
+            this.bytes_count = this.elements_count * 16 * Float32Array.BYTES_PER_ELEMENT;
+            this._data = option;
+            const { buffer, data } = this.render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
+            this.buffer_ref = new ReadonlyRef(buffer);
+            const mapped_array = new Float32Array(data);
+            mapped_array.set(this._data);
+            this.buffer.unmap();
+        }
         else {
-            this.element_count = option.length;
-            this.bytes_count = this.element_count * 16 * Float32Array.BYTES_PER_ELEMENT;
-            this._data = new Float32Array(this.element_count * 16);
-            for (let i = 0, j = 0; i < this.element_count; i++) {
+            this.elements_count = option.length;
+            this.bytes_count = this.elements_count * 16 * Float32Array.BYTES_PER_ELEMENT;
+            this._data = new Float32Array(this.elements_count * 16);
+            for (let i = 0, j = 0; i < this.elements_count; i++) {
                 this._data[j++] = option[i].n11;
                 this._data[j++] = option[i].n21;
                 this._data[j++] = option[i].n31;
@@ -255,7 +288,7 @@ export class WebGPURenderElementMatrix4Buffer extends WebGPURenderElementBuffer<
         }
         else if (Array.isArray(data)) {
             const count = data.length;
-            if (element_offset < 0 || (element_offset + count) > this.element_count) throw new Error('<WebGPURenderElementMatrix4Buffer> set_Data: data range out of bound');
+            if (element_offset < 0 || (element_offset + count) > this.elements_count) throw new Error('<WebGPURenderElementMatrix4Buffer> set_Data: data range out of bound');
             for (let i = 0, j = element_offset * 16; i < count; i++) {
                 this._data[j++] = data[i].n11;
                 this._data[j++] = data[i].n21;
@@ -277,7 +310,7 @@ export class WebGPURenderElementMatrix4Buffer extends WebGPURenderElementBuffer<
             this.changed = true;
         }
         else {
-            if (element_offset < 0 || element_offset >= this.element_count) throw new Error('<WebGPURenderElementMatrix4Buffer> set_Data: data offset out of bound');
+            if (element_offset < 0 || element_offset >= this.elements_count) throw new Error('<WebGPURenderElementMatrix4Buffer> set_Data: data offset out of bound');
             let j = element_offset * 16;
             this._data[j++] = data.n11;
             this._data[j++] = data.n21;
@@ -300,7 +333,7 @@ export class WebGPURenderElementMatrix4Buffer extends WebGPURenderElementBuffer<
     }
 
     public get_Data(element_index: number, target: Matrix4): Matrix4 {
-        if (element_index < 0 || element_index >= this.element_count) throw new Error('<WebGPURenderElementMatrix4Buffer> get_Data: element index out of bound');
+        if (element_index < 0 || element_index >= this.elements_count) throw new Error('<WebGPURenderElementMatrix4Buffer> get_Data: element index out of bound');
         let j = element_index * 16;
         const n11 = this._data[j++];
         const n21 = this._data[j++];

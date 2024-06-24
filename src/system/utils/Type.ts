@@ -56,3 +56,8 @@ export interface PartialEquailty<T> {
 export interface Disposable {
     dispose(): void;
 }
+
+export interface Validated<T> {
+    get validation(): T;
+    get is_valid(): boolean;
+}

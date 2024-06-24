@@ -28,7 +28,7 @@ export class MultiGeometry3DResource extends Geometry3DResource {
 
     private readonly instance_transform_color_buffer_ref: Ref<WebGPURenderElementMatrix4Buffer> = new Ref();
 
-    public get count() { return this.instance_transform_color_buffer_ref.expect.element_count; }
+    public get count() { return this.instance_transform_color_buffer_ref.expect.elements_count; }
 
     constructor() {
         super();

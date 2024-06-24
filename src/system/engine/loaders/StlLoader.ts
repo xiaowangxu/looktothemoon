@@ -54,7 +54,7 @@ import { Result } from "@/system/utils/Result";
 import { ClassSaver } from "../classes/saver_loader/ClassSaverLoader";
 import { RenderStatePrimitiveType, RenderStateBufferUsage } from "@/system/sliverofstraw/render_state/RenderState";
 import { PackedVector3Array, PackedVector2Array, PackedIndexArray, PackedVector4Array } from "../classes/value_wrappers/PackedArray";
-import { ArrayGeometryResource } from "../resources/geometry_resources/ArrayGeometryResource";
+import { ArrayGeometry3DResource } from "../resources/geometry_resources/geometry3d_resources/ArrayGeometry3DResource";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 
 export class StlLoader {
@@ -271,7 +271,7 @@ export class StlLoader {
             const binary = StlLoader.ensure_Binary(data);
             const { position, normal, color, bbox } = StlLoader.is_Binary(binary) ? StlLoader.parse_Binary(binary) : StlLoader.parse_Ascii(StlLoader.ensure_Ascii(data));
             const class_saver = new ClassSaver();
-            const refid = ArrayGeometryResource.dump_Data(
+            const refid = ArrayGeometry3DResource.dump_Data(
                 class_saver,
                 0,
                 RenderStatePrimitiveType.Triangles,
@@ -281,7 +281,7 @@ export class StlLoader {
                     color: color,
                 },
                 undefined,
-                position.element_count,
+                position.elements_count,
                 RenderStateBufferUsage.StaticDraw,
                 bbox,
                 undefined, undefined, undefined

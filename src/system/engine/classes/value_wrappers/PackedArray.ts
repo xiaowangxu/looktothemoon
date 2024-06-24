@@ -4,33 +4,37 @@ import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
-import type { RenderDevice } from "@/system/sliverofstraw/render_device/RenderDevice";
-import type { RenderState, RenderStateBufferUsage } from "@/system/sliverofstraw/render_state/RenderState";
-import { RenderDeviceVector2AttributeBuffer, type RenderDeviceAttributeBuffer, RenderDeviceVector3AttributeBuffer, RenderDeviceVector4AttributeBuffer, RenderDeviceMatrix4AttributeBuffer, RenderDeviceIndexAttributeBuffer, RenderDeviceMatrix3AttributeBuffer, RenderDeviceFloatAttributeBuffer, RenderDeviceIntAttributeBuffer, RenderDeviceUintAttributeBuffer, RenderDeviceMatrix2AttributeBuffer } from "@/system/sliverofstraw/render_device_objects/RenderDeviceAttributeBuffer";
+import type { WebGPURenderState } from "@/system/sliverofstraw/WebGPURenderState";
+import { WebGPURenderElementFloatBuffer, WebGPURenderElementIndexBuffer, WebGPURenderElementIntBuffer, WebGPURenderElementUintBuffer, type WebGPURenderElementBuffer } from "@/system/sliverofstraw/render_element_object/buffer/WebGPURenderElementBuffer";
+import { WebGPURenderElementMatrix2Buffer, WebGPURenderElementMatrix3Buffer, WebGPURenderElementMatrix4Buffer } from "@/system/sliverofstraw/render_element_object/buffer/WebGPURenderElementMatrixBuffer";
+import { WebGPURenderElementVector2Buffer, WebGPURenderElementVector3Buffer, WebGPURenderElementVector4Buffer } from "@/system/sliverofstraw/render_element_object/buffer/WebGPURenderElementVectorBuffer";
+import type { WebGPURenderElementVertexArrayBuffer } from "@/system/sliverofstraw/render_element_object/vertex_array/WebGPURenderElementVertexArray";
+import { WebGPURenderStateBuffer, WebGPURenderStateBufferType, type WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 
-export abstract class PackedArray<Data = any> {
+export abstract class PackedArray<Data = any, Buffer = WebGPURenderElementVertexArrayBuffer, ElementBuffer = WebGPURenderElementBuffer> {
     public abstract get data(): ArrayBufferView;
 
-    public abstract get per_element_byte_count(): number;
-    public abstract get per_item_element_count(): number;
-    public abstract get element_count(): number;
-    public get item_count(): number { return this.element_count / this.per_item_element_count; }
-    public get byte_count(): number { return this.data.byteLength; }
+    public abstract get per_element_bytes_count(): number;
+    public abstract get per_item_elements_count(): number;
+    public abstract get elements_count(): number;
+    public get items_count(): number { return this.elements_count / this.per_item_elements_count; }
+    public get bytes_count(): number { return this.data.byteLength; }
 
     public abstract update_Data(data: Data, offset: number): void;
     public abstract update_Data(data: ArrayBufferView, offset: number): void;
     public abstract update_Data(data: Data[], offset: number): void;
     public abstract update_Data(data: Data[] | ArrayBufferView | Data, offset: number): void;
 
-    public abstract get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceAttributeBuffer<T>;
+    public abstract get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): ElementBuffer;
+    public abstract get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): Buffer;
 }
 
 export class PackedByteArray extends PackedArray<number> {
     public readonly data: Uint8Array | Uint8ClampedArray;
 
-    public get per_element_byte_count(): number { return Uint8Array.BYTES_PER_ELEMENT; }
-    public get per_item_element_count(): number { return 1; }
-    public get element_count(): number { return this.data.length; }
+    public get per_element_bytes_count(): number { return Uint8Array.BYTES_PER_ELEMENT; }
+    public get per_item_elements_count(): number { return 1; }
+    public get elements_count(): number { return this.data.length; }
 
     constructor(length: number)
     constructor(array: Uint8Array | Uint8ClampedArray)
@@ -51,18 +55,18 @@ export class PackedByteArray extends PackedArray<number> {
         let uint8array: Uint8Array;
         let offset_bytes: number;
         if (data instanceof Uint8Array) {
-            offset_bytes = offset * this.per_element_byte_count;
+            offset_bytes = offset * this.per_element_bytes_count;
             const element_bytes = data.byteLength;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedByteArray> update_Data: data overflow');
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedByteArray> update_Data: data overflow');
             uint8array = new Uint8Array(this.data.buffer, offset_bytes, data.length);
             uint8array.set(data);
         }
         else {
             const single = !(data instanceof Array);
-            offset_bytes = offset * this.per_element_byte_count;
+            offset_bytes = offset * this.per_element_bytes_count;
             const element_count = single ? 1 : data.length;
-            const element_bytes = element_count * this.per_element_byte_count;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedByteArray> update_Data: data overflow');
+            const element_bytes = element_count * this.per_element_bytes_count;
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedByteArray> update_Data: data overflow');
             uint8array = new Uint8Array(this.data.buffer, offset_bytes, element_count);
             if (single) {
                 uint8array[0] = data;
@@ -73,17 +77,21 @@ export class PackedByteArray extends PackedArray<number> {
         }
     }
 
-    public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceIndexAttributeBuffer<T> {
+    public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementBuffer {
+        throw new Error('<PackedByteArray> get_RenderElementBuffer: cannot get attribute buffer from PackedByteArray')
+    }
+
+    public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementVertexArrayBuffer {
         throw new Error('<PackedByteArray> get_RenderDeviceAttributeBuffer: cannot get attribute buffer from PackedByteArray')
     }
 }
 
-export class PackedIndexArray extends PackedArray<number> {
+export class PackedIndexArray extends PackedArray<number, WebGPURenderStateBuffer, WebGPURenderElementIndexBuffer> {
     public readonly data: Uint32Array;
 
-    public get per_element_byte_count(): number { return Uint32Array.BYTES_PER_ELEMENT; }
-    public get per_item_element_count(): number { return 1; }
-    public get element_count(): number { return this.data.length; }
+    public get per_element_bytes_count(): number { return Uint32Array.BYTES_PER_ELEMENT; }
+    public get per_item_elements_count(): number { return 1; }
+    public get elements_count(): number { return this.data.length; }
 
     constructor(length: number)
     constructor(array: Uint32Array)
@@ -104,18 +112,18 @@ export class PackedIndexArray extends PackedArray<number> {
         let uint32array: Uint32Array;
         let offset_bytes: number;
         if (data instanceof Uint32Array) {
-            offset_bytes = offset * this.per_element_byte_count;
+            offset_bytes = offset * this.per_element_bytes_count;
             const element_bytes = data.byteLength;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedIndexArray> update_Data: data overflow');
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedIndexArray> update_Data: data overflow');
             uint32array = new Uint32Array(this.data.buffer, offset_bytes, data.length);
             uint32array.set(data);
         }
         else {
             const single = !(data instanceof Array);
-            offset_bytes = offset * this.per_element_byte_count;
+            offset_bytes = offset * this.per_element_bytes_count;
             const element_count = single ? 1 : data.length;
-            const element_bytes = element_count * this.per_element_byte_count;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedIndexArray> update_Data: data overflow');
+            const element_bytes = element_count * this.per_element_bytes_count;
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedIndexArray> update_Data: data overflow');
             uint32array = new Uint32Array(this.data.buffer, offset_bytes, element_count);
             if (single) {
                 uint32array[0] = data;
@@ -126,17 +134,25 @@ export class PackedIndexArray extends PackedArray<number> {
         }
     }
 
-    public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceIndexAttributeBuffer<T> {
-        return new RenderDeviceIndexAttributeBuffer(render_device, usage, this.data);
+    public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementIndexBuffer {
+        throw new WebGPURenderElementIndexBuffer(render_state, type, usage, this.data);
+    }
+
+    public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
+        const { buffer, data } = render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
+        const mapped_array = new Uint32Array(data);
+        mapped_array.set(this.data);
+        buffer.unmap();
+        return buffer;
     }
 }
 
-export class PackedUintArray extends PackedArray<number> {
+export class PackedUintArray extends PackedArray<number, WebGPURenderStateBuffer, WebGPURenderElementUintBuffer> {
     public readonly data: Uint32Array;
 
-    public get per_element_byte_count(): number { return Uint32Array.BYTES_PER_ELEMENT; }
-    public get per_item_element_count(): number { return 1; }
-    public get element_count(): number { return this.data.length; }
+    public get per_element_bytes_count(): number { return Uint32Array.BYTES_PER_ELEMENT; }
+    public get per_item_elements_count(): number { return 1; }
+    public get elements_count(): number { return this.data.length; }
 
     constructor(length: number)
     constructor(array: Uint32Array)
@@ -157,18 +173,18 @@ export class PackedUintArray extends PackedArray<number> {
         let uint32array: Uint32Array;
         let offset_bytes: number;
         if (data instanceof Uint32Array) {
-            offset_bytes = offset * this.per_element_byte_count;
+            offset_bytes = offset * this.per_element_bytes_count;
             const element_bytes = data.byteLength;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedUintArray> update_Data: data overflow');
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedUintArray> update_Data: data overflow');
             uint32array = new Uint32Array(this.data.buffer, offset_bytes, data.length);
             uint32array.set(data);
         }
         else {
             const single = !(data instanceof Array);
-            offset_bytes = offset * this.per_element_byte_count;
+            offset_bytes = offset * this.per_element_bytes_count;
             const element_count = single ? 1 : data.length;
-            const element_bytes = element_count * this.per_element_byte_count;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedUintArray> update_Data: data overflow');
+            const element_bytes = element_count * this.per_element_bytes_count;
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedUintArray> update_Data: data overflow');
             uint32array = new Uint32Array(this.data.buffer, offset_bytes, element_count);
             if (single) {
                 uint32array[0] = data;
@@ -179,70 +195,25 @@ export class PackedUintArray extends PackedArray<number> {
         }
     }
 
-    public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceUintAttributeBuffer<T> {
-        return new RenderDeviceUintAttributeBuffer(render_device, usage, this.data);
+    public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementUintBuffer {
+        throw new WebGPURenderElementUintBuffer(render_state, type, usage, this.data);
+    }
+
+    public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
+        const { buffer, data } = render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
+        const mapped_array = new Uint32Array(data);
+        mapped_array.set(this.data);
+        buffer.unmap();
+        return buffer;
     }
 }
 
-export class PackedFloatArray extends PackedArray<number> {
-    public readonly data: Float32Array;
-
-    public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
-    public get per_item_element_count(): number { return 1; }
-    public get element_count(): number { return this.data.length; }
-
-    constructor(length: number)
-    constructor(array: Float32Array)
-    constructor(data: Float32Array | number) {
-        super();
-        if (data instanceof Float32Array) {
-            this.data = data;
-        }
-        else {
-            this.data = new Float32Array(data);
-        }
-    }
-
-    public update_Data(data: number[], offset: number): void;
-    public update_Data(data: Float32Array, offset: number): void;
-    public update_Data(data: number, offset: number): void;
-    public update_Data(data: number[] | Float32Array | number, offset: number): void {
-        let float32array: Float32Array;
-        let offset_bytes: number;
-        if (data instanceof Float32Array) {
-            offset_bytes = offset * this.per_element_byte_count;
-            const element_bytes = data.byteLength;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedFloatArray> update_Data: data overflow');
-            float32array = new Float32Array(this.data.buffer, offset_bytes, data.length);
-            float32array.set(data);
-        }
-        else {
-            const single = !(data instanceof Array);
-            offset_bytes = offset * this.per_element_byte_count;
-            const element_count = single ? 1 : data.length;
-            const element_bytes = element_count * this.per_element_byte_count;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedFloatArray> update_Data: data overflow');
-            float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
-            if (single) {
-                float32array[0] = data;
-            }
-            else {
-                float32array.set(data);
-            }
-        }
-    }
-
-    public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceFloatAttributeBuffer<T> {
-        return new RenderDeviceFloatAttributeBuffer(render_device, usage, this.data);
-    }
-}
-
-export class PackedIntArray extends PackedArray<number> {
+export class PackedIntArray extends PackedArray<number, WebGPURenderStateBuffer, WebGPURenderElementIntBuffer> {
     public readonly data: Int32Array;
 
-    public get per_element_byte_count(): number { return Int32Array.BYTES_PER_ELEMENT; }
-    public get per_item_element_count(): number { return 1; }
-    public get element_count(): number { return this.data.length; }
+    public get per_element_bytes_count(): number { return Int32Array.BYTES_PER_ELEMENT; }
+    public get per_item_elements_count(): number { return 1; }
+    public get elements_count(): number { return this.data.length; }
 
     constructor(length: number)
     constructor(array: Int32Array)
@@ -263,18 +234,18 @@ export class PackedIntArray extends PackedArray<number> {
         let int32array: Int32Array;
         let offset_bytes: number;
         if (data instanceof Int32Array) {
-            offset_bytes = offset * this.per_element_byte_count;
+            offset_bytes = offset * this.per_element_bytes_count;
             const element_bytes = data.byteLength;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedIntArray> update_Data: data overflow');
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedIntArray> update_Data: data overflow');
             int32array = new Int32Array(this.data.buffer, offset_bytes, data.length);
             int32array.set(data);
         }
         else {
             const single = !(data instanceof Array);
-            offset_bytes = offset * this.per_element_byte_count;
+            offset_bytes = offset * this.per_element_bytes_count;
             const element_count = single ? 1 : data.length;
-            const element_bytes = element_count * this.per_element_byte_count;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedIntArray> update_Data: data overflow');
+            const element_bytes = element_count * this.per_element_bytes_count;
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedIntArray> update_Data: data overflow');
             int32array = new Int32Array(this.data.buffer, offset_bytes, element_count);
             if (single) {
                 int32array[0] = data;
@@ -285,17 +256,88 @@ export class PackedIntArray extends PackedArray<number> {
         }
     }
 
-    public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceIntAttributeBuffer<T> {
-        return new RenderDeviceIntAttributeBuffer(render_device, usage, this.data);
+    public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementIntBuffer {
+        throw new WebGPURenderElementIntBuffer(render_state, type, usage, this.data);
+    }
+
+    public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
+        const { buffer, data } = render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
+        const mapped_array = new Int32Array(data);
+        mapped_array.set(this.data);
+        buffer.unmap();
+        return buffer;
     }
 }
 
-export class PackedVector2Array extends PackedArray<Vector2> {
+export class PackedFloatArray extends PackedArray<number, WebGPURenderStateBuffer, WebGPURenderElementFloatBuffer> {
     public readonly data: Float32Array;
 
-    public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
-    public get per_item_element_count(): number { return 2; }
-    public get element_count(): number { return this.data.length; }
+    public get per_element_bytes_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
+    public get per_item_elements_count(): number { return 1; }
+    public get elements_count(): number { return this.data.length; }
+
+    constructor(length: number)
+    constructor(array: Float32Array)
+    constructor(data: Float32Array | number) {
+        super();
+        if (data instanceof Float32Array) {
+            this.data = data;
+        }
+        else {
+            this.data = new Float32Array(data);
+        }
+    }
+
+    public update_Data(data: number[], offset: number): void;
+    public update_Data(data: Float32Array, offset: number): void;
+    public update_Data(data: number, offset: number): void;
+    public update_Data(data: number[] | Float32Array | number, offset: number): void {
+        let float32array: Float32Array;
+        let offset_bytes: number;
+        if (data instanceof Float32Array) {
+            offset_bytes = offset * this.per_element_bytes_count;
+            const element_bytes = data.byteLength;
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedFloatArray> update_Data: data overflow');
+            float32array = new Float32Array(this.data.buffer, offset_bytes, data.length);
+            float32array.set(data);
+        }
+        else {
+            const single = !(data instanceof Array);
+            offset_bytes = offset * this.per_element_bytes_count;
+            const element_count = single ? 1 : data.length;
+            const element_bytes = element_count * this.per_element_bytes_count;
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedFloatArray> update_Data: data overflow');
+            float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
+            if (single) {
+                float32array[0] = data;
+            }
+            else {
+                float32array.set(data);
+            }
+        }
+    }
+
+    public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementFloatBuffer {
+        throw new WebGPURenderElementFloatBuffer(render_state, type, usage, this.data);
+    }
+
+    public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
+        const { buffer, data } = render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
+        const mapped_array = new Float32Array(data);
+        mapped_array.set(this.data);
+        buffer.unmap();
+        return buffer;
+    }
+}
+
+//===========================================================================================================
+
+export class PackedVector2Array extends PackedArray<Vector2, WebGPURenderStateBuffer, WebGPURenderElementVector2Buffer> {
+    public readonly data: Float32Array;
+
+    public get per_element_bytes_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
+    public get per_item_elements_count(): number { return 2; }
+    public get elements_count(): number { return this.data.length; }
 
     constructor(length: number)
     constructor(array: Float32Array)
@@ -317,18 +359,18 @@ export class PackedVector2Array extends PackedArray<Vector2> {
         let float32array: Float32Array;
         let offset_bytes: number;
         if (data instanceof Float32Array) {
-            offset_bytes = offset * this.per_element_byte_count;
+            offset_bytes = offset * this.per_element_bytes_count;
             const element_bytes = data.byteLength;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedVector2Array> update_Data: data overflow');
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedVector2Array> update_Data: data overflow');
             float32array = new Float32Array(this.data.buffer, offset_bytes, data.length);
             float32array.set(data);
         }
         else {
             const single = !(data instanceof Array);
-            offset_bytes = offset * 2 * this.per_element_byte_count;
+            offset_bytes = offset * 2 * this.per_element_bytes_count;
             const element_count = (single ? 1 : data.length) * 2;
-            const element_bytes = element_count * this.per_element_byte_count;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedVector2Array> update_Data: data overflow');
+            const element_bytes = element_count * this.per_element_bytes_count;
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedVector2Array> update_Data: data overflow');
             float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
             if (single) {
                 float32array[0] = data.x;
@@ -344,17 +386,25 @@ export class PackedVector2Array extends PackedArray<Vector2> {
         }
     }
 
-    public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceVector2AttributeBuffer<T> {
-        return new RenderDeviceVector2AttributeBuffer(render_device, usage, this.data);
+    public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementVector2Buffer {
+        throw new WebGPURenderElementVector2Buffer(render_state, type, usage, this.data);
+    }
+
+    public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
+        const { buffer, data } = render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
+        const mapped_array = new Float32Array(data);
+        mapped_array.set(this.data);
+        buffer.unmap();
+        return buffer;
     }
 }
 
-export class PackedVector3Array extends PackedArray<Vector3> {
+export class PackedVector3Array extends PackedArray<Vector3, WebGPURenderStateBuffer, WebGPURenderElementVector3Buffer> {
     public readonly data: Float32Array;
 
-    public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
-    public get per_item_element_count(): number { return 3; }
-    public get element_count(): number { return this.data.length; }
+    public get per_element_bytes_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
+    public get per_item_elements_count(): number { return 3; }
+    public get elements_count(): number { return this.data.length; }
 
     constructor(length: number)
     constructor(array: Float32Array)
@@ -376,18 +426,18 @@ export class PackedVector3Array extends PackedArray<Vector3> {
         let float32array: Float32Array;
         let offset_bytes: number;
         if (data instanceof Float32Array) {
-            offset_bytes = offset * this.per_element_byte_count;
+            offset_bytes = offset * this.per_element_bytes_count;
             const element_bytes = data.byteLength;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedVector3Array> update_Data: data overflow');
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedVector3Array> update_Data: data overflow');
             float32array = new Float32Array(this.data.buffer, offset_bytes, data.length);
             float32array.set(data);
         }
         else {
             const single = !(data instanceof Array);
-            offset_bytes = offset * 3 * this.per_element_byte_count;
+            offset_bytes = offset * 3 * this.per_element_bytes_count;
             const element_count = (single ? 1 : data.length) * 3;
-            const element_bytes = element_count * this.per_element_byte_count;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedVector3Array> update_Data: data overflow');
+            const element_bytes = element_count * this.per_element_bytes_count;
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedVector3Array> update_Data: data overflow');
             float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
             if (single) {
                 float32array[0] = data.x;
@@ -405,17 +455,25 @@ export class PackedVector3Array extends PackedArray<Vector3> {
         }
     }
 
-    public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceVector3AttributeBuffer<T> {
-        return new RenderDeviceVector3AttributeBuffer(render_device, usage, this.data);
+    public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementVector3Buffer {
+        throw new WebGPURenderElementVector3Buffer(render_state, type, usage, this.data);
+    }
+
+    public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
+        const { buffer, data } = render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
+        const mapped_array = new Float32Array(data);
+        mapped_array.set(this.data);
+        buffer.unmap();
+        return buffer;
     }
 }
 
-export class PackedVector4Array extends PackedArray<Vector4> {
+export class PackedVector4Array extends PackedArray<Vector4, WebGPURenderStateBuffer, WebGPURenderElementVector4Buffer> {
     public readonly data: Float32Array;
 
-    public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
-    public get per_item_element_count(): number { return 4; }
-    public get element_count(): number { return this.data.length; }
+    public get per_element_bytes_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
+    public get per_item_elements_count(): number { return 4; }
+    public get elements_count(): number { return this.data.length; }
 
     constructor(length: number)
     constructor(array: Float32Array)
@@ -437,18 +495,18 @@ export class PackedVector4Array extends PackedArray<Vector4> {
         let float32array: Float32Array;
         let offset_bytes: number;
         if (data instanceof Float32Array) {
-            offset_bytes = offset * this.per_element_byte_count;
+            offset_bytes = offset * this.per_element_bytes_count;
             const element_bytes = data.byteLength;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedVector4Array> update_Data: data overflow');
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedVector4Array> update_Data: data overflow');
             float32array = new Float32Array(this.data.buffer, offset_bytes, data.length);
             float32array.set(data);
         }
         else {
             const single = !(data instanceof Array);
-            offset_bytes = offset * 4 * this.per_element_byte_count;
+            offset_bytes = offset * 4 * this.per_element_bytes_count;
             const element_count = (single ? 1 : data.length) * 4;
-            const element_bytes = element_count * this.per_element_byte_count;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedVector4Array> update_Data: data overflow');
+            const element_bytes = element_count * this.per_element_bytes_count;
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedVector4Array> update_Data: data overflow');
             float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
             if (single) {
                 float32array[0] = data.x;
@@ -468,17 +526,25 @@ export class PackedVector4Array extends PackedArray<Vector4> {
         }
     }
 
-    public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceVector4AttributeBuffer<T> {
-        return new RenderDeviceVector4AttributeBuffer(render_device, usage, this.data);
+    public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementVector4Buffer {
+        throw new WebGPURenderElementVector4Buffer(render_state, type, usage, this.data);
+    }
+
+    public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
+        const { buffer, data } = render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
+        const mapped_array = new Float32Array(data);
+        mapped_array.set(this.data);
+        buffer.unmap();
+        return buffer;
     }
 }
 
-export class PackedMatrix2Array extends PackedArray<Matrix2> {
+export class PackedMatrix2Array extends PackedArray<Matrix2, WebGPURenderStateBuffer, WebGPURenderElementMatrix2Buffer> {
     public readonly data: Float32Array;
 
-    public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
-    public get per_item_element_count(): number { return 4; }
-    public get element_count(): number { return this.data.length; }
+    public get per_element_bytes_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
+    public get per_item_elements_count(): number { return 4; }
+    public get elements_count(): number { return this.data.length; }
 
     constructor(length: number)
     constructor(array: Float32Array)
@@ -500,19 +566,19 @@ export class PackedMatrix2Array extends PackedArray<Matrix2> {
         let float32array: Float32Array;
         let offset_bytes: number;
         if (data instanceof Float32Array) {
-            offset_bytes = offset * this.per_element_byte_count;
+            offset_bytes = offset * this.per_element_bytes_count;
             const element_bytes = data.byteLength;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedMatrix2Array> update_Data: data overflow');
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedMatrix2Array> update_Data: data overflow');
             float32array = new Float32Array(this.data.buffer, offset_bytes, data.length);
             float32array.set(data);
         }
         else {
             const single = !(data instanceof Array);
-            offset_bytes = offset * 4 * this.per_element_byte_count;
+            offset_bytes = offset * 4 * this.per_element_bytes_count;
             const mat3_count = single ? 1 : data.length;
             const element_count = mat3_count * 4;
-            const element_bytes = element_count * this.per_element_byte_count;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedMatrix2Array> update_Data: data overflow');
+            const element_bytes = element_count * this.per_element_bytes_count;
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedMatrix2Array> update_Data: data overflow');
             float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
             if (single) {
                 float32array[0] = data.n11;
@@ -532,17 +598,25 @@ export class PackedMatrix2Array extends PackedArray<Matrix2> {
         }
     }
 
-    public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceMatrix2AttributeBuffer<T> {
-        return new RenderDeviceMatrix2AttributeBuffer(render_device, usage, this.data);
+    public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementMatrix2Buffer {
+        throw new WebGPURenderElementMatrix2Buffer(render_state, type, usage, this.data);
+    }
+
+    public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
+        const { buffer, data } = render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
+        const mapped_array = new Float32Array(data);
+        mapped_array.set(this.data);
+        buffer.unmap();
+        return buffer;
     }
 }
 
-export class PackedMatrix3Array extends PackedArray<Matrix3> {
+export class PackedMatrix3Array extends PackedArray<Matrix3, WebGPURenderStateBuffer, WebGPURenderElementMatrix3Buffer> {
     public readonly data: Float32Array;
 
-    public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
-    public get per_item_element_count(): number { return 9; }
-    public get element_count(): number { return this.data.length; }
+    public get per_element_bytes_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
+    public get per_item_elements_count(): number { return 9; }
+    public get elements_count(): number { return this.data.length; }
 
     constructor(length: number)
     constructor(array: Float32Array)
@@ -564,19 +638,19 @@ export class PackedMatrix3Array extends PackedArray<Matrix3> {
         let float32array: Float32Array;
         let offset_bytes: number;
         if (data instanceof Float32Array) {
-            offset_bytes = offset * this.per_element_byte_count;
+            offset_bytes = offset * this.per_element_bytes_count;
             const element_bytes = data.byteLength;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedMatrix3Array> update_Data: data overflow');
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedMatrix3Array> update_Data: data overflow');
             float32array = new Float32Array(this.data.buffer, offset_bytes, data.length);
             float32array.set(data);
         }
         else {
             const single = !(data instanceof Array);
-            offset_bytes = offset * 9 * this.per_element_byte_count;
+            offset_bytes = offset * 9 * this.per_element_bytes_count;
             const mat3_count = single ? 1 : data.length;
             const element_count = mat3_count * 9;
-            const element_bytes = element_count * this.per_element_byte_count;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedMatrix3Array> update_Data: data overflow');
+            const element_bytes = element_count * this.per_element_bytes_count;
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedMatrix3Array> update_Data: data overflow');
             float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
             if (single) {
                 float32array[0] = data.n11;
@@ -606,17 +680,25 @@ export class PackedMatrix3Array extends PackedArray<Matrix3> {
         }
     }
 
-    public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceMatrix3AttributeBuffer<T> {
-        return new RenderDeviceMatrix3AttributeBuffer(render_device, usage, this.data);
+    public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementMatrix3Buffer {
+        throw new WebGPURenderElementMatrix3Buffer(render_state, type, usage, this.data);
+    }
+
+    public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
+        const { buffer, data } = render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
+        const mapped_array = new Float32Array(data);
+        mapped_array.set(this.data);
+        buffer.unmap();
+        return buffer;
     }
 }
 
-export class PackedMatrix4Array extends PackedArray<Matrix4> {
+export class PackedMatrix4Array extends PackedArray<Matrix4, WebGPURenderStateBuffer, WebGPURenderElementMatrix4Buffer> {
     public readonly data: Float32Array;
 
-    public get per_element_byte_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
-    public get per_item_element_count(): number { return 16; }
-    public get element_count(): number { return this.data.length; }
+    public get per_element_bytes_count(): number { return Float32Array.BYTES_PER_ELEMENT; }
+    public get per_item_elements_count(): number { return 16; }
+    public get elements_count(): number { return this.data.length; }
 
     constructor(length: number)
     constructor(array: Float32Array)
@@ -638,19 +720,19 @@ export class PackedMatrix4Array extends PackedArray<Matrix4> {
         let float32array: Float32Array;
         let offset_bytes: number;
         if (data instanceof Float32Array) {
-            offset_bytes = offset * this.per_element_byte_count;
+            offset_bytes = offset * this.per_element_bytes_count;
             const element_bytes = data.byteLength;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedMatrix4Array> update_Data: data overflow');
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedMatrix4Array> update_Data: data overflow');
             float32array = new Float32Array(this.data.buffer, offset_bytes, data.length);
             float32array.set(data);
         }
         else {
             const single = !(data instanceof Array);
-            offset_bytes = offset * 16 * this.per_element_byte_count;
+            offset_bytes = offset * 16 * this.per_element_bytes_count;
             const mat4_count = single ? 1 : data.length;
             const element_count = mat4_count * 16;
-            const element_bytes = element_count * this.per_element_byte_count;
-            if (offset_bytes + element_bytes > this.byte_count) throw new Error('<PackedMatrix4Array> update_Data: data overflow');
+            const element_bytes = element_count * this.per_element_bytes_count;
+            if (offset_bytes + element_bytes > this.bytes_count) throw new Error('<PackedMatrix4Array> update_Data: data overflow');
             float32array = new Float32Array(this.data.buffer, offset_bytes, element_count);
             if (single) {
                 float32array[0] = data.n11;
@@ -694,7 +776,15 @@ export class PackedMatrix4Array extends PackedArray<Matrix4> {
         }
     }
 
-    public get_RenderDeviceAttributeBuffer<T extends RenderState<T>>(render_device: RenderDevice<T>, usage: RenderStateBufferUsage): RenderDeviceMatrix4AttributeBuffer<T> {
-        return new RenderDeviceMatrix4AttributeBuffer(render_device, usage, this.data);
+    public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementMatrix4Buffer {
+        throw new WebGPURenderElementMatrix4Buffer(render_state, type, usage, this.data);
+    }
+
+    public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
+        const { buffer, data } = render_state.create_Buffer(type, usage, this.bytes_count, true, true).expect();
+        const mapped_array = new Float32Array(data);
+        mapped_array.set(this.data);
+        buffer.unmap();
+        return buffer;
     }
 }

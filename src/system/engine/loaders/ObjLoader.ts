@@ -2,13 +2,16 @@ import { Box3 } from '@/system/fivepebble/geometries/Box3';
 import { Vector3 } from '@/system/fivepebble/linear_algebra/Vector3';
 import { Result } from '@/system/utils/Result';
 import { ClassSaver } from '../classes/saver_loader/ClassSaverLoader';
-import { ArrayGeometryResource } from '../resources/geometry_resources/ArrayGeometryResource';
-import { RenderStateBufferUsage, RenderStatePrimitiveType } from '@/system/sliverofstraw/render_state/RenderState';
+import { ArrayGeometry3DResource } from '../resources/geometry_resources/geometry3d_resources/ArrayGeometry3DResource';
 import { PackedIndexArray, PackedVector2Array, PackedVector3Array } from '../classes/value_wrappers/PackedArray';
+import { WebGPURenderStatePrimitiveType } from '@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState';
+import { RenderServerGeometryAttributeLayoutBuffer } from '../render_server/geometry/RenderServerGeometryDefination';
+import { WebGPURenderStateBufferUsage } from '@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer';
 
 const WHITESPACE_RE = /\s+/;
 
 export class ObjLoader {
+
     public positions: number[] = [];
     public normals: number[] = [];
     public uvs: number[] = [];
@@ -163,20 +166,28 @@ export class ObjLoader {
         }
 
         const class_saver = new ClassSaver();
-        const refid = ArrayGeometryResource.dump_Data(
+        const refid = ArrayGeometry3DResource.dump_Data(
             class_saver,
-            0,
-            RenderStatePrimitiveType.Triangles,
-            {
-                position: this.positions.length > 0 ? new PackedVector3Array(new Float32Array(this.positions)) : undefined,
-                normal: this.normals.length > 0 ? new PackedVector3Array(new Float32Array(this.normals)) : undefined,
-                uv: this.uvs.length > 0 ? new PackedVector2Array(new Float32Array(this.uvs)) : undefined,
-            },
+            0, // rid
+            WebGPURenderStatePrimitiveType.Triangles,
+            WebGPURenderStateBufferUsage.None,
+            [
+                {
+                    attribute: RenderServerGeometryAttributeLayoutBuffer.Position, buffer: new PackedVector3Array(new Float32Array(this.positions))
+                },
+                {
+                    attribute: RenderServerGeometryAttributeLayoutBuffer.Normal, buffer: new PackedVector3Array(new Float32Array(this.normals))
+                },
+                {
+                    attribute: RenderServerGeometryAttributeLayoutBuffer.Uv, buffer: new PackedVector2Array(new Float32Array(this.uvs))
+                },
+            ],
             this.indices.length > 0 ? new PackedIndexArray(new Uint32Array(this.indices)) : undefined,
             this.indices.length,
-            RenderStateBufferUsage.StaticDraw,
             this.bbox,
-            undefined, undefined, undefined
+            undefined, // surfaces
+            undefined, // unique
+            undefined, // external
         );
         class_saver.set_Root(refid);
 

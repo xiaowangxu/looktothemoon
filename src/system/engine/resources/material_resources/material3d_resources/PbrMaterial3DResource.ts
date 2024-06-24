@@ -93,6 +93,9 @@ const PbrMaterialSolidPipelineCacheSet = new RefCacher(() => {
 	    var light: LightDataUniform = light_data_uniform[light_index];
 		var t: u32 = light.visible_queue_type & 0xff;
 		var visible: bool = (light.visible_queue_type & 0x80000000) != 0u;
+
+		if !visible { continue; }
+
 		var attenuation = light.direction_attenuation.w;
 		var direction = light.direction_attenuation.xyz;
 		var position = light.position.xyz;

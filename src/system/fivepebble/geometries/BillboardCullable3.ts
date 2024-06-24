@@ -21,12 +21,6 @@ export class BillboardCullable3 implements CameraFrustumLikeCullable<Matrix4, Ve
 
     static readonly #const_vector3_zero = new Vector3(0, 0, 0);
     static readonly #tmp_vector3_0 = new Vector3();
-    static readonly #tmp_vector3_1 = new Vector3();
-    static readonly #tmp_vector3_2 = new Vector3();
-    static readonly #tmp_vector3_3 = new Vector3();
-    static readonly #tmp_vector3_4 = new Vector3();
-    static readonly #tmp_vector3_5 = new Vector3();
-    static readonly #tmp_vector3_6 = new Vector3();
     static readonly #tmp_vector2_0 = new Vector2();
 
     public width: number = 1;

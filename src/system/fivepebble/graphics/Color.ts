@@ -32,7 +32,7 @@ export const Color = {
     },
 
     /**
-     * @param h 0-1 map onto [0deg - 360deg]
+     * @param h 0-1 map into [0deg - 360deg]
      * @param s 0-1
      * @param b 0-1
      */
@@ -42,7 +42,7 @@ export const Color = {
     },
 
     /**
-     * @param h 0-1 map onto [0deg - 360deg]
+     * @param h 0-1 map into [0deg - 360deg]
      * @param s 0-1
      * @param b 0-1
      */

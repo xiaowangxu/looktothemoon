@@ -7,10 +7,10 @@ export class ClassBase {
     public readonly rid: Rid = RID();
 
     public dump(writer: ClassWriter): void {
-        throw new Error("<ClassBase> dump: base method should not be called, may be this class not implement its own dump method");
+        throw new Error(`<${this.constructor.name}> dump: dump can not be called, may be this class does not implement its own dump method`);
     }
 
     public load(reader: ClassReader): void {
-        throw new Error("<ClassBase> dump: base method should not be called, may be this class not implement its own load method");
+        throw new Error(`<${this.constructor.name}> load: dump can not be called, may be this class does not implement its own load method`);
     }
 }

@@ -1,6 +1,7 @@
 import { Ref, type RefCounted, type Refed } from '../../utils/RefCounted';
 import { SignalEmitter } from '../../utils/SignalEmitter';
 import { ClassBase } from "../classes/class_database/ClassBase";
+import type { ClassWriter } from '../classes/saver_loader/ClassWriterReader';
 
 export abstract class ResourceBase extends ClassBase {
     public static readonly class_name: string = "ResourceBase";

@@ -1,4 +1,5 @@
 import { lerp } from "../Scalar";
+import type { Color } from "../graphics/Color";
 import type { Matrix4 } from "./Matrix4";
 import { Vector3 } from "./Vector3";
 import type { VectorLike } from "./VectorLike";
@@ -29,6 +30,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
     public set b(val: number) { this.z = val; }
     public set a(val: number) { this.w = val; }
     public get_PlainColor(mult_alpha: boolean = false) { return new Vector3(this.x * this.w, this.y * this.w, this.z * this.w); }
+    public get luminance() { return 0.2126 * this.r + 0.7152 * this.g + 0.0722 * this.b; }
 
     get dimension(): number { return 4; }
     get array(): number[] { return [this.x, this.y, this.z, this.w]; }
@@ -220,7 +222,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
     //#region color
 
     public get srgb() { return this.get_SRGB(new Vector4()); }
-    public get_SRGB(target: Vector4): Vector4 {
+    public get_SRGB(target: Color): Color {
         const { x, y, z, w } = this;
         target.x = (x < 0.0031308) ? x * 12.92 : 1.055 * (Math.pow(x, 0.41666)) - 0.055;
         target.y = (y < 0.0031308) ? y * 12.92 : 1.055 * (Math.pow(y, 0.41666)) - 0.055;
@@ -230,13 +232,28 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
     }
 
     public get linear_rgb() { return this.get_LinearRGB(new Vector4()); }
-    public get_LinearRGB(target: Vector4): Vector4 {
+    public get_LinearRGB(target: Color): Color {
         const { x, y, z, w } = this;
         target.x = (x < 0.04045) ? x * 0.0773993808 : Math.pow(x * 0.9478672986 + 0.0521327014, 2.4);
         target.y = (y < 0.04045) ? y * 0.0773993808 : Math.pow(y * 0.9478672986 + 0.0521327014, 2.4);
         target.z = (z < 0.04045) ? z * 0.0773993808 : Math.pow(z * 0.9478672986 + 0.0521327014, 2.4);
         target.w = w;
         return target;
+    }
+
+    public blend(color: Color, target: Color): Color {
+		const sa = 1.0 - color.a;
+		target.a = this.a * sa + color.a;
+		if (target.a === 0) {
+            target.r = 0;
+            target.g = 0;
+            target.b = 0;
+		} else {
+			target.r = (this.r * this.a * sa + color.r * color.a) / target.a;
+			target.g = (this.g * this.a * sa + color.g * color.a) / target.a;
+			target.b = (this.b * this.a * sa + color.b * color.a) / target.a;
+		}
+		return target;
     }
 
     //#endregion

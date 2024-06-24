@@ -47,7 +47,7 @@ const RenderServerLightClusterDataPipeline = new RefCacher(() => {
         let cluster_id = id.z * (cluster_uniform.width_count * cluster_uniform.height_count) + id.y * cluster_uniform.width_count + id.x;
         let index_id = cluster_id * (cluster_uniform.cluster_count + 1);
         var count: u32 = 0;
-        if id.x >= 12 && id.x <= 20 && id.y >= 5 && id.y <= 10 {
+        // if id.x >= 12 && id.x <= 20 && id.y >= 5 && id.y <= 10 {
             for (var i: u32 = 0; i < light_uniform.count && count < cluster_uniform.cluster_count; i++) {
                 let light = lights[i];
                 let t: u32 = light.visible_queue_type & 0xff;
@@ -61,7 +61,7 @@ const RenderServerLightClusterDataPipeline = new RefCacher(() => {
                 clusters[index_id + 1 + count] = i;
                 count += 1; 
             }
-        }
+        // }
         clusters[index_id] = count;
     }
 

@@ -1,4 +1,4 @@
-import { Viewport, ViewportUpdateMode } from "@/system/engine/nodes/Node";
+import { Viewport } from "@/system/engine/nodes/Node";
 import { SceneTree } from "@/system/engine/SceneTree";
 import { Node3D } from "@/system/engine/nodes/node3ds/Node3D";
 import { ViewportDomContainer } from "@/system/engine/nodes/ViewportDomContainer";
@@ -15,21 +15,6 @@ import { MeshInstance3D } from "@/system/engine/nodes/node3ds/visual_instance3ds
 import { RenderServerRenderer3D } from "@/system/engine/render_server/renderer3d/RenderServerRenderer3D";
 import { TestMaterial3DResource } from "@/system/engine/resources/material_resources/material3d_resources/TestMaterial3DResource";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
-import { OrthographicCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/OrthographicCamera3D";
-
-import f_image_url from 'res://test-image.png';
-import matcap_6_image_url from 'res://matcap-11.png';
-import matcap_7_image_url from 'res://matcap-0.png';
-import normal_image_url from 'res://normal_texture-0.png';
-import normal_0_image_url from 'res://normal_texture.png';
-import studio from 'res://grass_road.png';
-import cubemap_x from 'res://cubemap/x.png';
-import cubemap_x_ from 'res://cubemap/x_.png';
-import cubemap_y from 'res://cubemap/y.png';
-import cubemap_y_ from 'res://cubemap/y_.png';
-import cubemap_z from 'res://cubemap/z.png';
-import cubemap_z_ from 'res://cubemap/z_.png';
-
 import { ImageTexture2DResource } from "@/system/engine/resources/texture_resources/texture2d_resources/ImageTexture2DResource";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { MatcapMaterialResource } from "@/system/engine/resources/material_resources/material3d_resources/MatcapMaterial3DResource";
@@ -38,29 +23,39 @@ import { WebGPURenderElementTextureSamplerCacheHash } from "@/system/sliverofstr
 import { PolyLineGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/polyline_geometry3d_resources/PolyLineGeometry3DResource";
 import { PureColorMaterial3DResource } from "@/system/engine/resources/material_resources/material3d_resources/PureColorMaterial3DResource";
 import { PolyLineMaterial3DResource } from "@/system/engine/resources/material_resources/material3d_resources/polyline_material3d_resources/PolyLineMaterial3DResource";
-import type { SignalEmitterListener } from "@/system/utils/SignalEmitter";
-import { AmbientLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/AmbientLight3D";
-import { DirectionalLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/DirectionalLight3D";
 import { PhongMaterialResource } from "@/system/engine/resources/material_resources/material3d_resources/PhongMaterial3DResource";
-import { Pi, Tau } from "@/system/fivepebble/Scalar";
+import { Pi } from "@/system/fivepebble/Scalar";
 import { PointLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/PointLight3D";
-import { InterpolateTween, InterpolateTweenEasingType, InterpolateTweenTransitionType, MethodTweenAdaptor, PingPongTweenAdaptor, PropertyTweenAdaptor, TweenLoop } from "@/system/engine/Tween";
-import { MultiGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/MultiGeometry3DResource";
-import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
-import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
+import { InterpolateTween, InterpolateTweenEasingType, InterpolateTweenTransitionType, PingPongTweenAdaptor, PropertyTweenAdaptor, TweenLoop } from "@/system/engine/Tween";
 import { SpotLight3D } from "@/system/engine/nodes/node3ds/visual_instance3ds/light3ds/SpotLight3D";
 import { PbrMaterialResource } from "@/system/engine/resources/material_resources/material3d_resources/PbrMaterial3DResource";
 import { SphereGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/SphereGeometry3DResource";
 import { ImageTextureCubeMapResource } from "@/system/engine/resources/texture_resources/texture2d_resources/ImageTextureCubeMapResource";
-import { PlaneGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/PlaneGeometry3DResource";
 import { CylinderGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/CylinderGeometry3DResource";
-import { WebGPURenderState } from "@/system/sliverofstraw/WebGPURenderState";
-import { WebGPURenderStateBufferUniformType } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformLayout";
+
+import f_image_url from 'res://test-image.png';
+import matcap_6_image_url from 'res://matcap-11.png';
+import matcap_7_image_url from 'res://matcap-0.png';
+import normal_image_url from 'res://normal_texture-0.png';
+import studio from 'res://grass_road.png';
+import cubemap_x from 'res://cubemap/x.png';
+import cubemap_x_ from 'res://cubemap/x_.png';
+import cubemap_y from 'res://cubemap/y.png';
+import cubemap_y_ from 'res://cubemap/y_.png';
+import cubemap_z from 'res://cubemap/z.png';
+import cubemap_z_ from 'res://cubemap/z_.png';
+import huli from 'res://huli.obj?url';
+import { ClassLoader } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
+import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
+import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
+import type { ArrayGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/ArrayGeometry3DResource";
 
 const viewport_scale = 1;
 const bg_color = Color.create(0.25, 0.25, 0.25).linear_rgb;
 
 export async function createEditor() {
+
+	const ResInstCache = new ResourceInstanceCache();
 
 	// viewport
 	const EditorViewport = new Viewport();
@@ -575,6 +570,19 @@ export async function createEditor() {
 		)
 		World.add_Child(light3);
 	}
+
+	fetch(huli).then(r => r.text()).then(t => {
+		const class_saver = new ObjLoader().parse(t).expect();
+		class_saver.save(undefined, 'sys://huli.geometry.lttmbin');
+
+		const huli_geo = new ClassLoader(ResInstCache).fetch<ArrayGeometry3DResource>('sys://huli.geometry.lttmbin').expect();
+		const huli = new MeshInstance3D();
+		huli.geometry = huli_geo;
+		huli.material = box_mat3;
+		huli.local_position = Vector3.create(-200, -200, 100);
+		huli.local_scale = Vector3.create(100, 100, 100);
+		World.add_Child(huli);
+	});
 
 	return EditorSceneTree;
 }

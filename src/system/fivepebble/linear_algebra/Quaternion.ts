@@ -18,8 +18,6 @@ export class Quaternion implements Cloneable<Quaternion>, Copyable<Quaternion>, 
 
     //#endregion
 
-    static readonly #tmp_vector3_0 = new Vector3();
-
     public x: number;
     public y: number;
     public z: number;

@@ -138,7 +138,7 @@ const FullScreenBackgroundPipeline = new RefCacher(() => {
         var gamma = acos(R.y);
         var sky_color = textureSampleLevel(light_uniform_background_texture, light_uniform_sampler, vec2f(theta / TAU + 0.5, 1.0 - gamma / PI), 0);
         out.color = sky_color;
-        // out.color = vec4f(0.2, 0.2, 0.2, 1.0);
+        out.color = vec4f(0.175, 0.175, 0.175, 1.0);
         out.normal = vec4(normal_view, 1.0);
 
         return out;
@@ -330,7 +330,7 @@ const EffectFxaaPipeline = new RefCacher(() => {
         var out: FragmentOutput;
         // var color = fxaa(color, sample, vary.frag_coord, world_env_uniform_params.screen_size, vary.rgb_NW, vary.rgb_NE, vary.rgb_SW, vary.rgb_SE, vary.rgb_M);
         var color = textureSample(color, sample, vary.uv);
-        var tone_mapped = vec4f(aces_tone_mapping(color.rgb, 0.72), color.a);
+        var tone_mapped = vec4f(aces_tone_mapping(color.rgb, 0.8), color.a);
         out.color = tone_mapped;
         return out;
     }
