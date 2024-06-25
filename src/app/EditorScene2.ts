@@ -35,7 +35,7 @@ import { CylinderGeometry3DResource } from "@/system/engine/resources/geometry_r
 
 import f_image_url from 'res://test-image.png';
 import matcap_6_image_url from 'res://matcap-11.png';
-import matcap_7_image_url from 'res://matcap-0.png';
+import matcap_7_image_url from 'res://f-texture.png';
 import normal_image_url from 'res://normal_texture-0.png';
 import studio from 'res://grass_road.png';
 import cubemap_x from 'res://cubemap/x.png';
@@ -53,7 +53,32 @@ import type { ArrayGeometry3DResource } from "@/system/engine/resources/geometry
 const viewport_scale = 1;
 const bg_color = Color.create(0.25, 0.25, 0.25).linear_rgb;
 
+import matcap_0 from 'res://matcap-0.png';
+import matcap_1 from 'res://matcap-1.jpg';
+import matcap_2 from 'res://matcap-2.jpg';
+import matcap_3 from 'res://matcap-3.jpg';
+import matcap_4 from 'res://matcap-4.jpg';
+import matcap_5 from 'res://matcap-5.jpg';
+import matcap_6 from 'res://matcap-6.jpg';
+import matcap_7 from 'res://matcap-7.jpg';
+import matcap_8 from 'res://matcap-8.jpg';
+import matcap_9 from 'res://matcap-9.jpg';
+import matcap_10 from 'res://matcap-10.png';
+import matcap_11 from 'res://matcap-11.png';
+import matcap_12 from 'res://matcap-12.png';
+import matcap_13 from 'res://matcap-13.png';
+import matcap_14 from 'res://matcap-14.png';
+import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
+
 export async function createEditor() {
+
+	// {
+	// 	let i = 0;
+	// 	for (const url of [matcap_0, matcap_1, matcap_2, matcap_3, matcap_4, matcap_5, matcap_6, matcap_7, matcap_8, matcap_9, matcap_10, matcap_11, matcap_12, matcap_13, matcap_14]) {
+	// 		const class_saver = (await new ImageLoader().parse(url, true)).expect();
+	// 		class_saver.save(undefined, `download://matcap-${i++}.texture.lttmbin`);
+	// 	}
+	// }
 
 	const ResInstCache = new ResourceInstanceCache();
 
@@ -148,11 +173,13 @@ export async function createEditor() {
 	});
 
 	const box_mat_test = new MatcapMaterialResource();
+	box_mat_test.matcap_texture = new ClassLoader(ResInstCache).fetch<ImageTexture2DResource>('sys://textures/matcaps/matcap-2.texture.lttmbin').expect();
 	// box_mat_test.color = Vector4.create(0.55, 0.5, 0.7, 1.0);
 
 	const box_mat_test_2 = new PbrMaterialResource();
 	box_mat_test_2.roughness = 0.4;
 	box_mat_test_2.metallic = 1;
+	box_mat_test_2.color = Vector4.create(0.2, 0.2, 0.2, 1.0);
 	box_mat_test_2.color = Vector4.create(0.2, 0.2, 0.2, 1.0);
 
 	const box_mat1 = new TestMaterial3DResource();
@@ -178,7 +205,7 @@ export async function createEditor() {
 	// World.add_Child(_mesh);
 
 	const pure = new PureColorMaterial3DResource();
-	pure.color = Color.create(1.0, 1.0, 0.0, 0.5);
+	pure.color = Color.create(1.0, 1.0, 1.0, 1);
 	const mesh2 = new MeshInstance3D();
 	mesh2.geometry = box_geo;
 	const box_mat2 = new TestMaterial3DResource();
@@ -192,6 +219,7 @@ export async function createEditor() {
 	const mesh3 = new MeshInstance3D();
 	mesh3.geometry = box_geo;
 	const box_mat3 = new MatcapMaterialResource();
+	box_mat3.matcap_texture = new ClassLoader(ResInstCache).fetch<ImageTexture2DResource>('sys://textures/matcaps/matcap-10.texture.lttmbin').expect();
 	box_mat3.depth_bias = 0.3;
 	box_mat3.depth_bias_slope_scale = 2;
 	mesh3.material = box_mat3;
@@ -288,21 +316,11 @@ export async function createEditor() {
 
 	{
 		const image = new Image();
-		image.src = matcap_6_image_url;
-		image.onload = () => {
-			const { naturalWidth, naturalHeight } = image;
-			const texture = ImageTexture2DResource.create_Image(image, naturalWidth, naturalHeight);
-			box_mat_test.matcap_texture = texture;
-		};
-	}
-
-	{
-		const image = new Image();
 		image.src = matcap_7_image_url;
 		image.onload = () => {
 			const { naturalWidth, naturalHeight } = image;
 			const texture = ImageTexture2DResource.create_Image(image, naturalWidth, naturalHeight);
-			box_mat3.matcap_texture = texture;
+			pure.albedo_texture = texture;
 		};
 	}
 
@@ -571,18 +589,15 @@ export async function createEditor() {
 		World.add_Child(light3);
 	}
 
-	fetch(huli).then(r => r.text()).then(t => {
-		const class_saver = new ObjLoader().parse(t).expect();
-		class_saver.save(undefined, 'sys://huli.geometry.lttmbin');
-
-		const huli_geo = new ClassLoader(ResInstCache).fetch<ArrayGeometry3DResource>('sys://huli.geometry.lttmbin').expect();
+	{
+		const huli_geo = new ClassLoader(ResInstCache).fetch<ArrayGeometry3DResource>('sys://geometries/huli.geometry.lttmbin').expect();
 		const huli = new MeshInstance3D();
 		huli.geometry = huli_geo;
 		huli.material = box_mat3;
 		huli.local_position = Vector3.create(-200, -200, 100);
 		huli.local_scale = Vector3.create(100, 100, 100);
 		World.add_Child(huli);
-	});
+	}
 
 	return EditorSceneTree;
 }

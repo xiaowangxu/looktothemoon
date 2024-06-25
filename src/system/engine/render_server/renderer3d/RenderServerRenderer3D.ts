@@ -330,8 +330,8 @@ const EffectFxaaPipeline = new RefCacher(() => {
         var out: FragmentOutput;
         // var color = fxaa(color, sample, vary.frag_coord, world_env_uniform_params.screen_size, vary.rgb_NW, vary.rgb_NE, vary.rgb_SW, vary.rgb_SE, vary.rgb_M);
         var color = textureSample(color, sample, vary.uv);
-        var tone_mapped = vec4f(aces_tone_mapping(color.rgb, 0.8), color.a);
-        out.color = tone_mapped;
+        // var tone_mapped = vec4f(aces_tone_mapping(color.rgb, 0.85), color.a);
+        out.color = color;
         return out;
     }
 
@@ -1169,6 +1169,8 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
                 // queue.addtion_sync_queue = undefined;
             }
         }
+
+        // console.log(`obj: ${this.queue_0.solid_pointer + this.queue_0.transparent_pointer + 2}`);
     }
 
     public compute_Data(compute_pass: GPUComputePassEncoder, material: RenderServerComputeMaterial) {

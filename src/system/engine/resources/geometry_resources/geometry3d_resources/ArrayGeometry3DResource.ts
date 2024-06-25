@@ -87,7 +87,6 @@ export class ArrayGeometry3DResource extends Geometry3DResource {
         class_saver.add_Property(refid, 'bbox', bbox);
 
         return refid;
-
     }
 
     public load(reader: ClassReader): void {
@@ -99,15 +98,6 @@ export class ArrayGeometry3DResource extends Geometry3DResource {
         const vertex_length = reader.get<number>('vertex_length');
         const surfaces = reader.get<number[]>('surfaces');
         const bbox = reader.get<Box3>('bbox');
-
-        // console.log(primitive_type);
-        // console.log(usage);
-        // console.log(index);
-        // console.log(attr_attrs);
-        // console.log(attr_buffs);
-        // console.log(vertex_length);
-        // console.log(surfaces);
-        // console.log(bbox);
 
         if (primitive_type === undefined || usage === undefined || vertex_length === undefined) throw new Error(`<ArrayGeometry3DResource> load: ArrayGeometry's data is not complete`);
 

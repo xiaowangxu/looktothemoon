@@ -1,7 +1,7 @@
 import { Result } from "@/system/utils/Result";
 import { ClassSaver } from "../classes/saver_loader/ClassSaverLoader";
-import { ImageTextureResource } from "../resources/texture_resources/texture2d_resources/ImageTexture2DResource";
-import { RenderStateTextureMagFilter, RenderStateTextureMinFilter, RenderStateTextureWrap } from "@/system/sliverofstraw/render_state/RenderState";
+import { ImageTexture2DResource } from "../resources/texture_resources/texture2d_resources/ImageTexture2DResource";
+import { WebGPURenderState } from "@/system/sliverofstraw/WebGPURenderState";
 
 export class ImageLoader {
     private readonly canvas: HTMLCanvasElement = document.createElement('canvas');
@@ -20,10 +20,10 @@ export class ImageLoader {
         this.canvas.width = w;
         this.canvas.height = h;
         this.ctx.drawImage(image, 0, 0);
-        return this.ctx.getImageData(0, 0, w, h);
+        return this.ctx.getImageData(0, 0, w, h, { colorSpace: 'srgb' });
     }
 
-    public async parse(url: string, mipmap: 1 | 2 | 4 | 8 = 1, srgb: boolean = true): Promise<Result<ClassSaver, Error>> {
+    public async parse(url: string, mipmap: boolean, mipmap_count?: number): Promise<Result<ClassSaver, Error>> {
         try {
             const image = await new Promise((resolve: (img: HTMLImageElement) => void, reject) => {
                 const img = new Image();
@@ -33,13 +33,13 @@ export class ImageLoader {
             });
             const { width, height, data } = this.get_ImageData(image);
             const class_saver = new ClassSaver();
-            const refid = ImageTextureResource.dump_Data(
+            const refid = ImageTexture2DResource.dump_Data(
                 class_saver, 0,
+                new Uint8Array(data),
+                width,
+                height,
                 mipmap,
-                [{ level: 0, width, height, data, y_flip: true }], mipmap !== 1,
-                RenderStateTextureWrap.Clamp, RenderStateTextureWrap.Clamp,
-                RenderStateTextureWrap.Clamp, RenderStateTextureMinFilter.Linear, RenderStateTextureMagFilter.Linear,
-                8, srgb
+                mipmap_count ?? WebGPURenderState.get_MipmapCount(width, height),
             );
             class_saver.set_Root(refid);
             return Result.Ok(class_saver);

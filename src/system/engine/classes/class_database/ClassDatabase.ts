@@ -4,6 +4,7 @@ import { ClassBase } from "./ClassBase";
 import { MeshInstance3D } from "../../nodes/node3ds/visual_instance3ds/geometry3ds/MeshInstance3D";
 import { Result } from "@/system/utils/Result";
 import { ArrayGeometry3DResource } from "../../resources/geometry_resources/geometry3d_resources/ArrayGeometry3DResource";
+import { ImageTexture2DResource } from "../../resources/texture_resources/texture2d_resources/ImageTexture2DResource";
 
 export class ClassDatabase {
     private readonly db: Map<string, typeof ClassBase> = new Map();
@@ -26,3 +27,4 @@ export class ClassDatabase {
 export const ClassDB = new ClassDatabase();
 
 ClassDB.register_Class(ArrayGeometry3DResource);
+ClassDB.register_Class(ImageTexture2DResource);

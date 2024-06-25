@@ -64,9 +64,9 @@ export class RenderServerTexture extends RenderServerObjectRefCounted {
             width, height, 1, mipmap_level_count,
         ).expect();
         RenderServer.render_state.device.queue.copyExternalImageToTexture(
-            { source: image, flipY: true },
-            { texture: texture.texture },
-            { width, height, depthOrArrayLayers: 1 },
+            { source: image, flipY: true, },
+            { texture: texture.texture, },
+            { width, height, depthOrArrayLayers: 1, },
         );
         if (generate_mipmap && texture.mipmap_level_count > 1) {
             RenderServer.render_state.generate_Mipmap(texture);

@@ -58,6 +58,7 @@ export class VisualWorld3DMesh extends WorldObject {
         super(rid);
     }
 
+    private on_geometry_bbox_changed = (bbox: Box3) => { this.update_Cullable(); }
     private update_Cullable() {
         if (this.cullable_override === undefined) {
             if (!this.has_geometry) {
@@ -73,8 +74,6 @@ export class VisualWorld3DMesh extends WorldObject {
             this.is_cullable_empty = this.cullable.is_empty;
         }
     }
-
-    private on_geometry_bbox_changed = (bbox: Box3) => { this.update_Cullable(); }
 
     public set_Geometry(geometry: RenderServerGeometry3D | undefined) {
         if (!this.geometry_ref.is_empty) {

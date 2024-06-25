@@ -1,18 +1,22 @@
 import { WebGPURenderState } from "@/system/sliverofstraw/WebGPURenderState";
-import { WebGPURenderStateBufferUniformType } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformLayout";
-import { MaterialResource } from "../MaterialResource";
+import { WebGPURenderStateBufferUniformType, WebGPURenderStateSamplerUniformType, WebGPURenderStateTextureUniformSampleType, WebGPURenderStateTextureUniformType } from "@/system/sliverofstraw/render_state_object/uniform/WebGPURenderStateUniformLayout";
+import { MaterialResource, MaterialTextureSamplerStorage } from "../MaterialResource";
 import { ReadonlyRef, RefCacher } from "@/system/utils/RefCounted";
 import { RenderServerRenderMaterial } from "../../../render_server/material/RenderServerRenderMaterial";
 import { RenderServerGeometryAttributeLayout, RenderServerGeometryAttributeLocation } from "../../../render_server/geometry/RenderServerGeometryDefination";
 import { WebGPURenderStateAttributeType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateAttributeLayout";
 import { WebGPURenderStateShaderType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateShader";
-import { RenderServer, RenderServerSingleton } from "../../../render_server/RenderServer";
+import { RenderServer, RenderServerDefaultTextureType, RenderServerSingleton } from "../../../render_server/RenderServer";
 import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import type { Texture2DResource } from "../../texture_resources/texture2d_resources/Texture2DResource";
+import { WebGPURenderStateTextureFilter, WebGPURenderStateTextureWrap } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTextureSampler";
 
 const PureColorMaterial3DUniformLayout = new RefCacher(() => {
 	const layout = RenderServer.render_state.create_UniformLayout();
 	layout.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 0, false);
+	layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.Float, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 1);
+	layout.add_Sampler(WebGPURenderStateSamplerUniformType.Filter, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 2);
 	return layout;
 });
 
@@ -30,6 +34,8 @@ const PureColorMaterial3DSolidPipelineCacheSet = new RefCacher(() => {
 };
 
 @group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(0) var<uniform> mat_uniform: Uniform;
+@group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(1) var mat_albedo_tex: texture_2d<f32>;
+@group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(2) var mat_sampler: sampler;
 `,
 		// vertex code
 		`	var _instance_transform = instance_uniform.transform * instance_transform;
@@ -50,7 +56,7 @@ const PureColorMaterial3DSolidPipelineCacheSet = new RefCacher(() => {
 	@location(4) color: vec4f,`,
 		// fragment code
 		`	var normal = normalize(vary.normal);
-	var color = mat_uniform.color * vary.color;`,
+	var color = textureSample(mat_albedo_tex, mat_sampler, vary.uv) * mat_uniform.color * vary.color;`,
 		// custom
 		undefined,
 		PureColorMaterial3DUniformLayout.get(),
@@ -86,6 +92,13 @@ export class PureColorMaterial3DResource extends MaterialResource {
 			this.update_UniformBuffer();
 		}
 	}
+
+	private readonly albedo_texture_storage = new MaterialTextureSamplerStorage<Texture2DResource>(this.uniform_group_ref.expect, 1, undefined, RenderServerDefaultTextureType.White, 2, RenderServer.get_TextureSampler(
+		WebGPURenderStateTextureWrap.Clamp, WebGPURenderStateTextureWrap.Clamp, WebGPURenderStateTextureWrap.Clamp,
+		WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear
+	));
+	public get albedo_texture() { return this.albedo_texture_storage.get(); }
+	public set albedo_texture(texture: Texture2DResource | undefined) { this.albedo_texture_storage.set(texture); }
 
 	constructor() {
 		super();
