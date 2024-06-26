@@ -4,6 +4,8 @@ import { GeometryInstance3D } from "./GeometryInstance3D";
 import { Ref, RefMap } from "@/system/utils/RefCounted";
 import type { Geometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/Geometry3DResource";
 import type { MaterialResource } from "@/system/engine/resources/material_resources/MaterialResource";
+import type { ClassWriter, ClassRef, ClassReader } from "@/system/engine/classes/saver_loader/ClassWriterReader";
+import type { GeometryResource } from "@/system/engine/resources/geometry_resources/GeometryResource";
 
 export class MeshInstance3D extends GeometryInstance3D {
 
@@ -166,4 +168,33 @@ export class MeshInstance3D extends GeometryInstance3D {
         }
         super._notification(what);
     }
+
+    // save / load
+
+    public dump(writer: ClassWriter): void {
+        super.dump(writer);
+        writer.property('geometry', this.geometry);
+        writer.property('material', this.material);
+        if (this._surface_materials_map.size !== 0) {
+            const surface_materials_map = new Map<number, ClassRef>();
+            for (const [id, material] of this._surface_materials_map) {
+                const refid = writer.ref(material);
+                surface_materials_map.set(id, refid);
+            }
+            writer.property('surface_materials', surface_materials_map);
+        }
+    }
+
+    public load(reader: ClassReader): void {
+        super.load(reader);
+        this.geometry = reader.get<Geometry3DResource>('geometry');
+        this.material = reader.get<MaterialResource>('material');
+        const surface_materials = reader.get<Map<number, ClassRef>>('surface_materials');
+        if (surface_materials !== undefined) {
+            for (const [id, material_ref] of surface_materials) {
+                this.set_SurfaceMaterial(id, reader.get<MaterialResource>(material_ref));
+            }
+        }
+    }
+
 }

@@ -329,8 +329,12 @@ export class Node extends ClassBase {
         return this.children.indexOf(node);
     }
 
-    public get_Parent() {
-        return this.parent;
+    public get_Child<T extends Node = Node>(index: number) {
+        return this.children[index] as T | undefined;
+    }
+
+    public get_Parent<T extends Node = Node>() {
+        return this.parent as T | undefined;
     }
 
     public find_Parent_by_Class<T extends Node>(class_type: NodeConstructor<T>): T | undefined {

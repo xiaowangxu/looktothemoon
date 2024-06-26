@@ -1,10 +1,11 @@
 import type { Rid } from "@/system/engine/Rid";
 import { LightInstance3D } from "./LightInstance3D";
-import { NodeNotification } from "../../../Node";
+import { Node, NodeNotification } from "../../../Node";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Pi, clamp } from "@/system/fivepebble/Scalar";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import { RenderServerLightType } from "@/system/engine/render_server/light/RenderServerLightData";
+import type { ClassWriter, ClassRef, ClassReader } from "@/system/engine/classes/saver_loader/ClassWriterReader";
 
 export class SpotLight3D extends LightInstance3D {
 

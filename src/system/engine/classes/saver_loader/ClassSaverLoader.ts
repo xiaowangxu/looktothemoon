@@ -2,7 +2,7 @@ import type { Rid } from '../../Rid';
 import { Result } from '../../../utils/Result';
 import { ClassBase } from "../class_database/ClassBase";
 import { ClassDB, type ClassDatabase } from '../class_database/ClassDatabase';
-import { ClassReader, ClassRef, ClassWriter } from './ClassWriterReader';
+import { ClassReader, ClassRef, ClassWriter, type ClassReaderScope, type ClassWriterScope } from './ClassWriterReader';
 import { ResourceBase, ResourceInstanceCache } from '../../resources/Resource';
 import { ClassDecoder, type ClassEncoder } from './encoder_decoders/ClassEncoderDecoder';
 import { fspath } from '@/system/filesystem/FileSystemPath';
@@ -11,7 +11,7 @@ import { ClassBinaryDecoder, ClassBinaryEncoder } from './encoder_decoders/Class
 
 export type RefId = number;
 
-type PropertyMap = Map<string, any>;
+export type ClassInstancePropertyMap = Map<string, any>;
 
 export type ClassInstanceData = {
     type: string,
@@ -22,10 +22,10 @@ export type ClassInstanceData = {
     unique: boolean | undefined,
     external: string | undefined,
     uid: bigint,
-    property: PropertyMap | undefined,
+    property: ClassInstancePropertyMap | undefined,
 }
 
-export type ClassExchangeData = { root: RefId, uid: bigint, meta: PropertyMap | undefined, instances: ClassInstanceData[] };
+export type ClassExchangeData = { root: RefId, uid: bigint, meta: ClassInstancePropertyMap | undefined, instances: ClassInstanceData[] };
 
 // #region Saver
 
@@ -70,7 +70,7 @@ export function download_File(name: string, data: ArrayBuffer) {
     a.click();
 }
 
-export class ClassSaver {
+export class ClassSaver implements ClassWriterScope {
     private readonly class_db: ClassDatabase;
 
     private _refid: number = 0;
@@ -129,14 +129,19 @@ export class ClassSaver {
         }
     }
 
-    private get_Data(): Result<ClassExchangeData, Error> {
+    public get_Data(check_root_exist: boolean = true): Result<ClassExchangeData, Error> {
         const root_refid = this.root_refid;
-        if (root_refid === undefined) return Result.Error(new Error('<ClassSaver> get_Data: no root instance to be saved'));
-        const rid = this.refid_rid_map.get(root_refid);
-        if (rid === undefined || !this.rid_instance_data_map.has(rid)) return Result.Error(new Error('<ClassSaver> get_Data: root instance not registered'));
+        
+        let not_has_root = root_refid === undefined;
+        if (check_root_exist && not_has_root) return Result.Error(new Error('<ClassSaver> get_Data: no root instance to be saved'));
+        const rid = root_refid === undefined ? undefined : this.refid_rid_map.get(root_refid);
+        
+        not_has_root ||= (rid === undefined || !this.rid_instance_data_map.has(rid));
+        if (check_root_exist && not_has_root) return Result.Error(new Error('<ClassSaver> get_Data: root instance not registered'));
+        
         return Result.Ok({
-            root: root_refid,
-            uid: this.rid_instance_data_map.get(rid)!.uid,
+            root: not_has_root ? -1 : root_refid!,
+            uid: not_has_root ? -1n : this.rid_instance_data_map.get(rid!)!.uid,
             meta: new Map([
                 ['author', 'lttmsaver'],
                 ['date', new Date().toISOString()]
@@ -185,6 +190,25 @@ export class ClassSaver {
         obj.dump(new ClassWriter(this, obj));
     }
 
+    public add_Instance(obj: ClassBase, is_root: boolean = false): Result<RefId, Error> {
+        const refid_res = this.create_Instance(obj, true);
+        if (refid_res.failed) return Result.Error(refid_res.expect_Error());
+        const refid = refid_res.expect();
+        try {
+            this.dump_Instance(obj, is_root);
+            return Result.Ok(refid);
+        }
+        catch (err) {
+            return Result.Error(err as Error);
+        }
+    }
+
+    public get_InstanceData(refid: RefId) {
+        const rid = this.refid_rid_map.get(refid);
+        if (rid === undefined) return undefined;
+        return this.rid_instance_data_map.get(rid);
+    }
+
     // main apis
 
     public init(option?: ClassSaverOption) {
@@ -195,11 +219,14 @@ export class ClassSaver {
         this.static_mode = option?.static ?? false;
     }
 
-    public enocde<T, Option>(data: ClassExchangeData, encoder: typeof ClassEncoder<T, Option>, option?: Option): Result<T, Error> {
+    private enocde<T, Option>(data: ClassExchangeData, encoder: typeof ClassEncoder<T, Option>, option?: Option): Result<T, Error> {
         const _encoder = new (encoder)(data, option);
         return _encoder.encode();
     }
 
+    /**
+     * save obj with default encoder
+     */
     public save(obj: ClassBase | undefined, path: string, save_option?: ClassSaverOption): Result<undefined, Error> {
         let res: Result<ArrayBuffer, Error>;
         if (obj === undefined) {
@@ -208,7 +235,9 @@ export class ClassSaver {
             res = this.enocde(data.expect(), ClassBinaryEncoder);
         }
         else {
-            res = this.dump(obj, ClassBinaryEncoder, save_option);
+            const data = this.dump(obj, save_option);
+            if (data.failed) return Result.Error(data.expect_Error());
+            res = this.enocde(data.expect(), ClassBinaryEncoder);
         }
         if (res.failed) return Result.Error(res.expect_Error());
         const data = res.expect();
@@ -219,7 +248,10 @@ export class ClassSaver {
         return Result.Ok(undefined);
     }
 
-    private dump<T, Option>(obj: ClassBase, encoder: typeof ClassEncoder<T, Option>, option?: ClassSaverOption, encode_option?: Option): Result<T, Error> {
+    /**
+     * dump obj as it is root but do not encode the data
+     */
+    public dump(obj: ClassBase, option?: ClassSaverOption): Result<ClassExchangeData, Error> {
         this.init(option);
         try {
             const refid_res = this.create_Instance(obj, true);
@@ -227,8 +259,7 @@ export class ClassSaver {
             this.set_Root(refid_res.expect());
             this.dump_Instance(obj, true);
             const data = this.get_Data();
-            if (data.failed) return Result.Error(data.expect_Error());
-            return this.enocde(data.expect(), encoder, encode_option);
+            return data;
         }
         catch (err) {
             return Result.Error(err as Error);
@@ -270,7 +301,7 @@ function load_File(path: string): Result<ArrayBuffer, Error> {
     return Result.Ok(d);
 }
 
-export class ClassLoader {
+export class ClassLoader implements ClassReaderScope {
     private readonly class_db: ClassDatabase;
 
     private readonly resource_instance_cache: ResourceInstanceCache;
@@ -280,7 +311,7 @@ export class ClassLoader {
     private disable_use_cache: boolean = false;
     private disable_store_cache: boolean = false;
 
-    private readonly refid_instance_map: Map<RefId, { external: boolean, instance: ClassBase, property?: PropertyMap }> = new Map();
+    private readonly refid_instance_map: Map<RefId, { external: boolean, instance: ClassBase, property?: ClassInstancePropertyMap }> = new Map();
 
     constructor(resource_instance_cache: ResourceInstanceCache, class_db: ClassDatabase = ClassDB) {
         this.class_db = class_db;
@@ -289,8 +320,8 @@ export class ClassLoader {
 
     // parse methods
 
-    public get_Instance(refid: RefId) {
-        return this.refid_instance_map.get(refid)?.instance;
+    public get_Instance<T extends ClassBase = ClassBase>(refid: RefId) {
+        return this.refid_instance_map.get(refid)?.instance as T | undefined;
     }
 
     private parse_Instance(instance: ClassInstanceData): Result<RefId, Error> {
@@ -311,7 +342,7 @@ export class ClassLoader {
         return Result.Ok(refid);
     }
 
-    private load_InstanceProperty(instance: ClassBase, property: PropertyMap) {
+    private load_InstanceProperty(instance: ClassBase, property: ClassInstancePropertyMap) {
         instance.load(new ClassReader(this, property));
     }
 
@@ -319,14 +350,14 @@ export class ClassLoader {
         return `${path}:${instance.type}(${instance.refid})`;
     }
 
-    private init(option?: ClassLoaderOption) {
+    public init(option?: ClassLoaderOption) {
         this.refid_instance_map.clear();
         // set options
         this.disable_use_cache = option?.disable_use_cache ?? false;
         this.disable_store_cache = option?.disable_store_cache ?? false;
     }
 
-    private parse<T extends ClassBase>(data: ClassExchangeData, path?: string, option?: ClassLoaderOption): Result<T, Error> {
+    public parse_Data<T extends ClassBase>(data: ClassExchangeData, path?: string, option?: ClassLoaderOption) : Result<T | undefined, Error> {
         this.init(option);
         // parse
         const { root, instances } = data;
@@ -390,11 +421,18 @@ export class ClassLoader {
             if (external || property === undefined) continue;
             this.load_InstanceProperty(instance, property);
         }
+        return Result.Ok(root_instance as T | undefined);
+    }
+
+    public parse<T extends ClassBase>(data: ClassExchangeData, path?: string, option?: ClassLoaderOption): Result<T, Error> {
+        const parse_instance = this.parse_Data(data, path, option);
+        if (parse_instance.failed) return Result.Error(parse_instance.expect_Error());
+        const root_instance = parse_instance.expect();
         if (root_instance === undefined) return Result.Error(new Error('<ClassLoader> parse: fail to load root instance'));
         return Result.Ok(root_instance as T);
     }
 
-    private decode<T, Option>(data: T, decoder: typeof ClassDecoder<T, Option>, option?: Option): Result<ClassExchangeData, Error> {
+    public decode<T, Option>(data: T, decoder: typeof ClassDecoder<T, Option>, option?: Option): Result<ClassExchangeData, Error> {
         const _decoder = new (decoder)(data, option);
         return _decoder.decode();
     }

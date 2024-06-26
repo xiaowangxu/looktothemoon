@@ -45,7 +45,7 @@ import cubemap_y_ from 'res://cubemap/y_.png';
 import cubemap_z from 'res://cubemap/z.png';
 import cubemap_z_ from 'res://cubemap/z_.png';
 import huli from 'res://huli.obj?url';
-import { ClassLoader } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
+import { ClassLoader, ClassSaver } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
 import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
 import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
 import type { ArrayGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/ArrayGeometry3DResource";
@@ -69,6 +69,7 @@ import matcap_12 from 'res://matcap-12.png';
 import matcap_13 from 'res://matcap-13.png';
 import matcap_14 from 'res://matcap-14.png';
 import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
+import { PackedSceneResource } from "@/system/engine/resources/packed_scene/PackedScene";
 
 export async function createEditor() {
 
@@ -560,43 +561,69 @@ export async function createEditor() {
 	ground.local_position = Vector3.create(0, -120, 0);
 	World.add_Child(ground);
 
-	const light6 = new SpotLight3D();
-	light6.color = Vector3.create(1, 0, 0);
-	light6.distance = 10;
-	light6.intensity = 100;
-	light6.local_rotation = Euler.create(-Pi / 2, 0.3, 0);
-	light6.local_position = Vector3.create(200, 200, 0);
-	World.add_Child(light6);
+	// const light6 = new SpotLight3D();
+	// light6.color = Vector3.create(1, 0, 0);
+	// light6.distance = 10;
+	// light6.intensity = 100;
+	// light6.local_rotation = Euler.create(-Pi / 2, 0.3, 0);
+	// light6.local_position = Vector3.create(200, 200, 0);
+	// World.add_Child(light6);
 
-	for (let i = 0; i < 1024; i++) {
-		const light3 = new PointLight3D();
-		light3.color = Vector3.create(Math.random(), Math.random(), Math.random());
-		light3.local_position = Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200);
-		light3.intensity = 0.2;
-		light3.radius = 1;
-		EditorSceneTree.start_Tween(
-			new TweenLoop(
-				new PingPongTweenAdaptor(
-					new PropertyTweenAdaptor(
-						new InterpolateTween(2, InterpolateTweenTransitionType.Cubic, InterpolateTweenEasingType.InOut),
-						light3, "local_position",
-						Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200)
-					)
-				),
-				Infinity
-			)
-		)
-		World.add_Child(light3);
-	}
+	// for (let i = 0; i < 1024; i++) {
+	// 	const light3 = new PointLight3D();
+	// 	light3.color = Vector3.create(Math.random(), Math.random(), Math.random());
+	// 	light3.local_position = Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200);
+	// 	light3.intensity = 0.2;
+	// 	light3.radius = 1;
+	// 	EditorSceneTree.start_Tween(
+	// 		new TweenLoop(
+	// 			new PingPongTweenAdaptor(
+	// 				new PropertyTweenAdaptor(
+	// 					new InterpolateTween(2, InterpolateTweenTransitionType.Cubic, InterpolateTweenEasingType.InOut),
+	// 					light3, "local_position",
+	// 					Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200)
+	// 				)
+	// 			),
+	// 			Infinity
+	// 		)
+	// 	)
+	// 	World.add_Child(light3);
+	// }
 
 	{
+		const node = new Node3D();
+		node.name = 'fox';
+		World.add_Child(node);
 		const huli_geo = new ClassLoader(ResInstCache).fetch<ArrayGeometry3DResource>('sys://geometries/huli.geometry.lttmbin').expect();
 		const huli = new MeshInstance3D();
 		huli.geometry = huli_geo;
-		huli.material = box_mat3;
+		// huli.material = box_mat3;
 		huli.local_position = Vector3.create(-200, -200, 100);
 		huli.local_scale = Vector3.create(100, 100, 100);
-		World.add_Child(huli);
+		node.add_Child(huli);
+		const light6 = new SpotLight3D();
+		light6.color = Vector3.create(1, 0, 0);
+		light6.distance = 10;
+		light6.intensity = 100;
+		light6.local_rotation = Euler.create(-Pi / 2, 0.3, 0);
+		light6.local_position = Vector3.create(200, 200, 0);
+		huli.add_Child(light6);
+		// const packed_scene = new PackedSceneResource();
+		// packed_scene.parse(node).expect();
+		// console.log(packed_scene);
+		// const class_saver = new ClassSaver();
+		// class_saver.save(packed_scene, "download://test.scene.lttmbin").expect();
+		// console.log(class_saver.get_Data().expect());
+	}
+
+	{
+		const packed_scene = new ClassLoader(ResInstCache).fetch<PackedSceneResource>("sys://test.scene.lttmbin").expect();
+		const scene = packed_scene.instantiate(ResInstCache).expect();
+		scene.get_Child<MeshInstance3D>(0)!.material = new PbrMaterialResource();
+		scene.get_Child<MeshInstance3D>(0)!.local_position = Vector3.create(-200, -200, 200);
+		scene.get_Child<MeshInstance3D>(0)!.get_Child<SpotLight3D>(0)!.global_position = Vector3.create(200, 200, 0);
+		World.add_Child(scene);
+		console.log(scene);
 	}
 
 	return EditorSceneTree;

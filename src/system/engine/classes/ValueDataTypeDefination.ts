@@ -2,7 +2,7 @@ export enum ValueDataType {
     None = 0,
     ClassRef = 1,
     // base
-    Map = 2, Number, Boolean, String,
+    Map = 2, Number, Boolean, String, BigUint, BigInt, 
     // typed array
     Uint8Array = 16, Uint16Array, Uint32Array, Int8Array, Int16Array, Int32Array, Float32Array, Float64Array,
     // packed array

@@ -13,6 +13,7 @@ import type { ClassExchangeData, ClassInstanceData } from "../ClassSaverLoader";
 import { ValueDataType } from "../../ValueDataTypeDefination";
 import { PackedFloatArray, PackedIndexArray, PackedIntArray, PackedMatrix2Array, PackedMatrix3Array, PackedMatrix4Array, PackedUintArray, PackedVector2Array, PackedVector3Array, PackedVector4Array } from "../../value_wrappers/PackedArray";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
+import { BigInt, BigUint } from "../../value_wrappers/BigInt";
 
 // Lttm Bin format
 // |-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|
@@ -148,6 +149,12 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEnc
         this.byte_pointer += 8;
     }
 
+    private append_Int64(value: bigint) {
+        this.ensure_AppendSize(8);
+        this.data_view.setBigInt64(this.byte_pointer, value, this.little_endian);
+        this.byte_pointer += 8;
+    }
+
     // #endregion
 
     private append_String(value: string) {
@@ -180,6 +187,8 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEnc
         switch (type) {
             case ValueDataType.None: { return; }
             case ValueDataType.Number: { this.append_Float64(value); return; }
+            case ValueDataType.BigUint: { this.append_Uint64((value as BigInt).value); return; }
+            case ValueDataType.BigInt: { this.append_Int64((value as BigUint).value); return; }
             case ValueDataType.Boolean: { this.append_Byte(value ? 1 : 0); return; }
             case ValueDataType.String: { this.append_String(value); return; }
             case ValueDataType.ClassRef: { this.append_Uint32(value.refid); return; }
@@ -263,6 +272,8 @@ export class ClassBinaryEncoder extends ClassEncoder<ArrayBuffer, ClassBinaryEnc
         if (typeof value === 'boolean') return ValueDataType.Boolean;
         if (typeof value === 'string') return ValueDataType.String;
         if (value instanceof ClassRef) return ValueDataType.ClassRef;
+        if (value instanceof BigInt) return ValueDataType.BigInt;
+        if (value instanceof BigUint) return ValueDataType.BigUint;
         if (value instanceof Map) return ValueDataType.Map;
         // typed array
         if (value instanceof Uint8Array || value instanceof Uint8ClampedArray) return ValueDataType.Uint8Array;
@@ -429,6 +440,12 @@ export class ClassBinaryDecoder extends ClassDecoder<ArrayBuffer, ClassBinaryDec
         return value;
     }
 
+    private get_Int64() {
+        const value = this.data_view.getBigInt64(this.byte_pointer, this.little_endian);
+        this.byte_pointer += 8;
+        return value;
+    }
+
     private get_Float64() {
         const value = this.data_view.getFloat64(this.byte_pointer, this.little_endian);
         this.byte_pointer += 8;
@@ -480,6 +497,12 @@ export class ClassBinaryDecoder extends ClassDecoder<ArrayBuffer, ClassBinaryDec
             }
             case ValueDataType.Number: {
                 return this.get_Float64();
+            }
+            case ValueDataType.BigUint: {
+                return this.get_Uint64();
+            }
+            case ValueDataType.BigInt: {
+                return this.get_Int64();
             }
             case ValueDataType.Boolean: {
                 return this.get_Byte() !== 0;

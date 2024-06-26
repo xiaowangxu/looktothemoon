@@ -11,6 +11,6 @@ export class ClassBase {
     }
 
     public load(reader: ClassReader): void {
-        throw new Error(`<${this.constructor.name}> load: dump can not be called, may be this class does not implement its own load method`);
+        throw new Error(`<${this.constructor.name}> load: load can not be called, may be this class does not implement its own load method`);
     }
 }
