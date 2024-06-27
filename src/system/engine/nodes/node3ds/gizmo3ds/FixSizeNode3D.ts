@@ -3,7 +3,6 @@ import { Node3D } from "../Node3D";
 import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Plane3 } from "@/system/fivepebble/geometries/Plane3";
-import type { Config } from "@/system/engine/ConfiguredObject";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
@@ -42,8 +41,8 @@ export class FixSizeNode3D extends Node3D {
     }
     public consider_pixel_ratio: boolean = false;
 
-    constructor(config: Config) {
-        super(config);
+    constructor() {
+        super();
         this.block_redundant_before_render_notification = false;
         this.propergate_redundant_before_render_reset = true;
     }
@@ -113,7 +112,7 @@ export class FixSizeNode3D extends Node3D {
     protected update_Size() {
         let scale = this.get_Scale();
         if (scale === undefined) return;
-        if (this.consider_pixel_ratio) scale /= this.config.render_server.pixel_ratio;
+        if (this.consider_pixel_ratio) scale /= this.get_Viewport()?.pixel_ratio ?? 1;
         this.local_scale = FixSizeNode3D.#tmp_vector3_0.set(scale, scale, scale);
     }
 

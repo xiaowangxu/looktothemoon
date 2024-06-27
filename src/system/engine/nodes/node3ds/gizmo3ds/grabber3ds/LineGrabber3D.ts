@@ -1,11 +1,10 @@
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import { GrabberElement3D, GrabberPlainColorMaterialResource } from "./Grabber3D";
+import { GrabberElement3D } from "./Grabber3D";
 import { MeshInstance3D } from "../../visual_instance3ds/geometry3ds/MeshInstance3D";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import { clamp, is_ApproxEqual } from "@/system/fivepebble/Scalar";
 import { Cacher } from "@/system/utils/Cacher";
-import { CylinderGeometryResource } from "@/system/engine/resources/geometry_resources/primitive_geometry_resources/PrimitiveGeometryResource";
-import { Ref } from "@/system/utils/RefCounted";
+import { Ref, RefCacher } from "@/system/utils/RefCounted";
 import type { InputEvent } from "@/system/engine/inputs/InputEvent";
 import { MouseButton, MouseButtonInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseButtonInputEvent";
 import { MouseEnterLeaveInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseEnterLeaveInputEvent";
@@ -16,44 +15,48 @@ import { PickingArea3D } from "../../physics3ds/PickingArea3D";
 import { PickingShape3D } from "../../physics3ds/PickingShape3D";
 import { PickingCylinderResource } from "@/system/engine/resources/picking_shape_resources/PickingCylinderResource";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
-import type { Config } from "@/system/engine/ConfiguredObject";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { out } from "@/system/utils/Type";
+import { CylinderGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/CylinderGeometry3DResource";
+import { GrabberMaterial3DResource } from "./GrabberMaterial3DResource";
 
-const ArrowTailGeometry = new Cacher((config: Config) => {
-    const geometry = new CylinderGeometryResource(config);
-    geometry.top_radius = geometry.bottom_radius = 0.024;
-    geometry.height = 1;
-    geometry.segments = 16;
-    geometry.build();
-    return new Ref(geometry);
+const ArrowTailGeometry = new RefCacher(() => {
+    const geometry = new CylinderGeometry3DResource();
+    geometry.option = {
+        top_radius: 0.024,
+        bottom_radius: 0.024,
+        height: 1,
+        segments: 16,
+    };
+    return geometry;
 });
 
-const ArrowHeadGeometry = new Cacher((config: Config) => {
-    const geometry = new CylinderGeometryResource(config);
-    geometry.top_radius = 0.01;
-    geometry.bottom_radius = 0.1;
-    geometry.height = 0.28;
-    geometry.segments = 16;
-    geometry.build();
-    return new Ref(geometry);
+const ArrowHeadGeometry = new RefCacher(() => {
+    const geometry = new CylinderGeometry3DResource();
+    geometry.option = {
+        top_radius: 0.01,
+        bottom_radius: 0.1,
+        height: 0.28,
+        segments: 16,
+    };
+    return geometry;
 });
 
-const LineGrabberPickingShape = new Cacher((config: Config) => {
-    const picking_shape = new PickingCylinderResource(config);
+const LineGrabberPickingShape = new RefCacher(() => {
+    const picking_shape = new PickingCylinderResource();
     picking_shape.radius = 0.12;
-    return new Ref(picking_shape);
+    return picking_shape;
 });
 
 export class LineGrabber3D extends GrabberElement3D<Vector3> {
 
     static readonly #tmp_vector3_0 = Vector3.new;
 
-    private readonly arrow_tail: MeshInstance3D = new MeshInstance3D(this.config);
-    private readonly arrow_head: MeshInstance3D = new MeshInstance3D(this.config);
-    private readonly arrow_material: Ref<GrabberPlainColorMaterialResource> = new Ref(new GrabberPlainColorMaterialResource(this.config));
-    private readonly area: PickingArea3D = new PickingArea3D(this.config);
-    private readonly shape: PickingShape3D = new PickingShape3D(this.config);
+    private readonly arrow_tail: MeshInstance3D = new MeshInstance3D();
+    private readonly arrow_head: MeshInstance3D = new MeshInstance3D();
+    private readonly arrow_material: Ref<GrabberMaterial3DResource> = new Ref(new GrabberMaterial3DResource());
+    private readonly area: PickingArea3D = new PickingArea3D();
+    private readonly shape: PickingShape3D = new PickingShape3D();
 
     private _length: number = 0.7;
     public get length() { return this._length; }
@@ -107,7 +110,7 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         this.update_Visual();
     }
 
-    private readonly _highlight_color: Color = Color.color8(0xff, 0xbb, 0x00).linear_rgb;
+    private readonly _highlight_color: Color = Color.color8(0xff, 0xbb, 0x00);
     public get highlight_color() { return this._highlight_color.clone(); }
     public set highlight_color(highlight_color: Color) {
         this._highlight_color.copy(highlight_color);
@@ -176,7 +179,6 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
             this.visual_opacity = 1;
             this.visual_color.set(this.visual_color.r, this.visual_color.g, this.visual_color.b, this.visual_opacity);
             this.arrow_material.expect.color = this.visual_color;
-            this.arrow_material.expect.material.transparent = false;
             this.arrow_head.local_visible = true;
             this.visual_enabled = true;
             return;
@@ -190,10 +192,9 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
             b.mult(b, size); //new Vector3().fromArray(this.global_position.array).project(cam);
             const distance = a.distance_to(b) / 150;
             const opactiy = (clamp(distance, 0.1, 0.35) - 0.1) * 4;
-            this.visual_opacity = opactiy;
+            this.visual_opacity = is_ApproxEqual(opactiy, 1) ? 1 : opactiy;
             this.visual_color.set(this.visual_color.r, this.visual_color.g, this.visual_color.b, this.visual_opacity);
             this.arrow_material.expect.color = this.visual_color;
-            this.arrow_material.expect.material.transparent = !is_ApproxEqual(this.visual_opacity, 1);
             if (opactiy < 0.4) {
                 this.visual_enabled = false;
             }
@@ -204,15 +205,15 @@ export class LineGrabber3D extends GrabberElement3D<Vector3> {
         }
     }
 
-    constructor(config: Config) {
-        super(config);
+    constructor() {
+        super();
 
-        this.arrow_tail.geometry = ArrowTailGeometry.get(this.config).expect;
-        this.arrow_head.geometry = ArrowHeadGeometry.get(this.config).expect;
+        this.arrow_tail.geometry = ArrowTailGeometry.get();
+        this.arrow_head.geometry = ArrowHeadGeometry.get();
         this.arrow_tail.material = this.arrow_head.material = this.arrow_material.expect;
         this.on_RenderQueueChanged();
 
-        this.shape.shape = LineGrabberPickingShape.get(this.config).expect;
+        this.shape.shape = LineGrabberPickingShape.get();
 
         this.area.signal_mouse_entered.connect(() => {
             this.is_hovering = true;

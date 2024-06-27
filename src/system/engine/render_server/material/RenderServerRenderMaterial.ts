@@ -516,9 +516,10 @@ ${fragment}
 	// End Custom Fragment
 	${pass === RenderServerRenderMaterialPass.Transparent ? `
 	// Transparent OIT
-	var _z = abs(vary.position.z);
-	var _weight = max(min(1.0, max(max(${fragment_out_color_name}.r, ${fragment_out_color_name}.g), ${fragment_out_color_name}.b) * ${fragment_out_color_name}.a), ${fragment_out_color_name}.a) *
-    clamp(0.03 / (1e-5 + pow(_z / 200, 4.0)), 1e-2, 3e3);
+	let _z = abs(vary.position.z);
+	let _a = ${fragment_out_color_name}.a;
+	let _weight = max(0.01, min(3000.0, 0.03 / (1e-5 + pow(abs(_z) / 200.0, 4.0))));
+	// var _weight = max(min(1.0, max(max(${fragment_out_color_name}.r, ${fragment_out_color_name}.g), ${fragment_out_color_name}.b) * ${fragment_out_color_name}.a), ${fragment_out_color_name}.a) * clamp(0.03 / (1e-5 + pow(_z / 200, 4.0)), 1e-2, 3e3);
 	_out.accum = vec4(${fragment_out_color_name}.rgb * ${fragment_out_color_name}.a, ${fragment_out_color_name}.a)  * _weight;
 	_out.reveal = ${fragment_out_color_name}.a;
 	` :

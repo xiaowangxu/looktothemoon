@@ -70,6 +70,8 @@ import matcap_13 from 'res://matcap-13.png';
 import matcap_14 from 'res://matcap-14.png';
 import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
 import { PackedSceneResource } from "@/system/engine/resources/packed_scene/PackedScene";
+import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/LineGrabber3D";
+import { TranslateGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/TranslateGrabber3D";
 
 export async function createEditor() {
 
@@ -99,17 +101,17 @@ export async function createEditor() {
 	EditorViewport.world_3d = new World3D();
 	EditorViewport.renderer_3d = new RenderServerRenderer3D();
 
-	// // viewport 0
-	// const EditorViewportContainer0 = new ViewportDomContainer();
-	// EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
-	// const EditorViewport0 = new Viewport();
-	// EditorViewport0.scale = viewport_scale;
-	// EditorViewport0.renderer_3d = new RenderServerRenderer3D();
-	// EditorViewportContainer0.add_Child(EditorViewport0);
-	// const EditorCamera0 = new OrbitCamera3D();
-	// EditorViewport0.add_Child(EditorCamera0);
-	// EditorViewport.add_Child(EditorViewportContainer0);
-	// EditorCamera0.set_Zoom(0.3);
+	// viewport 0
+	const EditorViewportContainer0 = new ViewportDomContainer();
+	EditorViewportContainer0.dom = (document.querySelector('#viewport-1') ?? undefined) as HTMLElement;
+	const EditorViewport0 = new Viewport();
+	EditorViewport0.scale = viewport_scale;
+	EditorViewport0.renderer_3d = new RenderServerRenderer3D();
+	EditorViewportContainer0.add_Child(EditorViewport0);
+	const EditorCamera0 = new OrbitCamera3D();
+	EditorViewport0.add_Child(EditorCamera0);
+	EditorViewport.add_Child(EditorViewportContainer0);
+	EditorCamera0.set_Zoom(0.3);
 	// // viewport 1
 	// const EditorViewportContainer1 = new ViewportDomContainer();
 	// EditorViewportContainer1.dom = (document.querySelector('#viewport-2') ?? undefined) as HTMLElement;
@@ -621,10 +623,21 @@ export async function createEditor() {
 		const scene = packed_scene.instantiate(ResInstCache).expect();
 		scene.get_Child<MeshInstance3D>(0)!.material = new PbrMaterialResource();
 		scene.get_Child<MeshInstance3D>(0)!.local_position = Vector3.create(-200, -200, 200);
+		const spot = scene.get_Child<MeshInstance3D>(0)!.get_Child<SpotLight3D>(0)!;
 		scene.get_Child<MeshInstance3D>(0)!.get_Child<SpotLight3D>(0)!.global_position = Vector3.create(200, 200, 0);
 		World.add_Child(scene);
 		console.log(scene);
+		const translate_grabber1 = new TranslateGrabber3D();
+		World.add_Child(translate_grabber1);
+		translate_grabber1.set_TranslatePosition(spot.global_position);
+		console.log(translate_grabber1.global_position);
+		translate_grabber1.signal_grabbing.connect((position) => {
+			spot.global_position = position;
+		});
 	}
+
+	const translate_grabber = new TranslateGrabber3D();
+	World.add_Child(translate_grabber);
 
 	return EditorSceneTree;
 }

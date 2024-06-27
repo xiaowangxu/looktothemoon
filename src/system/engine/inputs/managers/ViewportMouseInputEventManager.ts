@@ -94,6 +94,7 @@ export class ViewportMouseInputEventManager {
             x === 0 ? -1 : (offsetX / x * 2 - 1),
             y === 0 ? -1 : (1 - offsetY / y * 2)
         );
+        console.log(this._mouse_position_normalized.clone());
     }
 
     private update_MouseKey(event: MouseEvent, down: boolean) {

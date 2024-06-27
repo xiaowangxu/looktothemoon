@@ -6,39 +6,39 @@ import { PickingSphereResource } from "@/system/engine/resources/picking_shape_r
 import { PickingArea3D } from "../../physics3ds/PickingArea3D";
 import { PickingShape3D } from "../../physics3ds/PickingShape3D";
 import { MeshInstance3D } from "../../visual_instance3ds/geometry3ds/MeshInstance3D";
-import { GrabberElement3D, GrabberPlainColorMaterialResource } from "./Grabber3D";
+import { GrabberElement3D } from "./Grabber3D";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import { Ref } from "@/system/utils/RefCounted";
+import { Ref, RefCacher } from "@/system/utils/RefCounted";
 import { Cacher } from "@/system/utils/Cacher";
-import type { Config } from "@/system/engine/ConfiguredObject";
 import { Color } from "@/system/fivepebble/graphics/Color";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
-import { SphereGeometryResource } from "@/system/engine/resources/geometry_resources/primitive_geometry_resources/PrimitiveGeometryResource";
 import type { InputEvent } from "@/system/engine/inputs/InputEvent";
 import { Plane3 } from "@/system/fivepebble/geometries/Plane3";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
+import { GrabberMaterial3DResource } from "./GrabberMaterial3DResource";
+import { SphereGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/SphereGeometry3DResource";
+import { ViewportCursorStyle } from "../../../Node";
 
-const PointGeometry = new Cacher((config: Config) => {
-    const geometry = new SphereGeometryResource(config);
+const PointGeometry = new RefCacher(() => {
+    const geometry = new SphereGeometry3DResource();
     geometry.radius = 1.0;
-    geometry.build();
-    return new Ref(geometry);
+    return geometry;
 });
 
-const PointPickingShape = new Cacher((config: Config) => {
-    const picking_shape = new PickingSphereResource(config);
+const PointPickingShape = new RefCacher(() => {
+    const picking_shape = new PickingSphereResource();
     picking_shape.radius = 1.5;
-    return new Ref(picking_shape);
+    return picking_shape;
 });
 
 export class PointGrabber3D extends GrabberElement3D<Vector3> {
 
     static readonly #tmp_vector3_0 = Vector3.new;
 
-    private readonly point: MeshInstance3D = new MeshInstance3D(this.config);
-    private readonly area: PickingArea3D = new PickingArea3D(this.config);
-    private readonly shape: PickingShape3D = new PickingShape3D(this.config);
-    private readonly material: Ref<GrabberPlainColorMaterialResource> = new Ref(new GrabberPlainColorMaterialResource(this.config));
+    private readonly point: MeshInstance3D = new MeshInstance3D();
+    private readonly area: PickingArea3D = new PickingArea3D();
+    private readonly shape: PickingShape3D = new PickingShape3D();
+    private readonly material: Ref<GrabberMaterial3DResource> = new Ref(new GrabberMaterial3DResource());
 
     private _radius: number = 0.085;
     public get radius() { return this._radius; }
@@ -78,7 +78,7 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
         this.update_Visual();
     }
 
-    private readonly _highlight_color: Color = Color.color8(0xff, 0xbb, 0x00).linear_rgb;
+    private readonly _highlight_color: Color = Color.color8(0xff, 0xbb, 0x00);
     public get highlight_color() { return this._highlight_color.clone(); }
     public set highlight_color(highlight_color: Color) {
         this._highlight_color.copy(highlight_color);
@@ -127,23 +127,23 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
         this.material.expect.color = this.visual_color;
     }
 
-    constructor(config: Config) {
-        super(config);
+    constructor() {
+        super();
 
         this.on_RenderQueueChanged();
 
-        this.point.geometry = PointGeometry.get(this.config).expect;
+        this.point.geometry = PointGeometry.get();
         this.point.material = this.material.expect;
 
-        this.shape.shape = PointPickingShape.get(this.config).expect;
+        this.shape.shape = PointPickingShape.get();
 
         this.area.signal_mouse_entered.connect((evt) => {
             this.is_hovering = true;
-            this.set_ViewportCursorStyle(evt.viewport!, 'move');
+            this.set_ViewportCursorStyle(evt.viewport!, ViewportCursorStyle.Move);
         });
         this.area.signal_mouse_exited.connect((evt) => {
             this.is_hovering = false;
-            this.set_ViewportCursorStyle(evt.viewport!, 'default');
+            this.set_ViewportCursorStyle(evt.viewport!, ViewportCursorStyle.Default);
         });
 
         this.area.signal_input.connect((evt, prop) => {

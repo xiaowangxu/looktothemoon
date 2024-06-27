@@ -2,15 +2,14 @@ import { type Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { GrabberElement3D, Grabber3D } from "./Grabber3D";
 import { LineGrabber3D } from "./LineGrabber3D";
 import { PointGrabber3D } from "./PointGrabber3D";
-import type { Config } from "@/system/engine/ConfiguredObject";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { Color } from "@/system/fivepebble/graphics/Color";
 
 export class TranslateGrabber3D extends Grabber3D<Vector3> {
-    private readonly axis_x_grabber: LineGrabber3D = new LineGrabber3D(this.config);
-    private readonly axis_y_grabber: LineGrabber3D = new LineGrabber3D(this.config);
-    private readonly axis_z_grabber: LineGrabber3D = new LineGrabber3D(this.config);
-    private readonly center_grabber: PointGrabber3D = new PointGrabber3D(this.config);
+    private readonly axis_x_grabber: LineGrabber3D = new LineGrabber3D();
+    private readonly axis_y_grabber: LineGrabber3D = new LineGrabber3D();
+    private readonly axis_z_grabber: LineGrabber3D = new LineGrabber3D();
+    private readonly center_grabber: PointGrabber3D = new PointGrabber3D();
 
     protected on_EnabledChanged(): void {
         this.axis_x_grabber.enabled = this.enabled;
@@ -40,25 +39,25 @@ export class TranslateGrabber3D extends Grabber3D<Vector3> {
         this.center_grabber.render_queue = this._render_queue;
     }
 
-    constructor(config: Config) {
-        super(config);
+    constructor() {
+        super();
 
-        const red = 0xff4a56ff;
-        const green = 0x04b973ff;
-        const blue = 0x466fd6ff;
+        const red = 0xff3a46ff;
+        const green = 0x4cff4dff;
+        const blue = 0x466fffff;
         const grey = 0x606060ff;
 
         this.on_RenderQueueChanged();
 
         this.axis_x_grabber.local_rotation = Euler.create(0, 0, - Math.PI / 2);
-        this.axis_x_grabber.color = Color.color8code(red).linear_rgb;
+        this.axis_x_grabber.color = Color.color8code(red);
 
-        this.axis_y_grabber.color = Color.color8code(green).linear_rgb;
+        this.axis_y_grabber.color = Color.color8code(green);
 
         this.axis_z_grabber.local_rotation = Euler.create(Math.PI / 2, 0, 0);
-        this.axis_z_grabber.color = Color.color8code(blue).linear_rgb;
+        this.axis_z_grabber.color = Color.color8code(blue);
 
-        this.center_grabber.color = Color.color8code(grey).linear_rgb;
+        this.center_grabber.color = Color.color8code(grey);
 
         this.add_Child(this.axis_x_grabber);
         this.add_Child(this.axis_y_grabber);
@@ -119,5 +118,13 @@ export class TranslateGrabber3D extends Grabber3D<Vector3> {
         this.axis_y_grabber.signal_grab_end.connect(grab_end);
         this.axis_z_grabber.signal_grab_end.connect(grab_end);
         this.center_grabber.signal_grab_end.connect(grab_end);
+    }
+
+    public set_TranslatePosition(position: Vector3) {
+        this.local_position = position;
+        this.axis_x_grabber.local_position = position;
+        this.axis_y_grabber.local_position = position;
+        this.axis_z_grabber.local_position = position;
+        this.center_grabber.local_position = position;
     }
 }

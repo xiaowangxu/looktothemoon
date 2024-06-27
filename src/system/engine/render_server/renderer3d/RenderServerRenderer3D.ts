@@ -328,9 +328,9 @@ const EffectFxaaPipeline = new RefCacher(() => {
     @fragment
     fn fs_main(vary: VertexOutput) -> FragmentOutput {
         var out: FragmentOutput;
-        // var color = fxaa(color, sample, vary.frag_coord, world_env_uniform_params.screen_size, vary.rgb_NW, vary.rgb_NE, vary.rgb_SW, vary.rgb_SE, vary.rgb_M);
-        var color = textureSample(color, sample, vary.uv);
-        // var tone_mapped = vec4f(aces_tone_mapping(color.rgb, 0.85), color.a);
+        // let color = fxaa(color, sample, vary.frag_coord, world_env_uniform_params.screen_size, vary.rgb_NW, vary.rgb_NE, vary.rgb_SW, vary.rgb_SE, vary.rgb_M);
+        let color = textureSample(color, sample, vary.uv);
+        // let tone_mapped = vec4f(aces_tone_mapping(color.rgb, 0.85), color.a);
         out.color = color;
         return out;
     }

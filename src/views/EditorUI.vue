@@ -24,12 +24,12 @@
 
         <!-- outline: black solid 1px; outline-offset: -2px;  -->
         <div id="viewport-0"
-            style="position: absolute; overflow: hidden; left: 0%; top: 0%; right: 0%; bottom: 0%; pointer-events: initial;">
+            style="position: absolute; overflow: hidden; left: 0%; top: 0%; right: 50%; bottom: 0%; pointer-events: initial;">
         </div>
-        <!-- <div id="viewport-1"
-            style="outline: black solid 1px; outline-offset: -2px; position: absolute; overflow: hidden; left: 50%; top: 0%; right: 0%; bottom: 50%; pointer-events: initial;">
+        <div id="viewport-1"
+            style="outline: black solid 1px; outline-offset: -2px; position: absolute; overflow: hidden; left: 50%; top: 0%; right: 0%; bottom: 0%; pointer-events: initial;">
         </div>
-        <div id="viewport-2"
+        <!-- <div id="viewport-2"
             style="outline: black solid 1px; outline-offset: -2px; position: absolute; overflow: hidden; left: 50%; top: 50%; right: 0%; bottom: 0%; pointer-events: initial;">
         </div> -->
 
