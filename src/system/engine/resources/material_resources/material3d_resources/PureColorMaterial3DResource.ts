@@ -20,7 +20,7 @@ const PureColorMaterial3DUniformLayout = new RefCacher(() => {
 	return layout;
 });
 
-const PureColorMaterial3DPipelineCacheSet = new RefCacher(() => {
+const PureColorMaterial3DSolidPipelineCacheSet = new RefCacher(() => {
 	const pipeline_cache_set = RenderServerRenderMaterial.create_PipelineCacheSet(
 		// attributes
 		[
@@ -46,26 +46,17 @@ const PureColorMaterial3DPipelineCacheSet = new RefCacher(() => {
 	out.normal = world_env_uniform_camera_matrix.camera_norview * instance_uniform.normal * instance_normal * attri.normal;
 	out.uv = attri.uv;
 	out.color = instance_color;
-	out.world = _world.xyz;
-	out.center = _instance_transform[3].xyz;
-	if bool(world_env_uniform_params.orthogonal) { out.lookat = vec3f(0.0f, 0.0f, 1.0f); } else { out.lookat = -_world_in_view.xyz; }`,
+	if bool(world_env_uniform_params.orthogonal) { out.lookat = vec3f(0.0f, 0.0f, 1.0f); } else { out.lookat = -normalize(_world_in_view.xyz); }`,
 		// varys
 		`	@builtin(position) position: vec4f,
 	@location(0) vertex_view: vec3f,
 	@location(1) normal: vec3f,
 	@location(2) lookat: vec3f,
 	@location(3) uv: vec2f,
-	@location(4) center: vec3f,
-	@location(5) world: vec3f,
-	@location(6) color: vec4f,`,
+	@location(4) color: vec4f,`,
 		// fragment code
-		`let normal = normalize(vary.normal);
-	let lookat = normalize(vary.lookat);
-	let normal_dot = smoothstep(0.05, 0.075, abs(dot(normal, lookat)));
-	let distance = distance(vary.center, vary.world);
-	let fade = 1 - smoothstep(100.0, 250.0, distance);
-	var color = textureSample(mat_albedo_tex, mat_sampler, vary.uv) * mat_uniform.color * vary.color;
-	color.a = clamp(color.a * fade * normal_dot, 0, 1);`,
+		`	var normal = normalize(vary.normal);
+	var color = textureSample(mat_albedo_tex, mat_sampler, vary.uv) * mat_uniform.color * vary.color;`,
 		// custom
 		undefined,
 		PureColorMaterial3DUniformLayout.get(),
@@ -113,7 +104,7 @@ export class PureColorMaterial3DResource extends MaterialResource {
 		super();
 		this.uniform_group_ref.expect.set_BufferUniform(0, this.uniform_buffer_ref.expect);
 		this.render_server_material.add_UniformBuffer(this.uniform_buffer_ref.expect, this.uniform_array_buffer);
-		PureColorMaterial3DPipelineCacheSet.get().set_RenderServerMaterialPipelineCaches(this.render_server_material, this.uniform_group_ref.expect);
+		PureColorMaterial3DSolidPipelineCacheSet.get().set_RenderServerMaterialPipelineCaches(this.render_server_material, this.uniform_group_ref.expect);
 		this.update_UniformBuffer();
 	}
 

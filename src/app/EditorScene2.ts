@@ -76,7 +76,8 @@ import { GridGeometry3DResource } from "@/system/engine/resources/geometry_resou
 import { OrthographicCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/OrthographicCamera3D";
 import { InfiniteLine3D } from "@/system/engine/nodes/node3ds/gizmo3ds/InfiniteLine3D";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
-import { InfiniteGrid3D } from "@/system/engine/nodes/node3ds/gizmo3ds/InfiniteGrid3D";
+import { InfiniteGrid3D, InfiniteGridMaterial3DResource } from "@/system/engine/nodes/node3ds/gizmo3ds/InfiniteGrid3D";
+import { StlLoader } from "@/system/engine/loaders/StlLoader";
 
 export async function createEditor() {
 
@@ -349,16 +350,6 @@ export async function createEditor() {
 	}
 
 	{
-		const image = new Image();
-		image.src = studio;
-		image.onload = () => {
-			const { naturalWidth, naturalHeight } = image;
-			const texture = ImageTexture2DResource.create_Image(image, naturalWidth, naturalHeight, Infinity, true);
-			EditorViewport.world_3d?.visual_world.set_BackgroundTexture(texture);
-		};
-	}
-
-	{
 		const promises = Promise.all([
 			cubemap_x,
 			cubemap_x_,
@@ -376,18 +367,32 @@ export async function createEditor() {
 		promises.then((images) => {
 			const image_options = images.map(img => ({ image: img, width: img.naturalWidth, height: img.naturalHeight }));
 			const texture = ImageTextureCubeMapResource.create_Images(image_options, Infinity, true);
-			box_mat_test_2.cube_texture = texture;
-			pbr.cube_texture = texture;
+			// EditorViewport.world_3d?.visual_world.set_BackgroundTexture(texture);
+			fetch('http://10.8.20.41:8084/group1/M00/00/00/4ZMEAGEcs9CEPKuPAAAAAItr2p0243.stl').then(r => r.arrayBuffer()).then(d => {
+				const class_saver = new StlLoader().parse(d).expect();
+				class_saver.save(undefined, 'sys://geometries/traffic_light.geometry.lttmbin');
+				const huli = new MeshInstance3D();
+				huli.geometry = new ClassLoader(ResInstCache).fetch<ArrayGeometry3DResource>('sys://geometries/traffic_light.geometry.lttmbin').expect();
+				const mat = new PbrMaterial3DResource();
+				mat.metallic = 0;
+				mat.roughness = 0.75;
+				mat.color = Vector4.create(0.5, 0.4, 1, 1.0);
+				huli.material = mat;
+				huli.local_position = Vector3.create(0, 50, 0);
+				huli.local_scale = Vector3.create(0.1, 0.1, 0.1);
+				World.add_Child(huli);
+			});
+			let idx = 0;
 			for (let i = 0; i <= 10; i++) {
 				for (let j = 0; j <= 10; j++) {
 					const mesh = new MeshInstance3D();
 					mesh.geometry = sph_geo;
 					const mat = new PbrMaterial3DResource();
-					// mat.color = Vector4.create(1.0, 0.0, 0.0, 1.0);
+					mat.color = Color.hsv(idx++ / 121, 1, 0.5, 1);
 					mesh.material = mat;
 					mat.roughness = i / 10;
 					mat.metallic = j / 10;
-					mat.cube_texture = texture;
+					// mat.cube_texture = texture;
 					mesh.local_position = Vector3.create(-80 + (i * 15), 20, -80 + (j * 15));
 					mesh.local_scale = Vector3.create(10, 10, 10);
 					World.add_Child(mesh);
@@ -414,58 +419,58 @@ export async function createEditor() {
 	// 	World.add_Child(mesh);
 	// }
 
-	{
-		// compass
-		// viewport 0
-		const CompassViewportContainer = new ViewportDomContainer();
-		CompassViewportContainer.dom = (document.querySelector('#compass-viewport') ?? undefined) as HTMLElement;
-		const CompassViewport = new Viewport();
-		CompassViewport.scale = 1.5;
-		CompassViewport.world_3d = new World3D();
-		CompassViewport.renderer_3d = new RenderServerRenderer3D(6, 6, 6, 6);
-		CompassViewport.background = false;
-		CompassViewportContainer.add_Child(CompassViewport);
+	// {
+	// 	// compass
+	// 	// viewport 0
+	// 	const CompassViewportContainer = new ViewportDomContainer();
+	// 	CompassViewportContainer.dom = (document.querySelector('#compass-viewport') ?? undefined) as HTMLElement;
+	// 	const CompassViewport = new Viewport();
+	// 	CompassViewport.scale = 1.5;
+	// 	CompassViewport.world_3d = new World3D();
+	// 	CompassViewport.renderer_3d = new RenderServerRenderer3D(6, 6, 6, 6);
+	// 	CompassViewport.background = false;
+	// 	CompassViewportContainer.add_Child(CompassViewport);
 
-		const compass_box_geo = new BoxGeometry3DResource();
-		const compass_box_mat_0 = new PureColorMaterial3DResource();
-		compass_box_mat_0.color = Color.color8code(0x365ff6ff);
-		const compass_box_mat_1 = new PureColorMaterial3DResource();
-		compass_box_mat_1.color = Color.color8code(0x04b973ff);
-		const compass_box_mat_2 = new PureColorMaterial3DResource();
-		compass_box_mat_2.color = Color.color8code(0xef4a56ff);
-		const compass_box_mat_0_n = new PureColorMaterial3DResource();
-		compass_box_mat_0_n.color = Color.color8code(0x365ff650);
-		const compass_box_mat_1_n = new PureColorMaterial3DResource();
-		compass_box_mat_1_n.color = Color.color8code(0x04b97350);
-		const compass_box_mat_2_n = new PureColorMaterial3DResource();
-		compass_box_mat_2_n.color = Color.color8code(0xef4a5650);
-		const mesh = new MeshInstance3D();
-		mesh.geometry = compass_box_geo;
-		mesh.set_SurfaceMaterial(2, compass_box_mat_0);
-		mesh.set_SurfaceMaterial(0, compass_box_mat_1);
-		mesh.set_SurfaceMaterial(4, compass_box_mat_2);
-		mesh.set_SurfaceMaterial(3, compass_box_mat_0_n);
-		mesh.set_SurfaceMaterial(1, compass_box_mat_1_n);
-		mesh.set_SurfaceMaterial(5, compass_box_mat_2_n);
-		CompassViewport.add_Child(mesh);
+	// 	const compass_box_geo = new BoxGeometry3DResource();
+	// 	const compass_box_mat_0 = new PureColorMaterial3DResource();
+	// 	compass_box_mat_0.color = Color.color8code(0x365ff6ff);
+	// 	const compass_box_mat_1 = new PureColorMaterial3DResource();
+	// 	compass_box_mat_1.color = Color.color8code(0x04b973ff);
+	// 	const compass_box_mat_2 = new PureColorMaterial3DResource();
+	// 	compass_box_mat_2.color = Color.color8code(0xef4a56ff);
+	// 	const compass_box_mat_0_n = new PureColorMaterial3DResource();
+	// 	compass_box_mat_0_n.color = Color.color8code(0x365ff650);
+	// 	const compass_box_mat_1_n = new PureColorMaterial3DResource();
+	// 	compass_box_mat_1_n.color = Color.color8code(0x04b97350);
+	// 	const compass_box_mat_2_n = new PureColorMaterial3DResource();
+	// 	compass_box_mat_2_n.color = Color.color8code(0xef4a5650);
+	// 	const mesh = new MeshInstance3D();
+	// 	mesh.geometry = compass_box_geo;
+	// 	mesh.set_SurfaceMaterial(2, compass_box_mat_0);
+	// 	mesh.set_SurfaceMaterial(0, compass_box_mat_1);
+	// 	mesh.set_SurfaceMaterial(4, compass_box_mat_2);
+	// 	mesh.set_SurfaceMaterial(3, compass_box_mat_0_n);
+	// 	mesh.set_SurfaceMaterial(1, compass_box_mat_1_n);
+	// 	mesh.set_SurfaceMaterial(5, compass_box_mat_2_n);
+	// 	CompassViewport.add_Child(mesh);
 
-		const CompassCamera = new OrthographicCamera3D();
-		CompassCamera.zoom = 0.45;
-		CompassCamera.local_position = Vector3.create(0, 0, 10);
-		CompassViewport.add_Child(CompassCamera);
+	// 	const CompassCamera = new OrthographicCamera3D();
+	// 	CompassCamera.zoom = 0.45;
+	// 	CompassCamera.local_position = Vector3.create(0, 0, 10);
+	// 	CompassViewport.add_Child(CompassCamera);
 
-		CompassViewport.signal_process.connect(() => {
-			const camera = CompassViewport.get_SceneTree()?.get_ActiveViewports()[0]?.get_Camera3D();
-			if (camera !== undefined) {
-				CompassCamera.local_rotation = camera.global_rotation;
-				const dir = CompassCamera.to_Global(Vector3.create(0, 0, -1), Vector3.new);
-				dir.direction_to(dir, CompassCamera.global_position);
-				CompassCamera.local_position = dir;
-			}
-		});
+	// 	CompassViewport.signal_process.connect(() => {
+	// 		const camera = CompassViewport.get_SceneTree()?.get_ActiveViewports()[0]?.get_Camera3D();
+	// 		if (camera !== undefined) {
+	// 			CompassCamera.local_rotation = camera.global_rotation;
+	// 			const dir = CompassCamera.to_Global(Vector3.create(0, 0, -1), Vector3.new);
+	// 			dir.direction_to(dir, CompassCamera.global_position);
+	// 			CompassCamera.local_position = dir;
+	// 		}
+	// 	});
 
-		EditorViewportContainer.add_Child(CompassViewportContainer);
-	}
+	// 	EditorViewportContainer.add_Child(CompassViewportContainer);
+	// }
 
 	const polyline = new MeshInstance3D();
 	const polyline_geo = new PolyLineGeometry3DResource();
@@ -582,45 +587,50 @@ export async function createEditor() {
 	// light6.local_position = Vector3.create(200, 200, 0);
 	// World.add_Child(light6);
 
-	// for (let i = 0; i < 1024; i++) {
-	// 	const light3 = new PointLight3D();
-	// 	light3.color = Vector3.create(Math.random(), Math.random(), Math.random());
-	// 	light3.local_position = Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200);
-	// 	light3.intensity = 0.2;
-	// 	light3.radius = 1;
-	// 	EditorSceneTree.start_Tween(
-	// 		new TweenLoop(
-	// 			new PingPongTweenAdaptor(
-	// 				new PropertyTweenAdaptor(
-	// 					new InterpolateTween(2, InterpolateTweenTransitionType.Cubic, InterpolateTweenEasingType.InOut),
-	// 					light3, "local_position",
-	// 					Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200)
-	// 				)
-	// 			),
-	// 			Infinity
-	// 		)
-	// 	)
-	// 	World.add_Child(light3);
-	// }
+	for (let i = 0; i < 16; i++) {
+		const light3 = new PointLight3D();
+		light3.color = Vector3.create(Math.random(), Math.random(), Math.random());
+		light3.local_position = Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200);
+		light3.intensity = 0.2;
+		light3.radius = 1;
+		EditorSceneTree.start_Tween(
+			new TweenLoop(
+				new PingPongTweenAdaptor(
+					new PropertyTweenAdaptor(
+						new InterpolateTween(2, InterpolateTweenTransitionType.Cubic, InterpolateTweenEasingType.InOut),
+						light3, "local_position",
+						Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200)
+					)
+				),
+				Infinity
+			)
+		)
+		World.add_Child(light3);
+	}
 
 	{
-		const node = new Node3D();
-		node.name = 'fox';
-		World.add_Child(node);
-		const huli_geo = new ClassLoader(ResInstCache).fetch<ArrayGeometry3DResource>('sys://geometries/huli.geometry.lttmbin').expect();
-		const huli = new MeshInstance3D();
-		huli.geometry = huli_geo;
-		// huli.material = box_mat3;
-		huli.local_position = Vector3.create(-200, -200, 100);
-		huli.local_scale = Vector3.create(100, 100, 100);
-		node.add_Child(huli);
-		const light6 = new SpotLight3D();
-		light6.color = Vector3.create(1, 0, 0);
-		light6.distance = 10;
-		light6.intensity = 100;
-		light6.local_rotation = Euler.create(-Pi / 2, 0.3, 0);
-		light6.local_position = Vector3.create(200, 200, 0);
-		huli.add_Child(light6);
+		// fetch(huli).then(r => r.text()).then(d => {
+		// 	const hili_geo = new ObjLoader().parse(d).expect();
+		// 	hili_geo.save(undefined, 'download://huli.geometry.lttmbin');
+		// });
+
+		// const node = new Node3D();
+		// node.name = 'fox';
+		// World.add_Child(node);
+		// const huli_geo = new ClassLoader(ResInstCache).fetch<ArrayGeometry3DResource>('sys://geometries/huli.geometry.lttmbin').expect();
+		// const huli = new MeshInstance3D();
+		// huli.geometry = huli_geo;
+		// // huli.material = box_mat3;
+		// huli.local_position = Vector3.create(-200, -200, 100);
+		// huli.local_scale = Vector3.create(100, 100, 100);
+		// node.add_Child(huli);
+		// const light6 = new SpotLight3D();
+		// light6.color = Vector3.create(1, 0, 0);
+		// light6.distance = 10;
+		// light6.intensity = 100;
+		// light6.local_rotation = Euler.create(-Pi / 2, 0.3, 0);
+		// light6.local_position = Vector3.create(200, 200, 0);
+		// huli.add_Child(light6);
 		// const packed_scene = new PackedSceneResource();
 		// packed_scene.parse(node).expect();
 		// console.log(packed_scene);
@@ -632,16 +642,15 @@ export async function createEditor() {
 	{
 		const packed_scene = new ClassLoader(ResInstCache).fetch<PackedSceneResource>("sys://test.scene.lttmbin").expect();
 		const scene = packed_scene.instantiate(ResInstCache).expect();
-		scene.get_Child<MeshInstance3D>(0)!.material = new PbrMaterial3DResource();
+		scene.get_Child<MeshInstance3D>(0)!.material = box_mat_test;
 		scene.get_Child<MeshInstance3D>(0)!.local_position = Vector3.create(-200, -200, 200);
 		const spot = scene.get_Child<MeshInstance3D>(0)!.get_Child<SpotLight3D>(0)!;
-		scene.get_Child<MeshInstance3D>(0)!.get_Child<SpotLight3D>(0)!.global_position = Vector3.create(200, 200, 0);
+		spot.global_position = Vector3.create(200, 200, 0);
+		spot.color = Vector3.create(1, 0, 0);
 		World.add_Child(scene);
-		console.log(scene);
 		const translate_grabber1 = new TranslateGrabber3D();
 		World.add_Child(translate_grabber1);
 		translate_grabber1.set_TranslatePosition(spot.global_position);
-		console.log(translate_grabber1.global_position);
 		translate_grabber1.signal_grabbing.connect((position) => {
 			spot.global_position = position;
 		});
@@ -660,7 +669,7 @@ export async function createEditor() {
 		}
 		const grid = new InfiniteGrid3D();
 		grid.geometry = grid_geo;
-		const grid_mat = new PureColorMaterial3DResource();
+		const grid_mat = new InfiniteGridMaterial3DResource();
 		grid_mat.color = Vector4.create(1, 1, 1, 0.075);
 		grid.material = grid_mat;
 		World.add_Child(grid);
@@ -690,5 +699,10 @@ export async function createEditor() {
 		line_x.ray = Ray3.create(Vector3.new, Vector3.create(0, 0, 1));
 		World.add_Child(line_x);
 	}
+
+	{
+
+	}
+
 	return EditorSceneTree;
 }

@@ -1,12 +1,12 @@
 import { WebGPURenderStateAttributeType, type WebGPURenderStateAttributeLayout } from "../../../sliverofstraw/render_state_object/pipeline/WebGPURenderStateAttributeLayout";
 
 export enum RenderServerGeometryAttributeLayoutBuffer {
-    Position = 0,
-    Normal = 1,
-    Tangent = 2,
+    PositionNormal = 0,
+    Tangent = 1,
+    Color = 2,
     Uv = 3,
-    Uv2BoneWeight = 4,
-    InstanceTransformColor = 5,
+    InstanceTransformColor = 4,
+    Uv2BoneWeight = 5,
     Custom0 = 6,
     Custom1 = 7,
 }
@@ -15,41 +15,38 @@ export enum RenderServerGeometryAttributeLocation {
     Position = 0,
     Normal = 1,
     Tangent = 2,
-    Uv = 3,
-    Uv2 = 4,
-    Bone = 5,
-    Weight = 6,
-    InstanceTransformColorRow0 = 7,
-    InstanceTransformColorRow1 = 8,
-    InstanceTransformColorRow2 = 9,
-    InstanceTransformColorRow3 = 10,
-    Custom0 = 11,
-    Custom1 = 12,
-    Custom2 = 13,
-    Custom3 = 14,
-    Custom4 = 15,
+    Color = 3,
+    Uv = 4,
+    InstanceTransformColorRow0 = 5,
+    InstanceTransformColorRow1 = 6,
+    InstanceTransformColorRow2 = 7,
+    InstanceTransformColorRow3 = 8,
+    Uv2 = 9,
+    Bone = 10,
+    Weight = 11,
+    Custom0 = 12,
+    Custom1 = 13,
+    Custom2 = 14,
+    Custom3 = 15,
 }
 
 export const RenderServerGeometryAttributeLayout: WebGPURenderStateAttributeLayout[] = [
     // Position
     {
-        stride: 12, // 3 * 4
+        stride: 24, // 3 * 4 * 2
         per_instance: false,
-        rows: [{
-            location: RenderServerGeometryAttributeLocation.Position,
-            offset: 0,
-            type: WebGPURenderStateAttributeType.Vector3
-        }]
-    },
-    // Normal
-    {
-        stride: 12, // 3 * 4
-        per_instance: false,
-        rows: [{
-            location: RenderServerGeometryAttributeLocation.Normal,
-            offset: 0,
-            type: WebGPURenderStateAttributeType.Vector3
-        }]
+        rows: [
+            {
+                location: RenderServerGeometryAttributeLocation.Position,
+                offset: 0,
+                type: WebGPURenderStateAttributeType.Vector3
+            },
+            {
+                location: RenderServerGeometryAttributeLocation.Normal,
+                offset: 12,
+                type: WebGPURenderStateAttributeType.Vector3
+            }
+        ]
     },
     // Tangent
     {
@@ -57,6 +54,16 @@ export const RenderServerGeometryAttributeLayout: WebGPURenderStateAttributeLayo
         per_instance: false,
         rows: [{
             location: RenderServerGeometryAttributeLocation.Tangent,
+            offset: 0,
+            type: WebGPURenderStateAttributeType.Vector3
+        }]
+    },
+    // Color
+    {
+        stride: 16, // 3 * 4
+        per_instance: false,
+        rows: [{
+            location: RenderServerGeometryAttributeLocation.Color,
             offset: 0,
             type: WebGPURenderStateAttributeType.Vector3
         }]
@@ -70,28 +77,6 @@ export const RenderServerGeometryAttributeLayout: WebGPURenderStateAttributeLayo
             offset: 0,
             type: WebGPURenderStateAttributeType.Vector2
         }]
-    },
-    //  Uv2BoneWeight
-    {
-        stride: 16, // 4 * 4
-        per_instance: false,
-        rows: [
-            {
-                location: RenderServerGeometryAttributeLocation.Uv2,
-                offset: 0,
-                type: WebGPURenderStateAttributeType.Vector2
-            },
-            {
-                location: RenderServerGeometryAttributeLocation.Bone,
-                offset: 8,
-                type: WebGPURenderStateAttributeType.Uint
-            },
-            {
-                location: RenderServerGeometryAttributeLocation.Weight,
-                offset: 12,
-                type: WebGPURenderStateAttributeType.Float
-            }
-        ]
     },
     //  InstanceTransformColor
     {
@@ -119,5 +104,27 @@ export const RenderServerGeometryAttributeLayout: WebGPURenderStateAttributeLayo
                 type: WebGPURenderStateAttributeType.Matrix4Row
             }
         ]
-    }
+    },
+    //  Uv2BoneWeight
+    {
+        stride: 16, // 4 * 4
+        per_instance: false,
+        rows: [
+            {
+                location: RenderServerGeometryAttributeLocation.Uv2,
+                offset: 0,
+                type: WebGPURenderStateAttributeType.Vector2
+            },
+            {
+                location: RenderServerGeometryAttributeLocation.Bone,
+                offset: 8,
+                type: WebGPURenderStateAttributeType.Uint
+            },
+            {
+                location: RenderServerGeometryAttributeLocation.Weight,
+                offset: 12,
+                type: WebGPURenderStateAttributeType.Float
+            },
+        ]
+    },
 ]

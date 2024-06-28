@@ -19,8 +19,7 @@ type SphereGeometry3DResourceOption = {
 
 export class SphereGeometry3DResource extends Geometry3DResource implements ResourceSetOptionAllAtOnce<SphereGeometry3DResourceOption> {
 
-    private readonly position_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
-    private readonly normal_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
+    private readonly position_normal_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
     private readonly uv_buffer_ref: Ref<WebGPURenderElementVector2Buffer> = new Ref();
     private readonly index_buffer_ref: Ref<WebGPURenderElementIndexBuffer> = new Ref();
 
@@ -128,8 +127,7 @@ export class SphereGeometry3DResource extends Geometry3DResource implements Reso
 
         const vertex_count = (theta_segments + 1) * (phi_segments + 1);
 
-        const position_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
-        const normal_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
+        const position_normal_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count* 2);
         const uv_buffer = new WebGPURenderElementVector2Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
 
         let vertex_idx = 0;
@@ -137,19 +135,19 @@ export class SphereGeometry3DResource extends Geometry3DResource implements Reso
             const v = iy / phi_segments;
             for (let ix = 0; ix <= theta_segments; ix++) {
                 const u = ix / theta_segments;
-                const vec3_idx = vertex_idx * 3;
+                const vec6_idx = vertex_idx * 6;
                 const vec2_idx = vertex_idx * 2;
                 // vertex
                 const x = Math.cos(u * theta) * Math.sin(v * phi);
                 const y = Math.cos(v * phi);
                 const z = Math.sin(u * theta) * Math.sin(v * phi);
-                position_buffer.data[vec3_idx + 0] = x * -radius;
-                position_buffer.data[vec3_idx + 1] = y * radius;
-                position_buffer.data[vec3_idx + 2] = z * radius;
+                position_normal_buffer.data[vec6_idx + 0] = x * -radius;
+                position_normal_buffer.data[vec6_idx + 1] = y * radius;
+                position_normal_buffer.data[vec6_idx + 2] = z * radius;
                 // normal
-                normal_buffer.data[vec3_idx + 0] = -x;
-                normal_buffer.data[vec3_idx + 1] = y;
-                normal_buffer.data[vec3_idx + 2] = z;
+                position_normal_buffer.data[vec6_idx + 3] = -x;
+                position_normal_buffer.data[vec6_idx + 4] = y;
+                position_normal_buffer.data[vec6_idx + 5] = z;
                 // uv
                 uv_buffer.data[vec2_idx + 0] = u;
                 uv_buffer.data[vec2_idx + 1] = 1 - v;
@@ -182,14 +180,12 @@ export class SphereGeometry3DResource extends Geometry3DResource implements Reso
             }
         }
 
-        position_buffer.commit(true);
-        normal_buffer.commit(true);
+        position_normal_buffer.commit(true);
         uv_buffer.commit(true);
         index_buffer.commit(true);
 
         // build geometry
-        this.position_buffer_ref.value = position_buffer;
-        this.normal_buffer_ref.value = normal_buffer;
+        this.position_normal_buffer_ref.value = position_normal_buffer;
         this.uv_buffer_ref.value = uv_buffer;
         this.index_buffer_ref.value = index_buffer;
 
@@ -197,8 +193,7 @@ export class SphereGeometry3DResource extends Geometry3DResource implements Reso
         this.render_server_geometry.set_IndexBuffer(this.index_buffer_ref.expect.buffer);
         this.render_server_geometry.set_VertexLength(index_count);
         this.render_server_geometry.set_PrimitiveType(WebGPURenderStatePrimitiveType.Triangles);
-        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Position, this.position_buffer_ref.expect.buffer);
-        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Normal, this.normal_buffer_ref.expect.buffer);
+        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.PositionNormal, this.position_normal_buffer_ref.expect.buffer);
         this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Uv, this.uv_buffer_ref.expect.buffer);
         Geometry3DResource.$tmp_box3_for_bbox.min.set(-radius, -radius, -radius);
         Geometry3DResource.$tmp_box3_for_bbox.max.set(radius, radius, radius);
@@ -206,8 +201,7 @@ export class SphereGeometry3DResource extends Geometry3DResource implements Reso
     }
 
     protected dispose(): void {
-        this.position_buffer_ref.clear();
-        this.normal_buffer_ref.clear();
+        this.position_normal_buffer_ref.clear();
         this.uv_buffer_ref.clear();
         this.index_buffer_ref.clear();
         super.dispose();

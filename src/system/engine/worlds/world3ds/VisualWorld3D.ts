@@ -24,6 +24,7 @@ import { type Indexed } from "@/system/utils/Type";
 import { IndexedVec } from "@/system/structures/IndexedVec";
 import type { RenderServerTexture } from "../../render_server/texture/RenderServerTexture";
 import type { Texture2DResource } from "../../resources/texture_resources/texture2d_resources/Texture2DResource";
+import type { TextureCubeMapResource } from "../../resources/texture_resources/texture2d_resources/TextureCubeMapResource";
 
 export type Cullable = CameraFrustumLikeCullable<Matrix4, Vector3, Matrix3> & Cloneable<Cullable> & Transformable<Cullable, Vector4, Matrix4>;
 
@@ -645,7 +646,7 @@ export class VisualWorld3D implements Disposable {
     protected readonly background_texture_ref: Ref<RenderServerTexture> = new Ref();
     public get background_texture() { return this.background_texture_ref.value; }
 
-    public set_BackgroundTexture(texture: Texture2DResource | undefined) {
+    public set_BackgroundTexture(texture: TextureCubeMapResource | undefined) {
         this.background_texture_ref.value = texture?.render_server_texture;
     }
 

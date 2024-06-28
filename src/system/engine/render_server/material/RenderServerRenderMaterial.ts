@@ -376,16 +376,13 @@ fn invert_mat3(mat: mat3x3f) -> mat3x3f {
 }`: ``}${builtin_func?.sample_background ? `
 
 fn sample_background(direction: vec3f, bias: f32) -> vec4f {
- 	var dir = mat3x3f(
+ 	var dir = normalize(mat3x3f(
         world_env_uniform_camera_matrix.camera_world[0].xyz,
         world_env_uniform_camera_matrix.camera_world[1].xyz,
         world_env_uniform_camera_matrix.camera_world[2].xyz,
-    ) * direction;
-	var R = normalize(dir);
-	var theta = atan2(R.z, R.x);
-	var gamma = acos(R.y);
+    ) * direction);
 	var mipmap = f32(textureNumLevels(light_uniform_background_texture) - 1);
-	return textureSampleBias(light_uniform_background_texture, light_uniform_sampler, vec2f(theta / TAU + 0.5, 1.0 - gamma / PI), bias * mipmap);
+	return textureSampleBias(light_uniform_background_texture, light_uniform_sampler, dir, bias * mipmap);
 }`: ``}`;
 
 		const fn: WebGPURenderElementRenderPipelineCacheGetterFn = (hash: WebGPURenderElementRenderPipelineCacheHash) => {

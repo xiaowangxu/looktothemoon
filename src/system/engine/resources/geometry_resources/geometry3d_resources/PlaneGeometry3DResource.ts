@@ -17,8 +17,7 @@ export type PlaneGeometry3DResourceOption = {
 
 export class PlaneGeometry3DResource extends Geometry3DResource implements ResourceSetOptionAllAtOnce<PlaneGeometry3DResourceOption> {
 
-    private readonly position_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
-    private readonly normal_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
+    private readonly position_normal_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
     private readonly uv_buffer_ref: Ref<WebGPURenderElementVector2Buffer> = new Ref();
     private readonly index_buffer_ref: Ref<WebGPURenderElementIndexBuffer> = new Ref();
 
@@ -109,8 +108,7 @@ export class PlaneGeometry3DResource extends Geometry3DResource implements Resou
 
         const vertex_count = (width_segments + 1) * (depth_segments + 1);
 
-        const position_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
-        const normal_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
+        const position_normal_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count * 2);
         const uv_buffer = new WebGPURenderElementVector2Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
 
         const width_half = width / 2;
@@ -127,16 +125,16 @@ export class PlaneGeometry3DResource extends Geometry3DResource implements Resou
             const y = iy * segment_depth - depth_half;
             for (let ix = 0; ix < width_segments_1; ix++) {
                 const x = ix * segment_width - width_half;
-                const vec3_idx = vertex_idx * 3;
+                const vec6_idx = vertex_idx * 6;
                 const vec2_idx = vertex_idx * 2;
                 // position
-                position_buffer.data[vec3_idx + 0] = x;
-                position_buffer.data[vec3_idx + 1] = 0;
-                position_buffer.data[vec3_idx + 2] = -y;
+                position_normal_buffer.data[vec6_idx + 0] = x;
+                position_normal_buffer.data[vec6_idx + 1] = 0;
+                position_normal_buffer.data[vec6_idx + 2] = -y;
                 // normal
-                normal_buffer.data[vec3_idx + 0] = 0;
-                normal_buffer.data[vec3_idx + 1] = 1;
-                normal_buffer.data[vec3_idx + 2] = 0;
+                position_normal_buffer.data[vec6_idx + 3] = 0;
+                position_normal_buffer.data[vec6_idx + 4] = 1;
+                position_normal_buffer.data[vec6_idx + 5] = 0;
                 // uv
                 uv_buffer.data[vec2_idx + 0] = ix / width_segments;
                 uv_buffer.data[vec2_idx + 1] = 1 - (iy / depth_segments);
@@ -166,14 +164,12 @@ export class PlaneGeometry3DResource extends Geometry3DResource implements Resou
             }
         }
 
-        position_buffer.commit(true);
-        normal_buffer.commit(true);
+        position_normal_buffer.commit(true);
         uv_buffer.commit(true);
         index_buffer.commit(true);
 
         // build geometry
-        this.position_buffer_ref.value = position_buffer;
-        this.normal_buffer_ref.value = normal_buffer;
+        this.position_normal_buffer_ref.value = position_normal_buffer;
         this.uv_buffer_ref.value = uv_buffer;
         this.index_buffer_ref.value = index_buffer;
 
@@ -181,8 +177,7 @@ export class PlaneGeometry3DResource extends Geometry3DResource implements Resou
         this.render_server_geometry.set_IndexBuffer(this.index_buffer_ref.expect.buffer);
         this.render_server_geometry.set_VertexLength(index_count);
         this.render_server_geometry.set_PrimitiveType(WebGPURenderStatePrimitiveType.Triangles);
-        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Position, this.position_buffer_ref.expect.buffer);
-        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Normal, this.normal_buffer_ref.expect.buffer);
+        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.PositionNormal, this.position_normal_buffer_ref.expect.buffer);
         this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Uv, this.uv_buffer_ref.expect.buffer);
         Geometry3DResource.$tmp_box3_for_bbox.min.set(-width_half, 0, -depth_half);
         Geometry3DResource.$tmp_box3_for_bbox.max.set(width_half, 0, depth_half);
@@ -190,8 +185,7 @@ export class PlaneGeometry3DResource extends Geometry3DResource implements Resou
     }
 
     protected dispose(): void {
-        this.position_buffer_ref.clear();
-        this.normal_buffer_ref.clear();
+        this.position_normal_buffer_ref.clear();
         this.uv_buffer_ref.clear();
         this.index_buffer_ref.clear();
         super.dispose();

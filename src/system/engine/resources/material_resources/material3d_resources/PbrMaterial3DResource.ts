@@ -17,8 +17,7 @@ const PbrMaterial3DResourceUniformLayout = new RefCacher(() => {
 	const layout = RenderServer.render_state.create_UniformLayout();
 	layout.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 0, false);
 	layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.Float, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 1);
-	layout.add_Texture(WebGPURenderStateTextureUniformType.TexCubeMap, WebGPURenderStateTextureUniformSampleType.Float, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 2);
-	layout.add_Sampler(WebGPURenderStateSamplerUniformType.Filter, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 3);
+	layout.add_Sampler(WebGPURenderStateSamplerUniformType.Filter, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 2);
 	return layout;
 });
 
@@ -41,8 +40,7 @@ const PbrMaterial3DPipelineCacheSet = new RefCacher(() => {
 
 @group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(0) var<uniform> mat_uniform: Uniform;
 @group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(1) var mat_uniform_normal_tex: texture_2d<f32>; 
-@group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(2) var mat_uniform_cubemap_tex: texture_cube<f32>; 
-@group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(3) var mat_uniform_sampler: sampler;
+@group(${RenderServerSingleton.UniformBindGroupIndex}) @binding(2) var mat_uniform_sampler: sampler;
 `,
 		// vertex code
 		`	var _instance_transform = instance_uniform.transform * instance_transform;
@@ -171,7 +169,7 @@ const PbrMaterial3DPipelineCacheSet = new RefCacher(() => {
         world_env_uniform_camera_matrix.camera_world[2].xyz,
 	) * _direction;
 	var mipmap = f32(textureNumLevels(light_uniform_background_texture));
-	var specular = textureSampleBias(mat_uniform_cubemap_tex, mat_uniform_sampler, dir, roughness * mipmap).rgb * 0.5;
+	var specular = textureSampleBias(light_uniform_background_texture, mat_uniform_sampler, dir, roughness * mipmap).rgb * 0.5;
 	// var specular = sample_background(_direction, roughness).rgb;
 
 	var ambient = (kD * Am * albedo.rgb + specular) * 1.0; // 1.0 is AO
@@ -305,7 +303,7 @@ export class PbrMaterial3DResource extends MaterialResource {
 	}
 
 	private _has_normal: boolean = false;
-	private readonly normal_texture_storage = new MaterialTextureSamplerStorage<Texture2DResource>(this.uniform_group_ref.expect, 1, undefined, RenderServerDefaultTextureType.White, 3, RenderServer.get_TextureSampler(undefined, undefined, undefined, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear));
+	private readonly normal_texture_storage = new MaterialTextureSamplerStorage<Texture2DResource>(this.uniform_group_ref.expect, 1, undefined, RenderServerDefaultTextureType.White, 2, RenderServer.get_TextureSampler(undefined, undefined, undefined, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear));
 	public get normal_texture() { return this.normal_texture_storage.get(); }
 	public set normal_texture(texture: Texture2DResource | undefined) {
 		if (this.normal_texture_storage.set(texture)) {
@@ -313,10 +311,6 @@ export class PbrMaterial3DResource extends MaterialResource {
 			this.update_UniformBuffer();
 		}
 	}
-
-	private readonly cube_texture_storage = new MaterialTextureSamplerStorage<TextureCubeMapResource>(this.uniform_group_ref.expect, 2, undefined, RenderServerDefaultTextureType.CubeWhite);
-	public get cube_texture() { return this.cube_texture_storage.get(); }
-	public set cube_texture(texture: TextureCubeMapResource | undefined) { this.cube_texture_storage.set(texture); }
 
 	constructor() {
 		super();

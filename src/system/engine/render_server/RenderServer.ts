@@ -12,6 +12,7 @@ import { RenderServerTexture } from "./texture/RenderServerTexture";
 export enum RenderServerDefaultTextureType {
     Hint, White, Black, Transparent,
     CubeWhite,
+    CubeBlack,
 }
 
 export class RenderServerSingleton implements Disposable {
@@ -190,7 +191,7 @@ struct LightClusterUniform {
 
     static readonly LightUniformsGroupBindingCode = `@group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(0) var<storage, read> light_data_uniform: array<LightDataUniform>;
 @group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(1) var<uniform> light_uniform: LightUniform;
-@group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(2) var light_uniform_background_texture: texture_2d<f32>;
+@group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(2) var light_uniform_background_texture: texture_cube<f32>;
 @group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(3) var light_uniform_sampler: sampler;
 @group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(4) var<storage, read> light_cluster_data_uniform: array<u32>;
 @group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(5) var<uniform> light_cluster_uniform: LightClusterUniform;
@@ -211,6 +212,7 @@ struct LightClusterUniform {
     private default_texture_black_ref!: ReadonlyRef<RenderServerTexture>;
     private default_texture_transparent_ref!: ReadonlyRef<RenderServerTexture>;
     private default_texture_cube_white_ref!: ReadonlyRef<RenderServerTexture>;
+    private default_texture_cube_black_ref!: ReadonlyRef<RenderServerTexture>;
 
     //#endregion
 
@@ -237,7 +239,7 @@ struct LightClusterUniform {
         this.lights_uniform_layout_ref.value = this.render_state.create_UniformLayout();
         this.lights_uniform_layout_ref.expect.add_Storage(true, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 0);
         this.lights_uniform_layout_ref.expect.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 1);
-        this.lights_uniform_layout_ref.expect.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.Float, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 2);
+        this.lights_uniform_layout_ref.expect.add_Texture(WebGPURenderStateTextureUniformType.TexCubeMap, WebGPURenderStateTextureUniformSampleType.Float, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 2);
         this.lights_uniform_layout_ref.expect.add_Sampler(WebGPURenderStateSamplerUniformType.Filter, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 3);
         this.lights_uniform_layout_ref.expect.add_Storage(true, WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 4);
         this.lights_uniform_layout_ref.expect.add_BufferUniform(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, 5);
@@ -288,6 +290,17 @@ struct LightClusterUniform {
                 255, 255, 255, 255,
             ]), 1, 1,
         );
+        this.default_texture_cube_black_ref = new ReadonlyRef(RenderServerTexture.create(WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopyDst, WebGPURenderStateTextureFormat.RGBA8, WebGPURenderStateTextureDimension.D2, 1, 1, 6, undefined, WebGPURenderStateTextureDimension.CubeMap));
+        this.default_texture_cube_black_ref.expect.update_Data(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
+            new Uint8Array([
+                0, 0, 0, 255,
+                0, 0, 0, 255,
+                0, 0, 0, 255,
+                0, 0, 0, 255,
+                0, 0, 0, 255,
+                0, 0, 0, 255,
+            ]), 1, 1,
+        );
         //#endregion
     }
 
@@ -311,6 +324,7 @@ struct LightClusterUniform {
             case RenderServerDefaultTextureType.Black: return this.default_texture_black_ref.expect;
             case RenderServerDefaultTextureType.Transparent: return this.default_texture_transparent_ref.expect;
             case RenderServerDefaultTextureType.CubeWhite: return this.default_texture_cube_white_ref.expect;
+            case RenderServerDefaultTextureType.CubeBlack: return this.default_texture_cube_black_ref.expect;
             default: {
                 const n: never = type;
                 throw new Error('should not reach');
@@ -328,6 +342,7 @@ struct LightClusterUniform {
         this.default_texture_black_ref.clear();
         this.default_texture_transparent_ref.clear();
         this.default_texture_cube_white_ref.clear();
+        this.default_texture_cube_black_ref.clear();
         this.render_state.dispose();
     }
 }

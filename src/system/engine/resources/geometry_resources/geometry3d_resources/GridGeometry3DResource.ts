@@ -12,8 +12,7 @@ import type { PlaneGeometry3DResourceOption } from "./PlaneGeometry3DResource";
 
 export class GridGeometry3DResource extends Geometry3DResource implements ResourceSetOptionAllAtOnce<PlaneGeometry3DResourceOption> {
 
-    private readonly position_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
-    private readonly normal_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
+    private readonly position_normal_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
     private readonly uv_buffer_ref: Ref<WebGPURenderElementVector2Buffer> = new Ref();
 
     protected _width: number = 10;
@@ -103,8 +102,7 @@ export class GridGeometry3DResource extends Geometry3DResource implements Resour
 
         const vertex_count = (width_segments + depth_segments + 2) * 2;
 
-        const position_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
-        const normal_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
+        const position_normal_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count * 2);
         const uv_buffer = new WebGPURenderElementVector2Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
 
         const width_half = width / 2;
@@ -120,30 +118,30 @@ export class GridGeometry3DResource extends Geometry3DResource implements Resour
         for (let iy = 0; iy < depth_segments_1; iy++) {
             const y = iy * segment_depth - depth_half;
             const uv_y = iy / depth_segments;
-            let vec3_idx = vertex_idx * 3;
+            let vec6_idx = vertex_idx * 6;
             let vec2_idx = vertex_idx * 2;
             // position
-            position_buffer.data[vec3_idx + 0] = -width_half;
-            position_buffer.data[vec3_idx + 1] = 0;
-            position_buffer.data[vec3_idx + 2] = -y;
+            position_normal_buffer.data[vec6_idx + 0] = -width_half;
+            position_normal_buffer.data[vec6_idx + 1] = 0;
+            position_normal_buffer.data[vec6_idx + 2] = -y;
             // normal
-            normal_buffer.data[vec3_idx + 0] = 0;
-            normal_buffer.data[vec3_idx + 1] = 1;
-            normal_buffer.data[vec3_idx + 2] = 0;
+            position_normal_buffer.data[vec6_idx + 3] = 0;
+            position_normal_buffer.data[vec6_idx + 4] = 1;
+            position_normal_buffer.data[vec6_idx + 5] = 0;
             // uv
             uv_buffer.data[vec2_idx + 0] = 0;
             uv_buffer.data[vec2_idx + 1] = uv_y;
             vertex_idx++;
-            vec3_idx = vertex_idx * 3;
+            vec6_idx = vertex_idx * 6;
             vec2_idx = vertex_idx * 2;
             // position
-            position_buffer.data[vec3_idx + 0] = width_half;
-            position_buffer.data[vec3_idx + 1] = 0;
-            position_buffer.data[vec3_idx + 2] = -y;
+            position_normal_buffer.data[vec6_idx + 0] = width_half;
+            position_normal_buffer.data[vec6_idx + 1] = 0;
+            position_normal_buffer.data[vec6_idx + 2] = -y;
             // normal
-            normal_buffer.data[vec3_idx + 0] = 0;
-            normal_buffer.data[vec3_idx + 1] = 1;
-            normal_buffer.data[vec3_idx + 2] = 0;
+            position_normal_buffer.data[vec6_idx + 3] = 0;
+            position_normal_buffer.data[vec6_idx + 4] = 1;
+            position_normal_buffer.data[vec6_idx + 5] = 0;
             // uv
             uv_buffer.data[vec2_idx + 0] = 1;
             uv_buffer.data[vec2_idx + 1] = uv_y;
@@ -153,50 +151,47 @@ export class GridGeometry3DResource extends Geometry3DResource implements Resour
         for (let ix = 0; ix < width_segments_1; ix++) {
             const x = ix * segment_width - width_half;
             const uv_x = 1 - ix / width_segments;
-            let vec3_idx = vertex_idx * 3;
+            let vec6_idx = vertex_idx * 6;
             let vec2_idx = vertex_idx * 2;
             // position
-            position_buffer.data[vec3_idx + 0] = -x;
-            position_buffer.data[vec3_idx + 1] = 0;
-            position_buffer.data[vec3_idx + 2] = -depth_half;
+            position_normal_buffer.data[vec6_idx + 0] = -x;
+            position_normal_buffer.data[vec6_idx + 1] = 0;
+            position_normal_buffer.data[vec6_idx + 2] = -depth_half;
             // normal
-            normal_buffer.data[vec3_idx + 0] = 0;
-            normal_buffer.data[vec3_idx + 1] = 1;
-            normal_buffer.data[vec3_idx + 2] = 0;
+            position_normal_buffer.data[vec6_idx + 3] = 0;
+            position_normal_buffer.data[vec6_idx + 4] = 1;
+            position_normal_buffer.data[vec6_idx + 5] = 0;
             // uv
             uv_buffer.data[vec2_idx + 0] = uv_x;
             uv_buffer.data[vec2_idx + 1] = 1;
             vertex_idx++;
-            vec3_idx = vertex_idx * 3;
+            vec6_idx = vertex_idx * 6;
             vec2_idx = vertex_idx * 2;
             // position
-            position_buffer.data[vec3_idx + 0] = -x;
-            position_buffer.data[vec3_idx + 1] = 0;
-            position_buffer.data[vec3_idx + 2] = depth_half;
+            position_normal_buffer.data[vec6_idx + 0] = -x;
+            position_normal_buffer.data[vec6_idx + 1] = 0;
+            position_normal_buffer.data[vec6_idx + 2] = depth_half;
             // normal
-            normal_buffer.data[vec3_idx + 0] = 0;
-            normal_buffer.data[vec3_idx + 1] = 1;
-            normal_buffer.data[vec3_idx + 2] = 0;
+            position_normal_buffer.data[vec6_idx + 3] = 0;
+            position_normal_buffer.data[vec6_idx + 4] = 1;
+            position_normal_buffer.data[vec6_idx + 5] = 0;
             // uv
             uv_buffer.data[vec2_idx + 0] = uv_x;
             uv_buffer.data[vec2_idx + 1] = 0;
             vertex_idx++;
         }
 
-        position_buffer.commit(true);
-        normal_buffer.commit(true);
+        position_normal_buffer.commit(true);
         uv_buffer.commit(true);
 
         // build geometry
-        this.position_buffer_ref.value = position_buffer;
-        this.normal_buffer_ref.value = normal_buffer;
+        this.position_normal_buffer_ref.value = position_normal_buffer;
         this.uv_buffer_ref.value = uv_buffer;
 
         this.render_server_geometry.clear_Geometry();
         this.render_server_geometry.set_VertexLength(vertex_count);
         this.render_server_geometry.set_PrimitiveType(WebGPURenderStatePrimitiveType.Lines);
-        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Position, this.position_buffer_ref.expect.buffer);
-        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Normal, this.normal_buffer_ref.expect.buffer);
+        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.PositionNormal, this.position_normal_buffer_ref.expect.buffer);
         this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Uv, this.uv_buffer_ref.expect.buffer);
         Geometry3DResource.$tmp_box3_for_bbox.min.set(-width_half, 0, -depth_half);
         Geometry3DResource.$tmp_box3_for_bbox.max.set(width_half, 0, depth_half);
@@ -204,8 +199,7 @@ export class GridGeometry3DResource extends Geometry3DResource implements Resour
     }
 
     protected dispose(): void {
-        this.position_buffer_ref.clear();
-        this.normal_buffer_ref.clear();
+        this.position_normal_buffer_ref.clear();
         this.uv_buffer_ref.clear();
         super.dispose();
     }

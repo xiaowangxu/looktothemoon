@@ -165,6 +165,14 @@ export class ObjLoader {
             }
         }
 
+        const position_normals = [];
+        for (let i = 0; i < this.positions.length;) {
+            position_normals.push(this.positions[i], this.positions[i + 1], this.positions[i + 2]);
+            position_normals.push(this.normals[i], this.normals[i + 1], this.normals[i + 2]);
+            i += 3;
+        }
+        console.log(position_normals.length);
+
         const class_saver = new ClassSaver();
         const refid = ArrayGeometry3DResource.dump_Data(
             class_saver,
@@ -173,10 +181,7 @@ export class ObjLoader {
             WebGPURenderStateBufferUsage.None,
             [
                 {
-                    attribute: RenderServerGeometryAttributeLayoutBuffer.Position, buffer: new PackedVector3Array(new Float32Array(this.positions))
-                },
-                {
-                    attribute: RenderServerGeometryAttributeLayoutBuffer.Normal, buffer: new PackedVector3Array(new Float32Array(this.normals))
+                    attribute: RenderServerGeometryAttributeLayoutBuffer.PositionNormal, buffer: new PackedVector3Array(new Float32Array(position_normals))
                 },
                 {
                     attribute: RenderServerGeometryAttributeLayoutBuffer.Uv, buffer: new PackedVector2Array(new Float32Array(this.uvs))

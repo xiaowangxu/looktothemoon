@@ -52,16 +52,18 @@
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Result } from "@/system/utils/Result";
 import { ClassSaver } from "../classes/saver_loader/ClassSaverLoader";
-import { RenderStatePrimitiveType, RenderStateBufferUsage } from "@/system/sliverofstraw/render_state/RenderState";
 import { PackedVector3Array, PackedVector2Array, PackedIndexArray, PackedVector4Array } from "../classes/value_wrappers/PackedArray";
 import { ArrayGeometry3DResource } from "../resources/geometry_resources/geometry3d_resources/ArrayGeometry3DResource";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
+import { WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
+import { WebGPURenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
+import { RenderServerGeometryAttributeLayoutBuffer } from "../render_server/geometry/RenderServerGeometryDefination";
 
 export class StlLoader {
 
     static #tmp_vector3_0 = Vector3.new;
 
-    protected static parse_Binary(data: ArrayBuffer): { position: PackedVector3Array, normal: PackedVector3Array, color?: PackedVector4Array | undefined, bbox: Box3 } {
+    protected static parse_Binary(data: ArrayBuffer): { vertex_count: number, position_normals: PackedVector3Array, uvs: PackedVector2Array, colors?: PackedVector4Array | undefined, bbox: Box3 } {
         const reader = new DataView(data);
         const faces_count = reader.getUint32(80, true);
 
@@ -85,8 +87,8 @@ export class StlLoader {
 
         const dataOffset = 84;
         const faceLength = 12 * 4 + 2;
-        const vertices = new PackedVector3Array(faces_count * 3);
-        const normals = new PackedVector3Array(faces_count * 3);
+        const vertex_count = faces_count * 3;
+        const position_normals = new PackedVector3Array(vertex_count * 2);
         // const colors = new PackedVector4Array(faces_count * 3);
 
         const vector3_0 = StlLoader.#tmp_vector3_0;
@@ -120,11 +122,11 @@ export class StlLoader {
                 vector3_0.z = reader.getFloat32(vertexstart + 8, true);
                 bbox_min.min(bbox_min, vector3_0);
                 bbox_max.max(bbox_max, vector3_0);
-                vertices.update_Data(vector3_0, face * 3 + i - 1);
+                position_normals.set_Data(vector3_0, face * 6 + i * 2 - 2);
                 vector3_0.x = normalX;
                 vector3_0.y = normalY;
                 vector3_0.z = normalZ;
-                normals.update_Data(vector3_0, face * 3 + i - 1);
+                position_normals.set_Data(vector3_0, face * 6 + i * 2 - 1);
                 // if (has_colors) {
                 //     color.set(r, g, b).convertSRGBToLinear();
                 //     colors[componentIdx] = color.r;
@@ -134,82 +136,82 @@ export class StlLoader {
             }
         }
 
-        return { position: vertices, normal: normals, color: undefined, bbox: Box3.create(bbox_min, bbox_max) };
+        return { vertex_count, position_normals, uvs: new PackedVector2Array(vertex_count), colors: undefined, bbox: Box3.create(bbox_min, bbox_max) };
     }
 
-    protected static parse_Ascii(data: string): { position: PackedVector3Array, normal: PackedVector3Array, color?: PackedVector4Array | undefined, bbox: Box3 } {
+    protected static parse_Ascii(data: string): { vertex_count: number, position_normals: PackedVector3Array, uvs: PackedVector2Array, colors?: PackedVector4Array | undefined, bbox: Box3 } {
+        throw new Error('');
+        // const patternSolid = /solid([\s\S]*?)endsolid/g;
+        // const patternFace = /facet([\s\S]*?)endfacet/g;
+        // const patternName = /solid\s(.+)/;
+        // let faceCounter = 0;
 
-        const patternSolid = /solid([\s\S]*?)endsolid/g;
-        const patternFace = /facet([\s\S]*?)endfacet/g;
-        const patternName = /solid\s(.+)/;
-        let faceCounter = 0;
+        // const patternFloat = /[\s]+([+-]?(?:\d*)(?:\.\d*)?(?:[eE][+-]?\d+)?)/.source;
+        // const patternVertex = new RegExp('vertex' + patternFloat + patternFloat + patternFloat, 'g');
+        // const patternNormal = new RegExp('normal' + patternFloat + patternFloat + patternFloat, 'g');
 
-        const patternFloat = /[\s]+([+-]?(?:\d*)(?:\.\d*)?(?:[eE][+-]?\d+)?)/.source;
-        const patternVertex = new RegExp('vertex' + patternFloat + patternFloat + patternFloat, 'g');
-        const patternNormal = new RegExp('normal' + patternFloat + patternFloat + patternFloat, 'g');
+        // const vertices = [];
+        // const normals = [];
+        // const groupNames = [];
 
-        const vertices = [];
-        const normals = [];
-        const groupNames = [];
+        // const normal = new Vector3();
 
-        const normal = new Vector3();
+        // let result;
 
-        let result;
+        // let groupCount = 0;
+        // let startVertex = 0;
+        // let endVertex = 0;
 
-        let groupCount = 0;
-        let startVertex = 0;
-        let endVertex = 0;
+        // while ((result = patternSolid.exec(data)) !== null) {
 
-        while ((result = patternSolid.exec(data)) !== null) {
+        //     startVertex = endVertex;
 
-            startVertex = endVertex;
+        //     const solid = result[0];
 
-            const solid = result[0];
+        //     const name = (result = patternName.exec(solid)) !== null ? result[1] : '';
+        //     groupNames.push(name);
 
-            const name = (result = patternName.exec(solid)) !== null ? result[1] : '';
-            groupNames.push(name);
+        //     while ((result = patternFace.exec(solid)) !== null) {
+        //         let vertexCountPerFace = 0;
+        //         let normalCountPerFace = 0;
+        //         const text = result[0];
+        //         while ((result = patternNormal.exec(text)) !== null) {
+        //             normal.x = parseFloat(result[1]);
+        //             normal.y = parseFloat(result[2]);
+        //             normal.z = parseFloat(result[3]);
+        //             normalCountPerFace++;
+        //         }
+        //         while ((result = patternVertex.exec(text)) !== null) {
+        //             vertices.push(parseFloat(result[1]), parseFloat(result[2]), parseFloat(result[3]));
+        //             normals.push(normal.x, normal.y, normal.z);
+        //             vertexCountPerFace++;
+        //             endVertex++;
+        //         }
+        //         // every face have to own ONE valid normal
+        //         if (normalCountPerFace !== 1) {
+        //             console.error('THREE.STLLoader: Something isn\'t right with the normal of face number ' + faceCounter);
+        //         }
+        //         // each face have to own THREE valid vertices
+        //         if (vertexCountPerFace !== 3) {
+        //             console.error('THREE.STLLoader: Something isn\'t right with the vertices of face number ' + faceCounter);
+        //         }
+        //         faceCounter++;
+        //     }
 
-            while ((result = patternFace.exec(solid)) !== null) {
-                let vertexCountPerFace = 0;
-                let normalCountPerFace = 0;
-                const text = result[0];
-                while ((result = patternNormal.exec(text)) !== null) {
-                    normal.x = parseFloat(result[1]);
-                    normal.y = parseFloat(result[2]);
-                    normal.z = parseFloat(result[3]);
-                    normalCountPerFace++;
-                }
-                while ((result = patternVertex.exec(text)) !== null) {
-                    vertices.push(parseFloat(result[1]), parseFloat(result[2]), parseFloat(result[3]));
-                    normals.push(normal.x, normal.y, normal.z);
-                    vertexCountPerFace++;
-                    endVertex++;
-                }
-                // every face have to own ONE valid normal
-                if (normalCountPerFace !== 1) {
-                    console.error('THREE.STLLoader: Something isn\'t right with the normal of face number ' + faceCounter);
-                }
-                // each face have to own THREE valid vertices
-                if (vertexCountPerFace !== 3) {
-                    console.error('THREE.STLLoader: Something isn\'t right with the vertices of face number ' + faceCounter);
-                }
-                faceCounter++;
-            }
+        //     const start = startVertex;
+        //     const count = endVertex - startVertex;
 
-            const start = startVertex;
-            const count = endVertex - startVertex;
+        //     geometry.userData.groupNames = groupNames;
 
-            geometry.userData.groupNames = groupNames;
+        //     geometry.addGroup(start, count, groupCount);
+        //     groupCount++;
 
-            geometry.addGroup(start, count, groupCount);
-            groupCount++;
+        // }
 
-        }
+        // geometry.setAttribute('position', new Float32BufferAttribute(vertices, 3));
+        // geometry.setAttribute('normal', new Float32BufferAttribute(normals, 3));
 
-        geometry.setAttribute('position', new Float32BufferAttribute(vertices, 3));
-        geometry.setAttribute('normal', new Float32BufferAttribute(normals, 3));
-
-        return geometry;
+        // return geometry;
 
     }
 
@@ -269,22 +271,32 @@ export class StlLoader {
     parse(data: ArrayBuffer | string): Result<ClassSaver, Error> {
         try {
             const binary = StlLoader.ensure_Binary(data);
-            const { position, normal, color, bbox } = StlLoader.is_Binary(binary) ? StlLoader.parse_Binary(binary) : StlLoader.parse_Ascii(StlLoader.ensure_Ascii(data));
+            const { vertex_count, position_normals, uvs, colors, bbox } = StlLoader.is_Binary(binary) ? StlLoader.parse_Binary(binary) : StlLoader.parse_Ascii(StlLoader.ensure_Ascii(data));
             const class_saver = new ClassSaver();
             const refid = ArrayGeometry3DResource.dump_Data(
                 class_saver,
-                0,
-                RenderStatePrimitiveType.Triangles,
-                {
-                    position: position,
-                    normal: normal,
-                    color: color,
-                },
+                0, // rid
+                WebGPURenderStatePrimitiveType.Triangles,
+                WebGPURenderStateBufferUsage.None,
+                [
+                    {
+                        attribute: RenderServerGeometryAttributeLayoutBuffer.PositionNormal, buffer: position_normals,
+                    },
+                    {
+                        attribute: RenderServerGeometryAttributeLayoutBuffer.Uv, buffer: uvs,
+                    },
+                    ...colors !== undefined ? [
+                        {
+                            attribute: RenderServerGeometryAttributeLayoutBuffer.Uv2BoneWeight, buffer: colors,
+                        }
+                    ] : []
+                ],
                 undefined,
-                position.elements_count,
-                RenderStateBufferUsage.StaticDraw,
+                vertex_count,
                 bbox,
-                undefined, undefined, undefined
+                undefined, // surfaces
+                undefined, // unique
+                undefined, // external
             );
             class_saver.set_Root(refid);
             return Result.Ok(class_saver);

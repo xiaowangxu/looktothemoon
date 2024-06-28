@@ -18,8 +18,7 @@ export type CylinderGeometry3DResourceOption = {
 
 export class CylinderGeometry3DResource extends Geometry3DResource implements ResourceSetOptionAllAtOnce<CylinderGeometry3DResourceOption> {
 
-    private readonly position_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
-    private readonly normal_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
+    private readonly position_normal_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
     private readonly uv_buffer_ref: Ref<WebGPURenderElementVector2Buffer> = new Ref();
     private readonly index_buffer_ref: Ref<WebGPURenderElementIndexBuffer> = new Ref();
 
@@ -119,41 +118,34 @@ export class CylinderGeometry3DResource extends Geometry3DResource implements Re
 
         const vertex_count = top_side_count + bottom_side_count + top_cap_count + bottom_cap_count + top_pole_count + bottom_pole_count;
 
-        const position_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
-        const normal_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
+        const position_normal_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count * 2);
         const uv_buffer = new WebGPURenderElementVector2Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
 
         // position / normal
 
         let offset = 0;
         let length = top_side_count * 3;
-        const position_top_side_buffer = new Float32Array(position_buffer.data.buffer, offset, length);
-        const normal_top_side_buffer = new Float32Array(normal_buffer.data.buffer, offset, length);
+        const position_top_side_buffer = new Float32Array(position_normal_buffer.data.buffer, offset * 2, length * 2);
 
         offset += length * Float32Array.BYTES_PER_ELEMENT;
         length = bottom_side_count * 3
-        const position_bottom_side_buffer = new Float32Array(position_buffer.data.buffer, offset, length);
-        const normal_bottom_side_buffer = new Float32Array(normal_buffer.data.buffer, offset, length);
+        const position_bottom_side_buffer = new Float32Array(position_normal_buffer.data.buffer, offset * 2, length * 2);
 
         offset += length * Float32Array.BYTES_PER_ELEMENT;
         length = top_cap_count * 3
-        const position_top_cap_buffer = new Float32Array(position_buffer.data.buffer, offset, length);
-        const normal_top_cap_buffer = new Float32Array(normal_buffer.data.buffer, offset, length);
+        const position_top_cap_buffer = new Float32Array(position_normal_buffer.data.buffer, offset * 2, length * 2);
 
         offset += length * Float32Array.BYTES_PER_ELEMENT;
         length = bottom_cap_count * 3
-        const position_bottom_cap_buffer = new Float32Array(position_buffer.data.buffer, offset, length);
-        const normal_bottom_cap_buffer = new Float32Array(normal_buffer.data.buffer, offset, length);
+        const position_bottom_cap_buffer = new Float32Array(position_normal_buffer.data.buffer, offset * 2, length * 2);
 
         offset += length * Float32Array.BYTES_PER_ELEMENT;
         length = top_pole_count * 3
-        const position_top_pole_buffer = new Float32Array(position_buffer.data.buffer, offset, length);
-        const normal_top_pole_buffer = new Float32Array(normal_buffer.data.buffer, offset, length);
+        const position_top_pole_buffer = new Float32Array(position_normal_buffer.data.buffer, offset * 2, length * 2);
 
         offset += length * Float32Array.BYTES_PER_ELEMENT;
         length = bottom_pole_count * 3
-        const position_bottom_pole_buffer = new Float32Array(position_buffer.data.buffer, offset, length);
-        const normal_bottom_pole_buffer = new Float32Array(normal_buffer.data.buffer, offset, length);
+        const position_bottom_pole_buffer = new Float32Array(position_normal_buffer.data.buffer, offset * 2, length * 2);
 
         // uv
 
@@ -189,23 +181,23 @@ export class CylinderGeometry3DResource extends Geometry3DResource implements Re
             const x = Math.cos(t);
             const z = Math.sin(t);
 
-            const vec3_idx = i * 3;
+            const vec6_idx = i * 6;
             const vec2_idx = i * 2;
 
-            position_top_cap_buffer[vec3_idx + 0] = position_top_side_buffer[vec3_idx + 0] = x * top_radius;
-            position_top_cap_buffer[vec3_idx + 1] = position_top_side_buffer[vec3_idx + 1] = half_height;
-            position_top_cap_buffer[vec3_idx + 2] = position_top_side_buffer[vec3_idx + 2] = z * top_radius;
-            position_bottom_cap_buffer[vec3_idx + 0] = position_bottom_side_buffer[vec3_idx + 0] = x * bottom_radius;
-            position_bottom_cap_buffer[vec3_idx + 1] = position_bottom_side_buffer[vec3_idx + 1] = -half_height;
-            position_bottom_cap_buffer[vec3_idx + 2] = position_bottom_side_buffer[vec3_idx + 2] = z * bottom_radius;
+            position_top_cap_buffer[vec6_idx + 0] = position_top_side_buffer[vec6_idx + 0] = x * top_radius;
+            position_top_cap_buffer[vec6_idx + 1] = position_top_side_buffer[vec6_idx + 1] = half_height;
+            position_top_cap_buffer[vec6_idx + 2] = position_top_side_buffer[vec6_idx + 2] = z * top_radius;
+            position_bottom_cap_buffer[vec6_idx + 0] = position_bottom_side_buffer[vec6_idx + 0] = x * bottom_radius;
+            position_bottom_cap_buffer[vec6_idx + 1] = position_bottom_side_buffer[vec6_idx + 1] = -half_height;
+            position_bottom_cap_buffer[vec6_idx + 2] = position_bottom_side_buffer[vec6_idx + 2] = z * bottom_radius;
 
-            normal_bottom_side_buffer[vec3_idx + 0] = normal_top_side_buffer[vec3_idx + 0] = x / normal_length;
-            normal_bottom_side_buffer[vec3_idx + 1] = normal_top_side_buffer[vec3_idx + 1] = slope / normal_length;
-            normal_bottom_side_buffer[vec3_idx + 2] = normal_top_side_buffer[vec3_idx + 2] = z / normal_length;
-            normal_bottom_cap_buffer[vec3_idx + 0] = normal_top_cap_buffer[vec3_idx + 0] = 0;
-            normal_bottom_cap_buffer[vec3_idx + 2] = normal_top_cap_buffer[vec3_idx + 2] = 0;
-            normal_top_cap_buffer[vec3_idx + 1] = 1;
-            normal_bottom_cap_buffer[vec3_idx + 1] = -1;
+            position_bottom_side_buffer[vec6_idx + 3] = position_top_side_buffer[vec6_idx + 3] = x / normal_length;
+            position_bottom_side_buffer[vec6_idx + 4] = position_top_side_buffer[vec6_idx + 4] = slope / normal_length;
+            position_bottom_side_buffer[vec6_idx + 5] = position_top_side_buffer[vec6_idx + 5] = z / normal_length;
+            position_bottom_cap_buffer[vec6_idx + 3] = position_top_cap_buffer[vec6_idx + 3] = 0;
+            position_bottom_cap_buffer[vec6_idx + 4] = position_top_cap_buffer[vec6_idx + 4] = 0;
+            position_top_cap_buffer[vec6_idx + 5] = 1;
+            position_bottom_cap_buffer[vec6_idx + 5] = -1;
 
             const u = 1 - i / segments;
             uv_top_side_buffer[vec2_idx + 0] = u;
@@ -214,17 +206,17 @@ export class CylinderGeometry3DResource extends Geometry3DResource implements Re
             uv_bottom_cap_buffer[vec2_idx + 1] = uv_top_cap_buffer[vec2_idx + 1] = uv_bottom_side_buffer[vec2_idx + 1] = 0;
 
             if (i < segments) {
-                position_top_pole_buffer[vec3_idx + 0] = 0;
-                position_top_pole_buffer[vec3_idx + 1] = half_height;
-                position_top_pole_buffer[vec3_idx + 2] = 0;
-                position_bottom_pole_buffer[vec3_idx + 0] = 0;
-                position_bottom_pole_buffer[vec3_idx + 1] = -half_height;
-                position_bottom_pole_buffer[vec3_idx + 2] = 0;
+                position_top_pole_buffer[vec6_idx + 0] = 0;
+                position_top_pole_buffer[vec6_idx + 1] = half_height;
+                position_top_pole_buffer[vec6_idx + 2] = 0;
+                position_bottom_pole_buffer[vec6_idx + 0] = 0;
+                position_bottom_pole_buffer[vec6_idx + 1] = -half_height;
+                position_bottom_pole_buffer[vec6_idx + 2] = 0;
 
-                normal_bottom_pole_buffer[vec3_idx + 0] = normal_top_pole_buffer[vec3_idx + 0] = 0;
-                normal_bottom_pole_buffer[vec3_idx + 2] = normal_top_pole_buffer[vec3_idx + 2] = 0;
-                normal_top_pole_buffer[vec3_idx + 1] = 1;
-                normal_bottom_pole_buffer[vec3_idx + 1] = -1;
+                position_bottom_pole_buffer[vec6_idx + 3] = position_top_pole_buffer[vec6_idx + 3] = 0;
+                position_bottom_pole_buffer[vec6_idx + 4] = position_top_pole_buffer[vec6_idx + 4] = 0;
+                position_top_pole_buffer[vec6_idx + 5] = 1;
+                position_bottom_pole_buffer[vec6_idx + 5] = -1;
 
                 uv_bottom_pole_buffer[vec2_idx + 0] = uv_top_pole_buffer[vec2_idx + 0] = u;
                 uv_bottom_pole_buffer[vec2_idx + 1] = uv_top_pole_buffer[vec2_idx + 1] = 1;
@@ -259,14 +251,12 @@ export class CylinderGeometry3DResource extends Geometry3DResource implements Re
             index_bottom_cap_buffer[index_top_cap_idx + 2] = i + ring_count * 4 + segments;
         }
 
-        position_buffer.commit(true);
-        normal_buffer.commit(true);
+        position_normal_buffer.commit(true);
         uv_buffer.commit(true);
         index_buffer.commit(true);
 
         // build geometry
-        this.position_buffer_ref.value = position_buffer;
-        this.normal_buffer_ref.value = normal_buffer;
+        this.position_normal_buffer_ref.value = position_normal_buffer;
         this.uv_buffer_ref.value = uv_buffer;
         this.index_buffer_ref.value = index_buffer;
 
@@ -274,8 +264,7 @@ export class CylinderGeometry3DResource extends Geometry3DResource implements Re
         this.render_server_geometry.set_IndexBuffer(this.index_buffer_ref.expect.buffer);
         this.render_server_geometry.set_VertexLength(index_count);
         this.render_server_geometry.set_PrimitiveType(WebGPURenderStatePrimitiveType.Triangles);
-        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Position, this.position_buffer_ref.expect.buffer);
-        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Normal, this.normal_buffer_ref.expect.buffer);
+        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.PositionNormal, this.position_normal_buffer_ref.expect.buffer);
         this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Uv, this.uv_buffer_ref.expect.buffer);
 
         this.render_server_geometry.add_Surface(0, segments * 6);
@@ -289,8 +278,7 @@ export class CylinderGeometry3DResource extends Geometry3DResource implements Re
     }
 
     protected dispose(): void {
-        this.position_buffer_ref.clear();
-        this.normal_buffer_ref.clear();
+        this.position_normal_buffer_ref.clear();
         this.uv_buffer_ref.clear();
         this.index_buffer_ref.clear();
         super.dispose();

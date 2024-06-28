@@ -111,7 +111,7 @@ const FullScreenBackgroundPipeline = new RefCacher(() => {
 
     @group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(0) var<storage, read> light_data_uniform: array<LightDataUniform>;
     @group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(1) var<uniform> light_uniform: LightUniform;
-    @group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(2) var light_uniform_background_texture: texture_2d<f32>;
+    @group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(2) var light_uniform_background_texture: texture_cube<f32>;
     @group(${RenderServerSingleton.LightsUniformBindGroupIndex}) @binding(3) var light_uniform_sampler: sampler;
     
     const PI: f32 = 3.141592653589793;
@@ -127,16 +127,12 @@ const FullScreenBackgroundPipeline = new RefCacher(() => {
         if !bool(world_env_uniform_params.orthogonal) {
             normal_view = -normalize(view.xyz);
         }
-        var dir = mat4x4f(
-            vec4f(world_env_uniform_camera_matrix.camera_world[0].xyz, 0.0),
-            vec4f(world_env_uniform_camera_matrix.camera_world[1].xyz, 0.0),
-            vec4f(world_env_uniform_camera_matrix.camera_world[2].xyz, 0.0),
-            vec4f(0.0, 0.0, 0.0, 1.0),
-        ) * view;
-        var R = normalize(dir.xyz);
-        var theta = atan2(R.z, R.x);
-        var gamma = acos(R.y);
-        var sky_color = textureSampleLevel(light_uniform_background_texture, light_uniform_sampler, vec2f(theta / TAU + 0.5, 1.0 - gamma / PI), 0);
+        var dir = normalize(mat3x3f(
+            world_env_uniform_camera_matrix.camera_world[0].xyz,
+            world_env_uniform_camera_matrix.camera_world[1].xyz,
+            world_env_uniform_camera_matrix.camera_world[2].xyz,
+        ) * normalize(view.xyz));
+        var sky_color = textureSampleLevel(light_uniform_background_texture, light_uniform_sampler, dir, 0);
         out.color = sky_color;
         out.color = vec4f(0.175, 0.175, 0.175, 1.0);
         out.normal = vec4(normal_view, 1.0);
@@ -762,7 +758,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     //#region Lights Uniform
 
     protected readonly lights_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(RenderServer.lights_uniform_layout).expect());
-    protected readonly lights_background_texture_view_ref = new ReadonlyRef(RenderServer.render_state.create_TextureView(RenderServer.get_DefaultTexture(RenderServerDefaultTextureType.White).texture_ref.expect).expect());
+    protected readonly lights_background_texture_view_ref = new ReadonlyRef(RenderServer.render_state.create_TextureView(RenderServer.get_DefaultTexture(RenderServerDefaultTextureType.CubeBlack).texture_ref.expect, WebGPURenderStateTextureDimension.CubeMap).expect());
     protected readonly lights_cluster_data_ref = new ReadonlyRef(new RenderServerLightClusterData());
 
     //#endregion

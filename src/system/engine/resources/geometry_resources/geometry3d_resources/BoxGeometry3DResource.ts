@@ -16,8 +16,7 @@ type BoxGeometry3DResourceOption = {
 
 export class BoxGeometry3DResource extends Geometry3DResource implements ResourceSetOptionAllAtOnce<BoxGeometry3DResourceOption> {
 
-    private readonly position_buffer_ref: ReadonlyRef<WebGPURenderElementVector3Buffer> = new ReadonlyRef(new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, 24));
-    private readonly normal_buffer_ref: ReadonlyRef<WebGPURenderElementVector3Buffer> = new ReadonlyRef(new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, 24));
+    private readonly position_normal_buffer_ref: ReadonlyRef<WebGPURenderElementVector3Buffer> = new ReadonlyRef(new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, 48));
     private readonly uv_buffer_ref: ReadonlyRef<WebGPURenderElementVector2Buffer> = new ReadonlyRef(new WebGPURenderElementVector2Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, 24));
     private readonly index_buffer_ref: ReadonlyRef<WebGPURenderElementIndexBuffer> = new ReadonlyRef(new WebGPURenderElementIndexBuffer(RenderServer.render_state, WebGPURenderStateBufferType.Index, WebGPURenderStateBufferUsage.None, [
         // top
@@ -99,8 +98,7 @@ export class BoxGeometry3DResource extends Geometry3DResource implements Resourc
         this.render_server_geometry.set_IndexBuffer(this.index_buffer_ref.expect.buffer);
         this.render_server_geometry.set_VertexLength(36);
         this.render_server_geometry.set_PrimitiveType(WebGPURenderStatePrimitiveType.Triangles);
-        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Position, this.position_buffer_ref.expect.buffer);
-        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Normal, this.normal_buffer_ref.expect.buffer);
+        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.PositionNormal, this.position_normal_buffer_ref.expect.buffer);
         this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Uv, this.uv_buffer_ref.expect.buffer);
         this.render_server_geometry.add_Surface(0, 6);
         this.render_server_geometry.add_Surface(6, 6);
@@ -115,76 +113,41 @@ export class BoxGeometry3DResource extends Geometry3DResource implements Resourc
         const half_w = this.width / 2;
         const half_h = this.height / 2;
         const half_d = this.depth / 2;
-        this.position_buffer_ref.expect.set_Data(
+        this.position_normal_buffer_ref.expect.set_Data(
             new Float32Array([
                 // top
-                half_w, half_h, half_d,
-                half_w, half_h, -half_d,
-                -half_w, half_h, half_d,
-                -half_w, half_h, -half_d,
+                half_w, half_h, half_d, 0, 1, 0,
+                half_w, half_h, -half_d, 0, 1, 0,
+                -half_w, half_h, half_d, 0, 1, 0,
+                -half_w, half_h, -half_d, 0, 1, 0,
                 // bottom
-                half_w, -half_h, half_d,
-                half_w, -half_h, -half_d,
-                -half_w, -half_h, half_d,
-                -half_w, -half_h, -half_d,
+                half_w, -half_h, half_d, 0, -1, 0,
+                half_w, -half_h, -half_d, 0, -1, 0,
+                -half_w, -half_h, half_d, 0, -1, 0,
+                -half_w, -half_h, -half_d, 0, -1, 0,
                 // front
-                half_w, -half_h, half_d,
-                half_w, half_h, half_d,
-                -half_w, -half_h, half_d,
-                -half_w, half_h, half_d,
+                half_w, -half_h, half_d, 0, 0, 1,
+                half_w, half_h, half_d, 0, 0, 1,
+                -half_w, -half_h, half_d, 0, 0, 1,
+                -half_w, half_h, half_d, 0, 0, 1,
                 // back
-                half_w, -half_h, -half_d,
-                half_w, half_h, -half_d,
-                -half_w, -half_h, -half_d,
-                -half_w, half_h, -half_d,
+                half_w, -half_h, -half_d, 0, 0, -1,
+                half_w, half_h, -half_d, 0, 0, -1,
+                -half_w, -half_h, -half_d, 0, 0, -1,
+                -half_w, half_h, -half_d, 0, 0, -1,
                 // right
-                half_w, -half_h, -half_d,
-                half_w, half_h, -half_d,
-                half_w, -half_h, half_d,
-                half_w, half_h, half_d,
+                half_w, -half_h, -half_d, 1, 0, 0,
+                half_w, half_h, -half_d, 1, 0, 0,
+                half_w, -half_h, half_d, 1, 0, 0,
+                half_w, half_h, half_d, 1, 0, 0,
                 // left
-                -half_w, -half_h, -half_d,
-                -half_w, half_h, -half_d,
-                -half_w, -half_h, half_d,
-                -half_w, half_h, half_d,
+                -half_w, -half_h, -half_d, -1, 0, 0,
+                -half_w, half_h, -half_d, -1, 0, 0,
+                -half_w, -half_h, half_d, -1, 0, 0,
+                -half_w, half_h, half_d, -1, 0, 0,
             ]), 0
         );
-        this.position_buffer_ref.expect.commit();
-        this.normal_buffer_ref.expect.set_Data(
-            new Float32Array([
-                // top
-                0, 1, 0,
-                0, 1, 0,
-                0, 1, 0,
-                0, 1, 0,
-                // bottom
-                0, -1, 0,
-                0, -1, 0,
-                0, -1, 0,
-                0, -1, 0,
-                // front
-                0, 0, 1,
-                0, 0, 1,
-                0, 0, 1,
-                0, 0, 1,
-                // back
-                0, 0, -1,
-                0, 0, -1,
-                0, 0, -1,
-                0, 0, -1,
-                // right
-                1, 0, 0,
-                1, 0, 0,
-                1, 0, 0,
-                1, 0, 0,
-                // left
-                -1, 0, 0,
-                -1, 0, 0,
-                -1, 0, 0,
-                -1, 0, 0,
-            ]), 0
-        );
-        this.normal_buffer_ref.expect.commit();
+        this.position_normal_buffer_ref.expect.commit();
         this.uv_buffer_ref.expect.set_Data(
             new Float32Array([
                 // top
@@ -203,10 +166,10 @@ export class BoxGeometry3DResource extends Geometry3DResource implements Resourc
                 0, 0,
                 0, 1,
                 // back
-                1, 1,
-                1, 0,
-                0, 1,
                 0, 0,
+                0, 1,
+                1, 0,
+                1, 1,
                 // right
                 1, 0,
                 1, 1,
@@ -226,8 +189,7 @@ export class BoxGeometry3DResource extends Geometry3DResource implements Resourc
     }
 
     protected dispose(): void {
-        this.position_buffer_ref.clear();
-        this.normal_buffer_ref.clear();
+        this.position_normal_buffer_ref.clear();
         this.uv_buffer_ref.clear();
         this.index_buffer_ref.clear();
         super.dispose();

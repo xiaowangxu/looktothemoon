@@ -20,10 +20,12 @@ export abstract class PackedArray<Data = any, Buffer = WebGPURenderElementVertex
     public get items_count(): number { return this.elements_count / this.per_item_elements_count; }
     public get bytes_count(): number { return this.data.byteLength; }
 
-    public abstract update_Data(data: Data, offset: number): void;
-    public abstract update_Data(data: ArrayBufferView, offset: number): void;
-    public abstract update_Data(data: Data[], offset: number): void;
-    public abstract update_Data(data: Data[] | ArrayBufferView | Data, offset: number): void;
+    public abstract set_Data(data: Data, offset: number): void;
+    public abstract set_Data(data: ArrayBufferView, offset: number): void;
+    public abstract set_Data(data: Data[], offset: number): void;
+    public abstract set_Data(data: Data[] | ArrayBufferView | Data, offset: number): void;
+
+    public abstract get_Data(element_index: number, target?: Data): Data;
 
     public abstract get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): ElementBuffer;
     public abstract get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): Buffer;
@@ -48,10 +50,10 @@ export class PackedByteArray extends PackedArray<number> {
         }
     }
 
-    public update_Data(data: number[], offset: number): void;
-    public update_Data(data: Uint8Array, offset: number): void;
-    public update_Data(data: number, offset: number): void;
-    public update_Data(data: number[] | Uint8Array | number, offset: number): void {
+    public set_Data(data: number[], offset: number): void;
+    public set_Data(data: Uint8Array, offset: number): void;
+    public set_Data(data: number, offset: number): void;
+    public set_Data(data: number[] | Uint8Array | number, offset: number): void {
         let uint8array: Uint8Array;
         let offset_bytes: number;
         if (data instanceof Uint8Array) {
@@ -75,6 +77,11 @@ export class PackedByteArray extends PackedArray<number> {
                 uint8array.set(data);
             }
         }
+    }
+
+    public get_Data(element_index: number, target: undefined = undefined): number {
+        if (element_index < 0 || element_index >= this.elements_count) throw new Error('<PackedByteArray> get_Data: element index out of bound');
+        return this.data[element_index];
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementBuffer {
@@ -105,10 +112,10 @@ export class PackedIndexArray extends PackedArray<number, WebGPURenderStateBuffe
         }
     }
 
-    public update_Data(data: number[], offset: number): void;
-    public update_Data(data: Uint32Array, offset: number): void;
-    public update_Data(data: number, offset: number): void;
-    public update_Data(data: number[] | Uint32Array | number, offset: number): void {
+    public set_Data(data: number[], offset: number): void;
+    public set_Data(data: Uint32Array, offset: number): void;
+    public set_Data(data: number, offset: number): void;
+    public set_Data(data: number[] | Uint32Array | number, offset: number): void {
         let uint32array: Uint32Array;
         let offset_bytes: number;
         if (data instanceof Uint32Array) {
@@ -132,6 +139,11 @@ export class PackedIndexArray extends PackedArray<number, WebGPURenderStateBuffe
                 uint32array.set(data);
             }
         }
+    }
+
+    public get_Data(element_index: number, target: undefined = undefined): number {
+        if (element_index < 0 || element_index >= this.elements_count) throw new Error('<PackedIndexArray> get_Data: element index out of bound');
+        return this.data[element_index];
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementIndexBuffer {
@@ -166,10 +178,10 @@ export class PackedUintArray extends PackedArray<number, WebGPURenderStateBuffer
         }
     }
 
-    public update_Data(data: number[], offset: number): void;
-    public update_Data(data: Uint32Array, offset: number): void;
-    public update_Data(data: number, offset: number): void;
-    public update_Data(data: number[] | Uint32Array | number, offset: number): void {
+    public set_Data(data: number[], offset: number): void;
+    public set_Data(data: Uint32Array, offset: number): void;
+    public set_Data(data: number, offset: number): void;
+    public set_Data(data: number[] | Uint32Array | number, offset: number): void {
         let uint32array: Uint32Array;
         let offset_bytes: number;
         if (data instanceof Uint32Array) {
@@ -193,6 +205,11 @@ export class PackedUintArray extends PackedArray<number, WebGPURenderStateBuffer
                 uint32array.set(data);
             }
         }
+    }
+
+    public get_Data(element_index: number, target: undefined = undefined): number {
+        if (element_index < 0 || element_index >= this.elements_count) throw new Error('<PackedUintArray> get_Data: element index out of bound');
+        return this.data[element_index];
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementUintBuffer {
@@ -227,10 +244,10 @@ export class PackedIntArray extends PackedArray<number, WebGPURenderStateBuffer,
         }
     }
 
-    public update_Data(data: number[], offset: number): void;
-    public update_Data(data: Int32Array, offset: number): void;
-    public update_Data(data: number, offset: number): void;
-    public update_Data(data: number[] | Int32Array | number, offset: number): void {
+    public set_Data(data: number[], offset: number): void;
+    public set_Data(data: Int32Array, offset: number): void;
+    public set_Data(data: number, offset: number): void;
+    public set_Data(data: number[] | Int32Array | number, offset: number): void {
         let int32array: Int32Array;
         let offset_bytes: number;
         if (data instanceof Int32Array) {
@@ -254,6 +271,11 @@ export class PackedIntArray extends PackedArray<number, WebGPURenderStateBuffer,
                 int32array.set(data);
             }
         }
+    }
+
+    public get_Data(element_index: number, target: undefined = undefined): number {
+        if (element_index < 0 || element_index >= this.elements_count) throw new Error('<PackedIntArray> get_Data: element index out of bound');
+        return this.data[element_index];
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementIntBuffer {
@@ -288,10 +310,10 @@ export class PackedFloatArray extends PackedArray<number, WebGPURenderStateBuffe
         }
     }
 
-    public update_Data(data: number[], offset: number): void;
-    public update_Data(data: Float32Array, offset: number): void;
-    public update_Data(data: number, offset: number): void;
-    public update_Data(data: number[] | Float32Array | number, offset: number): void {
+    public set_Data(data: number[], offset: number): void;
+    public set_Data(data: Float32Array, offset: number): void;
+    public set_Data(data: number, offset: number): void;
+    public set_Data(data: number[] | Float32Array | number, offset: number): void {
         let float32array: Float32Array;
         let offset_bytes: number;
         if (data instanceof Float32Array) {
@@ -315,6 +337,11 @@ export class PackedFloatArray extends PackedArray<number, WebGPURenderStateBuffe
                 float32array.set(data);
             }
         }
+    }
+
+    public get_Data(element_index: number, target: undefined = undefined): number {
+        if (element_index < 0 || element_index >= this.elements_count) throw new Error('<PackedFloatArray> get_Data: element index out of bound');
+        return this.data[element_index];
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementFloatBuffer {
@@ -352,10 +379,10 @@ export class PackedVector2Array extends PackedArray<Vector2, WebGPURenderStateBu
         }
     }
 
-    public update_Data(data: Vector2[], offset: number): void;
-    public update_Data(data: Float32Array, offset: number): void;
-    public update_Data(data: Vector2, offset: number): void;
-    public update_Data(data: Vector2[] | Float32Array | Vector2, offset: number): void {
+    public set_Data(data: Vector2[], offset: number): void;
+    public set_Data(data: Float32Array, offset: number): void;
+    public set_Data(data: Vector2, offset: number): void;
+    public set_Data(data: Vector2[] | Float32Array | Vector2, offset: number): void {
         let float32array: Float32Array;
         let offset_bytes: number;
         if (data instanceof Float32Array) {
@@ -384,6 +411,14 @@ export class PackedVector2Array extends PackedArray<Vector2, WebGPURenderStateBu
                 }
             }
         }
+    }
+
+    public get_Data(element_index: number, target: Vector2): Vector2 {
+        if (element_index < 0 || element_index >= this.elements_count) throw new Error('<PackedVector2Array> get_Data: element index out of bound');
+        let j = element_index * 2;
+        const x = this.data[j++];
+        const y = this.data[j++];
+        return target.set(x, y);
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementVector2Buffer {
@@ -419,10 +454,10 @@ export class PackedVector3Array extends PackedArray<Vector3, WebGPURenderStateBu
         }
     }
 
-    public update_Data(data: Vector3[], offset: number): void;
-    public update_Data(data: Float32Array, offset: number): void;
-    public update_Data(data: Vector3, offset: number): void;
-    public update_Data(data: Vector3[] | Float32Array | Vector3, offset: number): void {
+    public set_Data(data: Vector3[], offset: number): void;
+    public set_Data(data: Float32Array, offset: number): void;
+    public set_Data(data: Vector3, offset: number): void;
+    public set_Data(data: Vector3[] | Float32Array | Vector3, offset: number): void {
         let float32array: Float32Array;
         let offset_bytes: number;
         if (data instanceof Float32Array) {
@@ -453,6 +488,15 @@ export class PackedVector3Array extends PackedArray<Vector3, WebGPURenderStateBu
                 }
             }
         }
+    }
+
+    public get_Data(element_index: number, target: Vector3): Vector3 {
+        if (element_index < 0 || element_index >= this.elements_count) throw new Error('<PackedVector3Array> get_Data: element index out of bound');
+        let j = element_index * 3;
+        const x = this.data[j++];
+        const y = this.data[j++];
+        const z = this.data[j++];
+        return target.set(x, y, z);
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementVector3Buffer {
@@ -488,10 +532,10 @@ export class PackedVector4Array extends PackedArray<Vector4, WebGPURenderStateBu
         }
     }
 
-    public update_Data(data: Vector4[], offset: number): void;
-    public update_Data(data: Float32Array, offset: number): void;
-    public update_Data(data: Vector4, offset: number): void;
-    public update_Data(data: Vector4[] | Float32Array | Vector4, offset: number): void {
+    public set_Data(data: Vector4[], offset: number): void;
+    public set_Data(data: Float32Array, offset: number): void;
+    public set_Data(data: Vector4, offset: number): void;
+    public set_Data(data: Vector4[] | Float32Array | Vector4, offset: number): void {
         let float32array: Float32Array;
         let offset_bytes: number;
         if (data instanceof Float32Array) {
@@ -524,6 +568,16 @@ export class PackedVector4Array extends PackedArray<Vector4, WebGPURenderStateBu
                 }
             }
         }
+    }
+
+    public get_Data(element_index: number, target: Vector4): Vector4 {
+        if (element_index < 0 || element_index >= this.elements_count) throw new Error('<PackedVector4Array> get_Data: element index out of bound');
+        let j = element_index * 4;
+        const x = this.data[j++];
+        const y = this.data[j++];
+        const z = this.data[j++];
+        const w = this.data[j++];
+        return target.set(x, y, z, w);
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementVector4Buffer {
@@ -559,10 +613,10 @@ export class PackedMatrix2Array extends PackedArray<Matrix2, WebGPURenderStateBu
         }
     }
 
-    public update_Data(data: Matrix2[], offset: number): void;
-    public update_Data(data: Float32Array, offset: number): void;
-    public update_Data(data: Matrix2, offset: number): void;
-    public update_Data(data: Matrix2[] | Float32Array | Matrix2, offset: number): void {
+    public set_Data(data: Matrix2[], offset: number): void;
+    public set_Data(data: Float32Array, offset: number): void;
+    public set_Data(data: Matrix2, offset: number): void;
+    public set_Data(data: Matrix2[] | Float32Array | Matrix2, offset: number): void {
         let float32array: Float32Array;
         let offset_bytes: number;
         if (data instanceof Float32Array) {
@@ -598,6 +652,16 @@ export class PackedMatrix2Array extends PackedArray<Matrix2, WebGPURenderStateBu
         }
     }
 
+    public get_Data(element_index: number, target: Matrix2): Matrix2 {
+        if (element_index < 0 || element_index >= this.elements_count) throw new Error('<PackedMatrix2Array> get_Data: element index out of bound');
+        let j = element_index * 4;
+        const n11 = this.data[j++];
+        const n21 = this.data[j++];
+        const n12 = this.data[j++];
+        const n22 = this.data[j++];
+        return target.set(n11, n12, n21, n22);
+    }
+
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementMatrix2Buffer {
         throw new WebGPURenderElementMatrix2Buffer(render_state, type, usage, this.data);
     }
@@ -631,10 +695,10 @@ export class PackedMatrix3Array extends PackedArray<Matrix3, WebGPURenderStateBu
         }
     }
 
-    public update_Data(data: Matrix3[], offset: number): void;
-    public update_Data(data: Float32Array, offset: number): void;
-    public update_Data(data: Matrix3, offset: number): void;
-    public update_Data(data: Matrix3[] | Float32Array | Matrix3, offset: number): void {
+    public set_Data(data: Matrix3[], offset: number): void;
+    public set_Data(data: Float32Array, offset: number): void;
+    public set_Data(data: Matrix3, offset: number): void;
+    public set_Data(data: Matrix3[] | Float32Array | Matrix3, offset: number): void {
         let float32array: Float32Array;
         let offset_bytes: number;
         if (data instanceof Float32Array) {
@@ -680,6 +744,21 @@ export class PackedMatrix3Array extends PackedArray<Matrix3, WebGPURenderStateBu
         }
     }
 
+    public get_Data(element_index: number, target: Matrix3): Matrix3 {
+        if (element_index < 0 || element_index >= this.elements_count) throw new Error('<PackedMatrix3Array> get_Data: element index out of bound');
+        let j = element_index * 9;
+        const n11 = this.data[j++];
+        const n21 = this.data[j++];
+        const n31 = this.data[j++];
+        const n12 = this.data[j++];
+        const n22 = this.data[j++];
+        const n32 = this.data[j++];
+        const n13 = this.data[j++];
+        const n23 = this.data[j++];
+        const n33 = this.data[j++];
+        return target.set(n11, n12, n13, n21, n22, n23, n31, n32, n33);
+    }
+
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementMatrix3Buffer {
         throw new WebGPURenderElementMatrix3Buffer(render_state, type, usage, this.data);
     }
@@ -713,10 +792,10 @@ export class PackedMatrix4Array extends PackedArray<Matrix4, WebGPURenderStateBu
         }
     }
 
-    public update_Data(data: Matrix4[], offset: number): void;
-    public update_Data(data: Float32Array, offset: number): void;
-    public update_Data(data: Matrix4, offset: number): void;
-    public update_Data(data: Matrix4[] | Float32Array | Matrix4, offset: number): void {
+    public set_Data(data: Matrix4[], offset: number): void;
+    public set_Data(data: Float32Array, offset: number): void;
+    public set_Data(data: Matrix4, offset: number): void;
+    public set_Data(data: Matrix4[] | Float32Array | Matrix4, offset: number): void {
         let float32array: Float32Array;
         let offset_bytes: number;
         if (data instanceof Float32Array) {
@@ -774,6 +853,28 @@ export class PackedMatrix4Array extends PackedArray<Matrix4, WebGPURenderStateBu
                 }
             }
         }
+    }
+
+    public get_Data(element_index: number, target: Matrix4): Matrix4 {
+        if (element_index < 0 || element_index >= this.elements_count) throw new Error('<PackedMatrix4Array> get_Data: element index out of bound');
+        let j = element_index * 16;
+        const n11 = this.data[j++];
+        const n21 = this.data[j++];
+        const n31 = this.data[j++];
+        const n41 = this.data[j++];
+        const n12 = this.data[j++];
+        const n22 = this.data[j++];
+        const n32 = this.data[j++];
+        const n42 = this.data[j++];
+        const n13 = this.data[j++];
+        const n23 = this.data[j++];
+        const n33 = this.data[j++];
+        const n43 = this.data[j++];
+        const n14 = this.data[j++];
+        const n24 = this.data[j++];
+        const n34 = this.data[j++];
+        const n44 = this.data[j++];
+        return target.set(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44);
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementMatrix4Buffer {

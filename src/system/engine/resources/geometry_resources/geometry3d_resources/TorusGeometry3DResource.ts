@@ -20,8 +20,7 @@ type TorusGeometry3DResourceOption = {
 
 export class TorusGeometry3DResource extends Geometry3DResource implements ResourceSetOptionAllAtOnce<TorusGeometry3DResourceOption> {
 
-    private readonly position_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
-    private readonly normal_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
+    private readonly position_normal_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
     private readonly uv_buffer_ref: Ref<WebGPURenderElementVector2Buffer> = new Ref();
     private readonly index_buffer_ref: Ref<WebGPURenderElementIndexBuffer> = new Ref();
 
@@ -129,8 +128,7 @@ export class TorusGeometry3DResource extends Geometry3DResource implements Resou
 
         const vertex_count = (segments + 1) * (tube_segments + 1);
 
-        const position_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
-        const normal_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
+        const position_normal_buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count * 2);
         const uv_buffer = new WebGPURenderElementVector2Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, vertex_count);
 
         let vertex_idx = 0;
@@ -138,7 +136,7 @@ export class TorusGeometry3DResource extends Geometry3DResource implements Resou
             for (let i = 0; i <= tube_segments; i++) {
                 const u = i / tube_segments * theta;
                 const v = j / segments * Pi * 2;
-                const vec3_idx = vertex_idx * 3;
+                const vec6_idx = vertex_idx * 6;
                 const vec2_idx = vertex_idx * 2;
                 // vertex
                 const vertex = Vector3.create(
@@ -146,15 +144,15 @@ export class TorusGeometry3DResource extends Geometry3DResource implements Resou
                     -tube_radius * Math.sin(v),
                     (radius + tube_radius * Math.cos(v)) * Math.sin(u),
                 );
-                position_buffer.data[vec3_idx + 0] = vertex.x;
-                position_buffer.data[vec3_idx + 1] = vertex.y;
-                position_buffer.data[vec3_idx + 2] = vertex.z;
+                position_normal_buffer.data[vec6_idx + 0] = vertex.x;
+                position_normal_buffer.data[vec6_idx + 1] = vertex.y;
+                position_normal_buffer.data[vec6_idx + 2] = vertex.z;
                 // normal
                 const center = Vector3.create(radius * Math.cos(u), 0, radius * Math.sin(u));
                 const normal = center.direction_to(center, vertex);
-                normal_buffer.data[vec3_idx + 0] = normal.x;
-                normal_buffer.data[vec3_idx + 1] = normal.y;
-                normal_buffer.data[vec3_idx + 2] = normal.z;
+                position_normal_buffer.data[vec6_idx + 3] = normal.x;
+                position_normal_buffer.data[vec6_idx + 4] = normal.y;
+                position_normal_buffer.data[vec6_idx + 5] = normal.z;
                 // uv
                 uv_buffer.data[vec2_idx + 0] = i / tube_segments;
                 uv_buffer.data[vec2_idx + 1] = j / segments;
@@ -187,16 +185,14 @@ export class TorusGeometry3DResource extends Geometry3DResource implements Resou
             }
         }
 
-        position_buffer.commit(true);
-        normal_buffer.commit(true);
+        position_normal_buffer.commit(true);
         uv_buffer.commit(true);
         index_buffer.commit(true);
 
         // build geometry
         const outer_radius = radius + tube_radius;
 
-        this.position_buffer_ref.value = position_buffer;
-        this.normal_buffer_ref.value = normal_buffer;
+        this.position_normal_buffer_ref.value = position_normal_buffer;
         this.uv_buffer_ref.value = uv_buffer;
         this.index_buffer_ref.value = index_buffer;
 
@@ -204,8 +200,7 @@ export class TorusGeometry3DResource extends Geometry3DResource implements Resou
         this.render_server_geometry.set_IndexBuffer(this.index_buffer_ref.expect.buffer);
         this.render_server_geometry.set_VertexLength(index_count);
         this.render_server_geometry.set_PrimitiveType(WebGPURenderStatePrimitiveType.Triangles);
-        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Position, this.position_buffer_ref.expect.buffer);
-        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Normal, this.normal_buffer_ref.expect.buffer);
+        this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.PositionNormal, this.position_normal_buffer_ref.expect.buffer);
         this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Uv, this.uv_buffer_ref.expect.buffer);
         Geometry3DResource.$tmp_box3_for_bbox.min.set(-outer_radius, -tube_radius, -outer_radius);
         Geometry3DResource.$tmp_box3_for_bbox.max.set(outer_radius, tube_radius, outer_radius);
@@ -213,8 +208,7 @@ export class TorusGeometry3DResource extends Geometry3DResource implements Resou
     }
 
     protected dispose(): void {
-        this.position_buffer_ref.clear();
-        this.normal_buffer_ref.clear();
+        this.position_normal_buffer_ref.clear();
         this.uv_buffer_ref.clear();
         this.index_buffer_ref.clear();
         super.dispose();
