@@ -1,19 +1,17 @@
-import type { Config } from "@/system/engine/ConfiguredObject";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
-import { Cacher } from "@/system/utils/Cacher";
-import { MultiLineGeometryResource } from "@/system/engine/resources/geometry_resources/MultiLineSegmentGeometryResource";
-import { Ref } from "@/system/utils/RefCounted";
+import { RefCacher } from "@/system/utils/RefCounted";
 import { MeshInstance3D } from "../visual_instance3ds/geometry3ds/MeshInstance3D";
 import { NodeNotification } from "../../Node";
 import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { Plane3 } from "@/system/fivepebble/geometries/Plane3";
 import { Frustum3 } from "@/system/fivepebble/graphics/Frustum3";
+import { PolyLineGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/polyline_geometry3d_resources/PolyLineGeometry3DResource";
 
-const LineGeometry = new Cacher((config: Config) => {
-    const line = new MultiLineGeometryResource(config);
-    return new Ref(line);
+const LineGeometry = new RefCacher(() => {
+    const line = new PolyLineGeometry3DResource();
+    return line;
 });
 
 export class InfiniteLine3D extends MeshInstance3D {
@@ -29,10 +27,10 @@ export class InfiniteLine3D extends MeshInstance3D {
         this._ray.copy(ray);
     }
 
-    constructor(config: Config) {
-        super(config);
+    constructor() {
+        super();
         this.top_level = true;
-        this.geometry = LineGeometry.get(this.config).expect;
+        this.geometry = LineGeometry.get();
         this.block_redundant_before_render_notification = false;
     }
 

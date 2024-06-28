@@ -1,4 +1,4 @@
-import { lerp } from "../Scalar";
+import { lerp, snap } from "../Scalar";
 import type { Matrix2 } from "./Matrix2";
 import type { VectorLike } from "./VectorLike";
 
@@ -109,6 +109,11 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
     negate(a: Vector2): Vector2 {
         this.x = -a.x;
         this.y = -a.y;
+        return this;
+    }
+    snap(a: Vector2, b: Vector2): Vector2 {
+        this.x = snap(a.x, b.x);
+        this.y = snap(a.y, b.y);
         return this;
     }
     dot(b: Vector2): number {

@@ -518,10 +518,15 @@ ${fragment}
 	// Transparent OIT
 	let _z = abs(vary.position.z);
 	let _a = ${fragment_out_color_name}.a;
-	let _weight = max(0.01, min(3000.0, 0.03 / (1e-5 + pow(abs(_z) / 200.0, 4.0))));
-	// var _weight = max(min(1.0, max(max(${fragment_out_color_name}.r, ${fragment_out_color_name}.g), ${fragment_out_color_name}.b) * ${fragment_out_color_name}.a), ${fragment_out_color_name}.a) * clamp(0.03 / (1e-5 + pow(_z / 200, 4.0)), 1e-2, 3e3);
-	_out.accum = vec4(${fragment_out_color_name}.rgb * ${fragment_out_color_name}.a, ${fragment_out_color_name}.a)  * _weight;
-	_out.reveal = ${fragment_out_color_name}.a;
+	if _a < EPSILON {
+		_out.accum = vec4f(0.0);
+		_out.reveal = 0;
+	}
+	else {
+		let _weight = max(0.01, min(3000.0, 0.03 / (1e-5 + pow(abs(_z) / 200.0, 4.0))));
+		_out.accum = vec4f(${fragment_out_color_name}.rgb * ${fragment_out_color_name}.a, ${fragment_out_color_name}.a)  * _weight;
+		_out.reveal = ${fragment_out_color_name}.a;
+	}
 	` :
 					pass === RenderServerRenderMaterialPass.Solid ? `
 	// Solid

@@ -227,7 +227,7 @@ const OitComposePipeline = new RefCacher(() => {
         var out: FragmentOutput;
         var accum_sample = textureSample(accum, sample, vary.uv);
         var reveal_sample = textureSample(reveal, sample, vary.uv).r;
-        var color = vec4f(accum_sample.rgb / clamp(accum_sample.a, 1e-4, 5e4), 1.0 - reveal_sample);
+        let color = vec4f(clamp(vec3f(0.0), vec3f(1.0), accum_sample.rgb / clamp(accum_sample.a, 1e-5, 5e4)), 1.0 - reveal_sample);
         out.color = color;
         return out;
     }

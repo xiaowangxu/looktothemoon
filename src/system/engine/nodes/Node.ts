@@ -837,6 +837,11 @@ export class Viewport extends Node {
         this.signal_after_render.trigger();
     }
 
+    /**
+     * for multi windows app, scene tree's transforms' updates are sorted in order of render_priority then is_mouse_inside
+     * 
+     * so for windows have same priority, if mouse is inside, it will update later, that makes sure physics picking shapes are in the wanted transforms
+     */
     public process_PhysicsPicking(): void {
         if (this.physics_picking && this.input_manager.is_mouse_inside) {
             const picking_world = this.get_RenderableWorld3D()?.picking_world;

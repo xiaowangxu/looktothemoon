@@ -1,4 +1,4 @@
-import { lerp } from "../Scalar";
+import { lerp, snap } from "../Scalar";
 import type { Color } from "../graphics/Color";
 import type { Matrix4 } from "./Matrix4";
 import { Vector3 } from "./Vector3";
@@ -153,6 +153,13 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         this.y = -a.y;
         this.z = -a.z;
         this.w = -a.w;
+        return this;
+    }
+    snap(a: Vector4, b: Vector4): Vector4 {
+        this.x = snap(a.x, b.x);
+        this.y = snap(a.y, b.y);
+        this.z = snap(a.z, b.z);
+        this.w = snap(a.w, b.w);
         return this;
     }
     dot(b: Vector4): number {

@@ -29,3 +29,10 @@ export function align(value: number, alignment: number) {
         return value + alignment - remainder;
     }
 }
+
+export function snap(value: number, step: number) {
+    if (step !== 0) {
+        value = Math.floor(value / step + 0.5) * step;
+    }
+    return value;
+}

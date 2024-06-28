@@ -67,6 +67,7 @@ export class SceneTree {
         const world_before_render_triggered = SceneTree.world_before_render_triggered;
         world_before_render_triggered.clear();
         let redundant_before_render = false;
+        this.sort_Viewports();
         for (const viewport of this.sorted_viewports) {
             this.current_viewport = viewport;
             // update viewport size / setup camera etc.
@@ -184,7 +185,6 @@ export class SceneTree {
         if (!this.viewports.has(viewport)) {
             this.viewports.add(viewport);
             this.sorted_viewports.push(viewport);
-            this.sort_Viewports();
         }
     }
 
@@ -194,7 +194,6 @@ export class SceneTree {
             const index = this.sorted_viewports.indexOf(viewport);
             if (index >= 0) {
                 this.sorted_viewports.splice(index, 1);
-                this.sort_Viewports();
             }
         }
     }
@@ -205,6 +204,10 @@ export class SceneTree {
                 const a_p = a.render_priority, b_p = b.render_priority;
                 if (a_p < b_p) return -1;
                 if (a_p > b_p) return 1;
+                // for mouse picking in physics process, so picking shapes can have correct transforms updated
+                const a_m = a.get_Input().is_mouse_inside, b_m = b.get_Input().is_mouse_inside;
+                if (a_m) return 1;
+                if (b_m) return -1;
                 return 0;
             }
         );

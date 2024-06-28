@@ -5,6 +5,14 @@ import { RenderServerObjectRefCounted } from "../RenderServerObject";
 import { RenderServer } from "../RenderServer";
 import type { WebGPURenderStateBufferData } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 
+export type RenderServerTextureImageOption = {
+    image: GPUImageCopyExternalImageSource,
+    width: number, height: number,
+    src_x?: number, src_y?: number,
+    dst_x?: number, dst_y?: number,
+    flip_y?: boolean,
+};
+
 export class RenderServerTexture extends RenderServerObjectRefCounted {
 
     public readonly texture_ref: ReadonlyRef<WebGPURenderStateTexture>;
@@ -55,6 +63,7 @@ export class RenderServerTexture extends RenderServerObjectRefCounted {
 
     static create_Image(
         image: GPUImageCopyExternalImageSource, width: number, height: number, mipmap_level_count: number = 1, generate_mipmap: boolean = false,
+        src_x: number = 0, src_y: number = 0, dst_x: number = 0, dst_y: number = 0, flip_y: boolean = true,
         view_dimension?: WebGPURenderStateTextureDimension, part?: WebGPURendetStateTextureDestination, base_layer?: number, layer_count?: number, base_mipmap?: number, mipmap_count?: number,
     ) {
         const texture = RenderServer.render_state.create_Texture(
@@ -64,8 +73,8 @@ export class RenderServerTexture extends RenderServerObjectRefCounted {
             width, height, 1, mipmap_level_count,
         ).expect();
         RenderServer.render_state.device.queue.copyExternalImageToTexture(
-            { source: image, flipY: true, },
-            { texture: texture.texture, },
+            { source: image, flipY: flip_y, origin: { x: src_x, y: src_y } },
+            { texture: texture.texture, origin: { x: dst_x, y: dst_y } },
             { width, height, depthOrArrayLayers: 1, },
         );
         if (generate_mipmap && texture.mipmap_level_count > 1) {
@@ -75,7 +84,7 @@ export class RenderServerTexture extends RenderServerObjectRefCounted {
     }
 
     static create_Images(
-        image_options: { image: GPUImageCopyExternalImageSource, width: number, height: number }[], mipmap_level_count: number = 1, generate_mipmap: boolean = false,
+        image_options: RenderServerTextureImageOption[], mipmap_level_count: number = 1, generate_mipmap: boolean = false,
         view_dimension?: WebGPURenderStateTextureDimension, part?: WebGPURendetStateTextureDestination, base_layer?: number, layer_count?: number, base_mipmap?: number, mipmap_count?: number,
     ) {
         const [max_width, max_height] = image_options.reduce((max, option) => [Math.max(max[0], option.width), Math.max(max[1], option.height)], [0, 0]);
@@ -86,10 +95,10 @@ export class RenderServerTexture extends RenderServerObjectRefCounted {
             max_width, max_height, image_options.length, mipmap_level_count,
         ).expect();
         let layer = 0;
-        for (const { image, width, height } of image_options) {
+        for (const { image, width, height, src_x, src_y, dst_x, dst_y, flip_y } of image_options) {
             RenderServer.render_state.device.queue.copyExternalImageToTexture(
-                { source: image, flipY: true },
-                { texture: texture.texture, origin: { x: 0, y: 0, z: layer } },
+                { source: image, flipY: flip_y ?? true, origin: { x: src_x ?? 0, y: src_y ?? 0 } },
+                { texture: texture.texture, origin: { x: dst_x ?? 0, y: dst_y ?? 0, z: layer } },
                 { width, height, depthOrArrayLayers: 1 },
             );
             layer++;

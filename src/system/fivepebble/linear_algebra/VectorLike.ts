@@ -28,6 +28,7 @@ export interface VectorLike<Vec extends VectorLike<Vec, Mat>, Mat extends Matrix
     transform(a: Vec, matrix: Mat): Vec;
     normalize(a: Vec): Vec;
     negate(a: Vec): Vec;
+    snap(a: Vec, b: Vec): Vec;
     dot(b: Vec): number;
     min(a: Vec, b: Vec): Vec;
     max(a: Vec, b: Vec): Vec;

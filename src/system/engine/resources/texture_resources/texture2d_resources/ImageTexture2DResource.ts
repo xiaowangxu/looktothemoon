@@ -21,7 +21,7 @@ export class ImageTexture2DResource extends Texture2DResource {
     }
 
     static create_Image(image: GPUImageCopyExternalImageSource, width: number, height: number, mipmap_level_count?: number, generate_mipmap?: boolean) {
-        const texture = RenderServerTexture.create_Image(image, width, height, mipmap_level_count, generate_mipmap, WebGPURenderStateTextureDimension.D2);
+        const texture = RenderServerTexture.create_Image(image, width, height, mipmap_level_count, generate_mipmap, undefined, undefined, undefined, undefined, undefined, WebGPURenderStateTextureDimension.D2);
         const image_texture_2d_resource = new ImageTexture2DResource();
         image_texture_2d_resource.render_server_texture_ref.value = texture;
         return image_texture_2d_resource;
@@ -41,7 +41,7 @@ export class ImageTexture2DResource extends Texture2DResource {
     }
 
     private set_ImageInternal(image: GPUImageCopyExternalImageSource, width: number, height: number, mipmap_level_count?: number, generate_mipmap?: boolean) {
-        const texture = RenderServerTexture.create_Image(image, width, height, mipmap_level_count, generate_mipmap, WebGPURenderStateTextureDimension.D2);
+        const texture = RenderServerTexture.create_Image(image, width, height, mipmap_level_count, generate_mipmap, undefined, undefined, undefined, undefined, undefined, WebGPURenderStateTextureDimension.D2);
         this.render_server_texture_ref.value = texture;
     }
 
