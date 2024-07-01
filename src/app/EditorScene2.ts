@@ -493,11 +493,11 @@ export async function createEditor() {
 	// World.add_Child(light5);
 
 	const light6 = new SpotLight3D();
-	light6.color = Vector3.create(1, 1, 0);
+	light6.color = Vector3.create(1, 0, 0);
 	light6.angle = Pi / 10;
-	light6.local_position = Vector3.create(100, 0, 100);
+	light6.local_position = Vector3.create(200, -50, 200);
 	light6.local_rotation = Euler.create(0, Pi / 4, 0);
-	light6.intensity = 0.5;
+	light6.intensity = 1;
 	World.add_Child(light6);
 
 	// let t = 0;
@@ -539,18 +539,19 @@ export async function createEditor() {
 	// 	}
 	// });
 
-	const pln_geo = new CylinderGeometry3DResource();
+	const pln_geo = new BoxGeometry3DResource();
 	pln_geo.option = {
-		height: 2.3,
+		// height: 2.3,
 	}
 	const normal = new NormalMaterial3DResource();
 	const ground = new MeshInstance3D();
 	ground.geometry = pln_geo;
 	ground.material = pbr;
-	box_mat_test_2.roughness = 1;
-	box_mat_test_2.metallic = 0;
-	ground.local_scale = Vector3.create(100, 100, 100);
-	ground.local_position = Vector3.create(0, -120, 0);
+	box_mat_test_2.roughness = 0.3;
+	box_mat_test_2.metallic = 1;
+	ground.local_scale = Vector3.create(200, 200, 200);
+	ground.local_rotation = Euler.create(0, Pi/4, 0);
+	ground.local_position = Vector3.create(0, -150, 0);
 	World.add_Child(ground);
 
 	// const light6 = new SpotLight3D();
@@ -633,7 +634,7 @@ export async function createEditor() {
 		scene.get_Child<MeshInstance3D>(0)!.material = box_mat_test;
 		scene.get_Child<MeshInstance3D>(0)!.local_position = Vector3.create(-200, -200, 200);
 		const spot = scene.get_Child<MeshInstance3D>(0)!.get_Child<SpotLight3D>(0)!;
-		spot.global_position = Vector3.create(200, 200, 0);
+		spot.global_position = Vector3.create(50, 75, 0);
 		spot.color = Vector3.create(1, 0, 0);
 		World.add_Child(scene);
 		const translate_grabber1 = new TranslateGrabber3D();
@@ -697,12 +698,15 @@ export async function createEditor() {
 	}
 
 	{
-		for (let i = 0; i < 32; i++) {
+		for (let i = 0; i < 16; i++) {
 			const light3 = new PointLight3D();
 			light3.color = Vector3.create(Math.random(), Math.random(), Math.random());
-			light3.local_position = Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200);
-			light3.intensity = 0.2;
-			light3.radius = 1;
+			light3.local_position = Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 100 + 200, (Math.random() - 0.5) * 200);
+			light3.intensity = 0.1;
+			light3.radius = 0.5;
+			light3.block_process = true;
+			light3.block_input = true;
+			light3.block_physics_process = true;
 			World.add_Child(light3);
 			EditorSceneTree.start_Tween(
 				new TweenLoop(
