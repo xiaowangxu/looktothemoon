@@ -171,7 +171,6 @@ export class ObjLoader {
             position_normals.push(this.normals[i], this.normals[i + 1], this.normals[i + 2]);
             i += 3;
         }
-        console.log(position_normals.length);
 
         const class_saver = new ClassSaver();
         const refid = ArrayGeometry3DResource.dump_Data(

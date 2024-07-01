@@ -29,5 +29,12 @@ coverage
 
 res/*.vfs
 res/*.vfs.gz
+res/*.stl
+res/*.obj
+res/*.glb
+res/*.png
+res/*.jpg
+res/*.jpeg
+res/*.svg
 src/system/fivepebble/ok-list.txt
 src/system/filesystem/fs_saver_loader/FileSystemSaverLoader.d.mts

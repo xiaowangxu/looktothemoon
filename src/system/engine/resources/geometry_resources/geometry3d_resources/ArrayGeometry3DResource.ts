@@ -9,6 +9,7 @@ import { PackedIndexArray, PackedArray } from "@/system/engine/classes/value_wra
 import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 import type { ClassReader } from "@/system/engine/classes/saver_loader/ClassWriterReader";
 import { RenderServer } from "@/system/engine/render_server/RenderServer";
+import type { RenderServerGeometrySurfaces } from "@/system/engine/render_server/geometry/RenderServerGeometry";
 
 export class ArrayGeometry3DResource extends Geometry3DResource {
 
@@ -61,7 +62,7 @@ export class ArrayGeometry3DResource extends Geometry3DResource {
         index: PackedIndexArray | undefined,
         vertex_length: number | undefined,
         bbox: Box3,
-        surfaces?: { offset: number, length: number }[],
+        surfaces?: RenderServerGeometrySurfaces,
         unique?: boolean,
         external?: string
     ) {

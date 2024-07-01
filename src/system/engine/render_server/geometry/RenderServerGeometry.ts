@@ -12,6 +12,9 @@ import type { BoxLike } from "@/system/fivepebble/geometries/BoxLike";
 import type { MatrixLike } from "@/system/fivepebble/linear_algebra/MatrixLike";
 import type { VectorLike } from "@/system/fivepebble/linear_algebra/VectorLike";
 
+export type RenderServerGeometrySurface = { offset: number, length: number };
+export type RenderServerGeometrySurfaces = RenderServerGeometrySurface[];
+
 export abstract class RenderServerGeometry<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>, Box extends BoxLike<Vec, Mat>> extends RenderServerObjectRefCounted {
 
     public readonly vertex_array_ref: ReadonlyRef<WebGPURenderElementVertexArray> = new ReadonlyRef(new WebGPURenderElementVertexArray(RenderServer.render_state, WebGPURenderStatePrimitiveType.Triangles, 0, 0));

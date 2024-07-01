@@ -45,6 +45,7 @@ import cubemap_y_ from 'res://cubemap/y_.png';
 import cubemap_z from 'res://cubemap/z.png';
 import cubemap_z_ from 'res://cubemap/z_.png';
 import huli from 'res://huli.obj?url';
+import cubemap from 'res://cubemap.jpg';
 import { ClassLoader, ClassSaver } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
 import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
 import { ResourceInstanceCache } from "@/system/engine/resources/Resource";
@@ -68,6 +69,8 @@ import matcap_11 from 'res://matcap-11.png';
 import matcap_12 from 'res://matcap-12.png';
 import matcap_13 from 'res://matcap-13.png';
 import matcap_14 from 'res://matcap-14.png';
+import monkey from 'res://monkey.stl?url';
+
 import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
 import { PackedSceneResource } from "@/system/engine/resources/packed_scene/PackedScene";
 import { LineGrabber3D } from "@/system/engine/nodes/node3ds/gizmo3ds/grabber3ds/LineGrabber3D";
@@ -346,34 +349,44 @@ export async function createEditor() {
 		image.onload = () => {
 			const { naturalWidth, naturalHeight } = image;
 			const texture = ImageTexture2DResource.create_Image(image, naturalWidth, naturalHeight, Infinity, true);
-			box_mat_test.normal_texture = texture;
 			pbr.normal_texture = texture;
 			// box_mat_test_2.normal_texture = texture;
 		};
 	}
 
-	{
-		const promises = Promise.all([
-			cubemap_x,
-			cubemap_x_,
-			cubemap_y,
-			cubemap_y_,
-			cubemap_z,
-			cubemap_z_,
-		].map(url => {
-			return new Promise<HTMLImageElement>((resolve, reject) => {
-				const image = new Image();
-				image.src = url;
-				image.onload = () => { resolve(image) };
-			});
-		}));
-		promises.then((images) => {
-			const image_options = images.map(img => ({ image: img, width: img.naturalWidth, height: img.naturalHeight }));
-			const texture = ImageTextureCubeMapResource.create_Images(image_options, Infinity, true);
-			// EditorViewport.world_3d?.visual_world.set_BackgroundTexture(texture);
 
-		});
+	{
+		const image = new Image();
+		image.src = cubemap;
+		image.onload = () => {
+			const { naturalWidth, naturalHeight } = image;
+			const texture = ImageTextureCubeMapResource.create_Image(image, naturalWidth, naturalHeight, Infinity, true);
+			EditorViewport.world_3d?.visual_world.set_BackgroundTexture(texture);
+		};
 	}
+
+	// {
+	// 	const promises = Promise.all([
+	// 		cubemap_x,
+	// 		cubemap_x_,
+	// 		cubemap_y,
+	// 		cubemap_y_,
+	// 		cubemap_z,
+	// 		cubemap_z_,
+	// 	].map(url => {
+	// 		return new Promise<HTMLImageElement>((resolve, reject) => {
+	// 			const image = new Image();
+	// 			image.src = url;
+	// 			image.onload = () => { resolve(image) };
+	// 		});
+	// 	}));
+	// 	promises.then((images) => {
+	// 		const image_options = images.map(img => ({ image: img, width: img.naturalWidth, height: img.naturalHeight }));
+	// 		const texture = ImageTextureCubeMapResource.create_Images(image_options, Infinity, true);
+	// 		// EditorViewport.world_3d?.visual_world.set_BackgroundTexture(texture);
+
+	// 	});
+	// }
 
 	// {
 	// 	const multi_geo = new MultiGeometry3DResource();
@@ -550,7 +563,7 @@ export async function createEditor() {
 	box_mat_test_2.roughness = 0.3;
 	box_mat_test_2.metallic = 1;
 	ground.local_scale = Vector3.create(200, 200, 200);
-	ground.local_rotation = Euler.create(0, Pi/4, 0);
+	ground.local_rotation = Euler.create(0, Pi / 4, 0);
 	ground.local_position = Vector3.create(0, -150, 0);
 	World.add_Child(ground);
 
@@ -603,7 +616,7 @@ export async function createEditor() {
 			huli.geometry = new ClassLoader(ResInstCache).fetch<ArrayGeometry3DResource>('sys://geometries/traffic_light.geometry.lttmbin').expect();
 			const mat = new PbrMaterial3DResource();
 			mat.metallic = 0;
-			mat.roughness = 1;
+			mat.roughness = 0.5;
 			// mat.color = Vector4.create(0.5, 0.4, 1, 1.0);
 			huli.material = mat;
 			huli.local_position = Vector3.create(0, 100, 0);
@@ -721,6 +734,20 @@ export async function createEditor() {
 				)
 			);
 		}
+	}
+
+	{
+		// fetch(monkey).then(r => r.arrayBuffer()).then(d => {
+		// 	const class_saver = new StlLoader().parse(d).expect();
+		// 	class_saver.save(undefined, 'sys://geometries/monkey.geometry.lttmbin');
+		// 	const monkey = new MeshInstance3D();
+		// 	monkey.geometry = new ClassLoader(ResInstCache).fetch<ArrayGeometry3DResource>('sys://geometries/monkey.geometry.lttmbin').expect();
+		// 	monkey.material = box_mat_test;
+		// 	monkey.local_position = Vector3.create(0, 100, 0);
+		// 	monkey.local_scale = Vector3.create(100, 100, 100);
+		// 	World.add_Child(monkey);
+		// });
+		
 	}
 
 	return EditorSceneTree;
