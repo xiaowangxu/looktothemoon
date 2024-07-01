@@ -331,6 +331,24 @@ export class RenderServerRenderMaterial extends RenderServerMaterial<RenderServe
 		);
 	}
 
+	/**
+	 * internal builtins:
+	 * 
+	 * instance_transform: mat4x4f
+	 * 
+	 * instance_normal: mat3x3f
+	 * 
+	 * instance_color: vec4f
+	 * 
+	 * tbn: mat3x3f
+	 * 
+	 * internal outputs:
+	 * 
+	 * color: vec4f
+	 * 
+	 * normal: vec4f(normal, 1.0)
+	 * 
+	 */
 	static create_PipelineCacheFromCode(
 		pass: RenderServerRenderMaterialUsablePass,
 		attributes: Iterable<[name: string, location: number, type: WebGPURenderStateAttributeType]>,

@@ -195,9 +195,9 @@ export class CylinderGeometry3DResource extends Geometry3DResource implements Re
             position_bottom_side_buffer[vec6_idx + 4] = position_top_side_buffer[vec6_idx + 4] = slope / normal_length;
             position_bottom_side_buffer[vec6_idx + 5] = position_top_side_buffer[vec6_idx + 5] = z / normal_length;
             position_bottom_cap_buffer[vec6_idx + 3] = position_top_cap_buffer[vec6_idx + 3] = 0;
-            position_bottom_cap_buffer[vec6_idx + 4] = position_top_cap_buffer[vec6_idx + 4] = 0;
-            position_top_cap_buffer[vec6_idx + 5] = 1;
-            position_bottom_cap_buffer[vec6_idx + 5] = -1;
+            position_bottom_cap_buffer[vec6_idx + 5] = position_top_cap_buffer[vec6_idx + 5] = 0;
+            position_top_cap_buffer[vec6_idx + 4] = 1;
+            position_bottom_cap_buffer[vec6_idx + 4] = -1;
 
             const u = 1 - i / segments;
             uv_top_side_buffer[vec2_idx + 0] = u;
@@ -214,9 +214,9 @@ export class CylinderGeometry3DResource extends Geometry3DResource implements Re
                 position_bottom_pole_buffer[vec6_idx + 2] = 0;
 
                 position_bottom_pole_buffer[vec6_idx + 3] = position_top_pole_buffer[vec6_idx + 3] = 0;
-                position_bottom_pole_buffer[vec6_idx + 4] = position_top_pole_buffer[vec6_idx + 4] = 0;
-                position_top_pole_buffer[vec6_idx + 5] = 1;
-                position_bottom_pole_buffer[vec6_idx + 5] = -1;
+                position_bottom_pole_buffer[vec6_idx + 5] = position_top_pole_buffer[vec6_idx + 5] = 0;
+                position_top_pole_buffer[vec6_idx + 4] = 1;
+                position_bottom_pole_buffer[vec6_idx + 4] = -1;
 
                 uv_bottom_pole_buffer[vec2_idx + 0] = uv_top_pole_buffer[vec2_idx + 0] = u;
                 uv_bottom_pole_buffer[vec2_idx + 1] = uv_top_pole_buffer[vec2_idx + 1] = 1;

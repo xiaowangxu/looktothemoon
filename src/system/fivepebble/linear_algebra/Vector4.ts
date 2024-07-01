@@ -29,7 +29,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
     public set g(val: number) { this.y = val; }
     public set b(val: number) { this.z = val; }
     public set a(val: number) { this.w = val; }
-    public get_PlainColor(mult_alpha: boolean = false) { return new Vector3(this.x * this.w, this.y * this.w, this.z * this.w); }
+    public get_PlainColor(mult_alpha: boolean = false, target: Vector3) { return target.set(this.x * this.w, this.y * this.w, this.z * this.w); }
     public get luminance() { return 0.2126 * this.r + 0.7152 * this.g + 0.0722 * this.b; }
 
     get dimension(): number { return 4; }

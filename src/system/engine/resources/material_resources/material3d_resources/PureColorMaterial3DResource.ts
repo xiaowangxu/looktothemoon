@@ -20,7 +20,7 @@ const PureColorMaterial3DUniformLayout = new RefCacher(() => {
 	return layout;
 });
 
-const PureColorMaterial3DSolidPipelineCacheSet = new RefCacher(() => {
+const PureColorMaterial3DPipelineCacheSet = new RefCacher(() => {
 	const pipeline_cache_set = RenderServerRenderMaterial.create_PipelineCacheSet(
 		// attributes
 		[
@@ -104,7 +104,7 @@ export class PureColorMaterial3DResource extends MaterialResource {
 		super();
 		this.uniform_group_ref.expect.set_BufferUniform(0, this.uniform_buffer_ref.expect);
 		this.render_server_material.add_UniformBuffer(this.uniform_buffer_ref.expect, this.uniform_array_buffer);
-		PureColorMaterial3DSolidPipelineCacheSet.get().set_RenderServerMaterialPipelineCaches(this.render_server_material, this.uniform_group_ref.expect);
+		PureColorMaterial3DPipelineCacheSet.get().set_RenderServerMaterialPipelineCaches(this.render_server_material, this.uniform_group_ref.expect);
 		this.update_UniformBuffer();
 	}
 
