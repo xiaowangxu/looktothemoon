@@ -27,10 +27,10 @@
             style="position: absolute; overflow: hidden; left: 0%; top: 0%; right: 0%; bottom: 0%; pointer-events: initial;">
         </div>
         <!-- <div id="viewport-1"
-            style="outline: black solid 1px; outline-offset: -2px; position: absolute; overflow: hidden; left: 50%; top: 0%; right: 0%; bottom: 0%; pointer-events: initial;">
-        </div> -->
-        <!-- <div id="viewport-2"
-            style="outline: black solid 1px; outline-offset: -2px; position: absolute; overflow: hidden; left: 50%; top: 50%; right: 0%; bottom: 0%; pointer-events: initial;">
+            style="position: absolute; overflow: hidden; left: 50%; top: 0%; right: 0%; bottom: 0%; pointer-events: initial;">
+        </div>
+        <div id="viewport-2"
+            style="position: absolute; overflow: hidden; left: 50%; top: 50%; right: 0%; bottom: 0%; pointer-events: initial;">
         </div> -->
 
     </div>

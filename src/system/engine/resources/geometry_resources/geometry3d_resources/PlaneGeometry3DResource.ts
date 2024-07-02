@@ -8,11 +8,18 @@ import { RenderServerGeometryAttributeLayoutBuffer } from "../../../render_serve
 import { Geometry3DResource } from "./Geometry3DResource";
 import type { ResourceSetOptionAllAtOnce } from "../../Resource";
 
+export enum PlaneGeometryDirection {
+    YPositive, YNegative,
+    XPositive, XNegative,
+    ZPositive, ZNegative,
+}
+
 export type PlaneGeometry3DResourceOption = {
     width?: number,
     depth?: number,
     width_segments?: number,
     depth_segments?: number,
+    direction?: PlaneGeometryDirection,
 }
 
 export class PlaneGeometry3DResource extends Geometry3DResource implements ResourceSetOptionAllAtOnce<PlaneGeometry3DResourceOption> {
@@ -25,11 +32,13 @@ export class PlaneGeometry3DResource extends Geometry3DResource implements Resou
     protected _depth: number = 1;
     protected _width_segments: number = 1;
     protected _depth_segments: number = 1;
+    protected _direction: PlaneGeometryDirection = PlaneGeometryDirection.YPositive;
 
     public get width() { return this._width; }
     public get depth() { return this._depth; }
     public get width_segments() { return this._width_segments; }
     public get depth_segments() { return this._depth_segments; }
+    public get direction() { return this._direction; }
 
     public set width(width: number) {
         width = Math.max(width, 0);
@@ -56,6 +65,12 @@ export class PlaneGeometry3DResource extends Geometry3DResource implements Resou
         depth_segments = Math.max(Math.floor(depth_segments), 1);
         if (this._depth_segments !== depth_segments) {
             this._depth_segments = depth_segments;
+            this.build();
+        }
+    }
+    public set direction(direction: PlaneGeometryDirection) {
+        if (this._direction !== direction) {
+            this._direction = direction;
             this.build();
         }
     }
@@ -90,6 +105,12 @@ export class PlaneGeometry3DResource extends Geometry3DResource implements Resou
                 this._depth_segments = depth_segments;
             }
         }
+        if (option.direction !== undefined) {
+            if (this._direction !== option.direction) {
+                changed = true;
+                this._direction = option.direction;
+            }
+        }
         if (changed) {
             this.build();
         }
@@ -105,6 +126,7 @@ export class PlaneGeometry3DResource extends Geometry3DResource implements Resou
         const depth = this.depth;
         const width_segments = this.width_segments;
         const depth_segments = this.depth_segments;
+        const direction = this.direction;
 
         const vertex_count = (width_segments + 1) * (depth_segments + 1);
 
@@ -120,6 +142,8 @@ export class PlaneGeometry3DResource extends Geometry3DResource implements Resou
         const segment_width = width / width_segments;
         const segment_depth = depth / depth_segments;
 
+        const normal_negate = direction === PlaneGeometryDirection.XNegative || direction === PlaneGeometryDirection.YNegative || direction === PlaneGeometryDirection.ZNegative;
+
         let vertex_idx = 0;
         for (let iy = 0; iy < depth_segments_1; iy++) {
             const y = iy * segment_depth - depth_half;
@@ -128,16 +152,79 @@ export class PlaneGeometry3DResource extends Geometry3DResource implements Resou
                 const vec6_idx = vertex_idx * 6;
                 const vec2_idx = vertex_idx * 2;
                 // position
-                position_normal_buffer.data[vec6_idx + 0] = x;
-                position_normal_buffer.data[vec6_idx + 1] = 0;
-                position_normal_buffer.data[vec6_idx + 2] = -y;
+                switch (direction) {
+                    case PlaneGeometryDirection.YPositive:
+                    case PlaneGeometryDirection.YNegative: {
+                        position_normal_buffer.data[vec6_idx + 0] = x;
+                        position_normal_buffer.data[vec6_idx + 1] = 0;
+                        position_normal_buffer.data[vec6_idx + 2] = -y;
+                        break;
+                    }
+                    case PlaneGeometryDirection.XPositive:
+                    case PlaneGeometryDirection.XNegative: {
+                        position_normal_buffer.data[vec6_idx + 0] = 0;
+                        position_normal_buffer.data[vec6_idx + 1] = -y;
+                        position_normal_buffer.data[vec6_idx + 2] = x;
+                        break;
+                    }
+                    case PlaneGeometryDirection.ZPositive:
+                    case PlaneGeometryDirection.ZNegative: {
+                        position_normal_buffer.data[vec6_idx + 0] = x;
+                        position_normal_buffer.data[vec6_idx + 1] = -y;
+                        position_normal_buffer.data[vec6_idx + 2] = 0;
+                        break;
+                    }
+                }
                 // normal
-                position_normal_buffer.data[vec6_idx + 3] = 0;
-                position_normal_buffer.data[vec6_idx + 4] = 1;
-                position_normal_buffer.data[vec6_idx + 5] = 0;
+                switch (direction) {
+                    case PlaneGeometryDirection.YPositive:
+                    case PlaneGeometryDirection.YNegative: {
+                        position_normal_buffer.data[vec6_idx + 3] = normal_negate ? 0 : 0;
+                        position_normal_buffer.data[vec6_idx + 4] = normal_negate ? -1 : 1;
+                        position_normal_buffer.data[vec6_idx + 5] = normal_negate ? 0 : 0;
+                        break;
+                    }
+                    case PlaneGeometryDirection.XPositive:
+                    case PlaneGeometryDirection.XNegative: {
+                        position_normal_buffer.data[vec6_idx + 3] = normal_negate ? -1 : 1;
+                        position_normal_buffer.data[vec6_idx + 4] = normal_negate ? 0 : 0;
+                        position_normal_buffer.data[vec6_idx + 5] = normal_negate ? 0 : 0;
+                        break;
+                    }
+                    case PlaneGeometryDirection.ZPositive:
+                    case PlaneGeometryDirection.ZNegative: {
+                        position_normal_buffer.data[vec6_idx + 3] = normal_negate ? 0 : 0;
+                        position_normal_buffer.data[vec6_idx + 4] = normal_negate ? 0 : 0;
+                        position_normal_buffer.data[vec6_idx + 5] = normal_negate ? -1 : 1;
+                        break;
+                    }
+                }
                 // uv
-                uv_buffer.data[vec2_idx + 0] = ix / width_segments;
-                uv_buffer.data[vec2_idx + 1] = 1 - (iy / depth_segments);
+                switch (direction) {
+                    case PlaneGeometryDirection.YPositive: {
+                        uv_buffer.data[vec2_idx + 0] = (ix / width_segments);
+                        uv_buffer.data[vec2_idx + 1] = iy / depth_segments;
+                        break;
+                    }
+                    case PlaneGeometryDirection.XPositive:
+                    case PlaneGeometryDirection.ZNegative: {
+                        uv_buffer.data[vec2_idx + 0] = 1 - (ix / width_segments);
+                        uv_buffer.data[vec2_idx + 1] = 1 - (iy / depth_segments);
+                        break;
+                    }
+                    case PlaneGeometryDirection.ZPositive:
+                        {
+                            uv_buffer.data[vec2_idx + 0] = ix / width_segments;
+                            uv_buffer.data[vec2_idx + 1] = 1 - (iy / depth_segments);
+                            break;
+                        }
+                    case PlaneGeometryDirection.YNegative:
+                    case PlaneGeometryDirection.XNegative: {
+                        uv_buffer.data[vec2_idx + 0] = ix / width_segments;
+                        uv_buffer.data[vec2_idx + 1] = 1 - (iy / depth_segments);
+                        break;
+                    }
+                }
                 vertex_idx++;
             }
         }
@@ -145,6 +232,8 @@ export class PlaneGeometry3DResource extends Geometry3DResource implements Resou
         const index_count = (width_segments * depth_segments) * 6;
 
         const index_buffer = new WebGPURenderElementIndexBuffer(RenderServer.render_state, WebGPURenderStateBufferType.Index, WebGPURenderStateBufferUsage.CopyDst, index_count);
+
+        const clockwise = direction === PlaneGeometryDirection.XNegative || direction === PlaneGeometryDirection.YNegative || direction === PlaneGeometryDirection.ZPositive;
 
         let index_idx = 0;
         for (let iy = 0; iy < depth_segments; iy++) {
@@ -154,12 +243,22 @@ export class PlaneGeometry3DResource extends Geometry3DResource implements Resou
                 const c = (ix + 1) + width_segments_1 * (iy + 1);
                 const d = (ix + 1) + width_segments_1 * iy;
                 const idx = index_idx * 6;
-                index_buffer.data[idx + 0] = a;
-                index_buffer.data[idx + 1] = d;
-                index_buffer.data[idx + 2] = b;
-                index_buffer.data[idx + 3] = b;
-                index_buffer.data[idx + 4] = d;
-                index_buffer.data[idx + 5] = c;
+                if (clockwise) {
+                    index_buffer.data[idx + 0] = a;
+                    index_buffer.data[idx + 1] = b;
+                    index_buffer.data[idx + 2] = d;
+                    index_buffer.data[idx + 3] = b;
+                    index_buffer.data[idx + 4] = c;
+                    index_buffer.data[idx + 5] = d;
+                }
+                else {
+                    index_buffer.data[idx + 0] = a;
+                    index_buffer.data[idx + 1] = d;
+                    index_buffer.data[idx + 2] = b;
+                    index_buffer.data[idx + 3] = b;
+                    index_buffer.data[idx + 4] = d;
+                    index_buffer.data[idx + 5] = c;
+                }
                 index_idx++;
             }
         }

@@ -266,10 +266,8 @@ function onOpened() {
     last_color.value = [...value.value];
 }
 function onClosed() {
-    const [r, g, b, a] = value.value;
-    const [_r, _g, _b, _a] = inner_color.value;
     addRecentColor(inner_color.value);
-    if (r !== _r || g !== _g || b !== _b || a !== _a) {
+    if (color_changed.value) {
         setValueOnChange([...inner_color.value]);
     }
 }

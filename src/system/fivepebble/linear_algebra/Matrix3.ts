@@ -41,6 +41,7 @@ export class Matrix3 implements MatrixLike<Matrix3> {
     // used in Euler set_* to overcome ref init error
     public static readonly $tmp_matrix3_for_euler_0: Matrix3 = new Matrix3();
     static readonly #tmp_vector3_0: Vector3 = new Vector3();
+    static readonly #tmp_vector3_1: Vector3 = new Vector3();
     static readonly #tmp_matrix3_1: Matrix3 = new Matrix3();
     static readonly #tmp_euler_0: Euler = new Euler();
 
@@ -147,6 +148,21 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         return this;
     }
 
+    public set_LookAt(target: Vector3, up: Vector3) {
+        const v_z = Matrix3.#tmp_vector3_0.normalize(target);
+        v_z.negate(v_z);
+        const v_x = Matrix3.#tmp_vector3_1.cross(up, v_z);
+        v_x.normalize(v_x);
+        this.n11 = v_x.x; this.n13 = v_z.x;
+        this.n21 = v_x.y; this.n23 = v_z.y;
+        this.n31 = v_x.z; this.n33 = v_z.z;
+        v_x.cross(v_z, v_x);
+        this.n12 = v_x.x;
+        this.n22 = v_x.y;
+        this.n32 = v_x.z;
+        return this;
+    }
+
     public set_Euler(euler: Euler) {
         const { x, y, z, order } = euler;
         const a = Math.cos(x), b = Math.sin(x);
@@ -244,7 +260,7 @@ export class Matrix3 implements MatrixLike<Matrix3> {
         return this;
     }
 
-    public set_NormalTransform(transform : Matrix4) {
+    public set_NormalTransform(transform: Matrix4) {
         const {
             n11, n12, n13,
             n21, n22, n23,

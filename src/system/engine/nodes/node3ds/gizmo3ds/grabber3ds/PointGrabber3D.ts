@@ -78,7 +78,7 @@ export class PointGrabber3D extends GrabberElement3D<Vector3> {
         this.update_Visual();
     }
 
-    private readonly _highlight_color: Color = Color.color8(0xff, 0xbb, 0x00);
+    private readonly _highlight_color: Color = Color.color8code(0xFF8400FF);
     public get highlight_color() { return this._highlight_color.clone(); }
     public set highlight_color(highlight_color: Color) {
         this._highlight_color.copy(highlight_color);

@@ -9,8 +9,6 @@ import { SignalEmitter } from "../utils/SignalEmitter";
 
 export class SceneTree {
 
-    static readonly world_before_render_triggered: Set<number> = new Set();
-
     private readonly input_action_map: Ref<ShortCutActionMap> = new Ref(new ShortCutActionMap());
     private readonly root: Node;
     private readonly clock: Clock = new Clock();
@@ -53,6 +51,8 @@ export class SceneTree {
     }
 
     private current_viewport: Viewport | undefined = undefined;
+    private rendered_viewports = new Set<Viewport>();
+
     private process_Loop(time: number, delta: number, frame_id: number) {
         this.time = time;
         this.delta = delta;
@@ -64,25 +64,22 @@ export class SceneTree {
         this.tween_manager.process_Tweens(delta);
         this.root.propagate_InternalAfterProcess(this.delta);
 
-        const world_before_render_triggered = SceneTree.world_before_render_triggered;
-        world_before_render_triggered.clear();
-        let redundant_before_render = false;
+        this.rendered_viewports.clear();
         this.sort_Viewports();
         for (const viewport of this.sorted_viewports) {
             this.current_viewport = viewport;
             // update viewport size / setup camera etc.
             viewport.trigger_BeforeRender();
-            // scene tree 
-            this.root.propagate_InternalBeforeRender(this.delta, redundant_before_render);
+            // scene tree, render the renderable viewport
+            const viewport_root = viewport.get_UsableViewport() ?? viewport;
+            const redundant = this.rendered_viewports.has(viewport_root);
+            viewport_root.propagate_InternalBeforeRender(this.delta, redundant, viewport_root);
+            this.rendered_viewports.add(viewport_root);
             // world trigger update lights / shadow / visual instance etc.
-            const world = viewport.world_3d;
-            if (world !== undefined && !world_before_render_triggered.has(world.rid)) {
-                world_before_render_triggered.add(world.rid);
-                world.trigger_BeforeRender(this);
-            }
+            const world = viewport_root.world_3d;
+            if (world !== undefined && !redundant) world.trigger_BeforeRender(this);
             viewport.render();
             this.current_viewport = undefined;
-            redundant_before_render = true;
         }
 
         // queue free

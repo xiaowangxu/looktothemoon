@@ -220,14 +220,14 @@ export class Node extends ClassBase {
         if (this.is_inside_tree) this._notification(NodeNotification.InternalAfterPhysicsProcess);
     }
 
-    public propagate_InternalBeforeRender(delta: number, redundant: boolean) {
+    public propagate_InternalBeforeRender(delta: number, redundant: boolean, root: Viewport) {
         // internal after process
         if (!redundant || !(this.block_redundant_before_render_notification)) {
             this._notification(NodeNotification.InternalBeforeRender);
         }
         this.is_propagating++;
         for (const child of this._children) {
-            child.propagate_InternalBeforeRender(delta, redundant && !this.propergate_redundant_before_render_reset);
+            child.propagate_InternalBeforeRender(delta, redundant && !this.propergate_redundant_before_render_reset, root);
         }
         this.is_propagating--;
     }
@@ -496,6 +496,11 @@ export class Viewport extends Node {
     public get_Size(target: Vector2) { return this.render_server_viewport.get_RawSize(target); }
     public get background() { return this.render_server_viewport.background; }
     public set background(background: boolean) { this.render_server_viewport.set_Background(background); }
+
+    public propagate_InternalBeforeRender(delta: number, redundant: boolean, root: Viewport): void {
+        if (root === this) super.propagate_InternalBeforeRender(delta, redundant, root);
+        return;
+    }
 
     //#endregion
 
@@ -800,13 +805,17 @@ export class Viewport extends Node {
         this.is_propagating--;
     }
 
-    public get_RenderableWorld3D(): World3D | undefined {
-        if (this.world_3d !== undefined) return this.world_3d;
+    public get_UsableViewport(): Viewport | undefined {
+        if (this.world_3d !== undefined) return this;
         const parent = this.get_Parent();
         if (parent !== undefined) {
-            return parent.get_Viewport()?.get_RenderableWorld3D();
+            return parent.get_Viewport()?.get_UsableViewport();
         }
         return undefined;
+    }
+
+    protected get_UsableWorld3D() {
+        return this.get_UsableViewport()?.world_3d;
     }
 
     //#endregion
@@ -828,7 +837,7 @@ export class Viewport extends Node {
         const once = this.update_mode === ViewportUpdateMode.Once;
         if (once) this.update_mode = ViewportUpdateMode.Never;
         this.signal_before_render.trigger();
-        const world_3d = this.get_RenderableWorld3D();
+        const world_3d = this.get_UsableWorld3D();
         const camera_3d = this.get_Camera3D();
         const time = this.get_SceneTree()!.time;
         if (camera_3d !== undefined && world_3d !== undefined) {
@@ -844,7 +853,7 @@ export class Viewport extends Node {
      */
     public process_PhysicsPicking(): void {
         if (this.physics_picking && this.input_manager.is_mouse_inside) {
-            const picking_world = this.get_RenderableWorld3D()?.picking_world;
+            const picking_world = this.get_UsableWorld3D()?.picking_world;
             const camera_3d = this.get_Camera3D();
             if (picking_world === undefined ||
                 camera_3d === undefined ||

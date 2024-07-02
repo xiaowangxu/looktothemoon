@@ -324,11 +324,61 @@ const EffectFxaaPipeline = new RefCacher(() => {
     @fragment
     fn fs_main(vary: VertexOutput) -> FragmentOutput {
         var out: FragmentOutput;
+
         // let color = fxaa(color, sample, vary.frag_coord, world_env_uniform_params.screen_size, vary.rgb_NW, vary.rgb_NE, vary.rgb_SW, vary.rgb_SE, vary.rgb_M);
         let color = textureSample(color, sample, vary.uv);
-        // let tone_mapped = vec4f(aces_tone_mapping(color.rgb, 0.85), color.a);
-        out.color = color;
+        
+        let tone_mapped = vec4f(aces_tone_mapping(color.rgb, 0.8), color.a);
+        
+        out.color = tone_mapped;
+        
         return out;
+    }
+
+    fn to_srgb(color: vec3f) -> vec3f {
+        var _color: vec3f;
+        var r = color.r;
+        _color.r = select(1.055 * pow(r, 1.0 / 2.4) - 0.055, 12.92 * r, r <= 0.0031308);
+        var g = color.g;
+        _color.g = select(1.055 * pow(g, 1.0 / 2.4) - 0.055, 12.92 * g, g <= 0.0031308);
+        var b = color.b;
+        _color.b = select(1.055 * pow(b, 1.0 / 2.4) - 0.055, 12.92 * b, b <= 0.0031308);
+        return _color;
+    }
+
+    fn linear_tone_mapping(color: vec3f, adapted_lum: f32) -> vec3f {
+    	return color;
+    }
+
+    fn aces_tone_mapping(color: vec3f, adapted_lum: f32) -> vec3f {
+    	const A: f32 = 2.51f;
+    	const B: f32 = 0.03f;
+    	const C: f32 = 2.43f;
+    	const D: f32 = 0.59f;
+    	const E: f32 = 0.14f;
+    	var _color = color * adapted_lum;
+    	return (_color * (A * _color + B)) / (_color * (C * _color + D) + E);
+    }
+
+    fn reinhard_tone_mapping(color: vec3f, adapted_lum: f32) -> vec3f {
+        const MIDDLE_GREY: f32 = 1;
+        var _color = color * (MIDDLE_GREY / adapted_lum);
+        return _color / (1.0 + _color);
+    }
+
+    fn filmic_f(x: vec3f) -> vec3f {
+    	const A: f32 = 0.22f;
+    	const B: f32 = 0.30f;
+    	const C: f32 = 0.10f;
+    	const D: f32 = 0.20f;
+    	const E: f32 = 0.01f;
+    	const F: f32 = 0.30f;
+    	return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
+    }
+
+    fn filmic_tone_mapping(color: vec3f, adapted_lum: f32) -> vec3f {
+    	const WHITE: vec3f = vec3f(11.2);
+    	return filmic_f(1.6f * adapted_lum * color) / filmic_f(WHITE);
     }
 
     fn fxaa(tex: texture_2d<f32>, sample: sampler, fragCoord: vec2f, resolution: vec2f, v_rgbNW: vec2f, v_rgbNE: vec2f, v_rgbSW: vec2f, v_rgbSE: vec2f, v_rgbM: vec2f) -> vec4f {
@@ -380,16 +430,6 @@ const EffectFxaaPipeline = new RefCacher(() => {
 	    	return vec4f(0.0, 0.0, 0.0, color_output.a);
 	    }
         return color_output;
-    }
-
-    fn aces_tone_mapping(color: vec3f, adapted_lum: f32) -> vec3f {
-    	const A: f32 = 2.51f;
-    	const B: f32 = 0.03f;
-    	const C: f32 = 2.43f;
-    	const D: f32 = 0.59f;
-    	const E: f32 = 0.14f;
-    	var _color = color * adapted_lum;
-    	return (_color * (A * _color + B)) / (_color * (C * _color + D) + E);
     }
     `;
 
@@ -758,7 +798,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     //#region Lights Uniform
 
     protected readonly lights_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(RenderServer.lights_uniform_layout).expect());
-    protected readonly lights_background_texture_view_ref = new ReadonlyRef(RenderServer.render_state.create_TextureView(RenderServer.get_DefaultTexture(RenderServerDefaultTextureType.CubeBlack).texture_ref.expect, WebGPURenderStateTextureDimension.CubeMap).expect());
+    protected readonly lights_background_texture_view_ref = new ReadonlyRef(RenderServer.get_DefaultTexture(RenderServerDefaultTextureType.CubeBlack).texture_view_ref.expect);
     protected readonly lights_cluster_data_ref = new ReadonlyRef(new RenderServerLightClusterData());
 
     //#endregion

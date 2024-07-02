@@ -42,9 +42,9 @@ export class TranslateGrabber3D extends Grabber3D<Vector3> {
     constructor() {
         super();
 
-        const red = 0xef4a56ff;
-        const green = 0x04b973ff;
-        const blue = 0x365ff6ff;
+        const red = 0xDA2530FF;
+        const green = 0x1BAF4AFF;
+        const blue = 0x0A4DFFFF;
         const grey = 0x606060ff;
 
         this.on_RenderQueueChanged();

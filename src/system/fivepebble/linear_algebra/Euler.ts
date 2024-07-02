@@ -36,7 +36,7 @@ export class Euler implements Cloneable<Euler>, Copyable<Euler>, Equality<Euler>
         return this.set_RotateMatrix(Matrix3.$tmp_matrix3_for_euler_0.set_Quaternion(quat), order);
     }
 
-    public set_RotateMatrix(matrix: Matrix3, order: EulerOrder) {
+    public set_RotateMatrix(matrix: Matrix3, order: EulerOrder = EulerOrder.XYZ) {
         // assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
         const m11 = matrix.n11, m12 = matrix.n12, m13 = matrix.n13;
         const m21 = matrix.n21, m22 = matrix.n22, m23 = matrix.n23;

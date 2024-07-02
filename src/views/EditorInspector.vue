@@ -148,7 +148,7 @@
                     </SunInspectorRow>
 
                     <SunInspectorRow label="颜色">
-                        <SunColorPicker :model-value="[1.0, 0.0, 0.0, 1.0]" />
+                        <SunColorPicker v-model:model-value="color" @input="onChange"/>
                     </SunInspectorRow>
 
                     <SunInspectorRow label="名称">
@@ -193,6 +193,13 @@ import SunControlGroupRow from '../sundesign/controlgroup/SunControlGroupRow.vue
 import SunHSlider from '@/sundesign/slider/SunHSlider.vue';
 import SunButtonPopupNoScroll from '@/sundesign/buttonpopup/SunButtonPopupNoScroll.vue';
 import { RefreshCcwDot, Save, File, CircleSlash } from 'lucide-vue-next';
+import { ref } from 'vue';
+import type { ColorData } from '@/sundesign/colorpicker/SunColorPickerConstants';
 
+const color = ref<ColorData>([1.0, 0.0, 0.0, 1.0]);
+
+function onChange(color: ColorData) {
+    (window as any).set_Color.trigger(color);
+}
 
 </script>
