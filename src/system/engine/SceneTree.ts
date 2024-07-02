@@ -1,11 +1,12 @@
 import { Clock } from "../utils/Clock";
 import { ShortCutActionMap } from "./inputs/InputActionMap";
-import { Singletion } from "./singletions/Singletion";
+import { Singleton } from "./singletions/Singleton";
 import { Node, Viewport } from "./nodes/Node";
 import { Ref } from "../utils/RefCounted";
 import { clearAnimationInterval, setAnimationInterval } from "../utils/AnimationInterval";
 import { TweenManager, type Tween } from "./Tween";
 import { SignalEmitter } from "../utils/SignalEmitter";
+import { SettingsSingleton } from "./singletions/SettingsSingletion";
 
 export class SceneTree {
 
@@ -30,7 +31,7 @@ export class SceneTree {
     public readonly signal_after_loop: SignalEmitter<() => void> = new SignalEmitter();
 
     private readonly tween_manager: TweenManager = new TweenManager();
-    private readonly singletions: Map<string, Singletion> = new Map();
+    private readonly singletions: Map<string, Singleton> = new Map();
     private readonly viewports: Set<Viewport> = new Set();
     private readonly sorted_viewports: Viewport[] = [];
     private readonly linked_trees: Set<SceneTree> = new Set();
@@ -38,6 +39,7 @@ export class SceneTree {
 
     constructor(root: Node) {
         if (root.get_Parent() !== undefined || root.ready) throw new Error('<SceneTree> constructor: root is invalid');
+        this.register_Singleton(SettingsSingleton);
         this.root = root;
         this.root.set_SceneTree(this);
     }
@@ -119,13 +121,13 @@ export class SceneTree {
 
     // apis
 
-    public register_Singleton(singletion: new (scene_tree: SceneTree) => Singletion) {
-        const name = (singletion as typeof Singletion).singleton_name;
+    public register_Singleton(singletion: new (scene_tree: SceneTree) => Singleton) {
+        const name = (singletion as typeof Singleton).singleton_name;
         if (this.singletions.has(name)) return;
         this.singletions.set(name, new singletion(this));
     }
 
-    public unregister_Singleton(singletion: typeof Singletion) {
+    public unregister_Singleton(singletion: typeof Singleton) {
         const name = singletion.singleton_name;
         if (this.singletions.has(name)) {
             this.singletions.get(name)!.dispose();
@@ -133,7 +135,7 @@ export class SceneTree {
         }
     }
 
-    public get_Singleton<T extends typeof Singletion>(singletion: T): InstanceType<T> | undefined {
+    public get_Singleton<T extends typeof Singleton>(singletion: T): InstanceType<T> | undefined {
         return this.singletions.get(singletion.singleton_name) as InstanceType<T> | undefined;
     }
 

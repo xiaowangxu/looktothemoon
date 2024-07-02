@@ -1,7 +1,8 @@
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
-import { Singletion } from "./Singletion";
+import { Singleton } from "./Singleton";
 
-export class GrabbingSingleton extends Singletion {
+export class GrabbingSingleton extends Singleton {
+    
     public static readonly singleton_name: string = "GrabbingSingleton";
 
     // signals

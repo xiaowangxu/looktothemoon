@@ -10,7 +10,7 @@ import { Vector3 } from '@/system/fivepebble/linear_algebra/Vector3';
 import { Vector2 } from '@/system/fivepebble/linear_algebra/Vector2';
 import { Euler } from '@/system/fivepebble/linear_algebra/Euler';
 import { Plane3 } from '@/system/fivepebble/geometries/Plane3';
-import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
+import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingleton";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { Camera3 } from "@/system/fivepebble/graphics/Camera3";
 import type { MouseInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseInputEvent";

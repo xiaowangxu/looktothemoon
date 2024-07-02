@@ -6,7 +6,7 @@ import { KeyInputEvent } from "@/system/engine/inputs/events/KeyInputEvent";
 import { MouseButton, MouseButtonInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseButtonInputEvent";
 import { ShortCut } from "@/system/engine/inputs/ShortCut";
 import { Color } from "@/system/fivepebble/graphics/Color";
-import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingletion";
+import { GrabbingSingleton } from "@/system/engine/singletions/GrabbingSingleton";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { World3D } from "@/system/engine/worlds/world3ds/World3D";
 import { OrbitCamera3D } from "@/system/engine/nodes/node3ds/camera3ds/OrbitCamera3D";

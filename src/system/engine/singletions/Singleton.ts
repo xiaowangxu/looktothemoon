@@ -1,6 +1,7 @@
 import { SceneTree } from "../SceneTree";
 
-export class Singletion {
+export class Singleton {
+    
     public static readonly singleton_name: string = "Singleton";
 
     public readonly scene_tree: SceneTree;

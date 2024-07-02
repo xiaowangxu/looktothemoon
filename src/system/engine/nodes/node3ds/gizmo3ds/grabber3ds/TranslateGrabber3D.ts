@@ -4,6 +4,8 @@ import { LineGrabber3D } from "./LineGrabber3D";
 import { PointGrabber3D } from "./PointGrabber3D";
 import { Euler } from "@/system/fivepebble/linear_algebra/Euler";
 import { Color } from "@/system/fivepebble/graphics/Color";
+import { SettingsSingleton } from "@/system/engine/singletions/SettingsSingletion";
+import { NodeNotification } from "../../../Node";
 
 export class TranslateGrabber3D extends Grabber3D<Vector3> {
     private readonly axis_x_grabber: LineGrabber3D = new LineGrabber3D();
@@ -42,22 +44,10 @@ export class TranslateGrabber3D extends Grabber3D<Vector3> {
     constructor() {
         super();
 
-        const red = 0xDA2530FF;
-        const green = 0x1BAF4AFF;
-        const blue = 0x0A4DFFFF;
-        const grey = 0x606060ff;
-
         this.on_RenderQueueChanged();
 
         this.axis_x_grabber.local_rotation = Euler.create(0, 0, - Math.PI / 2);
-        this.axis_x_grabber.color = Color.color8code(red);
-
-        this.axis_y_grabber.color = Color.color8code(green);
-
         this.axis_z_grabber.local_rotation = Euler.create(Math.PI / 2, 0, 0);
-        this.axis_z_grabber.color = Color.color8code(blue);
-
-        this.center_grabber.color = Color.color8code(grey);
 
         this.add_Child(this.axis_x_grabber);
         this.add_Child(this.axis_y_grabber);
@@ -120,11 +110,39 @@ export class TranslateGrabber3D extends Grabber3D<Vector3> {
         this.center_grabber.signal_grab_end.connect(grab_end);
     }
 
+    protected update_VisualFromSettings() {
+        const setting = this.get_SceneTree()?.get_Singleton(SettingsSingleton);
+        const red = setting?.get_Setting('editor/colors/red', 0xff0000ff);
+        const green = setting?.get_Setting('editor/colors/green', 0x00ff00ff);
+        const blue = setting?.get_Setting('editor/colors/blue', 0x0000ffff);
+        const grey = setting?.get_Setting('editor/colors/grey', 0x707070ff);
+        const highlight = setting?.get_Setting('editor/colors/highlight', 0xff0070ff);
+        this.axis_x_grabber.color = Color.color8code(red);
+        this.axis_y_grabber.color = Color.color8code(green);
+        this.axis_z_grabber.color = Color.color8code(blue);
+        this.center_grabber.color = Color.color8code(grey);
+        const highlight_color = Color.color8code(highlight);
+        this.center_grabber.highlight_color = highlight_color;
+        this.axis_x_grabber.highlight_color = highlight_color;
+        this.axis_y_grabber.highlight_color = highlight_color;
+        this.axis_z_grabber.highlight_color = highlight_color;
+    }
+
     public set_TranslatePosition(position: Vector3) {
         this.local_position = position;
         this.axis_x_grabber.local_position = position;
         this.axis_y_grabber.local_position = position;
         this.axis_z_grabber.local_position = position;
         this.center_grabber.local_position = position;
+    }
+
+    public _notification(what: NodeNotification): void {
+        switch (what) {
+            case NodeNotification.EnteredTree: {
+                this.update_VisualFromSettings();
+                break;
+            }
+        }
+        super._notification(what);
     }
 }
