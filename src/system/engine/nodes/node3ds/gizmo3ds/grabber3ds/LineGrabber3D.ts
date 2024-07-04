@@ -13,7 +13,7 @@ import type { MouseInputEvent } from "@/system/engine/inputs/events/mouse_events
 import { NodeNotification } from "../../../Node";
 import { PickingArea3D } from "../../physics3ds/PickingArea3D";
 import { PickingShape3D } from "../../physics3ds/PickingShape3D";
-import { PickingCylinderResource } from "@/system/engine/resources/picking_shape_resources/PickingCylinderResource";
+import { CylinderPickingShape3DResource } from "@/system/engine/resources/picking_shape_resources/picking_shape3d_resources/CylinderPickingShape3DResource";
 import { Ray3 } from "@/system/fivepebble/geometries/Ray3";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { out } from "@/system/utils/Type";
@@ -43,7 +43,7 @@ const ArrowHeadGeometry = new RefCacher(() => {
 });
 
 const LineGrabberPickingShape = new RefCacher(() => {
-    const picking_shape = new PickingCylinderResource();
+    const picking_shape = new CylinderPickingShape3DResource();
     picking_shape.radius = 0.12;
     return picking_shape;
 });

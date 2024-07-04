@@ -7,6 +7,7 @@ import { ArrayGeometry3DResource } from "../../resources/geometry_resources/geom
 import { ImageTexture2DResource } from "../../resources/texture_resources/texture2d_resources/ImageTexture2DResource";
 import { SpotLight3D } from "../../nodes/node3ds/visual_instance3ds/light3ds/SpotLight3D";
 import { PackedSceneResource } from "../../resources/packed_scene/PackedScene";
+import { PbrMaterial3DResource } from "../../resources/material_resources/material3d_resources/PbrMaterial3DResource";
 
 export class ClassDatabase {
     private readonly db: Map<string, typeof ClassBase> = new Map();
@@ -34,3 +35,4 @@ ClassDB.register_Class(MeshInstance3D);
 ClassDB.register_Class(SpotLight3D);
 ClassDB.register_Class(Node3D);
 ClassDB.register_Class(PackedSceneResource);
+ClassDB.register_Class(PbrMaterial3DResource);

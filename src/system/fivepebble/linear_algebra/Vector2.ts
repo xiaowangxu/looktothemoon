@@ -140,7 +140,7 @@ export class Vector2 implements VectorLike<Vector2, Matrix2> {
     distance_to(b: Vector2) {
         const x = this.x - b.x;
         const y = this.y - b.y;
-        return Math.sqrt(x * x + y * y);
+        return Math.hypot(x, y);
     }
     squared_distance_to(b: Vector2) {
         const x = this.x - b.x;

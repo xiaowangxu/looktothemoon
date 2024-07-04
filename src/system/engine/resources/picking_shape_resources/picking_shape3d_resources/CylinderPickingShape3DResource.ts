@@ -1,18 +1,18 @@
-import type { Viewport } from "../../nodes/Node";
+import type { Viewport } from "../../../nodes/Node";
 import { RaycastSide } from "@/system/fivepebble/geometries/GeometryLike";
-import { Epsilon } from '../../../fivepebble/Scalar';
-import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
+import { Epsilon } from '../../../../fivepebble/Scalar';
+import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 import { Box3 } from "@/system/fivepebble/geometries/Box3";
 import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
 import { Line3 } from "@/system/fivepebble/geometries/Line3";
-import { PickingShape3DResource, type RaycastResult3 } from "./PickingShapeResource";
+import { PickingShape3DResource, type RaycastResult3 } from "./PickingShape3DResource";
 
-
-export class PickingCylinderResource extends PickingShape3DResource {
-    public static readonly class_name: string = "PickingCylinderResource";
+export class CylinderPickingShape3DResource extends PickingShape3DResource {
+    
+    public static readonly class_name: string = "CylinderPickingShape3DResource";
 
     static readonly #tmp_line3_0 = Line3.new;
     static readonly #tmp_vector3_0 = Vector3.new;
@@ -47,21 +47,21 @@ export class PickingCylinderResource extends PickingShape3DResource {
     }
 
     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3 | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
-        const line = PickingCylinderResource.#tmp_line3_0.set(from, to);
+        const line = CylinderPickingShape3DResource.#tmp_line3_0.set(from, to);
         if (!this.bbox.touch_Line(line)) return undefined;
 
-        const rel = PickingCylinderResource.#tmp_vector3_0.sub(to, from);
+        const rel = CylinderPickingShape3DResource.#tmp_vector3_0.sub(to, from);
         const rel_l = rel.length;
         if (rel_l < Epsilon) return undefined;
 
-        const cylinder_axis = PickingCylinderResource.#tmp_vector3_1.set(0, 1, 0);
+        const cylinder_axis = CylinderPickingShape3DResource.#tmp_vector3_1.set(0, 1, 0);
 
         // First check if they are parallel.
-        const normal = PickingCylinderResource.#tmp_vector3_2.div_Number(rel, rel_l);
+        const normal = CylinderPickingShape3DResource.#tmp_vector3_2.div_Number(rel, rel_l);
         const crs = normal.cross(normal, cylinder_axis);
         const crs_l = crs.length;
 
-        const axis_dir = PickingCylinderResource.#tmp_vector3_3;
+        const axis_dir = CylinderPickingShape3DResource.#tmp_vector3_3;
         if (crs_l < Epsilon) {
             axis_dir.set(0, 0, 1); // Any side axis OK.
         }
@@ -85,8 +85,8 @@ export class PickingCylinderResource extends PickingShape3DResource {
 
         const side_dir = Vector3.new.normalize(Vector3.new.cross(axis_dir, cylinder_axis));
 
-        const from_2d = PickingCylinderResource.#tmp_vector2_0.set(side_dir.dot(from), from.y);
-        const to_2d = PickingCylinderResource.#tmp_vector2_1.set(side_dir.dot(to), to.y);
+        const from_2d = CylinderPickingShape3DResource.#tmp_vector2_0.set(side_dir.dot(from), from.y);
+        const to_2d = CylinderPickingShape3DResource.#tmp_vector2_1.set(side_dir.dot(to), to.y);
 
         let min = 0, max = 1;
         let axis = -1;
@@ -154,6 +154,7 @@ export class PickingCylinderResource extends PickingShape3DResource {
     protected dispose(): void { }
 
     // save / load
+    
     public dump(writer: ClassWriter): void {
         writer.property('radius', this.radius);
         writer.property('height', this.height);

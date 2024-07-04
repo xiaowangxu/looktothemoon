@@ -70,6 +70,7 @@ import matcap_12 from 'res://matcap-12.png';
 import matcap_13 from 'res://matcap-13.png';
 import matcap_14 from 'res://matcap-14.png';
 import monkey from 'res://monkey.stl?url';
+import box from 'res://pole.glb?url';
 
 import { ImageLoader } from "@/system/engine/loaders/ImageLoader";
 import { PackedSceneResource } from "@/system/engine/resources/packed_scene/PackedScene";
@@ -87,6 +88,12 @@ import { Plane3 } from "@/system/fivepebble/geometries/Plane3";
 import { SignalEmitter } from "@/system/utils/SignalEmitter";
 import type { ColorData } from "@/sundesign/colorpicker/SunColorPickerConstants";
 import { PlaneGeometry3DResource, PlaneGeometryDirection } from "@/system/engine/resources/geometry_resources/geometry3d_resources/PlaneGeometry3DResource";
+import { GltfLoader } from "@/system/engine/loaders/GltfLoader";
+import { MultiGeometry3DResource } from "@/system/engine/resources/geometry_resources/geometry3d_resources/MultiGeometry3DResource";
+import { GeometryPickingShape3DResource } from "@/system/engine/resources/picking_shape_resources/picking_shape3d_resources/GeometryPickingShape3DResource";
+import { PickingShape3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingShape3D";
+import { PickingArea3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingArea3D";
+import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 
 (window as any).set_Color = new SignalEmitter<(color: ColorData) => void>();
 
@@ -306,7 +313,7 @@ export async function createEditor() {
 	//     }
 	// });
 
-	EditorSceneTree.start_Loop(Infinity, 45);
+	EditorSceneTree.start_Loop(Infinity, 60);
 	// EditorSceneTree.start_Tween(tween);
 	// EditorSceneTree.start_Tween(tween2);
 	// EditorSceneTree.start_Tween(tween3);
@@ -371,7 +378,7 @@ export async function createEditor() {
 		image.onload = () => {
 			const { naturalWidth, naturalHeight } = image;
 			const texture = ImageTextureCubeMapResource.create_Image(image, naturalWidth, naturalHeight, Infinity, true);
-			EditorViewport.world_3d?.visual_world.set_BackgroundTexture(texture);
+			// EditorViewport.world_3d?.visual_world.set_BackgroundTexture(texture);
 		};
 	}
 
@@ -479,13 +486,13 @@ export async function createEditor() {
 	polyline.local_scale = Vector3.create(100, 100, 100);
 	World.add_Child(polyline);
 
-	// const light1 = new AmbientLight3D();
-	// light1.intensity = 0.1;
-	// World.add_Child(light1);
+	const light1 = new AmbientLight3D();
+	light1.intensity = 0.4;
+	World.add_Child(light1);
 
 	const light2 = new DirectionalLight3D();
 	light2.local_rotation = Euler.create(-Pi / 2, 0, 0);
-	light2.intensity = 0.2;
+	light2.intensity = 0.5;
 	World.add_Child(light2);
 	const light2_1 = new DirectionalLight3D();
 	light2_1.local_rotation = Euler.create(-Pi / 3, 0, 0);
@@ -651,32 +658,32 @@ export async function createEditor() {
 	// 	}
 	// }
 
-	{
-		const packed_scene = new ClassLoader(ResInstCache).fetch<PackedSceneResource>("sys://test.scene.lttmbin").expect();
-		const scene = packed_scene.instantiate(ResInstCache).expect();
-		scene.get_Child<MeshInstance3D>(0)!.material = box_mat_test;
-		scene.get_Child<MeshInstance3D>(0)!.local_position = Vector3.create(-200, -200, 200);
-		const spot = scene.get_Child<MeshInstance3D>(0)!.get_Child<SpotLight3D>(0)!;
-		spot.global_position = Vector3.create(50, 75, 0);
-		spot.color = Vector3.create(1, 0, 0);
-		World.add_Child(scene);
-		const translate_grabber1 = new TranslateGrabber3D();
-		World.add_Child(translate_grabber1);
-		translate_grabber1.set_TranslatePosition(spot.global_position);
-		translate_grabber1.signal_grabbing.connect((position) => {
-			spot.global_position = position.snap(position, Vector3.create(1, 1, 1));
-			translate_grabber1.set_TranslatePosition(spot.global_position);
-		});
-		EditorSceneTree.start_Tween(new TweenLoop(
-			new MethodTweenAdaptor(
-				new InterpolateTween(5, InterpolateTweenTransitionType.Linear, InterpolateTweenEasingType.In),
-				(v) => {
-					spot.color = Color.hsv(v, 1, 0.5).get_PlainColor(false, Vector3.new);
-				}
-			),
-			Infinity
-		));
-	}
+	// {
+	// 	const packed_scene = new ClassLoader(ResInstCache).fetch<PackedSceneResource>("sys://test.scene.lttmbin").expect();
+	// 	const scene = packed_scene.instantiate(ResInstCache).expect();
+	// 	scene.get_Child<MeshInstance3D>(0)!.material = box_mat_test;
+	// 	scene.get_Child<MeshInstance3D>(0)!.local_position = Vector3.create(-200, -200, 200);
+	// 	const spot = scene.get_Child<MeshInstance3D>(0)!.get_Child<SpotLight3D>(0)!;
+	// 	spot.global_position = Vector3.create(50, 75, 0);
+	// 	spot.color = Vector3.create(1, 0, 0);
+	// 	World.add_Child(scene);
+	// 	const translate_grabber1 = new TranslateGrabber3D();
+	// 	World.add_Child(translate_grabber1);
+	// 	translate_grabber1.set_TranslatePosition(spot.global_position);
+	// 	translate_grabber1.signal_grabbing.connect((position) => {
+	// 		spot.global_position = position;//position.snap(position, Vector3.create(1, 1, 1));
+	// 		// translate_grabber1.set_TranslatePosition(spot.global_position);
+	// 	});
+	// 	EditorSceneTree.start_Tween(new TweenLoop(
+	// 		new MethodTweenAdaptor(
+	// 			new InterpolateTween(5, InterpolateTweenTransitionType.Linear, InterpolateTweenEasingType.In),
+	// 			(v) => {
+	// 				spot.color = Color.hsv(v, 1, 0.5).get_PlainColor(false, Vector3.new);
+	// 			}
+	// 		),
+	// 		Infinity
+	// 	));
+	// }
 
 	{
 		const grid = new InfiniteGrid3D();
@@ -765,6 +772,83 @@ export async function createEditor() {
 		// 	World.add_Child(monkey);
 		// });
 
+	}
+
+	// {
+	// 	const mat = new NormalMaterial3DResource();
+	// 	// mat.metallic = 0;
+	// 	// mat.roughness = 0.75;
+	// 	const root = new Node3D();
+	// 	root.stop_input = true;
+	// 	root.stop_process = true;
+	// 	root.stop_physics_process = true;
+	// 	root.local_scale = Vector3.create(100, 100, 100);
+	// 	World.add_Child(root);
+	// 	const geo = new TorusGeometry3DResource(); //new ClassLoader(ResInstCache).fetch<ArrayGeometry3DResource>('sys://geometries/huli.geometry.lttmbin').expect();
+	// 	for (let i = 0; i < 25; i++) {
+	// 		for (let j = 0; j < 25; j++) {
+	// 			for (let k = 0; k < 25; k++) {
+	// 				const node = new MeshInstance3D();
+	// 				node.material = mat;
+	// 				node.geometry = geo;
+	// 				node.global_position = Vector3.create(i * 5, k * -5, j * 5);
+	// 				root.add_Child(node);
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	{
+		fetch(box).then(r => r.arrayBuffer()).then(async d => {
+			const node = (await new GltfLoader().parse(d)).expect();
+			node.local_scale = Vector3.create(1, 1, 1);
+			node.local_rotation = Euler.create(0, Pi, 0);
+			World.add_Child(node);
+			// const res = packed_scene.parse(node);
+			// console.log(res);
+			// const class_saver = new ClassSaver();
+			// class_saver.save(packed_scene, "download://pole.scene.lttmbin").expect();
+			// for (let i = 1; i < 25; i++) {
+			// 	node.block_physics_process = true;
+			// 	node.block_process = true;
+			// 	node.block_input = true;
+			// 	node.local_scale = Vector3.create(1, 1, 1);
+			// 	node.global_position = Vector3.create(0, 0, i * 100);
+			// 	World.add_Child(node);
+			// }
+		});
+	}
+
+	{
+		const pointer = new LineGrabber3D();
+		pointer.offset_length = 0;
+		pointer.enabled = false;
+		World.add_Child(pointer);
+
+		const box = new TorusGeometry3DResource();
+		const shp = new GeometryPickingShape3DResource();
+		shp.base_geometry = box;
+
+		const shape = new PickingShape3D();
+		shape.shape = shp;
+
+		const area = new PickingArea3D();
+		area.add_Child(shape);
+
+		const mesh = new MeshInstance3D();
+		mesh.geometry = box;
+		mesh.material = new NormalMaterial3DResource();
+		mesh.local_position = Vector3.create(100, 0, -200);
+		mesh.local_scale = Vector3.create(100, 200, 100);
+		mesh.local_rotation = Euler.create(Math.random() * Tau, Math.random() * Tau, Math.random() * Tau);
+		mesh.add_Child(area);
+
+		area.signal_mouse_moved.connect((evt, res) => {
+			pointer.global_position = res.position;
+			pointer.global_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), res.normal));
+		});
+
+		World.add_Child(mesh);
 	}
 
 	return EditorSceneTree;

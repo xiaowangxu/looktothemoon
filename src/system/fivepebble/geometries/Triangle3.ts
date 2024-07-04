@@ -145,20 +145,6 @@ export class Triangle3 implements TriangleLike<Vector3, Matrix3>, BvhShape<Vecto
 
     //#region Bvh
 
-    get aabb(): Box3 {
-        return new Box3(
-            new Vector3(
-                Math.min(this.p0.x, this.p1.x, this.p2.x),
-                Math.min(this.p0.y, this.p1.y, this.p2.y),
-                Math.min(this.p0.z, this.p1.z, this.p2.z),
-            ),
-            new Vector3(
-                Math.max(this.p0.x, this.p1.x, this.p2.x),
-                Math.max(this.p0.y, this.p1.y, this.p2.y),
-                Math.max(this.p0.z, this.p1.z, this.p2.z),
-            ),
-        );
-    }
     get_AABB(target: Box3): Box3 {
         target.min.set(
             Math.min(this.p0.x, this.p1.x, this.p2.x),

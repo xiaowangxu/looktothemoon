@@ -9,6 +9,7 @@ import { Pi, Tau, clamp } from "@/system/fivepebble/Scalar";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Geometry3DResource } from "./Geometry3DResource";
 import type { ResourceSetOptionAllAtOnce } from "../../Resource";
+import type { GeometryPickingShape3D } from "../../picking_shape_resources/picking_shape3d_resources/GeometryPickingShape3DResource";
 
 type TorusGeometry3DResourceOption = {
     radius?: number,
@@ -18,11 +19,20 @@ type TorusGeometry3DResourceOption = {
     theta?: number,
 }
 
-export class TorusGeometry3DResource extends Geometry3DResource implements ResourceSetOptionAllAtOnce<TorusGeometry3DResourceOption> {
+export class TorusGeometry3DResource extends Geometry3DResource implements ResourceSetOptionAllAtOnce<TorusGeometry3DResourceOption>, GeometryPickingShape3D {
 
     private readonly position_normal_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
     private readonly uv_buffer_ref: Ref<WebGPURenderElementVector2Buffer> = new Ref();
     private readonly index_buffer_ref: Ref<WebGPURenderElementIndexBuffer> = new Ref();
+
+    //#region GeometryPickingShape3D
+
+    get primitive_type() { return WebGPURenderStatePrimitiveType.Triangles; }
+    get position_normal() { return this.position_normal_buffer_ref.expect; }
+    get uv() { return this.uv_buffer_ref.expect; }
+    get index() { return this.index_buffer_ref.expect; }
+
+    //#endregion
 
     protected _radius: number = 0.5;
     protected _tube_radius: number = 0.125;
@@ -205,6 +215,8 @@ export class TorusGeometry3DResource extends Geometry3DResource implements Resou
         Geometry3DResource.$tmp_box3_for_bbox.min.set(-outer_radius, -tube_radius, -outer_radius);
         Geometry3DResource.$tmp_box3_for_bbox.max.set(outer_radius, tube_radius, outer_radius);
         this.render_server_geometry.set_BBox(Geometry3DResource.$tmp_box3_for_bbox);
+        
+        this.trigger_Changed();
     }
 
     protected dispose(): void {

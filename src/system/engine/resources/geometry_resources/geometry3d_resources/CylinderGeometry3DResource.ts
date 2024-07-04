@@ -8,6 +8,7 @@ import { RenderServerGeometryAttributeLayoutBuffer } from "../../../render_serve
 import { Tau } from "@/system/fivepebble/Scalar";
 import { Geometry3DResource } from "./Geometry3DResource";
 import type { ResourceSetOptionAllAtOnce } from "../../Resource";
+import type { GeometryPickingShape3D } from "../../picking_shape_resources/picking_shape3d_resources/GeometryPickingShape3DResource";
 
 export type CylinderGeometry3DResourceOption = {
     top_radius?: number,
@@ -16,11 +17,20 @@ export type CylinderGeometry3DResourceOption = {
     segments?: number,
 }
 
-export class CylinderGeometry3DResource extends Geometry3DResource implements ResourceSetOptionAllAtOnce<CylinderGeometry3DResourceOption> {
+export class CylinderGeometry3DResource extends Geometry3DResource implements ResourceSetOptionAllAtOnce<CylinderGeometry3DResourceOption>, GeometryPickingShape3D {
 
     private readonly position_normal_buffer_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
     private readonly uv_buffer_ref: Ref<WebGPURenderElementVector2Buffer> = new Ref();
     private readonly index_buffer_ref: Ref<WebGPURenderElementIndexBuffer> = new Ref();
+
+    //#region GeometryPickingShape3D
+
+    get primitive_type() { return WebGPURenderStatePrimitiveType.Triangles; }
+    get position_normal() { return this.position_normal_buffer_ref.expect; }
+    get uv() { return this.uv_buffer_ref.expect; }
+    get index() { return this.index_buffer_ref.expect; }
+
+    //#endregion
 
     protected _top_radius: number = 0.5;
     protected _bottom_radius: number = 0.5;
@@ -275,6 +285,8 @@ export class CylinderGeometry3DResource extends Geometry3DResource implements Re
         Geometry3DResource.$tmp_box3_for_bbox.min.set(-max_radius, -half_height, -max_radius);
         Geometry3DResource.$tmp_box3_for_bbox.max.set(max_radius, half_height, max_radius);
         this.render_server_geometry.set_BBox(Geometry3DResource.$tmp_box3_for_bbox);
+
+        this.trigger_Changed();
     }
 
     protected dispose(): void {

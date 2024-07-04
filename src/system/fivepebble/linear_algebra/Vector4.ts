@@ -191,7 +191,7 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
         const y = this.y - b.y;
         const z = this.z - b.z;
         const w = this.w - b.w;
-        return Math.sqrt(x * x + y * y + z * z + w * w);
+        return Math.hypot(x, y, z, w);
     }
     squared_distance_to(b: Vector4) {
         const x = this.x - b.x;
@@ -249,18 +249,18 @@ export class Vector4 implements VectorLike<Vector4, Matrix4> {
     }
 
     public blend(color: Color, target: Color): Color {
-		const sa = 1.0 - color.a;
-		target.a = this.a * sa + color.a;
-		if (target.a === 0) {
+        const sa = 1.0 - color.a;
+        target.a = this.a * sa + color.a;
+        if (target.a === 0) {
             target.r = 0;
             target.g = 0;
             target.b = 0;
-		} else {
-			target.r = (this.r * this.a * sa + color.r * color.a) / target.a;
-			target.g = (this.g * this.a * sa + color.g * color.a) / target.a;
-			target.b = (this.b * this.a * sa + color.b * color.a) / target.a;
-		}
-		return target;
+        } else {
+            target.r = (this.r * this.a * sa + color.r * color.a) / target.a;
+            target.g = (this.g * this.a * sa + color.g * color.a) / target.a;
+            target.b = (this.b * this.a * sa + color.b * color.a) / target.a;
+        }
+        return target;
     }
 
     //#endregion

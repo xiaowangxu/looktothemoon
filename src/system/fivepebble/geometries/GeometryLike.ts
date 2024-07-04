@@ -1,6 +1,7 @@
 import type { Cloneable, Copyable, Equality } from "@/system/utils/Type";
 import type { MatrixLike } from "../linear_algebra/MatrixLike";
 import type { VectorLike } from "../linear_algebra/VectorLike";
+import type { Vector2 } from "../linear_algebra/Vector2";
 
 export interface GeometryLike<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>>
     extends Cloneable<GeometryLike<Vec, Mat>>, Copyable<GeometryLike<Vec, Mat>>, Equality<GeometryLike<Vec, Mat>> { }
@@ -21,6 +22,7 @@ export interface Raycastable<Vec extends VectorLike<Vec, Mat>, Mat extends Matri
 }
 
 export interface RaycastResult<Vec extends VectorLike<Vec, Mat>, Mat extends MatrixLike<Mat>> {
-    position: Vec;
-    normal: Vec;
+    position: Vec,
+    normal: Vec,
+    uv?: Vector2,
 }

@@ -6,6 +6,7 @@ import type { PickingArea3D } from "../../nodes/node3ds/physics3ds/PickingArea3D
 import { RaycastSide, type RaycastResult } from "@/system/fivepebble/geometries/GeometryLike";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
+import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
 
 type RaycastResult3 = RaycastResult<Vector3, Matrix3>;
 
@@ -62,14 +63,16 @@ export class RayPickingResult {
     public readonly area: PickingArea3D;
     public readonly position: Vector3;
     public readonly normal: Vector3;
+    public readonly uv?: Vector2;
     public readonly distance: number;
     public readonly offset_distance: number;
     public readonly priority: number;
 
-    constructor(area: PickingArea3D, position: Vector3, normal: Vector3, distance: number, offset_distance: number, priority: number) {
+    constructor(area: PickingArea3D, position: Vector3, normal: Vector3, uv: Vector2 | undefined, distance: number, offset_distance: number, priority: number) {
         this.area = area;
         this.position = position;
         this.normal = normal;
+        this.uv = uv;
         this.distance = distance;
         this.offset_distance = offset_distance;
         this.priority = priority;
@@ -108,7 +111,7 @@ export class PickingWorld3D {
                     const normal = preserve_global_transform ? _res_normal : _res_normal.transform(_res_normal, global_normal_transform).normalize(_res_normal);
                     const distance = position.distance_to(from);
                     result.push(
-                        new RayPickingResult(area.area, position, normal, distance, distance + distance_offset, area.priority)
+                        new RayPickingResult(area.area, position, normal, res.uv, distance, distance + distance_offset, area.priority)
                     );
                 }
             }

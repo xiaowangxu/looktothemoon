@@ -1,27 +1,27 @@
-import { type BvhLike, type BvhShape } from "./BvhLike";
+import { type AABB, type BvhIndexShape, type BvhLike, type BvhShape, type BvhShapes } from "./BvhLike";
 import { Vector3 } from "../linear_algebra/Vector3";
 import type { Matrix3 } from "../linear_algebra/Matrix3";
 import { Box3 } from "../geometries/Box3";
 import { Epsilon } from "../Scalar";
 
-export class BvhNode3 {
-    public parent: BvhNode3 | undefined;
+export class BvhNode3<BuildShape> {
+    public parent: BvhNode3<BuildShape> | undefined;
     public depth: number = 0;
     public readonly aabb: AABB3;
-    public shapes: BvhShape3[];
+    public shapes: BuildShape[];
     // children
-    public left: BvhNode3 | undefined = undefined;
-    public right: BvhNode3 | undefined = undefined;
+    public left: BvhNode3<BuildShape> | undefined = undefined;
+    public right: BvhNode3<BuildShape> | undefined = undefined;
 
     public get is_leaf() { return this.left === undefined && this.right === undefined; }
 
     constructor(
-        parent: BvhNode3 | undefined,
+        parent: BvhNode3<BuildShape> | undefined,
         depth: number,
         aabb: AABB3,
-        shapes: BvhShape3[],
-        left: BvhNode3 | undefined = undefined,
-        right: BvhNode3 | undefined = undefined,
+        shapes: BuildShape[],
+        left: BvhNode3<BuildShape> | undefined = undefined,
+        right: BvhNode3<BuildShape> | undefined = undefined,
     ) {
         this.parent = parent;
         this.depth = depth;
@@ -37,51 +37,44 @@ enum Bvh3Axis {
 };
 
 export enum Bvh3Strategy {
-    Center, Average, 
+    Center, Average,
     // SAH,
     X, Y, Z,
 }
 
 type AABB3 = Box3;
 type BvhShape3 = BvhShape<Vector3, Matrix3>;
+type BvhIndexShape3 = BvhIndexShape<Vector3, Matrix3>;
+export type BvhExtractShape<T extends BaseBvh3> = T extends BaseBvh3<infer R, infer B> ? R : never;
+export type BvhExtractBuild<T extends BaseBvh3> = T extends BaseBvh3<infer R, infer B> ? B : never;
 
-export class Bvh3 implements BvhLike<Vector3, Matrix3> {
+export abstract class BaseBvh3<
+    Shape extends BvhShape3[] | BvhIndexShape3 = BvhShape3[] | BvhIndexShape3,
+    BuildShape extends BvhShape3 | number = BvhShape3 | number
+> implements BvhLike<Vector3, Matrix3, Shape, BuildShape> {
 
     static readonly #const_empty_shapes: BvhShape3[] = [];
-    static #tmp_split_axis: Bvh3Axis = Bvh3Axis.X;
-    static #tmp_split_position: number = 0;
+    protected static $tmp_split_axis: Bvh3Axis = Bvh3Axis.X;
+    protected static $tmp_split_position: number = 0;
+    protected static readonly $tmp_centroid_box: AABB3 = Box3.new;
+    static readonly #tmp_vector3_0: Vector3 = Vector3.new;
 
-    //#region init
-
-    static get new() { return new Bvh3(); }
-
-    //#endregion
-
-    public root: BvhNode3 | undefined;
-    private shape_aabbs_map: Map<BvhShape3, AABB3> = new Map();
-    private shape_aabbs: AABB3[] = [];
+    public root: BvhNode3<BuildShape> | undefined;
+    protected shape_aabbs_map: Map<BuildShape, AABB3> = new Map();
+    protected shape_aabbs: AABB3[] = [];
+    public get is_empty() { return this.root === undefined; }
 
     constructor() { }
 
-    public build(shapes: BvhShape3[], max_depth: number = 16, strategy: Bvh3Strategy = Bvh3Strategy.Center) {
+    public abstract build(shapes: Shape, max_depth?: number, strategy?: number): void;
+
+    public clear() {
         this.root = undefined;
         this.shape_aabbs = [];
         this.shape_aabbs_map.clear();
-        if (shapes.length === 0) return;
-        const root_aabb = shapes[0].aabb as AABB3;
-        for (const shape of shapes) {
-            const aabb = shape.aabb as AABB3;
-            this.shape_aabbs.push(aabb);
-            this.shape_aabbs_map.set(shape, aabb);
-            root_aabb.merge(root_aabb, aabb);
-        }
-        this.root = this.build_Internal(this.root, root_aabb, shapes, 0, max_depth, strategy);
     }
 
-    static readonly #vector3: Vector3 = Vector3.new;
-    static readonly #centroid: AABB3 = Box3.new;
-
-    private get_CentriodAABB(shapes: BvhShape3[], target: AABB3) {
+    protected get_CentriodAABB(shapes: BuildShape[], target: AABB3) {
         let cminx = Infinity;
         let cminy = Infinity;
         let cminz = Infinity;
@@ -90,7 +83,7 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
         let cmaxz = - Infinity;
         for (let i = 0; i < shapes.length; i++) {
             const aabb = this.shape_aabbs_map.get(shapes[i])!;
-            const center = aabb.get_Center(Bvh3.#vector3);
+            const center = aabb.get_Center(BaseBvh3.#tmp_vector3_0);
             const cx = center.x;
             if (cx < cminx) cminx = cx;
             if (cx > cmaxx) cmaxx = cx;
@@ -106,77 +99,77 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
         return target;
     }
 
-    private static get_LongestAxis(aabb: AABB3) {
+    protected static get_LongestAxis(aabb: AABB3) {
         const a = aabb.max.x - aabb.min.x; // x
         const b = aabb.max.y - aabb.min.y; // y
         const c = aabb.max.z - aabb.min.z; // z
         if ((a >= b) && (a >= c)) {
-            Bvh3.#tmp_split_axis = Bvh3Axis.X;
-            Bvh3.#tmp_split_position = a;
+            BaseBvh3.$tmp_split_axis = Bvh3Axis.X;
+            BaseBvh3.$tmp_split_position = a;
         }
         else if ((b >= a) && (b >= c)) {
-            Bvh3.#tmp_split_axis = Bvh3Axis.Y;
-            Bvh3.#tmp_split_position = b;
+            BaseBvh3.$tmp_split_axis = Bvh3Axis.Y;
+            BaseBvh3.$tmp_split_position = b;
         }
         else {
-            Bvh3.#tmp_split_axis = Bvh3Axis.Z;
-            Bvh3.#tmp_split_position = c;
+            BaseBvh3.$tmp_split_axis = Bvh3Axis.Z;
+            BaseBvh3.$tmp_split_position = c;
         }
     }
 
-    private get_OptimalSplit(parent_aabb: AABB3, centroid_aabb: AABB3, shapes: BvhShape3[], strategy: Bvh3Strategy): boolean {
+    protected get_OptimalSplit(parent_aabb: AABB3, centroid_aabb: AABB3, shapes: BuildShape[], strategy: Bvh3Strategy): boolean {
         // Center
         if (strategy === Bvh3Strategy.Center) {
-            Bvh3.get_LongestAxis(centroid_aabb);
-            const axis = Bvh3.#tmp_split_axis, length = Bvh3.#tmp_split_position;
+            BaseBvh3.get_LongestAxis(centroid_aabb);
+            const axis = BaseBvh3.$tmp_split_axis, length = BaseBvh3.$tmp_split_position;
             if (length < Epsilon) return false;
             switch (axis) {
                 case Bvh3Axis.X: {
-                    Bvh3.#tmp_split_position = (centroid_aabb.min.x + centroid_aabb.max.x) / 2;
+                    BaseBvh3.$tmp_split_position = (centroid_aabb.min.x + centroid_aabb.max.x) / 2;
                     break;
                 }
                 case Bvh3Axis.Y: {
-                    Bvh3.#tmp_split_position = (centroid_aabb.min.y + centroid_aabb.max.y) / 2;
+                    BaseBvh3.$tmp_split_position = (centroid_aabb.min.y + centroid_aabb.max.y) / 2;
                     break;
                 }
                 case Bvh3Axis.Z: {
-                    Bvh3.#tmp_split_position = (centroid_aabb.min.z + centroid_aabb.max.z) / 2;
+                    BaseBvh3.$tmp_split_position = (centroid_aabb.min.z + centroid_aabb.max.z) / 2;
                     break;
                 }
             }
             return true;
         }
         else if (strategy === Bvh3Strategy.Average) {
-            Bvh3.get_LongestAxis(parent_aabb);
-            const axis = Bvh3.#tmp_split_axis, length = Bvh3.#tmp_split_position;
+            BaseBvh3.get_LongestAxis(parent_aabb);
+            const axis = BaseBvh3.$tmp_split_axis, length = BaseBvh3.$tmp_split_position;
             if (length < Epsilon) return false;
-            Bvh3.#tmp_split_position = this.get_Average(shapes, axis);
+            BaseBvh3.$tmp_split_position = this.get_Average(shapes, axis);
             return true;
         }
         else if (strategy === Bvh3Strategy.X) {
-            const length = Bvh3.get_Axis(centroid_aabb.max, Bvh3Axis.X) - Bvh3.get_Axis(centroid_aabb.min, Bvh3Axis.X);
+            const length = BaseBvh3.get_Axis(centroid_aabb.max, Bvh3Axis.X) - BaseBvh3.get_Axis(centroid_aabb.min, Bvh3Axis.X);
             if (length < Epsilon) return false;
-            Bvh3.#tmp_split_axis = Bvh3Axis.X;
-            Bvh3.#tmp_split_position = (centroid_aabb.min.x + centroid_aabb.max.x) / 2;
+            BaseBvh3.$tmp_split_axis = Bvh3Axis.X;
+            BaseBvh3.$tmp_split_position = (centroid_aabb.min.x + centroid_aabb.max.x) / 2;
             return true;
         }
         else if (strategy === Bvh3Strategy.Y) {
-            const length = Bvh3.get_Axis(centroid_aabb.max, Bvh3Axis.Y) - Bvh3.get_Axis(centroid_aabb.min, Bvh3Axis.Y);
+            const length = BaseBvh3.get_Axis(centroid_aabb.max, Bvh3Axis.Y) - BaseBvh3.get_Axis(centroid_aabb.min, Bvh3Axis.Y);
             if (length < Epsilon) return false;
-            Bvh3.#tmp_split_axis = Bvh3Axis.Y;
-            Bvh3.#tmp_split_position = (centroid_aabb.min.y + centroid_aabb.max.y) / 2;
+            BaseBvh3.$tmp_split_axis = Bvh3Axis.Y;
+            BaseBvh3.$tmp_split_position = (centroid_aabb.min.y + centroid_aabb.max.y) / 2;
             return true;
         }
         else if (strategy === Bvh3Strategy.Z) {
-            const length = Bvh3.get_Axis(centroid_aabb.max, Bvh3Axis.Z) - Bvh3.get_Axis(centroid_aabb.min, Bvh3Axis.Z);
+            const length = BaseBvh3.get_Axis(centroid_aabb.max, Bvh3Axis.Z) - BaseBvh3.get_Axis(centroid_aabb.min, Bvh3Axis.Z);
             if (length < Epsilon) return false;
-            Bvh3.#tmp_split_axis = Bvh3Axis.Z;
-            Bvh3.#tmp_split_position = (centroid_aabb.min.z + centroid_aabb.max.z) / 2;
+            BaseBvh3.$tmp_split_axis = Bvh3Axis.Z;
+            BaseBvh3.$tmp_split_position = (centroid_aabb.min.z + centroid_aabb.max.z) / 2;
             return true;
         }
 
         // else if (strategy === Bvh3Strategy.SAH) {
-        //     const root_surface_area = Bvh3.get_SurfaceArea(parent_aabb);
+        //     const root_surface_area = BaseBvh3.get_SurfaceArea(parent_aabb);
         //     let best_cost = TRIANGLE_INTERSECT_COST * count;
 
         //     // iterate over all axes
@@ -419,7 +412,7 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
         return false;
     }
 
-    private static get_Axis(vec: Vector3, axis: Bvh3Axis) {
+    protected static get_Axis(vec: Vector3, axis: Bvh3Axis) {
         switch (axis) {
             case Bvh3Axis.X: return vec.x;
             case Bvh3Axis.Y: return vec.y;
@@ -427,25 +420,25 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
         }
     }
 
-    private get_Average(shapes: BvhShape3[], axis: Bvh3Axis) {
+    protected get_Average(shapes: BuildShape[], axis: Bvh3Axis) {
         let avg = 0;
         let count = 0;
         for (const shape of shapes) {
             const aabb = this.shape_aabbs_map.get(shape)!;
-            avg += Bvh3.get_Axis(aabb.min, axis) + Bvh3.get_Axis(aabb.max, axis);
+            avg += BaseBvh3.get_Axis(aabb.min, axis) + BaseBvh3.get_Axis(aabb.max, axis);
             count += 2;
         }
         return avg / count;
     }
 
-    private static get_SurfaceArea(aabb: AABB3) {
+    protected static get_SurfaceArea(aabb: AABB3) {
         const x = aabb.max.x - aabb.min.x;
         const y = aabb.max.y - aabb.min.y;
         const z = aabb.max.z - aabb.min.z;
         return 2 * (x * y + y * z + z * x);
     }
 
-    private build_Internal(parent: BvhNode3 | undefined, parent_aabb: AABB3, shapes: BvhShape3[], depth: number, max_depth: number, strategy: Bvh3Strategy): BvhNode3 | undefined {
+    protected build_Internal(parent: BvhNode3<BuildShape> | undefined, parent_aabb: AABB3, shapes: BuildShape[], depth: number, max_depth: number, strategy: Bvh3Strategy): BvhNode3<BuildShape> | undefined {
         const count = shapes.length;
         if (count === 0) return undefined;
         if (count === 1) {
@@ -456,7 +449,7 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
             const node = new BvhNode3(parent, depth, parent_aabb, shapes, undefined, undefined);
             return node;
         }
-        const centroid_aabb = this.get_CentriodAABB(shapes, Bvh3.#centroid);
+        const centroid_aabb = this.get_CentriodAABB(shapes, BaseBvh3.$tmp_centroid_box);
         // split
         const split = this.get_OptimalSplit(parent_aabb, centroid_aabb, shapes, strategy);
         if (!split) {
@@ -465,10 +458,10 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
             return node;
         }
         else {
-            const axis = Bvh3.#tmp_split_axis, pos = Bvh3.#tmp_split_position;
+            const axis = BaseBvh3.$tmp_split_axis, pos = BaseBvh3.$tmp_split_position;
             // can split
-            const left = [];
-            const right = [];
+            const left: BuildShape[] = [];
+            const right: BuildShape[] = [];
             let left_minx = Infinity, left_maxx = - Infinity;
             let left_miny = Infinity, left_maxy = - Infinity;
             let left_minz = Infinity, left_maxz = - Infinity;
@@ -481,7 +474,7 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
                 const min_x = aabb.min.x, max_x = aabb.max.x;
                 const min_y = aabb.min.y, max_y = aabb.max.y;
                 const min_z = aabb.min.z, max_z = aabb.max.z;
-                const axis_center = Bvh3.get_Axis(center, axis);
+                const axis_center = BaseBvh3.get_Axis(center, axis);
                 if (axis_center < pos) {
                     // left
                     left.push(shape);
@@ -512,12 +505,12 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
 
     //#region query
 
-    public traverse(func: (aabb: AABB3) => boolean, max_depth: number = Infinity, target: BvhShape3[] = []) {
-        if (this.root === undefined) return Bvh3.#const_empty_shapes;
+    public traverse(func: (aabb: AABB3) => boolean, max_depth: number = Infinity, target: BuildShape[] = []) {
+        if (this.root === undefined) return target;
         return this.traverse_Internal(this.root, func, 0, max_depth, target);
     }
 
-    private traverse_Internal(node: BvhNode3, func: (aabb: AABB3) => boolean, depth: number = 0, max_depth: number = Infinity, result: BvhShape3[] = []) {
+    protected traverse_Internal(node: BvhNode3<BuildShape>, func: (aabb: AABB3) => boolean, depth: number = 0, max_depth: number = Infinity, result: BuildShape[] = []) {
         const hit = func(node.aabb);
         if (!hit) return result;
         if (node.is_leaf || depth >= max_depth) {
@@ -530,12 +523,12 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
         return result;
     }
 
-    public traverse_Callback<S extends BvhShape3 = BvhShape3>(func: (aabb: AABB3) => boolean, callback: (shape: S)=>void, max_depth: number = Infinity) {
+    public traverse_Callback<S extends BuildShape = BuildShape>(func: (aabb: AABB3) => boolean, callback: (shape: S) => void, max_depth: number = Infinity) {
         if (this.root === undefined) return;
         return this.traverse_CallbackInternal<S>(this.root, func, callback, 0, max_depth);
     }
 
-    private traverse_CallbackInternal<S extends BvhShape3 = BvhShape3>(node: BvhNode3, func: (aabb: AABB3) => boolean, callback: (shape: S)=>void, depth: number = 0, max_depth: number = Infinity) {
+    protected traverse_CallbackInternal<S extends BuildShape = BuildShape>(node: BvhNode3<BuildShape>, func: (aabb: AABB3) => boolean, callback: (shape: S) => void, depth: number = 0, max_depth: number = Infinity) {
         const hit = func(node.aabb);
         if (!hit) return;
         if (node.is_leaf || depth >= max_depth) {
@@ -549,12 +542,12 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
         if (node.right !== undefined) this.traverse_CallbackInternal(node.right, func, callback, children_depth, max_depth);
     }
 
-    public *traverse_Iterator<S extends BvhShape3 = BvhShape3>(func: (aabb: AABB3) => boolean, max_depth: number = Infinity) {
+    public *traverse_Iterator<S extends BuildShape = BuildShape>(func: (aabb: AABB3) => boolean, max_depth: number = Infinity) {
         if (this.root === undefined) return;
         yield* this.traverse_IteratorInternal<S>(this.root, func, 0, max_depth);
     }
 
-    private *traverse_IteratorInternal<S extends BvhShape3>(node: BvhNode3, func: (aabb: AABB3) => boolean, depth: number = 0, max_depth: number = Infinity): Generator<S> {
+    protected *traverse_IteratorInternal<S extends BuildShape>(node: BvhNode3<BuildShape>, func: (aabb: AABB3) => boolean, depth: number = 0, max_depth: number = Infinity): Generator<S> {
         const hit = func(node.aabb);
         if (!hit) return;
         if (node.is_leaf || depth >= max_depth) {
@@ -569,4 +562,73 @@ export class Bvh3 implements BvhLike<Vector3, Matrix3> {
     }
 
     //#endregion
+}
+
+export class Bvh3 extends BaseBvh3<BvhShape3[], BvhShape3> {
+
+    //#region init
+
+    static get new() { return new Bvh3(); }
+
+    //#endregion
+
+    public build(shapes: BvhShape3[], max_depth: number = 16, strategy: Bvh3Strategy = Bvh3Strategy.Center) {
+        if (!this.is_empty) {
+            this.root = undefined;
+            this.shape_aabbs = [];
+            this.shape_aabbs_map.clear();
+        }
+        if (shapes === undefined || shapes.length === 0) return;
+        
+        const root_aabb = shapes[0].get_AABB(Box3.new) as AABB3;
+        const first_aabb = root_aabb.clone();
+        this.shape_aabbs.push(first_aabb);
+        this.shape_aabbs_map.set(shapes[0], first_aabb);
+        
+        const count = shapes.length;
+        for (let i = 1; i < count; i++) {
+            const shape = shapes[i];
+            const aabb = shape.get_AABB(Box3.new) as AABB3;
+            this.shape_aabbs.push(aabb);
+            this.shape_aabbs_map.set(shape, aabb);
+            root_aabb.merge(root_aabb, aabb);
+        }
+
+        this.root = this.build_Internal(this.root, root_aabb, shapes, 0, max_depth, strategy);
+    }
+}
+
+export class IndexBvh3 extends BaseBvh3<BvhIndexShape3, number> {
+
+    //#region init
+
+    static get new() { return new IndexBvh3(); }
+
+    //#endregion
+
+    public build(index_shape: BvhIndexShape3, max_depth: number = 16, strategy: Bvh3Strategy = Bvh3Strategy.Center) {
+        if (!this.is_empty) {
+            this.root = undefined;
+            this.shape_aabbs = [];
+            this.shape_aabbs_map.clear();
+        }
+
+        const root_aabb = index_shape.get_AABB(0, Box3.new) as AABB3;
+        const first_aabb = root_aabb.clone();
+        this.shape_aabbs.push(first_aabb);
+        this.shape_aabbs_map.set(0, first_aabb);
+        
+        const count = index_shape.count;
+        const shapes = new Array(count);
+        shapes[0] = 0;
+        for (let i = 1; i < count; i++) {
+            const aabb = index_shape.get_AABB(i, Box3.new) as AABB3;
+            shapes[i] = i;
+            this.shape_aabbs.push(aabb);
+            this.shape_aabbs_map.set(i, aabb);
+            root_aabb.merge(root_aabb, aabb);
+        }
+
+        this.root = this.build_Internal(this.root, root_aabb, shapes, 0, max_depth, strategy);
+    }
 }

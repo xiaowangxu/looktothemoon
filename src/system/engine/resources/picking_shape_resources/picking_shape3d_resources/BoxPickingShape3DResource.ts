@@ -1,14 +1,14 @@
-import type { Viewport } from "../../nodes/Node";
+import type { Viewport } from "../../../nodes/Node";
 import { RaycastSide } from "@/system/fivepebble/geometries/GeometryLike";
-import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
+import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
-import { PickingShape3DResource, type RaycastResult3 } from "./PickingShapeResource";
+import { PickingShape3DResource, type RaycastResult3 } from "./PickingShape3DResource";
 
-
-export class PickingBoxResource extends PickingShape3DResource {
-    public static readonly class_name: string = "PickingBoxResource";
+export class BoxPickingShape3DResource extends PickingShape3DResource {
+    
+    public static readonly class_name: string = "BoxPickingShape3DResource";
 
     static readonly #tmp_vector3_0 = Vector3.new;
     static readonly #tmp_vector3_1 = Vector3.new;
@@ -47,8 +47,8 @@ export class PickingBoxResource extends PickingShape3DResource {
         let axis = 0;
         let sign = 0;
 
-        const position_start = PickingBoxResource.#tmp_vector3_0.set(-this.width / 2, -this.height / 2, -this.depth / 2);
-        const position_end = PickingBoxResource.#tmp_vector3_1.set(this.width / 2, this.height / 2, this.depth / 2);
+        const position_start = BoxPickingShape3DResource.#tmp_vector3_0.set(-this.width / 2, -this.height / 2, -this.depth / 2);
+        const position_end = BoxPickingShape3DResource.#tmp_vector3_1.set(this.width / 2, this.height / 2, this.depth / 2);
 
         for (let i = 0; i < 3; i++) {
             const seg_from = i === 0 ? from.x : (i === 1 ? from.y : from.z);
@@ -91,7 +91,7 @@ export class PickingBoxResource extends PickingShape3DResource {
             }
         }
 
-        const rel = PickingBoxResource.#tmp_vector3_0.sub(to, from);
+        const rel = BoxPickingShape3DResource.#tmp_vector3_0.sub(to, from);
 
         const result = Vector3.new.add_Scaled(from, min, rel);
         const normal = Vector3.new;
@@ -107,6 +107,7 @@ export class PickingBoxResource extends PickingShape3DResource {
     protected dispose(): void { }
 
     // save / load
+    
     public dump(writer: ClassWriter): void {
         writer.property('width', this.width);
         writer.property('height', this.height);

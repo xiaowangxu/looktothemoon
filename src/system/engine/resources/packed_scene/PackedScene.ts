@@ -40,7 +40,7 @@ export class PackedSceneResource extends Resource {
         const refid = result.expect();
         for (const child of node.children) {
             const res = this.walk_Nodes(class_saver, child, refid);
-            if (res.failed) return Result.Error(result.expect_Error());
+            if (res.failed) return Result.Error(res.expect_Error());
             
             this.parents_map.set(res.expect(), refid);
         }

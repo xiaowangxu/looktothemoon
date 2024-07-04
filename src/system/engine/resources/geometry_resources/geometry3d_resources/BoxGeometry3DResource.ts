@@ -7,6 +7,7 @@ import { WebGPURenderStatePrimitiveType } from "@/system/sliverofstraw/render_st
 import { RenderServerGeometryAttributeLayoutBuffer } from "../../../render_server/geometry/RenderServerGeometryDefination";
 import { Geometry3DResource } from "./Geometry3DResource";
 import type { ResourceSetOptionAllAtOnce } from "../../Resource";
+import type { GeometryPickingShape3D } from "../../picking_shape_resources/picking_shape3d_resources/GeometryPickingShape3DResource";
 
 type BoxGeometry3DResourceOption = {
     width?: number,
@@ -14,7 +15,7 @@ type BoxGeometry3DResourceOption = {
     depth?: number,
 }
 
-export class BoxGeometry3DResource extends Geometry3DResource implements ResourceSetOptionAllAtOnce<BoxGeometry3DResourceOption> {
+export class BoxGeometry3DResource extends Geometry3DResource implements ResourceSetOptionAllAtOnce<BoxGeometry3DResourceOption>, GeometryPickingShape3D {
 
     private readonly position_normal_buffer_ref: ReadonlyRef<WebGPURenderElementVector3Buffer> = new ReadonlyRef(new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, 48));
     private readonly uv_buffer_ref: ReadonlyRef<WebGPURenderElementVector2Buffer> = new ReadonlyRef(new WebGPURenderElementVector2Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.CopyDst, 24));
@@ -33,6 +34,15 @@ export class BoxGeometry3DResource extends Geometry3DResource implements Resourc
         20, 22, 21, 21, 22, 23,
 
     ]));
+
+    //#region GeometryPickingShape3D
+
+    get primitive_type() { return WebGPURenderStatePrimitiveType.Triangles; }
+    get position_normal() { return this.position_normal_buffer_ref.expect; }
+    get uv() { return this.uv_buffer_ref.expect; }
+    get index() { return this.index_buffer_ref.expect; }
+
+    //#endregion
 
     protected _width: number = 1;
     protected _height: number = 1;
@@ -186,6 +196,8 @@ export class BoxGeometry3DResource extends Geometry3DResource implements Resourc
         Geometry3DResource.$tmp_box3_for_bbox.min.set(-half_w, -half_h, -half_d);
         Geometry3DResource.$tmp_box3_for_bbox.max.set(half_w, half_h, half_d);
         this.render_server_geometry.set_BBox(Geometry3DResource.$tmp_box3_for_bbox);
+
+        this.trigger_Changed();
     }
 
     protected dispose(): void {

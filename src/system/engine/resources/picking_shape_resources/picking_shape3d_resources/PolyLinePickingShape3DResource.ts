@@ -1,6 +1,6 @@
-import type { Viewport } from "../../nodes/Node";
+import type { Viewport } from "../../../nodes/Node";
 import { RaycastSide } from "@/system/fivepebble/geometries/GeometryLike";
-import { Epsilon, lerp } from '../../../fivepebble/Scalar';
+import { Epsilon, lerp } from '../../../../fivepebble/Scalar';
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
@@ -10,11 +10,11 @@ import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { Line3 } from "@/system/fivepebble/geometries/Line3";
 import { out } from "@/system/utils/Type";
 import { Bvh3, Bvh3Strategy } from "@/system/fivepebble/bvh/Bvh3";
-import { PickingShape3DResource, type RaycastResult3 } from "./PickingShapeResource";
+import { PickingShape3DResource, type RaycastResult3 } from "./PickingShape3DResource";
 
+export class PolyLinePickingShape3DResource extends PickingShape3DResource {
 
-export class PickingPolyLineResource extends PickingShape3DResource {
-    public static readonly class_name: string = "PickingPolyLineResource";
+    public static readonly class_name: string = "PolyLinePickingShape3DResource";
 
     static #tmp_out_number_0 = out<number>();
     static #tmp_out_number_1 = out<number>();
@@ -65,8 +65,8 @@ export class PickingPolyLineResource extends PickingShape3DResource {
     }
 
     private get_WorldSpaceHalfWidth(camera: Camera3, distance: number, size: number, resolution: Vector2) {
-        const clip_to_world = PickingPolyLineResource.#tmp_vector4_0.set(0, 0, -distance, 1);
-        const projection = camera.get_Projection(PickingPolyLineResource.#tmp_matrix4_0);
+        const clip_to_world = PolyLinePickingShape3DResource.#tmp_vector4_0.set(0, 0, -distance, 1);
+        const projection = camera.get_Projection(PolyLinePickingShape3DResource.#tmp_matrix4_0);
         clip_to_world.transform(clip_to_world, projection);
         clip_to_world.mult_Number(clip_to_world, 1 / clip_to_world.w);
         clip_to_world.x = size / resolution.x;
@@ -77,26 +77,26 @@ export class PickingPolyLineResource extends PickingShape3DResource {
     }
 
     private raycast_LinesScreenSpace(line: Line3, to: Line3[], global_transform: Matrix4, camera: Camera3, resolution: Vector2): RaycastResult3 | undefined {
-        const projection = camera.get_Projection(PickingPolyLineResource.#tmp_matrix4_0);
-        const camera_view = camera.get_GlobalTransform(PickingPolyLineResource.#tmp_matrix4_1);
+        const projection = camera.get_Projection(PolyLinePickingShape3DResource.#tmp_matrix4_0);
+        const camera_view = camera.get_GlobalTransform(PolyLinePickingShape3DResource.#tmp_matrix4_1);
         camera_view.inverse(camera_view);
         const near = 0;
 
-        const picking_point_screen = camera.project_Point(line.start, PickingPolyLineResource.#tmp_vector2_1);
-        const picking_point_world = PickingPolyLineResource.#tmp_vector3_0.set(picking_point_screen.x * resolution.x / 2, picking_point_screen.y * resolution.y / 2, 0);
+        const picking_point_screen = camera.project_Point(line.start, PolyLinePickingShape3DResource.#tmp_vector2_1);
+        const picking_point_world = PolyLinePickingShape3DResource.#tmp_vector3_0.set(picking_point_screen.x * resolution.x / 2, picking_point_screen.y * resolution.y / 2, 0);
 
         let min_width = Infinity;
         let min_distance = Infinity;
         let min_point: RaycastResult3 | undefined = undefined;
 
-        const start = PickingPolyLineResource.#tmp_vector3_1;
-        const end = PickingPolyLineResource.#tmp_vector3_2;
-        const start4 = PickingPolyLineResource.#tmp_vector4_0;
-        const end4 = PickingPolyLineResource.#tmp_vector4_1;
-        const _line = PickingPolyLineResource.#tmp_line3_0;
-        const closest_point = PickingPolyLineResource.#tmp_vector3_3;
-        const p0 = PickingPolyLineResource.#tmp_out_number_0;
-        const p1 = PickingPolyLineResource.#tmp_out_number_1;
+        const start = PolyLinePickingShape3DResource.#tmp_vector3_1;
+        const end = PolyLinePickingShape3DResource.#tmp_vector3_2;
+        const start4 = PolyLinePickingShape3DResource.#tmp_vector4_0;
+        const end4 = PolyLinePickingShape3DResource.#tmp_vector4_1;
+        const _line = PolyLinePickingShape3DResource.#tmp_line3_0;
+        const closest_point = PolyLinePickingShape3DResource.#tmp_vector3_3;
+        const p0 = PolyLinePickingShape3DResource.#tmp_out_number_0;
+        const p1 = PolyLinePickingShape3DResource.#tmp_out_number_1;
 
         for (const _l of to) {
             start.affine_transform(_l.start, global_transform);
@@ -172,18 +172,18 @@ export class PickingPolyLineResource extends PickingShape3DResource {
 
     private amount: number = 0;
     private bvh_traverse = (aabb: Box3) => {
-        const box = PickingPolyLineResource.#tmp_box3_0.enlarge(aabb, this.amount);
-        return box.touch_Line(PickingPolyLineResource.#tmp_line3_0);
+        const box = PolyLinePickingShape3DResource.#tmp_box3_0.enlarge(aabb, this.amount);
+        return box.touch_Line(PolyLinePickingShape3DResource.#tmp_line3_0);
     };
 
     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3 | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
         if (camera === undefined || viewport === undefined || this.points.length <= 0 || this.bvh.root === undefined) return undefined;
 
-        const global_inverse = PickingPolyLineResource.#tmp_matrix4_0.inverse(global_transform);
-        PickingPolyLineResource.#tmp_line3_0.set(PickingPolyLineResource.#tmp_vector3_0.affine_transform(from, global_inverse), PickingPolyLineResource.#tmp_vector3_1.affine_transform(to, global_inverse));
-        const line_global = PickingPolyLineResource.#tmp_line3_1.set(from, to);
-        const camera_position = camera.get_GlobalTransform(PickingPolyLineResource.#tmp_matrix4_0).get_Position(PickingPolyLineResource.#tmp_vector3_0);
-        const resolution = viewport.get_Size(PickingPolyLineResource.#tmp_vector2_0);
+        const global_inverse = PolyLinePickingShape3DResource.#tmp_matrix4_0.inverse(global_transform);
+        PolyLinePickingShape3DResource.#tmp_line3_0.set(PolyLinePickingShape3DResource.#tmp_vector3_0.affine_transform(from, global_inverse), PolyLinePickingShape3DResource.#tmp_vector3_1.affine_transform(to, global_inverse));
+        const line_global = PolyLinePickingShape3DResource.#tmp_line3_1.set(from, to);
+        const camera_position = camera.get_GlobalTransform(PolyLinePickingShape3DResource.#tmp_matrix4_0).get_Position(PolyLinePickingShape3DResource.#tmp_vector3_0);
+        const resolution = viewport.get_Size(PolyLinePickingShape3DResource.#tmp_vector2_0);
         const root_aabb = this.bvh.root.aabb;
         const distance = root_aabb.get_FarestDistanceToPoint(camera_position);
         this.amount = this.get_WorldSpaceHalfWidth(camera, distance, this._line_width, resolution);
@@ -194,5 +194,4 @@ export class PickingPolyLineResource extends PickingShape3DResource {
     }
 
     protected dispose(): void { }
-
 }

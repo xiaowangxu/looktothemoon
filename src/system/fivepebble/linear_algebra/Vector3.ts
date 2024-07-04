@@ -165,7 +165,7 @@ export class Vector3 implements VectorLike<Vector3, Matrix3>, Transformable<Vect
         const x = this.x - b.x;
         const y = this.y - b.y;
         const z = this.z - b.z;
-        return Math.sqrt(x * x + y * y + z * z);
+        return Math.hypot(x, y, z);
     }
     squared_distance_to(b: Vector3) {
         const x = this.x - b.x;

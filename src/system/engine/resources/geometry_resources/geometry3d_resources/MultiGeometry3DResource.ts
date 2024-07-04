@@ -37,7 +37,7 @@ export class MultiGeometry3DResource extends Geometry3DResource {
         this.set_Count(1);
     }
 
-    public set_BaseGeometry(base_geometry: BaseGeometry3DResource | undefined, force_update_bbox: boolean = true) {
+    public set_BaseGeometry(base_geometry: BaseGeometry3DResource | undefined, force_update_bbox: boolean = true, trigger_changed: boolean = true) {
         if (!this.base_geometry_3d_resource_ref.is_empty) {
             this.base_geometry_3d_resource_ref.expect.render_server_geometry.singal_bbox_changed.disconnect(this.on_base_geometry_bbox_changed);
         }
@@ -47,9 +47,11 @@ export class MultiGeometry3DResource extends Geometry3DResource {
         }
         this.render_server_geometry.set_BaseGeometry(base_geometry?.render_server_geometry, true, true);
         if (force_update_bbox) this.update_BBox();
+
+        if (trigger_changed) this.trigger_Changed();
     }
 
-    public set_Count(count: number) {
+    public set_Count(count: number, trigger_changed: boolean = true) {
         if (this.base_geometry_3d_resource_ref.is_empty || count !== this.count) {
             this.instance_transform_color_buffer_ref.value = new WebGPURenderElementMatrix4Buffer(
                 RenderServer.render_state,
@@ -62,6 +64,8 @@ export class MultiGeometry3DResource extends Geometry3DResource {
             this.render_server_geometry.clear_Geometry();
             this.render_server_geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.InstanceTransformColor, this.instance_transform_color_buffer_ref.expect.buffer);
             this.render_server_geometry.set_InstanceCount(count);
+
+            if (trigger_changed) this.trigger_Changed();
         }
     }
 
@@ -100,9 +104,11 @@ export class MultiGeometry3DResource extends Geometry3DResource {
         }
     }
 
-    public commit(force_update_bbox: boolean = true) {
+    public commit(force_update_bbox: boolean = true, trigger_changed: boolean = true) {
         this.instance_transform_color_buffer_ref.expect.commit();
         if (force_update_bbox) this.update_BBox();
+
+        if (trigger_changed) this.trigger_Changed();
     }
 
     private clear_BaseGeometry() {

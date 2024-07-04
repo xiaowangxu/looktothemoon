@@ -87,12 +87,12 @@ export class WebGPURenderElementVertexArray extends WebGPURenderObjectRefCounted
         this.index_buffer_ref.value = undefined;
     }
 
-    protected get_Buffer(location: RenderServerGeometryAttributeLayoutBuffer) {
-        return this.attribute_buffer_refs.get(location) ?? this.base_vertex_array_ref.value?.attribute_buffer_refs.get(location);
+    protected get_Buffer(location: RenderServerGeometryAttributeLayoutBuffer): WebGPURenderElementVertexArrayBuffer | undefined {
+        return this.attribute_buffer_refs.get(location) ?? this.base_vertex_array_ref.value?.get_Buffer(location);
     }
 
-    protected get_IndexBuffer() {
-        return this.index_buffer_ref.value ?? this.base_vertex_array_ref.value?.index_buffer_ref.expect;
+    protected get_IndexBuffer(): WebGPURenderElementVertexArrayBuffer | undefined {
+        return this.index_buffer_ref.value ?? this.base_vertex_array_ref.value?.get_IndexBuffer();
     }
 
     public bind_Buffers(pass: GPURenderPassEncoder) {

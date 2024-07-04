@@ -281,6 +281,8 @@ export class PlaneGeometry3DResource extends Geometry3DResource implements Resou
         Geometry3DResource.$tmp_box3_for_bbox.min.set(-width_half, 0, -depth_half);
         Geometry3DResource.$tmp_box3_for_bbox.max.set(width_half, 0, depth_half);
         this.render_server_geometry.set_BBox(Geometry3DResource.$tmp_box3_for_bbox);
+        
+        this.trigger_Changed();
     }
 
     protected dispose(): void {

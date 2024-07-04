@@ -33,7 +33,7 @@ const NormalMaterial3DResourcePipelineCacheSet = new RefCacher(() => {
 	@location(4) color: vec4f,`,
 		// fragment code
 		`	var normal = normalize(vary.normal);
-	var color = vec4f(vary.uv, 0.0, 1.0);`,
+	var color = vec4f((normal + 1) / 2, 1.0);`,
 		// custom
 		undefined,
 		undefined,

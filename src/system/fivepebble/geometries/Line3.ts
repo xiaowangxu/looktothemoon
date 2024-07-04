@@ -59,20 +59,6 @@ export class Line3 implements LineLike<Vector3, Matrix3>, BvhShape<Vector3, Matr
     
     //#region Bvh
 
-    get aabb(): Box3 {
-        return new Box3(
-            new Vector3(
-                Math.min(this.start.x, this.end.x),
-                Math.min(this.start.y, this.end.y),
-                Math.min(this.start.z, this.end.z),
-            ),
-            new Vector3(
-                Math.max(this.start.x, this.end.x),
-                Math.max(this.start.y, this.end.y),
-                Math.max(this.start.z, this.end.z),
-            ),
-        );
-    }
     get_AABB(target: Box3): Box3 {
         target.min.set(
             Math.min(this.start.x, this.end.x),

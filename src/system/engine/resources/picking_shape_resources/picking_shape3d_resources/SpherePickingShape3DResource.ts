@@ -1,15 +1,15 @@
-import type { Viewport } from "../../nodes/Node";
+import type { Viewport } from "../../../nodes/Node";
 import { RaycastSide } from "@/system/fivepebble/geometries/GeometryLike";
-import { Epsilon } from '../../../fivepebble/Scalar';
-import type { ClassReader, ClassWriter } from "../../classes/saver_loader/ClassWriterReader";
+import { Epsilon } from '../../../../fivepebble/Scalar';
+import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
 import { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
-import { PickingShape3DResource, type RaycastResult3 } from "./PickingShapeResource";
+import { PickingShape3DResource, type RaycastResult3 } from "./PickingShape3DResource";
 
+export class SpherePickingShape3DResource extends PickingShape3DResource {
 
-export class PickingSphereResource extends PickingShape3DResource {
-    public static readonly class_name: string = "PickingSphereResource";
+    public static readonly class_name: string = "SpherePickingShape3DResource";
 
     static readonly #tmp_vector3_0 = Vector3.new;
     static readonly #tmp_vector3_1 = Vector3.new;
@@ -29,8 +29,8 @@ export class PickingSphereResource extends PickingShape3DResource {
     perform_Raycast(from: Vector3, to: Vector3, global_transform: Matrix4, side: RaycastSide, camera: Camera3 | undefined, viewport: Viewport | undefined): RaycastResult3 | undefined {
         if (this.radius < Epsilon) return undefined;
 
-        const sphere_pos = PickingSphereResource.#tmp_vector3_0.negate(from);
-        const rel = PickingSphereResource.#tmp_vector3_1.sub(to, from);
+        const sphere_pos = SpherePickingShape3DResource.#tmp_vector3_0.negate(from);
+        const rel = SpherePickingShape3DResource.#tmp_vector3_1.sub(to, from);
         const rel_l = rel.length;
 
         if (rel_l < Epsilon) {
@@ -39,7 +39,7 @@ export class PickingSphereResource extends PickingShape3DResource {
         const normal = rel.div_Number(rel, rel_l);
 
         const sphere_d = sphere_pos.dot(normal);
-        const ray_distance = sphere_pos.distance_to(PickingSphereResource.#tmp_vector3_2.mult_Number(normal, sphere_d));
+        const ray_distance = sphere_pos.distance_to(SpherePickingShape3DResource.#tmp_vector3_2.mult_Number(normal, sphere_d));
 
         if (ray_distance >= this.radius) {
             return undefined;
@@ -66,6 +66,7 @@ export class PickingSphereResource extends PickingShape3DResource {
     protected dispose(): void { }
 
     // save / load
+    
     public dump(writer: ClassWriter): void {
         writer.property('radius', this.radius);
     }

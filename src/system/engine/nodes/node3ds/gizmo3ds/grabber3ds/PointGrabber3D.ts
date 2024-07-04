@@ -2,7 +2,7 @@ import { MouseButtonInputEvent, MouseButton } from "@/system/engine/inputs/event
 import { MouseEnterLeaveInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseEnterLeaveInputEvent";
 import type { MouseInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseInputEvent";
 import { MouseMotionInputEvent } from "@/system/engine/inputs/events/mouse_events/MouseMotionInputEvent";
-import { PickingSphereResource } from "@/system/engine/resources/picking_shape_resources/PickingSphereResource";
+import { SpherePickingShape3DResource } from "@/system/engine/resources/picking_shape_resources/picking_shape3d_resources/SpherePickingShape3DResource";
 import { PickingArea3D } from "../../physics3ds/PickingArea3D";
 import { PickingShape3D } from "../../physics3ds/PickingShape3D";
 import { MeshInstance3D } from "../../visual_instance3ds/geometry3ds/MeshInstance3D";
@@ -26,7 +26,7 @@ const PointGeometry = new RefCacher(() => {
 });
 
 const PointPickingShape = new RefCacher(() => {
-    const picking_shape = new PickingSphereResource();
+    const picking_shape = new SpherePickingShape3DResource();
     picking_shape.radius = 1.5;
     return picking_shape;
 });

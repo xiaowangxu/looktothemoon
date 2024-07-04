@@ -12,6 +12,8 @@ import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { WebGPURenderStateTextureFilter } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTextureSampler";
 import type { Texture2DResource } from "../../texture_resources/texture2d_resources/Texture2DResource";
 import type { TextureCubeMapResource } from "../../texture_resources/texture2d_resources/TextureCubeMapResource";
+import type { ClassReader, ClassWriter } from "@/system/engine/classes/saver_loader/ClassWriterReader";
+import { Color } from "@/system/fivepebble/graphics/Color";
 
 const PbrMaterial3DResourceUniformLayout = new RefCacher(() => {
 	const layout = RenderServer.render_state.create_UniformLayout();
@@ -338,5 +340,19 @@ export class PbrMaterial3DResource extends MaterialResource {
 		this.uniform_group_ref.clear();
 		this.uniform_buffer_ref.clear();
 		super.dispose();
+	}
+
+	// save load
+
+	public dump(writer: ClassWriter): void {
+		writer.property('metallic', this.metallic);
+		writer.property('roughness', this.roughness);
+		writer.property('color', this.color);
+	}
+
+	public load(reader: ClassReader): void {
+		this.metallic = reader.get<number>('metallic') ?? 1;
+		this.roughness = reader.get<number>('roughness') ?? 1;
+		this.color = reader.get<Color>('color') ?? Color.create(1, 1, 1, 1);
 	}
 }

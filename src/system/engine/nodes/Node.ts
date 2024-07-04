@@ -52,8 +52,8 @@ export class Node extends ClassBase {
     public name: string | undefined;
     public get readable_name() { return this.name ?? this.rid; }
 
-    private scenetree: SceneTree | undefined = undefined;
-    private inside_tree: boolean = false;
+    protected scenetree: SceneTree | undefined = undefined;
+    protected inside_tree: boolean = false;
     public get is_inside_tree() { return this.inside_tree; }
     private viewport: Viewport | undefined;
 
@@ -82,6 +82,10 @@ export class Node extends ClassBase {
     public block_input: boolean = false;
     public block_process: boolean = false;
     public block_physics_process: boolean = false;
+    
+    public stop_input: boolean = false;
+    public stop_process: boolean = false;
+    public stop_physics_process: boolean = false;
 
     private _is_propagating: number = 0;
     protected get is_propagating() { return this._is_propagating; }
@@ -156,7 +160,7 @@ export class Node extends ClassBase {
             child.propagate_Ready();
         }
         this.is_propagating--;
-        if (this.is_inside_tree) {
+        if (this.inside_tree) {
             this._notification(NodeNotification.EnteredReady);
             if (this.first_time_ready) {
                 this.first_time_ready = false;
@@ -169,13 +173,14 @@ export class Node extends ClassBase {
     }
 
     public propagate_Process(delta: number) {
+        if (this.stop_process) return;
         this.is_propagating++;
         for (const child of this._children) {
             child.propagate_Process(delta);
         }
         this.is_propagating--;
         // process
-        if (this.is_inside_tree) {
+        if (this.inside_tree) {
             this._notification(NodeNotification.Process);
             if (!this.block_process) {
                 this._process(delta);
@@ -185,23 +190,25 @@ export class Node extends ClassBase {
     }
 
     public propagate_InternalAfterProcess(delta: number) {
+        if (this.stop_process) return;
         this.is_propagating++;
         for (const child of this._children) {
             child.propagate_InternalAfterProcess(delta);
         }
         this.is_propagating--;
         // internal before process
-        if (this.is_inside_tree) this._notification(NodeNotification.InternalAfterProcess);
+        if (this.inside_tree) this._notification(NodeNotification.InternalAfterProcess);
     }
 
     public propagate_PhysicsProcess(delta: number) {
+        if (this.stop_physics_process) return;
         this.is_propagating++;
         for (const child of this._children) {
             child.propagate_PhysicsProcess(delta);
         }
         this.is_propagating--;
         // physics process
-        if (this.is_inside_tree) {
+        if (this.inside_tree) {
             this._notification(NodeNotification.PhysicsProcess);
             if (!this.block_physics_process) {
                 this._physics_process(delta);
@@ -211,13 +218,14 @@ export class Node extends ClassBase {
     }
 
     public propagate_InternalAfterPhysicsProcess(delta: number) {
+        if (this.stop_physics_process) return;
         this.is_propagating++;
         for (const child of this._children) {
             child.propagate_InternalAfterPhysicsProcess(delta);
         }
         this.is_propagating--;
         // internal before process
-        if (this.is_inside_tree) this._notification(NodeNotification.InternalAfterPhysicsProcess);
+        if (this.inside_tree) this._notification(NodeNotification.InternalAfterPhysicsProcess);
     }
 
     public propagate_InternalBeforeRender(delta: number, redundant: boolean, root: Viewport) {
@@ -299,7 +307,7 @@ export class Node extends ClassBase {
     }
 
     private free_Internal() {
-        if (this.is_inside_tree) throw new Error('<Node> free_Internal: cannot free a node when it is inside the scenetree');
+        if (this.inside_tree) throw new Error('<Node> free_Internal: cannot free a node when it is inside the scenetree');
         this.propagate_Dispose();
     }
 
@@ -407,6 +415,9 @@ export class Node extends ClassBase {
         writer.property('block_input', this.block_input);
         writer.property('block_process', this.block_process);
         writer.property('block_physics_process', this.block_physics_process);
+        writer.property('stop_input', this.stop_input);
+        writer.property('stop_process', this.stop_process);
+        writer.property('stop_physics_process', this.stop_physics_process);
     }
 
     public load(reader: ClassReader): void {
@@ -414,6 +425,9 @@ export class Node extends ClassBase {
         this.block_input = reader.get<boolean>('block_input') ?? false;
         this.block_process = reader.get<boolean>('block_process') ?? false;
         this.block_physics_process = reader.get<boolean>('block_physics_process') ?? false;
+        this.stop_input = reader.get<boolean>('stop_input') ?? false;
+        this.stop_process = reader.get<boolean>('stop_process') ?? false;
+        this.stop_physics_process = reader.get<boolean>('stop_physics_process') ?? false;
     }
 }
 
@@ -683,6 +697,7 @@ export class Viewport extends Node {
     }
 
     private propagate_InputEventInternal(node: Node, event: InputEvent, target: Viewport | undefined) {
+        if (node.stop_input) return;
         if (event.cancelled) return;
         if (node instanceof Viewport) {
             if (node === target) {
@@ -691,9 +706,9 @@ export class Viewport extends Node {
             return;
         }
         if (!node.block_input) {
-            if (node.is_inside_tree) node._input(event, true);
+            if ((node as Viewport).inside_tree) node._input(event, true);
             if (event.cancelled) return;
-            if (node.is_inside_tree) node.signal_input.trigger(event, true);
+            if ((node as Viewport).inside_tree) node.signal_input.trigger(event, true);
             if (event.cancelled) return;
         }
         (node as Viewport).is_propagating++;
@@ -703,18 +718,19 @@ export class Viewport extends Node {
         }
         (node as Viewport).is_propagating--;
         if (!node.block_input) {
-            if (node.is_inside_tree) node._input(event, false);
+            if ((node as Viewport).inside_tree) node._input(event, false);
             if (event.cancelled) return;
-            if (node.is_inside_tree) node.signal_input.trigger(event, false);
+            if ((node as Viewport).inside_tree) node.signal_input.trigger(event, false);
         }
     }
 
     private propagate_InputEvent(event: InputEvent, target: Viewport | undefined) {
+        if (this.stop_input) return;
         if (event.cancelled) return;
         if (!this.block_input) {
-            if (this.is_inside_tree) this._input(event, true);
+            if (this.inside_tree) this._input(event, true);
             if (event.cancelled) return;
-            if (this.is_inside_tree) this.signal_input.trigger(event, true);
+            if (this.inside_tree) this.signal_input.trigger(event, true);
             if (event.cancelled) return;
         }
         this.is_propagating++;
@@ -724,9 +740,9 @@ export class Viewport extends Node {
         }
         this.is_propagating--;
         if (!this.block_input) {
-            if (this.is_inside_tree) this._input(event, false);
+            if (this.inside_tree) this._input(event, false);
             if (event.cancelled) return;
-            if (this.is_inside_tree) this.signal_input.trigger(event, false);
+            if (this.inside_tree) this.signal_input.trigger(event, false);
         }
     }
 

@@ -2,7 +2,7 @@ import type { Rid } from "../../../Rid";
 import { NodeNotification } from "../../Node";
 import { Node3D } from "../Node3D";
 import type { ClassReader, ClassWriter } from "../../../classes/saver_loader/ClassWriterReader";
-import type { PickingShape3DResource } from "../../../resources/picking_shape_resources/PickingShapeResource";
+import type { PickingShape3DResource } from "../../../resources/picking_shape_resources/picking_shape3d_resources/PickingShape3DResource";
 import { PickingArea3D } from "./PickingArea3D";
 import { Ref } from "@/system/utils/RefCounted";
 

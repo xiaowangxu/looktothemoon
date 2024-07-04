@@ -264,9 +264,6 @@ export class Box3 implements BoxLike<Vector3, Matrix3>, BvhShape<Vector3, Matrix
 
     //#region Bvh
 
-    get aabb(): Box3 {
-        return this.clone();
-    }
     get_AABB(target: Box3): Box3 {
         return target.copy(this);
     }

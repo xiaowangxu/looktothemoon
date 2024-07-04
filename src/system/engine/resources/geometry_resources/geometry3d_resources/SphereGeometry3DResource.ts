@@ -198,6 +198,8 @@ export class SphereGeometry3DResource extends Geometry3DResource implements Reso
         Geometry3DResource.$tmp_box3_for_bbox.min.set(-radius, -radius, -radius);
         Geometry3DResource.$tmp_box3_for_bbox.max.set(radius, radius, radius);
         this.render_server_geometry.set_BBox(Geometry3DResource.$tmp_box3_for_bbox);
+        
+        this.trigger_Changed();
     }
 
     protected dispose(): void {
