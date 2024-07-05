@@ -823,7 +823,9 @@ export async function createEditor() {
 		const pointer = new LineGrabber3D();
 		pointer.offset_length = 0;
 		pointer.enabled = false;
+		pointer.color = Color.create(0, 0, 0, 1);
 		World.add_Child(pointer);
+		pointer.visible = false;
 
 		const box = new TorusGeometry3DResource();
 		const shp = new GeometryPickingShape3DResource();
@@ -843,9 +845,18 @@ export async function createEditor() {
 		mesh.local_rotation = Euler.create(Math.random() * Tau, Math.random() * Tau, Math.random() * Tau);
 		mesh.add_Child(area);
 
+		area.signal_mouse_entered.connect(()=>{
+			pointer.visible = true;
+		});
+		area.signal_mouse_exited.connect(()=>{
+			pointer.visible = false;
+		});
 		area.signal_mouse_moved.connect((evt, res) => {
 			pointer.global_position = res.position;
 			pointer.global_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), res.normal));
+			// const normal = res.normal.clone();
+			// normal.add_Number(normal, 1).div_Number(normal, 2);
+			// pointer.color = Vector4.create(normal.x, normal.y, normal.z, 1);
 		});
 
 		World.add_Child(mesh);

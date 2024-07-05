@@ -885,7 +885,7 @@ export class Viewport extends Node {
                 camera_3d.get_Camera(),
                 this,
                 PickingOrder.OffsetOrdered,
-                RaycastSide.Front
+                RaycastSide.Front,
             );
             const ray_picking_results = picking_world.perform_RayPicking(ray_picking_option);
             if (ray_picking_results.length > 0) {

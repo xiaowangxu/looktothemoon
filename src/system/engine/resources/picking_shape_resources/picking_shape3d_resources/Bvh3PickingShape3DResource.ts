@@ -62,6 +62,14 @@ export abstract class Bvh3PickingShape3DResource<Bvh extends BaseBvh3> extends P
             }
         }
 
-        return has_result ? min_res : undefined;
+        if (!has_result) return undefined;
+        if (side === RaycastSide.Double) return min_res;
+
+        const dot = line.direction.dot(min_res.normal);
+
+        if (side === RaycastSide.Front && dot <= 0) return min_res;
+        if (side === RaycastSide.Back && dot >= 0) return min_res;
+
+        return undefined;
     }
 }
