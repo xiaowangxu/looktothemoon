@@ -23,6 +23,8 @@ export abstract class RenderServerGeometry<Vec extends VectorLike<Vec, Mat>, Mat
     public get surface_length() { return this.vertex_array_view_refs.length; }
     protected _instance_count: number = 1;
     public get instance_count() { return this._instance_count; }
+    public get vertex_length() { return this.vertex_array_ref.expect.length; }
+    public get primitive_type() { return this.vertex_array_ref.expect.primitive_type; }
 
     protected abstract _bbox: Box;
     /**

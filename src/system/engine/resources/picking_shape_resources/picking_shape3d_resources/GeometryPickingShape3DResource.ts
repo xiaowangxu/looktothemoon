@@ -15,6 +15,7 @@ import { Triangle3 } from "@/system/fivepebble/geometries/Triangle3";
 
 export interface GeometryPickingShape3D extends Geometry3DResource {
     get primitive_type(): WebGPURenderStatePrimitiveType;
+    get vertex_length(): number;
     get position_normal(): WebGPURenderElementVector3Buffer;
     get uv(): WebGPURenderElementVector2Buffer | undefined;
     get index(): WebGPURenderElementIndexBuffer | undefined;
@@ -81,7 +82,8 @@ export class GeometryPickingShape3DResource extends Bvh3PickingShape3DResource<I
                 this.position_normal_ref.value = geometry.position_normal;
                 this.uv_ref.value = geometry.uv;
                 this.index_ref.value = geometry.index;
-                this.count = (this.index_ref.is_empty ? this.position_normal_ref.expect.elements_count / 2 : this.index_ref.expect.elements_count) / 3;
+                const vertex_length = geometry.vertex_length;
+                this.count = vertex_length / 3;
                 this.bvh.build(this);
             }
         }

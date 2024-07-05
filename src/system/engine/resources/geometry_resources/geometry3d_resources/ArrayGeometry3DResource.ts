@@ -13,7 +13,10 @@ import type { RenderServerGeometrySurfaces } from "@/system/engine/render_server
 
 export class ArrayGeometry3DResource extends Geometry3DResource {
 
-    static class_name: string = 'ArrayGeometry3DResource' as const;
+    public static class_name: string = 'ArrayGeometry3DResource';
+
+    protected index_buffer: PackedIndexArray | undefined = undefined;
+    protected attribute_buffers_map: Map<RenderServerGeometryAttributeLayoutBuffer, PackedArray> = new Map();
 
     constructor() {
         super();
@@ -21,6 +24,8 @@ export class ArrayGeometry3DResource extends Geometry3DResource {
 
     public clear_Geometry() {
         this.render_server_geometry.clear_Geometry(true);
+        this.index_buffer = undefined;
+        this.attribute_buffers_map.clear();
     }
 
     public set_IndexBuffer(buffer: WebGPURenderElementVertexArrayBuffer) {
@@ -48,6 +53,8 @@ export class ArrayGeometry3DResource extends Geometry3DResource {
     }
 
     protected dispose(): void {
+        this.index_buffer = undefined;
+        this.attribute_buffers_map.clear();
         super.dispose();
     }
 

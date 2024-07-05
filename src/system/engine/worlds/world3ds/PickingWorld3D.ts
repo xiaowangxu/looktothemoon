@@ -6,7 +6,9 @@ import type { PickingArea3D } from "../../nodes/node3ds/physics3ds/PickingArea3D
 import { RaycastSide, type RaycastResult } from "@/system/fivepebble/geometries/GeometryLike";
 import { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import type { Camera3 } from "@/system/fivepebble/graphics/Camera3";
-import type { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import { Vector2 } from "@/system/fivepebble/linear_algebra/Vector2";
+import type { Cloneable, Indexed, New } from "@/system/utils/Type";
+import { ObjectPool } from "@/system/utils/ObjectPool";
 
 type RaycastResult3 = RaycastResult<Vector3, Matrix3>;
 
@@ -59,16 +61,19 @@ export class RayPickingOption {
     }
 }
 
-export class RayPickingResult {
-    public readonly area: PickingArea3D;
-    public readonly position: Vector3;
-    public readonly normal: Vector3;
-    public readonly uv?: Vector2;
-    public readonly distance: number;
-    public readonly offset_distance: number;
-    public readonly priority: number;
+export class RayPickingResult implements Indexed, Cloneable<RayPickingResult> {
 
-    constructor(area: PickingArea3D, position: Vector3, normal: Vector3, uv: Vector2 | undefined, distance: number, offset_distance: number, priority: number) {
+    public index: number = 0;
+
+    public area: PickingArea3D;
+    public position: Vector3;
+    public normal: Vector3;
+    public uv: Vector2;
+    public distance: number;
+    public offset_distance: number;
+    public priority: number;
+
+    constructor(area: PickingArea3D, position: Vector3, normal: Vector3, uv: Vector2, distance: number, offset_distance: number, priority: number) {
         this.area = area;
         this.position = position;
         this.normal = normal;
@@ -76,6 +81,18 @@ export class RayPickingResult {
         this.distance = distance;
         this.offset_distance = offset_distance;
         this.priority = priority;
+    }
+
+    public clone(): New<RayPickingResult> {
+        return new RayPickingResult(
+            this.area,
+            this.position.clone(),
+            this.normal.clone(),
+            this.uv.clone(),
+            this.distance,
+            this.offset_distance,
+            this.priority,
+        );
     }
 }
 
@@ -88,36 +105,57 @@ export class PickingWorld3D {
     private readonly shapes_map: Map<Rid, PickingShapeInstance> = new Map();
     private readonly areas_map: Map<Rid, PickingArea> = new Map();
 
+    private readonly result_pool: ObjectPool<RayPickingResult> = new ObjectPool(() => {
+        return new RayPickingResult(undefined!, Vector3.new, Vector3.new, Vector2.new, 0, 0, 0);
+    }, 128, true);
+
     public get is_empty(): boolean {
         return this.shapes_map.size <= 0 && this.areas_map.size <= 0;
     }
 
+    constructor() {
+        this.result_pool.warm_up(128);
+    }
+
     public perform_RayPicking(option: RayPickingOption) {
         const { mask, from, to, camera, viewport, order, side } = option;
-        const result: RayPickingResult[] = [];
+        const results: RayPickingResult[] = [];
+
         for (const shape_instance of this.shapes_map.values()) {
-            const _from = PickingWorld3D.#tmp_vector3_0.copy(from);
-            const _to = PickingWorld3D.#tmp_vector3_1.copy(to);
             const { shape, distance_offset, area, global_transform, global_transform_inverse, global_normal_transform } = shape_instance;
             if (shape !== undefined && area !== undefined && area.enabled && (area.layer & mask) !== 0) {
+
+                const _from = PickingWorld3D.#tmp_vector3_0.copy(from);
+                const _to = PickingWorld3D.#tmp_vector3_1.copy(to);
                 const preserve_global_transform = shape.preserve_global_transform;
                 const local_from = preserve_global_transform ? _from : _from.affine_transform(_from, global_transform_inverse);
                 const local_to = preserve_global_transform ? _to : _to.affine_transform(_to, global_transform_inverse);
                 const res = shape.perform_Raycast(local_from, local_to, global_transform, side, camera, viewport);
+
                 if (res !== undefined) {
                     const _res_position = res.position;
                     const _res_normal = res.normal;
                     const position = preserve_global_transform ? _res_position : _res_position.affine_transform(_res_position, global_transform);
                     const normal = preserve_global_transform ? _res_normal : _res_normal.transform(_res_normal, global_normal_transform).normalize(_res_normal);
                     const distance = position.distance_to(from);
-                    result.push(
-                        new RayPickingResult(area.area, position, normal, res.uv, distance, distance + distance_offset, area.priority)
-                    );
+
+                    const result = this.result_pool.get()!;
+                    result.area = area.area;
+                    result.position.copy(position);
+                    result.normal.copy(normal);
+                    if (res.uv) result.uv.copy(res.uv);
+                    result.distance = distance;
+                    result.offset_distance = distance + distance_offset;
+                    result.priority = area.priority;
+
+                    results.push(result);
                 }
             }
         }
+
+        // reorder
         if (order === PickingOrder.Ordered) {
-            result.sort((a, b) => {
+            results.sort((a, b) => {
                 const priority_a = a.priority;
                 const priority_b = b.priority;
                 if (priority_a < priority_b) return -1;
@@ -126,7 +164,7 @@ export class PickingWorld3D {
             });
         }
         else if (order === PickingOrder.OffsetOrdered) {
-            result.sort((a, b) => {
+            results.sort((a, b) => {
                 const priority_a = a.priority;
                 const priority_b = b.priority;
                 if (priority_a < priority_b) return -1;
@@ -134,7 +172,12 @@ export class PickingWorld3D {
                 return a.offset_distance - b.offset_distance;
             });
         }
-        return result;
+
+        for (const result of results) {
+            this.result_pool.give_back(result);
+        }
+        
+        return results;
     }
 
     //#region Area

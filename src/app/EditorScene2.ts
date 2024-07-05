@@ -94,6 +94,7 @@ import { GeometryPickingShape3DResource } from "@/system/engine/resources/pickin
 import { PickingShape3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingShape3D";
 import { PickingArea3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingArea3D";
 import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
+import { SpherePickingShape3DResource } from "@/system/engine/resources/picking_shape_resources/picking_shape3d_resources/SpherePickingShape3DResource";
 
 (window as any).set_Color = new SignalEmitter<(color: ColorData) => void>();
 
@@ -640,22 +641,40 @@ export async function createEditor() {
 	// 		huli.local_scale = Vector3.create(0.1, 0.1, 0.1);
 	// 		World.add_Child(huli);
 	// 	});
-	// 	let idx = 0;
-	// 	for (let i = 0; i <= 10; i++) {
-	// 		for (let j = 0; j <= 10; j++) {
-	// 			const mesh = new MeshInstance3D();
-	// 			mesh.geometry = sph_geo;
-	// 			const mat = new PbrMaterial3DResource();
-	// 			// mat.color = Color.hsv(idx++ / 121, 1, 0.5, 1);
-	// 			mesh.material = mat;
-	// 			mat.roughness = i / 10;
-	// 			mat.metallic = j / 10;
-	// 			// mat.cube_texture = texture;
-	// 			mesh.local_position = Vector3.create(-80 + (i * 15), 20, -80 + (j * 15));
-	// 			mesh.local_scale = Vector3.create(10, 10, 10);
-	// 			World.add_Child(mesh);
-	// 		}
-	// 	}
+	let idx = 0;
+	for (let i = 0; i <= 10; i++) {
+		for (let j = 0; j <= 10; j++) {
+			const shp = new PickingShape3D();
+			shp.shape = new SpherePickingShape3DResource();
+			const area = new PickingArea3D();
+			area.add_Child(shp);
+			const mesh = new MeshInstance3D();
+			mesh.add_Child(area);
+			mesh.geometry = sph_geo;
+			const mat = new PbrMaterial3DResource();
+			// mat.color = Color.hsv(idx++ / 121, 1, 0.5, 1);
+			mesh.material = mat;
+			mat.roughness = i / 10;
+			mat.metallic = j / 10;
+			// mat.cube_texture = texture;
+			mesh.local_position = Vector3.create(-80 + (i * 15), 20, -80 + (j * 15));
+			mesh.local_scale = Vector3.create(10, 10, 10);
+			World.add_Child(mesh);
+			area.signal_mouse_entered.connect(() => {
+				pointer.visible = true;
+			});
+			area.signal_mouse_exited.connect(() => {
+				pointer.visible = false;
+			});
+			area.signal_mouse_moved.connect((evt, res) => {
+				pointer.global_position = res.position;
+				pointer.global_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), res.normal));
+				// const normal = res.normal.clone();
+				// normal.add_Number(normal, 1).div_Number(normal, 2);
+				// pointer.color = Vector4.create(normal.x, normal.y, normal.z, 1);
+			});
+		}
+	}
 	// }
 
 	// {
@@ -734,31 +753,31 @@ export async function createEditor() {
 		World.add_Child(line_x);
 	}
 
-	{
-		for (let i = 0; i < 16; i++) {
-			const light3 = new PointLight3D();
-			light3.color = Vector3.create(Math.random(), Math.random(), Math.random());
-			light3.local_position = Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 100 + 200, (Math.random() - 0.5) * 200);
-			light3.intensity = 0.1;
-			light3.radius = 0.5;
-			light3.block_process = true;
-			light3.block_input = true;
-			light3.block_physics_process = true;
-			World.add_Child(light3);
-			EditorSceneTree.start_Tween(
-				new TweenLoop(
-					new PingPongTweenAdaptor(
-						new PropertyTweenAdaptor(
-							new InterpolateTween(2, InterpolateTweenTransitionType.Cubic, InterpolateTweenEasingType.InOut),
-							light3, "local_position",
-							Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200)
-						)
-					),
-					Infinity
-				)
-			);
-		}
-	}
+	// {
+	// 	for (let i = 0; i < 16; i++) {
+	// 		const light3 = new PointLight3D();
+	// 		light3.color = Vector3.create(Math.random(), Math.random(), Math.random());
+	// 		light3.local_position = Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 100 + 200, (Math.random() - 0.5) * 200);
+	// 		light3.intensity = 0.1;
+	// 		light3.radius = 0.5;
+	// 		light3.block_process = true;
+	// 		light3.block_input = true;
+	// 		light3.block_physics_process = true;
+	// 		World.add_Child(light3);
+	// 		EditorSceneTree.start_Tween(
+	// 			new TweenLoop(
+	// 				new PingPongTweenAdaptor(
+	// 					new PropertyTweenAdaptor(
+	// 						new InterpolateTween(2, InterpolateTweenTransitionType.Cubic, InterpolateTweenEasingType.InOut),
+	// 						light3, "local_position",
+	// 						Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200)
+	// 					)
+	// 				),
+	// 				Infinity
+	// 			)
+	// 		);
+	// 	}
+	// }
 
 	{
 		// fetch(monkey).then(r => r.arrayBuffer()).then(d => {
@@ -818,14 +837,16 @@ export async function createEditor() {
 			// }
 		});
 	}
-
+	
+	const pointer = new LineGrabber3D();
+	pointer.offset_length = 0;
+	pointer.enabled = false;
+	pointer.color = Color.create(1, 0.2, 0.2, 1);
+	World.add_Child(pointer);
+	pointer.visible = false;
+	
 	{
-		const pointer = new LineGrabber3D();
-		pointer.offset_length = 0;
-		pointer.enabled = false;
-		pointer.color = Color.create(0, 0, 0, 1);
-		World.add_Child(pointer);
-		pointer.visible = false;
+
 
 		const box = new TorusGeometry3DResource();
 		const shp = new GeometryPickingShape3DResource();
@@ -845,10 +866,10 @@ export async function createEditor() {
 		mesh.local_rotation = Euler.create(Math.random() * Tau, Math.random() * Tau, Math.random() * Tau);
 		mesh.add_Child(area);
 
-		area.signal_mouse_entered.connect(()=>{
+		area.signal_mouse_entered.connect(() => {
 			pointer.visible = true;
 		});
-		area.signal_mouse_exited.connect(()=>{
+		area.signal_mouse_exited.connect(() => {
 			pointer.visible = false;
 		});
 		area.signal_mouse_moved.connect((evt, res) => {
