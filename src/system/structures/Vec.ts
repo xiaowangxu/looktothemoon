@@ -34,21 +34,18 @@ export class Vec<T> {
 
     [Symbol.iterator]() { return new VecIterator<T>(this.array as T[], this.length); }
 
-    constructor(capacity: number) {
-        this._capacity = capacity;
-        this.array = new Array(capacity).fill(undefined);
+    constructor(initial_capacity: number) {
+        this._capacity = initial_capacity;
+        this.array = new Array(initial_capacity);
     }
 
     public insure(size: number) {
         if (this._capacity < size) {
-            this._capacity *= 1.5;
+            this._capacity = Math.ceil(this._capacity * 1.5);
             const array = new Array(this._capacity);
             for (let i = 0; i < this._length; i++) {
                 array[i] = this.array[i];
             }
-            // for (let i = this._length; i < this.capacity; i++) {
-            //     array[i] = undefined;
-            // }
             this.array = array;
         }
     }

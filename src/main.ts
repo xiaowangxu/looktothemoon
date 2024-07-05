@@ -1,14 +1,11 @@
 import { createApp } from 'vue';
 import App from './App.vue';
-// import { createEditor } from './app/EditorScene';
 import '@/system/filesystem/VirtualFileSystem';
 import sys_vfs from 'res://sys.vfs.gz?url';
 import { VFS } from '@/system/filesystem/VirtualFileSystem';
 import { fspath } from './system/filesystem/FileSystemPath';
 import { createEditor } from './app/EditorScene2';
 import { RenderServer } from './system/engine/render_server/RenderServer';
-// import { StlLoader } from './system/engine/loaders/StlLoader';
-// import { ObjLoader } from './system/engine/loaders/ObjLoader';
 
 createApp(App).mount('#app');
 
@@ -45,6 +42,8 @@ VFS.touch(fspath('user://'));
         (window as any).scenetree = createEditor();
     };
 })();
+
+import './system/utils/ObjectPool';
 
 // import { FPMesh } from './system/fivepebble/shape/fp_mesh/FPMesh';
 
