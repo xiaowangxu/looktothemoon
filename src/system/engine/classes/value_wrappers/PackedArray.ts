@@ -32,6 +32,40 @@ export abstract class PackedArray<Data = any, Buffer = WebGPURenderElementVertex
 
     public abstract get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): ElementBuffer;
     public abstract get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): Buffer;
+
+    public static from_RenderElementBuffer(buffer: WebGPURenderElementBuffer) {
+        if (buffer instanceof WebGPURenderElementIndexBuffer) {
+            return new PackedIndexArray(new Uint32Array(buffer.data));
+        }
+        if (buffer instanceof WebGPURenderElementUintBuffer) {
+            return new PackedUintArray(new Uint32Array(buffer.data));
+        }
+        if (buffer instanceof WebGPURenderElementIntBuffer) {
+            return new PackedIntArray(new Int32Array(buffer.data));
+        }
+        if (buffer instanceof WebGPURenderElementFloatBuffer) {
+            return new PackedFloatArray(new Float32Array(buffer.data));
+        }
+        if (buffer instanceof WebGPURenderElementVector2Buffer) {
+            return new PackedVector2Array(new Float32Array(buffer.data));
+        }
+        if (buffer instanceof WebGPURenderElementVector3Buffer) {
+            return new PackedVector3Array(new Float32Array(buffer.data));
+        }
+        if (buffer instanceof WebGPURenderElementVector4Buffer) {
+            return new PackedVector4Array(new Float32Array(buffer.data));
+        }
+        if (buffer instanceof WebGPURenderElementMatrix2Buffer) {
+            return new PackedMatrix2Array(new Float32Array(buffer.data));
+        }
+        if (buffer instanceof WebGPURenderElementMatrix3Buffer) {
+            return new PackedMatrix3Array(new Float32Array(buffer.data));
+        }
+        if (buffer instanceof WebGPURenderElementMatrix4Buffer) {
+            return new PackedMatrix4Array(new Float32Array(buffer.data));
+        }
+        throw new Error('<PackedArray> from_RenderElementBuffer: buffer\' type is not valid in RenderElementBuffer');
+    }
 }
 
 export class PackedByteArray extends PackedArray<number> {

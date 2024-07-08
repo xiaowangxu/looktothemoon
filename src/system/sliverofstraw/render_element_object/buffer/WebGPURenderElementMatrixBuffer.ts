@@ -7,7 +7,7 @@ import type { Matrix3 } from "@/system/fivepebble/linear_algebra/Matrix3";
 import type { Matrix4 } from "@/system/fivepebble/linear_algebra/Matrix4";
 import { PackedMatrix2Array, PackedMatrix3Array, PackedMatrix4Array } from "@/system/engine/classes/value_wrappers/PackedArray";
 
-export class WebGPURenderElementMatrix2Buffer extends WebGPURenderElementBuffer<Matrix2, PackedMatrix2Array> {
+export class WebGPURenderElementMatrix2Buffer extends WebGPURenderElementBuffer<Matrix2> {
 
     protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
@@ -95,10 +95,6 @@ export class WebGPURenderElementMatrix2Buffer extends WebGPURenderElementBuffer<
         return target.set(n11, n12, n21, n22);
     }
 
-    public get_PackedArray(): PackedMatrix2Array {
-        return new PackedMatrix2Array(new Float32Array(this._data));
-    }
-
     public commit(force: boolean = false): void {
         if (force || this.changed) {
             this.buffer.update_Data(0, this._data);
@@ -107,7 +103,7 @@ export class WebGPURenderElementMatrix2Buffer extends WebGPURenderElementBuffer<
     }
 }
 
-export class WebGPURenderElementMatrix3Buffer extends WebGPURenderElementBuffer<Matrix3, PackedMatrix3Array> {
+export class WebGPURenderElementMatrix3Buffer extends WebGPURenderElementBuffer<Matrix3> {
 
     protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
@@ -215,10 +211,6 @@ export class WebGPURenderElementMatrix3Buffer extends WebGPURenderElementBuffer<
         return target.set(n11, n12, n13, n21, n22, n23, n31, n32, n33);
     }
 
-    public get_PackedArray(): PackedMatrix3Array {
-        return new PackedMatrix3Array(new Float32Array(this._data));
-    }
-
     public commit(force: boolean = false): void {
         if (force || this.changed) {
             this.buffer.update_Data(0, this._data);
@@ -227,7 +219,7 @@ export class WebGPURenderElementMatrix3Buffer extends WebGPURenderElementBuffer<
     }
 }
 
-export class WebGPURenderElementMatrix4Buffer extends WebGPURenderElementBuffer<Matrix4, PackedMatrix4Array> {
+export class WebGPURenderElementMatrix4Buffer extends WebGPURenderElementBuffer<Matrix4> {
 
     protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
@@ -361,10 +353,6 @@ export class WebGPURenderElementMatrix4Buffer extends WebGPURenderElementBuffer<
         const n34 = this._data[j++];
         const n44 = this._data[j++];
         return target.set(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44);
-    }
-
-    public get_PackedArray(): PackedMatrix4Array {
-        return new PackedMatrix4Array(new Float32Array(this._data));
     }
 
     public commit(force: boolean = false): void {

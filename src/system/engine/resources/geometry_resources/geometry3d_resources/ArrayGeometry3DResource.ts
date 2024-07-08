@@ -129,14 +129,14 @@ export class ArrayGeometry3DResource extends Geometry3DResource implements Geome
                 continue;
             }
             attr_attrs.set(idx, attribute);
-            attr_buffs.set(idx, buffer.get_PackedArray());
+            attr_buffs.set(idx, PackedArray.from_RenderElementBuffer(buffer));
             attribute++;
             idx++;
         }
         writer.property('primitive_type', this.primitive_type);
         writer.property('attributes', attr_attrs);
         writer.property('buffers', attr_buffs);
-        writer.property('index', this.index_buffer_ref.value?.get_PackedArray());
+        writer.property('index', this.index_buffer_ref.is_empty ? undefined : PackedArray.from_RenderElementBuffer(this.index_buffer_ref.expect));
         writer.property('vertex_length', this.vertex_length);
         writer.property('surfaces', this.surfaces);
         writer.property('bbox', this.bbox);
