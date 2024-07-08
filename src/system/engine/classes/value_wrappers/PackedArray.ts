@@ -147,7 +147,7 @@ export class PackedIndexArray extends PackedArray<number, WebGPURenderStateBuffe
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementIndexBuffer {
-        throw new WebGPURenderElementIndexBuffer(render_state, type, usage, this.data);
+        return new WebGPURenderElementIndexBuffer(render_state, type, usage, this.data);
     }
 
     public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
@@ -213,7 +213,7 @@ export class PackedUintArray extends PackedArray<number, WebGPURenderStateBuffer
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementUintBuffer {
-        throw new WebGPURenderElementUintBuffer(render_state, type, usage, this.data);
+        return new WebGPURenderElementUintBuffer(render_state, type, usage, this.data);
     }
 
     public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
@@ -279,7 +279,7 @@ export class PackedIntArray extends PackedArray<number, WebGPURenderStateBuffer,
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementIntBuffer {
-        throw new WebGPURenderElementIntBuffer(render_state, type, usage, this.data);
+        return new WebGPURenderElementIntBuffer(render_state, type, usage, this.data);
     }
 
     public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
@@ -345,7 +345,7 @@ export class PackedFloatArray extends PackedArray<number, WebGPURenderStateBuffe
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementFloatBuffer {
-        throw new WebGPURenderElementFloatBuffer(render_state, type, usage, this.data);
+        return new WebGPURenderElementFloatBuffer(render_state, type, usage, this.data);
     }
 
     public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
@@ -422,7 +422,7 @@ export class PackedVector2Array extends PackedArray<Vector2, WebGPURenderStateBu
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementVector2Buffer {
-        throw new WebGPURenderElementVector2Buffer(render_state, type, usage, this.data);
+        return new WebGPURenderElementVector2Buffer(render_state, type, usage, this.data);
     }
 
     public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
@@ -500,7 +500,7 @@ export class PackedVector3Array extends PackedArray<Vector3, WebGPURenderStateBu
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementVector3Buffer {
-        throw new WebGPURenderElementVector3Buffer(render_state, type, usage, this.data);
+        return new WebGPURenderElementVector3Buffer(render_state, type, usage, this.data);
     }
 
     public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
@@ -581,7 +581,7 @@ export class PackedVector4Array extends PackedArray<Vector4, WebGPURenderStateBu
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementVector4Buffer {
-        throw new WebGPURenderElementVector4Buffer(render_state, type, usage, this.data);
+        return new WebGPURenderElementVector4Buffer(render_state, type, usage, this.data);
     }
 
     public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
@@ -663,7 +663,7 @@ export class PackedMatrix2Array extends PackedArray<Matrix2, WebGPURenderStateBu
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementMatrix2Buffer {
-        throw new WebGPURenderElementMatrix2Buffer(render_state, type, usage, this.data);
+        return new WebGPURenderElementMatrix2Buffer(render_state, type, usage, this.data);
     }
 
     public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
@@ -760,7 +760,7 @@ export class PackedMatrix3Array extends PackedArray<Matrix3, WebGPURenderStateBu
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementMatrix3Buffer {
-        throw new WebGPURenderElementMatrix3Buffer(render_state, type, usage, this.data);
+        return new WebGPURenderElementMatrix3Buffer(render_state, type, usage, this.data);
     }
 
     public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {
@@ -878,7 +878,7 @@ export class PackedMatrix4Array extends PackedArray<Matrix4, WebGPURenderStateBu
     }
 
     public get_RenderElementBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderElementMatrix4Buffer {
-        throw new WebGPURenderElementMatrix4Buffer(render_state, type, usage, this.data);
+        return new WebGPURenderElementMatrix4Buffer(render_state, type, usage, this.data);
     }
 
     public get_RenderStateBuffer(render_state: WebGPURenderState, type: WebGPURenderStateBufferType, usage: WebGPURenderStateBufferUsage): WebGPURenderStateBuffer {

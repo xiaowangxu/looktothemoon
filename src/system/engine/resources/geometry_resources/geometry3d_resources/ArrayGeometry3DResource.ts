@@ -1,6 +1,6 @@
 import type { Box3 } from "@/system/fivepebble/geometries/Box3";
 import { Geometry3DResource } from "./Geometry3DResource";
-import type { WebGPURenderElementVertexArrayBuffer } from "@/system/sliverofstraw/render_element_object/vertex_array/WebGPURenderElementVertexArray";
+import { WebGPURenderElementVertexArray } from "@/system/sliverofstraw/render_element_object/vertex_array/WebGPURenderElementVertexArray";
 import { WebGPURenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
 import { RenderServerGeometryAttributeLayoutBuffer } from "@/system/engine/render_server/geometry/RenderServerGeometryDefination";
 import type { ClassSaver } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
@@ -9,14 +9,32 @@ import { PackedIndexArray, PackedArray } from "@/system/engine/classes/value_wra
 import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 import type { ClassReader } from "@/system/engine/classes/saver_loader/ClassWriterReader";
 import { RenderServer } from "@/system/engine/render_server/RenderServer";
-import type { RenderServerGeometrySurfaces } from "@/system/engine/render_server/geometry/RenderServerGeometry";
+import { type RenderServerGeometrySurfaces } from "@/system/engine/render_server/geometry/RenderServerGeometry";
+import type { WebGPURenderElementBuffer, WebGPURenderElementIndexBuffer } from "@/system/sliverofstraw/render_element_object/buffer/WebGPURenderElementBuffer";
+import { Ref, RefArray } from "@/system/utils/RefCounted";
+import type { GeometryPickingShape3D } from "../../picking_shape_resources/picking_shape3d_resources/GeometryPickingShape3DResource";
+import type { WebGPURenderElementVector3Buffer, WebGPURenderElementVector2Buffer } from "@/system/sliverofstraw/render_element_object/buffer/WebGPURenderElementVectorBuffer";
 
-export class ArrayGeometry3DResource extends Geometry3DResource {
+export class ArrayGeometry3DResource extends Geometry3DResource implements GeometryPickingShape3D {
 
     public static class_name: string = 'ArrayGeometry3DResource';
 
-    protected index_buffer: PackedIndexArray | undefined = undefined;
-    protected attribute_buffers_map: Map<RenderServerGeometryAttributeLayoutBuffer, PackedArray> = new Map();
+    protected index_buffer_ref: Ref<WebGPURenderElementIndexBuffer> = new Ref();
+    protected attribute_buffer_refs: RefArray<WebGPURenderElementBuffer> = new RefArray(WebGPURenderElementVertexArray.MaxAttributeBufferCount);
+
+    //#region GeometryPickingShape3D
+
+    get position_normal() {
+        return this.attribute_buffer_refs.get(RenderServerGeometryAttributeLayoutBuffer.PositionNormal) as WebGPURenderElementVector3Buffer | undefined;
+    }
+    get uv() {
+        return this.attribute_buffer_refs.get(RenderServerGeometryAttributeLayoutBuffer.Uv) as WebGPURenderElementVector2Buffer | undefined;
+    }
+    get index() {
+        return this.index_buffer_ref.value;
+    }
+
+    //#endregion
 
     constructor() {
         super();
@@ -24,12 +42,14 @@ export class ArrayGeometry3DResource extends Geometry3DResource {
 
     public clear_Geometry() {
         this.render_server_geometry.clear_Geometry(true);
-        this.index_buffer = undefined;
-        this.attribute_buffers_map.clear();
+        this.index_buffer_ref.clear();
+        this.attribute_buffer_refs.clear(false);
     }
 
-    public set_IndexBuffer(buffer: WebGPURenderElementVertexArrayBuffer) {
-        this.render_server_geometry.set_IndexBuffer(buffer);
+    public set_IndexBuffer(buffer: PackedIndexArray) {
+        const re_buf = buffer.get_RenderElementBuffer(RenderServer.render_state, WebGPURenderStateBufferType.Index, WebGPURenderStateBufferUsage.None);
+        this.render_server_geometry.set_IndexBuffer(re_buf.buffer);
+        this.index_buffer_ref.value = re_buf;
     }
 
     public set_VertexLength(length: number) {
@@ -40,8 +60,11 @@ export class ArrayGeometry3DResource extends Geometry3DResource {
         this.render_server_geometry.set_PrimitiveType(type);
     }
 
-    public set_AttributeBuffer(attribute: RenderServerGeometryAttributeLayoutBuffer, buffer: WebGPURenderElementVertexArrayBuffer) {
-        this.render_server_geometry.set_AttributeBuffer(attribute, buffer);
+    public set_AttributeBuffer(attribute: RenderServerGeometryAttributeLayoutBuffer, buffer: PackedArray) {
+        if (attribute < 0 || attribute >= WebGPURenderElementVertexArray.MaxAttributeBufferCount || attribute >= this.attribute_buffer_refs.length) throw new Error('<ArrayGeometry3DResource> set_AttributeBuffer: attribute out of bound');
+        const re_buf = buffer.get_RenderElementBuffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.None);
+        this.render_server_geometry.set_AttributeBuffer(attribute, re_buf.buffer);
+        this.attribute_buffer_refs.set(attribute, re_buf);
     }
 
     public add_Surface(offset: number, length: number) {
@@ -53,8 +76,8 @@ export class ArrayGeometry3DResource extends Geometry3DResource {
     }
 
     protected dispose(): void {
-        this.index_buffer = undefined;
-        this.attribute_buffers_map.clear();
+        this.index_buffer_ref.clear();
+        this.attribute_buffer_refs.clear(false);
         super.dispose();
     }
 
@@ -109,19 +132,19 @@ export class ArrayGeometry3DResource extends Geometry3DResource {
 
         if (primitive_type === undefined || usage === undefined || vertex_length === undefined) throw new Error(`<ArrayGeometry3DResource> load: ArrayGeometry's data is not complete`);
 
-        this.render_server_geometry.clear_Geometry();
-        this.render_server_geometry.set_PrimitiveType(primitive_type);
-        this.render_server_geometry.set_VertexLength(vertex_length);
+        this.clear_Geometry();
+        this.set_PrimitiveType(primitive_type);
+        this.set_VertexLength(vertex_length);
 
         if (index !== undefined) {
-            this.render_server_geometry.set_IndexBuffer(index.get_RenderStateBuffer(RenderServer.render_state, WebGPURenderStateBufferType.Index, usage));
+            this.set_IndexBuffer(index);
         }
 
         if (attr_attrs !== undefined && attr_buffs !== undefined) {
             for (const [index, attribute] of attr_attrs) {
                 const buffer = attr_buffs.get(index);
                 if (buffer !== undefined) {
-                    this.render_server_geometry.set_AttributeBuffer(attribute, buffer.get_RenderStateBuffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, usage));
+                    this.set_AttributeBuffer(attribute, buffer);
                 }
             }
         }
@@ -131,17 +154,17 @@ export class ArrayGeometry3DResource extends Geometry3DResource {
             for (let i = 0; i < surface_count; i++) {
                 const offset = surfaces[i * 2];
                 const length = surfaces[i * 2 + 1];
-                this.render_server_geometry.add_Surface(offset, length);
+                this.add_Surface(offset, length);
             }
         }
 
         if (bbox !== undefined) {
-            this.render_server_geometry.set_BBox(bbox);
+            this.set_BBox(bbox);
         }
         else {
             Geometry3DResource.$tmp_box3_for_bbox.min.set(0, 0, 0);
             Geometry3DResource.$tmp_box3_for_bbox.max.set(0, 0, 0);
-            this.render_server_geometry.set_BBox(Geometry3DResource.$tmp_box3_for_bbox);
+            this.set_BBox(Geometry3DResource.$tmp_box3_for_bbox);
         }
     }
 }

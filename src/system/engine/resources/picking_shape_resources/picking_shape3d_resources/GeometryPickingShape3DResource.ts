@@ -16,7 +16,7 @@ import { Triangle3 } from "@/system/fivepebble/geometries/Triangle3";
 export interface GeometryPickingShape3D extends Geometry3DResource {
     get primitive_type(): WebGPURenderStatePrimitiveType;
     get vertex_length(): number;
-    get position_normal(): WebGPURenderElementVector3Buffer;
+    get position_normal(): WebGPURenderElementVector3Buffer | undefined;
     get uv(): WebGPURenderElementVector2Buffer | undefined;
     get index(): WebGPURenderElementIndexBuffer | undefined;
 }
@@ -76,10 +76,12 @@ export class GeometryPickingShape3DResource extends Bvh3PickingShape3DResource<I
             const geometry = this.base_geometry_3d_resource_ref.expect;
             if (geometry.primitive_type !== WebGPURenderStatePrimitiveType.Triangles) {
                 this.clear_BaseGeometry();
-                throw new Error(`<> update_Bvh: only Geometry3DResources with primitive type of Triangles are supported`);
+                throw new Error(`<GeometryPickingShape3DResource> update_Bvh: only Geometry3DResources with primitive type of Triangles are supported`);
             }
             else {
-                this.position_normal_ref.value = geometry.position_normal;
+                const position_normal = geometry.position_normal;
+                if (position_normal === undefined) throw new Error(`<GeometryPickingShape3DResource> update_Bvh: PositionNormal attribute buffer is required`);
+                this.position_normal_ref.value = position_normal;
                 this.uv_ref.value = geometry.uv;
                 this.index_ref.value = geometry.index;
                 const vertex_length = geometry.vertex_length;

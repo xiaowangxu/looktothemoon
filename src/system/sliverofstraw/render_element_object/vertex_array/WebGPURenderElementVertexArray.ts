@@ -12,7 +12,7 @@ export type WebGPURenderElementVertexArrayBuffer = WebGPURenderStateBuffer | Web
 
 export class WebGPURenderElementVertexArray extends WebGPURenderObjectRefCounted {
 
-    static readonly MaxAttributeLocationCount = 8;
+    static readonly MaxAttributeBufferCount = 8;
 
     public primitive_type: WebGPURenderStatePrimitiveType;
     public offset: number;
@@ -20,7 +20,7 @@ export class WebGPURenderElementVertexArray extends WebGPURenderObjectRefCounted
 
     protected base_vertex_array_ref: Ref<WebGPURenderElementVertexArray> = new Ref();
 
-    protected attribute_buffer_refs: RefArray<WebGPURenderElementVertexArrayBuffer> = new RefArray(WebGPURenderElementVertexArray.MaxAttributeLocationCount);
+    protected attribute_buffer_refs: RefArray<WebGPURenderElementVertexArrayBuffer> = new RefArray(WebGPURenderElementVertexArray.MaxAttributeBufferCount);
     protected index_buffer_ref: Ref<WebGPURenderElementVertexArrayBuffer> = new Ref();
 
     public get is_indexed(): boolean { return !this.index_buffer_ref.is_empty || (this.base_vertex_array_ref.value?.is_indexed ?? false); }
@@ -63,13 +63,13 @@ export class WebGPURenderElementVertexArray extends WebGPURenderObjectRefCounted
     }
 
     public set_Buffer(location: RenderServerGeometryAttributeLayoutBuffer, buffer: WebGPURenderElementVertexArrayBuffer): void {
-        if (location < 0 || location >= WebGPURenderElementVertexArray.MaxAttributeLocationCount) throw new Error('<WebGPURenderStateVertexArray> set_Buffer: attribute location out of bound');
+        if (location < 0 || location >= WebGPURenderElementVertexArray.MaxAttributeBufferCount) throw new Error('<WebGPURenderStateVertexArray> set_Buffer: attribute location out of bound');
         this.attribute_buffer_refs.set(location, buffer);
         this.enable_AttributeLocationBit(location);
     }
 
     public clear_Buffer(location: RenderServerGeometryAttributeLayoutBuffer): void {
-        if (location < 0 || location >= WebGPURenderElementVertexArray.MaxAttributeLocationCount) throw new Error('<WebGPURenderStateVertexArray> set_Buffer: attribute location out of bound');
+        if (location < 0 || location >= WebGPURenderElementVertexArray.MaxAttributeBufferCount) throw new Error('<WebGPURenderStateVertexArray> set_Buffer: attribute location out of bound');
         this.attribute_buffer_refs.set(location, undefined);
         this.disable_AttributeLocationBit(location);
     }
@@ -97,7 +97,7 @@ export class WebGPURenderElementVertexArray extends WebGPURenderObjectRefCounted
 
     public bind_Buffers(pass: GPURenderPassEncoder) {
         let i = 0;
-        const length = WebGPURenderElementVertexArray.MaxAttributeLocationCount;
+        const length = WebGPURenderElementVertexArray.MaxAttributeBufferCount;
         for (let idx = 0; idx < length; idx++) {
             const buffer = this.get_Buffer(idx);
             if (buffer !== undefined) {

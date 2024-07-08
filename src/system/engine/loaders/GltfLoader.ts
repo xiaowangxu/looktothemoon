@@ -22,6 +22,7 @@ import { WebGPURenderStatePrimitiveType } from "@/system/sliverofstraw/render_st
 import { NormalMaterial3DResource } from "../resources/material_resources/material3d_resources/NormalMaterial3DResource";
 import { RefCacher } from "@/system/utils/RefCounted";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import { PackedIndexArray, PackedVector2Array, PackedVector3Array, PackedVector4Array } from "../classes/value_wrappers/PackedArray";
 
 enum FilterType {
     Nearest,
@@ -474,35 +475,29 @@ export class GltfLoader {
         if (merge_group.position === undefined) throw new Error('mesh missing position normal');
         const vertex_length = has_index ? merge_group.index!.length : merge_group.position!.length / 3 / 2;
         if (merge_group.position !== undefined) {
-            const buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.None, merge_group.position);
-            geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.PositionNormal, buffer.buffer);
+            const buffer = new PackedVector3Array(merge_group.position);
+            geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.PositionNormal, buffer);
             geometry.set_VertexLength(vertex_length);
-            buffer.release();
         }
         if (merge_group.uv !== undefined) {
-            const buffer = new WebGPURenderElementVector2Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.None, merge_group.uv);
-            geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Uv, buffer.buffer);
-            buffer.release();
+            const buffer = new PackedVector2Array(merge_group.uv);
+            geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Uv, buffer);
         }
         else {
-            const buffer = new WebGPURenderElementVector2Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.None, vertex_length);
-            geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Uv, buffer.buffer);
-            buffer.release();
+            const buffer = new PackedVector2Array(vertex_length);
+            geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Uv, buffer);
         }
         if (merge_group.tangent !== undefined) {
-            const buffer = new WebGPURenderElementVector3Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.None, merge_group.tangent);
-            geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Tangent, buffer.buffer);
-            buffer.release();
+            const buffer = new PackedVector3Array(merge_group.tangent);
+            geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Tangent, buffer);
         }
         if (merge_group.color !== undefined) {
-            const buffer = new WebGPURenderElementVector4Buffer(RenderServer.render_state, WebGPURenderStateBufferType.VertexArray, WebGPURenderStateBufferUsage.None, merge_group.color);
-            geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Color, buffer.buffer);
-            buffer.release();
+            const buffer = new PackedVector4Array(merge_group.color);
+            geometry.set_AttributeBuffer(RenderServerGeometryAttributeLayoutBuffer.Color, buffer);
         }
         if (merge_group.index !== undefined) {
-            const buffer = new WebGPURenderElementIndexBuffer(RenderServer.render_state, WebGPURenderStateBufferType.Index, WebGPURenderStateBufferUsage.None, merge_group.index);
-            geometry.set_IndexBuffer(buffer.buffer);
-            buffer.release();
+            const buffer = new PackedIndexArray(merge_group.index);
+            geometry.set_IndexBuffer(buffer);
         }
         // if (surfaces.length > 1) {
         //     for (const { offset, length } of surfaces) {
