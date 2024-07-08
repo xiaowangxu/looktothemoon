@@ -5,8 +5,9 @@ import { WebGPURenderElementBuffer } from "./WebGPURenderElementBuffer";
 import type { WebGPURenderState } from "../../WebGPURenderState";
 import type { Vector3 } from "@/system/fivepebble/linear_algebra/Vector3";
 import type { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
+import { PackedVector2Array, PackedVector3Array, PackedVector4Array } from "@/system/engine/classes/value_wrappers/PackedArray";
 
-export class WebGPURenderElementVector2Buffer extends WebGPURenderElementBuffer<Vector2> {
+export class WebGPURenderElementVector2Buffer extends WebGPURenderElementBuffer<Vector2, PackedVector2Array> {
 
     protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
@@ -85,6 +86,10 @@ export class WebGPURenderElementVector2Buffer extends WebGPURenderElementBuffer<
         const y = this._data[j++];
         return target.set(x, y);
     }
+    
+    public get_PackedArray(): PackedVector2Array {
+        return new PackedVector2Array(new Float32Array(this._data));
+    }
 
     public commit(force: boolean = false): void {
         if (force || this.changed) {
@@ -94,7 +99,7 @@ export class WebGPURenderElementVector2Buffer extends WebGPURenderElementBuffer<
     }
 }
 
-export class WebGPURenderElementVector3Buffer extends WebGPURenderElementBuffer<Vector3> {
+export class WebGPURenderElementVector3Buffer extends WebGPURenderElementBuffer<Vector3, PackedVector3Array> {
 
     protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
@@ -177,6 +182,10 @@ export class WebGPURenderElementVector3Buffer extends WebGPURenderElementBuffer<
         const z = this._data[j++];
         return target.set(x, y, z);
     }
+    
+    public get_PackedArray(): PackedVector3Array {
+        return new PackedVector3Array(new Float32Array(this._data));
+    }
 
     public commit(force: boolean = false): void {
         if (force || this.changed) {
@@ -186,7 +195,7 @@ export class WebGPURenderElementVector3Buffer extends WebGPURenderElementBuffer<
     }
 }
 
-export class WebGPURenderElementVector4Buffer extends WebGPURenderElementBuffer<Vector4> {
+export class WebGPURenderElementVector4Buffer extends WebGPURenderElementBuffer<Vector4, PackedVector4Array> {
 
     protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
@@ -272,6 +281,10 @@ export class WebGPURenderElementVector4Buffer extends WebGPURenderElementBuffer<
         const z = this._data[j++];
         const w = this._data[j++];
         return target.set(x, y, z, w);
+    }
+    
+    public get_PackedArray(): PackedVector4Array {
+        return new PackedVector4Array(new Float32Array(this._data));
     }
 
     public commit(force: boolean = false): void {

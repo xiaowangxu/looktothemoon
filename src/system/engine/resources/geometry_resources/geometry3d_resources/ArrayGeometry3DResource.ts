@@ -102,8 +102,8 @@ export class ArrayGeometry3DResource extends Geometry3DResource implements Geome
         let idx = 0;
         for (const { attribute, buffer } of attributes) {
             if (buffer === undefined) continue;
-            attr_buffs.set(idx, buffer);
             attr_attrs.set(idx, attribute);
+            attr_buffs.set(idx, buffer);
             idx++;
         }
 
@@ -119,9 +119,24 @@ export class ArrayGeometry3DResource extends Geometry3DResource implements Geome
     }
 
     public dump(writer: ClassWriter): void {
+        const attr_buffs: Map<number, PackedArray> = new Map();
+        const attr_attrs: Map<number, RenderServerGeometryAttributeLayoutBuffer> = new Map();
+        let idx = 0;
+        let attribute = 0;
+        for (const buffer of this.attribute_buffer_refs) {
+            if (buffer === undefined) {
+                attribute++;
+                continue;
+            }
+            attr_attrs.set(idx, attribute);
+            attr_buffs.set(idx, buffer.get_PackedArray());
+            attribute++;
+            idx++;
+        }
         writer.property('primitive_type', this.primitive_type);
-        // writer.property('attributes', attr_attrs);
-        // writer.property('buffers', attr_buffs);
+        writer.property('attributes', attr_attrs);
+        writer.property('buffers', attr_buffs);
+        writer.property('index', this.index_buffer_ref.value?.get_PackedArray());
         writer.property('vertex_length', this.vertex_length);
         writer.property('surfaces', this.surfaces);
         writer.property('bbox', this.bbox);

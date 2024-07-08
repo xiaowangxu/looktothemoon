@@ -2,8 +2,13 @@ import { ReadonlyRef } from "@/system/utils/RefCounted";
 import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import type { WebGPURenderStateBuffer, WebGPURenderStateBufferData, WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "../../render_state_object/buffer/WebGPURenderStateBuffer";
 import type { WebGPURenderState } from "../../WebGPURenderState";
+import { PackedFloatArray, PackedIndexArray, PackedIntArray, PackedUintArray, type PackedArray } from "@/system/engine/classes/value_wrappers/PackedArray";
+import type { WebGPURenderElementVertexArrayBuffer } from "../vertex_array/WebGPURenderElementVertexArray";
 
-export abstract class WebGPURenderElementBuffer<T = any> extends WebGPURenderObjectRefCounted {
+/**
+ * this is not an adaptor so its data is always unique
+ */
+export abstract class WebGPURenderElementBuffer<TElement = any, TPackedArray = PackedArray<TElement, any, any>> extends WebGPURenderObjectRefCounted {
 
     protected abstract readonly buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
     public get buffer(): WebGPURenderStateBuffer { return this.buffer_ref.expect; }
@@ -13,18 +18,23 @@ export abstract class WebGPURenderElementBuffer<T = any> extends WebGPURenderObj
     public abstract get elements_count(): number;
     public abstract get bytes_count(): number;
 
-    public abstract set_Data(data: T | T[], element_offset: number): void;
+    public abstract set_Data(data: TElement | TElement[], element_offset: number): void;
 
-    public abstract get_Data(element_index: number, target?: T): T;
+    public abstract get_Data(element_index: number, target?: TElement): TElement;
 
     public abstract commit(force: boolean): void;
+
+    /**
+     * a new TypedArray will be created, so changing return TPackedArray's data will not affect WebGPURenderElementBuffer
+     */
+    public abstract get_PackedArray(): TPackedArray;
 
     public dispose(): void {
         this.buffer_ref.clear();
     }
 }
 
-export class WebGPURenderElementIndexBuffer extends WebGPURenderElementBuffer<number> {
+export class WebGPURenderElementIndexBuffer extends WebGPURenderElementBuffer<number, PackedIndexArray> {
 
     protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
@@ -82,6 +92,10 @@ export class WebGPURenderElementIndexBuffer extends WebGPURenderElementBuffer<nu
         return this._data[element_index];
     }
 
+    public get_PackedArray(): PackedIndexArray {
+        return new PackedIndexArray(new Uint32Array(this._data));
+    }
+
     public commit(force: boolean = false): void {
         if (force || this.changed) {
             this.buffer.update_Data(0, this._data);
@@ -90,7 +104,7 @@ export class WebGPURenderElementIndexBuffer extends WebGPURenderElementBuffer<nu
     }
 }
 
-export class WebGPURenderElementUintBuffer extends WebGPURenderElementBuffer<number> {
+export class WebGPURenderElementUintBuffer extends WebGPURenderElementBuffer<number, PackedUintArray> {
 
     protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
@@ -148,6 +162,10 @@ export class WebGPURenderElementUintBuffer extends WebGPURenderElementBuffer<num
         return this._data[element_index];
     }
 
+    public get_PackedArray(): PackedUintArray {
+        return new PackedUintArray(new Uint32Array(this._data));
+    }
+
     public commit(force: boolean = false): void {
         if (force || this.changed) {
             this.buffer.update_Data(0, this._data);
@@ -156,7 +174,7 @@ export class WebGPURenderElementUintBuffer extends WebGPURenderElementBuffer<num
     }
 }
 
-export class WebGPURenderElementIntBuffer extends WebGPURenderElementBuffer<number> {
+export class WebGPURenderElementIntBuffer extends WebGPURenderElementBuffer<number, PackedIntArray> {
 
     protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
@@ -214,6 +232,10 @@ export class WebGPURenderElementIntBuffer extends WebGPURenderElementBuffer<numb
         return this._data[element_index];
     }
 
+    public get_PackedArray(): PackedIntArray {
+        return new PackedIntArray(new Int32Array(this._data));
+    }
+
     public commit(force: boolean = false): void {
         if (force || this.changed) {
             this.buffer.update_Data(0, this._data);
@@ -222,7 +244,7 @@ export class WebGPURenderElementIntBuffer extends WebGPURenderElementBuffer<numb
     }
 }
 
-export class WebGPURenderElementFloatBuffer extends WebGPURenderElementBuffer<number> {
+export class WebGPURenderElementFloatBuffer extends WebGPURenderElementBuffer<number, PackedFloatArray> {
 
     protected buffer_ref: ReadonlyRef<WebGPURenderStateBuffer>;
 
@@ -278,6 +300,10 @@ export class WebGPURenderElementFloatBuffer extends WebGPURenderElementBuffer<nu
     public get_Data(element_index: number, target: undefined = undefined): number {
         if (element_index < 0 || element_index >= this.elements_count) throw new Error('<WebGPURenderElementFloatBuffer> get_Data: element index out of bound');
         return this._data[element_index];
+    }
+
+    public get_PackedArray(): PackedFloatArray {
+        return new PackedFloatArray(new Float32Array(this._data));
     }
 
     public commit(force: boolean = false): void {

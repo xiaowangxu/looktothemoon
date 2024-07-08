@@ -11,6 +11,9 @@ import { WebGPURenderElementVector2Buffer, WebGPURenderElementVector3Buffer, Web
 import type { WebGPURenderElementVertexArrayBuffer } from "@/system/sliverofstraw/render_element_object/vertex_array/WebGPURenderElementVertexArray";
 import { WebGPURenderStateBuffer, WebGPURenderStateBufferType, type WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
 
+/**
+ * this is an adaptor so it will reference outsides' data
+ */
 export abstract class PackedArray<Data = any, Buffer = WebGPURenderElementVertexArrayBuffer, ElementBuffer = WebGPURenderElementBuffer> {
     public abstract get data(): ArrayBufferView;
 
