@@ -275,7 +275,6 @@ export class StlLoader {
                 class_saver,
                 0, // rid
                 WebGPURenderStatePrimitiveType.Triangles,
-                WebGPURenderStateBufferUsage.None,
                 [
                     {
                         attribute: RenderServerGeometryAttributeLayoutBuffer.PositionNormal, buffer: position_normals,

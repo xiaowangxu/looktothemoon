@@ -177,7 +177,6 @@ export class ObjLoader {
             class_saver,
             0, // rid
             WebGPURenderStatePrimitiveType.Triangles,
-            WebGPURenderStateBufferUsage.None,
             [
                 {
                     attribute: RenderServerGeometryAttributeLayoutBuffer.PositionNormal, buffer: new PackedVector3Array(new Float32Array(position_normals))

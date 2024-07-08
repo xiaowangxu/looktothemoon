@@ -499,11 +499,11 @@ export class GltfLoader {
             const buffer = new PackedIndexArray(merge_group.index);
             geometry.set_IndexBuffer(buffer);
         }
-        // if (surfaces.length > 1) {
-        //     for (const { offset, length } of surfaces) {
-        //         geometry.add_Surface(offset, length);
-        //     }
-        // }
+        if (surfaces.length > 1) {
+            for (const { offset, length } of surfaces) {
+                geometry.add_Surface(offset, length);
+            }
+        }
         return { geometry, materials: groups.map(i => i.id) };
     }
 

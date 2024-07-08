@@ -7,7 +7,7 @@ import type { ClassSaver } from "@/system/engine/classes/saver_loader/ClassSaver
 import type { Rid } from "@/system/engine/Rid";
 import { PackedIndexArray, PackedArray } from "@/system/engine/classes/value_wrappers/PackedArray";
 import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
-import type { ClassReader } from "@/system/engine/classes/saver_loader/ClassWriterReader";
+import type { ClassReader, ClassWriter } from "@/system/engine/classes/saver_loader/ClassWriterReader";
 import { RenderServer } from "@/system/engine/render_server/RenderServer";
 import { type RenderServerGeometrySurfaces } from "@/system/engine/render_server/geometry/RenderServerGeometry";
 import type { WebGPURenderElementBuffer, WebGPURenderElementIndexBuffer } from "@/system/sliverofstraw/render_element_object/buffer/WebGPURenderElementBuffer";
@@ -87,7 +87,6 @@ export class ArrayGeometry3DResource extends Geometry3DResource implements Geome
         class_saver: ClassSaver,
         rid: Rid,
         primitive_type: WebGPURenderStatePrimitiveType,
-        usage: WebGPURenderStateBufferUsage,
         attributes: { attribute: RenderServerGeometryAttributeLayoutBuffer, buffer: PackedArray | undefined }[],
         index: PackedIndexArray | undefined,
         vertex_length: number | undefined,
@@ -109,7 +108,6 @@ export class ArrayGeometry3DResource extends Geometry3DResource implements Geome
         }
 
         class_saver.add_Property(refid, 'primitive_type', primitive_type);
-        class_saver.add_Property(refid, 'usage', usage);
         class_saver.add_Property(refid, 'index', index);
         class_saver.add_Property(refid, 'attributes', attr_attrs);
         class_saver.add_Property(refid, 'buffers', attr_buffs);
@@ -120,9 +118,18 @@ export class ArrayGeometry3DResource extends Geometry3DResource implements Geome
         return refid;
     }
 
+    public dump(writer: ClassWriter): void {
+        writer.property('primitive_type', this.primitive_type);
+        // writer.property('attributes', attr_attrs);
+        // writer.property('buffers', attr_buffs);
+        writer.property('vertex_length', this.vertex_length);
+        writer.property('surfaces', this.surfaces);
+        writer.property('bbox', this.bbox);
+    }
+
     public load(reader: ClassReader): void {
         const primitive_type = reader.get<WebGPURenderStatePrimitiveType>('primitive_type');
-        const usage = reader.get<WebGPURenderStateBufferUsage>('usage');
+        const usage = reader.get<WebGPURenderStateBufferUsage>('usage') ?? WebGPURenderStateBufferUsage.None;
         const index = reader.get<PackedIndexArray>('index');
         const attr_attrs = reader.get<Map<number, RenderServerGeometryAttributeLayoutBuffer>>('attributes');
         const attr_buffs = reader.get<Map<number, PackedArray>>('buffers');
@@ -130,7 +137,7 @@ export class ArrayGeometry3DResource extends Geometry3DResource implements Geome
         const surfaces = reader.get<number[]>('surfaces');
         const bbox = reader.get<Box3>('bbox');
 
-        if (primitive_type === undefined || usage === undefined || vertex_length === undefined) throw new Error(`<ArrayGeometry3DResource> load: ArrayGeometry's data is not complete`);
+        if (primitive_type === undefined || vertex_length === undefined) throw new Error(`<ArrayGeometry3DResource> load: ArrayGeometry's data is not complete`);
 
         this.clear_Geometry();
         this.set_PrimitiveType(primitive_type);

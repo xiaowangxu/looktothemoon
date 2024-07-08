@@ -52,6 +52,7 @@ export class GeometryPickingShape3DResource extends Bvh3PickingShape3DResource<I
         this.update_Bvh();
     }
 
+    protected primitive_type: WebGPURenderStatePrimitiveType.Triangles | WebGPURenderStatePrimitiveType.TriangleStrip = WebGPURenderStatePrimitiveType.Triangles;
     public count: number = 0;
     protected readonly position_normal_ref: Ref<WebGPURenderElementVector3Buffer> = new Ref();
     protected readonly uv_ref: Ref<WebGPURenderElementVector2Buffer> = new Ref();
@@ -74,11 +75,13 @@ export class GeometryPickingShape3DResource extends Bvh3PickingShape3DResource<I
         if (this.base_geometry_3d_resource_ref.is_empty) this.clear_BaseGeometry();
         else {
             const geometry = this.base_geometry_3d_resource_ref.expect;
-            if (geometry.primitive_type !== WebGPURenderStatePrimitiveType.Triangles) {
+            const primitive_type = geometry.primitive_type;
+            if (primitive_type !== WebGPURenderStatePrimitiveType.Triangles && primitive_type !== WebGPURenderStatePrimitiveType.TriangleStrip) {
                 this.clear_BaseGeometry();
                 throw new Error(`<GeometryPickingShape3DResource> update_Bvh: only Geometry3DResources with primitive type of Triangles are supported`);
             }
             else {
+                this.primitive_type = primitive_type;
                 const position_normal = geometry.position_normal;
                 if (position_normal === undefined) throw new Error(`<GeometryPickingShape3DResource> update_Bvh: PositionNormal attribute buffer is required`);
                 this.position_normal_ref.value = position_normal;
@@ -97,15 +100,29 @@ export class GeometryPickingShape3DResource extends Bvh3PickingShape3DResource<I
         let p2_index;
         if (!this.index_ref.is_empty) {
             const index_buffer = this.index_ref.expect;
-            const i = (index * 3);
-            p0_index = index_buffer.get_Data(i);
-            p1_index = index_buffer.get_Data(i + 1);
-            p2_index = index_buffer.get_Data(i + 2);
+            if (this.primitive_type === WebGPURenderStatePrimitiveType.Triangles) {
+                const i = (index * 3);
+                p0_index = index_buffer.get_Data(i);
+                p1_index = index_buffer.get_Data(i + 1);
+                p2_index = index_buffer.get_Data(i + 2);
+            }
+            else {
+                p0_index = index_buffer.get_Data(index);
+                p1_index = index_buffer.get_Data(index + 1);
+                p2_index = index_buffer.get_Data(index + 2);
+            }
         }
         else {
-            p0_index = (index * 3);
-            p1_index = p0_index + 1;
-            p2_index = p0_index + 2;
+            if (this.primitive_type === WebGPURenderStatePrimitiveType.Triangles) {
+                p0_index = index * 3;
+                p1_index = p0_index + 1;
+                p2_index = p0_index + 2;
+            }
+            else{ 
+                p0_index = index;
+                p1_index = p0_index + 1;
+                p2_index = p0_index + 2;
+            }
         }
         const position_normal_buffer = this.position_normal_ref.expect;
         const p0 = p0_index * 2;

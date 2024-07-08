@@ -12,8 +12,9 @@ export abstract class GeometryResource<Geo extends RenderServerGeometry<Vec, Mat
     public get vertex_length() { return this.render_server_geometry.vertex_length; }
     public get bbox() { return this.render_server_geometry.bbox.clone() as Box; }
     public get surfaces() {
-        const surfaces: RenderServerGeometrySurfaces = [];
         const surfaces_length = this.render_server_geometry.surface_length;
+        if (surfaces_length === 0) return undefined;
+        const surfaces: RenderServerGeometrySurfaces = [];
         for (let i = 0; i < surfaces_length; i++) {
             const surface = this.render_server_geometry.get_Surface(i);
             if (surface === undefined) throw new Error('<ArrayGeometry3DResource> get surfaces: failed to get all surfaces');
