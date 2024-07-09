@@ -837,14 +837,14 @@ export async function createEditor() {
 			// }
 		});
 	}
-	
+
 	const pointer = new LineGrabber3D();
 	pointer.offset_length = 0;
 	pointer.enabled = false;
 	pointer.color = Color.create(1, 0.2, 0.2, 1);
 	World.add_Child(pointer);
 	pointer.visible = false;
-	
+
 	{
 
 
@@ -880,6 +880,25 @@ export async function createEditor() {
 			// pointer.color = Vector4.create(normal.x, normal.y, normal.z, 1);
 		});
 
+		World.add_Child(mesh);
+	}
+
+	{
+		const geo = new PolyLineGeometry3DResource();
+		const mat = new PolyLineMaterial3DResource();
+		geo.set_PointCount(360);
+		for (let i = 0; i < 360; i++) {
+			geo.set_Point(i, Vector3.create(
+				Math.cos(i / 10) * 100,
+				i,
+				Math.sin(i / 10) * 100,
+			));
+		}
+		geo.commit();
+		const mesh = new MeshInstance3D();
+		mesh.geometry = geo;
+		mesh.material = mat;
+		mesh.local_position = Vector3.create(0, 100, 0);
 		World.add_Child(mesh);
 	}
 
