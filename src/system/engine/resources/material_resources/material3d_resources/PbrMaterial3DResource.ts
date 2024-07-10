@@ -146,8 +146,7 @@ const PbrMaterial3DPipelineCacheSet = new RefCacher(() => {
         var gsf: f32 = GeometrySmith(normal, view, direction, roughness);      
         var fnl: vec3f = fresnelSchlick(max(dot(half, view), 0.0), f0);       
 
-		var kS = fnl;
-        var kD = vec3f(1.0) - kS;
+        var kD = vec3f(1.0);
         kD *= 1.0 - metallic;	  
         
 		var strength = max(0.0, dot(normal, direction));
@@ -159,9 +158,7 @@ const PbrMaterial3DPipelineCacheSet = new RefCacher(() => {
         Lo += (kD * albedo.rgb / PI + specular) * radiance * strength; 
 	}
 
-	var fnl: vec3f = fresnelSchlickRoughness(max(dot(normal, view), 0.0), f0, roughness);       
-	var kS = fnl;
-    var kD = vec3f(1.0) - kS;
+    var kD = vec3f(1.0);
     kD *= 1.0 - metallic;	  
 
 	var _direction = reflect(-normalize(vary.lookat), normal);
