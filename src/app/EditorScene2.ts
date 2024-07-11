@@ -641,6 +641,17 @@ export async function createEditor() {
 	// 		huli.local_scale = Vector3.create(0.1, 0.1, 0.1);
 	// 		World.add_Child(huli);
 	// 	});
+
+	let move_target: MeshInstance3D | undefined = undefined;
+	const transform = new TranslateGrabber3D();
+	World.add_Child(transform);
+	transform.visible = false;
+	transform.signal_grabbing.connect((position) => {
+		if (move_target !== undefined) {
+			move_target.global_position = position;
+		}
+	});
+
 	let idx = 0;
 	for (let i = 0; i <= 10; i++) {
 		for (let j = 0; j <= 10; j++) {
@@ -662,6 +673,13 @@ export async function createEditor() {
 			World.add_Child(mesh);
 			area.signal_mouse_entered.connect(() => {
 				pointer.visible = true;
+			});
+			area.signal_input.connect((evt, prop) => {
+				if (!prop && area.is_mouse_hover && evt instanceof MouseButtonInputEvent && evt.click) {
+					move_target = mesh;
+					transform.set_TranslatePosition(move_target.global_position);
+					transform.visible = true;
+				}
 			});
 			area.signal_mouse_exited.connect(() => {
 				pointer.visible = false;
@@ -868,6 +886,13 @@ export async function createEditor() {
 
 		area.signal_mouse_entered.connect(() => {
 			pointer.visible = true;
+		});
+		area.signal_input.connect((evt, prop) => {
+			if (!prop && area.is_mouse_hover && evt instanceof MouseButtonInputEvent && evt.click) {
+				move_target = mesh;
+				transform.set_TranslatePosition(move_target.global_position);
+				transform.visible = true;
+			}
 		});
 		area.signal_mouse_exited.connect(() => {
 			pointer.visible = false;
