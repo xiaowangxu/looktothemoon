@@ -36,7 +36,7 @@ const GridGeometry = new RefCacher(() => {
 
 const GridMaterial = new RefCacher(() => {
 	const grid_material = new InfiniteGridMaterial3DResource();
-	grid_material.color = Color.create(1, 1, 1, 0.075);
+	grid_material.color = Color.create(1, 1, 1, 0.05);
 	return grid_material;
 });
 

@@ -228,6 +228,16 @@ export class PolyLineMaterial3DResource extends MaterialResource {
         this.update_UniformBuffer();
     }
 
+    private _width = 2.0;
+    public get width() { return this._width; }
+    public set width(width: number) {
+        width = Math.max(0, width);
+        if (this._width !== width) {
+            this._width = width;
+            this.update_UniformBuffer();
+        }
+    }
+
     constructor() {
         super();
         this.uniform_group_ref.expect.set_BufferUniform(0, this.uniform_buffer_ref.expect);
@@ -242,7 +252,7 @@ export class PolyLineMaterial3DResource extends MaterialResource {
         float32array0[1] = this._color.y;
         float32array0[2] = this._color.z;
         float32array0[3] = this._color.w;
-        float32array0[4] = 2;
+        float32array0[4] = this._width;
         this.render_server_material.trigger_UniformBufferChange(0);
     }
 
