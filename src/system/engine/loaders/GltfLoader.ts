@@ -192,8 +192,8 @@ export class GltfLoader {
     }
 
     protected json!: any;
-    protected buffers!: ArrayBuffer[];
 
+    protected buffers!: ArrayBuffer[];
     private readonly buffer_cache: Map<number, any> = new Map();
     private parse_Buffer(index: number): ArrayBuffer {
         if (this.buffer_cache.has(index)) return this.buffer_cache.get(index)!;

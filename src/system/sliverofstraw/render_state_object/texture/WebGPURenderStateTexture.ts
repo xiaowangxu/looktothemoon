@@ -25,7 +25,9 @@ export enum WebGPURenderStateTextureFormat {
     D24 = 'depth24plus',
     D24S8 = 'depth24plus-stencil8',
     D32F = 'depth32float',
-    D32FS8 = 'depth32float-stencil8'
+    D32FS8 = 'depth32float-stencil8',
+    RG8 = 'rg8unorm',
+    R8 = 'r8unorm',
 }
 
 export enum WebGPURenderStateTextureUsage {

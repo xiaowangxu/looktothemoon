@@ -29,6 +29,8 @@ import type { RenderServerComputeMaterial } from "../material/RenderServerComput
 import { RenderServerLightClusterData } from "../light/RenderServerLightClusterData";
 import { LightClusterMaterial3DResource } from "../../resources/material_resources/material3d_resources/LightClusterMaterial3DResource";
 import type { MaterialResource } from "../../resources/material_resources/MaterialResource";
+import { AreaTextureData, AreaTextureHeight, AreaTextureWidth } from "./Renderer3DSMAAAreaTextureData";
+import { SearchTextureData, SearchTextureHeight, SearchTextureWidth } from "./Renderer3DSMAASearchTextureData";
 
 const FullScreenTriangleVertexArray = new RefCacher(() => {
     const vertex_array = new WebGPURenderElementVertexArray(RenderServer.render_state, WebGPURenderStatePrimitiveType.Triangles, 0, 3);
@@ -169,6 +171,8 @@ const FullScreenBackgroundPipeline = new RefCacher(() => {
     return pipeline;
 });
 
+//#region Compose
+
 const ComposeUniformSmapler = new RefCacher(() => {
     return RenderServer.render_state.create_TextureSampler(
         WebGPURenderStateTextureWrap.Clamp,
@@ -257,6 +261,8 @@ const OitComposePipeline = new RefCacher(() => {
     return pipeline;
 });
 
+//#endregion
+
 const ResultDepthEmptyTextureView = new RefCacher(() => {
     const texture = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.D32F, WebGPURenderStateTextureDimension.D2, 1, 1).expect();
     return RenderServer.render_state.create_TextureView(texture).expect();
@@ -325,8 +331,8 @@ const EffectFxaaPipeline = new RefCacher(() => {
     fn fs_main(vary: VertexOutput) -> FragmentOutput {
         var out: FragmentOutput;
 
-        // let color = fxaa(color, sample, vary.frag_coord, world_env_uniform_params.screen_size, vary.rgb_NW, vary.rgb_NE, vary.rgb_SW, vary.rgb_SE, vary.rgb_M);
-        let color = textureSample(color, sample, vary.uv);
+        let color = fxaa(color, sample, vary.frag_coord, world_env_uniform_params.screen_size, vary.rgb_NW, vary.rgb_NE, vary.rgb_SW, vary.rgb_SE, vary.rgb_M);
+        // let color = textureSample(color, sample, vary.uv);
         
         let tone_mapped = vec4f(aces_tone_mapping(color.rgb, 0.8), color.a);
         
@@ -461,7 +467,9 @@ const EffectFxaaPipeline = new RefCacher(() => {
     return pipeline;
 });
 
-const EffectPreMultAlphaPipeline = new RefCacher(() => {
+//#region SMAA
+
+const EffectSMAAEdgePipeline = new RefCacher(() => {
 
     const shader_code = `
 
@@ -469,17 +477,44 @@ const EffectPreMultAlphaPipeline = new RefCacher(() => {
         @location(${RenderServerGeometryAttributeLocation.Position}) position: vec2f,
     };
     
+    struct WorldEnvUniformCameraMatrix {
+        camera_world: mat4x4f,
+        camera_view: mat4x4f,
+        camera_proj: mat4x4f,
+        camera_inv_proj: mat4x4f,
+        camera_norview: mat3x3f,
+    }
+
+    struct WorldEnvUniformParams {
+        screen_size: vec2f,
+        time: f32,
+        orthogonal: u32,
+        pixel_ratio: f32,
+    }
+    
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(0) var<uniform> world_env_uniform_camera_matrix: WorldEnvUniformCameraMatrix; 
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
+    
     struct VertexOutput {
         @builtin(position) position: vec4f,
         @location(0) uv: vec2f,
+        @location(1) offset_0: vec4f,
+        @location(2) offset_1: vec4f,
+        @location(3) offset_2: vec4f,
     };
 
     @vertex
     fn vs_main(attri: Attributes) -> VertexOutput {
         var out: VertexOutput;
-        out.position = vec4f(attri.position - vec2f(1.0), 1.0, 1.0);
 	    var uv = attri.position / 2.0;
+        var resolution = 1 / world_env_uniform_params.screen_size.xyxy;
+
         out.uv = vec2(uv.x, 1.0 - uv.y);
+        out.offset_0 = out.uv.xyxy + resolution * vec4f(-1.0, 0.0, 0.0,  1.0); // WebGL port note: Changed sign in W component
+		out.offset_1 = out.uv.xyxy + resolution * vec4f( 1.0, 0.0, 0.0, -1.0); // WebGL port note: Changed sign in W component
+		out.offset_2 = out.uv.xyxy + resolution * vec4f(-2.0, 0.0, 0.0,  2.0); // WebGL port note: Changed sign in W component
+        out.position = vec4f(attri.position - vec2f(1.0), 1.0, 1.0);
+
         return out;
     }
 
@@ -488,16 +523,69 @@ const EffectPreMultAlphaPipeline = new RefCacher(() => {
     };
 
     @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var color: texture_2d<f32>;
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(3) var normal: texture_2d<f32>;
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(4) var depth: texture_depth_2d;
     @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(5) var sample: sampler;
     
+    const SMAA_THRESHOLD: vec2f = vec2f(0.1, 0.1);
+
     @fragment
     fn fs_main(vary: VertexOutput) -> FragmentOutput {
         var out: FragmentOutput;
-        var color = textureSample(color, sample, vary.uv);
-        out.color = vec4f(color.rgb * color.a, color.a);
+
+        var texcoord = vary.uv;
+        var offset_0 = vary.offset_0;
+        var offset_1 = vary.offset_1;
+        var offset_2 = vary.offset_2;
+    
+		var threshold = SMAA_THRESHOLD;
+
+		// Calculate color deltas:
+
+		var delta: vec4f;
+		var C         = textureSample(color, sample, texcoord   ).rgb;
+		var Cleft     = textureSample(color, sample, offset_0.xy).rgb;
+		var t         = abs(C - Cleft);
+		delta.x       = max(max(t.r, t.g), t.b);
+		var Ctop      = textureSample(color, sample, offset_0.zw).rgb;
+		t             = abs(C - Ctop);
+		delta.y       = max(max(t.r, t.g), t.b);
+
+		// We do the usual threshold:
+		var edges     = step(threshold, delta.xy);
+
+		// Then discard if there is no edge:
+		if dot(edges, vec2f(1.0, 1.0)) == 0.0 { discard; }
+
+		// Calculate right and bottom deltas:
+		var Cright    = textureSample(color, sample, offset_1.xy).rgb;
+		t             = abs(C - Cright);
+		delta.z       = max(max(t.r, t.g ), t.b);
+		var Cbottom   = textureSample(color, sample, offset_1.zw).rgb;
+		t             = abs(C - Cbottom);
+		delta.w       = max(max(t.r, t.g), t.b);
+
+		// Calculate the maximum delta in the direct neighborhood:
+		var maxDelta  = max(max(max(delta.x,delta.y ), delta.z), delta.w);
+
+		// Calculate left-left and top-top deltas:
+		var Cleftleft = textureSample(color, sample, offset_2.xy).rgb;
+		t             = abs(C - Cleftleft);
+		delta.z       = max(max(t.r, t.g), t.b);
+		var Ctoptop   = textureSample(color, sample, offset_2.zw).rgb;
+		t             = abs(C - Ctoptop);
+		delta.w       = max(max(t.r, t.g), t.b);
+
+		// Calculate the final maximum delta:
+		maxDelta      = max(max(maxDelta, delta.z), delta.w);
+        
+		// Local contrast adaptation in action:
+		edges        *= step(vec2f(0.5 * maxDelta), delta.xy);
+
+		out.color     = vec4f(edges, 0.0, 1.0);
+
         return out;
     }
-
     `;
 
     const shader = RenderServer.render_state.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
@@ -527,6 +615,472 @@ const EffectPreMultAlphaPipeline = new RefCacher(() => {
 
     return pipeline;
 });
+
+const EffectSMAAAreaTextureView = new RefCacher(() => {
+    const texture = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopyDst, WebGPURenderStateTextureFormat.RG8, WebGPURenderStateTextureDimension.D2, AreaTextureWidth, AreaTextureHeight).expect();
+    texture.update_Data(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, AreaTextureData, AreaTextureWidth, AreaTextureHeight, undefined);
+    return RenderServer.render_state.create_TextureView(texture).expect();
+});
+
+const EffectSMAASearchTextureView = new RefCacher(() => {
+    const texture = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopyDst, WebGPURenderStateTextureFormat.R8, WebGPURenderStateTextureDimension.D2, SearchTextureWidth, SearchTextureHeight).expect();
+    texture.update_Data(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, SearchTextureData, SearchTextureWidth, SearchTextureHeight, undefined);
+    return RenderServer.render_state.create_TextureView(texture).expect();
+});
+
+const EffectSMAAWeightUniformLayout = new RefCacher(() => {
+    const layout = RenderServer.render_state.create_UniformLayout();
+    layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.NonFilterFloat, WebGPURenderStateShaderType.Fragment, 0);
+    layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.NonFilterFloat, WebGPURenderStateShaderType.Fragment, 1);
+    return layout;
+});
+
+const EffectSMAAWeightPipeline = new RefCacher(() => {
+
+    const shader_code = `
+
+    struct Attributes {
+        @location(${RenderServerGeometryAttributeLocation.Position}) position: vec2f,
+    };
+    
+    struct WorldEnvUniformCameraMatrix {
+        camera_world: mat4x4f,
+        camera_view: mat4x4f,
+        camera_proj: mat4x4f,
+        camera_inv_proj: mat4x4f,
+        camera_norview: mat3x3f,
+    }
+
+    struct WorldEnvUniformParams {
+        screen_size: vec2f,
+        time: f32,
+        orthogonal: u32,
+        pixel_ratio: f32,
+    }
+    
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(0) var<uniform> world_env_uniform_camera_matrix: WorldEnvUniformCameraMatrix; 
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
+    
+    struct VertexOutput {
+        @builtin(position) position: vec4f,
+        @location(0) uv: vec2f,
+        @location(1) offset_0: vec4f,
+        @location(2) offset_1: vec4f,
+        @location(3) offset_2: vec4f,
+        @location(4) pixel_coord: vec2f,
+    };
+
+    @vertex
+    fn vs_main(attri: Attributes) -> VertexOutput {
+        var out: VertexOutput;
+
+	    var uv = attri.position / 2.0;
+        var resolution = 1 / world_env_uniform_params.screen_size;
+        
+        out.uv = vec2(uv.x, 1.0 - uv.y);
+        out.pixel_coord = out.uv / resolution;
+        out.position = vec4f(attri.position - vec2f(1.0), 1.0, 1.0);
+
+        // We will use these offsets for the searches later on (see @PSEUDO_GATHER4):
+		out.offset_0 = out.uv.xyxy + resolution.xyxy * vec4f(-0.25, 0.125, 1.25, 0.125); // WebGL port note: Changed sign in Y and W components
+		out.offset_1 = out.uv.xyxy + resolution.xyxy * vec4f(-0.125, 0.25, -0.125, -1.25); // WebGL port note: Changed sign in Y and W components
+
+		// And these for the searches, they indicate the ends of the loops:
+		out.offset_2 = vec4f(out.offset_0.xz, out.offset_1.yw ) + vec4f(-2.0, 2.0, -2.0, 2.0) * resolution.xxyy * f32(SMAA_MAX_SEARCH_STEPS);
+
+        return out;
+    }
+
+    struct FragmentOutput {
+        @location(0) color: vec4f,
+    };
+
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var color: texture_2d<f32>;
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(3) var normal: texture_2d<f32>;
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(4) var depth: texture_depth_2d;
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(5) var sample: sampler;
+
+    @group(1) @binding(0) var area_tex: texture_2d<f32>; 
+    @group(1) @binding(1) var search_tex: texture_2d<f32>; 
+    @group(1) @binding(2) var raw_color: texture_2d<f32>;
+    
+    const SMAA_MAX_SEARCH_STEPS: i32 = 8;
+	const SMAA_AREATEX_MAX_DISTANCE: i32 = 16;
+	const SMAA_AREATEX_PIXEL_SIZE: vec2f = 1.0 / vec2f(160.0, 560.0);
+	const SMAA_AREATEX_SUBTEX_SIZE: f32 = 1.0 / 7.0;
+
+    @fragment
+    fn fs_main(vary: VertexOutput) -> FragmentOutput {
+        var out: FragmentOutput;
+        out.color = textureSample(color, sample, vary.uv);
+        // out.color = SMAABlendingWeightCalculationPS(vary.uv, vary.pixel_coord, vary.offset_0, vary.offset_1, vary.offset_2, vec4i(0));
+        return out;
+    }
+
+    fn SMAASearchLength(e: vec2f, bias: f32, scale: f32) -> f32 {
+
+    	/** 
+         * Not required if searchTex accesses are set to point:
+    	 * float2 SEARCH_TEX_PIXEL_SIZE = 1.0 / float2(66.0, 33.0);
+    	 * e = float2(bias, 0.0) + 0.5 * SEARCH_TEX_PIXEL_SIZE + e * float2(scale, 1.0) * float2(64.0, 32.0) * SEARCH_TEX_PIXEL_SIZE;
+    	 */
+
+    	var coord = e;
+        coord.r = bias + e.r * scale;
+    	return 255.0 * textureSample(search_tex, sample, coord).r;
+    }
+
+    fn SMAASearchXLeft(texcoord: vec2f, end: f32) -> f32 {
+
+    	/**
+    	 * @PSEUDO_GATHER4
+    	 * This texcoord has been offset by (-0.25, -0.125) in the vertex shader to
+    	 * sample between edge, thus fetching four edges in a row.
+    	 * Sampling with different offsets in each direction allows to disambiguate
+    	 * which edges are active from the four fetched ones.
+    	 */
+
+        var coord = texcoord;
+    	var e = vec2f(0.0, 1.0);
+        var resolution = 1 / world_env_uniform_params.screen_size;
+
+        var settable = true;
+    	for (var i: i32 = 0; i < SMAA_MAX_SEARCH_STEPS; i++) {
+    		var a = textureSample(color, sample, coord).rg;
+    		coord -= vec2(2.0, 0.0) * resolution;
+            if (settable) {
+                e = a;
+                if !(coord.x > end && e.g > 0.8281 && e.r == 0.0) { 
+                    settable = false;
+                }
+            }
+    	}
+
+    	// We correct the previous (-0.25, -0.125) offset we applied:
+    	coord.x += 0.25 * resolution.x;
+
+    	// The searches are bias by 1, so adjust the coords accordingly:
+    	coord.x += resolution.x;
+
+    	// Disambiguate the length added by the last step:
+    	coord.x += 2.0 * resolution.x; // Undo last step
+    	coord.x -= resolution.x * SMAASearchLength(e, 0.0, 0.5);
+
+    	return coord.x;
+    }
+
+    fn SMAASearchXRight(texcoord: vec2f, end: f32) -> f32 {
+
+    	var coord = texcoord;
+    	var e = vec2f(0.0, 1.0);
+        var resolution = 1 / world_env_uniform_params.screen_size;
+
+        var settable = true;
+    	for (var i: i32 = 0; i < SMAA_MAX_SEARCH_STEPS; i++) {
+    		var a = textureSample(color, sample, coord).rg;
+    		coord += vec2(2.0, 0.0) * resolution;
+            if (settable) {
+                e = a;
+                if !(coord.x < end && e.g > 0.8281 && e.r == 0.0) { 
+                    settable = false;
+                }
+            }
+    	}
+
+    	coord.x -= 0.25 * resolution.x;
+    	coord.x -= resolution.x;
+    	coord.x -= 2.0 * resolution.x;
+    	coord.x += resolution.x * SMAASearchLength(e, 0.5, 0.5);
+
+    	return coord.x;
+    }
+
+    fn SMAASearchYUp(texcoord: vec2f, end: f32) -> f32 {
+
+        var coord = texcoord;
+    	var e = vec2f(1.0, 0.0);
+        var resolution = 1 / world_env_uniform_params.screen_size;
+
+        var settable = true;
+    	for (var i: i32 = 0; i < SMAA_MAX_SEARCH_STEPS; i++) {
+    		var a = textureSample(color, sample, coord).rg;
+    		coord += vec2(0.0, 2.0) * resolution;
+            if (settable) {
+                e = a;
+                if !(coord.y > end && e.g > 0.8281 && e.r == 0.0) { 
+                    settable = false;
+                }
+            }
+    	}
+
+    	coord.y -= 0.25 * resolution.y;
+    	coord.y -= resolution.y;
+    	coord.y -= 2.0 * resolution.y;
+    	coord.y += resolution.y * SMAASearchLength(e.gr, 0.0, 0.5 );
+
+    	return coord.y;
+    }
+
+    fn SMAASearchYDown(texcoord: vec2f, end: f32) -> f32 {
+
+        var coord = texcoord;
+    	var e = vec2f(1.0, 0.0);
+        var resolution = 1 / world_env_uniform_params.screen_size;
+
+        var settable = true;
+    	for (var i: i32 = 0; i < SMAA_MAX_SEARCH_STEPS; i++) {
+    		var a = textureSample(color, sample, coord).rg;
+    		coord -= vec2(0.0, 2.0) * resolution;
+            if (settable) {
+                e = a;
+                if !(coord.y < end && e.g > 0.8281 && e.r == 0.0) { 
+                    settable = false;
+                }
+            }
+    	}
+
+    	coord.y += 0.25 * resolution.y;
+    	coord.y += resolution.y;
+    	coord.y += 2.0 * resolution.y;
+    	coord.y -= resolution.y * SMAASearchLength(e.gr, 0.5, 0.5);
+
+    	return coord.y;
+    }
+
+    fn SMAAArea(dist: vec2f, e1: f32, e2: f32, offset: f32) -> vec2f {
+
+    	// Rounding prevents precision errors of bilinear filtering:
+    	var texcoord = f32(SMAA_AREATEX_MAX_DISTANCE) * round(4.0 * vec2f(e1, e2)) + dist;
+
+    	// We do a scale and bias for mapping to texel space:
+    	texcoord = SMAA_AREATEX_PIXEL_SIZE * texcoord + (0.5 * SMAA_AREATEX_PIXEL_SIZE);
+
+    	// Move to proper place, according to the subpixel offset:
+    	texcoord.y += SMAA_AREATEX_SUBTEX_SIZE * offset;
+
+    	return textureSample(area_tex, sample, texcoord).rg;
+    }
+
+    fn SMAABlendingWeightCalculationPS(texcoord: vec2f, pixcoord: vec2f, offset_0: vec4f, offset_1: vec4f, offset_2: vec4f, subsampleIndices: vec4i) -> vec4f {
+    	
+        var weights = vec4f(0.0, 0.0, 0.0, 0.0);
+        var resolution = 1 / world_env_uniform_params.screen_size;
+    	var e = textureSample(color, sample, texcoord).rg;
+
+        {
+            var coords_x_0 = SMAASearchXLeft(offset_0.xy, offset_2.x);
+            var coords_x_1 = SMAASearchXRight(offset_0.zw, offset_2.y);
+            var e1_0 = textureSample(color, sample, vec2f(coords_x_0, offset_1.y)).r;
+            var e2_0 = textureSample(color, sample, vec2f(coords_x_1 - resolution.x, offset_1.y) + vec2f(1, 0) * resolution).r;
+
+            var d: vec2f;
+            d.x = coords_x_0;
+            d.y = coords_x_1;
+            d = d / resolution.x - pixcoord.x;
+            var sqrt_d: vec2f= sqrt(abs(d));
+            var area = SMAAArea(sqrt_d, e1_0, e2_0, f32(subsampleIndices.y));
+            
+            if e.g > 0.0 { // Edge at north
+                weights.r = area.x;
+                weights.g = area.y;
+            }
+    	}
+
+        {
+            var coords_y_0 = SMAASearchYUp(offset_1.xy, offset_2.z);
+            var coords_y_1 = SMAASearchYDown(offset_1.zw, offset_2.w);
+            var e1_1 = textureSample(color, sample, vec2f(offset_0.x, coords_y_0)).r;
+            var e2_1 = textureSample(color, sample, vec2f(offset_0.x, coords_y_0 - resolution.y) + vec2f(0, 1) * resolution).g;
+        
+            var d: vec2f;
+    		d.x = coords_y_0;
+    		d.y = coords_y_1;
+            d = d / resolution.y - pixcoord.y;
+    		var sqrt_d = sqrt(abs(d));
+            var area = SMAAArea(sqrt_d, e1_1, e2_1, f32(subsampleIndices.x));
+
+            if e.r > 0.0 { // Edge at north
+                weights.b = area.x;
+                weights.a = area.y;
+            }
+        }
+
+    	return weights;
+    }
+    `;
+
+    const shader = RenderServer.render_state.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
+    const program = RenderServer.render_state.create_Program(shader, shader).expect();
+
+    const pipeline = RenderServer.render_state.create_RenderPipeline(
+        program,
+        RenderServerRenderMaterial.ProgramStatePipelineTemplates[RenderServerRenderMaterialPass.Compose],
+        RenderServerRenderMaterial.OutputStatePipelineTemplates[RenderServerRenderMaterialPass.Compose],
+        [RenderServer.world_env_uniform_layout, EffectSMAAWeightUniformLayout.get()],
+        [
+            {
+                stride: 8, // 2 * 4
+                per_instance: false,
+                rows: [{
+                    location: 0,
+                    offset: 0,
+                    type: WebGPURenderStateAttributeType.Vector2
+                }]
+            },
+        ]
+    ).expect();
+
+    // mannually release shader and program
+    shader.release();
+    program.release();
+
+    return pipeline;
+});
+
+const EffectSMAABlendUniformLayout = new RefCacher(() => {
+    const layout = RenderServer.render_state.create_UniformLayout();
+    layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.NonFilterFloat, WebGPURenderStateShaderType.Fragment, 0);
+    return layout;
+});
+
+const EffectSMAABlendPipeline = new RefCacher(() => {
+    const shader_code = `
+
+    struct Attributes {
+        @location(${RenderServerGeometryAttributeLocation.Position}) position: vec2f,
+    };
+    
+    struct WorldEnvUniformCameraMatrix {
+        camera_world: mat4x4f,
+        camera_view: mat4x4f,
+        camera_proj: mat4x4f,
+        camera_inv_proj: mat4x4f,
+        camera_norview: mat3x3f,
+    }
+
+    struct WorldEnvUniformParams {
+        screen_size: vec2f,
+        time: f32,
+        orthogonal: u32,
+        pixel_ratio: f32,
+    }
+    
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(0) var<uniform> world_env_uniform_camera_matrix: WorldEnvUniformCameraMatrix; 
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
+    
+    struct VertexOutput {
+        @builtin(position) position: vec4f,
+        @location(0) uv: vec2f,
+        @location(1) offset_0: vec4f,
+        @location(2) offset_1: vec4f,
+    };
+
+    @vertex
+    fn vs_main(attri: Attributes) -> VertexOutput {
+        var out: VertexOutput;
+
+	    var uv = attri.position / 2.0;
+        var resolution = 1 / world_env_uniform_params.screen_size.xyxy;
+        
+        out.uv = vec2(uv.x, 1.0 - uv.y);
+        out.position = vec4f(attri.position - vec2f(1.0), 1.0, 1.0);
+
+        out.offset_0 = out.uv.xyxy + resolution * vec4f(-1.0, 0.0, 0.0, 1.0); // WebGL port note: Changed sign in W component
+		out.offset_1 = out.uv.xyxy + resolution * vec4f(1.0, 0.0, 0.0, -1.0); // WebGL port note: Changed sign in W component
+
+        return out;
+    }
+
+    struct FragmentOutput {
+        @location(0) color: vec4f,
+    };
+
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var color: texture_2d<f32>;
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(3) var normal: texture_2d<f32>;
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(4) var depth: texture_depth_2d;
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(5) var sample: sampler;
+
+    @group(1) @binding(0) var raw_color: texture_2d<f32>; 
+    
+    @fragment
+    fn fs_main(vary: VertexOutput) -> FragmentOutput {
+        var out: FragmentOutput;
+
+        var a: vec4f;
+        var texcoord = vary.uv;
+        var _a = textureSample(color, sample, texcoord).xz;
+		a.x = _a.x;
+		a.y = _a.y;
+		a.y = textureSample(color, sample, vary.offset_1.zw ).g;
+		a.w = textureSample(color, sample, vary.offset_1.xy ).a;
+        var resolution = 1 / world_env_uniform_params.screen_size;
+
+		// Is there any blending weight with a value greater than 0.0?
+        var color_0 = textureSample(raw_color, sample, texcoord);
+        var color_1: vec4f;
+        {
+            // Up to 4 lines can be crossing a pixel (one through each edge). We
+			// favor blending by choosing the line with the maximum weight for each
+			// direction:
+
+			var offset: vec2f;
+			offset.x = select(-a.b, a.a , a.a > a.b);
+			offset.y = select( a.r, -a.g, a.g > a.r);
+
+			// Then we go in the direction that has the maximum weight:
+
+			if abs(offset.x) > abs(offset.y) {
+				offset.y = 0.0;
+			} else {
+				offset.x = 0.0;
+			}
+
+			// Fetch the opposite color and lerp by hand:
+			var C = textureSample(raw_color, sample, texcoord);
+			texcoord += sign(offset) * resolution;
+			var Cop = textureSample(raw_color, sample, texcoord);
+			var s = max(abs( offset.x), abs(offset.y));
+			color_1 = mix(C, Cop, s);
+        }
+        
+        out.color = textureSample(color, sample, vary.uv);
+        out.color = textureSample(raw_color, sample, vary.uv) + textureSample(color, sample, vary.uv);
+        // var c = select(color_1, color_0, dot(a, vec4f(1.0, 1.0, 1.0, 1.0 )) < 1e-5);
+        // out.color = select(textureSample(raw_color, sample, vary.uv), color_1 * vec4f(1.0, 0.5, 0.5, 1.0), vary.uv.x < 0.5);
+
+        return out;
+    }
+    `;
+
+    const shader = RenderServer.render_state.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
+    const program = RenderServer.render_state.create_Program(shader, shader).expect();
+
+    const pipeline = RenderServer.render_state.create_RenderPipeline(
+        program,
+        RenderServerRenderMaterial.ProgramStatePipelineTemplates[RenderServerRenderMaterialPass.Compose],
+        RenderServerRenderMaterial.OutputStatePipelineTemplates[RenderServerRenderMaterialPass.Compose],
+        [RenderServer.world_env_uniform_layout, EffectSMAABlendUniformLayout.get()],
+        [
+            {
+                stride: 8, // 2 * 4
+                per_instance: false,
+                rows: [{
+                    location: 0,
+                    offset: 0,
+                    type: WebGPURenderStateAttributeType.Vector2
+                }]
+            },
+        ]
+    ).expect();
+
+    // mannually release shader and program
+    shader.release();
+    program.release();
+
+    return pipeline;
+});
+
+//#endregion
 
 const EffectTemplatePipeline = new RefCacher(() => {
 
@@ -767,6 +1321,12 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
     protected readonly effect_fxaa_pipeline_ref = new ReadonlyRef(EffectFxaaPipeline.get());
 
+    protected readonly effect_smaa_edge_pipeline_ref = new ReadonlyRef(EffectSMAAEdgePipeline.get());
+    protected readonly effect_smaa_weight_pipeline_ref = new ReadonlyRef(EffectSMAAWeightPipeline.get());
+    protected readonly effect_smaa_blend_pipeline_ref = new ReadonlyRef(EffectSMAABlendPipeline.get());
+    protected readonly effect_smaa_weight_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(EffectSMAAWeightUniformLayout.get()).expect());
+    protected readonly effect_smaa_blend_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(EffectSMAABlendUniformLayout.get()).expect());
+
     //#endregion
 
     //#region World Env Uniform
@@ -860,6 +1420,9 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.lights_uniform_group_ref.expect.set_Sampler(3, RenderServer.get_TextureSampler(WebGPURenderStateTextureWrap.Clamp, WebGPURenderStateTextureWrap.Clamp, WebGPURenderStateTextureWrap.Clamp, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear, WebGPURenderStateTextureFilter.Linear));
         this.lights_uniform_group_ref.expect.set_Storage(4, this.lights_cluster_data_ref.expect.cluster_buffer);
         this.lights_uniform_group_ref.expect.set_BufferUniform(5, this.lights_cluster_data_ref.expect.uniform_buffer);
+
+        this.effect_smaa_weight_uniform_group_ref.expect.set_Texture(0, EffectSMAAAreaTextureView.get());
+        this.effect_smaa_weight_uniform_group_ref.expect.set_Texture(1, EffectSMAASearchTextureView.get());
     }
 
     public set_WorldEnvUniform(camera_world: Matrix4, camera_projection: Matrix4, camera_is_orthogonal: boolean, z_near: number, z_far: number, time: number, pixel_ratio: number, screen_width: number, screen_height: number) {
@@ -1036,6 +1599,8 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
             this.world_env_effect_uniform_group_1_ref.expect.set_Texture(3, this.result_normal_texture_view_ref.expect);
             this.world_env_effect_uniform_group_1_ref.expect.set_Texture(4, this.result_depth_render_queue_1_texture_view_ref.expect);
 
+            this.effect_smaa_blend_uniform_group_ref.expect.set_Texture(0, this.result_color_render_queue_1_texture_view_ref.expect);
+
             return true;
         }
         return false;
@@ -1144,6 +1709,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         encoder.copyTextureToTexture({ texture: this.result_depth_texture_ref.expect.texture }, { texture: this.result_depth_render_queue_1_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
         this.render_Queue1Solid(encoder);
         this.render_Queue1Transparent(encoder);
+        encoder.copyTextureToTexture({ texture: this.result_color_texture_ref.expect.texture }, { texture: this.result_color_render_queue_1_texture_ref.expect.texture }, { width: texture_width, height: texture_height });
         const effect_queue_1_first_texture = (this.render_Queue1Effects(encoder) % 2) === 0;
         encoder.copyTextureToTexture({ texture: effect_queue_1_first_texture ? this.result_color_texture_ref.expect.texture : this.effect_texture_ref.expect.texture }, { texture: viewport.canvas_texture_view.texture }, { width: texture_width, height: texture_height });
 
@@ -1377,12 +1943,31 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         let pass = 0;
 
         const effect_pass_0 = encoder.beginRenderPass(this.effect_frame_buffer_0_ref.expect.frame_buffer_desc);
-        effect_pass_0.setPipeline(this.effect_fxaa_pipeline_ref.expect.pipeline);
+        effect_pass_0.setPipeline(this.effect_smaa_edge_pipeline_ref.expect.pipeline);
         effect_pass_0.setBindGroup(0, this.world_env_effect_uniform_group_0_ref.expect.binding_group);
-        effect_pass_0.setBindGroup(RenderServerSingleton.LightsUniformBindGroupIndex, this.lights_uniform_group_ref.expect.binding_group);
         this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(effect_pass_0);
         this.full_screen_triangle_vertex_array_ref.expect.draw(effect_pass_0);
         effect_pass_0.end();
+
+        pass++;
+
+        const effect_pass_1 = encoder.beginRenderPass(this.effect_frame_buffer_1_ref.expect.frame_buffer_desc);
+        effect_pass_1.setPipeline(this.effect_smaa_weight_pipeline_ref.expect.pipeline);
+        effect_pass_1.setBindGroup(0, this.world_env_effect_uniform_group_1_ref.expect.binding_group);
+        effect_pass_1.setBindGroup(1, this.effect_smaa_weight_uniform_group_ref.expect.binding_group);
+        this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(effect_pass_1);
+        this.full_screen_triangle_vertex_array_ref.expect.draw(effect_pass_1);
+        effect_pass_1.end();
+
+        pass++;
+
+        const effect_pass_2 = encoder.beginRenderPass(this.effect_frame_buffer_0_ref.expect.frame_buffer_desc);
+        effect_pass_2.setPipeline(this.effect_smaa_blend_pipeline_ref.expect.pipeline);
+        effect_pass_2.setBindGroup(0, this.world_env_effect_uniform_group_0_ref.expect.binding_group);
+        effect_pass_2.setBindGroup(1, this.effect_smaa_blend_uniform_group_ref.expect.binding_group);
+        this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(effect_pass_2);
+        this.full_screen_triangle_vertex_array_ref.expect.draw(effect_pass_2);
+        effect_pass_2.end();
 
         pass++;
 
@@ -1444,6 +2029,11 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.effect_frame_buffer_1_ref.clear();
 
         this.effect_fxaa_pipeline_ref.clear();
+        this.effect_smaa_edge_pipeline_ref.clear();
+        this.effect_smaa_weight_uniform_group_ref.clear();
+        this.effect_smaa_blend_uniform_group_ref.clear();
+        this.effect_smaa_weight_pipeline_ref.clear();
+        this.effect_smaa_blend_pipeline_ref.clear();
 
         this.queue_0_solid_instance_uniform_group_ref.clear();
         this.queue_0_solid_instance_uniform_buffer_view_ref.clear();

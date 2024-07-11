@@ -427,6 +427,8 @@ export class WebGPURenderState implements Disposable {
             case WebGPURenderStateTextureFormat.D24S8: return 4;
             case WebGPURenderStateTextureFormat.D32F: return 4;
             case WebGPURenderStateTextureFormat.D32FS8: return 5;
+            case WebGPURenderStateTextureFormat.RG8: return 2;
+            case WebGPURenderStateTextureFormat.R8: return 1;
             default: {
                 const n: never = format;
                 throw new Error('<WebGPURenderState> get_TextureFormatTexelBytes: unreachable');
