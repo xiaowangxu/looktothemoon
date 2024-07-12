@@ -476,6 +476,8 @@ const EffectFxaaPipeline = new RefCacher(() => {
 
 //#region SMAA
 
+// https://github.com/fintelia/smaa-rs/blob/main/third_party/smaa/SMAA.hlsl#L1021
+
 const EffectSMAAEdgePipeline = new RefCacher(() => {
 
     const shader_code = `
@@ -543,62 +545,72 @@ const EffectSMAAEdgePipeline = new RefCacher(() => {
      *   0.1 is a reasonable value, and allows to catch most visible edges.
      *   0.05 is a rather overkill value, that allows to catch 'em all.
      */
-    const SMAA_THRESHOLD: vec2f = vec2f(0.06);
+    const SMAA_THRESHOLD: vec2f = vec2f(0.1);
+    /**
+     * If there is an neighbor edge that has SMAA_LOCAL_CONTRAST_FACTOR times
+     * bigger contrast than current edge, current edge will be discarded.
+     *
+     * This allows to eliminate spurious crossing edges, and is based on the fact
+     * that, if there is too much contrast in a direction, that will hide
+     * perceptually contrast in the other neighbors.
+     */
+    const SMAA_LOCAL_CONTRAST_ADAPTATION_FACTOR: vec2f = vec2f(2.0);
 
     @fragment
     fn fs_main(vary: VertexOutput) -> FragmentOutput {
         var out: FragmentOutput;
 
-        var texcoord = vary.uv;
-        var offset_0 = vary.offset_0;
-        var offset_1 = vary.offset_1;
-        var offset_2 = vary.offset_2;
+        var texcoord   = vary.uv;
+        var offset_0   = vary.offset_0;
+        var offset_1   = vary.offset_1;
+        var offset_2   = vary.offset_2;
     
-		var threshold = SMAA_THRESHOLD;
+		var threshold  = SMAA_THRESHOLD;
 
 		// Calculate color deltas:
 
 		var delta: vec4f;
-		var C         = textureSample(color, sample, texcoord   ).rgb;
-		var Cleft     = textureSample(color, sample, offset_0.xy).rgb;
-		var t         = abs(C - Cleft);
-		delta.x       = max(max(t.r, t.g), t.b);
-		var Ctop      = textureSample(color, sample, offset_0.zw).rgb;
-		t             = abs(C - Ctop);
-		delta.y       = max(max(t.r, t.g), t.b);
+		var C          = textureSample(color, sample, texcoord   ).rgb;
+		var Cleft      = textureSample(color, sample, offset_0.xy).rgb;
+		var t          = abs(C - Cleft);
+		delta.x        = max(max(t.r, t.g), t.b);
+		var Ctop       = textureSample(color, sample, offset_0.zw).rgb;
+		t              = abs(C - Ctop);
+		delta.y        = max(max(t.r, t.g), t.b);
 
 		// We do the usual threshold:
-		var edges     = step(threshold, delta.xy);
+		var edges      = step(threshold, delta.xy);
 
 		// Then discard if there is no edge:
-		if dot(edges, vec2f(1.0, 1.0)) == 0.0 { discard; }
+		if dot(edges, vec2f(1.0)) == 0.0 { discard; }
 
 		// Calculate right and bottom deltas:
-		var Cright    = textureSample(color, sample, offset_1.xy).rgb;
-		t             = abs(C - Cright);
-		delta.z       = max(max(t.r, t.g ), t.b);
-		var Cbottom   = textureSample(color, sample, offset_1.zw).rgb;
-		t             = abs(C - Cbottom);
-		delta.w       = max(max(t.r, t.g), t.b);
+		var Cright     = textureSample(color, sample, offset_1.xy).rgb;
+		t              = abs(C - Cright);
+		delta.z        = max(max(t.r, t.g), t.b);
+		var Cbottom    = textureSample(color, sample, offset_1.zw).rgb;
+		t              = abs(C - Cbottom);
+		delta.w        = max(max(t.r, t.g), t.b);
 
 		// Calculate the maximum delta in the direct neighborhood:
-		var maxDelta  = max(max(max(delta.x,delta.y ), delta.z), delta.w);
+		var maxDelta   = max(delta.xy, delta.zw);
 
 		// Calculate left-left and top-top deltas:
-		var Cleftleft = textureSample(color, sample, offset_2.xy).rgb;
-		t             = abs(C - Cleftleft);
-		delta.z       = max(max(t.r, t.g), t.b);
-		var Ctoptop   = textureSample(color, sample, offset_2.zw).rgb;
-		t             = abs(C - Ctoptop);
-		delta.w       = max(max(t.r, t.g), t.b);
+		var Cleftleft  = textureSample(color, sample, offset_2.xy).rgb;
+		t              = abs(C - Cleftleft);
+		delta.z        = max(max(t.r, t.g), t.b);
+		var Ctoptop    = textureSample(color, sample, offset_2.zw).rgb;
+		t              = abs(C - Ctoptop);
+		delta.w        = max(max(t.r, t.g), t.b);
 
 		// Calculate the final maximum delta:
-		maxDelta      = max(max(maxDelta, delta.z), delta.w);
+		maxDelta       = max(maxDelta.xy, delta.zw);
+		var finalDelta = max(maxDelta.x, maxDelta.y);
         
 		// Local contrast adaptation in action:
-		edges        *= step(vec2f(0.5 * maxDelta), delta.xy);
+		edges         *= step(vec2f(finalDelta), SMAA_LOCAL_CONTRAST_ADAPTATION_FACTOR * delta.xy);
 
-		out.color     = vec4f(edges, 0.0, 1.0);
+		out.color      = vec4f(edges, 0.0, 1.0);
 
         return out;
     }
@@ -904,8 +916,8 @@ const EffectSMAAWeightPipeline = new RefCacher(() => {
             var area = SMAAArea(sqrt_d, e1, e2, f32(subsampleIndices.y));
             
             if e.g > 0.0 { // Edge at north
-                weights.r = area.x;
-                weights.g = area.y;
+                weights.x = area.x;
+                weights.y = area.y;
             }
     	}
 
@@ -927,8 +939,8 @@ const EffectSMAAWeightPipeline = new RefCacher(() => {
             var area = SMAAArea(sqrt_d, e1, e2, f32(subsampleIndices.x));
             
             if e.r > 0.0 { // Edge at north
-                weights.b = area.x;
-                weights.a = area.y;
+                weights.z = area.x;
+                weights.w = area.y;
             }
         }
 
@@ -1064,10 +1076,12 @@ const EffectSMAABlendPipeline = new RefCacher(() => {
 		texcoord += sign(offset) * resolution;
 		var Cop = textureSample(raw_color, sample, texcoord);
 		var s = select(abs(offset.y), abs(offset.x), abs(offset.x) > abs(offset.y));
-		var color_1 = mix(C, Cop, 0.5);
+		var color_1 = mix(C, Cop, s);
         
-        var c = select(color_1, color_0, dot(a, vec4f(1.0, 1.0, 1.0, 1.0)) < 1e-5);
+        var c = select(vec4f(1.0, 0.0, 0.0, 1.0), color_0, dot(a, vec4f(1.0, 1.0, 1.0, 1.0)) < 1e-5);
         out.color = c; 
+
+        out.color = textureSample(color, sample, vary.uv);
         
         return out;
     }
@@ -1966,7 +1980,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         let pass = 0;
 
         const effect_pass_0 = encoder.beginRenderPass(this.effect_frame_buffer_0_ref.expect.frame_buffer_desc);
-        effect_pass_0.setPipeline(this.effect_fxaa_pipeline_ref.expect.pipeline);
+        effect_pass_0.setPipeline(this.effect_smaa_edge_pipeline_ref.expect.pipeline);
         effect_pass_0.setBindGroup(0, this.world_env_effect_uniform_group_0_ref.expect.binding_group);
         this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(effect_pass_0);
         this.full_screen_triangle_vertex_array_ref.expect.draw(effect_pass_0);
@@ -1974,25 +1988,25 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
         pass++;
 
-        // const effect_pass_1 = encoder.beginRenderPass(this.effect_frame_buffer_1_ref.expect.frame_buffer_desc);
-        // effect_pass_1.setPipeline(this.effect_smaa_weight_pipeline_ref.expect.pipeline);
-        // effect_pass_1.setBindGroup(0, this.world_env_effect_uniform_group_1_ref.expect.binding_group);
-        // effect_pass_1.setBindGroup(1, this.effect_smaa_weight_uniform_group_ref.expect.binding_group);
-        // this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(effect_pass_1);
-        // this.full_screen_triangle_vertex_array_ref.expect.draw(effect_pass_1);
-        // effect_pass_1.end();
+        const effect_pass_1 = encoder.beginRenderPass(this.effect_frame_buffer_1_ref.expect.frame_buffer_desc);
+        effect_pass_1.setPipeline(this.effect_smaa_weight_pipeline_ref.expect.pipeline);
+        effect_pass_1.setBindGroup(0, this.world_env_effect_uniform_group_1_ref.expect.binding_group);
+        effect_pass_1.setBindGroup(1, this.effect_smaa_weight_uniform_group_ref.expect.binding_group);
+        this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(effect_pass_1);
+        this.full_screen_triangle_vertex_array_ref.expect.draw(effect_pass_1);
+        effect_pass_1.end();
 
-        // pass++;
+        pass++;
 
-        // const effect_pass_2 = encoder.beginRenderPass(this.effect_frame_buffer_0_ref.expect.frame_buffer_desc);
-        // effect_pass_2.setPipeline(this.effect_smaa_blend_pipeline_ref.expect.pipeline);
-        // effect_pass_2.setBindGroup(0, this.world_env_effect_uniform_group_0_ref.expect.binding_group);
-        // effect_pass_2.setBindGroup(1, this.effect_smaa_blend_uniform_group_ref.expect.binding_group);
-        // this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(effect_pass_2);
-        // this.full_screen_triangle_vertex_array_ref.expect.draw(effect_pass_2);
-        // effect_pass_2.end();
+        const effect_pass_2 = encoder.beginRenderPass(this.effect_frame_buffer_0_ref.expect.frame_buffer_desc);
+        effect_pass_2.setPipeline(this.effect_smaa_blend_pipeline_ref.expect.pipeline);
+        effect_pass_2.setBindGroup(0, this.world_env_effect_uniform_group_0_ref.expect.binding_group);
+        effect_pass_2.setBindGroup(1, this.effect_smaa_blend_uniform_group_ref.expect.binding_group);
+        this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(effect_pass_2);
+        this.full_screen_triangle_vertex_array_ref.expect.draw(effect_pass_2);
+        effect_pass_2.end();
 
-        // pass++;
+        pass++;
 
         return pass;
     }
