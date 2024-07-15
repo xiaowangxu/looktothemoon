@@ -911,7 +911,7 @@ export async function createEditor() {
 	{
 		const geo = new PolyLineGeometry3DResource();
 		const mat = new PolyLineMaterial3DResource();
-		mat.color = Color.create(1, 0.8, 0, 1);
+		mat.color = Color.create(1, 1, 0, 1);
 		mat.width = 10;
 		geo.set_PointCount(360);
 		for (let i = 0; i < 360; i++) {

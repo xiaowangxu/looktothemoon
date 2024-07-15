@@ -197,8 +197,8 @@ const ComposeUniformLinearSmapler = new RefCacher(() => {
 
 const OitComposeUniformLayout = new RefCacher(() => {
     const layout = RenderServer.render_state.create_UniformLayout();
-    layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.NonFilterFloat, WebGPURenderStateShaderType.Fragment, 0);
-    layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.NonFilterFloat, WebGPURenderStateShaderType.Fragment, 1);
+    layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.Float, WebGPURenderStateShaderType.Fragment, 0);
+    layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.Float, WebGPURenderStateShaderType.Fragment, 1);
     layout.add_Sampler(WebGPURenderStateSamplerUniformType.NonFilter, WebGPURenderStateShaderType.Fragment, 2);
     return layout;
 });
@@ -519,9 +519,9 @@ const EffectSMAAEdgePipeline = new RefCacher(() => {
         var resolution = 1 / world_env_uniform_params.screen_size.xyxy;
 
         out.uv = vec2(uv.x, 1.0 - uv.y);
-        out.offset_0 = out.uv.xyxy + resolution * vec4f(-1.0, 0.0, 0.0,  1.0); // WebGL port note: Changed sign in W component
-		out.offset_1 = out.uv.xyxy + resolution * vec4f( 1.0, 0.0, 0.0, -1.0); // WebGL port note: Changed sign in W component
-		out.offset_2 = out.uv.xyxy + resolution * vec4f(-2.0, 0.0, 0.0,  2.0); // WebGL port note: Changed sign in W component
+        out.offset_0 = out.uv.xyxy + resolution * vec4f(-1.0, 0.0, 0.0, -1.0); // WebGL port note: Changed sign in W component
+		out.offset_1 = out.uv.xyxy + resolution * vec4f( 1.0, 0.0, 0.0,  1.0); // WebGL port note: Changed sign in W component
+		out.offset_2 = out.uv.xyxy + resolution * vec4f(-2.0, 0.0, 0.0, -2.0); // WebGL port note: Changed sign in W component
         out.position = vec4f(attri.position - vec2f(1.0), 1.0, 1.0);
 
         return out;
@@ -545,7 +545,7 @@ const EffectSMAAEdgePipeline = new RefCacher(() => {
      *   0.1 is a reasonable value, and allows to catch most visible edges.
      *   0.05 is a rather overkill value, that allows to catch 'em all.
      */
-    const SMAA_THRESHOLD: vec2f = vec2f(0.1);
+    const SMAA_THRESHOLD: vec2f = vec2f(0.075);
     /**
      * If there is an neighbor edge that has SMAA_LOCAL_CONTRAST_FACTOR times
      * bigger contrast than current edge, current edge will be discarded.
@@ -659,7 +659,7 @@ const EffectSMAASearchTextureView = new RefCacher(() => {
 const EffectSMAAWeightUniformLayout = new RefCacher(() => {
     const layout = RenderServer.render_state.create_UniformLayout();
     layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.Float, WebGPURenderStateShaderType.Fragment, 0);
-    layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.NonFilterFloat, WebGPURenderStateShaderType.Fragment, 1);
+    layout.add_Texture(WebGPURenderStateTextureUniformType.Tex2D, WebGPURenderStateTextureUniformSampleType.Float, WebGPURenderStateShaderType.Fragment, 1);
     layout.add_Sampler(WebGPURenderStateSamplerUniformType.Filter, WebGPURenderStateShaderType.Fragment, 2);
     return layout;
 });
@@ -711,8 +711,8 @@ const EffectSMAAWeightPipeline = new RefCacher(() => {
         out.position = vec4f(attri.position - vec2f(1.0), 1.0, 1.0);
 
         // We will use these offsets for the searches later on (see @PSEUDO_GATHER4):
-		out.offset_0 = out.uv.xyxy + resolution.xyxy * vec4f(-0.25, 0.125, 1.25, 0.125); // WebGL port note: Changed sign in Y and W components
-		out.offset_1 = out.uv.xyxy + resolution.xyxy * vec4f(-0.125, 0.25, -0.125, -1.25); // WebGL port note: Changed sign in Y and W components
+		out.offset_0 = out.uv.xyxy + resolution.xyxy * vec4f(-0.25, -0.125, 1.25, -0.125);
+		out.offset_1 = out.uv.xyxy + resolution.xyxy * vec4f(-0.125, -0.25, -0.125, 1.25);
 
 		// And these for the searches, they indicate the ends of the loops:
 		out.offset_2 = vec4f(out.offset_0.xz, out.offset_1.yw) + resolution.xxyy * vec4f(-2.0, 2.0, -2.0, 2.0) * f32(SMAA_MAX_SEARCH_STEPS);
@@ -724,227 +724,257 @@ const EffectSMAAWeightPipeline = new RefCacher(() => {
         @location(0) color: vec4f,
     };
 
-    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var color: texture_2d<f32>;
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var edge: texture_2d<f32>;
     @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(3) var normal: texture_2d<f32>;
     @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(4) var depth: texture_depth_2d;
     @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(5) var sample: sampler;
 
     @group(1) @binding(0) var area_tex: texture_2d<f32>; 
     @group(1) @binding(1) var search_tex: texture_2d<f32>; 
-    @group(1) @binding(2) var area_sample: sampler;
+    @group(1) @binding(2) var linear_sample: sampler;
     
     const SMAA_MAX_SEARCH_STEPS: i32 = 8;
 	const SMAA_AREATEX_MAX_DISTANCE: i32 = 16;
 	const SMAA_AREATEX_PIXEL_SIZE: vec2f = 1.0 / vec2f(160.0, 560.0);
 	const SMAA_AREATEX_SUBTEX_SIZE: f32 = 1.0 / 7.0;
+    const SMAA_SEARCHTEX_SIZE: vec2f = vec2f(66.0, 33.0);
+    const SMAA_SEARCHTEX_PACKED_SIZE: vec2f = vec2f(64.0, 16.0);
+    /**
+     * SMAA_CORNER_ROUNDING specifies how much sharp corners will be rounded.
+     * Range: [0, 100]
+     */
+    const SMAA_CORNER_ROUNDING: f32 = 25;
+    const SMAA_CORNER_ROUNDING_NORM: f32 = SMAA_CORNER_ROUNDING / 100.0;
 
     @fragment
     fn fs_main(vary: VertexOutput) -> FragmentOutput {
         var out: FragmentOutput;
-        // out.color = textureSample(area_tex, area_sample, vec2f(vary.uv.x, 1 - vary.uv.y));
+        // out.color = textureSample(area_tex, linear_sample, vec2f(vary.uv.x, 1 - vary.uv.y));
         out.color = SMAABlendingWeightCalculationPS(vary.uv, vary.pixel_coord, vary.offset_0, vary.offset_1, vary.offset_2, vec4i(0));
         return out;
     }
 
-    fn SMAASearchLength(e: vec2f, bias: f32, scale: f32) -> f32 {
+    fn SMAASearchLength(e: vec2f, offset: f32) -> f32 {
+    	// The texture is flipped vertically, with left and right cases taking half
+        // of the space horizontally:
+        var scale = SMAA_SEARCHTEX_SIZE * vec2f(0.5, -1.0);
+        var bias = SMAA_SEARCHTEX_SIZE * vec2f(offset, 1.0);
 
-    	/** 
-         * Not required if searchTex accesses are set to point:
-    	 * float2 SEARCH_TEX_PIXEL_SIZE = 1.0 / float2(66.0, 33.0);
-    	 * e = float2(bias, 0.0) + 0.5 * SEARCH_TEX_PIXEL_SIZE + e * float2(scale, 1.0) * float2(64.0, 32.0) * SEARCH_TEX_PIXEL_SIZE;
-    	 */
+        // Scale and bias to access texel centers:
+        scale += vec2f(-1.0,  1.0);
+        bias  += vec2f( 0.5, -0.5);
 
-    	var coord = e;
-        coord.r = bias + e.r * scale;
-    	return 255.0 * textureSample(search_tex, sample, coord).r;
+        // Convert from pixel coordinates to texcoords:
+        // (We use SMAA_SEARCHTEX_PACKED_SIZE because the texture is cropped)
+        scale *= 1.0 / SMAA_SEARCHTEX_PACKED_SIZE;
+        bias *= 1.0 / SMAA_SEARCHTEX_PACKED_SIZE;
+
+        // Lookup the search texture:
+        return textureSampleLevel(search_tex, linear_sample, scale * e + bias, 0).r;
     }
 
     fn SMAASearchXLeft(texcoord: vec2f, end: f32) -> f32 {
-
-    	/**
-    	 * @PSEUDO_GATHER4
-    	 * This texcoord has been offset by (-0.25, -0.125) in the vertex shader to
-    	 * sample between edge, thus fetching four edges in a row.
-    	 * Sampling with different offsets in each direction allows to disambiguate
-    	 * which edges are active from the four fetched ones.
-    	 */
-
-        var coord = texcoord;
-    	var e = vec2f(0.0, 1.0);
+        /**
+         * @PSEUDO_GATHER4
+         * This texcoord has been offset by (-0.25, -0.125) in the vertex shader to
+         * sample between edge, thus fetching four edges in a row.
+         * Sampling with different offsets in each direction allows to disambiguate
+         * which edges are active from the four fetched ones.
+         */
+        var e = vec2f(0.0, 1.0);
         var resolution = 1 / world_env_uniform_params.screen_size;
-
-        var settable = true;
-    	for (var i: i32 = 0; i < SMAA_MAX_SEARCH_STEPS; i++) {
-    		var a = textureSample(color, sample, coord).rg;
-            if (settable) {
-                coord -= vec2(2.0, 0.0) * resolution;
-                e = a;
-                if !(coord.x > end && e.g > 0.8281 && e.r == 0.0) { 
-                    settable = false;
-                }
-            }
-    	}
-
-    	// We correct the previous (-0.25, -0.125) offset we applied:
-    	coord.x += 0.25 * resolution.x;
-
-    	// The searches are bias by 1, so adjust the coords accordingly:
-    	coord.x += resolution.x;
-
-    	// Disambiguate the length added by the last step:
-    	coord.x += 2.0 * resolution.x; // Undo last step
-    	coord.x -= resolution.x * SMAASearchLength(e, 0.0, 0.5);
-
-    	return coord.x;
+        var _texcoord = texcoord;
+        while (_texcoord.x > end && 
+               e.g > 0.8281 && // Is there some edge not activated?
+               e.r == 0.0) { // Or is there a crossing edge that breaks the line?
+            e = textureSampleLevel(edge, linear_sample, _texcoord, 0).rg;
+            _texcoord = -vec2f(2.0, 0.0) * resolution + _texcoord;
+        }
+        var offset = -(255.0 / 127.0) * SMAASearchLength(e, 0.0) + 3.25;
+        return resolution.x * offset + _texcoord.x;
     }
 
     fn SMAASearchXRight(texcoord: vec2f, end: f32) -> f32 {
-
-    	var coord = texcoord;
-    	var e = vec2f(0.0, 1.0);
+        var e = vec2f(0.0, 1.0);
         var resolution = 1 / world_env_uniform_params.screen_size;
-
-        var settable = true;
-    	for (var i: i32 = 0; i < SMAA_MAX_SEARCH_STEPS; i++) {
-    		var a = textureSample(color, sample, coord).rg;
-            if (settable) {
-                coord += vec2(2.0, 0.0) * resolution;
-                e = a;
-                if !(coord.x < end && e.g > 0.8281 && e.r == 0.0) { 
-                    settable = false;
-                }
-            }
-    	}
-
-    	coord.x -= 0.25 * resolution.x;
-    	coord.x -= resolution.x;
-    	coord.x -= 2.0 * resolution.x;
-    	coord.x += resolution.x * SMAASearchLength(e, 0.5, 0.5);
-
-    	return coord.x;
+        var _texcoord = texcoord;
+        while (_texcoord.x < end && 
+               e.g > 0.8281 && // Is there some edge not activated?
+               e.r == 0.0) { // Or is there a crossing edge that breaks the line?
+            e = textureSampleLevel(edge, linear_sample, _texcoord, 0).rg;
+            _texcoord = vec2f(2.0, 0.0) * resolution + _texcoord;
+        }
+        var offset = -(255.0 / 127.0) * SMAASearchLength(e, 0.5) + 3.25;
+        return -resolution.x * offset + _texcoord.x;
     }
 
     fn SMAASearchYUp(texcoord: vec2f, end: f32) -> f32 {
-
-        var coord = texcoord;
-    	var e = vec2f(1.0, 0.0);
+        var e = vec2f(1.0, 0.0);
         var resolution = 1 / world_env_uniform_params.screen_size;
-
-        var settable = true;
-    	for (var i: i32 = 0; i < SMAA_MAX_SEARCH_STEPS; i++) {
-    		var a = textureSample(color, sample, coord).rg;
-    		coord += vec2(0.0, 2.0) * resolution;
-            if (settable) {
-                e = a;
-                if !(coord.y > end && e.r > 0.8281 && e.g == 0.0) { 
-                    settable = false;
-                }
-            }
-    	}
-
-    	coord.y -= 0.25 * resolution.y;
-    	coord.y -= resolution.y;
-    	coord.y -= 2.0 * resolution.y;
-    	coord.y += resolution.y * SMAASearchLength(e.gr, 0.0, 0.5 );
-
-    	return coord.y;
+        var _texcoord = texcoord;
+        while (_texcoord.y > end && 
+            e.r > 0.8281 && // Is there some edge not activated?
+            e.g == 0.0) { // Or is there a crossing edge that breaks the line?
+            e = textureSampleLevel(edge, linear_sample, _texcoord, 0).rg;
+            _texcoord = -vec2f(0.0, 2.0) * resolution + _texcoord;
+        }
+        var offset = -(255.0 / 127.0) * SMAASearchLength(e.gr, 0.0) + 3.25;
+        return resolution.y * offset + _texcoord.y;
     }
 
     fn SMAASearchYDown(texcoord: vec2f, end: f32) -> f32 {
-
-        var coord = texcoord;
-    	var e = vec2f(1.0, 0.0);
+        var e = vec2f(1.0, 0.0);
         var resolution = 1 / world_env_uniform_params.screen_size;
-
-        var settable = true;
-    	for (var i: i32 = 0; i < SMAA_MAX_SEARCH_STEPS; i++) {
-    		var a = textureSample(color, sample, coord).rg;
-    		coord -= vec2(0.0, 2.0) * resolution;
-            if (settable) {
-                e = a;
-                if !(coord.y < end && e.r > 0.8281 && e.g == 0.0) { 
-                    settable = false;
-                }
-            }
-    	}
-
-    	coord.y += 0.25 * resolution.y;
-    	coord.y += resolution.y;
-    	coord.y += 2.0 * resolution.y;
-    	coord.y -= resolution.y * SMAASearchLength(e.gr, 0.5, 0.5);
-
-    	return coord.y;
+        var _texcoord = texcoord;
+        while (_texcoord.y < end && 
+            e.r > 0.8281 && // Is there some edge not activated?
+            e.g == 0.0) { // Or is there a crossing edge that breaks the line?
+            e = textureSampleLevel(edge, linear_sample, _texcoord, 0).rg;
+            _texcoord = vec2f(0.0, 2.0) * resolution + _texcoord;
+        }
+        var offset = -(255.0 / 127.0) * SMAASearchLength(e.gr, 0.5) + 3.25;
+        return -resolution.y * offset + _texcoord.y;
     }
 
+    /** 
+     * Ok, we have the distance and both crossing edges. So, what are the areas
+     * at each side of current edge?
+     */
     fn SMAAArea(dist: vec2f, e1: f32, e2: f32, offset: f32) -> vec2f {
+        // Rounding prevents precision errors of bilinear filtering:
+        var texcoord = vec2f(f32(SMAA_AREATEX_MAX_DISTANCE), f32(SMAA_AREATEX_MAX_DISTANCE)) * round(4.0 * vec2f(e1, e2)) + dist;
 
-    	// Rounding prevents precision errors of bilinear filtering:
-    	var texcoord = f32(SMAA_AREATEX_MAX_DISTANCE) * round(4.0 * vec2f(e1, e2)) + dist;
+        // We do a scale and bias for mapping to texel space:
+        texcoord = SMAA_AREATEX_PIXEL_SIZE * texcoord + 0.5 * SMAA_AREATEX_PIXEL_SIZE;
 
-    	// We do a scale and bias for mapping to texel space:
-    	texcoord = SMAA_AREATEX_PIXEL_SIZE * texcoord + (0.5 * SMAA_AREATEX_PIXEL_SIZE);
+        // Move to proper place, according to the subpixel offset:
+        texcoord.y = SMAA_AREATEX_SUBTEX_SIZE * offset + texcoord.y;
 
-    	// Move to proper place, according to the subpixel offset:
-    	texcoord.y += SMAA_AREATEX_SUBTEX_SIZE * offset;
+        // Do it!
+        return textureSampleLevel(area_tex, linear_sample, texcoord, 0).rg;
+    }
 
-        texcoord.y = 1 - texcoord.y;
+    fn SMAADetectHorizontalCornerPattern(weights: vec2f, texcoord: vec4f, d: vec2f) -> vec2f {
+        let leftRight = step(d.xy, d.yx);
+        var rounding = (1.0 - SMAA_CORNER_ROUNDING_NORM) * leftRight;
+        let resolution = 1 / world_env_uniform_params.screen_size;
 
-    	return textureSample(area_tex, area_sample, texcoord).rg;
+        rounding /= leftRight.x + leftRight.y; // Reduce blending for pixels in the center of a line.
+
+        var factor = vec2f(1.0, 1.0);
+        factor.x -= rounding.x * textureSampleLevel(edge, linear_sample, texcoord.xy + vec2f(0,  1) * resolution, 0).r;
+        factor.x -= rounding.y * textureSampleLevel(edge, linear_sample, texcoord.zw + vec2f(1,  1) * resolution, 0).r;
+        factor.y -= rounding.x * textureSampleLevel(edge, linear_sample, texcoord.xy + vec2f(0, -2) * resolution, 0).r;
+        factor.y -= rounding.y * textureSampleLevel(edge, linear_sample, texcoord.zw + vec2f(1, -2) * resolution, 0).r;
+
+        return weights * saturate(factor);
+    }
+
+    fn SMAADetectVerticalCornerPattern(weights: vec2f, texcoord: vec4f, d: vec2f) -> vec2f {
+        let leftRight = step(d.xy, d.yx);
+        var rounding = (1.0 - SMAA_CORNER_ROUNDING_NORM) * leftRight;
+        let resolution = 1 / world_env_uniform_params.screen_size;
+
+        rounding /= leftRight.x + leftRight.y;
+
+        var factor = vec2f(1.0, 1.0);
+        factor.x -= rounding.x * textureSampleLevel(edge, linear_sample, texcoord.xy + vec2f( 1, 0) * resolution, 0).g;
+        factor.x -= rounding.y * textureSampleLevel(edge, linear_sample, texcoord.zw + vec2f( 1, 1) * resolution, 0).g;
+        factor.y -= rounding.x * textureSampleLevel(edge, linear_sample, texcoord.xy + vec2f(-2, 0) * resolution, 0).g;
+        factor.y -= rounding.y * textureSampleLevel(edge, linear_sample, texcoord.zw + vec2f(-2, 1) * resolution, 0).g;
+
+        return weights * saturate(factor);
     }
 
     fn SMAABlendingWeightCalculationPS(texcoord: vec2f, pixcoord: vec2f, offset_0: vec4f, offset_1: vec4f, offset_2: vec4f, subsampleIndices: vec4i) -> vec4f {
     	
         var weights = vec4f(0.0, 0.0, 0.0, 0.0);
-        var resolution = 1 / world_env_uniform_params.screen_size;
-    	var e = textureSample(color, sample, texcoord).rg;
+        let screen_size = world_env_uniform_params.screen_size;
+        let resolution = 1 / world_env_uniform_params.screen_size;
 
-        {
+        let e = textureSample(edge, linear_sample, texcoord).rg;
+
+        if e.g > 0.0 { // Edge at north
             var d: vec2f;
-            var coords = vec2f(SMAASearchXLeft(offset_0.xy, offset_2.x), offset_1.y);
+
+            // Find the distance to the left:
+            var coords: vec3f;
+            coords.x = SMAASearchXLeft(offset_0.xy, offset_2.x);
+            coords.y = offset_1.y; // offset[1].y = texcoord.y - 0.25 * SMAA_RT_METRICS.y (@CROSSING_OFFSET)
             d.x = coords.x;
-            
-            var e1 = textureSample(color, sample, coords).r;
 
-            coords.x = SMAASearchXRight(offset_0.zw, offset_2.y);
-            d.y = coords.x;
-            d = d / resolution.x - pixcoord.x;
-            var sqrt_d: vec2f = sqrt(abs(d));
-            coords.y -= resolution.y;
+            // Now fetch the left crossing edges, two at a time using bilinear
+            // filtering. Sampling at -0.25 (see @CROSSING_OFFSET) enables to
+            // discern what value each edge has:
+            let e1 = textureSampleLevel(edge, linear_sample, coords.xy, 0).r;
 
-            var e2 = textureSample(color, sample, coords + vec2f(1, 0) * resolution).r;
-            
-            var area = SMAAArea(sqrt_d, e1, e2, f32(subsampleIndices.y));
-            
-            if e.g > 0.0 { // Edge at north
-                weights.x = area.x;
-                weights.y = area.y;
-            }
-    	}
+            // Find the distance to the right:
+            coords.z = SMAASearchXRight(offset_0.zw, offset_2.y);
+            d.y = coords.z;
 
-        {
-            var d: vec2f;
-            var coords = vec2f(offset_0.x, SMAASearchYUp(offset_1.xy, offset_2.z));
-            d.x = coords.y;
-            
-            var e1 = textureSample(color, sample, coords).g;
+            // We want the distances to be in pixel units (doing this here allow to
+            // better interleave arithmetic and memory accesses):
+            d = abs(round(screen_size.xx * d - pixcoord.xx));
 
-            coords.y = SMAASearchYDown(offset_1.zw, offset_2.w);
-            d.y = coords.y;
-            d = d / resolution.y - pixcoord.y;
-            var sqrt_d: vec2f = sqrt(abs(d));
-            coords.y -= resolution.y;
+            // SMAAArea below needs a sqrt, as the areas texture is compressed
+            // quadratically:
+            let sqrt_d = sqrt(d);
 
-            var e2 = textureSample(color, sample, coords + vec2f(0, 1) * resolution).g;
-            
-            var area = SMAAArea(sqrt_d, e1, e2, f32(subsampleIndices.x));
-            
-            if e.r > 0.0 { // Edge at north
-                weights.z = area.x;
-                weights.w = area.y;
-            }
+            // Fetch the right crossing edges:
+            let e2 = textureSampleLevel(edge, linear_sample, coords.zy + vec2f(1, 0) * resolution, 0).r;
+
+            // Ok, we know how this pattern looks like, now it is time for getting
+            // the actual area:
+            var c = SMAAArea(sqrt_d, e1, e2, f32(subsampleIndices.y));
+            weights.r = c.x;
+            weights.g = c.y;
+
+            // // Fix corners:
+            coords.y = texcoord.y;
+            var fixed = SMAADetectHorizontalCornerPattern(weights.rg, coords.xyzy, d);
+            weights.r = fixed.x;
+            weights.g = fixed.y;
         }
 
-    	return weights;
+        if e.r > 0.0 { // Edge at west
+            var d: vec2f;
+
+            // Find the distance to the top:
+            var coords: vec3f;
+            coords.y = SMAASearchYUp(offset_1.xy, offset_2.z);
+            coords.x = offset_0.x;
+            d.x = coords.y;
+
+            // Fetch the top crossing edges:
+            let e1 = textureSampleLevel(edge, linear_sample, coords.xy, 0).g;
+
+            // Find the distance to the bottom:
+            coords.z = SMAASearchYDown(offset_1.zw, offset_2.w);
+            d.y = coords.z;
+
+            // We want the distances to be in pixel units:
+            d = abs(round(screen_size.yy * d - pixcoord.yy));
+
+            // SMAAArea below needs a sqrt, as the areas texture is compressed 
+            // quadratically:
+            let sqrt_d = sqrt(d);
+
+            // Fetch the bottom crossing edges:
+            let e2 = textureSampleLevel(edge, linear_sample, coords.xz+ vec2f(0, 1) * resolution, 0).g;
+
+            // Get the area for this direction:
+            var c = SMAAArea(sqrt_d, e1, e2, f32(subsampleIndices.x));
+            weights.b = c.x;
+            weights.a = c.y;
+
+            // Fix corners:
+            coords.x = texcoord.x;
+            var fixed = SMAADetectVerticalCornerPattern(weights.ba, coords.xyxz, d);
+            weights.b = fixed.x;
+            weights.a = fixed.y;
+        }
+
+        return weights;
     }
     `;
 
@@ -1011,8 +1041,7 @@ const EffectSMAABlendPipeline = new RefCacher(() => {
     struct VertexOutput {
         @builtin(position) position: vec4f,
         @location(0) uv: vec2f,
-        @location(1) offset_0: vec4f,
-        @location(2) offset_1: vec4f,
+        @location(1) offset: vec4f,
     };
 
     @vertex
@@ -1025,8 +1054,7 @@ const EffectSMAABlendPipeline = new RefCacher(() => {
         out.uv = vec2(uv.x, 1.0 - uv.y);
         out.position = vec4f(attri.position - vec2f(1.0), 1.0, 1.0);
 
-        out.offset_0 = out.uv.xyxy + resolution * vec4f(-1.0, 0.0, 0.0, 1.0); // WebGL port note: Changed sign in W component
-		out.offset_1 = out.uv.xyxy + resolution * vec4f(1.0, 0.0, 0.0, -1.0); // WebGL port note: Changed sign in W component
+        out.offset = out.uv.xyxy + resolution * vec4f(1.0, 0.0, 0.0, 1.0);
 
         return out;
     }
@@ -1035,7 +1063,7 @@ const EffectSMAABlendPipeline = new RefCacher(() => {
         @location(0) color: vec4f,
     };
 
-    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var color: texture_2d<f32>;
+    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var weight: texture_2d<f32>;
     @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(3) var normal: texture_2d<f32>;
     @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(4) var depth: texture_depth_2d;
     @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(5) var sample: sampler;
@@ -1046,44 +1074,106 @@ const EffectSMAABlendPipeline = new RefCacher(() => {
     @fragment
     fn fs_main(vary: VertexOutput) -> FragmentOutput {
         var out: FragmentOutput;
+        var resolution = 1 / world_env_uniform_params.screen_size.xy;
 
+        // Fetch the blending weights for current pixel:
         var a: vec4f;
-        var texcoord = vary.uv;
-        var _a = textureSample(color, sample, texcoord);
-		a.x = _a.x;
-		a.z = _a.z;
-		a.y = textureSample(color, sample, vary.offset_1.zw).g;
-		a.w = textureSample(color, sample, vary.offset_1.xy).a;
-        var resolution = 1 / world_env_uniform_params.screen_size;
+        a.x = textureSample(weight, raw_color_sample, vary.offset.xy).a; // Right
+        a.y = textureSample(weight, raw_color_sample, vary.offset.zw).g; // Top
+        var c = textureSample(weight, raw_color_sample, vary.uv); // Bottom / Left
+        a.w = c.x;
+        a.z = c.z;
 
-		// Is there any blending weight with a value greater than 0.0?
-        var color_0 = textureSample(raw_color, sample, texcoord);
-        
-        // Up to 4 lines can be crossing a pixel (one through each edge). We
-		// favor blending by choosing the line with the maximum weight for each
-		// direction:
-		var offset: vec2f;
-		offset.x = select(-a.b,  a.a, a.a > a.b);
-		offset.y = select( a.r, -a.g, a.g > a.r);
-		// Then we go in the direction that has the maximum weight:
-		if abs(offset.x) > abs(offset.y) {
-			offset.y = 0.0;
-		} else {
-			offset.x = 0.0;
-		}
-		// Fetch the opposite color and lerp by hand:
-		var C = textureSample(raw_color, sample, texcoord);
-		texcoord += sign(offset) * resolution;
-		var Cop = textureSample(raw_color, sample, texcoord);
-		var s = select(abs(offset.y), abs(offset.x), abs(offset.x) > abs(offset.y));
-		var color_1 = mix(C, Cop, s);
-        
-        var c = select(vec4f(1.0, 0.0, 0.0, 1.0), color_0, dot(a, vec4f(1.0, 1.0, 1.0, 1.0)) < 1e-5);
-        out.color = c; 
+        var linear_color: vec4f;
 
-        out.color = textureSample(color, sample, vary.uv);
-        
+        // Is there any blending weight with a value greater than 0.0?
+        if dot(a, vec4f(1.0, 1.0, 1.0, 1.0)) < 1e-5 {
+            linear_color = textureSampleLevel(raw_color, raw_color_sample, vary.uv, 0);
+        }
+        else {
+            var h = max(a.x, a.z) > max(a.y, a.w); // max(horizontal) > max(vertical)
+
+            // Calculate the blending offsets:
+            var blendingOffset = vec4f(0.0, a.y, 0.0, a.w);
+            var blendingWeight = a.yw;
+            blendingOffset = SMAAMovc4(vec4<bool>(h, h, h, h), blendingOffset, vec4f(a.x, 0.0, a.z, 0.0));
+            blendingWeight = SMAAMovc2(vec2<bool>(h, h), blendingWeight, a.xz);
+            blendingWeight /= dot(blendingWeight, vec2f(1.0, 1.0));
+
+            // Calculate the texture coordinates:
+            var blendingCoord = blendingOffset * vec4f(resolution, -resolution) + vary.uv.xyxy;
+
+            // We exploit bilinear filtering to mix current pixel with the chosen
+            // neighbor:
+            var color = blendingWeight.x * textureSampleLevel(raw_color, raw_color_sample, blendingCoord.xy, 0);
+            color += blendingWeight.y * textureSampleLevel(raw_color, raw_color_sample, blendingCoord.zw, 0);
+
+            linear_color = color;
+        }
+
+        let tone_mapped = vec4f(aces_tone_mapping(linear_color.rgb, 0.8), linear_color.a);
+        out.color = tone_mapped;
         return out;
+    }
+
+    fn SMAAMovc2(cond: vec2<bool>, variable: vec2f, value: vec2f) -> vec2f {
+        return vec2f(
+            select(variable.x, value.x, cond.x),
+            select(variable.y, value.y, cond.y)
+        );
+    }
+
+    fn SMAAMovc4(cond: vec4<bool>, variable: vec4f, value: vec4f) -> vec4f {
+        return vec4f(
+            SMAAMovc2(cond.xy, variable.xy, value.xy),
+            SMAAMovc2(cond.zw, variable.zw, value.zw)
+        );
+    }
+
+    fn to_srgb(color: vec3f) -> vec3f {
+        var _color: vec3f;
+        var r = color.r;
+        _color.r = select(1.055 * pow(r, 1.0 / 2.4) - 0.055, 12.92 * r, r <= 0.0031308);
+        var g = color.g;
+        _color.g = select(1.055 * pow(g, 1.0 / 2.4) - 0.055, 12.92 * g, g <= 0.0031308);
+        var b = color.b;
+        _color.b = select(1.055 * pow(b, 1.0 / 2.4) - 0.055, 12.92 * b, b <= 0.0031308);
+        return _color;
+    }
+
+    fn linear_tone_mapping(color: vec3f, adapted_lum: f32) -> vec3f {
+    	return color;
+    }
+
+    fn aces_tone_mapping(color: vec3f, adapted_lum: f32) -> vec3f {
+    	const A: f32 = 2.51f;
+    	const B: f32 = 0.03f;
+    	const C: f32 = 2.43f;
+    	const D: f32 = 0.59f;
+    	const E: f32 = 0.14f;
+    	var _color = color * adapted_lum;
+    	return (_color * (A * _color + B)) / (_color * (C * _color + D) + E);
+    }
+
+    fn reinhard_tone_mapping(color: vec3f, adapted_lum: f32) -> vec3f {
+        const MIDDLE_GREY: f32 = 1;
+        var _color = color * (MIDDLE_GREY / adapted_lum);
+        return _color / (1.0 + _color);
+    }
+
+    fn filmic_f(x: vec3f) -> vec3f {
+    	const A: f32 = 0.22f;
+    	const B: f32 = 0.30f;
+    	const C: f32 = 0.10f;
+    	const D: f32 = 0.20f;
+    	const E: f32 = 0.01f;
+    	const F: f32 = 0.30f;
+    	return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
+    }
+
+    fn filmic_tone_mapping(color: vec3f, adapted_lum: f32) -> vec3f {
+    	const WHITE: vec3f = vec3f(11.2);
+    	return filmic_f(1.6f * adapted_lum * color) / filmic_f(WHITE);
     }
     `;
 
@@ -1270,7 +1360,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
     protected readonly compose_uniform_nearest_sampler_ref = new ReadonlyRef(ComposeUniformNearestSmapler.get());
 
-    protected readonly material_override_ref = new Ref<MaterialResource>(); // new LightClusterMaterial3DResource()
+    protected readonly material_override_ref = new Ref<MaterialResource>();
 
     //#region full screen triangle
 
@@ -1353,8 +1443,6 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
     protected readonly effect_frame_buffer_0_ref = new ReadonlyRef(new WebGPURenderElementFrameBuffer(RenderServer.render_state));
     protected readonly effect_frame_buffer_1_ref = new ReadonlyRef(new WebGPURenderElementFrameBuffer(RenderServer.render_state));
-
-    protected readonly effect_fxaa_pipeline_ref = new ReadonlyRef(EffectFxaaPipeline.get());
 
     protected readonly effect_smaa_edge_pipeline_ref = new ReadonlyRef(EffectSMAAEdgePipeline.get());
     protected readonly effect_smaa_weight_pipeline_ref = new ReadonlyRef(EffectSMAAWeightPipeline.get());
@@ -2065,7 +2153,6 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.effect_frame_buffer_0_ref.clear();
         this.effect_frame_buffer_1_ref.clear();
 
-        this.effect_fxaa_pipeline_ref.clear();
         this.effect_smaa_edge_pipeline_ref.clear();
         this.effect_smaa_weight_uniform_group_ref.clear();
         this.effect_smaa_blend_uniform_group_ref.clear();

@@ -7,7 +7,7 @@
                 <div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
                 </div>
             </template>
-            <template #first>
+<template #first>
                 <div id="viewport-0"
                     style="position: absolute; overflow: hidden; left: 0%; top: 0%; right: 0%; bottom: 0%; border-radius: 0px 10px 10px 0px;">
                     <div id="render-server-debug"
@@ -15,16 +15,16 @@
                     </div>
                 </div>
             </template>
-            <template #second>
+<template #second>
                 <div id="viewport-1"
                     style="position: absolute; overflow: hidden; left: 0%; top: 0%; right: 0%; bottom: 0%; border-radius: 10px 0px 0px 10px;">
                 </div>
             </template>
-        </SunPanelResizeContainerRemainNob> -->
+</SunPanelResizeContainerRemainNob> -->
 
         <!-- outline: black solid 1px; outline-offset: -2px;  -->
         <div id="viewport-0"
-            style="position: absolute; overflow: hidden; left: 0%; top: 0%; right: 0%; bottom: 0%; pointer-events: initial;">
+            style="position: absolute; overflow: hidden; left: 0%; top: 0%; right: 0%; bottom: 0%; pointer-events: initial; image-rendering: pixelated;">
         </div>
         <!-- <div id="viewport-1"
             style="position: absolute; overflow: hidden; left: 50%; top: 0%; right: 0%; bottom: 0%; pointer-events: initial;">
