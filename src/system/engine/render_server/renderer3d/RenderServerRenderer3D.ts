@@ -9,7 +9,7 @@ import type { VisualWorld3DMesh } from "../../worlds/world3ds/VisualWorld3D";
 import type { WebGPURenderStateTextureView } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTextureView";
 import { ReadonlyRef, Ref, RefCacher } from "@/system/utils/RefCounted";
 import { RenderServer, RenderServerDefaultTextureType, RenderServerSingleton } from "../RenderServer";
-import { WebGPURenderStateTextureUsage, WebGPURenderStateTextureFormat, WebGPURenderStateTexture, WebGPURenderStateTextureDimension } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTexture";
+import { WebGPURenderStateTextureUsage, WebGPURenderStateTextureFormat, WebGPURenderStateTexture, WebGPURenderStateTextureDimension, WebGPURendetStateTextureDestination } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTexture";
 import { WebGPURenderElementFrameBuffer } from "@/system/sliverofstraw/render_element_object/frame_buffer/WebGPURenderElementFrameBuffer";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
 import { RenderServerRenderMaterial, RenderServerRenderMaterialPass } from "../material/RenderServerRenderMaterial";
@@ -275,8 +275,8 @@ const OitComposePipeline = new RefCacher(() => {
 //#endregion
 
 const ResultDepthEmptyTextureView = new RefCacher(() => {
-    const texture = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.D32F, WebGPURenderStateTextureDimension.D2, 1, 1).expect();
-    return RenderServer.render_state.create_TextureView(texture).expect();
+    const texture = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.D32FS8, WebGPURenderStateTextureDimension.D2, 1, 1).expect();
+    return RenderServer.render_state.create_TextureView(texture, undefined, WebGPURendetStateTextureDestination.Depth).expect();
 });
 
 const ResultEmptyTextureView = new RefCacher(() => {
@@ -1423,6 +1423,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
     protected readonly result_color_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
     protected readonly result_normal_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
     protected readonly result_depth_texture_view_ref = new Ref<WebGPURenderStateTextureView>();
+    protected readonly result_depth_texture_render_view_ref = new Ref<WebGPURenderStateTextureView>();
 
     protected readonly result_color_render_queue_1_texture_ref = new Ref<WebGPURenderStateTexture>();
     protected readonly result_normal_render_queue_1_texture_ref = new Ref<WebGPURenderStateTexture>();
@@ -1691,19 +1692,20 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
 
             this.result_color_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment | WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopySrc, WebGPURenderStateTextureFormat.RGBA16F, WebGPURenderStateTextureDimension.D2, width, height).expect();
             this.result_normal_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment | WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopySrc, WebGPURenderStateTextureFormat.RGBA16F, WebGPURenderStateTextureDimension.D2, width, height).expect();
-            this.result_depth_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment | WebGPURenderStateTextureUsage.CopySrc, WebGPURenderStateTextureFormat.D32F, WebGPURenderStateTextureDimension.D2, width, height).expect();
+            this.result_depth_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment | WebGPURenderStateTextureUsage.CopySrc, WebGPURenderStateTextureFormat.D32FS8, WebGPURenderStateTextureDimension.D2, width, height).expect();
 
             this.result_color_render_queue_1_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopyDst, WebGPURenderStateTextureFormat.RGBA16F, WebGPURenderStateTextureDimension.D2, width, height).expect();
             this.result_normal_render_queue_1_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopyDst, WebGPURenderStateTextureFormat.RGBA16F, WebGPURenderStateTextureDimension.D2, width, height).expect();
-            this.result_depth_render_queue_1_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment | WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopySrc, WebGPURenderStateTextureFormat.D32F, WebGPURenderStateTextureDimension.D2, width, height).expect();
+            this.result_depth_render_queue_1_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment | WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopySrc, WebGPURenderStateTextureFormat.D32FS8, WebGPURenderStateTextureDimension.D2, width, height).expect();
 
             this.result_color_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.result_color_texture_ref.expect).expect();
             this.result_normal_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.result_normal_texture_ref.expect).expect();
-            this.result_depth_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.result_depth_texture_ref.expect).expect();
+            this.result_depth_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.result_depth_texture_ref.expect, undefined, WebGPURendetStateTextureDestination.Depth).expect();
+            this.result_depth_texture_render_view_ref.value = RenderServer.render_state.create_TextureView(this.result_depth_texture_ref.expect).expect();
 
             this.result_color_render_queue_1_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.result_color_render_queue_1_texture_ref.expect).expect();
             this.result_normal_render_queue_1_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.result_normal_render_queue_1_texture_ref.expect).expect();
-            this.result_depth_render_queue_1_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.result_depth_render_queue_1_texture_ref.expect).expect();
+            this.result_depth_render_queue_1_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.result_depth_render_queue_1_texture_ref.expect, undefined, WebGPURendetStateTextureDestination.Depth).expect();
 
             this.effect_texture_ref.value = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment | WebGPURenderStateTextureUsage.Uniform | WebGPURenderStateTextureUsage.CopySrc, WebGPURenderStateTextureFormat.RGBA16F, WebGPURenderStateTextureDimension.D2, width, height).expect();
             this.effect_texture_view_ref.value = RenderServer.render_state.create_TextureView(this.effect_texture_ref.expect).expect();
@@ -1736,24 +1738,24 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.solid_frame_buffer_ref.expect.clear_DepthStencilAttachment();
         this.solid_frame_buffer_ref.expect.add_Attachment(this.result_color_texture_view_ref.expect, true, Vector4.create(0, 0, 0, 0), true);
         this.solid_frame_buffer_ref.expect.add_Attachment(this.result_normal_texture_view_ref.expect, true, Vector4.create(0, 0, 0, 1), true);
-        this.solid_frame_buffer_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_view_ref.expect, true, 1, true, false);
+        this.solid_frame_buffer_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_render_view_ref.expect, true, 1, true, false);
 
         this.solid_frame_buffer_1_ref.expect.clear_Attachments();
         this.solid_frame_buffer_1_ref.expect.clear_DepthStencilAttachment();
         this.solid_frame_buffer_1_ref.expect.add_Attachment(this.result_color_texture_view_ref.expect, false, Vector4.create(0, 0, 0, 0), true);
         this.solid_frame_buffer_1_ref.expect.add_Attachment(this.result_normal_texture_view_ref.expect, false, Vector4.create(0, 0, 0, 0), false);
-        this.solid_frame_buffer_1_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_view_ref.expect, true, 1, true, false);
+        this.solid_frame_buffer_1_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_render_view_ref.expect, true, 1, true, false);
 
         this.transparent_frame_buffer_ref.expect.clear_Attachments();
         this.transparent_frame_buffer_ref.expect.clear_DepthStencilAttachment();
         this.transparent_frame_buffer_ref.expect.add_Attachment(this.transparent_accum_texture_view_ref.expect, true, Vector4.create(1, 1, 1, 0), true);
         this.transparent_frame_buffer_ref.expect.add_Attachment(this.transparent_reveal_texture_view_ref.expect, true, Vector4.create(1, 1, 1, 1), true);
-        this.transparent_frame_buffer_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_view_ref.expect, false, 1, false, true);
+        this.transparent_frame_buffer_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_render_view_ref.expect, false, 1, false, true);
 
         this.transparent_depth_normal_frame_buffer_ref.expect.clear_Attachments();
         this.transparent_depth_normal_frame_buffer_ref.expect.clear_DepthStencilAttachment();
         this.transparent_depth_normal_frame_buffer_ref.expect.add_Attachment(this.result_normal_texture_view_ref.expect, false, Vector4.create(1, 1, 1, 0), true);
-        this.transparent_depth_normal_frame_buffer_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_view_ref.expect, false, 1, true, false);
+        this.transparent_depth_normal_frame_buffer_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_render_view_ref.expect, false, 1, true, false);
 
         this.compose_frame_buffer_ref.expect.clear_Attachments();
         this.compose_frame_buffer_ref.expect.add_Attachment(this.result_color_texture_view_ref.expect, false, Vector4.create(0, 0, 0, 0), true);
@@ -2114,6 +2116,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.result_depth_texture_ref.clear();
         this.solid_normal_texture_view_ref.clear();
         this.result_depth_texture_view_ref.clear();
+        this.result_depth_texture_render_view_ref.clear();
 
         this.solid_frame_buffer_ref.clear();
         this.solid_frame_buffer_1_ref.clear();

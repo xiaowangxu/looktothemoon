@@ -430,7 +430,6 @@ export async function createEditor() {
 		const CompassViewportContainer = new ViewportDomContainer();
 		CompassViewportContainer.dom = (document.querySelector('#compass-viewport') ?? undefined) as HTMLElement;
 		const CompassViewport = new Viewport();
-		CompassViewport.scale = 1.5;
 		CompassViewport.world_3d = new World3D();
 		CompassViewport.renderer_3d = new RenderServerRenderer3D(6, 6, 6, 6);
 		CompassViewport.background = false;

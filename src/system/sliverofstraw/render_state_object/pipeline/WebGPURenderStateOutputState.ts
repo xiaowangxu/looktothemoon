@@ -1,5 +1,6 @@
 import type { WebGPURenderStateMultiSampleCount } from "../texture/WebGPURenderStateMultiSampleTexture";
 import type { WebGPURenderStateTextureFormat } from "../texture/WebGPURenderStateTexture";
+import type { WebGPURenderStateDepthCompareFunc } from "./WebGPURenderStateProgramState";
 
 export enum WebGPURenderStateBlendFactor {
     Constant = 'constant',
@@ -25,6 +26,17 @@ export enum WebGPURenderStateBlendOperator {
     Min = 'min',
 }
 
+export enum WebGPURenderStateStencilOperator {
+    Keep = "keep",
+    Zero = "zero",
+    Replace = "replace",
+    Invert = "invert",
+    IncrementClamp = "increment-clamp",
+    DecrementClamp = "decrement-clamp",
+    IncrementWrap = "increment-wrap",
+    DecrementWrap = "decrement-wrap",
+}
+
 interface WebGPURenderStateProgramOutputState {
     format: WebGPURenderStateTextureFormat,
     blend: boolean,
@@ -36,9 +48,20 @@ interface WebGPURenderStateProgramOutputState {
     alpha_operator?: WebGPURenderStateBlendOperator,
 }
 
+interface WebGPURenderStateProgramStencilState {
+    compare?: WebGPURenderStateDepthCompareFunc,
+    pass_operator?: WebGPURenderStateStencilOperator,
+    fail_operator?: WebGPURenderStateStencilOperator,
+    depth_fail_operator?: WebGPURenderStateStencilOperator,
+}
+
 export interface WebGPURenderStateOutputState {
     depth_stencil_format?: WebGPURenderStateTextureFormat,
     multi_sample_count: WebGPURenderStateMultiSampleCount,
     alpha_to_coverage?: boolean,
     attachments: WebGPURenderStateProgramOutputState[],
+    stencil_front?: WebGPURenderStateProgramStencilState,
+    stencil_back?: WebGPURenderStateProgramStencilState,
+    stencil_read_mask?: number,
+    stencil_write_mask?: number,
 }

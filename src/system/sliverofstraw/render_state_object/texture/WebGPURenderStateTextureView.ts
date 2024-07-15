@@ -2,7 +2,7 @@ import { Ref } from "@/system/utils/RefCounted";
 import type { WebGPURenderState } from "../../WebGPURenderState";
 import { WebGPURenderObjectRefCounted } from "../../WebGPURenderObject";
 import type { WebGPURenderStateMultiSampleCount, WebGPURenderStateMultiSampleTexture } from "./WebGPURenderStateMultiSampleTexture";
-import { WebGPURenderStateTexture, type WebGPURenderStateTextureDimension } from "./WebGPURenderStateTexture";
+import { WebGPURenderStateTexture, WebGPURendetStateTextureDestination, type WebGPURenderStateTextureDimension } from "./WebGPURenderStateTexture";
 
 export class WebGPURenderStateTextureView extends WebGPURenderObjectRefCounted {
 
@@ -12,13 +12,15 @@ export class WebGPURenderStateTextureView extends WebGPURenderObjectRefCounted {
     public readonly multi_sample_count: WebGPURenderStateMultiSampleCount;
 
     public readonly dimension: WebGPURenderStateTextureDimension;
+    public readonly part: WebGPURendetStateTextureDestination;
     public readonly texture_ref: Ref<WebGPURenderStateTexture | WebGPURenderStateMultiSampleTexture> = new Ref();
 
-    constructor(render_state: WebGPURenderState, texture: WebGPURenderStateTexture | WebGPURenderStateMultiSampleTexture, dimension: WebGPURenderStateTextureDimension, multi_sample_count: WebGPURenderStateMultiSampleCount, texture_view: GPUTextureView) {
+    constructor(render_state: WebGPURenderState, texture: WebGPURenderStateTexture | WebGPURenderStateMultiSampleTexture, dimension: WebGPURenderStateTextureDimension, part: WebGPURendetStateTextureDestination, multi_sample_count: WebGPURenderStateMultiSampleCount, texture_view: GPUTextureView) {
         super(render_state);
         this.texture_ref.value = texture;
         this.multi_sample_count = multi_sample_count;
         this.dimension = dimension;
+        this.part = part;
         this._texture_view = texture_view;
     }
 

@@ -202,7 +202,7 @@ export class RenderServerRenderMaterial extends RenderServerMaterial<RenderServe
 	static OutputStatePipelineTemplates: [WebGPURenderStateOutputState, WebGPURenderStateOutputState, WebGPURenderStateOutputState, WebGPURenderStateOutputState, WebGPURenderStateOutputState] = [
 		// RenderServerMaterialPass.Depth
 		{
-			depth_stencil_format: WebGPURenderStateTextureFormat.D32F,
+			depth_stencil_format: WebGPURenderStateTextureFormat.D32FS8,
 			multi_sample_count: WebGPURenderStateMultiSampleCount.None,
 			attachments: [
 				// normal
@@ -214,7 +214,7 @@ export class RenderServerRenderMaterial extends RenderServerMaterial<RenderServe
 		},
 		// RenderServerMaterialPass.Solid
 		{
-			depth_stencil_format: WebGPURenderStateTextureFormat.D32F,
+			depth_stencil_format: WebGPURenderStateTextureFormat.D32FS8,
 			multi_sample_count: WebGPURenderStateMultiSampleCount.None,
 			attachments: [
 				// color
@@ -231,7 +231,7 @@ export class RenderServerRenderMaterial extends RenderServerMaterial<RenderServe
 		},
 		// RenderServerMaterialPass.Transparent
 		{
-			depth_stencil_format: WebGPURenderStateTextureFormat.D32F,
+			depth_stencil_format: WebGPURenderStateTextureFormat.D32FS8,
 			multi_sample_count: WebGPURenderStateMultiSampleCount.None,
 			alpha_to_coverage: false,
 			attachments: [

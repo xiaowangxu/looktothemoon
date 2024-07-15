@@ -40,7 +40,9 @@ export class WebGPURenderState implements Disposable {
 
     public async init(): Promise<boolean> {
         const adapter = await navigator.gpu?.requestAdapter();
-        const device = await adapter?.requestDevice();
+        const device = await adapter?.requestDevice({
+            requiredFeatures: ['depth32float-stencil8'],
+        });
         if (!device) {
             return false;
         }
@@ -305,6 +307,20 @@ export class WebGPURenderState implements Disposable {
                 depthCompare: WebGPURenderState.RenderStateDepthCompareFunc(program_state.depth_compare_func),
                 depthBias: program_state.depth_bias,
                 depthBiasSlopeScale: program_state.depth_bias_slope_scale,
+                stencilReadMask: output_state.stencil_read_mask,
+                stencilWriteMask: output_state.stencil_write_mask,
+                stencilFront: output_state.stencil_front === undefined ? undefined : {
+                    compare: output_state.stencil_front.compare === undefined ? undefined : WebGPURenderState.RenderStateDepthCompareFunc(output_state.stencil_front.compare),
+                    passOp: output_state.stencil_front.pass_operator,
+                    failOp: output_state.stencil_front.fail_operator,
+                    depthFailOp: output_state.stencil_front.depth_fail_operator,
+                },
+                stencilBack: output_state.stencil_back === undefined ? undefined : {
+                    compare: output_state.stencil_back.compare === undefined ? undefined : WebGPURenderState.RenderStateDepthCompareFunc(output_state.stencil_back.compare),
+                    passOp: output_state.stencil_back.pass_operator,
+                    failOp: output_state.stencil_back.fail_operator,
+                    depthFailOp: output_state.stencil_back.depth_fail_operator,
+                },
             },
             primitive: {
                 topology: WebGPURenderState.RenderStatePrimitiveType(program_state.primitive_type),
@@ -453,7 +469,7 @@ export class WebGPURenderState implements Disposable {
     }
 
     public create_CanvasTextureView(canvas: GPUCanvasContext): Result<WebGPURenderStateCanvasTextureView, Error> {
-        return Result.Ok(new WebGPURenderStateCanvasTextureView(this, canvas));
+        return Result.Ok(new WebGPURenderStateCanvasTextureView(this, canvas, WebGPURendetStateTextureDestination.All));
     }
 
     public delete_CanvasTextureView(canvas_texture_view: WebGPURenderStateCanvasTextureView): void {
@@ -705,7 +721,7 @@ export class WebGPURenderState implements Disposable {
             mipLevelCount: mipmap_count
         });
         const multi_sample_count = texture instanceof WebGPURenderStateTexture ? 1 : texture.multi_sample_count;
-        return Result.Ok(new WebGPURenderStateTextureView(this, texture, dimension, multi_sample_count, texture_view));
+        return Result.Ok(new WebGPURenderStateTextureView(this, texture, dimension, part, multi_sample_count, texture_view));
     }
 
     public delete_TextureView(texture_view: WebGPURenderStateTextureView): void {
