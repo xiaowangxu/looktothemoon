@@ -168,7 +168,7 @@ export class ObjLoader {
         const position_normals = [];
         for (let i = 0; i < this.positions.length;) {
             position_normals.push(this.positions[i], this.positions[i + 1], this.positions[i + 2]);
-            position_normals.push(this.normals[i], this.normals[i + 1], this.normals[i + 2]);
+            position_normals.push(this.normals[i] ?? 1, this.normals[i + 1] ?? 0, this.normals[i + 2] ?? 0);
             i += 3;
         }
 

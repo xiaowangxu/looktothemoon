@@ -158,7 +158,14 @@ function onContextMenu(data: UID, evt: Event) {
                 uid: 'delete',
                 icon: 'Trash',
             }
-        ]
+        ],
+        [
+            {
+                label: '复制路径',
+                uid: 'copy_path',
+                icon: 'Clipboard',
+            }
+        ],
     ], evt as MouseEvent).signal_click.connect(async (action) => {
         switch (action) {
             case 'new_folder': {
@@ -179,6 +186,9 @@ function onContextMenu(data: UID, evt: Event) {
             }
             case 'delete': {
                 VFS.remove(p);
+            }
+            case 'copy_path': {
+                console.log(p.path);
             }
         }
     });

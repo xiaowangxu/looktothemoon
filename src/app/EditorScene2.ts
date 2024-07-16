@@ -45,6 +45,7 @@ import cubemap_y_ from 'res://cubemap/y_.png';
 import cubemap_z from 'res://cubemap/z.png';
 import cubemap_z_ from 'res://cubemap/z_.png';
 import huli from 'res://huli.obj?url';
+import bunny from 'res://monkey.obj?url';
 import cubemap from 'res://cubemap.jpg';
 import { ClassLoader, ClassSaver } from "@/system/engine/classes/saver_loader/ClassSaverLoader";
 import { ObjLoader } from "@/system/engine/loaders/ObjLoader";
@@ -926,6 +927,55 @@ export async function createEditor() {
 		mesh.material = mat;
 		mesh.local_position = Vector3.create(0, 100, 0);
 		World.add_Child(mesh);
+	}
+
+	{
+		fetch(bunny).then(r => r.text()).then(r => {
+			const class_saver = new ObjLoader().parse(r).expect();
+			class_saver.save(undefined, "sys://bunny.geometry.lttmbin");
+			const geo = new ClassLoader(ResInstCache).fetch<ArrayGeometry3DResource>("sys://bunny.geometry.lttmbin").expect();
+			const mat = new MatcapMaterialResource();
+			mat.matcap_texture = new ClassLoader(ResInstCache).fetch<ImageTexture2DResource>("/sys/textures/matcaps/matcap-11.texture.lttmbin").expect();
+			// mat.metallic = 0;
+			// mat.roughness = 0.25;
+			mat.color = Color.create(1, 1, 1, 1);
+
+
+			const shp = new GeometryPickingShape3DResource();
+			shp.base_geometry = geo;
+
+			const mesh = new MeshInstance3D();
+			mesh.geometry = geo;
+			mesh.material = mat;
+			mesh.local_scale = Vector3.create(40, 40, 40);
+			mesh.local_position = Vector3.create(200, 150, 0);
+			World.add_Child(mesh);
+			const shape = new PickingShape3D();
+			shape.shape = shp;
+			const area = new PickingArea3D();
+			area.add_Child(shape);
+			mesh.add_Child(area);
+			area.signal_mouse_entered.connect(() => {
+				pointer.visible = true;
+			});
+			area.signal_input.connect((evt, prop) => {
+				if (!prop && area.is_mouse_hover && evt instanceof MouseButtonInputEvent && evt.click) {
+					move_target = mesh;
+					transform.set_TranslatePosition(move_target.global_position);
+					transform.visible = true;
+				}
+			});
+			area.signal_mouse_exited.connect(() => {
+				pointer.visible = false;
+			});
+			area.signal_mouse_moved.connect((evt, res) => {
+				pointer.global_position = res.position;
+				pointer.global_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), res.normal));
+				// const normal = res.normal.clone();
+				// normal.add_Number(normal, 1).div_Number(normal, 2);
+				// pointer.color = Vector4.create(normal.x, normal.y, normal.z, 1);
+			});
+		});
 	}
 
 	return EditorSceneTree;

@@ -444,8 +444,7 @@ const EffectSMAAEdgePipeline = new RefCacher(() => {
                 pass_operator: WebGPURenderStateStencilOperator.Replace
             },
             stencil_back: {
-                compare: WebGPURenderStateDepthCompareFunc.Always,
-                pass_operator: WebGPURenderStateStencilOperator.Replace
+                compare: WebGPURenderStateDepthCompareFunc.Never,
             },
             stencil_read_mask: 0xff,
             stencil_write_mask: 0xff,
@@ -815,6 +814,9 @@ const EffectSMAAWeightPipeline = new RefCacher(() => {
             stencil_front: {
                 compare: WebGPURenderStateDepthCompareFunc.NotEqual,
                 pass_operator: WebGPURenderStateStencilOperator.Keep,
+            },
+            stencil_back: {
+                compare: WebGPURenderStateDepthCompareFunc.Never,
             },
             stencil_read_mask: 0x80,
         },

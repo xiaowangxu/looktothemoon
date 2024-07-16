@@ -154,7 +154,7 @@ export class StlLoader {
         const vertices = [];
         const normals = [];
 
-        let normal_x: number = 0, normal_y: number = 0, normal_z: number = 0;
+        let normal_x: number = 1, normal_y: number = 0, normal_z: number = 0;
 
         let groups: RenderServerGeometrySurfaces = [];
         let vertex_start = 0;
@@ -205,7 +205,7 @@ export class StlLoader {
             bbox_min.min(bbox_min, vector3);
             bbox_max.max(bbox_max, vector3);
             position_normals.push(vertices[i], vertices[i + 1], vertices[i + 2]);
-            position_normals.push(normals[i], normals[i + 1], normals[i + 2]);
+            position_normals.push(normals[i] ?? 1, normals[i + 1] ?? 0, normals[i + 2] ?? 0);
             i += 3;
         }
         const vertex_count = position_normals.length / 2 / 3;
