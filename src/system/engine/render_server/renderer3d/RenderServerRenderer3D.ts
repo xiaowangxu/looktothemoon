@@ -31,6 +31,7 @@ import { LightClusterMaterial3DResource } from "../../resources/material_resourc
 import type { MaterialResource } from "../../resources/material_resources/MaterialResource";
 import { AreaTextureData, AreaTextureHeight, AreaTextureWidth } from "./Renderer3DSMAAAreaTextureData";
 import { SearchTextureData, SearchTextureHeight, SearchTextureWidth } from "./Renderer3DSMAASearchTextureData";
+import { WebGPURenderStateStencilOperator } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateOutputState";
 
 const FullScreenTriangleVertexArray = new RefCacher(() => {
     const vertex_array = new WebGPURenderElementVertexArray(RenderServer.render_state, WebGPURenderStatePrimitiveType.Triangles, 0, 3);
@@ -274,6 +275,8 @@ const OitComposePipeline = new RefCacher(() => {
 
 //#endregion
 
+//#region Empty Textures
+
 const ResultDepthEmptyTextureView = new RefCacher(() => {
     const texture = RenderServer.render_state.create_Texture(WebGPURenderStateTextureUsage.Attchment, WebGPURenderStateTextureFormat.D32FS8, WebGPURenderStateTextureDimension.D2, 1, 1).expect();
     return RenderServer.render_state.create_TextureView(texture, undefined, WebGPURendetStateTextureDestination.Depth).expect();
@@ -284,195 +287,7 @@ const ResultEmptyTextureView = new RefCacher(() => {
     return RenderServer.render_state.create_TextureView(texture).expect();
 });
 
-const EffectFxaaPipeline = new RefCacher(() => {
-
-    const shader_code = `
-
-    struct Attributes {
-        @location(${RenderServerGeometryAttributeLocation.Position}) position: vec2f,
-    };
-    
-    struct WorldEnvUniformParams {
-        screen_size: vec2f,
-        time: f32,
-        orthogonal: u32,
-        pixel_ratio: f32,
-    };
-
-    struct VertexOutput {
-        @builtin(position) position: vec4f,
-        @location(0) frag_coord: vec2f,
-        @location(1) rgb_NW: vec2f,
-        @location(2) rgb_NE: vec2f,
-        @location(3) rgb_SW: vec2f,
-        @location(4) rgb_SE: vec2f,
-        @location(5) rgb_M: vec2f,
-        @location(6) uv: vec2f,
-    };
-
-    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(1) var<uniform> world_env_uniform_params: WorldEnvUniformParams;
-
-    @vertex
-    fn vs_main(attri: Attributes) -> VertexOutput {
-        var out: VertexOutput;
-        out.position = vec4f(attri.position - vec2f(1.0), 1.0, 1.0);
-        out.uv = vec2f(attri.position.x, 2.0 - attri.position.y) / 2.0;
-        out.frag_coord = out.uv * world_env_uniform_params.screen_size;
-        var inv_vp = 1.0 / world_env_uniform_params.screen_size.xy;
-        out.rgb_NW = (out.frag_coord + vec2f(-1.0, -1.0)) * inv_vp;
-        out.rgb_NE = (out.frag_coord + vec2f(1.0, -1.0)) * inv_vp;
-        out.rgb_SW = (out.frag_coord + vec2f(-1.0, 1.0)) * inv_vp;
-        out.rgb_SE = (out.frag_coord + vec2f(1.0, 1.0)) * inv_vp;
-        out.rgb_M = vec2f(out.frag_coord) * inv_vp;
-        return out;
-    }
-
-    struct FragmentOutput {
-        @location(0) color: vec4f,
-    };
-
-    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(2) var color: texture_2d<f32>;
-    @group(${RenderServerSingleton.WorldEnvUniformBindGroupIndex}) @binding(5) var sample: sampler;
-    
-    @fragment
-    fn fs_main(vary: VertexOutput) -> FragmentOutput {
-        var out: FragmentOutput;
-
-        // let color = fxaa(color, sample, vary.frag_coord, world_env_uniform_params.screen_size, vary.rgb_NW, vary.rgb_NE, vary.rgb_SW, vary.rgb_SE, vary.rgb_M);
-        let color = textureSample(color, sample, vary.uv);
-        
-        let tone_mapped = vec4f(aces_tone_mapping(color.rgb, 0.8), color.a);
-        
-        out.color = tone_mapped;
-        
-        return out;
-    }
-
-    fn to_srgb(color: vec3f) -> vec3f {
-        var _color: vec3f;
-        var r = color.r;
-        _color.r = select(1.055 * pow(r, 1.0 / 2.4) - 0.055, 12.92 * r, r <= 0.0031308);
-        var g = color.g;
-        _color.g = select(1.055 * pow(g, 1.0 / 2.4) - 0.055, 12.92 * g, g <= 0.0031308);
-        var b = color.b;
-        _color.b = select(1.055 * pow(b, 1.0 / 2.4) - 0.055, 12.92 * b, b <= 0.0031308);
-        return _color;
-    }
-
-    fn linear_tone_mapping(color: vec3f, adapted_lum: f32) -> vec3f {
-    	return color;
-    }
-
-    fn aces_tone_mapping(color: vec3f, adapted_lum: f32) -> vec3f {
-    	const A: f32 = 2.51f;
-    	const B: f32 = 0.03f;
-    	const C: f32 = 2.43f;
-    	const D: f32 = 0.59f;
-    	const E: f32 = 0.14f;
-    	var _color = color * adapted_lum;
-    	return (_color * (A * _color + B)) / (_color * (C * _color + D) + E);
-    }
-
-    fn reinhard_tone_mapping(color: vec3f, adapted_lum: f32) -> vec3f {
-        const MIDDLE_GREY: f32 = 1;
-        var _color = color * (MIDDLE_GREY / adapted_lum);
-        return _color / (1.0 + _color);
-    }
-
-    fn filmic_f(x: vec3f) -> vec3f {
-    	const A: f32 = 0.22f;
-    	const B: f32 = 0.30f;
-    	const C: f32 = 0.10f;
-    	const D: f32 = 0.20f;
-    	const E: f32 = 0.01f;
-    	const F: f32 = 0.30f;
-    	return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
-    }
-
-    fn filmic_tone_mapping(color: vec3f, adapted_lum: f32) -> vec3f {
-    	const WHITE: vec3f = vec3f(11.2);
-    	return filmic_f(1.6f * adapted_lum * color) / filmic_f(WHITE);
-    }
-
-    fn fxaa(tex: texture_2d<f32>, sample: sampler, fragCoord: vec2f, resolution: vec2f, v_rgbNW: vec2f, v_rgbNE: vec2f, v_rgbSW: vec2f, v_rgbSE: vec2f, v_rgbM: vec2f) -> vec4f {
-        
-        // modified from godot https://github.com/godotengine/godot/blob/b1a50ad80538d57d917c3f399053e1a22d1aa749/drivers/gles3/shaders/tonemap.glsl
-        
-        const FXAA_REDUCE_MIN = (1.0 / 128.0);
-	    const FXAA_REDUCE_MUL = (1.0 / 8.0);
-	    const FXAA_SPAN_MAX = 8.0;
-        
-        var inverseVP = 1.0 / world_env_uniform_params.screen_size.xy;
-        var rgbNW = textureSample(tex, sample, v_rgbNW);
-        var rgbNE = textureSample(tex, sample, v_rgbNE);
-        var rgbSW = textureSample(tex, sample, v_rgbSW);
-        var rgbSE = textureSample(tex, sample, v_rgbSE);
-        var rgbM  = textureSample(tex, sample, v_rgbM);
-
-        var color = rgbM;
-
-        var luma = vec3f(0.4126729,  0.7151522, 0.1721750); // vec3f(0.299, 0.587, 0.114);
-        var lumaNW = dot(rgbNW.rgb, luma) - ((1 - rgbNW.a) / 8.0);
-        var lumaNE = dot(rgbNE.rgb, luma) - ((1 - rgbNE.a) / 8.0);
-        var lumaSW = dot(rgbSW.rgb, luma) - ((1 - rgbSW.a) / 8.0);
-        var lumaSE = dot(rgbSE.rgb, luma) - ((1 - rgbSE.a) / 8.0);
-        var lumaM  = dot( rgbM.rgb, luma) - (color.a / 8.0);
-        var lumaMin = min(lumaM, min(min(lumaNW, lumaNE), min(lumaSW, lumaSE)));
-        var lumaMax = max(lumaM, max(max(lumaNW, lumaNE), max(lumaSW, lumaSE)));
-        
-        var dir: vec2f;
-        dir.x = -((lumaNW + lumaNE) - (lumaSW + lumaSE));
-        dir.y =  ((lumaNW + lumaSW) - (lumaNE + lumaSE));
-
-        var dirReduce = max((lumaNW + lumaNE + lumaSW + lumaSE) *
-                              (0.25 * FXAA_REDUCE_MUL), FXAA_REDUCE_MIN);
-        
-        var rcpDirMin = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
-
-        dir = min(vec2(FXAA_SPAN_MAX, FXAA_SPAN_MAX),
-                  max(vec2(-FXAA_SPAN_MAX, -FXAA_SPAN_MAX),
-                  dir * rcpDirMin)) * inverseVP;
-
-        var rgbA: vec4f = 0.5 * (textureSample(tex, sample, fragCoord * inverseVP + dir * (1.0 / 3.0 - 0.5)) + textureSample(tex, sample, fragCoord * inverseVP + dir * (2.0 / 3.0 - 0.5)));
-
-	    var rgbB : vec4f= rgbA * 0.5 + 0.25 * (textureSample(tex, sample, fragCoord * inverseVP + dir * -0.5) + textureSample(tex, sample, fragCoord * inverseVP + dir * 0.5));
-
-	    var lumaB = dot(rgbB.rgb, luma) - ((1 - rgbB.a) / 8.0);
-	    var color_output = select(rgbA, rgbB, (lumaB < lumaMin) || (lumaB > lumaMax));
-	    if color_output.a == 0.0 {
-	    	return vec4f(0.0, 0.0, 0.0, color_output.a);
-	    }
-        return color_output;
-    }
-    `;
-
-    const shader = RenderServer.render_state.create_Shader(WebGPURenderStateShaderType.Vertex | WebGPURenderStateShaderType.Fragment, shader_code).expect();
-    const program = RenderServer.render_state.create_Program(shader, shader).expect();
-
-    const pipeline = RenderServer.render_state.create_RenderPipeline(
-        program,
-        RenderServerRenderMaterial.ProgramStatePipelineTemplates[RenderServerRenderMaterialPass.Set],
-        RenderServerRenderMaterial.OutputStatePipelineTemplates[RenderServerRenderMaterialPass.Set],
-        [RenderServer.world_env_uniform_layout],
-        [
-            {
-                stride: 8, // 2 * 4
-                per_instance: false,
-                rows: [{
-                    location: 0,
-                    offset: 0,
-                    type: WebGPURenderStateAttributeType.Vector2
-                }]
-            },
-        ]
-    ).expect();
-
-    // mannually release shader and program
-    shader.release();
-    program.release();
-
-    return pipeline;
-});
+//#endregion
 
 //#region SMAA
 
@@ -622,7 +437,19 @@ const EffectSMAAEdgePipeline = new RefCacher(() => {
     const pipeline = RenderServer.render_state.create_RenderPipeline(
         program,
         RenderServerRenderMaterial.ProgramStatePipelineTemplates[RenderServerRenderMaterialPass.Set],
-        RenderServerRenderMaterial.OutputStatePipelineTemplates[RenderServerRenderMaterialPass.Set],
+        {
+            ...RenderServerRenderMaterial.OutputStatePipelineTemplates[RenderServerRenderMaterialPass.Set],
+            stencil_front: {
+                compare: WebGPURenderStateDepthCompareFunc.Always,
+                pass_operator: WebGPURenderStateStencilOperator.Replace
+            },
+            stencil_back: {
+                compare: WebGPURenderStateDepthCompareFunc.Always,
+                pass_operator: WebGPURenderStateStencilOperator.Replace
+            },
+            stencil_read_mask: 0xff,
+            stencil_write_mask: 0xff,
+        },
         [RenderServer.world_env_uniform_layout],
         [
             {
@@ -749,7 +576,6 @@ const EffectSMAAWeightPipeline = new RefCacher(() => {
     @fragment
     fn fs_main(vary: VertexOutput) -> FragmentOutput {
         var out: FragmentOutput;
-        // out.color = textureSample(area_tex, linear_sample, vec2f(vary.uv.x, 1 - vary.uv.y));
         out.color = SMAABlendingWeightCalculationPS(vary.uv, vary.pixel_coord, vary.offset_0, vary.offset_1, vary.offset_2, vec4i(0));
         return out;
     }
@@ -984,7 +810,14 @@ const EffectSMAAWeightPipeline = new RefCacher(() => {
     const pipeline = RenderServer.render_state.create_RenderPipeline(
         program,
         RenderServerRenderMaterial.ProgramStatePipelineTemplates[RenderServerRenderMaterialPass.Set],
-        RenderServerRenderMaterial.OutputStatePipelineTemplates[RenderServerRenderMaterialPass.Set],
+        {
+            ...RenderServerRenderMaterial.OutputStatePipelineTemplates[RenderServerRenderMaterialPass.Set],
+            stencil_front: {
+                compare: WebGPURenderStateDepthCompareFunc.NotEqual,
+                pass_operator: WebGPURenderStateStencilOperator.Keep,
+            },
+            stencil_read_mask: 0x80,
+        },
         [RenderServer.world_env_uniform_layout, EffectSMAAWeightUniformLayout.get()],
         [
             {
@@ -1113,6 +946,7 @@ const EffectSMAABlendPipeline = new RefCacher(() => {
 
         let tone_mapped = vec4f(aces_tone_mapping(linear_color.rgb, 0.8), linear_color.a);
         out.color = tone_mapped;
+
         return out;
     }
 
@@ -1738,33 +1572,39 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         this.solid_frame_buffer_ref.expect.clear_DepthStencilAttachment();
         this.solid_frame_buffer_ref.expect.add_Attachment(this.result_color_texture_view_ref.expect, true, Vector4.create(0, 0, 0, 0), true);
         this.solid_frame_buffer_ref.expect.add_Attachment(this.result_normal_texture_view_ref.expect, true, Vector4.create(0, 0, 0, 1), true);
-        this.solid_frame_buffer_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_render_view_ref.expect, true, 1, true, false);
+        this.solid_frame_buffer_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_render_view_ref.expect, true, 1, true, false, true, 0, true, false);
 
         this.solid_frame_buffer_1_ref.expect.clear_Attachments();
         this.solid_frame_buffer_1_ref.expect.clear_DepthStencilAttachment();
         this.solid_frame_buffer_1_ref.expect.add_Attachment(this.result_color_texture_view_ref.expect, false, Vector4.create(0, 0, 0, 0), true);
         this.solid_frame_buffer_1_ref.expect.add_Attachment(this.result_normal_texture_view_ref.expect, false, Vector4.create(0, 0, 0, 0), false);
-        this.solid_frame_buffer_1_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_render_view_ref.expect, true, 1, true, false);
+        this.solid_frame_buffer_1_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_render_view_ref.expect, true, 1, true, false, false, 0, true, false);
 
         this.transparent_frame_buffer_ref.expect.clear_Attachments();
         this.transparent_frame_buffer_ref.expect.clear_DepthStencilAttachment();
         this.transparent_frame_buffer_ref.expect.add_Attachment(this.transparent_accum_texture_view_ref.expect, true, Vector4.create(1, 1, 1, 0), true);
         this.transparent_frame_buffer_ref.expect.add_Attachment(this.transparent_reveal_texture_view_ref.expect, true, Vector4.create(1, 1, 1, 1), true);
-        this.transparent_frame_buffer_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_render_view_ref.expect, false, 1, false, true);
+        this.transparent_frame_buffer_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_render_view_ref.expect, false, 1, false, true, false, 0, true, false);
 
         this.transparent_depth_normal_frame_buffer_ref.expect.clear_Attachments();
         this.transparent_depth_normal_frame_buffer_ref.expect.clear_DepthStencilAttachment();
         this.transparent_depth_normal_frame_buffer_ref.expect.add_Attachment(this.result_normal_texture_view_ref.expect, false, Vector4.create(1, 1, 1, 0), true);
-        this.transparent_depth_normal_frame_buffer_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_render_view_ref.expect, false, 1, true, false);
+        this.transparent_depth_normal_frame_buffer_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_render_view_ref.expect, false, 1, true, false, false, 0, false, true);
 
         this.compose_frame_buffer_ref.expect.clear_Attachments();
+        this.compose_frame_buffer_ref.expect.clear_DepthStencilAttachment();
         this.compose_frame_buffer_ref.expect.add_Attachment(this.result_color_texture_view_ref.expect, false, Vector4.create(0, 0, 0, 0), true);
+        this.compose_frame_buffer_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_render_view_ref.expect, false, 1, false, true, false, 0, true, false);
 
         this.effect_frame_buffer_0_ref.expect.clear_Attachments();
+        this.effect_frame_buffer_0_ref.expect.clear_DepthStencilAttachment();
         this.effect_frame_buffer_0_ref.expect.add_Attachment(this.effect_texture_view_ref.expect, true, Vector4.create(0, 0, 0, 0), true);
+        this.effect_frame_buffer_0_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_render_view_ref.expect, false, 1, false, true, false, 0, true, false);
 
         this.effect_frame_buffer_1_ref.expect.clear_Attachments();
+        this.effect_frame_buffer_1_ref.expect.clear_DepthStencilAttachment();
         this.effect_frame_buffer_1_ref.expect.add_Attachment(this.result_color_texture_view_ref.expect, true, Vector4.create(0, 0, 0, 0), true);
+        this.effect_frame_buffer_1_ref.expect.set_DepthStencilAttachment(this.result_depth_texture_render_view_ref.expect, false, 1, false, true, false, 0, true, false);
     }
 
     private last_viewport_id: number = -1;
@@ -2070,6 +1910,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         let pass = 0;
 
         const effect_pass_0 = encoder.beginRenderPass(this.effect_frame_buffer_0_ref.expect.frame_buffer_desc);
+        effect_pass_0.setStencilReference(0xff);
         effect_pass_0.setPipeline(this.effect_smaa_edge_pipeline_ref.expect.pipeline);
         effect_pass_0.setBindGroup(0, this.world_env_effect_uniform_group_0_ref.expect.binding_group);
         this.full_screen_triangle_vertex_array_ref.expect.bind_Buffers(effect_pass_0);
@@ -2079,6 +1920,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         pass++;
 
         const effect_pass_1 = encoder.beginRenderPass(this.effect_frame_buffer_1_ref.expect.frame_buffer_desc);
+        effect_pass_1.setStencilReference(0x00);
         effect_pass_1.setPipeline(this.effect_smaa_weight_pipeline_ref.expect.pipeline);
         effect_pass_1.setBindGroup(0, this.world_env_effect_uniform_group_1_ref.expect.binding_group);
         effect_pass_1.setBindGroup(1, this.effect_smaa_weight_uniform_group_ref.expect.binding_group);

@@ -257,7 +257,7 @@ export class RenderServerRenderMaterial extends RenderServerMaterial<RenderServe
 		},
 		// RenderServerMaterialPass.Compose
 		{
-			depth_stencil_format: undefined,
+			depth_stencil_format: WebGPURenderStateTextureFormat.D32FS8,
 			multi_sample_count: WebGPURenderStateMultiSampleCount.None,
 			alpha_to_coverage: false,
 			attachments: [
@@ -274,7 +274,7 @@ export class RenderServerRenderMaterial extends RenderServerMaterial<RenderServe
 		},
 		// RenderServerMaterialPass.Set
 		{
-			depth_stencil_format: undefined,
+			depth_stencil_format: WebGPURenderStateTextureFormat.D32FS8,
 			multi_sample_count: WebGPURenderStateMultiSampleCount.None,
 			alpha_to_coverage: false,
 			attachments: [
