@@ -1142,7 +1142,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         compose_pass.end();
     }
 
-    protected effects: RefArray<PostprocessingResource> = new RefArray([new SmaaPostprocessingResource(), new ToneMapPostprocessingResource()]);
+    protected effects: RefArray<PostprocessingResource> = new RefArray([new SmaaPostprocessingResource()]);
 
     protected render_Queue1Effects(encoder: GPUCommandEncoder): number {
         let rendered_pass = 0;
