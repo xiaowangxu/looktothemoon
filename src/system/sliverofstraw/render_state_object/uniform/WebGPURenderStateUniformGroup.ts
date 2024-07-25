@@ -46,6 +46,7 @@ export class WebGPURenderStateUniformGroup extends WebGPURenderObjectRefCounted 
         if (binding < 0 || binding >= this.entries.length) throw new Error('<WebGPURenderStateUniformGroup> set_Storage: binding out of bound');
         const entry = this.entries[binding];
         if (entry.type !== WebGPURenderStateUniformBindingType.StorageBuffer) throw new Error('<WebGPURenderStateUniformGroup> set_Storage: binding is not type of StorageBuffer');
+        if (entry.ref.value === buffer) return;
         entry.ref.value = buffer;
         entry.resource = { buffer: buffer.buffer, offset: buffer.offset, size: buffer.length };
         this._binding_group = undefined;
@@ -55,6 +56,7 @@ export class WebGPURenderStateUniformGroup extends WebGPURenderObjectRefCounted 
         if (binding < 0 || binding >= this.entries.length) throw new Error('<WebGPURenderStateUniformGroup> set_BufferUniform: binding out of bound');
         const entry = this.entries[binding];
         if (entry.type !== WebGPURenderStateUniformBindingType.Buffer) throw new Error('<WebGPURenderStateUniformGroup> set_BufferUniform: binding is not type of Buffer');
+        if (entry.ref.value === buffer) return;
         entry.ref.value = buffer;
         entry.resource = { buffer: buffer.buffer, offset: buffer.offset, size: buffer.length };
         this._binding_group = undefined;
@@ -64,6 +66,7 @@ export class WebGPURenderStateUniformGroup extends WebGPURenderObjectRefCounted 
         if (binding < 0 || binding >= this.entries.length) throw new Error('<WebGPURenderStateUniformGroup> set_Texture: binding out of bound');
         const entry = this.entries[binding];
         if (entry.type !== WebGPURenderStateUniformBindingType.Texture) throw new Error('<WebGPURenderStateUniformGroup> set_Texture: binding is not type of Texture');
+        if (entry.ref.value === texture_view) return;
         entry.ref.value = texture_view;
         entry.resource = texture_view.texture_view;
         this._binding_group = undefined;
@@ -73,6 +76,7 @@ export class WebGPURenderStateUniformGroup extends WebGPURenderObjectRefCounted 
         if (binding < 0 || binding >= this.entries.length) throw new Error('<WebGPURenderStateUniformGroup> set_Sampler: binding out of bound');
         const entry = this.entries[binding];
         if (entry.type !== WebGPURenderStateUniformBindingType.Sampler) throw new Error('<WebGPURenderStateUniformGroup> set_Sampler: binding is not type of Sampler');
+        if (entry.ref.value === sampler) return;
         entry.ref.value = sampler;
         entry.resource = sampler.sampler;
         this._binding_group = undefined;
