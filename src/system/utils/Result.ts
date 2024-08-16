@@ -45,7 +45,7 @@ export class Result<T, Err> {
         return this.unwrap() ?? default_val;
     }
 
-    public do<Res>(succeed: (item: T) => Res, failed: (err: Err) => Res) {
+    public do<V, VE>(succeed: (item: T) => V, failed: (err: Err) => VE) {
         if (this.failed) return failed(this.expect_Error());
         return succeed(this.expect());
     }

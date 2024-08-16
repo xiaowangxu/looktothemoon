@@ -76,5 +76,6 @@ export class SignalEmitter<T extends (...args: any[]) => void> {
         this.callbacks_once.clear();
         this.has_callbacks = false;
         this.has_callbacks_once = false;
+        if (this.defer_timer !== undefined) clearTimeout(this.defer_timer);
     }
 }
