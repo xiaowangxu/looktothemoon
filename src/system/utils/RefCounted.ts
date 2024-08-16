@@ -1,23 +1,25 @@
-export interface RefCounted {
-    get ref_count(): number;
-    ref(): void;
-    unref(): void;
-    /**
-     * try release an RefCounted item
-     * 
-     * you may use this if you're creating some temp / internal RefCounted objects which will not be used later
-     * 
-     */
-    release(): void;
-}
+import type { Disposable } from "./Type";
 
 export interface RefCountedLike {
     ref(): void;
     unref(): void;
     /**
-     * try release an RefCountedLike item
+     * try release a RefCountedLike item
      * 
      * you may use this if you're creating some temp / internal RefCountedLike objects which will not be used later
+     * 
+     */
+    release(): void;
+}
+
+export interface RefCounted extends RefCountedLike {
+    get ref_count(): number;
+    ref(): void;
+    unref(): void;
+    /**
+     * try release a RefCounted item
+     * 
+     * you may use this if you're creating some temp / internal RefCounted objects which will not be used later
      * 
      */
     release(): void;
@@ -26,7 +28,45 @@ export interface RefCountedLike {
 export type Refed<T> = T extends Ref<infer V> ? Ref<V> : (T extends RefCounted ? Ref<T> : T);
 export type Unrefed<T> = T extends Ref<infer V> ? V : T;
 
-export type WillRefed<T extends RefCountedLike> = T;
+/**
+ * turn a disposeable object into a ref counted one, use obj.value to access the original object
+ */
+export class RefCountedWrapper<T extends Disposable> implements RefCounted {
+
+    private _value: T;
+    public get value() { return this._value; }
+
+    private _ref_count: number = 0;
+
+    public get ref_count() { return this._ref_count; }
+
+    constructor(value: T) {
+        this._value = value;
+    }
+
+    public ref() {
+        this._ref_count++;
+    }
+
+    public unref() {
+        if (this._ref_count === 0) return;
+        this._ref_count--;
+        if (this._ref_count === 0) {
+            this.dispose();
+        }
+    }
+
+    public release() {
+        if (this._ref_count === 0) {
+            this.dispose();
+        }
+    }
+
+    protected dispose() {
+        this._value.dispose();
+    }
+
+}
 
 export class Ref<T extends RefCountedLike> {
     private ref: T | undefined = undefined;
