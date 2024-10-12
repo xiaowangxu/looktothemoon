@@ -22,7 +22,7 @@ export const Tag: Story = {
         },
         template: `
 			  <SunFormatEdit v-bind="args">
-                <SunFormatEditSection model-value="2024">年</SunFormatEditSection>
+                <SunFormatEditSection model-value="2024" :format="(a, b)=> b.substring(0, 4).padEnd(4, '0')">年</SunFormatEditSection>
                 <SunFormatEditSection model-value="5">月</SunFormatEditSection>
                 <SunFormatEditSection model-value="16">日</SunFormatEditSection>
                 <SunFormatEditSection model-value="12"></SunFormatEditSection>

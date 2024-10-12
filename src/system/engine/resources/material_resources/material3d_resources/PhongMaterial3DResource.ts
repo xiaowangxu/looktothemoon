@@ -95,7 +95,7 @@ const PhongMaterialSolidPipelineCacheSet = new RefCacher(() => {
 	            var near_distance = light.params.x;
 	            var far_distance = light.params.y;
 	            var distance_w = (l_distance - near_distance) / ( far_distance - near_distance);
-	            var distance_strength = smoothstep(1.0, 0.0, distance_w);
+	            var distance_strength = smoothstep(0.0, 1.0, distance_w);
 	            var l_atten = distance_strength / pow(max(l_distance, 1.0), attenuation);
 	            calc_light(t, l_dir, view, normal, light.color, l_atten, &diffuse, &specular);
 	        }
@@ -108,7 +108,7 @@ const PhongMaterialSolidPipelineCacheSet = new RefCacher(() => {
             	var near_distance = light.params.z;
             	var far_distance = light.params.w;
             	var distance_w = (l_distance - near_distance) / (far_distance - near_distance);
-            	var distance_strength = smoothstep(1.0f, 0.0f, distance_w);
+            	var distance_strength = smoothstep(0.0, 1.0, distance_w);
             	var l_atten = (angle_strength * distance_strength) / pow(l_distance, attenuation);
             	var l_dir_view = normalize(world_env_uniform_camera_matrix.camera_norview * l_dir);
             	calc_light(t, l_dir_view, view, normal, light.color, l_atten, &diffuse, &specular);

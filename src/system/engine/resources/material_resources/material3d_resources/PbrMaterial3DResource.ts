@@ -119,7 +119,7 @@ const PbrMaterial3DPipelineCacheSet = new RefCacher(() => {
 	            var near_distance = light.params.x;
 	            var far_distance = light.params.y;
 	            var distance_w = (l_distance - near_distance) / ( far_distance - near_distance);
-	            var distance_strength = smoothstep(1.0, 0.0, distance_w);
+	            var distance_strength = smoothstep(0.0, 1.0, distance_w);
 	            radiance *= distance_strength / pow(max(l_distance, 1.0), attenuation);
 				Am += max(0, dot(normal, direction)) * radiance;
 	        }
@@ -132,7 +132,7 @@ const PbrMaterial3DPipelineCacheSet = new RefCacher(() => {
             	var near_distance = light.params.z;
             	var far_distance = light.params.w;
             	var distance_w = (l_distance - near_distance) / (far_distance - near_distance);
-            	var distance_strength = smoothstep(1.0f, 0.0f, distance_w);
+            	var distance_strength = smoothstep(0.0, 1.0, distance_w);
             	radiance *= (angle_strength * distance_strength) / pow(l_distance, attenuation);
             	direction = normalize(world_env_uniform_camera_matrix.camera_norview * l_dir);
 				Am += max(0, dot(normal, direction)) * radiance;

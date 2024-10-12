@@ -60,7 +60,7 @@ export class GeometryPickingShape3DResource extends Bvh3PickingShape3DResource<I
 
     protected clear_BaseGeometry() {
         if (!this.base_geometry_3d_resource_ref.is_empty) {
-            this.base_geometry_3d_resource_ref.expect.render_server_geometry.singal_bbox_changed.connect(this.on_base_geometry_bbox_changed);
+            this.base_geometry_3d_resource_ref.expect.render_server_geometry.singal_bbox_changed.disconnect(this.on_base_geometry_bbox_changed);
         }
         this.count = 0;
         this.position_normal_ref.clear();
@@ -77,7 +77,6 @@ export class GeometryPickingShape3DResource extends Bvh3PickingShape3DResource<I
             const geometry = this.base_geometry_3d_resource_ref.expect;
             const primitive_type = geometry.primitive_type;
             if (primitive_type !== WebGPURenderStatePrimitiveType.Triangles && primitive_type !== WebGPURenderStatePrimitiveType.TriangleStrip) {
-                this.clear_BaseGeometry();
                 throw new Error(`<GeometryPickingShape3DResource> update_Bvh: only Geometry3DResources with primitive type of Triangles are supported`);
             }
             else {

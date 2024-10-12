@@ -20,12 +20,14 @@ const props = withDefaults(
         // value
         modelValue: string,
         modelModifiers?: Record<string, boolean>,
+        format?: (old_value: string, new_value: string) => string,
     }>(),
     {
         focusAll: true,
     }
 );
 
+const old_value = ref('');
 const input_span_ref = ref<HTMLSpanElement | null>(null);
 const clicked = ref(false);
 
@@ -55,10 +57,18 @@ function onInputFocused(event: FocusEvent) {
         focusAll();
     }
     clicked.value = false;
+    old_value.value = input_span_ref.value?.textContent ?? '';
 }
 
 function onInputBlur() {
     document.getSelection()?.removeAllRanges();
+    const new_value = input_span_ref.value?.textContent ?? '';
+    if (props.format !== undefined) {
+        const format_value = props.format(old_value.value, new_value);
+        if (format_value !== undefined && input_span_ref.value !== null) {
+            input_span_ref.value.textContent = format_value;
+        }
+    }
 }
 
 function focusAll(node: HTMLSpanElement | undefined = undefined) {
