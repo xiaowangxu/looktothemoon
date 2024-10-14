@@ -27,7 +27,7 @@ export const NumberEdit: Story = {
             return { args, val };
         },
         template: `
-			  <SunNumberEdit v-bind="args" style="width: 150px;" v-model="val"  @input="v=>console.log('input', v)" @change="v=>console.warn('change', v)">
+			  <SunNumberEdit v-bind="args" style="width: 150px;" v-model="val" @input="v=>console.log('input', v)" @change="v=>console.warn('change', v)">
 			  	  <template #prefix>
 			  	  	  长度
 			  	  </template>

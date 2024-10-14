@@ -251,7 +251,16 @@ const field_y = computed({
     },
 });
 
-const { value, setValueOnInput, setValueOnChange } = useInputModel(props, 'modelValue', 'modelModifiers', emits, { emitInput: 'input', emitChange: 'change' });
+const { value, startInput, setValueOnInput, setValueOnChange } = useInputModel(props, 'modelValue', 'modelModifiers', emits, {
+    emitInput: 'input',
+    emitChange: 'change',
+    compare: (newval, oldval) => {
+        const [r, g, b, a] = oldval;
+        const [_r, _g, _b, _a] = newval;
+        return r === _r && g === _g && b === _b && a === _a;
+    },
+    forceChangeEqualityCheck: true,
+});
 const color_str = computed(() => `#${toHex(value.value[0], 255)}${toHex(value.value[1], 255)}${toHex(value.value[2], 255)}${toHex(value.value[3], 255)}`);
 const plain_color_str = computed(() => `#${toHex(value.value[0], 255)}${toHex(value.value[1], 255)}${toHex(value.value[2], 255)}`);
 watch(value, val => setRGBA(val[0], val[1], val[2], val[3]), { immediate: true });
@@ -264,12 +273,11 @@ const color_changed = computed(() => {
 });
 function onOpened() {
     last_color.value = [...value.value];
+    startInput([...last_color.value]);
 }
 function onClosed() {
     addRecentColor(inner_color.value);
-    if (color_changed.value) {
-        setValueOnChange([...inner_color.value]);
-    }
+    setValueOnChange([...inner_color.value]);
 }
 function resetLastColor() {
     const [r, g, b, a] = last_color.value;

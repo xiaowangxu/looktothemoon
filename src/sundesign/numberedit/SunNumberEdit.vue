@@ -1,8 +1,9 @@
 <template>
     <template v-if="!inputing || disabled || !allowInput">
         <SunButton class="__sun-design-numberedit-container__ no-pressed-color"
-            :class="{ hover, dragging, 'no-hover-color': dragging }" :size="size" :flat="flat" :color-scheme="colorScheme"
-            :border-mask="borderMask" @mousedown="onContainerMouseDown" @click="onClick" :disabled="disabled">
+            :class="{ hover, dragging, 'no-hover-color': dragging }" :size="size" :flat="flat"
+            :color-scheme="colorScheme" :border-mask="borderMask" @mousedown="onContainerMouseDown" @click="onClick"
+            :disabled="disabled">
             <button v-if="show_step_button" :disabled="disabled || !show_decrease"
                 class="__sun-design__ __sun-design-numberedit-dec__ __sun-design-button-like__ colored"
                 :class="{ bordered: !flat, dragging }" :data-size="size" @mousedown.stop @click.stop="decrease">
@@ -12,11 +13,13 @@
             </button>
             <div class="__sun-design-numberedit-display-container__" :class="{ 'step-button': show_step_button }">
                 <span class="__sun-design__ __sun-design-numberedit-display__" :data-size="size">
-                    <span v-if="$slots.prefix !== undefined" class="__sun-design-numberedit-prefix__" :class="{ disabled }">
+                    <span v-if="$slots.prefix !== undefined" class="__sun-design-numberedit-prefix__"
+                        :class="{ disabled }">
                         <slot name="prefix" />
                     </span>
                     <span class="__sun-design-numberedit-value__">{{ display_value }}</span>
-                    <span v-if="$slots.suffix !== undefined" class="__sun-design-numberedit-suffix__" :class="{ disabled }">
+                    <span v-if="$slots.suffix !== undefined" class="__sun-design-numberedit-suffix__"
+                        :class="{ disabled }">
                         <slot name="suffix" />
                     </span>
                 </span>
@@ -108,7 +111,7 @@ const emits = defineEmits<{
     (event: 'change', val: string): void,
 }>();
 
-const { value, setValueOnInput, setValueOnChange } = useInputModel(props, 'modelValue', 'modelModifiers', emits, { emitInput: 'input', emitChange: 'change' });
+const { value, startInput, setValueOnInput, setValueOnChange } = useInputModel(props, 'modelValue', 'modelModifiers', emits, { emitInput: 'input', emitChange: 'change', forceChangeEqualityCheck: true });
 
 // datas
 const show_step_button = computed(() => !(props.disabled ?? false) && props.stepButton && props.step !== undefined && props.step !== 0);
@@ -152,6 +155,7 @@ function increase() {
     if (dragging.value) return;
     const val = formatNumber(value.value + (props.step ?? 0));
     if (val !== value.value) {
+        startInput(value.value);
         setValueSafe(val, true);
         setValueSafe(val, false);
     }
@@ -160,6 +164,7 @@ function decrease() {
     if (dragging.value) return;
     const val = formatNumber(value.value - (props.step ?? 0));
     if (val !== value.value) {
+        startInput(value.value);
         setValueSafe(val, true);
         setValueSafe(val, false);
     }
@@ -177,6 +182,7 @@ function onMouseDown(evt: MouseEvent) {
     last_mouse_pos = evt.clientX;
     last_value = formatNumber(value.value);
     dragging_new_value.value = last_value;
+    startInput(last_value);
     window.addEventListener('mousemove', onMouseMove, { capture: true });
     window.addEventListener('mouseup', onMouseUp, { capture: true });
 }
@@ -223,6 +229,7 @@ function onClick(evt: Event) {
     }
     if (props.allowInput && !inputing.value) {
         inputing.value = true;
+        startInput();
     }
 }
 

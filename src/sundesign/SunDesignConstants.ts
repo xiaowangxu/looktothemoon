@@ -566,16 +566,22 @@ interface UseInputModelOptions<T> {
     set?: (val: T, modifiers: Record<string, boolean> | undefined) => T,
     forceUpdate?: boolean,
     skipEqualityCheck?: boolean,
+    forceChangeEqualityCheck?: boolean,
     emitInput?: string,
     emitChange?: string,
+    compare?: (newval: T, oldval: T) => boolean,
 };
+
+const USE_INPUT_MODEL_DEFAULT_COMPARE = (a: any, b: any) => a === b;
 
 export function useInputModel<P extends object, ValKey extends keyof P & string, ModifiersKey extends keyof P & string & ModifiersKeyNameString<ValKey>, Name extends string>(props: P, val_key: ValKey, modifiers_key: ModifiersKey, emit: (name: Name, ...args: any[]) => void, options?: UseInputModelOptions<P[ValKey]>): {
     value: Readonly<Ref<DeepReadonly<P[ValKey]>>>,
+    startInput: (val?: P[ValKey]) => void,
     setValueOnInput: (val: P[ValKey]) => void,
     setValueOnChange: (val: P[ValKey]) => void,
 } {
     const value = readonly(toRef(props, val_key) as Ref<P[ValKey]>);
+    const startValue = ref<Ref<P[ValKey]>>(value.value as Ref<P[ValKey]>);
     const set = options?.set;
     const emitInput = options?.emitInput;
     const emitChange = options?.emitChange;
@@ -583,25 +589,33 @@ export function useInputModel<P extends object, ValKey extends keyof P & string,
     const update_event = `update:${val_key}`;
     const forceUpdate = options?.forceUpdate ?? false;
     const skipEqualityCheck = options?.skipEqualityCheck ?? false;
+    const forceChangeEqualityCheck = options?.forceChangeEqualityCheck ?? false;
+    const compare = options?.compare ?? USE_INPUT_MODEL_DEFAULT_COMPARE;
     return {
         value: value,
+        startInput: (val?: P[ValKey]) => {
+            startValue.value = val ?? value.value as P[ValKey];
+        },
         setValueOnInput: (val: P[ValKey]) => {
+            const lazy = modifiers.value?.lazy ?? false;
             const v = set?.(val, modifiers.value) ?? val;
-            const changed = value.value !== val;
-            if (forceUpdate || (!(modifiers.value?.lazy ?? false) && (skipEqualityCheck || changed))) {
+            const changed = !compare(v, value.value as P[ValKey]);
+            if (forceUpdate || (!lazy && (skipEqualityCheck || changed))) {
                 emit(update_event as any, v);
             }
             if (emitInput !== undefined && emit !== undefined) {
                 emit(emitInput as any, v);
             }
         },
-        setValueOnChange: (val: P[ValKey]) => {
+        setValueOnChange: (val: P[ValKey], ignore_start_input: boolean = false) => {
+            const lazy = modifiers.value?.lazy ?? false;
             const v = set?.(val, modifiers.value) ?? val;
-            const changed = value.value !== val;
-            if (forceUpdate || ((modifiers.value?.lazy ?? false) && (skipEqualityCheck || changed))) {
+            const changed = !compare(v, value.value as P[ValKey]);
+            const start_changed = forceChangeEqualityCheck && !ignore_start_input ? !compare(v, startValue.value) : true;
+            if (forceUpdate || (lazy && (skipEqualityCheck || changed))) {
                 emit(update_event as any, v);
             }
-            if (emitChange !== undefined && emit !== undefined) {
+            if (emitChange !== undefined && emit !== undefined && start_changed) {
                 emit(emitChange as any, v);
             }
         }

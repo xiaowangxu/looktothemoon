@@ -1,8 +1,9 @@
 <template>
     <span ref="input_span_ref"
         class="__sun-design__ __sun-design-formatedit-section__ __sun-design-formatedit-section-input__" contenteditable
-        @keydown="onInputKeyDown" @mousedown="clicked = true" @focus="onInputFocused" @blur="onInputBlur">{{
-            modelValue }}</span>
+        @keydown="onInputKeyDown" @mousedown="clicked = true" @focus="onInputFocused" @blur="onInputBlur"
+        @input="onInput">{{
+            value }}</span>
     <span v-if="$slots.default !== undefined" @click="click">
         <slot name="default"></slot>
     </span>
@@ -10,6 +11,7 @@
 
 <script setup lang="ts">
 
+import { useInputModel } from '../SunDesignConstants';
 import '../SunDesignStyle.styl';
 import { ref } from 'vue';
 
@@ -27,9 +29,17 @@ const props = withDefaults(
     }
 );
 
-const old_value = ref('');
+// emits
+const emits = defineEmits<{
+    (event: 'update:modelValue', value: string): void,
+    (event: 'input', val: string): void,
+    (event: 'change', val: string): void,
+}>();
+
 const input_span_ref = ref<HTMLSpanElement | null>(null);
 const clicked = ref(false);
+
+const { value, startInput, setValueOnInput, setValueOnChange } = useInputModel(props, 'modelValue', 'modelModifiers', emits, { emitInput: 'input', emitChange: 'change', forceChangeEqualityCheck: true });
 
 // methods
 function click() {
@@ -52,23 +62,34 @@ function onInputKeyDown(event: KeyboardEvent) {
     }
 }
 
+function onInput(event: Event) {
+    const new_value = input_span_ref.value?.textContent ?? '';
+    let format_value = new_value;
+    if (props.format !== undefined) {
+        format_value = props.format(value.value, new_value);
+    }
+    setValueOnInput(format_value);
+}
+
 function onInputFocused(event: FocusEvent) {
     if (!clicked.value || props.focusAll) {
         focusAll();
     }
     clicked.value = false;
-    old_value.value = input_span_ref.value?.textContent ?? '';
+    startInput();
 }
 
 function onInputBlur() {
     document.getSelection()?.removeAllRanges();
     const new_value = input_span_ref.value?.textContent ?? '';
+    let format_value = new_value;
     if (props.format !== undefined) {
-        const format_value = props.format(old_value.value, new_value);
-        if (format_value !== undefined && input_span_ref.value !== null) {
+        format_value = props.format(value.value, new_value);
+        if (input_span_ref.value !== null) {
             input_span_ref.value.textContent = format_value;
         }
     }
+    setValueOnChange(format_value);
 }
 
 function focusAll(node: HTMLSpanElement | undefined = undefined) {

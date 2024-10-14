@@ -8,7 +8,6 @@
 
 import '../SunDesignStyle.styl';
 import SunButtonLike from '../button/SunButtonLike.vue';
-import { type Size, type BorderMask, type ColorScheme, useInputModel } from '../SunDesignConstants';
 
 // props
 const props = withDefaults(

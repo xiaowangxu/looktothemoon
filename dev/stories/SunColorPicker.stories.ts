@@ -26,7 +26,7 @@ export const ColorPicker: Story = {
             return { args, color };
         },
         template: `
-			  <SunColorPicker v-bind="args" v-model="color" />
+			  <SunColorPicker v-bind="args" v-model="color" @input="()=>console.log('input')" @change="(v)=>console.log('change', v)" />
 			  <SunColorPicker v-bind="args" v-model.lazy="color" />
 		`,
     }),
