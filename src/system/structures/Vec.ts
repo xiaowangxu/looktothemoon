@@ -4,19 +4,27 @@ class VecIterator<T> implements Iterator<T> {
 
     protected length: number;
     protected current: number = 0;
+    protected base: number = 0;
 
     constructor(array: T[], length: number, base: number = 0) {
         this.array = array;
         this.length = length;
+        this.base = base;
         this.current = base;
     }
 
-    next(): IteratorResult<T, T> {
+    next(): IteratorResult<T, T | undefined> {
         const value = this.array[this.current];
         const done = this.current >= this.length;
         this.current++;
         return { value, done };
     }
+
+    return(): IteratorResult<T, T | undefined> {
+        this.current = this.base;
+        return { value: undefined, done: true };
+    }
+
 }
 
 export class Vec<T> {
