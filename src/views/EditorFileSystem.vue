@@ -42,7 +42,7 @@
             <SunPanel container vertical style="height: 100%;">
                 <SunScrollContainer style="width: 100%; height: unset;">
                     <SunPanelContainer>
-                        <SunBreadcrumb :options="nav_options" :filter-sort="(sort as any)" @click="onBreadcrumbClick" :show-root="false"/>
+                        <SunBreadcrumb :options="nav_options" :filter-sort="(sort as any)" @click="onBreadcrumbClick" :show-root="nav_options.length === 0"/>
                     </SunPanelContainer>
                 </SunScrollContainer>
                 <SunPanelSeparator />
