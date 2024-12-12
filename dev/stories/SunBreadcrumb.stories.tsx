@@ -71,7 +71,8 @@ export const Breadcrumb: Story = {
                 item: {
                     label: 'geometries',
                     icon: 'Box',
-                    uid: 'geometries'
+                    uid: 'geometries',
+                    active: true,
                 },
                 siblings: [
                     {
@@ -123,11 +124,31 @@ export const Breadcrumb: Story = {
                     uid: 100,
                     render: (props, ctx) => {
                         return <>
-                            <span style={{ fontFamily: "consolas", fontWeight: 'bold' }}><span style={{ color: 'purple' }}>func</span> <span style={{ color: 'blue' }}>main</span>()</span>
+                            <span style={{ fontFamily: "consolas", fontWeight: 'bold' }}><span style={{ color: '#bd60bd' }}>func</span> <span style={{ color: '#216ff3' }}>main</span>()</span>
                         </>
                     }
                 }
-            }
+            },
+            {
+                item: {
+                    label: 'Header',
+                    icon: 'Code2',
+                    uid: 'monkey.lttmbin/header',
+                },
+                hideItem: true,
+                siblings: [
+                    {
+                        label: 'Header',
+                        icon: 'Code2',
+                        uid: 'monkey.lttmbin/header',
+                    },
+                    {
+                        label: 'Body',
+                        icon: 'Cuboid',
+                        uid: 'monkey.lttmbin/body',
+                    }
+                ]
+            },
         ]
     }
 };

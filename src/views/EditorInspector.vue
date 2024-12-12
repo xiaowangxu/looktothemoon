@@ -25,7 +25,7 @@
 
         <SunPanelFoldContainer label="可编辑属性">
             <SunPanelContainer vertical gap style="width: 100%;">
-                <!-- <SunInspectorGrid>
+                <SunInspectorGrid>
 
                     <SunInspectorRow label="数字输入">
                         <SunNumberEdit :model-value="123" :min="0" :max="200" :step="1" />
@@ -159,7 +159,7 @@
                         <SunTextarea style="resize: vertical;" />
                     </SunInspectorRow>
 
-                </SunInspectorGrid> -->
+                </SunInspectorGrid>
             </SunPanelContainer>
         </SunPanelFoldContainer>
 

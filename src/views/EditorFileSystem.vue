@@ -42,7 +42,7 @@
             <SunPanel container vertical style="height: 100%;">
                 <SunScrollContainer style="width: 100%; height: unset;">
                     <SunPanelContainer>
-                        <SunBreadcrumb :options="nav_options" :filter-sort="(sort as any)" @click="onBreadcrumbClick" />
+                        <SunBreadcrumb :options="nav_options" :filter-sort="(sort as any)" @click="onBreadcrumbClick" :show-root="false"/>
                     </SunPanelContainer>
                 </SunScrollContainer>
                 <SunPanelSeparator />
@@ -118,13 +118,12 @@ function sort(options: FileSystemRefItem[]) {
 const data = ref('');
 let opened_vfsid: VfsId | undefined;
 function onClick(vfsid: UID | undefined) {
-    console.log(">>>>>>");
     opened_vfsid = vfsid as VfsId;
     if (vfsid === undefined) {
         nav_options.value = [];
     }
     else {
-        nav_options.value = VFSTreeOptionsRef.get_Breadcrumb(vfsid as VfsId)
+        nav_options.value = VFSTreeOptionsRef.get_Breadcrumb(vfsid as VfsId, { active: true, leaf: true, peekNext: true })
     }
 }
 

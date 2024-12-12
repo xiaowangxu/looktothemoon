@@ -119,16 +119,62 @@ export class FileSystemTreeOptionsRef {
         }
     }
 
-    public get_Breadcrumb(path: FileSystemPath | VfsId) {
+    public get_Breadcrumb(path: FileSystemPath | VfsId, options?: { active?: boolean, leaf?: boolean, peekNext?: boolean }) {
+        const { active = true, leaf: showLeaf = false, peekNext = false } = options ?? {};
         const id = this.vfs.lookup(path);
         if (id.failed) return [];
         const _id = id.expect();
         if (!this.has_Node(_id)) return [];
         const crumbs: BreadcrumbItem[] = [];
         let node = this.tree_data.get(_id);
+        const node_uid = node?.uid;
+        if (peekNext && this.vfs.is_Directory(_id) && node !== undefined) {
+            let next = this.tree_data.get(node.uid);
+            while (next !== undefined) {
+                const subs = next === undefined ? [] : next.subs.filter(s => showLeaf || s.leaf === false).map(s => {
+                    return {
+                        label: s.label,
+                        uid: s.uid,
+                        icon: s.icon,
+                    } as Item
+                });
+                if (subs.length === 1) {
+                    const sub_node = this.tree_data.get(subs[0].uid);
+                    if (sub_node === undefined) break;
+                    crumbs.push({
+                        item: {
+                            label: sub_node.label,
+                            iconOnly: sub_node.label === undefined,
+                            uid: sub_node.uid,
+                            icon: sub_node.unfoldIcon ?? sub_node.icon,
+                        },
+                        siblings: subs,
+                        selectInSiblings: false,
+                        siblingDisabled: true,
+                    });
+                    next = sub_node;
+                }
+                else if (subs.length > 1) {
+                    crumbs.push({
+                        item: {
+                            uid: subs[0].uid,
+                        },
+                        siblings: subs,
+                        siblingDisabled: false,
+                        hideItem: true,
+                        selectInSiblings: false,
+                    });
+                    break;
+                }
+                else {
+                    break;
+                }
+            }
+
+        }
         while (node !== undefined) {
             const parent = node.parent === undefined ? undefined : this.tree_data.get(node.parent);
-            const subs = parent === undefined ? [] : parent.subs.filter(s => s.leaf === false).map(s => {
+            const subs = parent === undefined ? [] : parent.subs.filter(s => showLeaf || s.leaf === false).map(s => {
                 return {
                     label: s.label,
                     uid: s.uid,
@@ -141,8 +187,10 @@ export class FileSystemTreeOptionsRef {
                     iconOnly: node.label === undefined,
                     uid: node.uid,
                     icon: node.unfoldIcon ?? node.icon,
+                    active: active && node.uid === node_uid,
                 },
                 siblings: subs,
+                siblingDisabled: subs.length <= 1,
             });
             node = parent;
         }

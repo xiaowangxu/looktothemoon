@@ -6,8 +6,8 @@
             </slot>
         </SunButton>
         <template v-for="option, idx in options" :key="option.item.uid">
-            <SunSelect v-if="idx !== 0" :size="size" flat icon-only squared :model-value="option.item.uid"
-                :disabled="disabled || option.item.disabled || sorted_options[idx] === undefined || sorted_options[idx]!.length <= 0"
+            <SunSelect v-if="option.siblings !== undefined" :size="size" flat icon-only squared :model-value="(option.selectInSiblings ?? true) ? option.item.uid : undefined"
+                :disabled="disabled || option.item.disabled || option.siblingDisabled || sorted_options[idx] === undefined || sorted_options[idx]!.length <= 0"
                 :options="sorted_options[idx]" @change="onSelectChange">
                 <template #closed>
                     <slot name="separator">
@@ -15,7 +15,7 @@
                     </slot>
                 </template>
             </SunSelect>
-            <SunButton :size="size" flat :active="active && idx === options.length - 1"
+            <SunButton v-if="!(option.hideItem ?? false)" :size="size" flat :active="option.item.active"
                 :disabled="disabled || option.item.disabled" :squared="option.item.iconOnly"
                 @click="$emit('click', option.item.uid)">
                 <SunButtonItem v-if="(option.item as RenderBreadcrumbItem).render === undefined"
@@ -41,19 +41,19 @@ import { computed, type Component, type Raw } from 'vue';
 type ItemBreadcrumbItem<T extends UID = UID> = Item<T> & { iconOnly?: boolean };
 type RenderBreadcrumbItem<T extends UID = UID> = {
     uid: T,
+    active?: boolean,
     disabled?: boolean,
     colorScheme?: ColorScheme,
     iconOnly?: boolean,
     render: Raw<Component<{ item: RenderBreadcrumbItem<T> }>>,
 };
-export type BreadcrumbItem<T extends UID = UID> = { item: ItemBreadcrumbItem<T> | RenderBreadcrumbItem<T>, siblings?: SelectItem[] };
+export type BreadcrumbItem<T extends UID = UID> = { item: ItemBreadcrumbItem<T> | RenderBreadcrumbItem<T>, siblings?: SelectItem[], siblingDisabled?: boolean, hideItem?: boolean, selectInSiblings?: boolean };
 
 // props
 const props = withDefaults(
     defineProps<{
         size?: Size,
         options: BreadcrumbItem[],
-        active?: boolean,
         disabled?: boolean,
         filterSort?: (options: SelectItem[]) => SelectItem[],
         showRoot?: boolean,
