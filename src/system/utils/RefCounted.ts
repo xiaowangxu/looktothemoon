@@ -68,6 +68,9 @@ export class RefCountedWrapper<T extends Disposable> implements RefCounted {
 
 }
 
+/**
+ * ref pointer to a RefCountedLike object
+ */
 export class Ref<T extends RefCountedLike> {
     private ref: T | undefined = undefined;
 
