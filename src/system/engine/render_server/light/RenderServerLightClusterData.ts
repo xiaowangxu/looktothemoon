@@ -195,7 +195,7 @@ export class RenderServerLightClusterData extends RenderServerObjectRefCounted {
     protected readonly compute_data_pipeline_ref: ReadonlyRef<WebGPURenderStateComputePipeline>;
     protected readonly compute_data_uniform_group_ref = new ReadonlyRef(RenderServer.render_state.create_UniformGroup(RenderServerLightClusterUniformLayout.get()).expect());
 
-    constructor(width_count: number = 32, height_count: number = 16, depth_count: number = 32, cluster_count: number = 24, light_count: number = 1024) {
+    constructor(width_count: number = 32, height_count: number = 16, depth_count: number = 32, cluster_count: number = 32, light_count: number = 1024) {
         super();
         if (light_count % 32 !== 0) throw new Error('<RenderServerLightClusterData> constructor: light count should be multiples of 32');
         const uint32array = new Uint32Array(this.uniform_array_buffer);
