@@ -69,7 +69,6 @@ export class PolyLineGeometry3DResource extends Geometry3DResource {
     public commit(force_update_bbox: boolean = true, trigger_changed: boolean = true) {
         this.point_buffer_ref.expect.commit();
         if (force_update_bbox) this.update_BBox();
-
         if (trigger_changed) this.trigger_Changed();
     }
 

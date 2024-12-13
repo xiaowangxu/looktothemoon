@@ -96,6 +96,7 @@ import { PickingShape3D } from "@/system/engine/nodes/node3ds/physics3ds/Picking
 import { PickingArea3D } from "@/system/engine/nodes/node3ds/physics3ds/PickingArea3D";
 import { Quaternion } from "@/system/fivepebble/linear_algebra/Quaternion";
 import { SpherePickingShape3DResource } from "@/system/engine/resources/picking_shape_resources/picking_shape3d_resources/SpherePickingShape3DResource";
+import { PolyLinePickingShape3DResource } from "@/system/engine/resources/picking_shape_resources/picking_shape3d_resources/PolyLinePickingShape3DResource";
 
 (window as any).set_Color = new SignalEmitter<(color: ColorData) => void>();
 
@@ -771,7 +772,7 @@ export async function createEditor() {
 	}
 
 	{
-		for (let i = 0; i < 256; i++) {
+		for (let i = 0; i < 0; i++) {
 			const light3 = new PointLight3D();
 			light3.color = Vector3.create(Math.random(), Math.random(), Math.random());
 			light3.local_position = Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 100 + 200, (Math.random() - 0.5) * 200);
@@ -910,22 +911,71 @@ export async function createEditor() {
 	{
 		const geo = new PolyLineGeometry3DResource();
 		const mat = new PolyLineMaterial3DResource();
+		const count = 360;
 		mat.color = Color.create(1, 1, 0, 1);
-		mat.width = 10;
-		geo.set_PointCount(360);
-		for (let i = 0; i < 360; i++) {
-			geo.set_Point(i, Vector3.create(
+		mat.width = 5;
+		geo.set_PointCount(count);
+		const points = [];
+		for (let i = 0; i < count; i++) {
+			const point = Vector3.create(
 				Math.cos(i / 10) * 100,
 				i,
 				Math.sin(i / 10) * 100,
-			));
+			);
+			points.push(point);
+			geo.set_Point(i, point);
 		}
 		geo.commit();
 		const mesh = new MeshInstance3D();
 		mesh.geometry = geo;
 		mesh.material = mat;
 		mesh.local_position = Vector3.create(0, 100, 0);
+
+		const detect_width = 20;
+		
+		const mesh2 = new MeshInstance3D();
+		mesh2.geometry = geo;
+		const mat2 = new PolyLineMaterial3DResource();
+		mat2.color = Color.create(0.4, 0.4, 0, 1);
+		mat2.width = detect_width;
+		mesh2.material = mat2;
+		
+		const shp = new PolyLinePickingShape3DResource();
+		shp.points = points;
+		shp.line_width = detect_width;
+		
+		const shape = new PickingShape3D();
+		shape.shape = shp;
+
+		const area = new PickingArea3D();
+		area.add_Child(shape);
+
+		mesh.add_Child(area);
+
+		area.signal_mouse_entered.connect(() => {
+			pointer.visible = true;
+		});
+		area.signal_input.connect((evt, prop) => {
+			if (!prop && area.is_mouse_hover && evt instanceof MouseButtonInputEvent && evt.click) {
+				move_target = mesh;
+				transform.set_TranslatePosition(move_target.global_position);
+				transform.visible = true;
+			}
+		});
+		area.signal_mouse_exited.connect(() => {
+			pointer.visible = false;
+		});
+		area.signal_mouse_moved.connect((evt, res) => {
+			pointer.global_position = res.position;
+			pointer.global_rotation = Euler.new.set_Quaternion(Quaternion.new.set_Rotate(Vector3.create(0, 1, 0), res.normal));
+			// const normal = res.normal.clone();
+			// normal.add_Number(normal, 1).div_Number(normal, 2);
+			// pointer.color = Vector4.create(normal.x, normal.y, normal.z, 1);
+		});
+
 		World.add_Child(mesh);
+		// mesh.render_queue = 1;
+		// mesh.add_Child(mesh2);
 	}
 
 	{

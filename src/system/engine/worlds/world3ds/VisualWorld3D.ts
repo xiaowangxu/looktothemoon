@@ -123,7 +123,7 @@ export class VisualWorld3DMesh extends WorldObject {
     }
 
     public set_CullableEnlargement(amount: number) {
-        this.cullable_enlargment = Math.max(0, Math.min(65536, amount));
+        this.cullable_enlargment = Math.max(0, amount);
     }
 
     public set_EditorHighlighted(highlighted: boolean) {

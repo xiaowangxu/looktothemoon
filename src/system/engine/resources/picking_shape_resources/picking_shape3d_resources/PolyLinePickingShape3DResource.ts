@@ -12,6 +12,9 @@ import { out } from "@/system/utils/Type";
 import { Bvh3, Bvh3Strategy } from "@/system/fivepebble/bvh/Bvh3";
 import { PickingShape3DResource, type RaycastResult3 } from "./PickingShape3DResource";
 
+/**
+ * @todo amount is incorrect 
+ */
 export class PolyLinePickingShape3DResource extends PickingShape3DResource {
 
     public static readonly class_name: string = "PolyLinePickingShape3DResource";
@@ -43,7 +46,7 @@ export class PolyLinePickingShape3DResource extends PickingShape3DResource {
         }
     }
 
-    public distance_first: boolean = true;
+    public distance_first: boolean = false;
 
     private _points: Vector3[] = [];
     public get points() { return this._points; }

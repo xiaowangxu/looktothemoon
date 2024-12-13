@@ -31,6 +31,18 @@ export abstract class GeometryInstance3D extends VisualInstance3D {
 
     protected abstract on_CullableOverrideChanged(): void;
 
+    protected _cullable_enlargement: number = 0;
+    public get cullable_enlargement() { return this._cullable_enlargement; }
+    public set cullable_enlargement(enlargement: number) {
+        enlargement = Math.max(0, enlargement);
+        if (this._cullable_enlargement !== enlargement) {
+            this._cullable_enlargement = enlargement;
+            this.on_CullableEnlargementChanged();
+        }
+    }
+
+    protected abstract on_CullableEnlargementChanged(): void;
+
     // save / load
 
     public dump(writer: ClassWriter): void {
