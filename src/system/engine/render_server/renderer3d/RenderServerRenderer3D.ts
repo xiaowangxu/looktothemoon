@@ -12,7 +12,7 @@ import { RenderServer, RenderServerDefaultTextureType, RenderServerSingleton } f
 import { WebGPURenderStateTextureUsage, WebGPURenderStateTextureFormat, WebGPURenderStateTexture, WebGPURenderStateTextureDimension, WebGPURendetStateTextureDestination } from "@/system/sliverofstraw/render_state_object/texture/WebGPURenderStateTexture";
 import { WebGPURenderElementFrameBuffer } from "@/system/sliverofstraw/render_element_object/frame_buffer/WebGPURenderElementFrameBuffer";
 import { Vector4 } from "@/system/fivepebble/linear_algebra/Vector4";
-import { RenderServerRenderMaterial, RenderServerRenderMaterialPass } from "../material/RenderServerRenderMaterial";
+import { RenderServerRenderMaterial, RenderServerRenderMaterialPass, type RenderServerRenderMaterialUsablePass } from "../material/RenderServerRenderMaterial";
 import { WebGPURenderStateDepthCompareFunc, WebGPURenderStatePrimitiveType } from "@/system/sliverofstraw/render_state_object/pipeline/WebGPURenderStateProgramState";
 import { WebGPURenderElementVertexArray } from "@/system/sliverofstraw/render_element_object/vertex_array/WebGPURenderElementVertexArray";
 import { WebGPURenderStateBufferType, WebGPURenderStateBufferUsage } from "@/system/sliverofstraw/render_state_object/buffer/WebGPURenderStateBuffer";
@@ -995,7 +995,7 @@ export class RenderServerRenderer3D extends RenderServerObjectRefCounted {
         }
     }
 
-    protected render_Mesh(render_pass: GPURenderPassEncoder, index: number, pass: RenderServerRenderMaterialPass, frame_buffer: WebGPURenderElementFrameBuffer, depth_func: WebGPURenderStateDepthCompareFunc, vertex_array: RenderServerRenderer3DQueueVeretxArray, material: RenderServerRenderMaterial, instance_uniform_group: WebGPURenderStateUniformGroup, instance_count: number) {
+    protected render_Mesh(render_pass: GPURenderPassEncoder, index: number, pass: RenderServerRenderMaterialUsablePass, frame_buffer: WebGPURenderElementFrameBuffer, depth_func: WebGPURenderStateDepthCompareFunc, vertex_array: RenderServerRenderer3DQueueVeretxArray, material: RenderServerRenderMaterial, instance_uniform_group: WebGPURenderStateUniformGroup, instance_count: number) {
         let mat: RenderServerRenderMaterial | undefined = this.material_override_ref.value?.render_server_material ?? material;
         const dynamic_offsets = RenderServerRenderer3D.#tmp_instance_uniform_group_dynamic_offsets;
         while (mat !== undefined) {

@@ -28,7 +28,7 @@ export enum RenderServerRenderMaterialPass {
 	Set = 4,
 }
 
-type RenderServerRenderMaterialUsablePass = Exclude<RenderServerRenderMaterialPass, RenderServerRenderMaterialPass.Max>;
+export type RenderServerRenderMaterialUsablePass = Exclude<RenderServerRenderMaterialPass, RenderServerRenderMaterialPass.Max | RenderServerRenderMaterialPass.Compose | RenderServerRenderMaterialPass.Set>;
 
 class RenderServerRenderMaterialPipelineUniformItem implements RefCountedLike {
 
@@ -587,7 +587,7 @@ ${custom}` : ``}`;
 		this.pipeline_uniform_refs.set(pass, new RenderServerRenderMaterialPipelineUniformItem(pipeline_cache, uniform));
 	}
 
-	public get_PipelineUniform(pass: RenderServerRenderMaterialPass, vertex_array: WebGPURenderElementVertexArrayLike, frame_buffer: WebGPURenderElementFrameBuffer, depth_compare_func: WebGPURenderStateDepthCompareFunc): Temp<RenderServerRenderMaterialPipelineUniformTarget> | undefined {
+	public get_PipelineUniform(pass: RenderServerRenderMaterialUsablePass, vertex_array: WebGPURenderElementVertexArrayLike, frame_buffer: WebGPURenderElementFrameBuffer, depth_compare_func: WebGPURenderStateDepthCompareFunc): Temp<RenderServerRenderMaterialPipelineUniformTarget> | undefined {
 		const item = this.pipeline_uniform_refs.get(pass);
 		if (item === undefined) return undefined;
 		const { pipeline_cache, uniform } = item;

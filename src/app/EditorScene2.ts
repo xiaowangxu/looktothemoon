@@ -380,7 +380,7 @@ export async function createEditor() {
 		image.onload = () => {
 			const { naturalWidth, naturalHeight } = image;
 			const texture = ImageTextureCubeMapResource.create_Image(image, naturalWidth, naturalHeight, Infinity, true);
-			// EditorViewport.world_3d?.visual_world.set_BackgroundTexture(texture);
+			EditorViewport.world_3d?.visual_world.set_BackgroundTexture(texture);
 		};
 	}
 
@@ -389,7 +389,7 @@ export async function createEditor() {
 	// 		cubemap_x,
 	// 		cubemap_x_,
 	// 		cubemap_y,
-	// 		cubemap_y_,
+	// 		cubemap_y_, 
 	// 		cubemap_z,
 	// 		cubemap_z_,
 	// 	].map(url => {
@@ -402,8 +402,7 @@ export async function createEditor() {
 	// 	promises.then((images) => {
 	// 		const image_options = images.map(img => ({ image: img, width: img.naturalWidth, height: img.naturalHeight }));
 	// 		const texture = ImageTextureCubeMapResource.create_Images(image_options, Infinity, true);
-	// 		// EditorViewport.world_3d?.visual_world.set_BackgroundTexture(texture);
-
+	// 		EditorViewport.world_3d?.visual_world.set_BackgroundTexture(texture);
 	// 	});
 	// }
 
@@ -487,37 +486,37 @@ export async function createEditor() {
 	polyline.local_scale = Vector3.create(100, 100, 100);
 	World.add_Child(polyline);
 
-	const light1 = new AmbientLight3D();
-	light1.intensity = 0.4;
-	World.add_Child(light1);
+	// const light1 = new AmbientLight3D();
+	// light1.intensity = 0.4;
+	// World.add_Child(light1);
 
-	const light2 = new DirectionalLight3D();
-	light2.local_rotation = Euler.create(-Pi / 2, 0, 0);
-	light2.intensity = 0.5;
-	World.add_Child(light2);
-	const light2_1 = new DirectionalLight3D();
-	light2_1.local_rotation = Euler.create(-Pi / 3, 0, 0);
-	light2_1.intensity = 0.2;
-	World.add_Child(light2_1);
-	const light2_2 = new DirectionalLight3D();
-	light2_2.local_rotation = Euler.create(Pi + Pi / 3, 0, 0);
-	light2_2.intensity = 0.2;
-	World.add_Child(light2_2);
+	// const light2 = new DirectionalLight3D();
+	// light2.local_rotation = Euler.create(-Pi / 2, 0, 0);
+	// light2.intensity = 0.5;
+	// World.add_Child(light2);
+	// const light2_1 = new DirectionalLight3D();
+	// light2_1.local_rotation = Euler.create(-Pi / 3, 0, 0);
+	// light2_1.intensity = 0.2;
+	// World.add_Child(light2_1);
+	// const light2_2 = new DirectionalLight3D();
+	// light2_2.local_rotation = Euler.create(Pi + Pi / 3, 0, 0);
+	// light2_2.intensity = 0.2;
+	// World.add_Child(light2_2);
 
 	// const light3 = new PointLight3D();
-	// light3.color = Vector3.create(1, 1, 1);
+	// light3.color = Vector3.create(1, 0, 0);
 	// light3.local_position = Vector3.create(0, 100, 0);
 	// light3.intensity = 0.5;
 	// light3.radius = 100;
 	// World.add_Child(light3);
 	// const light4 = new PointLight3D();
-	// light4.color = Vector3.create(1, 1, 1);
+	// light4.color = Vector3.create(0, 1, 0);
 	// light4.local_position = Vector3.create(-25, 60, 20);
 	// light4.intensity = 0.1;
 	// light4.radius = 0.4;
 	// World.add_Child(light4);
 	// const light5 = new PointLight3D();
-	// light5.color = Vector3.create(1, 1, 1);
+	// light5.color = Vector3.create(0, 0, 1);
 	// light5.local_position = Vector3.create(0, 60, -23);
 	// light5.intensity = 0.1;
 	// light5.radius = 0.4;
@@ -771,31 +770,31 @@ export async function createEditor() {
 		World.add_Child(line_x);
 	}
 
-	// {
-	// 	for (let i = 0; i < 16; i++) {
-	// 		const light3 = new PointLight3D();
-	// 		light3.color = Vector3.create(Math.random(), Math.random(), Math.random());
-	// 		light3.local_position = Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 100 + 200, (Math.random() - 0.5) * 200);
-	// 		light3.intensity = 0.1;
-	// 		light3.radius = 0.5;
-	// 		light3.block_process = true;
-	// 		light3.block_input = true;
-	// 		light3.block_physics_process = true;
-	// 		World.add_Child(light3);
-	// 		EditorSceneTree.start_Tween(
-	// 			new TweenLoop(
-	// 				new PingPongTweenAdaptor(
-	// 					new PropertyTweenAdaptor(
-	// 						new InterpolateTween(2, InterpolateTweenTransitionType.Cubic, InterpolateTweenEasingType.InOut),
-	// 						light3, "local_position",
-	// 						Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200)
-	// 					)
-	// 				),
-	// 				Infinity
-	// 			)
-	// 		);
-	// 	}
-	// }
+	{
+		for (let i = 0; i < 256; i++) {
+			const light3 = new PointLight3D();
+			light3.color = Vector3.create(Math.random(), Math.random(), Math.random());
+			light3.local_position = Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 100 + 200, (Math.random() - 0.5) * 200);
+			light3.intensity = 0.1;
+			light3.radius = 0.1;
+			light3.block_process = true;
+			light3.block_input = true;
+			light3.block_physics_process = true;
+			World.add_Child(light3);
+			EditorSceneTree.start_Tween(
+				new TweenLoop(
+					new PingPongTweenAdaptor(
+						new PropertyTweenAdaptor(
+							new InterpolateTween(2, InterpolateTweenTransitionType.Cubic, InterpolateTweenEasingType.InOut),
+							light3, "local_position",
+							Vector3.create((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200)
+						)
+					),
+					Infinity
+				)
+			);
+		}
+	}
 
 	{
 		// fetch(monkey).then(r => r.arrayBuffer()).then(d => {

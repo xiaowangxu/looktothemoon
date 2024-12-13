@@ -51,7 +51,9 @@ export type BvhExtractBuild<T extends BaseBvh3> = T extends BaseBvh3<infer R, in
 export abstract class BaseBvh3<
     Shape extends BvhShape3[] | BvhIndexShape3 = BvhShape3[] | BvhIndexShape3,
     BuildShape extends BvhShape3 | number = BvhShape3 | number
-> implements BvhLike<Vector3, Matrix3, Shape, BuildShape> {
+> implements
+    BvhLike<Vector3, Matrix3, Shape, BuildShape>,
+    BvhShape<Vector3, Matrix3> {
 
     static readonly #const_empty_shapes: BvhShape3[] = [];
     protected static $tmp_split_axis: Bvh3Axis = Bvh3Axis.X;
@@ -65,6 +67,11 @@ export abstract class BaseBvh3<
     public get is_empty() { return this.root === undefined; }
 
     constructor() { }
+
+    get_AABB(target: AABB3): AABB3 {
+        if (this.root === undefined) return target;
+        return target.copy(this.root.aabb);
+    }
 
     public abstract build(shapes: Shape, max_depth?: number, strategy?: number): void;
 
@@ -579,12 +586,12 @@ export class Bvh3 extends BaseBvh3<BvhShape3[], BvhShape3> {
             this.shape_aabbs_map.clear();
         }
         if (shapes === undefined || shapes.length === 0) return;
-        
+
         const root_aabb = shapes[0].get_AABB(Box3.new) as AABB3;
         const first_aabb = root_aabb.clone();
         this.shape_aabbs.push(first_aabb);
         this.shape_aabbs_map.set(shapes[0], first_aabb);
-        
+
         const count = shapes.length;
         for (let i = 1; i < count; i++) {
             const shape = shapes[i];
@@ -617,7 +624,7 @@ export class IndexBvh3 extends BaseBvh3<BvhIndexShape3, number> {
         const first_aabb = root_aabb.clone();
         this.shape_aabbs.push(first_aabb);
         this.shape_aabbs_map.set(0, first_aabb);
-        
+
         const count = index_shape.count;
         const shapes = new Array(count);
         shapes[0] = 0;
