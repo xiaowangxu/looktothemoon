@@ -127,7 +127,28 @@ export const Breadcrumb: Story = {
                             <span style={{ fontFamily: "consolas", fontWeight: 'bold' }}><span style={{ color: '#bd60bd' }}>func</span> <span style={{ color: '#216ff3' }}>main</span>()</span>
                         </>
                     }
-                }
+                },
+                siblings: [{
+                    uid: 100,
+                    render: (props, ctx) => {
+                        return <>
+                            <span style={{ fontFamily: "consolas", fontWeight: 'bold', marginRight: 'auto' }}><span style={{ color: '#bd60bd' }}>func</span> <span style={{ color: '#216ff3' }}>main</span>()</span>
+                        </>
+                    }
+                },
+                {
+                    label: 'Body',
+                    icon: 'Cuboid',
+                    uid: 'monkey.lttmbin/body',
+                },
+                {
+                    uid: 200,
+                    render: (props, ctx) => {
+                        return <>
+                            <span style={{ fontFamily: "consolas", fontWeight: 'bold', marginRight: 'auto' }}><span style={{ color: '#bd60bd' }}>func</span> <span style={{ color: '#216ff3' }}>add</span>(): <span style={{ color: '#6ff321' }}>number</span></span>
+                        </>
+                    }
+                }]
             },
             {
                 item: {

@@ -107,7 +107,7 @@ export const ScrollContainer: Story = {
 			control: { type: 'radio' }
 		},
 		scrollBarVisibility: {
-			options: ['always', 'hover', 'hover-track', 'hidden'],
+			options: ['always', 'hover', 'hover-track', 'hidden', 'scrolled'],
 			control: { type: 'radio' },
 		},
 	},

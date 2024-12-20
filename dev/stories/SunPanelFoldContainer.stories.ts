@@ -45,18 +45,22 @@ export const PanelFoldContainer: Story = {
             
             <SunPanel vertical style="width: 200px;">
                 <SunPanelFoldContainerGroup>
-                    <SunPanelFoldContainer v-bind="args" label="折叠容器1" style="width: 100%;" initial-fold>
+                    <SunPanelFoldContainer v-bind="args" label="折叠容器 Group1" style="width: 100%;" initial-fold>
                         <div style="width: 100%; height: 350px; background-color: green;"/>
                     </SunPanelFoldContainer>
                     <SunPanelSeparator/>
-                    <SunPanelFoldContainer v-bind="args" label="折叠容器2" style="width: 100%;">
+                    <SunPanelFoldContainer v-bind="args" label="折叠容器 Group2" style="width: 100%;">
                         <div style="width: 100%; height: 350px; background-color: blue;"/>
                     </SunPanelFoldContainer>
                     <SunPanelSeparator/>
-                    <SunPanelFoldContainer v-bind="args" label="折叠容器3" style="width: 100%;" initial-fold>
+                    <SunPanelFoldContainer v-bind="args" label="折叠容器 Group3" style="width: 100%;" initial-fold>
                         <div style="width: 100%; height: 350px; background-color: orange;"/>
                     </SunPanelFoldContainer>
                 </SunPanelFoldContainerGroup>
+                <SunPanelSeparator/>
+                <SunPanelFoldContainer v-bind="args" label="折叠容器1" style="width: 100%;" resizable>
+                    <div style="width: 100%; height: 100%; min-height: 24px; background-color: purple;"/>
+                </SunPanelFoldContainer>
             </SunPanel>
         `,
     }),
