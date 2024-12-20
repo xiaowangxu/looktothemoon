@@ -26,7 +26,7 @@ import SunMeasurePopupPanel from '../measurepopuppanel/SunMeasurePopupPanel.vue'
 import SunButton from '../button/SunButton.vue';
 import { type ScrollBarState } from '../scrollcontainer/SunScrollContainer.vue';
 import { type ScrollBarVisibility } from '../scrollcontainer/SunScrollBar.vue';
-import { type Size, type BorderMask, type ColorScheme, type Rect, type BoxSize, type PopupOpenMode, calcButtonPopupRect, TrapFocusOutEvent, Align } from '../SunDesignConstants';
+import { type Size, type BorderMask, type ColorScheme, type Rect, type BoxSize, type PopupOpenMode, calcButtonPopupRect, TrapFocusOutEvent, type Align } from '../SunDesignConstants';
 import { ref, watch, nextTick } from 'vue';
 
 defineOptions({

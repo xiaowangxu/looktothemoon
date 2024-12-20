@@ -1,7 +1,8 @@
 <template>
-    <SunButton class="__sun-design-color-button__" :style="{ '--Color': color_str , '--PlainColor': plain_color_str }" :size="size" :flat="flat"
-        :active="active" :disabled="disabled" :border-mask="borderMask" :hover="hover" :color-scheme="colorScheme"
-        :squared="squared" :title="color_str" />
+    <SunButton class="__sun-design-color-button__"
+        v-hover-menu:__sun-color-button__.label.no-hover.mouse="color_str"
+        :style="{ '--Color': color_str, '--PlainColor': plain_color_str }" :size="size" :flat="flat" :active="active"
+        :disabled="disabled" :border-mask="borderMask" :hover="hover" :color-scheme="colorScheme" :squared="squared" />
 </template>
 
 <script setup lang="ts">
@@ -11,6 +12,7 @@ import SunButton from '../button/SunButton.vue';
 import type { Size, BorderMask, ColorScheme } from '../SunDesignConstants';
 import { type ColorData } from './SunColorPickerConstants';
 import { computed } from 'vue';
+import { vHoverMenu } from '../hovermenu/SunHoverMenu';
 
 // props
 const props = withDefaults(

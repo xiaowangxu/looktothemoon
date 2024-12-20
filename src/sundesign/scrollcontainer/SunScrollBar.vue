@@ -1,6 +1,6 @@
 <template>
     <div ref="track_div_dom" class="__sun-design__ __sun-design-scrollbar__"
-        :class="{ flat, vertical: vertical, hoverparent: visibility === 'hover', hovertrack: visibility === 'hover-track' }"
+        :class="{ flat, vertical: vertical, hoverparent: mapped_visibility === 'hover', hovertrack: mapped_visibility === 'hover-track' }"
         :style="{ '--Percentage': clamped_percent, '--NobSizePercentage': nobSizePercentage }">
         <div ref="nob_div_dom" v-show="visibility !== 'hidden'"
             class="__sun-design__ __sun-design-scrollbar-nob__ colored bordered" :class="{ dragging: is_dragging }"
@@ -10,10 +10,11 @@
 
 <script setup lang="ts">
 
-import { computed, ref } from 'vue';
+import { computed, ref, toRef, watch } from 'vue';
+import { timer, type TimerCanceller } from '../SunDesignConstants';
 
 // props
-export type ScrollBarVisibility = 'always' | 'hover' | 'hover-track' | 'hidden';
+export type ScrollBarVisibility = 'always' | 'hover' | 'hover-track' | 'scrolled' | 'hidden';
 const props = withDefaults(
     defineProps<{
         flat?: boolean,
@@ -22,6 +23,7 @@ const props = withDefaults(
         nobSizePercentage: number,
         visibility?: ScrollBarVisibility,
         dragFactor?: number,
+        scrolledVisibilityDelay?: number
     }>(),
     {
         vertical: true,
@@ -29,6 +31,7 @@ const props = withDefaults(
         nobSizePercentage: 0.2,
         visibility: 'hover-track',
         dragFactor: 1,
+        scrolledVisibilityDelay: 1000,
     }
 );
 
@@ -39,12 +42,46 @@ const emits = defineEmits<{
 }>();
 
 // datas
+const mapped_visibility = ref(props.visibility);
+watch(mapped_visibility, (newval)=>{
+    console.log(newval);
+});
+let scrolled_timer: TimerCanceller | undefined = undefined;
+
+watch(toRef(props, 'visibility'), (newval) => {
+    scrolled_timer?.();
+    scrolled_timer = undefined;
+    switch (newval) {
+        case 'scrolled': {
+            mapped_visibility.value = 'hover-track';
+            break;
+        }
+        default: {
+            mapped_visibility.value = newval;
+            break;
+        }
+    }
+});
+
 const track_div_dom = ref<HTMLDivElement>();
 const nob_div_dom = ref<HTMLDivElement>();
 const clamped_percent = computed(() => Math.min(1, Math.max(0, props.percentage)));
 const is_dragging = ref(false);
 let last_mouse_position = 0;
 let last_percentage = 0;
+
+const scrolled_delay_finished = () => {
+    if (props.visibility === 'scrolled') {
+        scrolled_timer = undefined;
+        mapped_visibility.value = 'hover-track';
+    }
+}
+watch(toRef(props, 'percentage'), (p) => {
+    if (props.visibility !== 'scrolled') return;
+    scrolled_timer?.();
+    scrolled_timer = timer(scrolled_delay_finished, props.scrolledVisibilityDelay);
+    mapped_visibility.value = 'hover';
+});
 
 // methods
 function onMouseDown(evt: MouseEvent) {

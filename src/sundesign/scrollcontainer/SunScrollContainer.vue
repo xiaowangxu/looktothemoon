@@ -23,10 +23,10 @@
         </template>
         <!-- scrollbar -->
         <SunScrollBar v-if="scrollable_visible_h" v-show="is_scrollable_h" :vertical="false"
-            :visibility="scrollBarVisibility" class="__s_scrollcontainer_hbar__" :percentage="percentage_h"
+            :visibility="scrollBarVisibility" :percentage="percentage_h"
             :nob-size-percentage="scroll_nob_size_h" @update:percentage="onHScrolled" @scroll="onHWheel" />
         <SunScrollBar v-if="scrollable_visible_v" v-show="is_scrollable_v" :vertical="true"
-            :visibility="scrollBarVisibility" class="__s_scrollcontainer_vbar__" :percentage="percentage_v"
+            :visibility="scrollBarVisibility" :percentage="percentage_v"
             :nob-size-percentage="scroll_nob_size_v" @update:percentage="onVScrolled" @scroll="onVWheel" />
         <!-- <div
             style="position: absolute; left: 0; top: 0; font-size: 8px; padding: 2px 4px; font-family: consolas; pointer-events: none;">

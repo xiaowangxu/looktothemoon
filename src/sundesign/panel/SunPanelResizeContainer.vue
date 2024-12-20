@@ -1,6 +1,7 @@
 <template>
     <div ref="div_ref" v-resize-observe="onResized" class="__sun-design-panel-resize-conatiner__"
-        :class="{ 'flip-direction': flipDirection, vertical, start, end }" :style="{ '--Offset': offset }" v-bind="$attrs">
+        :class="{ 'flip-direction': flipDirection, vertical, start, end }" :style="{ '--Offset': offset }"
+        v-bind="$attrs">
         <div class="__sun-design-panel-resize-conatiner-first__" :class="{ bordered: !hideBorder }">
             <slot name="first" />
         </div>
@@ -12,7 +13,7 @@
             <slot name="nob" :start="start" :end="end" />
         </div>
         <SunButton v-if="expandIndicator" class="__sun-design-panel-resize-button__" size="small"
-            @click="setSize(open_size)"></SunButton>
+            @click="open"></SunButton>
     </div>
 </template>
 
@@ -67,18 +68,31 @@ const size = ref(0);
 const div_ref = ref<HTMLDivElement | null>(null);
 let last_size = 0;
 let open_size = props.initialSize;
+let open_percentage = 0;
 let mouse_last_x = 0;
 let mouse_last_y = 0;
 let mouse_moved = false;
 const container_rect = ref<BoxSize>({ width: 0, height: 0 });
 onMounted(() => {
-    if (div_ref.value !== null && (!props.flipDirection && props.initialCollapse === 'second' || props.flipDirection && props.initialCollapse === 'first')) {
+    if (div_ref.value !== null) {
         const { width, height } = div_ref.value.getBoundingClientRect();
-        if (props.vertical) {
-            setSize(Math.ceil(height));
+        onResized({ width, height }, { width, height }, div_ref.value);
+        open_percentage = props.vertical ?
+            (height === 0 ? 0 : Math.min(1, Math.max(open_size / height))) :
+            (width === 0 ? 0 : Math.min(1, Math.max(open_size / width)));
+        if (!props.flipDirection && props.initialCollapse === 'second' || props.flipDirection && props.initialCollapse === 'first') {
+            if (props.vertical) {
+                setSize(Math.ceil(height));
+            }
+            else {
+                setSize(Math.ceil(width));
+            }
         }
-        else {
-            setSize(Math.ceil(width));
+        else if (props.initialCollapse === undefined) {
+            setSize(open_percentage * height);
+        }
+        else if (!props.flipDirection && props.initialCollapse === 'first' || props.flipDirection && props.initialCollapse === 'second') {
+            setSize(0);
         }
     }
 });
@@ -89,12 +103,7 @@ const safe_size = computed(() => Math.min(max_size.value, Math.max(min_size.valu
 const start = computed(() => safe_size.value - min_size.value < 0.5);
 const end = computed(() => max_size.value - safe_size.value < 0.5);
 const offset = computed(() => `${safe_size.value}px`);
-if (props.initialCollapse === undefined) {
-    setSize(open_size);
-}
-else if (!props.flipDirection && props.initialCollapse === 'first' || props.flipDirection && props.initialCollapse === 'second') {
-    setSize(0);
-}
+
 
 function onResized(borderBoxSize: BoxSize, contentBoxSize: BoxSize, target: Element) {
     container_rect.value = borderBoxSize;
@@ -127,6 +136,10 @@ function onDragMouseMove(evt: MouseEvent) {
 function onDragMouseUp(evt: MouseEvent) {
     if (mouse_moved && !start.value && !end.value) {
         open_size = safe_size.value;
+        const { width, height } = container_rect.value;
+        open_percentage = props.vertical ?
+            (height === 0 ? 0 : Math.min(1, Math.max(open_size / height))) :
+            (width === 0 ? 0 : Math.min(1, Math.max(open_size / width)));
     }
     removeDraggingEvents();
 }
@@ -152,11 +165,12 @@ function setSize(val: number) {
     if (props.secondSnap !== undefined && val >= props.secondSnap) {
         val = max_size.value;
     }
-    size.value = val;
+    size.value = Math.max(min_size.value, Math.min(max_size.value, val));
 }
 function open() {
     if (open_size <= min_size.value || open_size >= max_size.value) {
-        setSize(props.initialSize);
+        let percentage = open_percentage <= 0 || open_percentage >= 1 ? 0.5 : open_percentage;
+        setSize(percentage * (props.vertical? container_rect.value.height : container_rect.value.width));
     }
     else {
         setSize(open_size);

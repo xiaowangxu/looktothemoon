@@ -207,9 +207,13 @@ class SunHoverMenuBase<D extends Record<string, unknown>, T extends Component> {
 
 //#region SunHoverMenu
 
-const LabelStringElement: FunctionalComponent<{ string: string }> = (props, ctx) => {
+const LabelStringElement: FunctionalComponent<{ string: string, label: boolean }> = (props, ctx) => {
     return <>
-        <SunLabel noHorizontalPadding={false}>{props.string}</SunLabel>
+        {
+            props.label ?
+                <SunLabel noHorizontalPadding={false}>{props.string}</SunLabel> :
+                <div>{props.string}</div>
+        }
     </>;
 };
 
@@ -309,7 +313,7 @@ const vHoverMenuGetPopupRect: { [x: string]: HoverMenuWithTargetGetPopupRect } =
         return calcButtonHorizontalPopupRect({ x: targetRect.x, y: targetRect.y, width: targetRect.width, height: targetRect.height }, contentMinSize, windowSize, 1, 0, undefined, undefined, false);
     },
     'mouse': (targetRect, contentMinSize, windowSize, mousePosition) => {
-        return calcMenuPopupRect(contentMinSize, { x: mousePosition.x, y: mousePosition.y, width: 0, height: 0 }, windowSize, 0, { width: DefaultOffset, height: DefaultOffset }).rect;
+        return calcMenuPopupRect(contentMinSize, { x: mousePosition.x + 10, y: mousePosition.y + 10, width: 0, height: 0 }, windowSize, 0, { width: DefaultOffset, height: DefaultOffset }).rect;
     },
 } as const;
 
@@ -339,7 +343,7 @@ export const vHoverMenu: ObjectDirective<HTMLElement & { [vHoverMenuId]?: SunHov
                     el[vHoverMenuId] = new SunHoverMenu(el, HtmlStringElement, { html: binding.value, label: binding.modifiers.label === true }, get_popup_rect, undefined, option);
                 }
                 else {
-                    el[vHoverMenuId] = new SunHoverMenu(el, LabelStringElement, { string: binding.value }, get_popup_rect, undefined, option);
+                    el[vHoverMenuId] = new SunHoverMenu(el, LabelStringElement, { string: binding.value, label: binding.modifiers.label === true }, get_popup_rect, undefined, option);
                 }
             }
             else if ((binding.value as Item).uid !== undefined) {
