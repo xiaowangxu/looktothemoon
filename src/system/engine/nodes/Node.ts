@@ -82,7 +82,7 @@ export class Node extends ClassBase {
     public block_input: boolean = false;
     public block_process: boolean = false;
     public block_physics_process: boolean = false;
-    
+
     public stop_input: boolean = false;
     public stop_process: boolean = false;
     public stop_physics_process: boolean = false;
@@ -500,6 +500,7 @@ export class Viewport extends Node {
 
     public render_priority: number = 0;
     public update_mode: ViewportUpdateMode = ViewportUpdateMode.Always;
+    public time_round_duration: number = 3600;
     public get raw_pixel_ratio() { return this.render_server_viewport.raw_pixel_ratio; }
     public get scale() { return this.render_server_viewport.scale; }
     public set scale(scale: number) { this.render_server_viewport.set_Scale(scale); }
@@ -855,7 +856,7 @@ export class Viewport extends Node {
         this.signal_before_render.trigger();
         const world_3d = this.get_UsableWorld3D();
         const camera_3d = this.get_Camera3D();
-        const time = this.get_SceneTree()!.time;
+        const time = this.get_SceneTree()!.time % this.time_round_duration;
         if (camera_3d !== undefined && world_3d !== undefined) {
             this._renderer_3d.expect.render(world_3d, camera_3d.get_Camera(), this.render_server_viewport, time, once);
         }

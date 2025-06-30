@@ -19,8 +19,7 @@ export type PopupOpenMode = 'instance' | 'visibility';
 
 export type UID = string | number | symbol;
 
-export interface Item<T extends UID = UID> {
-    readonly uid: T,
+export interface Item<T extends UID = UID> extends ItemLike<T> {
     label?: string,
     colorScheme?: ColorScheme,
     icon?: string,

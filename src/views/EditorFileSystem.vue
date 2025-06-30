@@ -1,5 +1,5 @@
 <template>
-    <SunPanelResizeContainer style="width: 100%; height: 100%;">
+    <SunPanelResizeContainer style="width: 100%; height: 100%;" :initial-size="300">
         
         <template #first>
             <SunPanel container vertical style="width: 100%; height: 100%;">

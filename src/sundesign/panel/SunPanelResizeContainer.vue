@@ -89,7 +89,7 @@ onMounted(() => {
             }
         }
         else if (props.initialCollapse === undefined) {
-            setSize(open_percentage * height);
+            setSize(open_percentage * (props.vertical ? height : width));
         }
         else if (!props.flipDirection && props.initialCollapse === 'first' || props.flipDirection && props.initialCollapse === 'second') {
             setSize(0);

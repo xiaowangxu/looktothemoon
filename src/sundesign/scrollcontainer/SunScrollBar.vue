@@ -152,7 +152,7 @@ scrollbar-track-offset = 7px
     pointer-events: all
     top: scrollbar-nob-offset
     bottom: 0
-    --NobSize: 'clamp(16px, calc(100% * var(--NobSizePercentage, 0.2)), calc(30%))' % ('')
+    --NobSize: 'clamp(calc(100% * var(--NobSizePercentage, 0.2)), 16px, calc(30%))' % ('')
     width: var(--NobSize)
     height: scrollbar-nob-size
     left: calc((100% - var(--NobSize)) * var(--Percentage))
